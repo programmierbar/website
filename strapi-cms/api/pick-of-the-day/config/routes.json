@@ -1,0 +1,52 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/picks-of-the-day",
+      "handler": "pick-of-the-day.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/picks-of-the-day/count",
+      "handler": "pick-of-the-day.count",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/picks-of-the-day/:id",
+      "handler": "pick-of-the-day.findOne",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/picks-of-the-day",
+      "handler": "pick-of-the-day.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/picks-of-the-day/:id",
+      "handler": "pick-of-the-day.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/picks-of-the-day/:id",
+      "handler": "pick-of-the-day.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

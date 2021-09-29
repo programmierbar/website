@@ -1,0 +1,22 @@
+{
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/files",
+      "handler": "Upload.create",
+      "config": {
+        "policies": [],
+        "description": "Create new file documents"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/cloud-storage-token",
+      "handler": "Upload.cloudStorageToken",
+      "config": {
+        "policies": [],
+        "description": "Get a Cloud Storage token to upload files from client"
+      }
+    }
+  ]
+}

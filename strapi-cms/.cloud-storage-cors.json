@@ -1,0 +1,13 @@
+[
+  {
+    "origin": [
+      "http://localhost:3000",
+      "http://localhost:1337",
+      "https://programmierbar-323408.ey.r.appspot.com",
+      "https://www.programmier.bar"
+    ],
+    "method": ["GET", "PUT"],
+    "responseHeader": ["Authorization", "Cache-Control", "Content-Type"],
+    "maxAgeSeconds": 3600
+  }
+]

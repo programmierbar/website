@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/meetup-page",
+      "handler": "meetup-page.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/meetup-page",
+      "handler": "meetup-page.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/meetup-page",
+      "handler": "meetup-page.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

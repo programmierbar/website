@@ -1,0 +1,80 @@
+{
+  "kind": "collectionType",
+  "collectionName": "Members",
+  "info": {
+    "name": "Member",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "first_name": {
+      "type": "string",
+      "required": true,
+      "unique": false
+    },
+    "last_name": {
+      "type": "string",
+      "required": true
+    },
+    "task_area": {
+      "type": "enumeration",
+      "enum": [
+        "podcast_crew",
+        "behind_the_scenes",
+        "inactive"
+      ],
+      "required": true
+    },
+    "occupation": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "richtext",
+      "required": true,
+      "unique": false
+    },
+    "normal_image": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images"
+      ],
+      "plugin": "upload",
+      "required": true,
+      "pluginOptions": {}
+    },
+    "action_image": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images"
+      ],
+      "plugin": "upload",
+      "required": true,
+      "pluginOptions": {}
+    },
+    "podcasts": {
+      "via": "members",
+      "collection": "podcast"
+    },
+    "picks_of_the_day": {
+      "via": "member",
+      "collection": "pick-of-the-day"
+    },
+    "tags": {
+      "collection": "tag",
+      "via": "members",
+      "dominant": true
+    },
+    "meetups": {
+      "via": "members",
+      "collection": "meetup"
+    }
+  }
+}

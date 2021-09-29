@@ -1,0 +1,159 @@
+<template>
+  <div v-if="podcastPage && podcasts">
+    <section class="relative">
+      <!-- Page cover -->
+      <PageCoverImage :cover-image="podcastPage.cover_image" />
+      <div
+        class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 mt-16 md:mt-28 lg:mt-32"
+      >
+        <Breadcrumbs :breadcrumbs="breadcrumbs" />
+
+        <!-- Page intro -->
+        <SectionHeading class="mt-8 md:mt-0" tag="h1">
+          {{ podcastPage.intro_heading }}
+        </SectionHeading>
+        <p
+          class="
+            text-lg
+            md:text-2xl
+            lg:text-3xl
+            text-white
+            md:font-bold
+            leading-normal
+            md:leading-normal
+            lg:leading-normal
+            mt-8
+            md:mt-16
+          "
+        >
+          {{ podcastPage.intro_text_1 }}
+        </p>
+        <p
+          class="
+            text-base
+            md:text-xl
+            lg:text-2xl
+            text-white
+            font-light
+            md:font-normal
+            leading-normal
+            md:leading-normal
+            lg:leading-normal
+            mt-8
+            md:mt-6
+          "
+        >
+          {{ podcastPage.intro_text_2 }}
+        </p>
+      </div>
+    </section>
+
+    <!-- Deep dive podcasts -->
+    <section
+      v-if="deepDivePodcasts.length"
+      class="
+        relative
+        md:pl-40
+        3xl:px-0
+        py-8
+        md:py-20
+        lg:py-32
+        mt-8
+        md:mt-20
+        lg:mt-32
+      "
+    >
+      <SectionHeading class="px-6 md:px-0" tag="h2">
+        {{ podcastPage.deep_dive_heading }}
+      </SectionHeading>
+      <PodcastCarousel class="mt-10 md:mt-0" :podcasts="deepDivePodcasts" />
+    </section>
+
+    <!-- CTO special podcasts -->
+    <section
+      v-if="ctoSpecialPodcasts.length"
+      class="relative md:pl-40 3xl:px-0 py-8 md:py-20 lg:py-32"
+    >
+      <SectionHeading class="px-6 md:px-0" tag="h2">
+        {{ podcastPage.cto_special_heading }}
+      </SectionHeading>
+      <PodcastCarousel class="mt-10 md:mt-0" :podcasts="ctoSpecialPodcasts" />
+    </section>
+
+    <!-- News podcasts -->
+    <section
+      v-if="newsPodcasts.length"
+      class="
+        relative
+        md:pl-40
+        3xl:px-0
+        py-8
+        md:py-20
+        lg:py-32
+        mb-8
+        md:mb-20
+        lg:mb-32
+      "
+    >
+      <SectionHeading class="px-6 md:px-0" tag="h2">
+        {{ podcastPage.news_heading }}
+      </SectionHeading>
+      <PodcastCarousel class="mt-10 md:mt-0" :podcasts="newsPodcasts" />
+    </section>
+  </div>
+</template>
+
+<script lang="ts">
+import { computed, defineComponent, ref } from '@nuxtjs/composition-api';
+import {
+  Breadcrumbs,
+  PageCoverImage,
+  PodcastCarousel,
+  SectionHeading,
+} from '../../components';
+import { useStrapi } from '../../composables';
+
+export default defineComponent({
+  components: {
+    Breadcrumbs,
+    PageCoverImage,
+    PodcastCarousel,
+    SectionHeading,
+  },
+  setup() {
+    // Query Strapi about page and members
+    const podcastPage = useStrapi('podcast-page');
+    const podcasts = useStrapi('podcasts', ref(`?_limit=-1`));
+
+    // Create deep dive podcasts list
+    const deepDivePodcasts = computed(() =>
+      podcasts.value
+        ?.filter((podcast) => podcast.type === 'deep_dive')
+        .sort((a, b) => (a.published_at < b.published_at ? 1 : -1))
+    );
+
+    // Create CTO special podcasts list
+    const ctoSpecialPodcasts = computed(() =>
+      podcasts.value
+        ?.filter((podcast) => podcast.type === 'cto_special')
+        .sort((a, b) => (a.published_at < b.published_at ? 1 : -1))
+    );
+
+    // Create news podcasts list
+    const newsPodcasts = computed(() =>
+      podcasts.value
+        ?.filter((podcast) => podcast.type === 'news')
+        .sort((a, b) => (a.published_at < b.published_at ? 1 : -1))
+    );
+
+    return {
+      podcastPage,
+      podcasts,
+      breadcrumbs: [{ label: 'Podcast' }],
+      deepDivePodcasts,
+      ctoSpecialPodcasts,
+      newsPodcasts,
+    };
+  },
+});
+</script>

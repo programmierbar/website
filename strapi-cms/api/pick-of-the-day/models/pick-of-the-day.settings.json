@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "PicksOfTheDay",
+  "info": {
+    "name": "PickOfTheDay",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "description": {
+      "type": "richtext",
+      "required": true,
+      "unique": false
+    },
+    "image": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images"
+      ],
+      "plugin": "upload",
+      "required": false,
+      "pluginOptions": {}
+    },
+    "website_url": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$"
+    },
+    "podcast": {
+      "via": "picks_of_the_day",
+      "model": "podcast"
+    },
+    "member": {
+      "via": "picks_of_the_day",
+      "model": "member"
+    },
+    "speaker": {
+      "via": "picks_of_the_day",
+      "model": "speaker"
+    },
+    "tags": {
+      "collection": "tag",
+      "via": "picks_of_the_day",
+      "dominant": true
+    }
+  }
+}

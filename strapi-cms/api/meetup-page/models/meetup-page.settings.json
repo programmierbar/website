@@ -1,0 +1,45 @@
+{
+  "kind": "singleType",
+  "collectionName": "meetup_pages",
+  "info": {
+    "name": "MeetupPage"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "cover_image": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images"
+      ],
+      "plugin": "upload",
+      "required": true,
+      "pluginOptions": {}
+    },
+    "intro_heading": {
+      "type": "string",
+      "required": true
+    },
+    "intro_text_1": {
+      "type": "richtext",
+      "required": true
+    },
+    "intro_text_2": {
+      "type": "richtext",
+      "required": true
+    },
+    "corona_text": {
+      "type": "richtext",
+      "required": true
+    },
+    "meetups_heading": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "folders": [{ "path": "." }],
+  "settings": {
+    "editor.formatOnSave": true,
+    "eslint.workingDirectories": ["./shared-code", "./strapi-cms", "./nuxt-app"]
+  }
+}

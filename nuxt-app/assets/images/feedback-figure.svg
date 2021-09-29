@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 242 177">
+  <title>Feedback figure</title>
+  <g transform="matrix(-1 0 0 1 238.02 1.02)" stroke="#CFFF00" fill="none" fill-rule="evenodd">
+    <ellipse stroke-width="6" cx="94.89" cy="48.92" rx="39.94" ry="40.06"/>
+    <path d="M77.33 62.73c3.8 6.6 10.62 9.48 20.48 8.64" stroke-width="6" stroke-linecap="round"/>
+    <path d="M89 11.4a27.77 27.77 0 0 0 39.05 19.92" stroke-width="6.6"/>
+    <path d="M107.01 100.65a25.6 25.6 0 0 1 18.16 7.52 25.6 25.6 0 0 1 7.52 18.15v46.66H53.54v-46.66a25.6 25.6 0 0 1 7.52-18.15 25.6 25.6 0 0 1 18.16-7.52z" stroke-width="6"/>
+    <path d="M51.84 118.61c-28.33-3.35-42.5 9.62-42.5 38.9m122.86-38.14c21.92-2.43 36.96-20.47 45.1-54.11 12.22-50.47 43.5-31.42 43.5-16.34" stroke-width="6" stroke-linecap="round"/>
+  </g>
+</svg>

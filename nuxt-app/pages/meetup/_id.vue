@@ -1,0 +1,185 @@
+<template>
+  <div v-if="meetup">
+    <article class="relative">
+      <div
+        class="
+          container
+          px-6
+          md:pl-48
+          lg:pr-8
+          3xl:px-8
+          pt-32
+          md:pt-40
+          lg:pt-56
+          2xl:pt-64
+        "
+      >
+        <div class="flex items-center justify-between space-x-4">
+          <Breadcrumbs :breadcrumbs="breadcrumbs" />
+          <LikeButton />
+        </div>
+
+        <h1
+          class="
+            text-2xl
+            md:text-4xl
+            lg:text-5xl
+            text-white
+            font-black
+            mt-12
+            md:mt-16
+            lg:mt-20
+          "
+        >
+          {{ meetup.title }}
+        </h1>
+
+        <!-- Cover -->
+        <MeetupCover
+          class="xl:w-2/3 mt-10 md:mt-12 lg:mt-16"
+          :meetup="meetup"
+        />
+
+        <!-- Start and end time -->
+        <MeetupStartAndEnd
+          class="
+            text-sm
+            md:text-lg
+            lg:text-xl
+            text-lime
+            font-bold
+            italic
+            mt-10
+            md:mt-16
+            lg:mt-24
+          "
+          :meetup="meetup"
+        />
+
+        <!-- Heading and description -->
+        <SectionHeading class="hidden md:flex" tag="h2">
+          Meetup Infos
+        </SectionHeading>
+        <MarkdownToHtml
+          class="
+            text-base
+            md:text-xl
+            lg:text-2xl
+            text-white
+            font-light
+            leading-normal
+            space-y-8
+            mt-8
+            md:mt-14
+          "
+          :markdown="meetup.description"
+        />
+
+        <!-- Meetup tags -->
+        <TagList
+          v-if="meetup.tags.length"
+          class="mt-10 md:mt-14"
+          :tags="meetup.tags"
+        />
+      </div>
+    </article>
+
+    <!-- Speakers -->
+    <section v-if="meetup.speakers.length" class="relative">
+      <div
+        class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 mt-20 md:mt-32 lg:mt-40"
+      >
+        <SectionHeading tag="h2">Speaker Info</SectionHeading>
+        <SpeakerList class="mt-12 md:mt-0" :speakers="meetup.speakers" />
+        <div class="flex justify-center mt-12 md:mt-20 lg:mt-28">
+          <LinkButton href="/hall-of-fame"> Alle 67 Speaker:innen </LinkButton>
+        </div>
+      </div>
+    </section>
+
+    <!-- Related podcasts -->
+    <section
+      v-if="relatedPodcasts && relatedPodcasts.length"
+      class="relative md:pl-40 3xl:px-0 mt-20 md:mt-32 lg:mt-40"
+    >
+      <SectionHeading class="px-6 md:px-0" tag="h2">
+        Verwandte Podcasts
+      </SectionHeading>
+      <PodcastCarousel class="mt-12 md:mt-0" :podcasts="relatedPodcasts" />
+    </section>
+
+    <FeedbackSection
+      class="md:pl-40 3xl:px-0 mt-16 md:mt-24 lg:mt-32 mb-20 md:mb-32 lg:mb-40"
+    />
+  </div>
+</template>
+
+<script lang="ts">
+import { computed, defineComponent, useRoute } from '@nuxtjs/composition-api';
+import {
+  Breadcrumbs,
+  FeedbackSection,
+  LikeButton,
+  LinkButton,
+  MarkdownToHtml,
+  MeetupCover,
+  MeetupStartAndEnd,
+  PodcastCarousel,
+  SectionHeading,
+  SpeakerList,
+  TagList,
+} from '../../components';
+import { useStrapi } from '../../composables';
+
+export default defineComponent({
+  components: {
+    Breadcrumbs,
+    FeedbackSection,
+    LikeButton,
+    LinkButton,
+    MarkdownToHtml,
+    MeetupCover,
+    MeetupStartAndEnd,
+    PodcastCarousel,
+    SectionHeading,
+    SpeakerList,
+    TagList,
+  },
+  setup() {
+    // Get route and meetup ID param
+    const route = useRoute();
+    const meetupIdPath = computed(() => `/${route.value.params.id}` as const);
+
+    // Query Strapi meetup
+    const meetup = useStrapi('meetups', meetupIdPath);
+
+    // Create breadcrumb list
+    const breadcrumbs = computed(() => [
+      { label: 'Meetup', href: '/meetup' },
+      {
+        label: meetup.value
+          ? `${meetup.value.title.slice(0, 12).trim()}...`
+          : 'Error 404',
+      },
+    ]);
+
+    // Create related podcasts query string
+    const relatedPodcastsQuery = computed(() =>
+      meetup.value && meetup.value.tags.length
+        ? (`?${meetup.value.tags
+            .map((tag, index) => `_where[_or][${index}][0][tags_in]=${tag.id}`)
+            .join('&')}&_sort=published_at:DESC` as const)
+        : ('?_limit=0' as const)
+    );
+
+    // Query related podcast from Strapi
+    const relatedPodcasts = useStrapi('podcasts', relatedPodcastsQuery);
+
+    return {
+      meetup,
+      breadcrumbs,
+      relatedPodcasts,
+    };
+  },
+});
+</script>

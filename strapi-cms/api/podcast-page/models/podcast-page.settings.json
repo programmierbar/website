@@ -1,0 +1,50 @@
+{
+  "kind": "singleType",
+  "collectionName": "podcast_pages",
+  "info": {
+    "name": "PodcastPage",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "intro_heading": {
+      "type": "string",
+      "required": true
+    },
+    "intro_text_1": {
+      "type": "text",
+      "required": true
+    },
+    "intro_text_2": {
+      "type": "text",
+      "required": true
+    },
+    "deep_dive_heading": {
+      "type": "string",
+      "required": true
+    },
+    "cto_special_heading": {
+      "type": "string",
+      "required": true
+    },
+    "news_heading": {
+      "type": "string",
+      "required": true
+    },
+    "cover_image": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images"
+      ],
+      "plugin": "upload",
+      "required": true,
+      "pluginOptions": {}
+    }
+  }
+}

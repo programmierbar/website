@@ -1,0 +1,99 @@
+{
+  "kind": "collectionType",
+  "collectionName": "Speakers",
+  "info": {
+    "name": "Speaker",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "academic_title": {
+      "type": "string"
+    },
+    "first_name": {
+      "type": "string",
+      "required": true,
+      "unique": false
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "occupation": {
+      "type": "string",
+      "required": false
+    },
+    "description": {
+      "type": "richtext",
+      "required": true,
+      "unique": false
+    },
+    "profile_image": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": ["images"],
+      "plugin": "upload",
+      "required": true,
+      "pluginOptions": {}
+    },
+    "event_image": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": ["images"],
+      "plugin": "upload",
+      "required": true,
+      "pluginOptions": {}
+    },
+    "twitter_url": {
+      "type": "string",
+      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
+      "unique": true
+    },
+    "linkedin_url": {
+      "type": "string",
+      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
+      "unique": true
+    },
+    "instagram_url": {
+      "type": "string",
+      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
+      "unique": true
+    },
+    "youtube_url": {
+      "type": "string",
+      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
+      "unique": true
+    },
+    "website_url": {
+      "type": "string",
+      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
+      "unique": true
+    },
+    "github_url": {
+      "type": "string",
+      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
+      "unique": true
+    },
+    "podcasts": {
+      "via": "speakers",
+      "collection": "podcast"
+    },
+    "picks_of_the_day": {
+      "via": "speaker",
+      "collection": "pick-of-the-day"
+    },
+    "tags": {
+      "collection": "tag",
+      "via": "speakers",
+      "dominant": true
+    },
+    "meetups": {
+      "via": "speakers",
+      "collection": "meetup"
+    }
+  }
+}

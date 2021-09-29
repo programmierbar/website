@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "Tags",
+  "info": {
+    "name": "Tag"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "unique": true,
+      "required": true
+    },
+    "podcasts": {
+      "via": "tags",
+      "collection": "podcast"
+    },
+    "members": {
+      "via": "tags",
+      "collection": "member"
+    },
+    "picks_of_the_day": {
+      "via": "tags",
+      "collection": "pick-of-the-day"
+    },
+    "speakers": {
+      "via": "tags",
+      "collection": "speaker"
+    },
+    "meetups": {
+      "via": "tags",
+      "collection": "meetup"
+    }
+  }
+}

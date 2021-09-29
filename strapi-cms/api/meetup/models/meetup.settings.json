@@ -1,0 +1,61 @@
+{
+  "kind": "collectionType",
+  "collectionName": "Meetups",
+  "info": {
+    "name": "Meetup",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "start_at": {
+      "type": "datetime",
+      "required": true
+    },
+    "end_at": {
+      "type": "datetime",
+      "required": true
+    },
+    "description": {
+      "type": "richtext",
+      "required": true
+    },
+    "cover_image": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images"
+      ],
+      "plugin": "upload",
+      "required": true,
+      "pluginOptions": {}
+    },
+    "youtube_url": {
+      "type": "string",
+      "regex": "^(http:\\\\/\\\\/|https:\\\\/\\\\/)?[a-z0-9]+([\\\\-\\\\.]{1}[a-z0-9]+)*\\\\.[a-z]{2,5}(:[0-9]{1,5})?(\\\\/.*)?$"
+    },
+    "members": {
+      "via": "meetups",
+      "collection": "member",
+      "dominant": true
+    },
+    "speakers": {
+      "via": "meetups",
+      "collection": "speaker",
+      "dominant": true
+    },
+    "tags": {
+      "collection": "tag",
+      "via": "meetups",
+      "dominant": true
+    }
+  }
+}
