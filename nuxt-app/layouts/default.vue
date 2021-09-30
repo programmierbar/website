@@ -6,15 +6,23 @@
     </main>
     <Footer />
     <PodcastPlayer />
+    <CookieBanner />
   </Theme>
 </template>
 
 <script>
 import { defineComponent } from '@nuxtjs/composition-api';
-import { Footer, Header, PodcastPlayer, Theme } from '../components';
+import {
+  CookieBanner,
+  Footer,
+  Header,
+  PodcastPlayer,
+  Theme,
+} from '../components';
 
 export default defineComponent({
   components: {
+    CookieBanner,
     Footer,
     Header,
     PodcastPlayer,

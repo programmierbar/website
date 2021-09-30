@@ -1,6 +1,7 @@
 export { default as Breadcrumbs } from './Breadcrumbs.vue';
 export { default as Carousel } from './Carousel.vue';
 export { default as CarouselSlide } from './CarouselSlide.vue';
+export { default as CookieBanner } from './CookieBanner.vue';
 export { default as FeedbackSection } from './FeedbackSection.vue';
 export { default as Footer } from './Footer.vue';
 export { default as Header } from './Header.vue';
