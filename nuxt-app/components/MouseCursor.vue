@@ -27,8 +27,11 @@
         cursorMode === 'black' && 'before:bg-black before:border-black',
         ['hover', 'more', 'arrow-left', 'arrow-right'].includes(cursorMode) &&
           'before:bg-pink before:bg-opacity-0 before:border-pink',
-        ['hover', 'arrow-left', 'arrow-right'].includes(cursorMode) &&
-          'before:scale-200',
+        ['hover', 'hover-blue', 'arrow-left', 'arrow-right'].includes(
+          cursorMode
+        ) && 'before:scale-200',
+        cursorMode === 'hover-blue' &&
+          'before:bg-blue before:bg-opacity-0 before:border-blue',
         cursorMode === 'more' && 'before:scale-250',
       ]"
     >
@@ -65,9 +68,14 @@
       "
       :class="[
         cursorMode === 'black' ? 'bg-black' : 'bg-lime',
-        ['none', 'hover', 'more', 'arrow-left', 'arrow-right'].includes(
-          cursorMode
-        ) && 'opacity-0',
+        [
+          'none',
+          'hover',
+          'hover-blue',
+          'more',
+          'arrow-left',
+          'arrow-right',
+        ].includes(cursorMode) && 'opacity-0',
       ]"
     />
   </div>
@@ -95,6 +103,7 @@ type CursorMode =
   | 'none'
   | 'black'
   | 'hover'
+  | 'hover-blue'
   | 'more'
   | 'arrow-left'
   | 'arrow-right';
@@ -139,6 +148,7 @@ export default defineComponent({
       'none',
       'black',
       'hover',
+      'hover-blue',
       'more',
       'arrow-left',
       'arrow-right',
