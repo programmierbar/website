@@ -22,6 +22,7 @@
           "
           :href="pickOfTheDay.website_url"
           target="_blank"
+          rel="noreferrer noopener"
           data-cursor-hover
         >
           <h2
