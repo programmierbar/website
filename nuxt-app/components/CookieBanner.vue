@@ -19,9 +19,9 @@
         deinen Besuch auf unserer Website gespeichert werden. Die durch die
         Cookies erhobenen Daten werden durch uns sowie durch dritte
         Dienstleister (Google Analytics) ausgewertet. Mit Klick auf den Button
-        "[Y]ES" oder der Taste "Y" erklärst du deine Einwilligung in diese
-        Datenverarbeitung. Deine Einwilligung kannst du jederzeit mit Wirkung
-        für die Zukunft frei widerrufen.
+        "[Y]ES" erklärst du deine Einwilligung in diese Datenverarbeitung. Deine
+        Einwilligung kannst du jederzeit mit Wirkung für die Zukunft frei
+        widerrufen.
         <NuxtLink class="underline" to="/datenschutz" data-cursor-hover>
           Mehr Infos
         </NuxtLink>
@@ -41,6 +41,7 @@
         <button
           v-for="i of 2"
           :key="i"
+          ref="buttonElements"
           class="
             w-28
             lg:w-48
@@ -58,9 +59,10 @@
           "
           :class="
             i === 1
-              ? 'hover:bg-lime border-lime text-lime hover:text-black'
-              : 'hover:bg-black border-black text-black hover:text-white'
+              ? 'hover:bg-lime focus:bg-lime border-lime text-lime hover:text-black focus:text-black'
+              : 'hover:bg-black focus:bg-black border-black text-black hover:text-white focus:text-white'
           "
+          type="button"
           data-cursor-hover-blue
           @click="() => answer(i === 1)"
         >
@@ -80,8 +82,9 @@ const COOKIE_NAME = 'cookies_consented';
 
 export default defineComponent({
   setup() {
-    // Create is visible reference
+    // Create state references
     const isVisible = ref(false);
+    const buttonElements = ref<HTMLButtonElement[]>();
 
     // Check if banner must be displayed
     onMounted(() => {
@@ -104,9 +107,9 @@ export default defineComponent({
         // Get selected key
         const key = event.key.toLowerCase();
 
-        // Answer cookie question
+        // Focus selected button
         if (['y', 'n'].includes(key)) {
-          answer(key === 'y');
+          buttonElements.value?.[key === 'y' ? 0 : 1].focus();
         }
       }
     };
@@ -116,6 +119,7 @@ export default defineComponent({
 
     return {
       isVisible,
+      buttonElements,
       answer,
     };
   },
