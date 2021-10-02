@@ -84,7 +84,13 @@ module.exports = {
         '4/6-screen': '66.666667vh',
         '1/2-screen': '50vh',
       },
+      maxHeight: {
+        '1/2-screen': '50vh',
+      },
       minHeight: {
+        8: '2rem',
+        9: '2.25rem',
+        11: '2.75rem',
         80: '20rem',
       },
       scale: {
@@ -95,6 +101,7 @@ module.exports = {
         250: '2.5',
       },
       spacing: {
+        0.75: '0.1875rem',
         1.25: '0.3rem',
         112: '28rem',
         120: '30rem',

@@ -12,4 +12,5 @@ export * from './usePodcastPlayer';
 export * from './useScrollParallax';
 export * from './useShare';
 export * from './useStrapi';
+export * from './useTagFilter';
 export * from './useWindow';
