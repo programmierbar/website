@@ -80,6 +80,7 @@
           v-if="meetup.tags.length"
           class="mt-10 md:mt-14"
           :tags="meetup.tags"
+          :on-click="() => null"
         />
       </div>
     </article>

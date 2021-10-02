@@ -163,6 +163,7 @@
           v-if="speaker.tags.length"
           class="mt-10 md:mt-14"
           :tags="speaker.tags"
+          :on-click="() => null"
         />
       </div>
     </article>

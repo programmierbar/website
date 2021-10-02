@@ -155,6 +155,7 @@
                 class="flex-grow"
                 :tags="pickOfTheDay.tags"
                 variant="pick_of_the_day_card"
+                :on-click="() => null"
               />
 
               <!-- Likes -->

@@ -33,6 +33,7 @@
           v-if="podcast.tags.length"
           class="mt-10 md:mt-14"
           :tags="podcast.tags"
+          :on-click="() => null"
         />
 
         <!-- Pocast download and platform links -->
