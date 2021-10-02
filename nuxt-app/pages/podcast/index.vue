@@ -48,58 +48,57 @@
       </div>
     </section>
 
-    <!-- Deep dive podcasts -->
-    <section
-      v-if="deepDivePodcasts.length"
-      class="
-        relative
-        md:pl-40
-        3xl:px-0
-        py-8
-        md:py-20
-        lg:py-32
-        mt-8
-        md:mt-20
-        lg:mt-32
-      "
-    >
-      <SectionHeading class="px-6 md:px-0" tag="h2">
-        {{ podcastPage.deep_dive_heading }}
-      </SectionHeading>
-      <PodcastCarousel class="mt-10 md:mt-0" :podcasts="deepDivePodcasts" />
-    </section>
+    <div>
+      <!-- Tag Filter -->
+      <TagFilter
+        class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 mt-8 md:mt-20 lg:mt-32"
+        :tags="tagFilter.tags"
+        :toggle-tag="tagFilter.toggleTag"
+      />
 
-    <!-- CTO special podcasts -->
-    <section
-      v-if="ctoSpecialPodcasts.length"
-      class="relative md:pl-40 3xl:px-0 py-8 md:py-20 lg:py-32"
-    >
-      <SectionHeading class="px-6 md:px-0" tag="h2">
-        {{ podcastPage.cto_special_heading }}
-      </SectionHeading>
-      <PodcastCarousel class="mt-10 md:mt-0" :podcasts="ctoSpecialPodcasts" />
-    </section>
+      <!-- Deep dive podcasts -->
+      <section
+        v-if="deepDivePodcasts.length"
+        class="relative md:pl-40 3xl:px-0 py-8 md:py-20 lg:py-32"
+      >
+        <SectionHeading class="px-6 md:px-0" tag="h2">
+          {{ podcastPage.deep_dive_heading }}
+        </SectionHeading>
+        <PodcastCarousel class="mt-10 md:mt-0" :podcasts="deepDivePodcasts" />
+      </section>
 
-    <!-- News podcasts -->
-    <section
-      v-if="newsPodcasts.length"
-      class="
-        relative
-        md:pl-40
-        3xl:px-0
-        py-8
-        md:py-20
-        lg:py-32
-        mb-8
-        md:mb-20
-        lg:mb-32
-      "
-    >
-      <SectionHeading class="px-6 md:px-0" tag="h2">
-        {{ podcastPage.news_heading }}
-      </SectionHeading>
-      <PodcastCarousel class="mt-10 md:mt-0" :podcasts="newsPodcasts" />
-    </section>
+      <!-- CTO special podcasts -->
+      <section
+        v-if="ctoSpecialPodcasts.length"
+        class="relative md:pl-40 3xl:px-0 py-8 md:py-20 lg:py-32"
+      >
+        <SectionHeading class="px-6 md:px-0" tag="h2">
+          {{ podcastPage.cto_special_heading }}
+        </SectionHeading>
+        <PodcastCarousel class="mt-10 md:mt-0" :podcasts="ctoSpecialPodcasts" />
+      </section>
+
+      <!-- News podcasts -->
+      <section
+        v-if="newsPodcasts.length"
+        class="
+          relative
+          md:pl-40
+          3xl:px-0
+          py-8
+          md:py-20
+          lg:py-32
+          mb-8
+          md:mb-20
+          lg:mb-32
+        "
+      >
+        <SectionHeading class="px-6 md:px-0" tag="h2">
+          {{ podcastPage.news_heading }}
+        </SectionHeading>
+        <PodcastCarousel class="mt-10 md:mt-0" :podcasts="newsPodcasts" />
+      </section>
+    </div>
   </div>
 </template>
 
@@ -110,8 +109,9 @@ import {
   PageCoverImage,
   PodcastCarousel,
   SectionHeading,
+  TagFilter,
 } from '../../components';
-import { useStrapi } from '../../composables';
+import { useStrapi, useTagFilter } from '../../composables';
 
 export default defineComponent({
   components: {
@@ -119,30 +119,34 @@ export default defineComponent({
     PageCoverImage,
     PodcastCarousel,
     SectionHeading,
+    TagFilter,
   },
   setup() {
     // Query Strapi about page and members
     const podcastPage = useStrapi('podcast-page');
     const podcasts = useStrapi('podcasts', ref(`?_limit=-1`));
 
+    // Create podcast tag filter
+    const tagFilter = useTagFilter(podcasts);
+
     // Create deep dive podcasts list
     const deepDivePodcasts = computed(() =>
-      podcasts.value
-        ?.filter((podcast) => podcast.type === 'deep_dive')
+      tagFilter.output
+        .filter((podcast) => podcast.type === 'deep_dive')
         .sort((a, b) => (a.published_at < b.published_at ? 1 : -1))
     );
 
     // Create CTO special podcasts list
     const ctoSpecialPodcasts = computed(() =>
-      podcasts.value
-        ?.filter((podcast) => podcast.type === 'cto_special')
+      tagFilter.output
+        .filter((podcast) => podcast.type === 'cto_special')
         .sort((a, b) => (a.published_at < b.published_at ? 1 : -1))
     );
 
     // Create news podcasts list
     const newsPodcasts = computed(() =>
-      podcasts.value
-        ?.filter((podcast) => podcast.type === 'news')
+      tagFilter.output
+        .filter((podcast) => podcast.type === 'news')
         .sort((a, b) => (a.published_at < b.published_at ? 1 : -1))
     );
 
@@ -150,6 +154,7 @@ export default defineComponent({
       podcastPage,
       podcasts,
       breadcrumbs: [{ label: 'Podcast' }],
+      tagFilter,
       deepDivePodcasts,
       ctoSpecialPodcasts,
       newsPodcasts,
