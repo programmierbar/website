@@ -1,7 +1,7 @@
 import { onMounted, ref } from '@nuxtjs/composition-api';
 
 /**
- * Composables for secure access of the navigator object.
+ * Composable for secure access of the navigator object.
  *
  * @returns A reference to the navigator object.
  */

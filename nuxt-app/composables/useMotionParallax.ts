@@ -2,7 +2,7 @@ import { reactive, Ref } from '@nuxtjs/composition-api';
 import { useEventListener } from '.';
 
 /**
- * Composables to add parallax effects when
+ * Composable to add parallax effects when
  * moving the mouse over an element.
  *
  * @param target The target element.

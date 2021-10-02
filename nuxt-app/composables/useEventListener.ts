@@ -7,7 +7,7 @@ import {
 } from '@nuxtjs/composition-api';
 
 /**
- * Composables to add an event listener to an HTML
+ * Composable to add an event listener to an HTML
  * element, the document or window object.
  *
  * @param target The event target.

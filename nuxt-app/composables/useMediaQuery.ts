@@ -3,7 +3,7 @@ import { useEventListener } from './useEventListener';
 import { useWindow } from './useWindow';
 
 /**
- * Composables to check if a media query matches the current device.
+ * Composable to check if a media query matches the current device.
  *
  * @param query The media query string.
  *

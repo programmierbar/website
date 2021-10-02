@@ -6,7 +6,7 @@ import {
 } from '@nuxtjs/composition-api';
 
 /**
- * Composables for observing an HTML element with a mutation observer.
+ * Composable for observing an HTML element with a mutation observer.
  *
  * @param target The observation target.
  * @param listener The observation listener.

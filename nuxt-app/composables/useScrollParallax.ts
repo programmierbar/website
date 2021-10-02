@@ -2,7 +2,7 @@ import { reactive, Ref } from '@nuxtjs/composition-api';
 import { useEventListener, useWindow } from '.';
 
 /**
- * Composables to add parallax effects when scrolling within an element.
+ * Composable to add parallax effects when scrolling within an element.
  *
  * @param target The target element.
  *

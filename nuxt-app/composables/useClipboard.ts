@@ -2,7 +2,7 @@ import { reactive, ref, watch } from '@nuxtjs/composition-api';
 import { useNavigator } from './useNavigator';
 
 /**
- * Composables for secure use of the share API.
+ * Composable for secure use of the share API.
  *
  * @returns A reference to the share API.
  */

@@ -28,7 +28,7 @@ watch(
 );
 
 /**
- * Composables that provide the functionality of the podcast player.
+ * Composable that provide the functionality of the podcast player.
  *
  * @returns State and methods to use the podcast player.
  */

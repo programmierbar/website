@@ -3,7 +3,7 @@ import { StrapiImage } from 'shared-code';
 import { getImageSrcSet } from '../helpers';
 
 /**
- * Composables that creates the string for
+ * Composable that creates the string for
  * the srcset attribute of an <img> Element.
  *
  * @param strapiImage A Strapi image object.

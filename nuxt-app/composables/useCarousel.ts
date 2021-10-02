@@ -1,7 +1,7 @@
 import { reactive, ref } from '@nuxtjs/composition-api';
 
 /**
- * Composables that provide the state and functions for a carousel.
+ * Composable that provide the state and functions for a carousel.
  *
  * @param initialIndex The initial active index.
  *
