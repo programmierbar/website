@@ -1,7 +1,7 @@
 <template>
   <Theme>
     <Header />
-    <main class="min-h-screen overflow-hidden">
+    <main class="min-h-screen">
       <Nuxt />
     </main>
     <Footer />

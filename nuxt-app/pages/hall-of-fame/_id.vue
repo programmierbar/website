@@ -180,7 +180,7 @@
         v-if="speaker.podcasts.length < 3"
         class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 mt-12 md:mt-0"
       >
-        <div class="flex flex-wrap -m-8 lg:-m-12">
+        <div class="w-full flex flex-wrap -m-8 lg:-m-12">
           <PodcastCard
             v-for="podcast of speaker.podcasts"
             :key="podcast.id"

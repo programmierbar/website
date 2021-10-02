@@ -1,5 +1,5 @@
 <template>
-  <div v-if="speakers" class="relative">
+  <div v-if="speakers" class="relative overflow-hidden">
     <div
       class="
         container
