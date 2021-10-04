@@ -1,9 +1,9 @@
 {
   "kind": "collectionType",
-  "collectionName": "Speakers",
+  "collectionName": "speakers",
   "info": {
-    "name": "Speaker",
-    "description": ""
+    "name": "Speakers",
+    "description": "Der Inhalt der einzelnen Speaker (Gäste) unserer Website."
   },
   "options": {
     "increments": true,

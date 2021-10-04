@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/picks-of-the-day-page",
+      "handler": "picks-of-the-day-page.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/picks-of-the-day-page",
+      "handler": "picks-of-the-day-page.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/picks-of-the-day-page",
+      "handler": "picks-of-the-day-page.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

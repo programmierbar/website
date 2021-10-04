@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/hall-of-fame-page",
+      "handler": "hall-of-fame-page.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/hall-of-fame-page",
+      "handler": "hall-of-fame-page.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/hall-of-fame-page",
+      "handler": "hall-of-fame-page.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

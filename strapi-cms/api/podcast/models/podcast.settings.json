@@ -1,9 +1,9 @@
 {
   "kind": "collectionType",
-  "collectionName": "Podcasts",
+  "collectionName": "podcasts",
   "info": {
-    "name": "Podcast",
-    "description": ""
+    "name": "Podcasts",
+    "description": "Der Inhalt der einzelnen Podcastfolgen unserer Website."
   },
   "options": {
     "increments": true,

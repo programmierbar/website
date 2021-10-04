@@ -2,8 +2,8 @@
   "kind": "singleType",
   "collectionName": "podcast_pages",
   "info": {
-    "name": "PodcastPage",
-    "description": ""
+    "name": "Podcast",
+    "description": "Der Inhalt der \"Podcast\"-Seite unserer Website."
   },
   "options": {
     "increments": true,
@@ -12,16 +12,26 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "meta_title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 42
+    },
+    "meta_description": {
+      "type": "text",
+      "maxLength": 160,
+      "required": true
+    },
     "intro_heading": {
       "type": "string",
       "required": true
     },
     "intro_text_1": {
-      "type": "text",
+      "type": "richtext",
       "required": true
     },
     "intro_text_2": {
-      "type": "text",
+      "type": "richtext",
       "required": true
     },
     "deep_dive_heading": {
@@ -39,9 +49,7 @@
     "cover_image": {
       "model": "file",
       "via": "related",
-      "allowedTypes": [
-        "images"
-      ],
+      "allowedTypes": ["images"],
       "plugin": "upload",
       "required": true,
       "pluginOptions": {}

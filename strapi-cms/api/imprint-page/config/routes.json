@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/imprint-page",
+      "handler": "imprint-page.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/imprint-page",
+      "handler": "imprint-page.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/imprint-page",
+      "handler": "imprint-page.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

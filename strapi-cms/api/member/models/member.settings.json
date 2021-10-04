@@ -1,9 +1,9 @@
 {
   "kind": "collectionType",
-  "collectionName": "Members",
+  "collectionName": "members",
   "info": {
-    "name": "Member",
-    "description": ""
+    "name": "Members",
+    "description": "Der Inhalt der einzelnen Members (Teammitglieder) unserer Website."
   },
   "options": {
     "increments": true,
@@ -23,11 +23,7 @@
     },
     "task_area": {
       "type": "enumeration",
-      "enum": [
-        "podcast_crew",
-        "behind_the_scenes",
-        "inactive"
-      ],
+      "enum": ["podcast_crew", "behind_the_scenes", "inactive"],
       "required": true
     },
     "occupation": {
@@ -42,9 +38,7 @@
     "normal_image": {
       "model": "file",
       "via": "related",
-      "allowedTypes": [
-        "images"
-      ],
+      "allowedTypes": ["images"],
       "plugin": "upload",
       "required": true,
       "pluginOptions": {}
@@ -52,9 +46,7 @@
     "action_image": {
       "model": "file",
       "via": "related",
-      "allowedTypes": [
-        "images"
-      ],
+      "allowedTypes": ["images"],
       "plugin": "upload",
       "required": true,
       "pluginOptions": {}

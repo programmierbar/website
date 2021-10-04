@@ -1,8 +1,9 @@
 {
   "kind": "collectionType",
-  "collectionName": "Tags",
+  "collectionName": "tags",
   "info": {
-    "name": "Tag"
+    "name": "Tags",
+    "description": "Der Inhalt der einzelnen Tags unserer Website."
   },
   "options": {
     "increments": true,

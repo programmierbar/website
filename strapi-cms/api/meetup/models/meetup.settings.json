@@ -1,9 +1,9 @@
 {
   "kind": "collectionType",
-  "collectionName": "Meetups",
+  "collectionName": "meetups",
   "info": {
-    "name": "Meetup",
-    "description": ""
+    "name": "Meetups",
+    "description": "Der Inhalt der einzelnen Meetups (Veranstaltungen) unserer Website."
   },
   "options": {
     "increments": true,
@@ -31,9 +31,7 @@
     "cover_image": {
       "model": "file",
       "via": "related",
-      "allowedTypes": [
-        "images"
-      ],
+      "allowedTypes": ["images"],
       "plugin": "upload",
       "required": true,
       "pluginOptions": {}

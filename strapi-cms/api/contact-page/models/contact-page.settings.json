@@ -1,9 +1,9 @@
 {
   "kind": "singleType",
-  "collectionName": "home_pages",
+  "collectionName": "contact_pages",
   "info": {
-    "name": "Home",
-    "description": "Der Inhalt der \"Home\"-Seite unserer Website."
+    "name": "Kontakt",
+    "description": "Der Inhalt der \"Kontakt\"-Seite unserer Website."
   },
   "options": {
     "increments": true,
@@ -23,26 +23,24 @@
       "required": true
     },
     "intro_text": {
-      "type": "string",
-      "required": true
-    },
-    "podcast_heading": {
-      "type": "string"
-    },
-    "podcasts": {
-      "collection": "podcast"
-    },
-    "news": {
       "type": "richtext",
       "required": true
     },
-    "video": {
-      "model": "file",
-      "via": "related",
-      "allowedTypes": ["videos"],
-      "plugin": "upload",
-      "required": true,
-      "pluginOptions": {}
+    "address_heading": {
+      "type": "string",
+      "required": true
+    },
+    "address_text": {
+      "type": "richtext",
+      "required": true
+    },
+    "business_heading": {
+      "type": "string",
+      "required": true
+    },
+    "business_text": {
+      "type": "richtext",
+      "required": true
     }
   }
 }

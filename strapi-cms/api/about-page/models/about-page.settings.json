@@ -2,8 +2,8 @@
   "kind": "singleType",
   "collectionName": "about_pages",
   "info": {
-    "name": "AboutPage",
-    "description": ""
+    "name": "Über uns",
+    "description": "Der Inhalt der \"Über uns\"-Seite unserer Website."
   },
   "options": {
     "increments": true,
@@ -12,8 +12,18 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "intro_text": {
+    "meta_title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 42
+    },
+    "meta_description": {
       "type": "text",
+      "maxLength": 160,
+      "required": true
+    },
+    "intro_text": {
+      "type": "richtext",
       "required": true
     },
     "podcast_crew_heading": {
@@ -27,9 +37,7 @@
     "cover_image": {
       "model": "file",
       "via": "related",
-      "allowedTypes": [
-        "images"
-      ],
+      "allowedTypes": ["images"],
       "plugin": "upload",
       "required": true,
       "pluginOptions": {}

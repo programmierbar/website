@@ -1,9 +1,9 @@
 {
   "kind": "collectionType",
-  "collectionName": "PicksOfTheDay",
+  "collectionName": "picks_of_the_day",
   "info": {
-    "name": "PickOfTheDay",
-    "description": ""
+    "name": "Picks of the Day",
+    "description": "Der Inhalt der einzelnen Picks of the Day unserer Website."
   },
   "options": {
     "increments": true,
@@ -25,9 +25,7 @@
     "image": {
       "model": "file",
       "via": "related",
-      "allowedTypes": [
-        "images"
-      ],
+      "allowedTypes": ["images"],
       "plugin": "upload",
       "required": false,
       "pluginOptions": {}
