@@ -91,7 +91,7 @@ export default defineComponent({
 
     return {
       picksOfTheDay,
-      breadcrumbs: [{ label: 'Picks of the Day' }],
+      breadcrumbs: [{ label: 'Pick of the Day' }],
     };
   },
 });

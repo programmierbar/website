@@ -98,7 +98,7 @@ export default defineComponent({
         { label: 'Podcast', href: '/podcast' },
         { label: 'Meetup', href: '/meetup' },
         { label: 'Hall of Fame', href: '/hall-of-fame' },
-        { label: 'Picks of the Day', href: '/picks-of-the-day' },
+        { label: 'Pick of the Day', href: '/pick-of-the-day' },
         { label: 'Über uns', href: '/ueber-uns' },
       ],
       subMenuItems: [

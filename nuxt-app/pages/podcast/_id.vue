@@ -87,7 +87,7 @@
           :picks-of-the-day="podcast.picks_of_the_day"
         />
         <div class="flex justify-center mt-12 md:mt-16 lg:mt-20">
-          <LinkButton href="/picks-of-the-day">
+          <LinkButton href="/pick-of-the-day">
             Alle 200 Picks of the Day
           </LinkButton>
         </div>
