@@ -15,7 +15,7 @@
     "meta_title": {
       "type": "string",
       "required": true,
-      "maxLength": 42
+      "maxLength": 60
     },
     "meta_description": {
       "type": "text",
