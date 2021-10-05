@@ -25,10 +25,10 @@ export default defineComponent({
     const html = computed(() =>
       props.markdown
         .split(/(?:\r?\n){2,}/)
-        .map((l) =>
-          [' ', '\t', '#', '-', '*', '>'].some((char) => l.startsWith(char))
-            ? snarkdown(l)
-            : `<p>${snarkdown(l)}</p>`
+        .map((text) =>
+          /^(\s|#{1,6}|-|\*|>)\s+/.test(text)
+            ? snarkdown(text)
+            : `<p>${snarkdown(text)}</p>`
         )
         .join('\n')
         .replace(/<a /g, '<a data-cursor-hover ')
@@ -40,6 +40,12 @@ export default defineComponent({
 </script>
 
 <style lang="postcss">
+.markdown-to-html p {
+  @apply whitespace-pre-line;
+}
+.markdown-to-html strong {
+  @apply font-black;
+}
 .markdown-to-html a {
   @apply text-lime hover:text-blue font-bold transition-colors;
 }
