@@ -2,13 +2,18 @@
 import { computed, Ref, useStatic } from '@nuxtjs/composition-api';
 import {
   StrapiAboutPage,
+  StrapiContactPage,
+  StrapiHallOfFamePage,
   StrapiHomePage,
+  StrapiImprintPage,
   StrapiMeetup,
   StrapiMeetupPage,
   StrapiMember,
   StrapiPickOfTheDay,
+  StrapiPickOfTheDayPage,
   StrapiPodcast,
   StrapiPodcastPage,
+  StrapiPrivacyPage,
   StrapiSpeaker,
 } from 'shared-code';
 import { getHashCode } from '../helpers';
@@ -53,9 +58,18 @@ export function useStrapi(
   param: Ref<`?_limit=${number}`>
 ): Ref<StrapiPickOfTheDay[] | null>;
 export function useStrapi(route: 'home-page'): Ref<StrapiHomePage | null>;
-export function useStrapi(route: 'about-page'): Ref<StrapiAboutPage | null>;
 export function useStrapi(route: 'podcast-page'): Ref<StrapiPodcastPage | null>;
 export function useStrapi(route: 'meetup-page'): Ref<StrapiMeetupPage | null>;
+export function useStrapi(
+  route: 'hall-of-fame-page'
+): Ref<StrapiHallOfFamePage | null>;
+export function useStrapi(
+  route: 'pick-of-the-day-page'
+): Ref<StrapiPickOfTheDayPage | null>;
+export function useStrapi(route: 'about-page'): Ref<StrapiAboutPage | null>;
+export function useStrapi(route: 'contact-page'): Ref<StrapiContactPage | null>;
+export function useStrapi(route: 'imprint-page'): Ref<StrapiImprintPage | null>;
+export function useStrapi(route: 'privacy-page'): Ref<StrapiPrivacyPage | null>;
 export function useStrapi(route: string, param?: Ref<string>) {
   const hashCode = computed(() =>
     param?.value ? `${getHashCode(param.value)}` : 'list'

@@ -140,6 +140,8 @@ export interface StrapiTag extends StrapiTyp {
 }
 
 export interface StrapiHomePage extends StrapiTyp {
+  meta_title: string;
+  meta_description: string;
   intro_text: string;
   podcast_heading: string;
   podcasts: StrapiPodcast[];
@@ -147,14 +149,9 @@ export interface StrapiHomePage extends StrapiTyp {
   news: string;
 }
 
-export interface StrapiAboutPage extends StrapiTyp {
-  cover_image: StrapiImage;
-  intro_text: string;
-  podcast_crew_heading: string;
-  behind_the_scenes_heading: string;
-}
-
 export interface StrapiPodcastPage extends StrapiTyp {
+  meta_title: string;
+  meta_description: string;
   cover_image: StrapiImage;
   intro_heading: string;
   intro_text_1: string;
@@ -165,10 +162,51 @@ export interface StrapiPodcastPage extends StrapiTyp {
 }
 
 export interface StrapiMeetupPage extends StrapiTyp {
+  meta_title: string;
+  meta_description: string;
   cover_image: StrapiImage;
   intro_heading: string;
   intro_text_1: string;
   intro_text_2: string;
   corona_text: string;
   meetups_heading: string;
+}
+
+export interface StrapiHallOfFamePage extends StrapiTyp {
+  meta_title: string;
+  meta_description: string;
+  intro_text: string;
+}
+
+export interface StrapiPickOfTheDayPage extends StrapiTyp {
+  meta_title: string;
+  meta_description: string;
+  intro_text: string;
+}
+
+export interface StrapiAboutPage extends StrapiTyp {
+  meta_title: string;
+  meta_description: string;
+  cover_image: StrapiImage;
+  intro_text: string;
+  podcast_crew_heading: string;
+  behind_the_scenes_heading: string;
+}
+
+export interface StrapiContactPage extends StrapiTyp {
+  meta_title: string;
+  meta_description: string;
+  intro_text: string;
+  address_heading: string;
+  address_text: string;
+  business_heading: string;
+  business_text: string;
+}
+
+export interface StrapiImprintPage extends StrapiTyp {
+  text: string;
+}
+
+export interface StrapiPrivacyPage extends StrapiTyp {
+  text: string;
 }
