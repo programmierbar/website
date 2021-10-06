@@ -4,6 +4,7 @@ export { default as CarouselSlide } from './CarouselSlide.vue';
 export { default as CookieBanner } from './CookieBanner.vue';
 export { default as FeedbackSection } from './FeedbackSection.vue';
 export { default as Footer } from './Footer.vue';
+export { default as GoogleMaps } from './GoogleMaps.vue';
 export { default as Header } from './Header.vue';
 export { default as LikeButton } from './LikeButton.vue';
 export { default as LinkButton } from './LinkButton.vue';
