@@ -175,12 +175,14 @@ export interface StrapiMeetupPage extends StrapiTyp {
 export interface StrapiHallOfFamePage extends StrapiTyp {
   meta_title: string;
   meta_description: string;
+  intro_heading: string;
   intro_text: string;
 }
 
 export interface StrapiPickOfTheDayPage extends StrapiTyp {
   meta_title: string;
   meta_description: string;
+  intro_heading: string;
   intro_text: string;
 }
 
