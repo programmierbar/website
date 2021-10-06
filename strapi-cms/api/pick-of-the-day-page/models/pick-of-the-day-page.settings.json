@@ -22,6 +22,10 @@
       "maxLength": 160,
       "required": true
     },
+    "intro_heading": {
+      "type": "string",
+      "required": true
+    },
     "intro_text": {
       "type": "richtext",
       "required": true
