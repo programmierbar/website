@@ -1,5 +1,5 @@
 <template>
-  <div v-if="speakers" class="relative overflow-hidden">
+  <div v-if="hallOfFamePage && speakers" class="relative overflow-hidden">
     <div
       class="
         container
@@ -20,7 +20,7 @@
 
       <!-- Page intro -->
       <SectionHeading class="mt-8 md:mt-0" tag="h1">
-        Hall of Fame
+        {{ hallOfFamePage.intro_heading }}
       </SectionHeading>
       <p
         class="
@@ -36,9 +36,7 @@
           md:mt-16
         "
       >
-        In unserer Hall Of Fame finden sich alle Speaker, die einmal bei uns
-        waren. Hier könnt ihr ein bissche mehr über sie erfahren. Vorhang auf
-        für unsere tollen Gäste!
+        {{ hallOfFamePage.intro_text }}
       </p>
 
       <!-- Speaker bubbles -->
@@ -83,9 +81,11 @@ export default defineComponent({
   },
   setup() {
     // Query Strapi hall of fame page and speakers
+    const hallOfFamePage = useStrapi('hall-of-fame-page');
     const speakers = useStrapi('speakers', ref(`?_limit=-1`));
 
     return {
+      hallOfFamePage,
       speakers,
       breadcrumbs: [{ label: 'Hall of Fame' }],
       bubbleColors: ['pink', 'blue', 'lime'] as const,

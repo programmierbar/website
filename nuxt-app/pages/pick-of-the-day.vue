@@ -1,5 +1,5 @@
 <template>
-  <div v-if="picksOfTheDay" class="relative">
+  <div v-if="pickOfTheDayPage && picksOfTheDay" class="relative">
     <div
       class="
         container
@@ -20,7 +20,7 @@
 
       <!-- Page intro -->
       <SectionHeading class="mt-8 md:mt-0" tag="h1">
-        Picks Of The Day
+        {{ pickOfTheDayPage.intro_heading }}
       </SectionHeading>
       <p
         class="
@@ -36,10 +36,7 @@
           md:mt-16
         "
       >
-        Die neusten Features, coole Tools, hilfreiche Websiten und vieles mehr.
-        Genau darum geht es bei unseren Picks Of The Day. Am Ende jeder Deep
-        Dive Folge versuchen wir für euch unsere besten Helfer aufzulisten,
-        damit sie vielleicht auch euch irgndwann das Leben leichter machen.
+        {{ pickOfTheDayPage.intro_text }}
       </p>
 
       <!-- Picks of the day -->
@@ -86,10 +83,12 @@ export default defineComponent({
     SectionHeading,
   },
   setup() {
-    // Query Strapi hall of fame page and speakers
+    // Query Strapi pick of the day page and picks of the day
+    const pickOfTheDayPage = useStrapi('pick-of-the-day-page');
     const picksOfTheDay = useStrapi('picks-of-the-day', ref(`?_limit=-1`));
 
     return {
+      pickOfTheDayPage,
       picksOfTheDay,
       breadcrumbs: [{ label: 'Pick of the Day' }],
     };
