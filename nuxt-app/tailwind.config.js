@@ -74,7 +74,11 @@ module.exports = {
     extend: {
       borderWidth: {
         3: '3px',
+        5: '5px',
         6: '6px',
+      },
+      transitionDuration: {
+        3000: '3000ms',
       },
       fontSize: {
         '7.5xl-screen': '5vh',
@@ -105,6 +109,8 @@ module.exports = {
         1.25: '0.3rem',
         112: '28rem',
         120: '30rem',
+        160: '40rem',
+        192: '48rem',
       },
       translate: {
         '3/20': '15%',
