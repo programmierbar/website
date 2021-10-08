@@ -8,7 +8,12 @@
         :srcset="coverSrcSet"
         sizes="(min-width: 1024px) 384px, (min-width: 768px) 256px, 192px"
         loading="lazy"
-        :alt="`${type}${divider}${podcast.title}`"
+        :alt="
+          podcast.cover_image.alternativeText ||
+          (podcast.type !== 'other'
+            ? `${type} ${podcast.number}${divider}`
+            : '' + podcast.title)
+        "
       />
     </NuxtLink>
 
@@ -25,6 +30,7 @@
       <button
         class="h-10 md:h-12 text-lime"
         :class="!isActive && 'hidden'"
+        type="button"
         data-cursor-hover
         @click="playOrPausePodcast"
         v-html="
@@ -41,10 +47,10 @@
       <div class="w-4/5">
         <!-- Podcast title -->
         <h2 class="text-lg lg:text-xl text-white font-light italic">
-          <strong v-if="type" class="font-black">
-            {{ type }} {{ podcast.number }}
+          <strong v-if="podcast.type !== 'other'" class="font-black">
+            {{ type }} {{ podcast.number }}{{ divider }}
           </strong>
-          {{ divider }}{{ podcast.title }}
+          {{ podcast.title }}
         </h2>
 
         <div
