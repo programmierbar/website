@@ -124,7 +124,7 @@ export default defineComponent({
   setup() {
     // Query Strapi about page and members
     const podcastPage = useStrapi('podcast-page');
-    const podcasts = useStrapi('podcasts', ref(`?_limit=-1`));
+    const podcasts = useStrapi('podcasts', ref('?_limit=-1'));
 
     // Create podcast tag filter
     const tagFilter = useTagFilter(podcasts);

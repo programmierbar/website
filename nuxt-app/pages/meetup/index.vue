@@ -104,7 +104,7 @@ export default defineComponent({
   setup() {
     // Query Strapi about page and members
     const meetupPage = useStrapi('meetup-page');
-    const meetups = useStrapi('meetups', ref(`?_limit=-1`));
+    const meetups = useStrapi('meetups', ref('?_limit=-1'));
 
     return {
       meetupPage,

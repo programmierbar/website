@@ -82,7 +82,7 @@ export default defineComponent({
   setup() {
     // Query Strapi hall of fame page and speakers
     const hallOfFamePage = useStrapi('hall-of-fame-page');
-    const speakers = useStrapi('speakers', ref(`?_limit=-1`));
+    const speakers = useStrapi('speakers', ref('?_limit=-1'));
 
     return {
       hallOfFamePage,

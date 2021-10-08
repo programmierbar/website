@@ -85,7 +85,7 @@ export default defineComponent({
   setup() {
     // Query Strapi pick of the day page and picks of the day
     const pickOfTheDayPage = useStrapi('pick-of-the-day-page');
-    const picksOfTheDay = useStrapi('picks-of-the-day', ref(`?_limit=-1`));
+    const picksOfTheDay = useStrapi('picks-of-the-day', ref('?_limit=-1'));
 
     return {
       pickOfTheDayPage,
