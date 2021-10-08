@@ -75,6 +75,7 @@
           'md:text-black'
         "
         data-cursor-hover
+        type="button"
         @click="playOrPausePodcast"
         v-html="
           require(`../assets/icons/${

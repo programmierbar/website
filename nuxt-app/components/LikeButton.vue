@@ -8,6 +8,7 @@
           ? 'h-5 xs:h-6 md:h-7 xl:h-8'
           : 'h-6 md:h-8 lg:h-10'
       "
+      type="button"
       data-cursor-hover
       v-html="require('../assets/icons/heart.svg?raw')"
     />

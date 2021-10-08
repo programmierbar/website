@@ -52,6 +52,7 @@
                 xl:duration-300
               "
               :class="filterIsOpen ? 'translate-x-2 -translate-y-2' : 'w-full'"
+              type="button"
               data-cursor-hover
               @click="toggleFilter"
             >

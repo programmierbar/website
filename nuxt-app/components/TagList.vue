@@ -19,6 +19,7 @@
               ? 'bg-lime text-black'
               : 'bg-gray-800 text-white',
           ]"
+          type="button"
           data-cursor-hover
           @click="() => onClick(tag, index)"
         >

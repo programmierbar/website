@@ -70,6 +70,7 @@
           >
             <button
               class="h-6 text-pink"
+              type="button"
               data-cursor-hover
               v-html="require('../assets/icons/heart.svg?raw')"
             />
@@ -77,6 +78,7 @@
               <button
                 v-if="podcastPlayer.paused"
                 class="h-full"
+                type="button"
                 data-cursor-hover
                 @click.stop="podcastPlayer.play"
                 v-html="require('../assets/icons/play.svg?raw')"
@@ -84,6 +86,7 @@
               <button
                 v-else
                 class="h-full"
+                type="button"
                 data-cursor-hover
                 @click.stop="podcastPlayer.pause"
                 v-html="require('../assets/icons/pause.svg?raw')"
@@ -99,6 +102,7 @@
                 ? 'opacity-100  duration-500 delay-200'
                 : 'opacity-0 pointer-events-none'
             "
+            type="button"
             data-cursor-hover
             @click.stop="toogleExpanded"
             v-html="require('../assets/icons/angle-down.svg?raw')"
@@ -115,6 +119,7 @@
         >
           <button
             class="h-9 lg:h-7"
+            type="button"
             data-cursor-hover
             @click="podcastPlayer.backward"
             v-html="require('../assets/icons/15-sec-backwards.svg?raw')"
@@ -123,6 +128,7 @@
             <button
               v-if="podcastPlayer.paused"
               class="h-9 lg:h-7"
+              type="button"
               data-cursor-hover
               @click="podcastPlayer.play"
               v-html="require('../assets/icons/play.svg?raw')"
@@ -130,6 +136,7 @@
             <button
               v-else
               class="h-9 lg:h-7"
+              type="button"
               data-cursor-hover
               @click="podcastPlayer.pause"
               v-html="require('../assets/icons/pause.svg?raw')"
@@ -137,6 +144,7 @@
           </div>
           <button
             class="h-9 lg:h-7"
+            type="button"
             data-cursor-hover
             @click="podcastPlayer.forward"
             v-html="require('../assets/icons/15-sec-forwards.svg?raw')"
@@ -211,6 +219,7 @@
         >
           <button
             class="h-6 text-pink"
+            type="button"
             data-cursor-hover
             v-html="require('../assets/icons/heart.svg?raw')"
           />
@@ -218,6 +227,7 @@
             <button
               v-if="clipboard.isSupported || share.isSupported"
               class="h-6"
+              type="button"
               data-cursor-hover
               @click="shareAudio"
               v-html="require('../assets/icons/share.svg?raw')"
