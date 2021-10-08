@@ -128,7 +128,7 @@ export interface StrapiPickOfTheDay extends StrapiTyp {
   name: string;
   description: string;
   website_url: string;
-  image: StrapiImage | null;
+  image: StrapiImage;
   podcast: number;
   member: number | null;
   speaker: number | null;

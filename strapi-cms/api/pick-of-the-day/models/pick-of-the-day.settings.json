@@ -27,7 +27,7 @@
       "via": "related",
       "allowedTypes": ["images"],
       "plugin": "upload",
-      "required": false,
+      "required": true,
       "pluginOptions": {}
     },
     "website_url": {
