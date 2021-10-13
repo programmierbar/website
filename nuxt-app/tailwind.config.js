@@ -73,6 +73,7 @@ module.exports = {
     },
     extend: {
       borderWidth: {
+        1: '1px',
         3: '3px',
         5: '5px',
         6: '6px',
@@ -107,6 +108,7 @@ module.exports = {
       spacing: {
         0.75: '0.1875rem',
         1.25: '0.3rem',
+        18: '4.5rem',
         112: '28rem',
         120: '30rem',
         160: '40rem',

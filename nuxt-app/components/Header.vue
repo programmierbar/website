@@ -16,6 +16,7 @@
         bg-opacity-75
         backdrop-filter backdrop-blur
         transition-colors
+        duration-300
       "
       :class="menuIsOpen ? 'bg-gray-900' : 'bg-black'"
       to="/"
@@ -35,6 +36,63 @@
       </div>
     </NuxtLink>
 
+    <!-- Search form -->
+    <form
+      class="
+        fixed
+        z-40
+        top-7
+        right-18
+        lg:right-24
+        flex
+        bg-opacity-75
+        backdrop-filter backdrop-blur
+        transition-all
+        duration-300
+      "
+      :class="[
+        searchIsOpen ? 'w-36 xs:w-60 md:w-80' : 'w-10 lg:w-14',
+        menuIsOpen ? 'bg-gray-900' : 'bg-black',
+      ]"
+      @submit.prevent="handleSearch"
+    >
+      <input
+        ref="searchInputElement"
+        class="
+          w-full
+          bg-transparent
+          border-b-2 border-white
+          rounded-none
+          outline-none
+          text-lg
+          lg:text-2xl
+          text-blue text-center
+          font-light
+        "
+        type="seach"
+      />
+      <button
+        class="
+          w-6
+          lg:w-8
+          h-7
+          lg:h-9
+          text-white
+          flex-shrink-0
+          box-content
+          py-1.5
+          lg:py-2.5
+          px-2
+          lg:px-3
+          rounded-none
+        "
+        :type="searchIsOpen ? 'submit' : 'button'"
+        data-cursor-hover
+        @click.stop.prevent="handleSearch"
+        v-html="require('~/assets/icons/search.svg?raw')"
+      />
+    </form>
+
     <!-- Burger icon -->
     <button
       class="
@@ -45,8 +103,7 @@
         lg:h-10
         fixed
         z-40
-        top-6
-        lg:top-7
+        top-7
         right-4
         lg:right-5
         box-content
@@ -58,10 +115,12 @@
         bg-opacity-75
         backdrop-filter backdrop-blur
         transition-colors
+        duration-300
       "
       :class="menuIsOpen ? 'bg-gray-900 rotate-180' : 'bg-black'"
+      type="button"
       data-cursor-hover
-      @click="toogleMenu"
+      @click="handleBurgerClick"
     >
       <div class="relative flex items-center justify-center">
         <div
@@ -75,7 +134,7 @@
             transition-transform
           "
           :class="
-            menuIsOpen
+            menuIsOpen || searchIsOpen
               ? 'translate-y-0 -rotate-45'
               : '-translate-y-1.5 lg:-translate-y-2'
           "
@@ -91,7 +150,7 @@
             transition-transform
           "
           :class="
-            menuIsOpen
+            menuIsOpen || searchIsOpen
               ? 'translate-y-0 translate-x-0 scale-x-100 rotate-45'
               : 'translate-y-1.5 lg:translate-y-2 translate-x-3/20 md:group-hover:translate-x-0 scale-x-70 md:group-hover:scale-x-100'
           "
@@ -209,7 +268,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch } from '@nuxtjs/composition-api';
+import {
+  defineComponent,
+  onMounted,
+  ref,
+  useRoute,
+  useRouter,
+  watch,
+} from '@nuxtjs/composition-api';
+import { useEventListener, useDocument } from '../composables';
 import SocialNetworks from './SocialNetworks.vue';
 
 export default defineComponent({
@@ -217,8 +284,16 @@ export default defineComponent({
     SocialNetworks,
   },
   setup() {
-    // Create menu is open reference
+    // Add route und router
+    const route = useRoute();
+    const router = useRouter();
+
+    // Create menu and search is open reference
     const menuIsOpen = ref(false);
+    const searchIsOpen = ref(false);
+
+    // Create search input element reference
+    const searchInputElement = ref<HTMLInputElement>();
 
     // Disable scrolling while menu is open
     watch(menuIsOpen, () => {
@@ -226,11 +301,106 @@ export default defineComponent({
     });
 
     /**
-     * It opens or closes the menu.
+     * It sets the initial value of the search
+     * input element and opens the search form.
      */
-    const toogleMenu = () => {
-      menuIsOpen.value = !menuIsOpen.value;
+    const setInitialSearch = () => {
+      if (route.value.path === '/suche' && searchInputElement.value) {
+        searchInputElement.value.value =
+          (route.value.query.search as string) || '';
+        searchInputElement.value.focus();
+        searchIsOpen.value = true;
+      }
     };
+
+    // Set initial search state when component is mounted or path changes
+    onMounted(setInitialSearch);
+    watch(() => route.value.path, setInitialSearch);
+
+    // Close and reset search if path does not change to /suche
+    watch(
+      () => route.value.path,
+      (path) => {
+        if (path !== '/suche' && searchIsOpen.value) {
+          searchIsOpen.value = false;
+          if (searchInputElement.value?.value) {
+            searchInputElement.value.value = '';
+          }
+        }
+      }
+    );
+
+    /**
+     * It handles clicking on the burger button.
+     */
+    const handleBurgerClick = () => {
+      if (searchIsOpen.value) {
+        searchIsOpen.value = false;
+        if (menuIsOpen.value) {
+          menuIsOpen.value = false;
+        }
+      } else {
+        menuIsOpen.value = !menuIsOpen.value;
+      }
+    };
+
+    /**
+     * It handles the search by open it or forwarding
+     * or replacing the location.
+     */
+    const handleSearch = (event: Event) => {
+      if (searchIsOpen.value) {
+        const location = {
+          path: '/suche',
+          query: { search: searchInputElement.value?.value || '' },
+        };
+        if (event.type !== 'input' && location.query.search) {
+          router.push(location);
+        } else {
+          router.replace(location);
+        }
+        if (menuIsOpen.value) {
+          menuIsOpen.value = false;
+        }
+      } else {
+        searchIsOpen.value = true;
+        searchInputElement.value?.focus();
+      }
+    };
+
+    // Add input event listener to search input element
+    useEventListener(searchInputElement, 'input', handleSearch);
+
+    /**
+     * It handles key down events.
+     */
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Get keys from event
+      const { metaKey, shiftKey } = event;
+      const key = event.key.toLowerCase();
+
+      // Open search if closed and meta key and
+      // "k" or shift key and "/" is pressed
+      if (
+        !searchIsOpen.value &&
+        ((metaKey && key === 'k') || (shiftKey && key === '/'))
+      ) {
+        event.preventDefault();
+        searchIsOpen.value = true;
+        searchInputElement.value?.focus();
+
+        // Otherwise close it if search is open and
+        // escape or meta key and "k" is pressed
+      } else if (
+        searchIsOpen.value &&
+        (key === 'escape' || (metaKey && key === 'k'))
+      ) {
+        searchIsOpen.value = false;
+      }
+    };
+
+    // Add key down event listener
+    useEventListener(useDocument(), 'keydown', handleKeyDown);
 
     /**
      * It closes the menu.
@@ -241,7 +411,10 @@ export default defineComponent({
 
     return {
       menuIsOpen,
-      toogleMenu,
+      searchIsOpen,
+      searchInputElement,
+      handleBurgerClick,
+      handleSearch,
       closeMenu,
       mainMenuItems: [
         { label: 'Home', href: '/' },
