@@ -52,7 +52,11 @@ export default {
 
   generate: {
     // https://github.com/nuxt-community/composition-api/issues/44
-    interval: 1500,
+    interval: 1000,
+    // Uncomment below to generate single routes
+    // crawler: false,
+    // exclude: [/^\/(\w|\d|-)*$/],
+    // routes: ['/route/to/generate'],
   },
 
   // PWA module configuration: https://go.nuxtjs.dev/pwa

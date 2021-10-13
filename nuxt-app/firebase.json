@@ -2,7 +2,7 @@
   "hosting": {
     "cleanUrls": true,
     "trailingSlash": false,
-    "public": "./dist",
+    "public": "./build",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [
       {
