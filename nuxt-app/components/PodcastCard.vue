@@ -46,7 +46,7 @@
 
       <div class="w-4/5">
         <!-- Podcast title -->
-        <h2 class="text-lg lg:text-xl text-white font-light italic">
+        <h2 class="text-lg lg:text-xl text-white font-light">
           <strong v-if="podcast.type !== 'other'" class="font-black">
             {{ type }} {{ podcast.number }}{{ divider }}
           </strong>
