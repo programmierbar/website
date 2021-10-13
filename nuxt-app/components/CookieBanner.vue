@@ -13,7 +13,7 @@
       "
     >
       <!-- Text -->
-      <p class="text-sm lg:text-xl text-lime font-bold">
+      <p class="text-sm lg:text-lg text-lime font-bold">
         Zur fortlaufenden Verbesserung unserer Website und deines
         Nutzererlebnisses verwenden wir Cookies, in denen Informationen über
         deinen Besuch auf unserer Website gespeichert werden. Die durch die

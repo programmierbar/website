@@ -7,6 +7,6 @@
  */
 export function setCookie(name: string, value: string, days: number) {
   const maxAge = 60 * 60 * 24 * days;
-  const domain = window.location.hostname.split('.').slice(-2).join('.');
+  const domain = window.location.hostname;
   document.cookie = `${name}=${value}; max-age=${maxAge}; domain=${domain}; path=/; samesite=strict; secure`;
 }
