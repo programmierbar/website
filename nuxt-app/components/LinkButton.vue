@@ -70,6 +70,6 @@ export default defineComponent({
   }
 }
 .link-button:hover .angle-right {
-  animation: fade-in 1s ease infinite forwards;
+  animation: fade-in 0.8s ease infinite forwards;
 }
 </style>
