@@ -1,5 +1,5 @@
 <template>
-  <div class="hidden md:block" :class="isVisible ? 'visible' : 'invisible'">
+  <div class="mouse-cursor pointer-events-none">
     <div
       ref="mainCursorElement"
       class="
@@ -12,7 +12,6 @@
         flex
         items-center
         justify-center
-        pointer-events-none
         before:w-8
         before:h-8
         before:fixed
@@ -22,14 +21,19 @@
         before:transition-all
       "
       :class="[
+        !cursorMode || cursorMode === 'none'
+          ? 'before:opacity-0'
+          : 'before:opacity-100',
         cursorMode === 'default' && 'before:bg-lime before:border-lime',
-        cursorMode === 'none' ? 'before:opacity-0' : 'before:opacity-100',
         cursorMode === 'black' && 'before:bg-black before:border-black',
-        ['hover', 'more', 'arrow-left', 'arrow-right'].includes(cursorMode) &&
+        cursorMode &&
+          ['hover', 'more', 'arrow-left', 'arrow-right'].includes(cursorMode) &&
           'before:bg-pink before:bg-opacity-0 before:border-pink',
-        ['hover', 'hover-blue', 'arrow-left', 'arrow-right'].includes(
-          cursorMode
-        ) && 'before:scale-200',
+        cursorMode &&
+          ['hover', 'hover-blue', 'arrow-left', 'arrow-right'].includes(
+            cursorMode
+          ) &&
+          'before:scale-200',
         cursorMode === 'hover-blue' &&
           'before:bg-blue before:bg-opacity-0 before:border-blue',
         cursorMode === 'more' && 'before:scale-250',
@@ -54,49 +58,30 @@
     </div>
     <div
       ref="delayedDotElement"
-      class="
-        w-2
-        h-2
-        fixed
-        z-50
-        -top-1
-        -left-1
-        rounded-full
-        pointer-events-none
-        ease-linear
-        duration-100
-      "
+      class="w-2 h-2 fixed z-50 -top-1 -left-1 rounded-full"
       :class="[
         cursorMode === 'black' ? 'bg-black' : 'bg-lime',
-        [
-          'none',
-          'hover',
-          'hover-blue',
-          'more',
-          'arrow-left',
-          'arrow-right',
-        ].includes(cursorMode) && 'opacity-0',
+        (!cursorMode ||
+          [
+            'none',
+            'hover',
+            'hover-blue',
+            'more',
+            'arrow-left',
+            'arrow-right',
+          ].includes(cursorMode)) &&
+          'opacity-0',
       ]"
+      :style="`transition: transform 0.1s linear, opacity 0.1s linear ${
+        cursorMode === 'default' ? 0.5 : 0
+      }s`"
     />
   </div>
 </template>
 
 <script lang="ts">
-import {
-  defineComponent,
-  onMounted,
-  reactive,
-  ref,
-  toRefs,
-  useRoute,
-  watch,
-} from '@nuxtjs/composition-api';
-import {
-  useBodyElement,
-  useEventListener,
-  useMutationObserver,
-  useWindow,
-} from '../composables';
+import { defineComponent, ref } from '@nuxtjs/composition-api';
+import { useEventListener, useWindow } from '../composables';
 
 type CursorMode =
   | 'default'
@@ -108,174 +93,79 @@ type CursorMode =
   | 'arrow-left'
   | 'arrow-right';
 
-interface MouseCursorState {
-  cursorMode: CursorMode;
-  isVisible: boolean;
-}
-
-interface ActiveEventListener {
-  target: Element;
-  type: string;
-  listener: EventListener;
-}
+const cursorModes: CursorMode[] = [
+  'none',
+  'black',
+  'hover',
+  'hover-blue',
+  'more',
+  'arrow-left',
+  'arrow-right',
+];
 
 export default defineComponent({
   setup() {
     // Create element and state references
     const mainCursorElement = ref<HTMLDivElement>();
     const delayedDotElement = ref<HTMLDivElement>();
-    const mouseCursorState = reactive<MouseCursorState>({
-      cursorMode: 'default',
-      isVisible: false,
-    });
+
+    // Create cursor mode references
+    const cursorMode = ref<CursorMode>();
 
     /**
-     * It moves the custom mouse cursor based on the mouse move event object.
+     * It handels the movement, visibility and mode of the mouse cursor.
      */
-    const moveMouseCursor = (event: MouseEvent) => {
+    const handleMouseCursor = (event: MouseEvent) => {
+      // Move mouse cursor based on mouse move event
       const transform = `translate(${event.clientX}px, ${event.clientY}px)`;
       mainCursorElement.value!.style.transform = transform;
       delayedDotElement.value!.style.transform = transform;
-      mouseCursorState.isVisible = true;
+
+      // Set cursor mode based on nodes of composed path
+      cursorMode.value =
+        event
+          .composedPath()
+          .reduce<CursorMode | false | undefined>(
+            (cursorMode, currentNode) =>
+              cursorMode ||
+              (currentNode instanceof HTMLElement &&
+                cursorModes.find((cursorMode) =>
+                  currentNode.hasAttribute(`data-cursor-${cursorMode}`)
+                )),
+            undefined
+          ) || 'default';
     };
 
-    // Add mouse move event listener to move custom mouse cursor
-    useEventListener(useWindow(), 'mousemove', moveMouseCursor);
-
-    // Create list with all cursor modes
-    const allCursorModes: CursorMode[] = [
-      'default',
-      'none',
-      'black',
-      'hover',
-      'hover-blue',
-      'more',
-      'arrow-left',
-      'arrow-right',
-    ];
-
-    // Create cursor mode chain
-    const cursorModeChain: CursorMode[] = ['default'];
-
-    // Create list for active event listeners
-    const activeEventListeners: ActiveEventListener[] = [];
-
-    /**
-     * It adds event listeners for the individual cursor modes
-     * that are required to update the current cursor mode.
-     */
-    const addEventListeners = () => {
-      allCursorModes.forEach((cursorMode) => {
-        document
-          .querySelectorAll(`[data-cursor-${cursorMode}]`)
-          .forEach((element) => {
-            // Create add listeners function
-            const addListeners = () => {
-              // Create remove mode listener function
-              const removeModeListener = () => {
-                // Remove this listener on first call
-                element.removeEventListener('mouseleave', removeModeListener);
-
-                // Check if the chain has not been reset
-                if (cursorModeChain.length > 1) {
-                  // Remove current cursor mode from chain (last index)
-                  cursorModeChain.pop();
-
-                  // Change back to the previous cursor mode
-                  mouseCursorState.cursorMode =
-                    cursorModeChain[cursorModeChain.length - 1];
-                }
-
-                // Add listeners to current element again
-                addListeners();
-              };
-
-              // Create add mode listener function
-              const addModeListener = () => {
-                // Remove this listener on first call
-                element.removeEventListener('mousemove', addModeListener);
-
-                // Set cursor mode and add it to chain
-                mouseCursorState.cursorMode = cursorMode;
-                cursorModeChain.push(cursorMode);
-
-                // Add remove mode listener and add it to active event listeners
-                element.addEventListener('mouseleave', removeModeListener);
-              };
-
-              // Add add mode listener and add it to active event listeners
-              element.addEventListener('mousemove', addModeListener);
-              activeEventListeners.push({
-                target: element,
-                type: 'mousemove',
-                listener: addModeListener,
-              });
-            };
-
-            // Add listeners to current element
-            addListeners();
-          });
-      });
-    };
-
-    /**
-     * It removes the all added event listeners for the individual cursor modes.
-     */
-    const removeEventListeners = () => {
-      activeEventListeners.forEach(({ target, type, listener }) =>
-        target.removeEventListener(type, listener)
-      );
-      activeEventListeners.length = 0;
-    };
-
-    // Reset cursor mode and cursor mode chain when route changes
-    const route = useRoute();
-    watch(
-      () => route.value.path,
-      () => {
-        mouseCursorState.cursorMode = 'default';
-        cursorModeChain.length = 0;
-        cursorModeChain.push('default');
-      }
-    );
-
-    // Add event listeners for individual cusor modes
-    onMounted(addEventListeners);
-
-    // Add mutation observer that updates event listener for individual
-    // cursor modes when cursor mode attributes changes
-    useMutationObserver(
-      useBodyElement(),
-      () => {
-        removeEventListeners();
-        addEventListeners();
-      },
-      {
-        subtree: true,
-        childList: true,
-        attributes: true,
-        attributeFilter: allCursorModes.map(
-          (cursorMode) => `data-cursor-${cursorMode}`
-        ),
-      }
-    );
+    // Add mouse move event listener
+    useEventListener(useWindow(), 'mousemove', handleMouseCursor);
 
     return {
       mainCursorElement,
       delayedDotElement,
-      ...toRefs(mouseCursorState),
+      cursorMode,
     };
   },
 });
 </script>
 
+<style scoped>
+.mouse-cursor {
+  display: none;
+}
+@media (pointer: fine) {
+  .mouse-cursor {
+    display: block;
+  }
+}
+</style>
+
 <style>
-@media (min-width: 768px) {
+@media (pointer: fine) {
   * {
     cursor: none !important;
   }
-}
-body {
-  min-height: 100vh;
+  body {
+    min-height: 100vh;
+  }
 }
 </style>
