@@ -331,7 +331,7 @@ export default defineComponent({
 
 <style lang="postcss" scoped>
 .text-input {
-  @apply w-full bg-gray-800 text-white text-base md:text-xl lg:text-2xl p-4 md:p-6 lg:p-8;
+  @apply w-full bg-gray-800 text-white text-base md:text-xl lg:text-2xl font-light p-4 md:p-6 lg:p-8;
 }
 input.text-input {
   @apply h-12 md:h-16 lg:h-20;
