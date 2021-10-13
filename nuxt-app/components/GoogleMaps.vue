@@ -25,7 +25,6 @@ export default defineComponent({
             lng: 8.7497127,
           },
           mapId: '6539fad3cb291e05',
-          disableDefaultUI: true,
           zoom: 15,
         });
       }
