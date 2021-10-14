@@ -111,7 +111,7 @@ import {
   SectionHeading,
   TagFilter,
 } from '../../components';
-import { useStrapi, useTagFilter } from '../../composables';
+import { useStrapi, useTagFilter, usePageMeta } from '../../composables';
 
 export default defineComponent({
   components: {
@@ -125,6 +125,9 @@ export default defineComponent({
     // Query Strapi about page and members
     const podcastPage = useStrapi('podcast-page');
     const podcasts = useStrapi('podcasts', ref('?_limit=-1'));
+
+    // Set page meta data
+    usePageMeta(podcastPage);
 
     // Create podcast tag filter
     const tagFilter = useTagFilter(podcasts);
@@ -160,5 +163,6 @@ export default defineComponent({
       newsPodcasts,
     };
   },
+  head: {},
 });
 </script>

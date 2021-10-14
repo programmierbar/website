@@ -252,7 +252,7 @@ import {
   MarkdownToHtml,
   SectionHeading,
 } from '../components';
-import { useStrapi } from '../composables';
+import { useStrapi, usePageMeta } from '../composables';
 
 type FormState = 'pending' | 'submitting' | 'submitted' | 'error';
 
@@ -266,6 +266,9 @@ export default defineComponent({
   setup() {
     // Query Strapi contact-page
     const contactPage = useStrapi('contact-page');
+
+    // Set page meta data
+    usePageMeta(contactPage);
 
     // Create form field references
     const name = ref('');
@@ -326,6 +329,7 @@ export default defineComponent({
       submitForm,
     };
   },
+  head: {},
 });
 </script>
 

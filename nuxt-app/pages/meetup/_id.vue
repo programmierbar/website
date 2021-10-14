@@ -116,7 +116,12 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, useRoute } from '@nuxtjs/composition-api';
+import {
+  computed,
+  defineComponent,
+  useMeta,
+  useRoute,
+} from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   FeedbackSection,
@@ -131,6 +136,7 @@ import {
   TagList,
 } from '../../components';
 import { useStrapi } from '../../composables';
+import { getTrimmedString } from '../../helpers';
 
 export default defineComponent({
   components: {
@@ -154,12 +160,28 @@ export default defineComponent({
     // Query Strapi meetup
     const meetup = useStrapi('meetups', meetupIdPath);
 
+    // Set page meta data
+    useMeta(() =>
+      meetup.value
+        ? {
+            title: `${meetup.value.title} | programmier.bar`,
+            meta: [
+              {
+                hid: 'description',
+                name: 'description',
+                content: getTrimmedString(meetup.value.description, 160),
+              },
+            ],
+          }
+        : {}
+    );
+
     // Create breadcrumb list
     const breadcrumbs = computed(() => [
       { label: 'Meetup', href: '/meetup' },
       {
         label: meetup.value
-          ? `${meetup.value.title.slice(0, 12).trim()}...`
+          ? getTrimmedString(meetup.value.title, 12)
           : 'Error 404',
       },
     ]);
@@ -182,5 +204,6 @@ export default defineComponent({
       relatedPodcasts,
     };
   },
+  head: {},
 });
 </script>

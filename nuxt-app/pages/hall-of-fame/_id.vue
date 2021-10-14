@@ -219,7 +219,12 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, useRoute } from '@nuxtjs/composition-api';
+import {
+  computed,
+  defineComponent,
+  useMeta,
+  useRoute,
+} from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   FeedbackSection,
@@ -233,6 +238,7 @@ import {
   SectionHeading,
 } from '../../components';
 import { useStrapi, useImageSrcSet } from '../../composables';
+import { getTrimmedString } from '../../helpers';
 
 export default defineComponent({
   components: {
@@ -267,6 +273,22 @@ export default defineComponent({
       `${speaker.value?.academic_title || ''} ${speaker.value?.first_name} ${
         speaker.value?.last_name
       }`.trim()
+    );
+
+    // Set page meta data
+    useMeta(() =>
+      speaker.value
+        ? {
+            title: `Speaker – ${fullName.value} | programmier.bar`,
+            meta: [
+              {
+                hid: 'description',
+                name: 'description',
+                content: getTrimmedString(speaker.value.description, 160),
+              },
+            ],
+          }
+        : {}
     );
 
     // Create breadcrumb list
@@ -328,5 +350,6 @@ export default defineComponent({
       platforms,
     };
   },
+  head: {},
 });
 </script>

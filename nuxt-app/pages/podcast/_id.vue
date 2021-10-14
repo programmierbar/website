@@ -125,7 +125,12 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, useRoute } from '@nuxtjs/composition-api';
+import {
+  computed,
+  defineComponent,
+  useMeta,
+  useRoute,
+} from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   FeedbackSection,
@@ -140,7 +145,11 @@ import {
   TagList,
 } from '../../components';
 import { useStrapi } from '../../composables';
-import { getPodcastTypeString } from '../../helpers';
+import {
+  getPodcastTypeString,
+  getTrimmedString,
+  getFullPodcastTitle,
+} from '../../helpers';
 
 export default defineComponent({
   components: {
@@ -163,6 +172,22 @@ export default defineComponent({
 
     // Query Strapi podcast
     const podcast = useStrapi('podcasts', podcastIdPath);
+
+    // Set page meta data
+    useMeta(() =>
+      podcast.value
+        ? {
+            title: `${getFullPodcastTitle(podcast.value)} | programmier.bar`,
+            meta: [
+              {
+                hid: 'description',
+                name: 'description',
+                content: getTrimmedString(podcast.value.description, 160),
+              },
+            ],
+          }
+        : {}
+    );
 
     // Create podcast type
     const type = computed(
@@ -226,5 +251,6 @@ export default defineComponent({
       relatedPodcasts,
     };
   },
+  head: {},
 });
 </script>

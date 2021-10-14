@@ -74,7 +74,7 @@
 <script lang="ts">
 import { defineComponent, ref } from '@nuxtjs/composition-api';
 import { Breadcrumbs, PickOfTheDayCard, SectionHeading } from '../components';
-import { useStrapi } from '../composables';
+import { useStrapi, usePageMeta } from '../composables';
 
 export default defineComponent({
   components: {
@@ -87,11 +87,15 @@ export default defineComponent({
     const pickOfTheDayPage = useStrapi('pick-of-the-day-page');
     const picksOfTheDay = useStrapi('picks-of-the-day', ref('?_limit=-1'));
 
+    // Set page meta data
+    usePageMeta(pickOfTheDayPage);
+
     return {
       pickOfTheDayPage,
       picksOfTheDay,
       breadcrumbs: [{ label: 'Pick of the Day' }],
     };
   },
+  head: {},
 });
 </script>

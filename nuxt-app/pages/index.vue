@@ -81,7 +81,7 @@ import {
   ScrollDownMouse,
   TypedText,
 } from '../components';
-import { useStrapi } from '../composables';
+import { useStrapi, usePageMeta } from '../composables';
 
 export default defineComponent({
   components: {
@@ -94,6 +94,9 @@ export default defineComponent({
   setup() {
     // Query Strapi home-page
     const homePage = useStrapi('home-page');
+
+    // Set page meta data
+    usePageMeta(homePage);
 
     // Create news list
     const news = computed(() =>
@@ -109,6 +112,7 @@ export default defineComponent({
       breadcrumbs: [{ label: 'Home' }],
     };
   },
+  head: {},
 });
 </script>
 

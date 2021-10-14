@@ -75,7 +75,7 @@ import {
   PageCoverImage,
   SectionHeading,
 } from '../components';
-import { useStrapi } from '../composables';
+import { useStrapi, usePageMeta } from '../composables';
 
 export default defineComponent({
   components: {
@@ -88,6 +88,9 @@ export default defineComponent({
     // Query Strapi about page and members
     const aboutPage = useStrapi('about-page');
     const members = useStrapi('members');
+
+    // Set page meta data
+    usePageMeta(aboutPage);
 
     // Create podcast crew memeber list
     const podcastCrewMembers = computed(() =>
@@ -109,5 +112,6 @@ export default defineComponent({
       breadcrumbs: [{ label: 'Über uns' }],
     };
   },
+  head: {},
 });
 </script>

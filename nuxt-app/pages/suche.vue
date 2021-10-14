@@ -54,6 +54,7 @@ import {
   defineComponent,
   ref,
   Ref,
+  useMeta,
   useRoute,
 } from '@nuxtjs/composition-api';
 import {
@@ -181,6 +182,15 @@ export default defineComponent({
       return [];
     });
 
+    // Set page meta data
+    useMeta(() => ({
+      title: `Suche – ${searchResults.value.length} Treffer | programmier.bar`,
+      meta: [
+        { hid: 'description', name: 'description', content: '' },
+        { name: 'robots', content: 'noindex, nofollow' },
+      ],
+    }));
+
     // Create breadcrumbs
     const breadcrumbs = computed(() => [
       { label: 'Search' },
@@ -194,6 +204,7 @@ export default defineComponent({
       breadcrumbs,
     };
   },
+  head: {},
 });
 </script>
 

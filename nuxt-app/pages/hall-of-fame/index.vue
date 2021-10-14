@@ -74,7 +74,7 @@
 <script lang="ts">
 import { defineComponent, ref } from '@nuxtjs/composition-api';
 import { Breadcrumbs, SectionHeading, SpeakerBubble } from '../../components';
-import { useStrapi } from '../../composables';
+import { useStrapi, usePageMeta } from '../../composables';
 
 export default defineComponent({
   components: {
@@ -87,6 +87,9 @@ export default defineComponent({
     const hallOfFamePage = useStrapi('hall-of-fame-page');
     const speakers = useStrapi('speakers', ref('?_limit=-1'));
 
+    // Set page meta data
+    usePageMeta(hallOfFamePage);
+
     return {
       hallOfFamePage,
       speakers,
@@ -94,5 +97,6 @@ export default defineComponent({
       bubbleColors: ['pink', 'blue', 'lime'] as const,
     };
   },
+  head: {},
 });
 </script>

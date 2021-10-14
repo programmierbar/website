@@ -91,7 +91,7 @@ import {
   PageCoverImage,
   SectionHeading,
 } from '../../components';
-import { useStrapi } from '../../composables';
+import { useStrapi, usePageMeta } from '../../composables';
 
 export default defineComponent({
   components: {
@@ -106,11 +106,15 @@ export default defineComponent({
     const meetupPage = useStrapi('meetup-page');
     const meetups = useStrapi('meetups', ref('?_limit=-1'));
 
+    // Set page meta data
+    usePageMeta(meetupPage);
+
     return {
       meetupPage,
       meetups,
       breadcrumbs: [{ label: 'Meetup' }],
     };
   },
+  head: {},
 });
 </script>

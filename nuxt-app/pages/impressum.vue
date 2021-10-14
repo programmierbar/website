@@ -43,7 +43,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from '@nuxtjs/composition-api';
+import { defineComponent, useMeta } from '@nuxtjs/composition-api';
 import { Breadcrumbs, MarkdownToHtml, SectionHeading } from '../components';
 import { useStrapi } from '../composables';
 
@@ -57,10 +57,20 @@ export default defineComponent({
     // Query Strapi imprint-page
     const imprintPage = useStrapi('imprint-page');
 
+    // Set page meta data
+    useMeta({
+      title: 'Impressum | programmier.bar',
+      meta: [
+        { hid: 'description', name: 'description', content: '' },
+        { name: 'robots', content: 'noindex, nofollow' },
+      ],
+    });
+
     return {
       imprintPage,
       breadcrumbs: [{ label: 'Impressum' }],
     };
   },
+  head: {},
 });
 </script>

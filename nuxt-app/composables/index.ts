@@ -8,6 +8,7 @@ export * from './useMediaQuery';
 export * from './useMotionParallax';
 export * from './useMutationObserver';
 export * from './useNavigator';
+export * from './usePageMeta';
 export * from './usePodcastPlayer';
 export * from './useScrollParallax';
 export * from './useShare';
