@@ -135,7 +135,7 @@ export default defineComponent({
       if (searchText) {
         // Split search text in search crumbs
         const searchCrumbs = searchText
-          .replace(/([^\s\w\d-_#:.])/g, '')
+          .replace(/([^\s\w-_#:.äöüß])/gi, '')
           .replace(/(\s|-|_|#|:|\.)+/g, ' ')
           .toLowerCase()
           .split(' ');
