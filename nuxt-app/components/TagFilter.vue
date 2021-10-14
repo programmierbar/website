@@ -1,5 +1,9 @@
 <template>
-  <div class="sticky z-20 top-24 lg:top-32 3xl:top-9">
+  <div
+    ref="tagFilterElement"
+    class="sticky z-20 top-24 lg:top-32 3xl:top-9"
+    :class="!filterIsOpen && 'pointer-events-none'"
+  >
     <div class="h-8 md:h-9 lg:h-11 relative">
       <div class="w-full absolute top-0 left-0">
         <div
@@ -50,6 +54,7 @@
                 transition-all
                 duration-200
                 xl:duration-300
+                pointer-events-auto
               "
               :class="filterIsOpen ? 'translate-x-2 -translate-y-2' : 'w-full'"
               type="button"
@@ -124,6 +129,7 @@
 <script lang="ts">
 import { defineComponent, PropType, ref } from '@nuxtjs/composition-api';
 import { StrapiTag } from 'shared-code';
+import { useEventListener, useDocument } from '../composables';
 import TagList from './TagList.vue';
 
 interface Tag extends StrapiTag {
@@ -145,8 +151,26 @@ export default defineComponent({
     },
   },
   setup() {
+    // Create tag filter element reference
+    const tagFilterElement = ref<HTMLDivElement>();
+
     // Create filter is open reference
     const filterIsOpen = ref(false);
+
+    /**
+     * It closes the tag filter when clicked outside.
+     */
+    const handleClick = (event: Event) => {
+      if (
+        filterIsOpen.value &&
+        !tagFilterElement.value!.contains(event.target as Node)
+      ) {
+        filterIsOpen.value = false;
+      }
+    };
+
+    // Add click event listener
+    useEventListener(useDocument(), 'click', handleClick);
 
     /**
      * It opens or closes the filter.
@@ -156,6 +180,7 @@ export default defineComponent({
     };
 
     return {
+      tagFilterElement,
       filterIsOpen,
       toggleFilter,
     };
