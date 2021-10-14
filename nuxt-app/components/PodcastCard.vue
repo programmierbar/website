@@ -8,12 +8,7 @@
         :srcset="coverSrcSet"
         sizes="(min-width: 1024px) 384px, (min-width: 768px) 256px, 192px"
         loading="lazy"
-        :alt="
-          podcast.cover_image.alternativeText ||
-          (podcast.type !== 'other'
-            ? `${type} ${podcast.number}${divider}`
-            : '' + podcast.title)
-        "
+        :alt="podcast.cover_image.alternativeText || fullTitle"
       />
     </NuxtLink>
 
@@ -75,7 +70,11 @@
 import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
 import { StrapiPodcast } from 'shared-code';
 import { usePodcastPlayer, useImageSrcSet } from '../composables';
-import { getPodcastTypeString, getPodcastTitleDivider } from '../helpers';
+import {
+  getPodcastTypeString,
+  getPodcastTitleDivider,
+  getFullPodcastTitle,
+} from '../helpers';
 
 export default defineComponent({
   props: {
@@ -124,6 +123,9 @@ export default defineComponent({
     // Create divider between podcast type and title
     const divider = computed(() => getPodcastTitleDivider(props.podcast));
 
+    // Create full podcast title
+    const fullTitle = computed(() => getFullPodcastTitle(props.podcast));
+
     // Create platform list
     const platforms = computed(() => [
       {
@@ -157,6 +159,7 @@ export default defineComponent({
       coverSrcSet,
       type,
       divider,
+      fullTitle,
       platforms,
     };
   },

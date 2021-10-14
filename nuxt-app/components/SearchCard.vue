@@ -82,7 +82,7 @@ import {
 } from 'shared-code';
 import snarkdown from 'snarkdown';
 import { useImageSrcSet } from '../composables';
-import { getPodcastTypeString, getPodcastTitleDivider } from '../helpers';
+import { getFullPodcastTitle } from '../helpers';
 
 type Item =
   | (StrapiPodcast & { itemType: 'podcast' })
@@ -147,12 +147,7 @@ export default defineComponent({
     // Create heading depending on item typ
     const heading = computed(() =>
       props.item.itemType === 'podcast'
-        ? (props.item.type !== 'other'
-            ? getPodcastTypeString(props.item) +
-              ' ' +
-              props.item.number +
-              getPodcastTitleDivider(props.item)
-            : '') + props.item.title
+        ? getFullPodcastTitle(props.item)
         : props.item.itemType === 'meetup'
         ? props.item.title
         : props.item.itemType === 'pick_of_the_day'
