@@ -1,23 +1,26 @@
 <template>
-  <div class="w-full h-1/2-screen lg:h-4/6-screen relative">
-    <div
-      class="w-full h-full absolute top-0 left-0 bg-gray-900 bg-opacity-30"
-    />
-    <img
-      class="w-full h-full object-cover"
-      :src="coverImage.url"
-      :srcset="coverSrcSet"
-      sizes="100vw"
-      :alt="coverImage.alternativeText || ''"
-    />
+  <div class="w-full h-1/2-screen lg:h-4/6-screen">
+    <div class="h-full relative overflow-hidden">
+      <div
+        class="w-full h-full absolute top-0 left-0 bg-gray-900 bg-opacity-30"
+      />
+      <img
+        ref="imageElement"
+        class="w-full h-full relative object-cover"
+        :src="coverImage.url"
+        :srcset="coverSrcSet"
+        sizes="100vw"
+        :alt="coverImage.alternativeText || ''"
+      />
+    </div>
     <ScrollDownMouse class="relative -top-9 lg:-top-14" />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from '@nuxtjs/composition-api';
+import { defineComponent, PropType, ref } from '@nuxtjs/composition-api';
 import { StrapiImage } from 'shared-code';
-import { useImageSrcSet } from '../composables';
+import { useImageSrcSet, useEventListener, useWindow } from '../composables';
 import ScrollDownMouse from './ScrollDownMouse.vue';
 
 export default defineComponent({
@@ -31,10 +34,27 @@ export default defineComponent({
     },
   },
   setup(props) {
+    // Create podcast cover element reference
+    const imageElement = ref<HTMLImageElement>();
+
     // Create cover src set
     const coverSrcSet = useImageSrcSet(props.coverImage);
 
+    /**
+     * It handles the scroll event and adds a
+     * parallax effect to the image element.
+     */
+    const handleScroll = () => {
+      imageElement.value!.style.transform = `translateY(${
+        window.scrollY * 0.15
+      }px)`;
+    };
+
+    // Add scroll event listener
+    useEventListener(useWindow(), 'scroll', handleScroll);
+
     return {
+      imageElement,
       coverSrcSet,
     };
   },
