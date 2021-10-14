@@ -1,5 +1,8 @@
 <template>
-  <div v-if="hallOfFamePage && speakers" class="relative overflow-hidden">
+  <div
+    v-if="hallOfFamePage && speakers"
+    class="relative overflow-hidden md:overflow-unset"
+  >
     <div
       class="
         container

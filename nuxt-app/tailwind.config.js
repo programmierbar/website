@@ -129,6 +129,9 @@ module.exports = {
     require('@tailwindcss/line-clamp'),
     plugin(function ({ addUtilities }) {
       const newUtilities = {
+        '.overflow-unset': {
+          overflow: 'unset',
+        },
         '.vertical-rl': {
           writingMode: 'vertical-rl',
         },
