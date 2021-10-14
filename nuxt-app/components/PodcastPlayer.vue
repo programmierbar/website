@@ -38,24 +38,31 @@
           px-6
           lg:px-0
         "
-        @click="toogleExpanded"
+        @click="expandPlayer"
       >
         <!-- Podcast infos -->
-        <div class="w-2/3 lg:w-full">
-          <h3 class="text-sm lg:text-base text-black font-black">
-            {{ podcastTypeAndNumber }}
-          </h3>
-          <p
-            class="
-              text-sm text-black
-              font-light
-              whitespace-nowrap
-              overflow-hidden overflow-ellipsis
-              mt-px
-            "
+        <div class="w-2/3 lg:w-full flex items-center">
+          <NuxtLink
+            class="inline-block"
+            :class="!isExpanded && 'pointer-events-none md:pointer-events-auto'"
+            :to="podcastPath"
+            data-cursor-hover
           >
-            {{ podcastTitle }}
-          </p>
+            <h3 class="text-sm lg:text-base text-black font-black">
+              {{ podcastTypeAndNumber }}
+            </h3>
+            <p
+              class="
+                text-sm text-black
+                font-light
+                whitespace-nowrap
+                overflow-hidden overflow-ellipsis
+                mt-px
+              "
+            >
+              {{ podcastTitle }}
+            </p>
+          </NuxtLink>
         </div>
 
         <div class="relative lg:hidden">
@@ -72,6 +79,7 @@
               class="h-6 text-pink"
               type="button"
               data-cursor-hover
+              @click.stop=""
               v-html="require('../assets/icons/heart.svg?raw')"
             />
             <div class="w-5 h-6 flex justify-center">
@@ -104,7 +112,7 @@
             "
             type="button"
             data-cursor-hover
-            @click.stop="toogleExpanded"
+            @click.stop="collapsePlayer"
             v-html="require('../assets/icons/angle-down.svg?raw')"
           />
         </div>
@@ -263,10 +271,19 @@ export default defineComponent({
     const isExpanded = ref(false);
 
     /**
-     * It expands or reduces the podcast player.
+     * It expands the podcast player on mobile devices.
      */
-    const toogleExpanded = () => {
-      isExpanded.value = !isExpanded.value;
+    const expandPlayer = () => {
+      if (window.innerWidth <= 768) {
+        isExpanded.value = true;
+      }
+    };
+
+    /**
+     * It collapses the podcast player.
+     */
+    const collapsePlayer = () => {
+      isExpanded.value = false;
     };
 
     // Use podcast player, clipboard and share
@@ -277,6 +294,11 @@ export default defineComponent({
     // Create podcast type
     const podcastType = computed(() =>
       podcastPlayer.podcast ? getPodcastTypeString(podcastPlayer.podcast) : ''
+    );
+
+    // Create podcast path
+    const podcastPath = computed(
+      () => `/podcast/${podcastPlayer.podcast?.id || ''}`
     );
 
     // Create podcast type and number
@@ -369,9 +391,10 @@ export default defineComponent({
 
     return {
       isExpanded,
-      toogleExpanded,
+      expandPlayer,
+      collapsePlayer,
       podcastPlayer,
-      podcastType,
+      podcastPath,
       podcastTypeAndNumber,
       podcastTitle,
       fullPodcastTitle,
