@@ -70,6 +70,7 @@
           font-light
         "
         type="seach"
+        spellcheck="false"
       />
       <button
         class="

@@ -165,6 +165,7 @@
                 type="text"
                 name="name"
                 placeholder="Name"
+                spellcheck="false"
                 required
               />
               <input
@@ -173,6 +174,7 @@
                 type="email"
                 name="email"
                 placeholder="E-Mail"
+                spellcheck="false"
                 required
               />
             </div>
