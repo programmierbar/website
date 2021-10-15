@@ -9,7 +9,7 @@
         <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
         <!-- Page intro -->
-        <SectionHeading class="mt-8 md:mt-0" tag="h1">
+        <SectionHeading class="mt-8 md:mt-0" element="h1">
           {{ meetupPage.intro_heading }}
         </SectionHeading>
         <MarkdownToHtml
@@ -69,7 +69,7 @@
     <!-- Meetups -->
     <section class="relative my-12 md:my-28 lg:my-40">
       <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
-        <SectionHeading tag="h2">
+        <SectionHeading element="h2">
           {{ meetupPage.meetups_heading }}
         </SectionHeading>
         <ul class="space-y-14 md:space-y-20 lg:space-y-28 mt-10">

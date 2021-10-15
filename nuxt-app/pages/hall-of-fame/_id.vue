@@ -42,7 +42,7 @@
           <LikeButton />
         </div>
 
-        <SectionHeading class="hidden md:flex" tag="h2">
+        <SectionHeading class="hidden md:flex" element="h2">
           Informationen
         </SectionHeading>
 
@@ -173,7 +173,7 @@
       v-if="speaker.podcasts.length || speaker.picks_of_the_day.length"
       class="relative mt-20 md:mt-32 lg:mt-40"
     >
-      <SectionHeading class="px-6 md:px-0" tag="h2">
+      <SectionHeading class="px-6 md:px-0" element="h2">
         Verwandter Inhalt
       </SectionHeading>
       <div

@@ -64,7 +64,7 @@
       v-if="homePage.podcasts.length"
       class="relative py-16 md:py-40 lg:py-60"
     >
-      <SectionHeading class="px-6 md:px-0" tag="h2">
+      <SectionHeading class="px-6 md:px-0" element="h2">
         {{ homePage.podcast_heading }}
       </SectionHeading>
       <PodcastCarousel class="mt-10 md:mt-0" :podcasts="homePage.podcasts" />

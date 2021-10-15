@@ -19,7 +19,9 @@
       <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
       <!-- Heading -->
-      <SectionHeading class="mt-8 md:mt-0" tag="h1">Impressum</SectionHeading>
+      <SectionHeading class="mt-8 md:mt-0" element="h1"
+        >Impressum</SectionHeading
+      >
 
       <!-- Text -->
       <MarkdownToHtml

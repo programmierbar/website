@@ -9,7 +9,7 @@
         <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
         <!-- Page intro -->
-        <SectionHeading class="mt-8 md:mt-0" tag="h1">
+        <SectionHeading class="mt-8 md:mt-0" element="h1">
           {{ podcastPage.intro_heading }}
         </SectionHeading>
         <p
@@ -53,7 +53,7 @@
       <TagFilter
         class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 mt-8 md:mt-20 lg:mt-32"
         :tags="tagFilter.tags"
-        :toggle-tag="tagFilter.toggleTag"
+        :toggle-element="tagFilter.toggleTag"
       />
 
       <!-- Deep dive podcasts -->
@@ -61,7 +61,7 @@
         v-if="deepDivePodcasts.length"
         class="relative md:pl-40 3xl:px-0 py-8 md:py-20 lg:py-32"
       >
-        <SectionHeading class="px-6 md:px-0" tag="h2">
+        <SectionHeading class="px-6 md:px-0" element="h2">
           {{ podcastPage.deep_dive_heading }}
         </SectionHeading>
         <PodcastCarousel class="mt-10 md:mt-0" :podcasts="deepDivePodcasts" />
@@ -72,7 +72,7 @@
         v-if="ctoSpecialPodcasts.length"
         class="relative md:pl-40 3xl:px-0 py-8 md:py-20 lg:py-32"
       >
-        <SectionHeading class="px-6 md:px-0" tag="h2">
+        <SectionHeading class="px-6 md:px-0" element="h2">
           {{ podcastPage.cto_special_heading }}
         </SectionHeading>
         <PodcastCarousel class="mt-10 md:mt-0" :podcasts="ctoSpecialPodcasts" />
@@ -93,7 +93,7 @@
           lg:mb-32
         "
       >
-        <SectionHeading class="px-6 md:px-0" tag="h2">
+        <SectionHeading class="px-6 md:px-0" element="h2">
           {{ podcastPage.news_heading }}
         </SectionHeading>
         <PodcastCarousel class="mt-10 md:mt-0" :podcasts="newsPodcasts" />

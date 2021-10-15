@@ -10,7 +10,9 @@
           <LikeButton />
         </div>
 
-        <SectionHeading class="mt-8 md:mt-0" tag="h2">Shownotes</SectionHeading>
+        <SectionHeading class="mt-8 md:mt-0" element="h2"
+          >Shownotes</SectionHeading
+        >
 
         <!-- Description -->
         <MarkdownToHtml
@@ -81,7 +83,7 @@
       <div
         class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 mt-20 md:mt-32 lg:mt-40"
       >
-        <SectionHeading tag="h2">Picks of the Day</SectionHeading>
+        <SectionHeading element="h2">Picks of the Day</SectionHeading>
         <PickOfTheDayList
           class="mt-12 md:mt-0"
           :picks-of-the-day="podcast.picks_of_the_day"
@@ -99,7 +101,7 @@
       <div
         class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 mt-20 md:mt-32 lg:mt-40"
       >
-        <SectionHeading tag="h2">Speaker Info</SectionHeading>
+        <SectionHeading element="h2">Speaker Info</SectionHeading>
         <SpeakerList class="mt-12 md:mt-0" :speakers="podcast.speakers" />
         <div class="flex justify-center mt-12 md:mt-20 lg:mt-28">
           <LinkButton href="/hall-of-fame"> Alle 67 Speaker:innen </LinkButton>
@@ -112,7 +114,7 @@
       v-if="relatedPodcasts && relatedPodcasts.length"
       class="relative md:pl-40 3xl:px-0 mt-20 md:mt-32 lg:mt-40"
     >
-      <SectionHeading class="px-6 md:px-0" tag="h2">
+      <SectionHeading class="px-6 md:px-0" element="h2">
         Verwandte Podcasts
       </SectionHeading>
       <PodcastCarousel class="mt-12 md:mt-0" :podcasts="relatedPodcasts" />

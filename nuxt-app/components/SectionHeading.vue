@@ -12,7 +12,7 @@
       "
     >
       <component
-        :is="tag"
+        :is="element"
         class="
           md:vertical-rl
           text-2xl
@@ -36,7 +36,7 @@ import { defineComponent, PropType } from '@nuxtjs/composition-api';
 
 export default defineComponent({
   props: {
-    tag: {
+    element: {
       type: String as PropType<'h1' | 'h2'>,
       required: true,
     },

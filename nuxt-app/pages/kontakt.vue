@@ -20,7 +20,7 @@
         <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
         <!-- Address heading -->
-        <SectionHeading class="mt-8 md:mt-0" tag="h1">
+        <SectionHeading class="mt-8 md:mt-0" element="h1">
           {{ contactPage.address_heading }}
         </SectionHeading>
 
@@ -112,7 +112,7 @@
       </div>
 
       <!-- Business heading -->
-      <SectionHeading class="px-6 mt-16 md:mt-0" tag="h2">
+      <SectionHeading class="px-6 mt-16 md:mt-0" element="h2">
         {{ contactPage.business_heading }}
       </SectionHeading>
 

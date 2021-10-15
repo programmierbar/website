@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div class="min-h-screen relative">
     <div
       class="
         container
@@ -18,7 +18,7 @@
     >
       <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
-      <SectionHeading class="mt-8 md:mt-0" tag="h1">
+      <SectionHeading class="mt-8 md:mt-0" element="h1">
         Suchergebnisse
       </SectionHeading>
 
