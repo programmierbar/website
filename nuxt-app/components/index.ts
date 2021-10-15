@@ -29,5 +29,4 @@ export { default as SpeakerBubble } from './SpeakerBubble.vue';
 export { default as SpeakerList } from './SpeakerList.vue';
 export { default as TagFilter } from './TagFilter.vue';
 export { default as TagList } from './TagList.vue';
-export { default as Theme } from './Theme.vue';
 export { default as TypedText } from './TypedText.vue';
