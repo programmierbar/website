@@ -1,32 +1,38 @@
 <template>
   <div>
-    <div
-      ref="maskBoxElement"
-      class="w-full relative"
-      style="padding-top: 100%"
-      data-cursor-none
-    >
+    <div ref="maskBoxElement" class="w-full relative" style="padding-top: 100%">
       <!-- Background circle -->
       <div
-        ref="cursorElement"
+        v-for="i of 2"
+        :key="i"
+        ref="cursorElements"
         class="
-          w-2/5
-          h-2/5
+          w-1/3
+          h-1/3
           absolute
           left-0
-          origin-top-left
-          pointer-events-none
-          before:w-full
-          before:h-full
-          before:absolute
-          before:bg-lime-200
-          before:rounded-full
-          before:-translate-x-1/2
-          before:-translate-y-1/2
+          -translate-x-1/2 -translate-y-1/2
+          rounded-full
+          overflow-hidden
         "
-        :class="
-          !clipPathIsMoving ? 'top-1/2 transition-all duration-300' : 'top-0'
-        "
+        :class="[
+          i === 1
+            ? 'z-10'
+            : color === 'lime'
+            ? 'bg-lime'
+            : color === 'pink'
+            ? 'bg-pink'
+            : 'bg-blue',
+          clipPathIsMoving ? 'top-0' : 'top-1/4 transition-all ease-linear',
+          clipPathStartMoving
+            ? 'duration-100'
+            : !clipPathIsMoving
+            ? 'duration-200'
+            : '',
+        ]"
+        :data-cursor-none="i === 1"
+        @touchstart.prevent="handleDiscoverEffect"
+        @mouseover.prevent="handleDiscoverEffect"
       />
 
       <!-- Normal image -->
@@ -48,9 +54,16 @@
       <!-- Action image -->
       <img
         ref="clipPathElement"
-        class="w-full absolute top-0 left-0 object-cover pointer-events-none"
-        :class="!clipPathIsMoving && 'transition-all duration-300'"
-        style="clip-path: circle(20% at 0 50%)"
+        class="w-full absolute top-0 left-0 object-cover"
+        :class="[
+          !clipPathIsMoving && 'transition-all ease-linear',
+          clipPathStartMoving
+            ? 'duration-100'
+            : !clipPathIsMoving
+            ? 'duration-200'
+            : '',
+        ]"
+        :style="{ clipPath: initClipPath }"
         :src="member.action_image.url"
         :srcset="actionImageSrcSet"
         sizes="
@@ -126,12 +139,18 @@ import {
   ref,
 } from '@nuxtjs/composition-api';
 import { StrapiMember } from 'shared-code';
-import { useEventListener, useImageSrcSet } from '../composables';
+import { useImageSrcSet } from '../composables';
+
+const initClipPath = 'circle(16.666% at 0 25%)';
 
 export default defineComponent({
   props: {
     member: {
       type: Object as PropType<StrapiMember>,
+      required: true,
+    },
+    color: {
+      type: String as PropType<'lime' | 'pink' | 'blue'>,
       required: true,
     },
   },
@@ -141,53 +160,114 @@ export default defineComponent({
       () => `${props.member.first_name} ${props.member.last_name}`
     );
 
-    // Create normal image src set
+    // Create normal and action image src set
     const normalImageSrcSet = useImageSrcSet(props.member.normal_image);
-
-    // Create action image src set
     const actionImageSrcSet = useImageSrcSet(props.member.action_image);
 
-    // Create element and state references
-    const maskBoxElement = ref<HTMLDivElement>();
-    const cursorElement = ref<HTMLDivElement>();
+    // Create element references
+    const cursorElements = ref<HTMLDivElement[]>();
     const clipPathElement = ref<HTMLImageElement>();
+
+    // Create state references
     const clipPathIsMoving = ref(false);
+    const clipPathStartMoving = ref(false);
 
-    /**
-     * It moves the cursor and the clip path so that the user
-     * can playfully discover the action image via mouse.
-     */
-    const moveCursorAndClipPath = (event: MouseEvent) => {
-      clipPathIsMoving.value = true;
-      const { top, left } = maskBoxElement.value!.getBoundingClientRect();
-      const x = event.clientX - left;
-      const y = event.clientY - top;
-      cursorElement.value!.style.transform = `translate(${x}px, ${y}px) scale(1.5)`;
-      clipPathElement.value!.style.clipPath = `circle(30% at ${x}px ${y}px)`;
+    const handleDiscoverEffect = (startEvent: TouchEvent | MouseEvent) => {
+      // Detect and create event type
+      const isTouch = startEvent.type === 'touchstart';
+      const moveEventType = isTouch ? 'touchmove' : 'mousemove';
+
+      // Get initial cursor size
+      const cursorSize = {
+        width: (startEvent.target as HTMLDivElement).clientWidth,
+        height: (startEvent.target as HTMLDivElement).clientHeight,
+      };
+
+      /**
+       * It handles the move event of the discover effect.
+       */
+      const handleMoveEvent = (moveEvent: Event) => {
+        // Get event position and clip path client rect
+        const position = isTouch
+          ? (moveEvent as TouchEvent).targetTouches[0]
+          : (moveEvent as MouseEvent);
+        const clipPath = clipPathElement.value!.getBoundingClientRect();
+
+        // If event position is inside area run discover effect
+        if (
+          position.clientX > clipPath.left - cursorSize.width / 2 &&
+          position.clientX <
+            clipPath.left + clipPath.width + cursorSize.width / 2 &&
+          position.clientY > clipPath.top - cursorSize.height / 2 &&
+          position.clientY <
+            clipPath.top + clipPath.height + cursorSize.height / 2
+        ) {
+          // Update state references
+          if (!clipPathIsMoving.value) {
+            clipPathIsMoving.value = true;
+            clipPathStartMoving.value = true;
+            setTimeout(() => {
+              clipPathStartMoving.value = false;
+            }, 100);
+          }
+
+          // Update cursor and clip path position
+          const x = position.clientX - clipPath.left;
+          const y = position.clientY - clipPath.top;
+          clipPathElement.value!.style.clipPath = `circle(41.666% at ${x}px ${y}px)`;
+          cursorElements.value?.forEach((element) => {
+            element.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(2.5)`;
+          });
+
+          // Otherwise clean up discover effect
+        } else {
+          handleCleanUp();
+        }
+      };
+
+      // Add move event listener to start event target
+      startEvent.target!.addEventListener(moveEventType, handleMoveEvent);
+
+      /**
+       * It handles the clean up of the discover effect.
+       */
+      const handleCleanUp = () => {
+        // Remove event listeners
+        startEvent.target!.removeEventListener(moveEventType, handleMoveEvent);
+        if (isTouch) {
+          startEvent.target!.removeEventListener('touchend', handleCleanUp);
+        } else {
+          window.removeEventListener('scroll', handleCleanUp);
+        }
+
+        // Clean up state reference
+        clipPathIsMoving.value = false;
+
+        // Clean up cursor and clip path position
+        clipPathElement.value!.style.clipPath = initClipPath;
+        cursorElements.value?.forEach(
+          (element) => (element.style.transform = '')
+        );
+      };
+
+      // Add clean up event listener
+      if (isTouch) {
+        startEvent.target!.addEventListener('touchend', handleCleanUp);
+      } else {
+        window.addEventListener('scroll', handleCleanUp);
+      }
     };
-
-    /**
-     * It resets the position of the cursor and the clip path
-     * as soon as the user's mouse leaves the image.
-     */
-    const resetCursorAndClipPath = () => {
-      clipPathIsMoving.value = false;
-      cursorElement.value!.style.transform = '';
-      clipPathElement.value!.style.clipPath = `circle(20% at 0 50%)`;
-    };
-
-    // Add mousemove and mouseleave event listeners
-    useEventListener(maskBoxElement, 'mousemove', moveCursorAndClipPath);
-    useEventListener(maskBoxElement, 'mouseleave', resetCursorAndClipPath);
 
     return {
       fullName,
       normalImageSrcSet,
       actionImageSrcSet,
-      maskBoxElement,
-      cursorElement,
+      cursorElements,
+      initClipPath,
       clipPathElement,
       clipPathIsMoving,
+      clipPathStartMoving,
+      handleDiscoverEffect,
     };
   },
 });

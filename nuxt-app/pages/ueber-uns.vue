@@ -1,6 +1,6 @@
 <template>
   <div v-if="aboutPage && members">
-    <section class="relative">
+    <section class="relative overflow-hidden md:overflow-unset">
       <!-- Page cover -->
       <PageCoverImage :cover-image="aboutPage.cover_image" />
       <div
@@ -37,7 +37,7 @@
             class="md:w-2/5 mt-20"
             :class="index % 2 === 0 ? 'md:mt-32' : 'md:mt-60'"
           >
-            <MemberCard :member="member" />
+            <MemberCard :member="member" :color="memberColors[index % 3]" />
           </li>
         </ul>
       </div>
@@ -59,7 +59,7 @@
               index % 2 === 0 ? 'md:mt-32' : 'md:mt-72',
             ]"
           >
-            <MemberCard :member="member" />
+            <MemberCard :member="member" :color="memberColors[index % 3]" />
           </li>
         </ul>
       </div>
@@ -110,6 +110,7 @@ export default defineComponent({
       podcastCrewMembers,
       behindTheScenesMembers,
       breadcrumbs: [{ label: 'Über uns' }],
+      memberColors: ['pink', 'blue', 'lime'] as const,
     };
   },
   head: {},
