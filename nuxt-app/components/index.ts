@@ -15,6 +15,7 @@ export { default as MeetupCover } from './MeetupCover.vue';
 export { default as MeetupStartAndEnd } from './MeetupStartAndEnd.vue';
 export { default as MemberCard } from './MemberCard.vue';
 export { default as MouseCursor } from './MouseCursor.vue';
+export { default as NewsTicker } from './NewsTicker.vue';
 export { default as PageCoverImage } from './PageCoverImage.vue';
 export { default as PickOfTheDayCard } from './PickOfTheDayCard.vue';
 export { default as PickOfTheDayList } from './PickOfTheDayList.vue';
