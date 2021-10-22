@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen relative">
+  <div class="min-h-screen relative overflow-hidden md:overflow-unset">
     <div
       class="
         container
@@ -25,10 +25,9 @@
       <!-- Search results -->
       <ul class="mt-12 md:mt-16 lg:mt-28">
         <li
-          v-for="(item, index) of searchResults"
+          v-for="item of searchResults"
           :key="item.itemType + item.id"
           class="
-            search-item
             border-b-1
             last:border-b-0
             border-white border-opacity-70
@@ -39,9 +38,10 @@
             lg:mb-24
             last:mb-0
           "
-          :style="`animation-delay: ${index * 0.2}s;`"
         >
-          <SearchCard :item="item" />
+          <FadeAnimation fade-in="from_right">
+            <SearchCard :item="item" />
+          </FadeAnimation>
         </li>
       </ul>
     </div>
@@ -63,12 +63,18 @@ import {
   StrapiPickOfTheDay,
   StrapiSpeaker,
 } from 'shared-code';
-import { Breadcrumbs, SearchCard, SectionHeading } from '../components';
+import {
+  Breadcrumbs,
+  FadeAnimation,
+  SearchCard,
+  SectionHeading,
+} from '../components';
 import { useStrapi } from '../composables';
 
 export default defineComponent({
   components: {
     Breadcrumbs,
+    FadeAnimation,
     SearchCard,
     SectionHeading,
   },
@@ -207,19 +213,3 @@ export default defineComponent({
   head: {},
 });
 </script>
-
-<style scoped>
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateX(10%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-.search-item {
-  animation: fade-in 0.5s ease both;
-}
-</style>
