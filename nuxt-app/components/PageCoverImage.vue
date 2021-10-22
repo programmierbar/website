@@ -13,7 +13,7 @@
         :alt="coverImage.alternativeText || ''"
       />
     </div>
-    <ScrollDownMouse class="relative -top-9 lg:-top-14" />
+    <ScrollDownMouse />
   </div>
 </template>
 
