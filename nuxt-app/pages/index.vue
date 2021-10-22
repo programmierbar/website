@@ -1,6 +1,19 @@
 <template>
   <div v-if="homePage">
-    <section class="container px-6 lg:px-8 mt-28 md:mt-40">
+    <section
+      class="
+        container
+        px-6
+        lg:px-8
+        pt-32
+        md:pt-40
+        lg:pt-56
+        2xl:pt-64
+        pb-24
+        md:pb-32
+        lg:pb-52
+      "
+    >
       <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
       <!-- Page intro -->
@@ -27,15 +40,15 @@
           {{ homePage.intro_text }}
         </TypedText>
       </h1>
-
-      <!-- Scroll down mouse -->
-      <ScrollDownMouse class="relative top-16 lg:top-20" />
     </section>
 
-    <section class="mt-16 md:mt-10">
+    <section>
+      <!-- Scroll down mouse -->
+      <ScrollDownMouse />
+
       <!-- Video -->
       <video
-        class="w-full min-h-80 max-h- object-cover"
+        class="w-full min-h-80 object-cover"
         :src="homePage.video.url"
         :alt="homePage.video.alternativeText"
         autoplay="true"
@@ -44,19 +57,7 @@
       />
 
       <!-- Newsticker -->
-      <div
-        class="h-20 lg:h-36 flex items-center bg-lime overflow-hidden"
-        data-cursor-black
-      >
-        <p class="news-ticker text-xl lg:text-4xl italic whitespace-nowrap">
-          <span v-for="item in 2" :key="item">
-            <span v-for="newsItem in news" :key="newsItem">
-              {{ newsItem }}
-              <span class="font-black mx-5">+++</span>
-            </span>
-          </span>
-        </p>
-      </div>
+      <NewsTicker :markdown="homePage.news" />
     </section>
 
     <!-- Podcasts -->
@@ -73,9 +74,10 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent } from '@nuxtjs/composition-api';
+import { defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
+  NewsTicker,
   PodcastCarousel,
   SectionHeading,
   ScrollDownMouse,
@@ -86,6 +88,7 @@ import { useStrapi, usePageMeta } from '../composables';
 export default defineComponent({
   components: {
     Breadcrumbs,
+    NewsTicker,
     PodcastCarousel,
     SectionHeading,
     ScrollDownMouse,
@@ -98,34 +101,11 @@ export default defineComponent({
     // Set page meta data
     usePageMeta(homePage);
 
-    // Create news list
-    const news = computed(() =>
-      homePage.value?.news
-        ?.replace(/(^- |\n- )/g, '|')
-        .split('|')
-        .slice(1)
-    );
-
     return {
       homePage,
-      news,
       breadcrumbs: [{ label: 'Home' }],
     };
   },
   head: {},
 });
 </script>
-
-<style scoped>
-@keyframes news-ticker {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-.news-ticker {
-  animation: news-ticker 30s linear infinite;
-}
-</style>
