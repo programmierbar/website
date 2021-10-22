@@ -6,7 +6,8 @@ import {
 } from '@nuxtjs/composition-api';
 
 /**
- * Composable for observing an HTML element with a mutation observer.
+ * Composable for observing DOM changes of an
+ * HTML element with a mutation observer.
  *
  * @param target The observation target.
  * @param listener The observation listener.
@@ -15,7 +16,7 @@ import {
 export function useMutationObserver<T extends HTMLElement>(
   target: Ref<T | undefined | null>,
   listener: MutationCallback,
-  options: MutationObserverInit | undefined
+  options?: MutationObserverInit | undefined
 ) {
   let mutationObserver: MutationObserver;
 
