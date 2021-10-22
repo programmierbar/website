@@ -4,6 +4,7 @@ export * from './useClipboard';
 export * from './useDocument';
 export * from './useEventListener';
 export * from './useImageSrcSet';
+export * from './useIntersectionObserver';
 export * from './useMediaQuery';
 export * from './useMotionParallax';
 export * from './useMutationObserver';
