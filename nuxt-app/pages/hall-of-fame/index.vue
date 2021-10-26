@@ -43,7 +43,7 @@
       </p>
 
       <!-- Speaker bubbles -->
-      <ul
+      <LazyList
         class="
           flex flex-col
           items-baseline
@@ -53,32 +53,41 @@
           lg:mt-44
           xl:mt-60
         "
+        :items="speakers"
+        direction="vertical"
       >
-        <li
-          v-for="(speaker, index) of speakers"
-          :key="speaker.id"
-          :class="[
-            index > 0 && 'mt-10',
-            index % 2
-              ? 'self-end xs:-mt-10 sm:-mt-20 xl:-mt-32 2xl:-mt-60'
-              : 'xs:-mt-5 sm:-mt-10',
-          ]"
-        >
-          <SpeakerBubble :speaker="speaker" :color="bubbleColors[index % 3]" />
-        </li>
-      </ul>
+        <template #default="{ item, index }">
+          <li
+            :key="item.id"
+            :class="[
+              index > 0 && 'mt-10',
+              index % 2
+                ? 'self-end xs:-mt-10 sm:-mt-20 xl:-mt-32 2xl:-mt-60'
+                : 'xs:-mt-5 sm:-mt-10',
+            ]"
+          >
+            <SpeakerBubble :speaker="item" :color="bubbleColors[index % 3]" />
+          </li>
+        </template>
+      </LazyList>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref } from '@nuxtjs/composition-api';
-import { Breadcrumbs, SectionHeading, SpeakerBubble } from '../../components';
+import {
+  Breadcrumbs,
+  LazyList,
+  SectionHeading,
+  SpeakerBubble,
+} from '../../components';
 import { useStrapi, usePageMeta } from '../../composables';
 
 export default defineComponent({
   components: {
     Breadcrumbs,
+    LazyList,
     SectionHeading,
     SpeakerBubble,
   },

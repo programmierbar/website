@@ -23,27 +23,30 @@
       </SectionHeading>
 
       <!-- Search results -->
-      <ul class="mt-12 md:mt-16 lg:mt-28">
-        <li
-          v-for="item of searchResults"
-          :key="item.itemType + item.id"
-          class="
-            border-b-1
-            last:border-b-0
-            border-white border-opacity-70
-            pb-9
-            lg:pb-24
-            last:pb-0
-            mb-10
-            lg:mb-24
-            last:mb-0
-          "
-        >
-          <FadeAnimation fade-in="from_right">
-            <SearchCard :item="item" />
-          </FadeAnimation>
-        </li>
-      </ul>
+      <LazyList
+        class="mt-12 md:mt-16 lg:mt-28"
+        :items="searchResults"
+        direction="vertical"
+      >
+        <template #default="{ item, index }">
+          <li
+            :key="item.itemType + item.id"
+            class="
+              border-b-1
+              last:border-b-0
+              border-white border-opacity-70
+              pb-9
+              lg:pb-24
+              last:pb-0
+            "
+            :class="index > 0 && 'mt-10 lg:mt-24'"
+          >
+            <FadeAnimation fade-in="from_right">
+              <SearchCard :item="item" />
+            </FadeAnimation>
+          </li>
+        </template>
+      </LazyList>
     </div>
   </div>
 </template>
@@ -66,6 +69,7 @@ import {
 import {
   Breadcrumbs,
   FadeAnimation,
+  LazyList,
   SearchCard,
   SectionHeading,
 } from '../components';
@@ -75,6 +79,7 @@ export default defineComponent({
   components: {
     Breadcrumbs,
     FadeAnimation,
+    LazyList,
     SearchCard,
     SectionHeading,
   },

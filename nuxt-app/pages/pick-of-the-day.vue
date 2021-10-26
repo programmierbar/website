@@ -40,45 +40,50 @@
       </p>
 
       <!-- Picks of the day -->
-      <div class="mt-20 md:mt-32 lg:mt-40">
-        <ul
-          class="
-            flex flex-wrap
-            items-center
-            justify-between
-            -my-8
-            md:-my-12
-            lg:-my-24
-          "
-        >
+      <LazyList
+        class="lg:flex lg:flex-col lg:items-baseline mt-20 md:mt-32 lg:mt-40"
+        :items="picksOfTheDay"
+        direction="vertical"
+      >
+        <template #default="{ item, index }">
           <li
-            v-for="(pickOfTheDay, index) of picksOfTheDay"
-            :key="pickOfTheDay.id"
-            class="group w-full h-full lg:w-1/2 my-8 md:my-12 lg:my-24"
+            :key="item.id"
+            class="lg:w-1/2"
             :class="[
-              (index + 3) % 4 < 2 ? 'lg:scale-70' : 'lg:scale-110',
-              index % 2 ? 'lg:origin-right' : 'lg:origin-left',
+              index > 0 && 'mt-8 md:mt-12',
+              index > 0 && index % 2 === 0 && 'lg:mt-44',
+              index % 2 > 0 && 'lg:self-end lg:-mt-2/7',
             ]"
           >
             <PickOfTheDayCard
-              :pick-of-the-day="pickOfTheDay"
+              :class="[
+                index % 2 === 0 ? 'lg:origin-left' : 'lg:origin-right',
+                (index + 3) % 4 < 2 ? 'lg:scale-70' : 'lg:scale-110',
+              ]"
+              :pick-of-the-day="item"
               :variant="(index + 3) % 4 < 2 ? 'small' : 'large'"
             />
           </li>
-        </ul>
-      </div>
+        </template>
+      </LazyList>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref } from '@nuxtjs/composition-api';
-import { Breadcrumbs, PickOfTheDayCard, SectionHeading } from '../components';
+import {
+  Breadcrumbs,
+  LazyList,
+  PickOfTheDayCard,
+  SectionHeading,
+} from '../components';
 import { useStrapi, usePageMeta } from '../composables';
 
 export default defineComponent({
   components: {
     Breadcrumbs,
+    LazyList,
     PickOfTheDayCard,
     SectionHeading,
   },

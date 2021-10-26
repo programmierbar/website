@@ -72,11 +72,13 @@
         <SectionHeading element="h2">
           {{ meetupPage.meetups_heading }}
         </SectionHeading>
-        <ul class="space-y-14 md:space-y-20 lg:space-y-28 mt-10">
-          <li v-for="meetup of meetups" :key="meetup.id">
-            <MeetupCard :meetup="meetup" />
-          </li>
-        </ul>
+        <LazyList class="mt-10" :items="meetups" direction="vertical">
+          <template #default="{ item, index }">
+            <li :key="item.id" :class="index > 0 && 'mt-14 md:mt-20 lg:mt-28'">
+              <MeetupCard :meetup="item" />
+            </li>
+          </template>
+        </LazyList>
       </div>
     </section>
   </div>
@@ -86,6 +88,7 @@
 import { defineComponent, ref } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
+  LazyList,
   MarkdownToHtml,
   MeetupCard,
   PageCoverImage,
@@ -96,6 +99,7 @@ import { useStrapi, usePageMeta } from '../../composables';
 export default defineComponent({
   components: {
     Breadcrumbs,
+    LazyList,
     MarkdownToHtml,
     MeetupCard,
     PageCoverImage,
