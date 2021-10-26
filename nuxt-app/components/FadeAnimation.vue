@@ -82,7 +82,7 @@ export default defineComponent({
       fadeElement,
       handleIntersection,
       {
-        threshold: 0.5,
+        threshold: 0.25,
       }
     );
 
