@@ -15,8 +15,10 @@
       class="news-ticker text-xl lg:text-4xl italic whitespace-nowrap"
       :style="style"
     >
-      <span v-for="item in 4" :key="item">
-        <span v-for="newsItem in news" :key="newsItem"
+      <span v-for="occurrence in 4" :key="occurrence">
+        <span
+          v-for="(newsItem, index) in news"
+          :key="occurrence + newsItem + index"
           >{{ newsItem }}<span class="font-black mx-5">+++</span></span
         >
       </span>
