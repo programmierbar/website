@@ -7,6 +7,7 @@ export { default as FeedbackSection } from './FeedbackSection.vue';
 export { default as Footer } from './Footer.vue';
 export { default as GoogleMaps } from './GoogleMaps.vue';
 export { default as Header } from './Header.vue';
+export { default as LazyList } from './LazyList.vue';
 export { default as LikeButton } from './LikeButton.vue';
 export { default as LinkButton } from './LinkButton.vue';
 export { default as MarkdownToHtml } from './MarkdownToHtml.vue';
