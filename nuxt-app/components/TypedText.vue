@@ -1,48 +1,46 @@
 <template>
-  <span ref="typedTextElement" class="text-transparent">
-    <slot />
-  </span>
+  <span
+    ><span
+      v-for="(char, index) of charList"
+      :key="char + index"
+      class="typed-char"
+      :style="{ animationDelay: `${index * 0.06}s` }"
+      >{{ char }}</span
+    ></span
+  >
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from '@nuxtjs/composition-api';
+import { computed, defineComponent } from '@nuxtjs/composition-api';
 
 export default defineComponent({
-  setup() {
-    // Create typed text element reference
-    const typedTextElement = ref<HTMLSpanElement>();
+  props: {
+    text: {
+      type: String,
+      required: true,
+    },
+  },
+  setup(props) {
+    // Create char list of text
+    const charList = computed(() => [...props.text]);
 
-    // Start typing animation when component has been mounted
-    onMounted(() => {
-      // Create necessary variables
-      let addedText = '';
-      let remainingText = typedTextElement.value!.innerText;
-      let currentIndex = 0;
-      const lastIndex = remainingText.length - 1;
-
-      /**
-       * It types the next letter of the typed text animation.
-       */
-      const typeNextLetter = () => {
-        if (currentIndex <= lastIndex) {
-          addedText +=
-            '<span class="text-white">' + remainingText.charAt(0) + '</span>';
-          remainingText = remainingText.substring(1);
-          typedTextElement.value!.innerHTML = addedText + remainingText;
-
-          // Increase current index by 1
-          currentIndex += 1;
-
-          // Repeat function with delay until last letter has been reached
-          setTimeout(typeNextLetter, 50);
-        }
-      };
-
-      // Start typing first letter
-      typeNextLetter();
-    });
-
-    return { typedTextElement };
+    return {
+      charList,
+    };
   },
 });
 </script>
+
+<style scoped>
+@keyframes type-char {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.typed-char {
+  animation: type-char both;
+}
+</style>

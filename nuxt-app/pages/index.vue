@@ -36,9 +36,7 @@
           :src="require('~/assets/images/brand-logo.svg')"
           alt="programier.bar Logo"
         />:
-        <TypedText>
-          {{ homePage.intro_text }}
-        </TypedText>
+        <TypedText :text="homePage.intro_text" />
       </h1>
     </section>
 
