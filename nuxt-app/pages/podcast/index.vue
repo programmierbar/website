@@ -53,7 +53,7 @@
       <TagFilter
         class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 mt-8 md:mt-20 lg:mt-32"
         :tags="tagFilter.tags"
-        :toggle-element="tagFilter.toggleTag"
+        :toggle-tag="tagFilter.toggleTag"
       />
 
       <!-- Deep dive podcasts -->
