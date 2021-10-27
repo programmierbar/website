@@ -6,7 +6,7 @@
       />
       <img
         ref="imageElement"
-        class="w-full h-full relative object-cover"
+        class="w-full h-full relative -z-1 object-cover"
         :src="coverImage.url"
         :srcset="coverSrcSet"
         sizes="100vw"
