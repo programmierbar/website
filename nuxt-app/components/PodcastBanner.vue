@@ -169,10 +169,10 @@
         class="
           w-52
           md:w-96
-          lg:w-120
+          lg:w-112
           h-52
           md:h-96
-          lg:h-120
+          lg:h-112
           absolute
           right-0
           bottom-0
