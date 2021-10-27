@@ -9,7 +9,7 @@
         <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
         <!-- Page intro -->
-        <SectionHeading class="mt-8 md:mt-0" element="h1">
+        <SectionHeading class="md:pt-96 lg:pt-120 mt-8 md:mt-0" element="h1">
           {{ aboutPage.podcast_crew_heading }}
         </SectionHeading>
         <p
@@ -46,7 +46,7 @@
     <!-- Behind the scenes members -->
     <section class="relative mb-20 md:mb-40 lg:mb-60">
       <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
-        <SectionHeading class="mt-20 md:mt-0" element="h2">
+        <SectionHeading class="md:pt-32 mt-20 md:mt-0" element="h2">
           {{ aboutPage.behind_the_scenes_heading }}
         </SectionHeading>
         <ul class="flex justify-between flex-wrap">

@@ -61,7 +61,7 @@
     <!-- Podcasts -->
     <section
       v-if="homePage.podcasts.length"
-      class="relative py-16 md:py-40 lg:py-60"
+      class="relative py-16 md:py-28 lg:py-36 md:my-14 lg:my-24"
     >
       <SectionHeading class="px-6 md:px-0" element="h2">
         {{ homePage.podcast_heading }}

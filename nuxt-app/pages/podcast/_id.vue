@@ -1,80 +1,82 @@
 <template>
   <div v-if="podcast">
-    <article class="relative">
+    <article>
       <!-- Banner -->
       <PodcastBanner :podcast="podcast" />
 
-      <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
-        <div class="flex items-center justify-between space-x-4 mt-8 md:mt-14">
-          <Breadcrumbs :breadcrumbs="breadcrumbs" />
-          <LikeButton />
+      <div class="relative mt-8 md:mt-14">
+        <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
+          <div class="flex items-center justify-between space-x-4">
+            <Breadcrumbs :breadcrumbs="breadcrumbs" />
+            <LikeButton />
+          </div>
+
+          <SectionHeading class="mt-8 md:mt-0" element="h2">
+            Shownotes
+          </SectionHeading>
+
+          <!-- Description -->
+          <MarkdownToHtml
+            class="
+              text-base
+              md:text-xl
+              lg:text-2xl
+              text-white
+              font-light
+              leading-normal
+              space-y-8
+              mt-8
+              md:mt-14
+            "
+            :markdown="podcast.description"
+          />
+
+          <!-- Podcast tags -->
+          <TagList
+            v-if="podcast.tags.length"
+            class="mt-10 md:mt-14"
+            :tags="podcast.tags"
+            :on-click="() => null"
+          />
+
+          <!-- Pocast download and platform links -->
+          <ul class="flex items-center space-x-4 mt-12 md:mt-14">
+            <li>
+              <a
+                class="
+                  block
+                  border-lime border-3
+                  md:border-4
+                  rounded-full
+                  text-sm
+                  md:text-base
+                  lg:text-lg
+                  text-lime
+                  font-black
+                  tracking-widest
+                  uppercase
+                  px-4
+                  md:px-8
+                  pt-1
+                  pb-0.5
+                "
+                download=""
+                data-cursor-hover
+              >
+                Download
+              </a>
+            </li>
+            <li v-for="platform of platforms" :key="platform.name">
+              <a
+                class="h-8 md:h-10 lg:h-12 block"
+                :href="platform.url"
+                target="_blank"
+                data-cursor-hover
+                v-html="require(`../../assets/logos/${platform.icon}?raw`)"
+              />
+            </li>
+          </ul>
         </div>
-
-        <SectionHeading class="mt-8 md:mt-0" element="h2"
-          >Shownotes</SectionHeading
-        >
-
-        <!-- Description -->
-        <MarkdownToHtml
-          class="
-            text-base
-            md:text-xl
-            lg:text-2xl
-            text-white
-            font-light
-            leading-normal
-            space-y-8
-            mt-8
-            md:mt-14
-          "
-          :markdown="podcast.description"
-        />
-
-        <!-- Podcast tags -->
-        <TagList
-          v-if="podcast.tags.length"
-          class="mt-10 md:mt-14"
-          :tags="podcast.tags"
-          :on-click="() => null"
-        />
-
-        <!-- Pocast download and platform links -->
-        <ul class="flex items-center space-x-4 mt-12 md:mt-14">
-          <li>
-            <a
-              class="
-                block
-                border-lime border-3
-                md:border-4
-                rounded-full
-                text-sm
-                md:text-base
-                lg:text-lg
-                text-lime
-                font-black
-                tracking-widest
-                uppercase
-                px-4
-                md:px-8
-                pt-1
-                pb-0.5
-              "
-              download=""
-              data-cursor-hover
-            >
-              Download
-            </a>
-          </li>
-          <li v-for="platform of platforms" :key="platform.name">
-            <a
-              class="h-8 md:h-10 lg:h-12 block"
-              :href="platform.url"
-              target="_blank"
-              data-cursor-hover
-              v-html="require(`../../assets/logos/${platform.icon}?raw`)"
-            />
-          </li>
-        </ul>
       </div>
     </article>
 

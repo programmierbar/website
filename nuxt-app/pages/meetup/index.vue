@@ -9,7 +9,7 @@
         <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
         <!-- Page intro -->
-        <SectionHeading class="mt-8 md:mt-0" element="h1">
+        <SectionHeading class="md:pt-96 lg:pt-120 mt-8 md:mt-0" element="h1">
           {{ meetupPage.intro_heading }}
         </SectionHeading>
         <MarkdownToHtml

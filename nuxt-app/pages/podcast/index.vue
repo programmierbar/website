@@ -9,7 +9,7 @@
         <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
         <!-- Page intro -->
-        <SectionHeading class="mt-8 md:mt-0" element="h1">
+        <SectionHeading class="md:pt-96 lg:pt-120 mt-8 md:mt-0" element="h1">
           {{ podcastPage.intro_heading }}
         </SectionHeading>
         <p
@@ -59,7 +59,16 @@
       <!-- Deep dive podcasts -->
       <section
         v-if="deepDivePodcasts.length"
-        class="relative md:pl-40 3xl:px-0 py-8 md:py-20 lg:py-32"
+        class="
+          relative
+          md:pl-40
+          3xl:px-0
+          py-8
+          md:py-10
+          lg:py-16
+          md:my-12
+          lg:my-16
+        "
       >
         <SectionHeading class="px-6 md:px-0" element="h2">
           {{ podcastPage.deep_dive_heading }}
@@ -70,7 +79,16 @@
       <!-- CTO special podcasts -->
       <section
         v-if="ctoSpecialPodcasts.length"
-        class="relative md:pl-40 3xl:px-0 py-8 md:py-20 lg:py-32"
+        class="
+          relative
+          md:pl-40
+          3xl:px-0
+          py-8
+          md:py-10
+          lg:py-16
+          md:my-12
+          lg:my-16
+        "
       >
         <SectionHeading class="px-6 md:px-0" element="h2">
           {{ podcastPage.cto_special_heading }}
@@ -86,11 +104,13 @@
           md:pl-40
           3xl:px-0
           py-8
-          md:py-20
-          lg:py-32
+          md:py-10
+          lg:py-16
+          md:mt-12
+          lg:mt-16
           mb-8
-          md:mb-20
-          lg:mb-32
+          md:mb-28
+          lg:mb-40
         "
       >
         <SectionHeading class="px-6 md:px-0" element="h2">

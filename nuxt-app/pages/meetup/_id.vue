@@ -57,7 +57,7 @@
         />
 
         <!-- Heading and description -->
-        <SectionHeading class="hidden md:flex" element="h2">
+        <SectionHeading class="hidden md:block" element="h2">
           Meetup Infos
         </SectionHeading>
         <MarkdownToHtml
