@@ -114,6 +114,8 @@ module.exports = {
         160: '40rem',
         192: '48rem',
         '2/7': '28%',
+        '2/5-screen': '40vh',
+        '1/2-screen': '50vh',
       },
       translate: {
         '3/20': '15%',
