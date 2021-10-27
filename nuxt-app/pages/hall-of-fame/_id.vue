@@ -159,11 +159,18 @@
         />
 
         <!-- Speaker tags -->
+        <!-- TODO: Replace router.push() with <a> element -->
         <TagList
           v-if="speaker.tags.length"
           class="mt-10 md:mt-14"
           :tags="speaker.tags"
-          :on-click="() => null"
+          :on-click="
+            (tag) =>
+              router.push({
+                path: '/suche',
+                query: { search: tag.name },
+              })
+          "
         />
       </div>
     </article>
@@ -224,6 +231,7 @@ import {
   defineComponent,
   useMeta,
   useRoute,
+  useRouter,
 } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
@@ -254,6 +262,9 @@ export default defineComponent({
     SectionHeading,
   },
   setup() {
+    // Add router
+    const router = useRouter();
+
     // Get route and speaker ID param
     const route = useRoute();
     const speakerIdPath = computed(() => `/${route.value.params.id}` as const);
@@ -342,6 +353,7 @@ export default defineComponent({
     );
 
     return {
+      router,
       color,
       speaker,
       breadcrumbs,

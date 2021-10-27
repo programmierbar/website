@@ -150,12 +150,19 @@
               "
             >
               <!-- Tags -->
+              <!-- TODO: Replace router.push() with <a> element -->
               <TagList
                 v-if="pickOfTheDay.tags.length"
                 class="flex-grow"
                 :tags="pickOfTheDay.tags"
                 variant="pick_of_the_day_card"
-                :on-click="() => null"
+                :on-click="
+                  (tag) =>
+                    router.push({
+                      path: '/suche',
+                      query: { search: tag.name },
+                    })
+                "
               />
 
               <!-- Likes -->
@@ -169,7 +176,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from '@nuxtjs/composition-api';
+import { defineComponent, PropType, useRouter } from '@nuxtjs/composition-api';
 import { StrapiPickOfTheDay } from 'shared-code';
 import { useImageSrcSet } from '../composables';
 import LikeButton from './LikeButton.vue';
@@ -193,10 +200,16 @@ export default defineComponent({
     },
   },
   setup(props) {
+    // Add router
+    const router = useRouter();
+
     // Create normal image src set
     const imageSrcSet = useImageSrcSet(props.pickOfTheDay.image);
 
-    return { imageSrcSet };
+    return {
+      router,
+      imageSrcSet,
+    };
   },
 });
 </script>

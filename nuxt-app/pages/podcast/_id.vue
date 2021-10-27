@@ -32,11 +32,18 @@
           />
 
           <!-- Podcast tags -->
+          <!-- TODO: Replace router.push() with <a> element -->
           <TagList
             v-if="podcast.tags.length"
             class="mt-10 md:mt-14"
             :tags="podcast.tags"
-            :on-click="() => null"
+            :on-click="
+              (tag) =>
+                router.push({
+                  path: '/suche',
+                  query: { search: tag.name },
+                })
+            "
           />
 
           <!-- Pocast download and platform links -->
@@ -134,6 +141,7 @@ import {
   defineComponent,
   useMeta,
   useRoute,
+  useRouter,
 } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
@@ -170,6 +178,9 @@ export default defineComponent({
     TagList,
   },
   setup() {
+    // Add router
+    const router = useRouter();
+
     // Get route and podcast ID param
     const route = useRoute();
     const podcastIdPath = computed(() => `/${route.value.params.id}` as const);
@@ -249,6 +260,7 @@ export default defineComponent({
     const relatedPodcasts = useStrapi('podcasts', relatedPodcastsQuery);
 
     return {
+      router,
       podcast,
       breadcrumbs,
       platforms,

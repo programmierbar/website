@@ -32,7 +32,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from '@nuxtjs/composition-api';
-import { StrapiTag } from '~/../shared-code/lib';
+import { StrapiTag } from 'shared-code';
 
 interface Tag extends StrapiTag {
   isActive?: boolean;
