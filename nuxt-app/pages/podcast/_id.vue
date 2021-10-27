@@ -49,29 +49,7 @@
           <!-- Pocast download and platform links -->
           <ul class="flex items-center space-x-4 mt-12 md:mt-14">
             <li>
-              <a
-                class="
-                  block
-                  border-lime border-3
-                  md:border-4
-                  rounded-full
-                  text-sm
-                  md:text-base
-                  lg:text-lg
-                  text-lime
-                  font-black
-                  tracking-widest
-                  uppercase
-                  px-4
-                  md:px-8
-                  pt-1
-                  pb-0.5
-                "
-                download=""
-                data-cursor-hover
-              >
-                Download
-              </a>
+              <PodcastDownload :podcast="podcast" />
             </li>
             <li v-for="platform of platforms" :key="platform.name">
               <a
@@ -152,6 +130,7 @@ import {
   PickOfTheDayList,
   PodcastBanner,
   PodcastCarousel,
+  PodcastDownload,
   SectionHeading,
   SpeakerList,
   TagList,
@@ -173,6 +152,7 @@ export default defineComponent({
     PickOfTheDayList,
     PodcastBanner,
     PodcastCarousel,
+    PodcastDownload,
     SectionHeading,
     SpeakerList,
     TagList,
