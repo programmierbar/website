@@ -1,5 +1,5 @@
 <template>
-  <div class="relative" data-cursor-black>
+  <div class="group relative" data-cursor-black>
     <!-- 16:9 aspect ratio -->
     <div class="w-full relative overflow-hidden" style="padding-top: 56.25%">
       <div class="w-full h-full absolute top-0 left-0 bg-white">
