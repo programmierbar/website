@@ -55,7 +55,6 @@
 import {
   computed,
   defineComponent,
-  ref,
   Ref,
   useMeta,
   useRoute,
@@ -88,10 +87,10 @@ export default defineComponent({
     const route = useRoute();
 
     // Query podcasts, meetups, picks of the day and speakers from strapi
-    const podcasts = useStrapi('podcasts', ref('?_limit=-1'));
-    const meetups = useStrapi('meetups', ref('?_limit=-1'));
-    const picksOfTheDay = useStrapi('picks-of-the-day', ref('?_limit=-1'));
-    const speakers = useStrapi('speakers', ref('?_limit=-1'));
+    const podcasts = useStrapi('podcasts', '?_limit=-1');
+    const meetups = useStrapi('meetups', '?_limit=-1');
+    const picksOfTheDay = useStrapi('picks-of-the-day', '?_limit=-1');
+    const speakers = useStrapi('speakers', '?_limit=-1');
 
     /**
      * It filters the list by the keys and search crumbs.

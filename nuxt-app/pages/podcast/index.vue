@@ -126,7 +126,7 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, ref } from '@nuxtjs/composition-api';
+import { computed, defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   PageCoverImage,
@@ -147,7 +147,7 @@ export default defineComponent({
   setup() {
     // Query Strapi about page and members
     const podcastPage = useStrapi('podcast-page');
-    const podcasts = useStrapi('podcasts', ref('?_limit=-1'));
+    const podcasts = useStrapi('podcasts', '?_limit=-1');
 
     // Set page meta data
     usePageMeta(podcastPage);

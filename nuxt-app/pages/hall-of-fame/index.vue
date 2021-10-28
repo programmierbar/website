@@ -75,7 +75,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from '@nuxtjs/composition-api';
+import { defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   LazyList,
@@ -94,7 +94,7 @@ export default defineComponent({
   setup() {
     // Query Strapi hall of fame page and speakers
     const hallOfFamePage = useStrapi('hall-of-fame-page');
-    const speakers = useStrapi('speakers', ref('?_limit=-1'));
+    const speakers = useStrapi('speakers', '?_limit=-1');
 
     // Set page meta data
     usePageMeta(hallOfFamePage);

@@ -88,7 +88,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from '@nuxtjs/composition-api';
+import { defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   LazyList,
@@ -111,7 +111,7 @@ export default defineComponent({
   setup() {
     // Query Strapi about page and members
     const meetupPage = useStrapi('meetup-page');
-    const meetups = useStrapi('meetups', ref('?_limit=-1'));
+    const meetups = useStrapi('meetups', '?_limit=-1');
 
     // Set page meta data
     usePageMeta(meetupPage);

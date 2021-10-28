@@ -71,7 +71,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from '@nuxtjs/composition-api';
+import { defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   LazyList,
@@ -90,7 +90,7 @@ export default defineComponent({
   setup() {
     // Query Strapi pick of the day page and picks of the day
     const pickOfTheDayPage = useStrapi('pick-of-the-day-page');
-    const picksOfTheDay = useStrapi('picks-of-the-day', ref('?_limit=-1'));
+    const picksOfTheDay = useStrapi('picks-of-the-day', '?_limit=-1');
 
     // Set page meta data
     usePageMeta(pickOfTheDayPage);
