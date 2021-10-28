@@ -196,8 +196,13 @@
             is-active
           />
         </div>
-        <div class="flex justify-center mt-12 md:mt-16 lg:mt-20">
-          <LinkButton href="/podcast"> Alle 200 Podcast-Folgen </LinkButton>
+        <div
+          v-if="podcastCountString"
+          class="flex justify-center mt-12 md:mt-16 lg:mt-20"
+        >
+          <LinkButton href="/podcast">
+            Alle {{ podcastCountString }} Podcast-Folgen
+          </LinkButton>
         </div>
       </div>
       <PodcastCarousel
@@ -210,9 +215,12 @@
         class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 mt-20 md:mt-32 lg:mt-40"
       >
         <PickOfTheDayList :picks-of-the-day="speaker.picks_of_the_day" />
-        <div class="flex justify-center mt-12 md:mt-16 lg:mt-20">
+        <div
+          v-if="pickOfTheDayCountString"
+          class="flex justify-center mt-12 md:mt-16 lg:mt-20"
+        >
           <LinkButton href="/pick-of-the-day">
-            Alle 200 Picks of the Day
+            Alle {{ pickOfTheDayCountString }} Picks of the Day
           </LinkButton>
         </div>
       </div>
@@ -245,7 +253,7 @@ import {
   TagList,
   SectionHeading,
 } from '../../components';
-import { useStrapi, useImageSrcSet } from '../../composables';
+import { useStrapi, useLocaleString, useImageSrcSet } from '../../composables';
 import { getTrimmedString } from '../../helpers';
 
 export default defineComponent({
@@ -271,6 +279,14 @@ export default defineComponent({
 
     // Query Strapi speaker
     const speaker = useStrapi('speakers', speakerIdPath);
+
+    // Query Strapi podcast and pick of the day count
+    const podcastCount = useStrapi('podcasts', '/count');
+    const pickOfTheDayCount = useStrapi('picks-of-the-day', '/count');
+
+    // Convert number to local string
+    const podcastCountString = useLocaleString(podcastCount);
+    const pickOfTheDayCountString = useLocaleString(pickOfTheDayCount);
 
     // Get color from search param
     const color = computed(
@@ -356,6 +372,8 @@ export default defineComponent({
       router,
       color,
       speaker,
+      podcastCountString,
+      pickOfTheDayCountString,
       breadcrumbs,
       fullName,
       profileImageSrcSet,

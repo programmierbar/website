@@ -75,9 +75,12 @@
           class="mt-12 md:mt-0"
           :picks-of-the-day="podcast.picks_of_the_day"
         />
-        <div class="flex justify-center mt-12 md:mt-16 lg:mt-20">
+        <div
+          v-if="pickOfTheDayCountString"
+          class="flex justify-center mt-12 md:mt-16 lg:mt-20"
+        >
           <LinkButton href="/pick-of-the-day">
-            Alle 200 Picks of the Day
+            Alle {{ pickOfTheDayCountString }} Picks of the Day
           </LinkButton>
         </div>
       </div>
@@ -90,8 +93,13 @@
       >
         <SectionHeading element="h2">Speaker Info</SectionHeading>
         <SpeakerList class="mt-12 md:mt-0" :speakers="podcast.speakers" />
-        <div class="flex justify-center mt-12 md:mt-20 lg:mt-28">
-          <LinkButton href="/hall-of-fame"> Alle 67 Speaker:innen </LinkButton>
+        <div
+          v-if="speakerCountString"
+          class="flex justify-center mt-12 md:mt-20 lg:mt-28"
+        >
+          <LinkButton href="/hall-of-fame">
+            Alle {{ speakerCountString }} Speaker:innen
+          </LinkButton>
         </div>
       </div>
     </section>
@@ -135,7 +143,7 @@ import {
   SpeakerList,
   TagList,
 } from '../../components';
-import { useStrapi } from '../../composables';
+import { useStrapi, useLocaleString } from '../../composables';
 import {
   getPodcastTypeString,
   getTrimmedString,
@@ -167,6 +175,14 @@ export default defineComponent({
 
     // Query Strapi podcast
     const podcast = useStrapi('podcasts', podcastIdPath);
+
+    // Query Strapi pick of the day and speaker count
+    const pickOfTheDayCount = useStrapi('picks-of-the-day', '/count');
+    const speakerCount = useStrapi('speakers', '/count');
+
+    // Convert number to local string
+    const pickOfTheDayCountString = useLocaleString(pickOfTheDayCount);
+    const speakerCountString = useLocaleString(speakerCount);
 
     // Set page meta data
     useMeta(() =>
@@ -242,6 +258,8 @@ export default defineComponent({
     return {
       router,
       podcast,
+      pickOfTheDayCountString,
+      speakerCountString,
       breadcrumbs,
       platforms,
       relatedPodcasts,

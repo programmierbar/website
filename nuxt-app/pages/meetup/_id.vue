@@ -99,8 +99,13 @@
       >
         <SectionHeading element="h2">Speaker Info</SectionHeading>
         <SpeakerList class="mt-12 md:mt-0" :speakers="meetup.speakers" />
-        <div class="flex justify-center mt-12 md:mt-20 lg:mt-28">
-          <LinkButton href="/hall-of-fame"> Alle 67 Speaker:innen </LinkButton>
+        <div
+          v-if="speakerCountString"
+          class="flex justify-center mt-12 md:mt-20 lg:mt-28"
+        >
+          <LinkButton href="/hall-of-fame">
+            Alle {{ speakerCountString }} Speaker:innen
+          </LinkButton>
         </div>
       </div>
     </section>
@@ -143,7 +148,7 @@ import {
   SpeakerList,
   TagList,
 } from '../../components';
-import { useStrapi } from '../../composables';
+import { useStrapi, useLocaleString } from '../../composables';
 import { getTrimmedString } from '../../helpers';
 
 export default defineComponent({
@@ -170,6 +175,10 @@ export default defineComponent({
 
     // Query Strapi meetup
     const meetup = useStrapi('meetups', meetupIdPath);
+
+    // Query Strapi speaker count and convert it to local string
+    const speakerCount = useStrapi('speakers', '/count');
+    const speakerCountString = useLocaleString(speakerCount);
 
     // Set page meta data
     useMeta(() =>
@@ -212,6 +221,7 @@ export default defineComponent({
     return {
       router,
       meetup,
+      speakerCountString,
       breadcrumbs,
       relatedPodcasts,
     };
