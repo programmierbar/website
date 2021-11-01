@@ -1,5 +1,5 @@
 <template>
-  <ul ref="lazyListElement" class="lazy-list" :class="direction" :style="style">
+  <ul ref="lazyListElement" :style="style">
     <slot
       v-for="(renderItem, index) in renderItems"
       :item="renderItem"
@@ -29,6 +29,12 @@ export default defineComponent({
     direction: {
       type: String as PropType<'vertical' | 'horizontal'>,
       required: true,
+    },
+    scrollElement: {
+      type: (typeof window === 'undefined'
+        ? Object
+        : window.HTMLElement) as PropType<HTMLElement | undefined>,
+      default: undefined,
     },
   },
   setup(props) {
@@ -76,17 +82,23 @@ export default defineComponent({
       props.items.slice(firstIndex.value, lastIndex.value + 1)
     );
 
-    // Create list style with padding start and end variable
-    const style = computed(
-      () => `
-      --padding-start: ${
-        paddingStartList.value.reduce((total, size) => total + size, 0) + 'px'
+    // Create list style with padding start and end
+    const style = computed(() => {
+      const paddingStart =
+        paddingStartList.value.reduce((total, size) => total + size, 0) + 'px';
+      const paddingEnd =
+        paddingEndList.value.reduce((total, size) => total + size, 0) + 'px';
+      if (props.direction === 'vertical') {
+        return {
+          paddingTop: paddingStart,
+          paddingBottom: paddingEnd,
+        };
+      }
+      return {
+        paddingLeft: paddingStart,
+        paddingRight: paddingEnd,
       };
-      --padding-end: ${
-        paddingEndList.value.reduce((total, size) => total + size, 0) + 'px'
-      };
-    `
-    );
+    });
 
     /**
      * It adds an element to the start or end of the list.
@@ -150,12 +162,14 @@ export default defineComponent({
      */
     const handleScroll = () => {
       // Destructure window object
-      const { scrollY, innerWidth, innerHeight } = window;
-      const { scrollLeft } = lazyListElement.value!;
+      const { scrollX, scrollY, innerWidth, innerHeight } = window;
+      const { scrollTop, scrollLeft } = props.scrollElement || {};
 
       // Detect scroll direction
       const nextScrollPosition =
-        props.direction === 'vertical' ? scrollY : scrollLeft;
+        props.direction === 'vertical'
+          ? scrollTop || scrollY
+          : scrollLeft || scrollX;
       const scrollDirection =
         lastScrollPosition > nextScrollPosition ? 'up' : 'down';
       lastScrollPosition = nextScrollPosition;
@@ -217,14 +231,12 @@ export default defineComponent({
       }
     };
 
-    // Get target based on direction
+    // Create scroll target
     const windowRef = useWindow();
-    const target = computed(() =>
-      props.direction === 'vertical' ? windowRef.value : lazyListElement.value
-    );
+    const scrollTarget = computed(() => props.scrollElement || windowRef.value);
 
-    // Add scroll event listener to target
-    useEventListener(target as any, 'scroll', handleScroll);
+    // Add scroll event listener to scroll target
+    useEventListener(scrollTarget as any, 'scroll', handleScroll);
 
     // Update first and last item element when items,
     // lazy list element, first or last index changes
@@ -246,24 +258,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped>
-.lazy-list::before,
-.lazy-list::after {
-  content: '';
-  display: block;
-  box-sizing: content-box;
-}
-.lazy-list.vertical::before {
-  padding-top: var(--padding-start);
-}
-.lazy-list.vertical::after {
-  padding-bottom: var(--padding-end);
-}
-.lazy-list.horizontal::before {
-  padding-left: var(--padding-start);
-}
-.lazy-list.horizontal::after {
-  padding-right: var(--padding-end);
-}
-</style>

@@ -1,9 +1,10 @@
 <template>
-  <div ref="podcastSliderElement" class="relative">
+  <div class="relative">
     <!-- Podcast list -->
-    <LazyList
+    <div
+      ref="scrollBoxElement"
       class="
-        lazy-list
+        scroll-box
         flex
         overflow-x-auto
         before:w-6
@@ -14,20 +15,26 @@
         lg:after:w-8
         after:flex-shrink-0
       "
-      :items="podcasts"
-      direction="horizontal"
     >
-      <template #default="{ item, index }">
-        <li
-          :key="item.id"
-          :class="
-            index > 0 && 'ml-10 md:ml-16 lg:ml-20 xl:ml-24 2xl:md-28 3xl:ml-32'
-          "
-        >
-          <PodcastCard :podcast="item" />
-        </li>
-      </template>
-    </LazyList>
+      <LazyList
+        class="flex"
+        :items="podcasts"
+        direction="horizontal"
+        :scroll-element="scrollBoxElement"
+      >
+        <template #default="{ item, index }">
+          <li
+            :key="item.id"
+            :class="
+              index > 0 &&
+              'ml-10 md:ml-16 lg:ml-20 xl:ml-24 2xl:md-28 3xl:ml-32'
+            "
+          >
+            <PodcastCard :podcast="item" />
+          </li>
+        </template>
+      </LazyList>
+    </div>
 
     <!-- Overlay gradient -->
     <button
@@ -54,6 +61,7 @@
           'opacity-0 pointer-events-none',
       ]"
       type="button"
+      :title="index === 1 ? 'Scroll left' : 'Scroll right'"
       :data-cursor-arrow-left="index === 1 && !scrollStartReached"
       :data-cursor-arrow-right="index === 2 && !scrollEndReached"
       @click="() => scrollTo(index === 1 ? 'left' : 'right')"
@@ -63,7 +71,6 @@
 
 <script lang="ts">
 import {
-  computed,
   defineComponent,
   onMounted,
   PropType,
@@ -87,26 +94,20 @@ export default defineComponent({
     },
   },
   setup() {
-    // Create podcast slider element reference
-    const podcastSliderElement = ref<HTMLElement>();
+    // Create scroll box element reference
+    const scrollBoxElement = ref<HTMLDivElement>();
 
     // Create scroll start and end reached reference
     const scrollStartReached = ref(true);
     const scrollEndReached = ref(true);
-
-    // Get lazy list element
-    const lazyListElement = computed(
-      () =>
-        podcastSliderElement.value?.firstElementChild as HTMLUListElement | null
-    );
 
     /**
      * It programmatically scrolls the slider a little to the left or right.
      */
     const scrollTo = (direction: 'left' | 'right') => {
       const { innerWidth } = window;
-      const { scrollLeft } = lazyListElement.value!;
-      lazyListElement.value!.scrollTo({
+      const { scrollLeft } = scrollBoxElement.value!;
+      scrollBoxElement.value!.scrollTo({
         left: scrollLeft + innerWidth * 0.4 * (direction === 'left' ? -1 : 1),
         behavior: 'smooth',
       });
@@ -121,7 +122,7 @@ export default defineComponent({
      */
     const handleScrollState = () => {
       const { innerWidth } = window;
-      const { scrollLeft, scrollWidth } = lazyListElement.value!;
+      const { scrollLeft, scrollWidth } = scrollBoxElement.value!;
       scrollStartReached.value = scrollLeft === 0;
       scrollEndReached.value = scrollLeft === scrollWidth - innerWidth;
     };
@@ -130,7 +131,7 @@ export default defineComponent({
     onMounted(handleScrollState);
 
     // Add scroll event listener to lazy list element
-    useEventListener(lazyListElement, 'scroll', handleScrollState);
+    useEventListener(scrollBoxElement, 'scroll', handleScrollState);
 
     // Creaet mouse position variable
     let mousePosition: number | null = null;
@@ -142,8 +143,8 @@ export default defineComponent({
       // Change scroll position on mouse movement
       const handleScrollMove = (event: MouseEvent) => {
         if (mousePosition) {
-          lazyListElement.value!.scrollLeft += mousePosition - event.clientX;
-          lazyListElement.value!.style.pointerEvents = 'none';
+          scrollBoxElement.value!.scrollLeft += mousePosition - event.clientX;
+          scrollBoxElement.value!.style.pointerEvents = 'none';
         }
         mousePosition = event.clientX;
       };
@@ -153,17 +154,17 @@ export default defineComponent({
       const handleScrollStop = () => {
         window.removeEventListener('mousemove', handleScrollMove);
         window.removeEventListener('mouseup', handleScrollStop, true);
-        lazyListElement.value!.style.pointerEvents = '';
+        scrollBoxElement.value!.style.pointerEvents = '';
         mousePosition = null;
       };
       window.addEventListener('mouseup', handleScrollStop, true);
     };
 
     // Add mouse down event listener to lazy list element
-    useEventListener(lazyListElement, 'mousedown', handleScrollPosition);
+    useEventListener(scrollBoxElement, 'mousedown', handleScrollPosition);
 
     return {
-      podcastSliderElement,
+      scrollBoxElement,
       scrollStartReached,
       scrollEndReached,
       scrollTo,
@@ -173,23 +174,23 @@ export default defineComponent({
 </script>
 
 <style lang="postcss" scoped>
-.lazy-list {
+.scroll-box {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-.lazy-list::-webkit-scrollbar {
+.scroll-box::-webkit-scrollbar {
   @apply hidden;
 }
 @media (min-width: 1536px) {
-  .lazy-list::before {
+  .scroll-box::before {
     width: calc((100vw - 1536px) / 2 + 12rem);
   }
-  .lazy-list::after {
+  .scroll-box::after {
     width: calc((100vw - 1536px) / 2 + 2rem);
   }
 }
 @media (min-width: 2000px) {
-  .lazy-list::before {
+  .scroll-box::before {
     width: calc((100vw - 1536px) / 2 + 2rem);
   }
 }
