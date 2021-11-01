@@ -1,3 +1,5 @@
+import { getStrapiCollection } from './tools/getStrapiCollection';
+
 export default {
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
@@ -52,11 +54,29 @@ export default {
 
   generate: {
     // https://github.com/nuxt-community/composition-api/issues/44
-    interval: 1000,
+    interval: 1500,
     // Uncomment below to generate single routes
     // crawler: false,
     // exclude: [/^\/(\w|\d|-)*$/],
     // routes: ['/route/to/generate'],
+    async routes() {
+      const [podcasts, speakers, meetups] = await Promise.all([
+        getStrapiCollection('podcasts'),
+        getStrapiCollection('speakers'),
+        getStrapiCollection('meetups'),
+      ]);
+      const routes = [];
+      podcasts.forEach(({ id }) => {
+        routes.push(`/podcast/${id}`);
+      });
+      speakers.forEach(({ id }) => {
+        routes.push(`/hall-of-fame/${id}`);
+      });
+      meetups.forEach(({ id }) => {
+        routes.push(`/meetups/${id}`);
+      });
+      return routes;
+    },
   },
 
   // PWA module configuration: https://go.nuxtjs.dev/pwa
