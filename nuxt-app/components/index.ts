@@ -25,6 +25,7 @@ export { default as PodcastCard } from './PodcastCard.vue';
 export { default as PodcastCarousel } from './PodcastCarousel.vue';
 export { default as PodcastDownload } from './PodcastDownload.vue';
 export { default as PodcastPlayer } from './PodcastPlayer.vue';
+export { default as PodcastSlider } from './PodcastSlider.vue';
 export { default as ScrollDownMouse } from './ScrollDownMouse.vue';
 export { default as SearchCard } from './SearchCard.vue';
 export { default as SectionHeading } from './SectionHeading.vue';

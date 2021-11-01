@@ -17,10 +17,12 @@
     "@tailwindcss/line-clamp": "^0.2.1",
     "@types/google.maps": "^3.45.6",
     "@types/remove-markdown": "^0.3.1",
+    "@types/smoothscroll-polyfill": "^0.3.1",
     "core-js": "^3.15.1",
     "nuxt": "^2.15.7",
     "remove-markdown": "^0.3.0",
     "shared-code": "0.0.0",
+    "smoothscroll-polyfill": "^0.4.4",
     "snarkdown": "^2.0.0"
   },
   "devDependencies": {
