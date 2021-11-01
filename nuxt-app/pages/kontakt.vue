@@ -19,9 +19,9 @@
       >
         <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
-        <!-- Address heading -->
+        <!-- Business heading -->
         <SectionHeading class="mt-8 md:mt-0" element="h1">
-          {{ contactPage.address_heading }}
+          {{ contactPage.business_heading }}
         </SectionHeading>
 
         <!-- Page intro -->
@@ -42,95 +42,8 @@
         />
       </div>
 
-      <!-- Google Maps -->
-      <div class="md:container md:pr-6 md:pl-48 lg:pr-8 3xl:px-8">
-        <GoogleMaps class="h-72 md:h-120 lg:h-160 2xl:h-192" />
-      </div>
-
-      <div
-        class="
-          container
-          px-6
-          md:pl-72
-          lg:pl-80
-          xl:pl-96
-          lg:pr-8
-          3xl:pl-52
-          mt-16
-          md:mt-24
-          lg:mt-32
-        "
-      >
-        <!-- Address text -->
-        <MarkdownToHtml
-          class="
-            text-base
-            md:text-xl
-            lg:text-2xl
-            text-white
-            font-light
-            md:leading-normal
-            lg:leading-normal
-            space-y-8
-            break-words
-          "
-          :markdown="contactPage.address_text"
-        />
-      </div>
-    </section>
-
-    <section class="relative">
-      <div
-        class="
-          container
-          px-6
-          md:pl-72
-          lg:pl-80
-          xl:pl-96
-          lg:pr-8
-          3xl:pl-52
-          mt-8
-          md:mt-16
-          lg:mt-24
-        "
-      >
-        <!-- Business text -->
-        <MarkdownToHtml
-          class="
-            text-base
-            md:text-xl
-            lg:text-2xl
-            text-white
-            font-light
-            md:leading-normal
-            lg:leading-normal
-            space-y-8
-            break-words
-          "
-          :markdown="contactPage.business_text"
-        />
-      </div>
-
-      <!-- Business heading -->
-      <SectionHeading class="px-6 mt-16 md:mt-0" element="h2">
-        {{ contactPage.business_heading }}
-      </SectionHeading>
-
       <!-- Form -->
-      <div
-        class="
-          container
-          md:pr-6 md:pl-48
-          lg:pr-8
-          3xl:px-8
-          mt-10
-          md:mt-16
-          lg:mt-24
-          pb-24
-          md:pb-36
-          lg:pb-52
-        "
-      >
+      <div class="container md:pr-6 md:pl-48 lg:pr-8 3xl:px-8">
         <form
           class="
             flex flex-col
@@ -224,9 +137,11 @@
             "
             :class="[
               formState === 'submitted' ? 'text-black' : 'text-lime',
-              formState !== 'submitting' && formState !== 'submitted'
-                ? 'after:scale-x-0'
-                : 'after:scale-x-100',
+              formState === 'submitting'
+                ? 'after:scale-x-75'
+                : formState === 'submitted'
+                ? 'after:scale-x-100'
+                : 'after:scale-x-0',
               formState === 'submitting'
                 ? 'text-transparent after:duration-3000'
                 : 'after:duration-1000',
@@ -241,6 +156,92 @@
             {{ formState === 'submitted' ? 'Gesendet' : 'Senden' }}
           </button>
         </form>
+      </div>
+
+      <div
+        class="
+          container
+          px-6
+          md:pl-72
+          lg:pl-80
+          xl:pl-96
+          lg:pr-8
+          3xl:pl-52
+          mt-16
+          md:mt-24
+          lg:mt-32
+        "
+      >
+        <!-- Address text -->
+        <MarkdownToHtml
+          class="
+            text-base
+            md:text-xl
+            lg:text-2xl
+            text-white
+            font-light
+            md:leading-normal
+            lg:leading-normal
+            space-y-8
+            break-words
+          "
+          :markdown="contactPage.business_text"
+        />
+      </div>
+    </section>
+
+    <section class="relative">
+      <div
+        class="
+          container
+          px-6
+          md:pl-72
+          lg:pl-80
+          xl:pl-96
+          lg:pr-8
+          3xl:pl-52
+          mt-12
+          md:mt-16
+          lg:mt-24
+        "
+      >
+        <!-- Address heading -->
+        <SectionHeading element="h2">
+          {{ contactPage.address_heading }}
+        </SectionHeading>
+
+        <!-- Business text -->
+        <MarkdownToHtml
+          class="
+            text-base
+            md:text-xl
+            lg:text-2xl
+            text-white
+            font-light
+            md:leading-normal
+            lg:leading-normal
+            space-y-8
+            break-words
+            mt-8
+          "
+          :markdown="contactPage.address_text"
+        />
+      </div>
+
+      <!-- Google Maps -->
+      <div
+        class="
+          md:container md:pr-6 md:pl-48
+          lg:pr-8
+          3xl:px-8
+          mt-10
+          md:mt-16
+          lg:mt-32
+          md:pb-36
+          lg:pb-52
+        "
+      >
+        <GoogleMaps class="h-120 lg:h-160 2xl:h-192" />
       </div>
     </section>
   </div>
@@ -307,7 +308,7 @@ export default defineComponent({
 
         // TODO: Implement real logic
         await new Promise((resolve) => {
-          setTimeout(() => resolve(null), 5000);
+          setTimeout(() => resolve(null), 500);
         });
 
         // Set form state to submitted
