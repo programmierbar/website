@@ -1,6 +1,6 @@
 <template>
   <div class="relative flex justify-center">
-    <div
+    <button
       class="
         w-8
         lg:w-12
@@ -17,16 +17,61 @@
         border-lime
         rounded-full
       "
+      :class="!opacity && 'invisible'"
+      :style="{ opacity }"
+      type="button"
+      title="Scroll down"
+      data-cursor-hover
+      @click="scrollDown"
     >
       <div class="animate-scroll w-1.5 lg:w-2 h-4 lg:h-6 bg-lime origin-top" />
-    </div>
+    </button>
   </div>
 </template>
 
 <script>
-import { defineComponent } from '@nuxtjs/composition-api';
+import { defineComponent, onMounted, ref } from '@nuxtjs/composition-api';
+import smoothscroll from 'smoothscroll-polyfill';
+import { useEventListener, useWindow } from '../composables';
 
-export default defineComponent({});
+export default defineComponent({
+  setup() {
+    // Add opacity reference
+    const opacity = ref(1);
+
+    /**
+     * It updates the opacity based on the scroll
+     * position and the height of the viewport.
+     */
+    const handleOpacity = () => {
+      const { scrollY, innerHeight } = window;
+      const maxHeight = innerHeight / 2;
+      opacity.value = (maxHeight - Math.min(scrollY, maxHeight)) / maxHeight;
+    };
+
+    // Add scroll event listener to window object
+    useEventListener(useWindow(), 'scroll', handleOpacity);
+
+    /**
+     * It scrolls the page down a bit.
+     */
+    const scrollDown = () => {
+      const { scrollY, innerHeight } = window;
+      window.scrollTo({
+        top: scrollY + innerHeight / 2,
+        behavior: 'smooth',
+      });
+    };
+
+    // Add smooth scroll polyfill
+    onMounted(smoothscroll.polyfill);
+
+    return {
+      opacity,
+      scrollDown,
+    };
+  },
+});
 </script>
 
 <style lang="postcss" scoped>
