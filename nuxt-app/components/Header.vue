@@ -69,6 +69,7 @@
           text-blue text-center
           font-light
         "
+        :class="!searchIsOpen && 'invisible transition-all delay-300'"
         type="seach"
         spellcheck="false"
       />
@@ -169,11 +170,14 @@
         top-0
         right-0
         bg-gray-900
-        transition-all
+        transition
         duration-300
+        origin-right
       "
-      :class="
-        menuIsOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full'
+      :class="!menuIsOpen && 'invisible opacity-0 translate-x-20 scale-x-90'"
+      :style="
+        (!menuIsOpen || undefined) &&
+        'transition: visibility 0s .3s, opacity .3s, transform .3s'
       "
     >
       <div
