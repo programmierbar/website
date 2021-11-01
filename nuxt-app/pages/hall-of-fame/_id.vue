@@ -193,7 +193,6 @@
             :key="podcast.id"
             class="m-8 lg:m-12"
             :podcast="podcast"
-            is-active
           />
         </div>
         <div

@@ -3,7 +3,7 @@
     <NuxtLink :to="`/podcast/${podcast.id}`" data-cursor-more>
       <!-- Podcast cover -->
       <img
-        class="w-48 md:w-64 lg:w-96 h-48 md:h-64 lg:h-96"
+        class="w-48 md:w-64 lg:w-96 h-48 md:h-64 lg:h-96 pointer-events-none"
         :src="podcast.cover_image.url"
         :srcset="coverSrcSet"
         sizes="(min-width: 1024px) 384px, (min-width: 768px) 256px, 192px"
@@ -13,18 +13,25 @@
     </NuxtLink>
 
     <!-- Podcast date -->
-    <div class="text-sm lg:text-base text-white font-light italic mt-4">
+    <div
+      class="
+        hidden
+        md:block
+        text-sm
+        lg:text-base
+        text-white
+        font-light
+        italic
+        mt-4
+      "
+    >
       {{ date }}
     </div>
 
-    <div
-      class="flex mt-3 transition-all duration-500"
-      :class="isActive && 'space-x-4'"
-    >
+    <div class="flex space-x-4 mt-3 transition-all duration-500">
       <!-- Podcast play or pause button -->
       <button
         class="h-10 md:h-12 text-lime"
-        :class="!isActive && 'hidden'"
         type="button"
         data-cursor-hover
         @click="playOrPausePodcast"
@@ -41,17 +48,23 @@
 
       <div class="w-4/5">
         <!-- Podcast title -->
-        <h2 class="text-lg lg:text-xl text-white font-light">
+        <h2
+          class="
+            text-sm
+            md:text-lg
+            lg:text-xl
+            text-white
+            font-light
+            line-clamp-2
+          "
+        >
           <strong v-if="podcast.type !== 'other'" class="font-black">
             {{ type }} {{ podcast.number }}{{ divider }}
           </strong>
           {{ podcast.title }}
         </h2>
 
-        <div
-          :class="!isActive && 'invisible'"
-          class="flex space-x-3 md:spaxe-x-4 mt-4"
-        >
+        <div class="hidden md:flex space-x-3 md:spaxe-x-4 mt-4">
           <a
             v-for="platform in platforms"
             :key="platform.name"
@@ -80,10 +93,6 @@ export default defineComponent({
   props: {
     podcast: {
       type: Object as PropType<StrapiPodcast>,
-      required: true,
-    },
-    isActive: {
-      type: Boolean,
       required: true,
     },
   },
