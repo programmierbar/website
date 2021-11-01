@@ -52,6 +52,7 @@
         autoplay="true"
         loop="true"
         muted="true"
+        playsinline
       />
 
       <!-- Newsticker -->
