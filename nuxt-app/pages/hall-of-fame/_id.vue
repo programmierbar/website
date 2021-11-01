@@ -183,32 +183,19 @@
       <SectionHeading class="px-6 md:px-0" element="h2">
         Verwandter Inhalt
       </SectionHeading>
+
+      <!-- Podcasts -->
+      <PodcastSlider class="mt-12 md:mt-0" :podcasts="speaker.podcasts" />
       <div
-        v-if="speaker.podcasts.length < 3"
-        class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 mt-12 md:mt-0"
+        v-if="podcastCountString"
+        class="flex justify-center mt-12 md:mt-16 lg:mt-20"
       >
-        <div class="w-full flex flex-wrap -m-8 lg:-m-12">
-          <PodcastCard
-            v-for="podcast of speaker.podcasts"
-            :key="podcast.id"
-            class="m-8 lg:m-12"
-            :podcast="podcast"
-          />
-        </div>
-        <div
-          v-if="podcastCountString"
-          class="flex justify-center mt-12 md:mt-16 lg:mt-20"
-        >
-          <LinkButton href="/podcast">
-            Alle {{ podcastCountString }} Podcast-Folgen
-          </LinkButton>
-        </div>
+        <LinkButton href="/podcast">
+          Alle {{ podcastCountString }} Podcast-Folgen
+        </LinkButton>
       </div>
-      <PodcastCarousel
-        v-else
-        class="md:pl-40 3xl:px-0 mt-12 md:mt-0"
-        :podcasts="speaker.podcasts"
-      />
+
+      <!-- Picks of the Day -->
       <div
         v-if="speaker.picks_of_the_day.length"
         class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 mt-20 md:mt-32 lg:mt-40"
@@ -247,8 +234,7 @@ import {
   LinkButton,
   MarkdownToHtml,
   PickOfTheDayList,
-  PodcastCard,
-  PodcastCarousel,
+  PodcastSlider,
   TagList,
   SectionHeading,
 } from '../../components';
@@ -263,8 +249,7 @@ export default defineComponent({
     LinkButton,
     MarkdownToHtml,
     PickOfTheDayList,
-    PodcastCard,
-    PodcastCarousel,
+    PodcastSlider,
     TagList,
     SectionHeading,
   },

@@ -1,5 +1,9 @@
 <template>
-  <div class="md:h-full md:absolute md:z-10 md:left-0 md:top-0">
+  <div
+    class="
+      md:h-full md:absolute md:z-10 md:left-0 md:top-0 md:pointer-events-none
+    "
+  >
     <component
       :is="element"
       class="

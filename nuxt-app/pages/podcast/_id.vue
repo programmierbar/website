@@ -112,7 +112,7 @@
       <SectionHeading class="px-6 md:px-0" element="h2">
         Verwandte Podcasts
       </SectionHeading>
-      <PodcastCarousel class="mt-12 md:mt-0" :podcasts="relatedPodcasts" />
+      <PodcastSlider class="mt-12 md:mt-0" :podcasts="relatedPodcasts" />
     </section>
 
     <FeedbackSection
@@ -137,7 +137,7 @@ import {
   MarkdownToHtml,
   PickOfTheDayList,
   PodcastBanner,
-  PodcastCarousel,
+  PodcastSlider,
   PodcastDownload,
   SectionHeading,
   SpeakerList,
@@ -159,7 +159,7 @@ export default defineComponent({
     MarkdownToHtml,
     PickOfTheDayList,
     PodcastBanner,
-    PodcastCarousel,
+    PodcastSlider,
     PodcastDownload,
     SectionHeading,
     SpeakerList,

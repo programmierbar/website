@@ -66,7 +66,7 @@
       <SectionHeading class="px-6 md:px-0" element="h2">
         {{ homePage.podcast_heading }}
       </SectionHeading>
-      <PodcastCarousel class="mt-10 md:mt-0" :podcasts="homePage.podcasts" />
+      <PodcastSlider class="mt-10 md:mt-0" :podcasts="homePage.podcasts" />
     </section>
   </div>
 </template>
@@ -76,7 +76,7 @@ import { defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   NewsTicker,
-  PodcastCarousel,
+  PodcastSlider,
   SectionHeading,
   ScrollDownMouse,
   TypedText,
@@ -87,7 +87,7 @@ export default defineComponent({
   components: {
     Breadcrumbs,
     NewsTicker,
-    PodcastCarousel,
+    PodcastSlider,
     SectionHeading,
     ScrollDownMouse,
     TypedText,

@@ -62,41 +62,23 @@
       <!-- Deep dive podcasts -->
       <section
         v-if="deepDivePodcasts.length"
-        class="
-          relative
-          md:pl-40
-          3xl:px-0
-          py-8
-          md:py-10
-          lg:py-16
-          md:my-12
-          lg:my-16
-        "
+        class="relative py-8 md:py-10 lg:py-16 md:my-12 lg:my-16"
       >
         <SectionHeading class="px-6 md:px-0" element="h2">
           {{ podcastPage.deep_dive_heading }}
         </SectionHeading>
-        <PodcastCarousel class="mt-10 md:mt-0" :podcasts="deepDivePodcasts" />
+        <PodcastSlider class="mt-10 md:mt-0" :podcasts="deepDivePodcasts" />
       </section>
 
       <!-- CTO special podcasts -->
       <section
         v-if="ctoSpecialPodcasts.length"
-        class="
-          relative
-          md:pl-40
-          3xl:px-0
-          py-8
-          md:py-10
-          lg:py-16
-          md:my-12
-          lg:my-16
-        "
+        class="relative py-8 md:py-10 lg:py-16 md:my-12 lg:my-16"
       >
         <SectionHeading class="px-6 md:px-0" element="h2">
           {{ podcastPage.cto_special_heading }}
         </SectionHeading>
-        <PodcastCarousel class="mt-10 md:mt-0" :podcasts="ctoSpecialPodcasts" />
+        <PodcastSlider class="mt-10 md:mt-0" :podcasts="ctoSpecialPodcasts" />
       </section>
 
       <!-- News podcasts -->
@@ -104,8 +86,6 @@
         v-if="newsPodcasts.length"
         class="
           relative
-          md:pl-40
-          3xl:px-0
           py-8
           md:py-10
           lg:py-16
@@ -119,7 +99,7 @@
         <SectionHeading class="px-6 md:px-0" element="h2">
           {{ podcastPage.news_heading }}
         </SectionHeading>
-        <PodcastCarousel class="mt-10 md:mt-0" :podcasts="newsPodcasts" />
+        <PodcastSlider class="mt-10 md:mt-0" :podcasts="newsPodcasts" />
       </section>
     </div>
   </div>
@@ -130,7 +110,7 @@ import { computed, defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   PageCoverImage,
-  PodcastCarousel,
+  PodcastSlider,
   SectionHeading,
   TagFilter,
 } from '../../components';
@@ -140,7 +120,7 @@ export default defineComponent({
   components: {
     Breadcrumbs,
     PageCoverImage,
-    PodcastCarousel,
+    PodcastSlider,
     SectionHeading,
     TagFilter,
   },
