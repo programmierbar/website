@@ -1,6 +1,4 @@
 export { default as Breadcrumbs } from './Breadcrumbs.vue';
-export { default as Carousel } from './Carousel.vue';
-export { default as CarouselSlide } from './CarouselSlide.vue';
 export { default as CookieBanner } from './CookieBanner.vue';
 export { default as FadeAnimation } from './FadeAnimation.vue';
 export { default as FeedbackSection } from './FeedbackSection.vue';
@@ -22,7 +20,6 @@ export { default as PickOfTheDayCard } from './PickOfTheDayCard.vue';
 export { default as PickOfTheDayList } from './PickOfTheDayList.vue';
 export { default as PodcastBanner } from './PodcastBanner.vue';
 export { default as PodcastCard } from './PodcastCard.vue';
-export { default as PodcastCarousel } from './PodcastCarousel.vue';
 export { default as PodcastDownload } from './PodcastDownload.vue';
 export { default as PodcastPlayer } from './PodcastPlayer.vue';
 export { default as PodcastSlider } from './PodcastSlider.vue';
