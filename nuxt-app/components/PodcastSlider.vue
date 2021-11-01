@@ -11,7 +11,7 @@
         3xl:before:w-8
         before:flex-shrink-0
         after:w-6
-        md:after:w-8
+        lg:after:w-8
         after:flex-shrink-0
       "
       :items="podcasts"
@@ -182,7 +182,7 @@ export default defineComponent({
 }
 @media (min-width: 1536px) {
   .lazy-list::before {
-    width: calc((100vw - 1536px) / 2 + 10rem);
+    width: calc((100vw - 1536px) / 2 + 12rem);
   }
   .lazy-list::after {
     width: calc((100vw - 1536px) / 2 + 2rem);
