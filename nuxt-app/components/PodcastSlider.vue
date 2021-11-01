@@ -58,8 +58,14 @@
           : 'md:right-0 md:bg-gradient-to-l',
         ((index === 1 && scrollStartReached) ||
           (index === 2 && scrollEndReached)) &&
-          'opacity-0 pointer-events-none',
+          'invisible opacity-0 pointer-events-none',
       ]"
+      :style="
+        ((index === 1 && scrollStartReached) ||
+          (index === 2 && scrollEndReached) ||
+          undefined) &&
+        'transition: visibility 0s .2s, opacity .2s'
+      "
       type="button"
       :title="index === 1 ? 'Scroll left' : 'Scroll right'"
       :data-cursor-arrow-left="index === 1 && !scrollStartReached"
