@@ -169,7 +169,7 @@
             lg:order-none lg:space-x-4
           "
         >
-          <div class="w-10 text-sm lg:text-base mt-3 lg:mt-0.5 ml-6 lg:ml-0">
+          <div class="text-sm lg:text-base mt-3 lg:mt-0.5 ml-6 lg:ml-0">
             {{ currentTimeString }}
           </div>
           <input
@@ -189,7 +189,7 @@
             data-cursor-hover
             @change="changeCurrentTime"
           />
-          <div class="w-10 text-sm lg:text-base mt-3 lg:mt-0.5 mr-6 lg:mr-0">
+          <div class="text-sm lg:text-base mt-3 lg:mt-0.5 mr-6 lg:mr-0">
             {{ durationString }}
           </div>
         </div>
@@ -327,8 +327,10 @@ export default defineComponent({
      *
      * @returns A audio timestamp.
      */
-    const getAudioTimestamp = (time: number) =>
-      (time / 100).toFixed(2).replace('.', ':').padStart(5, '0');
+    const getAudioTimestamp = (time: number) => {
+      const isoString = new Date(time * 1000).toISOString();
+      return time < 3600 ? isoString.substr(14, 5) : isoString.substr(11, 8);
+    };
 
     // Create current time string
     const currentTimeString = computed(() =>
