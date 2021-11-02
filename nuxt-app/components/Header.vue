@@ -276,6 +276,7 @@
 import {
   defineComponent,
   onMounted,
+  nextTick,
   ref,
   useRoute,
   useRouter,
@@ -313,8 +314,8 @@ export default defineComponent({
       if (route.value.path === '/suche' && searchInputElement.value) {
         searchInputElement.value.value =
           (route.value.query.search as string) || '';
-        searchInputElement.value.focus();
         searchIsOpen.value = true;
+        nextTick(() => searchInputElement.value?.focus());
       }
     };
 
@@ -369,7 +370,7 @@ export default defineComponent({
         }
       } else {
         searchIsOpen.value = true;
-        searchInputElement.value?.focus();
+        nextTick(() => searchInputElement.value?.focus());
       }
     };
 
@@ -392,7 +393,7 @@ export default defineComponent({
       ) {
         event.preventDefault();
         searchIsOpen.value = true;
-        searchInputElement.value?.focus();
+        nextTick(() => searchInputElement.value?.focus());
 
         // Otherwise close it if search is open and
         // escape or meta key and "k" is pressed
