@@ -108,7 +108,7 @@
     <!-- Related podcasts -->
     <section
       v-if="relatedPodcasts && relatedPodcasts.length"
-      class="relative md:pl-40 3xl:px-0 mt-20 md:mt-32 lg:mt-40"
+      class="relative mt-20 md:mt-32 lg:mt-40"
     >
       <SectionHeading class="px-6 md:px-0" element="h2">
         Verwandte Podcasts
