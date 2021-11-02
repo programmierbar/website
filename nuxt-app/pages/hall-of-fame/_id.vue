@@ -239,7 +239,12 @@ import {
   TagList,
   SectionHeading,
 } from '../../components';
-import { useStrapi, useLocaleString, useImageSrcSet } from '../../composables';
+import {
+  useStrapi,
+  useLocaleString,
+  useImageSrcSet,
+  useFullSpeakerName,
+} from '../../composables';
 import { getTrimmedString } from '../../helpers';
 
 export default defineComponent({
@@ -281,11 +286,7 @@ export default defineComponent({
     );
 
     // Create full name
-    const fullName = computed(() =>
-      `${speaker.value?.academic_title || ''} ${speaker.value?.first_name} ${
-        speaker.value?.last_name
-      }`.trim()
-    );
+    const fullName = useFullSpeakerName(speaker.value);
 
     // Set page meta data
     useMeta(() =>

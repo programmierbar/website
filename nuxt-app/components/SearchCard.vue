@@ -82,7 +82,7 @@ import {
 } from 'shared-code';
 import snarkdown from 'snarkdown';
 import { useImageSrcSet } from '../composables';
-import { getFullPodcastTitle } from '../helpers';
+import { getFullPodcastTitle, getFullSpeakerName } from '../helpers';
 
 type Item =
   | (StrapiPodcast & { itemType: 'podcast' })
@@ -152,10 +152,7 @@ export default defineComponent({
         ? props.item.title
         : props.item.itemType === 'pick_of_the_day'
         ? props.item.name
-        : (props.item.academic_title ? props.item.academic_title + ' ' : '') +
-          props.item.first_name +
-          ' ' +
-          props.item.last_name
+        : getFullSpeakerName(props.item)
     );
 
     // Lazy load description because DOMParser

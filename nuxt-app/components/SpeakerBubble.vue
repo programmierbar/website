@@ -137,7 +137,11 @@ import {
   ref,
 } from '@nuxtjs/composition-api';
 import { StrapiSpeaker } from 'shared-code';
-import { useMotionParallax, useImageSrcSet } from '../composables';
+import {
+  useMotionParallax,
+  useImageSrcSet,
+  useFullSpeakerName,
+} from '../composables';
 
 export default defineComponent({
   props: {
@@ -179,11 +183,7 @@ export default defineComponent({
     );
 
     // Create full name
-    const fullName = computed(() =>
-      `${props.speaker.academic_title || ''} ${props.speaker.first_name} ${
-        props.speaker.last_name
-      }`.trim()
-    );
+    const fullName = useFullSpeakerName(props.speaker);
 
     // Create profile image src set
     const profileImageSrcSet = useImageSrcSet(props.speaker.profile_image);

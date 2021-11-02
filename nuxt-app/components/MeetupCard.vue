@@ -30,7 +30,7 @@
       </h3>
 
       <!-- Description -->
-      <MarkdownToHtml
+      <p
         class="
           text-base
           md:text-xl
@@ -42,8 +42,9 @@
           space-y-8
           mt-6
         "
-        :markdown="meetup.description"
-      />
+      >
+        {{ description }}
+      </p>
 
       <!-- Likes -->
       <LinkButton class="mt-6" :href="`/meetup/${meetup.id}`">
@@ -56,15 +57,14 @@
 <script lang="ts">
 import { defineComponent, PropType } from '@nuxtjs/composition-api';
 import { StrapiMeetup } from 'shared-code';
+import { useTextFromMarkdown } from '../composables';
 import LinkButton from './LinkButton.vue';
-import MarkdownToHtml from './MarkdownToHtml.vue';
 import MeetupCover from './MeetupCover.vue';
 import MeetupStartAndEnd from './MeetupStartAndEnd.vue';
 
 export default defineComponent({
   components: {
     LinkButton,
-    MarkdownToHtml,
     MeetupCover,
     MeetupStartAndEnd,
   },
@@ -77,6 +77,14 @@ export default defineComponent({
       type: String as PropType<'default' | 'meetup_page'>,
       default: 'default',
     },
+  },
+  setup(props) {
+    // Create plain description text
+    const description = useTextFromMarkdown(props.meetup.description);
+
+    return {
+      description,
+    };
   },
 });
 </script>

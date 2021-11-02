@@ -1,5 +1,6 @@
 export * from './getCookie';
 export * from './getFullPodcastTitle';
+export * from './getFullSpeakerName';
 export * from './getHashCode';
 export * from './getImageSrcSet';
 export * from './getPodcastTitleDivider';
