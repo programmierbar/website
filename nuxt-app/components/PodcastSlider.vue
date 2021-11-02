@@ -36,7 +36,7 @@
       </LazyList>
     </div>
 
-    <!-- Overlay gradient -->
+    <!-- Scroll buttons -->
     <button
       v-for="index of 2"
       :key="index"
@@ -108,7 +108,8 @@ export default defineComponent({
     const scrollEndReached = ref(true);
 
     /**
-     * It programmatically scrolls the slider a little to the left or right.
+     * It programmatically scrolls the slider
+     * a little to the left or right.
      */
     const scrollTo = (direction: 'left' | 'right') => {
       const { innerWidth } = window;
@@ -123,8 +124,8 @@ export default defineComponent({
     onMounted(smoothscroll.polyfill);
 
     /**
-     * It sets the scroll state to "start", "end" or
-     * "between" depending on the scroll position.
+     * It detects whether the start or the end of the scrolling area
+     * has been reached, depending on the scrolling position.
      */
     const handleScrollState = () => {
       const { innerWidth } = window;
@@ -136,14 +137,14 @@ export default defineComponent({
     // Update scroll state on mounted
     onMounted(handleScrollState);
 
-    // Add scroll event listener to lazy list element
+    // Add scroll event listener to scroll box element
     useEventListener(scrollBoxElement, 'scroll', handleScrollState);
 
-    // Creaet mouse position variable
+    // Create mouse position variable
     let mousePosition: number | null = null;
 
     /**
-     * Handles the scroll position of the lazy list element.
+     * Handles the scroll position of the scroll box element.
      */
     const handleScrollPosition = () => {
       // Change scroll position on mouse movement
@@ -166,7 +167,7 @@ export default defineComponent({
       window.addEventListener('mouseup', handleScrollStop, true);
     };
 
-    // Add mouse down event listener to lazy list element
+    // Add mouse down event listener to scroll box element
     useEventListener(scrollBoxElement, 'mousedown', handleScrollPosition);
 
     return {
