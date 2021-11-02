@@ -39,9 +39,8 @@
         "
       >
         <button
-          v-for="i of 2"
-          :key="i"
-          ref="buttonElements"
+          v-for="number of 2"
+          :key="number"
           class="
             w-28
             lg:w-48
@@ -58,15 +57,15 @@
             transition-colors
           "
           :class="
-            i === 1
+            number === 1
               ? 'hover:bg-lime focus:bg-lime border-lime text-lime hover:text-black focus:text-black'
               : 'hover:bg-black focus:bg-black border-black text-black hover:text-white focus:text-white'
           "
           type="button"
           data-cursor-hover-blue
-          @click="() => answer(i === 1)"
+          @click="() => answer(number === 1)"
         >
-          {{ i === 1 ? '[Y]ES' : '[N]O' }}
+          {{ number === 1 ? '[Y]ES' : '[N]O' }}
         </button>
       </div>
     </div>
@@ -84,7 +83,6 @@ export default defineComponent({
   setup() {
     // Create state references
     const isVisible = ref(false);
-    const buttonElements = ref<HTMLButtonElement[]>();
 
     // Check if banner must be displayed
     onMounted(() => {
@@ -100,26 +98,29 @@ export default defineComponent({
     };
 
     /**
-     * It handles key down events.
+     * It handles keydown events and answers the cookie question.
      */
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isVisible) {
         // Get selected key
         const key = event.key.toLowerCase();
 
-        // Focus selected button
-        if (['y', 'n'].includes(key)) {
-          buttonElements.value?.[key === 'y' ? 0 : 1].focus();
+        // If the key is "y", answer true
+        if (key === 'y') {
+          answer(true);
+
+          // If the key is "n", answer false
+        } else if (key === 'n') {
+          answer(false);
         }
       }
     };
 
-    // Add key down event listener
+    // Add keydown event listener to document
     useEventListener(useDocument(), 'keydown', handleKeyDown);
 
     return {
       isVisible,
-      buttonElements,
       answer,
     };
   },
