@@ -58,7 +58,7 @@ export default {
 
   generate: {
     // https://github.com/nuxt-community/composition-api/issues/44
-    interval: 1500,
+    interval: 2000,
     // Uncomment below to generate single routes
     // crawler: false,
     // exclude: [/^\/(\w|\d|-)*$/],
@@ -77,7 +77,7 @@ export default {
         routes.push(`/hall-of-fame/${id}`);
       });
       meetups.forEach(({ id }) => {
-        routes.push(`/meetups/${id}`);
+        routes.push(`/meetup/${id}`);
       });
       return routes;
     },
