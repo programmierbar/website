@@ -133,6 +133,7 @@
                   class="h-7 md:h-8 lg:h-10 block text-white"
                   :href="platform.url"
                   target="_blank"
+                  rel="noreferrer"
                   data-cursor-hover
                   v-html="require(`../../assets/logos/${platform.icon}?raw`)"
                 />

@@ -70,6 +70,8 @@
             :key="platform.name"
             class="h-7 md:h-8"
             :href="platform.url"
+            target="_blank"
+            rel="noreferrer"
             data-cursor-hover
             v-html="require(`~/assets/logos/${platform.icon}?raw`)"
           />

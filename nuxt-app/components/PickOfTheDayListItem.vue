@@ -11,7 +11,7 @@
       "
       :href="pickOfTheDay.website_url"
       target="_blank"
-      rel="noreferrer noopener"
+      rel="noreferrer"
       data-cursor-hover
     >
       <div class="w-56 md:w-44 lg:w-48 flex-shrink-0">

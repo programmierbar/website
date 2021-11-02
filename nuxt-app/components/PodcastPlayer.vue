@@ -250,6 +250,7 @@
               "
               :download="`${fullPodcastTitle}.mp3`"
               target="_blank"
+              rel="noreferrer"
               data-cursor-hover
               v-html="require('../assets/icons/download.svg?raw')"
             />

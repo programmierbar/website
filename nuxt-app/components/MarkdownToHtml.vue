@@ -31,7 +31,10 @@ export default defineComponent({
             : `<p>${snarkdown(text)}</p>`
         )
         .join('\n')
-        .replace(/<a /g, '<a data-cursor-hover ')
+        .replace(
+          /<a /g,
+          '<a target="_blank" rel="noreferrer" data-cursor-hover '
+        )
     );
 
     return { html, variantClass };

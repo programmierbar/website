@@ -5,7 +5,7 @@
       class="block lg:flex space-y-6 lg:space-y-0 lg:space-x-12"
       :href="isExternalUrl ? urlOrPath : undefined"
       :target="isExternalUrl ? '_blank' : undefined"
-      :rel="isExternalUrl ? 'noreferrer noopener' : undefined"
+      :rel="isExternalUrl ? 'noreferrer' : undefined"
       :to="isExternalUrl ? undefined : urlOrPath"
       data-cursor-more
     >

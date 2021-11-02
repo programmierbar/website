@@ -8,6 +8,8 @@
       <a
         class="h-full block text-white hover:text-lime"
         :href="socialNetwork.href"
+        target="_blank"
+        rel="noreferrer"
         data-cursor-hover
         v-html="require(`../assets/logos/${socialNetwork.icon}?raw`)"
       />

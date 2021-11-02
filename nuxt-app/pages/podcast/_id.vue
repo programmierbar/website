@@ -56,6 +56,7 @@
                 class="h-8 md:h-10 lg:h-12 block"
                 :href="platform.url"
                 target="_blank"
+                rel="noreferrer"
                 data-cursor-hover
                 v-html="require(`../../assets/logos/${platform.icon}?raw`)"
               />
