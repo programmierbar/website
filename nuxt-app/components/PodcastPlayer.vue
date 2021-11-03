@@ -238,22 +238,20 @@
               class="h-6"
               type="button"
               data-cursor-hover
-              @click="shareAudio"
+              @click="sharePodcast"
               v-html="require('../assets/icons/share.svg?raw')"
             />
-            <a
-              class="h-6"
-              :href="
-                podcastPlayer.podcast
-                  ? podcastPlayer.podcast.audio_url ||
-                    podcastPlayer.podcast.audio_file.url
-                  : undefined
-              "
-              :download="fullTitle"
-              target="_blank"
-              rel="noreferrer"
+            <button
+              class="w-6 h-6 flex justify-center"
+              :class="isDownloading && 'animate-spin'"
+              type="button"
               data-cursor-hover
-              v-html="require('../assets/icons/download.svg?raw')"
+              @click="downloadPodcast"
+              v-html="
+                require(isDownloading
+                  ? '../assets/icons/semicircle.svg?raw'
+                  : '../assets/icons/download.svg?raw')
+              "
             />
           </div>
         </div>
@@ -269,33 +267,20 @@ import {
   getFullPodcastTitle,
   getPodcastTypeAndNumber,
   getSubpagePath,
+  downloadExternalFile,
+  getUrlSlug,
 } from '../helpers';
 
 export default defineComponent({
   setup() {
-    // Create is expanded reference
-    const isExpanded = ref(false);
-
-    /**
-     * It expands the podcast player on mobile devices.
-     */
-    const expandPlayer = () => {
-      if (window.innerWidth <= 768) {
-        isExpanded.value = true;
-      }
-    };
-
-    /**
-     * It collapses the podcast player.
-     */
-    const collapsePlayer = () => {
-      isExpanded.value = false;
-    };
-
     // Use podcast player, clipboard and share
     const podcastPlayer = usePodcastPlayer();
     const clipboard = useClipboard();
     const share = useShare();
+
+    // Create is expanded and downloading reference
+    const isExpanded = ref(false);
+    const isDownloading = ref(false);
 
     // Create podcast type and number
     const typeAndNumber = computed(
@@ -350,6 +335,22 @@ export default defineComponent({
     const volumeString = computed(() => `${podcastPlayer.volume * 100}%`);
 
     /**
+     * It expands the podcast player on mobile devices.
+     */
+    const expandPlayer = () => {
+      if (window.innerWidth <= 768) {
+        isExpanded.value = true;
+      }
+    };
+
+    /**
+     * It collapses the podcast player.
+     */
+    const collapsePlayer = () => {
+      isExpanded.value = false;
+    };
+
+    /**
      * It changes the current time of the podcast player.
      */
     const changeCurrentTime = (event: Event) => {
@@ -362,7 +363,7 @@ export default defineComponent({
      * It shares or copies the URL of the podcast
      * subpage via the share or clipboard API.
      */
-    const shareAudio = () => {
+    const sharePodcast = () => {
       if (podcastPlayer.podcast && fullTitle.value) {
         const url = `${window.location.origin}${href.value}`;
         if (share.isSupported) {
@@ -387,15 +388,34 @@ export default defineComponent({
       }
     );
 
+    /**
+     * It downloads the audio file of a podcast episode.
+     */
+    const downloadPodcast = async () => {
+      if (podcastPlayer.podcast && fullTitle.value) {
+        // Start downloading
+        isDownloading.value = true;
+
+        // Download file
+        await downloadExternalFile(
+          podcastPlayer.podcast.audio_file.url,
+          getUrlSlug(fullTitle.value)
+        );
+
+        // Stop downloading
+        isDownloading.value = false;
+      }
+    };
+
     return {
       isExpanded,
+      isDownloading,
       expandPlayer,
       collapsePlayer,
       podcastPlayer,
       href,
       typeAndNumber,
       title,
-      fullTitle,
       currentTimeString,
       durationString,
       progressString,
@@ -403,7 +423,8 @@ export default defineComponent({
       share,
       clipboard,
       changeCurrentTime,
-      shareAudio,
+      sharePodcast,
+      downloadPodcast,
     };
   },
 });

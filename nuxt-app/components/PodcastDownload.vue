@@ -48,7 +48,11 @@
 <script lang="ts">
 import { defineComponent, PropType, ref } from '@nuxtjs/composition-api';
 import { StrapiPodcast } from 'shared-code';
-import { getFullPodcastTitle } from '../helpers';
+import {
+  downloadExternalFile,
+  getUrlSlug,
+  getFullPodcastTitle,
+} from '../helpers';
 
 export default defineComponent({
   props: {
@@ -69,22 +73,10 @@ export default defineComponent({
       isLoading.value = true;
 
       // Download file
-      const file = await fetch(props.podcast.audio_file.url);
-
-      // Create blob URL
-      const blob = await file.blob();
-      const url = URL.createObjectURL(blob);
-
-      // Create <a> element
-      const downloadLink = document.createElement('a');
-      downloadLink.href = url;
-      downloadLink.download = getFullPodcastTitle(props.podcast)
-        .toLowerCase()
-        .replace(/\s/g, '-')
-        .replace(/[^a-z0-9-]/g, '');
-
-      // Trigger download
-      downloadLink.click();
+      await downloadExternalFile(
+        props.podcast.audio_file.url,
+        getUrlSlug(getFullPodcastTitle(props.podcast))
+      );
 
       // Stop loading
       isLoading.value = false;
