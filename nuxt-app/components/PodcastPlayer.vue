@@ -1,7 +1,7 @@
 <template>
   <div
     class="transition-all"
-    :class="podcastPlayer.podcast ? 'h-16 md:h-20' : 'h-0'"
+    :class="podcastPlayer.podcast ? 'h-16 md:h-20' : 'h-0 invisible'"
   >
     <div
       class="
@@ -44,12 +44,21 @@
         <div class="w-2/3 lg:w-full flex items-center">
           <NuxtLink
             v-if="href"
-            class="inline-block"
+            class="w-full inline-block"
             :class="!isExpanded && 'pointer-events-none md:pointer-events-auto'"
             :to="href"
             data-cursor-hover
           >
-            <h3 class="text-sm lg:text-base text-black font-black">
+            <h3
+              class="
+                text-sm
+                lg:text-base
+                text-black
+                font-black
+                whitespace-nowrap
+                overflow-hidden overflow-ellipsis
+              "
+            >
               {{ typeAndNumber }}
             </h3>
             <p
