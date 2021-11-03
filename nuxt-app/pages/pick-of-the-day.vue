@@ -39,10 +39,17 @@
         {{ pickOfTheDayPage.intro_text }}
       </p>
 
+      <!-- Tag Filter -->
+      <TagFilter
+        class="mt-12 md:mt-20 lg:mt-32"
+        :tags="tagFilter.tags"
+        :toggle-tag="tagFilter.toggleTag"
+      />
+
       <!-- Picks of the day -->
       <LazyList
-        class="lg:flex lg:flex-col lg:items-baseline mt-20 md:mt-32 lg:mt-40"
-        :items="picksOfTheDay"
+        class="lg:flex lg:flex-col lg:items-baseline mt-12 md:mt-16 lg:mt-28"
+        :items="tagFilter.output"
         direction="vertical"
       >
         <template #default="{ item, index }">
@@ -77,8 +84,9 @@ import {
   LazyList,
   PickOfTheDayCard,
   SectionHeading,
+  TagFilter,
 } from '../components';
-import { useStrapi, usePageMeta } from '../composables';
+import { useStrapi, useTagFilter, usePageMeta } from '../composables';
 
 export default defineComponent({
   components: {
@@ -86,6 +94,7 @@ export default defineComponent({
     LazyList,
     PickOfTheDayCard,
     SectionHeading,
+    TagFilter,
   },
   setup() {
     // Query Strapi pick of the day page and picks of the day
@@ -95,10 +104,14 @@ export default defineComponent({
     // Set page meta data
     usePageMeta(pickOfTheDayPage);
 
+    // Create tag filter
+    const tagFilter = useTagFilter(picksOfTheDay);
+
     return {
       pickOfTheDayPage,
       picksOfTheDay,
       breadcrumbs: [{ label: 'Pick of the Day' }],
+      tagFilter,
     };
   },
   head: {},
