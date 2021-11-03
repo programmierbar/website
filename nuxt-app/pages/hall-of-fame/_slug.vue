@@ -239,13 +239,12 @@ import {
   TagList,
   SectionHeading,
 } from '../../components';
+import { useStrapi, useLocaleString } from '../../composables';
 import {
-  useStrapi,
-  useLocaleString,
-  useImageSrcSet,
-  useFullSpeakerName,
-} from '../../composables';
-import { getTrimmedString } from '../../helpers';
+  getImageSrcSet,
+  getFullSpeakerName,
+  getTrimmedString,
+} from '../../helpers';
 
 export default defineComponent({
   components: {
@@ -265,7 +264,9 @@ export default defineComponent({
 
     // Get route and speaker ID param
     const route = useRoute();
-    const speakerIdPath = computed(() => `/${route.value.params.id}` as const);
+    const speakerIdPath = computed(
+      () => `/${route.value.params.slug.split('-').pop()}` as const
+    );
 
     // Query Strapi speaker
     const speaker = useStrapi('speakers', speakerIdPath);
@@ -286,7 +287,9 @@ export default defineComponent({
     );
 
     // Create full name
-    const fullName = useFullSpeakerName(speaker.value);
+    const fullName = computed(() =>
+      speaker.value ? getFullSpeakerName(speaker.value) : undefined
+    );
 
     // Set page meta data
     useMeta(() =>
@@ -307,11 +310,13 @@ export default defineComponent({
     // Create breadcrumb list
     const breadcrumbs = computed(() => [
       { label: 'Hall of Fame', href: '/hall-of-fame' },
-      { label: fullName.value },
+      { label: fullName.value || '' },
     ]);
 
     // Create profile image src set
-    const profileImageSrcSet = useImageSrcSet(speaker.value?.profile_image);
+    const profileImageSrcSet = computed(() =>
+      speaker.value ? getImageSrcSet(speaker.value.profile_image) : undefined
+    );
 
     // Create platform list
     const platforms = computed(

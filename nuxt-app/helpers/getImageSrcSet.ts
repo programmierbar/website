@@ -8,16 +8,13 @@ import { StrapiImage, StrapiImageFormat } from 'shared-code';
  *
  * @returns A string for the srcset attribute of an <img> Element.
  */
-export function getImageSrcSet(strapiImage: StrapiImage | null | undefined) {
-  if (strapiImage) {
-    const originalFile = `${strapiImage.url} ${strapiImage.width}w`;
-    return strapiImage.formats
-      ? originalFile +
-          ', ' +
-          (Object.values(strapiImage.formats) as StrapiImageFormat[])
-            .map(({ url, width }) => `${url} ${width}w`)
-            .join(', ')
-      : originalFile;
-  }
-  return undefined;
+export function getImageSrcSet(strapiImage: StrapiImage) {
+  const originalFile = `${strapiImage.url} ${strapiImage.width}w`;
+  return strapiImage.formats
+    ? originalFile +
+        ', ' +
+        (Object.values(strapiImage.formats) as StrapiImageFormat[])
+          .map(({ url, width }) => `${url} ${width}w`)
+          .join(', ')
+    : originalFile;
 }

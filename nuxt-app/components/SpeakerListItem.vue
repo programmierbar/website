@@ -48,21 +48,16 @@
       </p>
 
       <!-- Link -->
-      <LinkButton class="mt-6" :href="`/hall-of-fame/${speaker.id}`">
-        Mehr Infos
-      </LinkButton>
+      <LinkButton class="mt-6" :href="href">Mehr Infos</LinkButton>
     </div>
   </li>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from '@nuxtjs/composition-api';
+import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
+import removeMarkdown from 'remove-markdown';
 import { StrapiSpeaker } from 'shared-code';
-import {
-  useImageSrcSet,
-  useFullSpeakerName,
-  useTextFromMarkdown,
-} from '../composables';
+import { getImageSrcSet, getFullSpeakerName, getSubpagePath } from '../helpers';
 import LinkButton from './LinkButton.vue';
 
 export default defineComponent({
@@ -77,15 +72,29 @@ export default defineComponent({
   },
   setup(props) {
     // Create image src set
-    const imageSrcSet = useImageSrcSet(props.speaker.event_image);
+    const imageSrcSet = computed(() =>
+      getImageSrcSet(props.speaker.event_image)
+    );
 
     // Create get full name function
-    const fullName = useFullSpeakerName(props.speaker);
+    const fullName = computed(() => getFullSpeakerName(props.speaker));
 
     // Create plain description text
-    const description = useTextFromMarkdown(props.speaker.description);
+    const description = computed(() =>
+      removeMarkdown(props.speaker.description)
+    );
 
-    return { imageSrcSet, fullName, description };
+    // Create href to speaker's subpage
+    const href = computed(() =>
+      getSubpagePath('hall-of-fame', fullName.value, props.speaker.id)
+    );
+
+    return {
+      imageSrcSet,
+      fullName,
+      description,
+      href,
+    };
   },
 });
 </script>

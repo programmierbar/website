@@ -1,6 +1,6 @@
 <template>
   <div class="w-48 md:w-64 lg:w-96 relative">
-    <NuxtLink :to="`/podcast/${podcast.id}`" data-cursor-more>
+    <NuxtLink :to="href" data-cursor-more>
       <!-- Podcast cover -->
       <img
         class="w-48 md:w-64 lg:w-96 h-48 md:h-64 lg:h-96 pointer-events-none"
@@ -84,11 +84,13 @@
 <script lang="ts">
 import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
 import { StrapiPodcast } from 'shared-code';
-import { usePodcastPlayer, useImageSrcSet } from '../composables';
+import { usePodcastPlayer } from '../composables';
 import {
+  getImageSrcSet,
   getPodcastTypeString,
   getPodcastTitleDivider,
   getFullPodcastTitle,
+  getSubpagePath,
 } from '../helpers';
 
 export default defineComponent({
@@ -126,7 +128,9 @@ export default defineComponent({
     );
 
     // Create cover src set
-    const coverSrcSet = useImageSrcSet(props.podcast.cover_image);
+    const coverSrcSet = computed(() =>
+      getImageSrcSet(props.podcast.cover_image)
+    );
 
     // Create podcast type
     const type = computed(() => getPodcastTypeString(props.podcast));
@@ -136,6 +140,11 @@ export default defineComponent({
 
     // Create full podcast title
     const fullTitle = computed(() => getFullPodcastTitle(props.podcast));
+
+    // Create href to podcast subpage
+    const href = computed(() =>
+      getSubpagePath('podcast', fullTitle.value, props.podcast.id)
+    );
 
     // Create platform list
     const platforms = computed(() => [
@@ -171,6 +180,7 @@ export default defineComponent({
       type,
       divider,
       fullTitle,
+      href,
       platforms,
     };
   },

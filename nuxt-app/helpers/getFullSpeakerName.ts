@@ -7,11 +7,12 @@ import { StrapiSpeaker } from 'shared-code';
  *
  * @returns The full name of the speaker.
  */
-export function getFullSpeakerName(speaker: StrapiSpeaker | null | undefined) {
-  return speaker
-    ? (speaker.academic_title || '') +
-        speaker.first_name +
-        ' ' +
-        speaker.last_name
-    : '';
+export function getFullSpeakerName(speaker: StrapiSpeaker) {
+  return (
+    (speaker.academic_title || '') +
+    ' ' +
+    speaker.first_name +
+    ' ' +
+    speaker.last_name
+  ).trim();
 }

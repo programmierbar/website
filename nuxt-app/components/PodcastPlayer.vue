@@ -43,13 +43,14 @@
         <!-- Podcast infos -->
         <div class="w-2/3 lg:w-full flex items-center">
           <NuxtLink
+            v-if="href"
             class="inline-block"
             :class="!isExpanded && 'pointer-events-none md:pointer-events-auto'"
-            :to="podcastPath"
+            :to="href"
             data-cursor-hover
           >
             <h3 class="text-sm lg:text-base text-black font-black">
-              {{ podcastTypeAndNumber }}
+              {{ typeAndNumber }}
             </h3>
             <p
               class="
@@ -60,7 +61,7 @@
                 mt-px
               "
             >
-              {{ podcastTitle }}
+              {{ title }}
             </p>
           </NuxtLink>
         </div>
@@ -248,7 +249,7 @@
                     podcastPlayer.podcast.audio_file.url
                   : undefined
               "
-              :download="`${fullPodcastTitle}.mp3`"
+              :download="fullTitle"
               target="_blank"
               rel="noreferrer"
               data-cursor-hover
@@ -264,7 +265,11 @@
 <script lang="ts">
 import { computed, defineComponent, ref, watch } from '@nuxtjs/composition-api';
 import { usePodcastPlayer, useClipboard, useShare } from '../composables';
-import { getPodcastTypeString, getPodcastTitleDivider } from '../helpers';
+import {
+  getFullPodcastTitle,
+  getPodcastTypeAndNumber,
+  getSubpagePath,
+} from '../helpers';
 
 export default defineComponent({
   setup() {
@@ -292,33 +297,26 @@ export default defineComponent({
     const clipboard = useClipboard();
     const share = useShare();
 
-    // Create podcast type
-    const podcastType = computed(() =>
-      podcastPlayer.podcast ? getPodcastTypeString(podcastPlayer.podcast) : ''
-    );
-
-    // Create podcast path
-    const podcastPath = computed(
-      () => `/podcast/${podcastPlayer.podcast?.id || ''}`
-    );
-
     // Create podcast type and number
-    const podcastTypeAndNumber = computed(() =>
-      podcastPlayer.podcast
-        ? `${podcastType.value} ${podcastPlayer.podcast.number}`
-        : ''
+    const typeAndNumber = computed(
+      () =>
+        podcastPlayer.podcast && getPodcastTypeAndNumber(podcastPlayer.podcast)
     );
 
     // Create podcast title
-    const podcastTitle = computed(() => podcastPlayer.podcast?.title || '');
+    const title = computed(() => podcastPlayer.podcast?.title);
 
     // Create full podcast title
-    const fullPodcastTitle = computed(() =>
-      podcastPlayer.podcast
-        ? `${podcastTypeAndNumber.value}${getPodcastTitleDivider(
-            podcastPlayer.podcast
-          )}${podcastTitle}`
-        : ''
+    const fullTitle = computed(
+      () => podcastPlayer.podcast && getFullPodcastTitle(podcastPlayer.podcast)
+    );
+
+    // Create href to podcast subpage
+    const href = computed(
+      () =>
+        fullTitle.value &&
+        podcastPlayer.podcast?.id &&
+        getSubpagePath('podcast', fullTitle.value, podcastPlayer.podcast.id)
     );
 
     /**
@@ -361,23 +359,20 @@ export default defineComponent({
     };
 
     /**
-     * It shares the current audio URL via share or clipboard API.
+     * It shares or copies the URL of the podcast
+     * subpage via the share or clipboard API.
      */
     const shareAudio = () => {
-      if (podcastPlayer.podcast && fullPodcastTitle.value) {
+      if (podcastPlayer.podcast && fullTitle.value) {
+        const url = `${window.location.origin}${href.value}`;
         if (share.isSupported) {
           share.share({
             title: 'programmier.bar',
-            text: fullPodcastTitle.value,
-            url:
-              podcastPlayer.podcast.audio_url ||
-              podcastPlayer.podcast.audio_file.url,
+            text: fullTitle.value,
+            url,
           });
         } else if (clipboard.isSupported) {
-          clipboard.copy(
-            podcastPlayer.podcast.audio_url ||
-              podcastPlayer.podcast.audio_file.url
-          );
+          clipboard.copy(url);
         }
       }
     };
@@ -397,10 +392,10 @@ export default defineComponent({
       expandPlayer,
       collapsePlayer,
       podcastPlayer,
-      podcastPath,
-      podcastTypeAndNumber,
-      podcastTitle,
-      fullPodcastTitle,
+      href,
+      typeAndNumber,
+      title,
+      fullTitle,
       currentTimeString,
       durationString,
       progressString,

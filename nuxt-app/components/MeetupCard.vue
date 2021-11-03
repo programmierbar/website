@@ -1,11 +1,7 @@
 <template>
   <div class="lg:flex lg:items-center lg:space-x-14">
     <!-- Cover -->
-    <NuxtLink
-      class="lg:w-1/2 xl:w-5/12 block"
-      :to="`/meetup/${meetup.id}`"
-      data-cursor-more
-    >
+    <NuxtLink class="lg:w-1/2 xl:w-5/12 block" :to="href" data-cursor-more>
       <MeetupCover :meetup="meetup" variant="meetup_card" />
     </NuxtLink>
 
@@ -47,17 +43,16 @@
       </p>
 
       <!-- Likes -->
-      <LinkButton class="mt-6" :href="`/meetup/${meetup.id}`">
-        Mehr Infos
-      </LinkButton>
+      <LinkButton class="mt-6" :href="href">Mehr Infos</LinkButton>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from '@nuxtjs/composition-api';
+import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
+import removeMarkdown from 'remove-markdown';
 import { StrapiMeetup } from 'shared-code';
-import { useTextFromMarkdown } from '../composables';
+import { getSubpagePath } from '../helpers';
 import LinkButton from './LinkButton.vue';
 import MeetupCover from './MeetupCover.vue';
 import MeetupStartAndEnd from './MeetupStartAndEnd.vue';
@@ -79,10 +74,18 @@ export default defineComponent({
     },
   },
   setup(props) {
+    // Create href to meetup subpage
+    const href = computed(() =>
+      getSubpagePath('meetup', props.meetup.title, props.meetup.id)
+    );
+
     // Create plain description text
-    const description = useTextFromMarkdown(props.meetup.description);
+    const description = computed(() =>
+      removeMarkdown(props.meetup.description)
+    );
 
     return {
+      href,
       description,
     };
   },

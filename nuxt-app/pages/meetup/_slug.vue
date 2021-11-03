@@ -171,7 +171,9 @@ export default defineComponent({
 
     // Get route and meetup ID param
     const route = useRoute();
-    const meetupIdPath = computed(() => `/${route.value.params.id}` as const);
+    const meetupIdPath = computed(
+      () => `/${route.value.params.slug.split('-').pop()}` as const
+    );
 
     // Query Strapi meetup
     const meetup = useStrapi('meetups', meetupIdPath);

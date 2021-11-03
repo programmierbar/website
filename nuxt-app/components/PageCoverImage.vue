@@ -18,9 +18,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, ref } from '@nuxtjs/composition-api';
+import {
+  computed,
+  defineComponent,
+  PropType,
+  ref,
+} from '@nuxtjs/composition-api';
 import { StrapiImage } from 'shared-code';
-import { useImageSrcSet, useEventListener, useWindow } from '../composables';
+import { useEventListener, useWindow } from '../composables';
+import { getImageSrcSet } from '../helpers';
 import ScrollDownMouse from './ScrollDownMouse.vue';
 
 export default defineComponent({
@@ -38,7 +44,7 @@ export default defineComponent({
     const imageElement = ref<HTMLImageElement>();
 
     // Create cover src set
-    const coverSrcSet = useImageSrcSet(props.coverImage);
+    const coverSrcSet = computed(() => getImageSrcSet(props.coverImage));
 
     /**
      * It handles the scroll event and adds a

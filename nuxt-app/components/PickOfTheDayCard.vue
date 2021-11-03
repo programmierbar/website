@@ -176,9 +176,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, useRouter } from '@nuxtjs/composition-api';
+import {
+  computed,
+  defineComponent,
+  PropType,
+  useRouter,
+} from '@nuxtjs/composition-api';
 import { StrapiPickOfTheDay } from 'shared-code';
-import { useImageSrcSet } from '../composables';
+import { getImageSrcSet } from '../helpers';
 import LikeButton from './LikeButton.vue';
 import MarkdownToHtml from './MarkdownToHtml.vue';
 import TagList from './TagList.vue';
@@ -203,8 +208,10 @@ export default defineComponent({
     // Add router
     const router = useRouter();
 
-    // Create normal image src set
-    const imageSrcSet = useImageSrcSet(props.pickOfTheDay.image);
+    // Create image src set
+    const imageSrcSet = computed(() =>
+      getImageSrcSet(props.pickOfTheDay.image)
+    );
 
     return {
       router,

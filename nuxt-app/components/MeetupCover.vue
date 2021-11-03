@@ -63,7 +63,7 @@
 <script lang="ts">
 import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
 import { StrapiMeetup } from 'shared-code';
-import { useImageSrcSet } from '../composables';
+import { getImageSrcSet } from '../helpers';
 
 export default defineComponent({
   props: {
@@ -78,7 +78,9 @@ export default defineComponent({
   },
   setup(props) {
     // Create normal image src set
-    const coverImageSrcSet = useImageSrcSet(props.meetup.cover_image);
+    const coverImageSrcSet = computed(() =>
+      getImageSrcSet(props.meetup.cover_image)
+    );
 
     // Get name of month
     const nameOfMonth = computed(

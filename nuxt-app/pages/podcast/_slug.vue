@@ -172,7 +172,9 @@ export default defineComponent({
 
     // Get route and podcast ID param
     const route = useRoute();
-    const podcastIdPath = computed(() => `/${route.value.params.id}` as const);
+    const podcastIdPath = computed(
+      () => `/${route.value.params.slug.split('-').pop()}` as const
+    );
 
     // Query Strapi podcast
     const podcast = useStrapi('podcasts', podcastIdPath);

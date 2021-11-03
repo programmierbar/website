@@ -13,8 +13,7 @@ export function getPodcastTitleDivider(podcast: StrapiPodcast) {
       return ' – ';
     case 'cto_special':
     case 'news':
-      return ': ';
     default:
-      return '';
+      return ': ';
   }
 }

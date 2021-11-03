@@ -17,6 +17,6 @@ export function getPodcastTypeString(podcast: StrapiPodcast) {
     case 'news':
       return 'News';
     default:
-      return '';
+      return 'Spezialfolge';
   }
 }

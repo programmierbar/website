@@ -1,3 +1,8 @@
+import {
+  getFullPodcastTitle,
+  getFullSpeakerName,
+  getSubpagePath,
+} from './helpers';
 import { getStrapiCollection } from './tools/getStrapiCollection';
 
 export default {
@@ -70,14 +75,22 @@ export default {
         getStrapiCollection('meetups'),
       ]);
       const routes = [];
-      podcasts.forEach(({ id }) => {
-        routes.push(`/podcast/${id}`);
+      podcasts.forEach((podcast) => {
+        routes.push(
+          getSubpagePath('podcast', getFullPodcastTitle(podcast), podcast.id)
+        );
       });
-      speakers.forEach(({ id }) => {
-        routes.push(`/hall-of-fame/${id}`);
+      speakers.forEach((speaker) => {
+        routes.push(
+          getSubpagePath(
+            'hall-of-fame',
+            getFullSpeakerName(speaker),
+            speaker.id
+          )
+        );
       });
-      meetups.forEach(({ id }) => {
-        routes.push(`/meetup/${id}`);
+      meetups.forEach((meetup) => {
+        routes.push(getSubpagePath('meetup', meetup.title, meetup.id));
       });
       return routes;
     },

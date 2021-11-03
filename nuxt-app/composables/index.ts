@@ -1,10 +1,7 @@
 export * from './useBodyElement';
-export * from './useCarousel';
 export * from './useClipboard';
 export * from './useDocument';
 export * from './useEventListener';
-export * from './useFullSpeakerName';
-export * from './useImageSrcSet';
 export * from './useIntersectionObserver';
 export * from './useLocaleString';
 export * from './useMediaQuery';
@@ -17,5 +14,4 @@ export * from './useScrollParallax';
 export * from './useShare';
 export * from './useStrapi';
 export * from './useTagFilter';
-export * from './useTextFromMarkdown';
 export * from './useWindow';

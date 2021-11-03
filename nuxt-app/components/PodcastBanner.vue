@@ -185,7 +185,7 @@
         :src="podcast.banner_image.url"
         :srcset="bannerSrcSet"
         sizes="(min-width: 768px) 400px, 200px"
-        :alt="podcast.banner_image.alternativeText || ''"
+        :alt="podcast.banner_image.alternativeText || speakerName"
       />
     </div>
   </div>
@@ -194,8 +194,12 @@
 <script lang="ts">
 import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
 import { StrapiPodcast } from 'shared-code';
-import { usePodcastPlayer, useImageSrcSet } from '../composables';
-import { getPodcastTypeString } from '../helpers';
+import { usePodcastPlayer } from '../composables';
+import {
+  getPodcastTypeString,
+  getImageSrcSet,
+  getFullSpeakerName,
+} from '../helpers';
 
 export default defineComponent({
   props: {
@@ -231,7 +235,17 @@ export default defineComponent({
     const type = computed(() => getPodcastTypeString(props.podcast));
 
     // Create banner src set
-    const bannerSrcSet = useImageSrcSet(props.podcast.banner_image);
+    const bannerSrcSet = computed(() =>
+      props.podcast.banner_image
+        ? getImageSrcSet(props.podcast.banner_image)
+        : undefined
+    );
+
+    // Create speaker name
+    const speakerName = computed(() => {
+      const firstSpeaker = props.podcast.speakers[0];
+      return firstSpeaker ? getFullSpeakerName(firstSpeaker) : undefined;
+    });
 
     return {
       podcastPlayer,
@@ -239,6 +253,7 @@ export default defineComponent({
       date,
       type,
       bannerSrcSet,
+      speakerName,
     };
   },
 });

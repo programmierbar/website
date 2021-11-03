@@ -28,7 +28,7 @@
             <NuxtLink
               class="h-full relative block rounded-full overflow-hidden"
               :class="`shadow-${color}`"
-              :to="`/hall-of-fame/${speaker.id}?color=${color}`"
+              :to="href"
               data-cursor-more
             >
               <!-- Profile image -->
@@ -137,11 +137,8 @@ import {
   ref,
 } from '@nuxtjs/composition-api';
 import { StrapiSpeaker } from 'shared-code';
-import {
-  useMotionParallax,
-  useImageSrcSet,
-  useFullSpeakerName,
-} from '../composables';
+import { useMotionParallax } from '../composables';
+import { getImageSrcSet, getFullSpeakerName, getSubpagePath } from '../helpers';
 
 export default defineComponent({
   props: {
@@ -183,10 +180,22 @@ export default defineComponent({
     );
 
     // Create full name
-    const fullName = useFullSpeakerName(props.speaker);
+    const fullName = computed(() => getFullSpeakerName(props.speaker));
+
+    // Create href to speaker's subpage
+    const href = computed(() =>
+      getSubpagePath(
+        'hall-of-fame',
+        fullName.value,
+        props.speaker.id,
+        `?color=${props.color}` as const
+      )
+    );
 
     // Create profile image src set
-    const profileImageSrcSet = useImageSrcSet(props.speaker.profile_image);
+    const profileImageSrcSet = computed(() =>
+      getImageSrcSet(props.speaker.profile_image)
+    );
 
     return {
       isFocused,
@@ -194,6 +203,7 @@ export default defineComponent({
       motionElement,
       parallaxStyle,
       fullName,
+      href,
       profileImageSrcSet,
     };
   },

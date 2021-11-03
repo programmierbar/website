@@ -63,9 +63,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from '@nuxtjs/composition-api';
+import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
+import removeMarkdown from 'remove-markdown';
 import { StrapiPickOfTheDay } from 'shared-code';
-import { useImageSrcSet, useTextFromMarkdown } from '../composables';
+import { getImageSrcSet } from '../helpers';
 
 export default defineComponent({
   props: {
@@ -76,10 +77,14 @@ export default defineComponent({
   },
   setup(props) {
     // Create image src set
-    const imageSrcSet = useImageSrcSet(props.pickOfTheDay.image);
+    const imageSrcSet = computed(() =>
+      getImageSrcSet(props.pickOfTheDay.image)
+    );
 
     // Create plain description text
-    const description = useTextFromMarkdown(props.pickOfTheDay.description);
+    const description = computed(() =>
+      removeMarkdown(props.pickOfTheDay.description)
+    );
 
     return {
       imageSrcSet,

@@ -139,7 +139,7 @@ import {
   ref,
 } from '@nuxtjs/composition-api';
 import { StrapiMember } from 'shared-code';
-import { useImageSrcSet } from '../composables';
+import { getImageSrcSet } from '../helpers';
 
 const initClipPath = 'circle(16.666% at 0 25%)';
 
@@ -161,8 +161,12 @@ export default defineComponent({
     );
 
     // Create normal and action image src set
-    const normalImageSrcSet = useImageSrcSet(props.member.normal_image);
-    const actionImageSrcSet = useImageSrcSet(props.member.action_image);
+    const normalImageSrcSet = computed(() =>
+      getImageSrcSet(props.member.normal_image)
+    );
+    const actionImageSrcSet = computed(() =>
+      getImageSrcSet(props.member.action_image)
+    );
 
     // Create element references
     const cursorElements = ref<HTMLDivElement[]>();

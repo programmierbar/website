@@ -1,5 +1,5 @@
 import { StrapiPodcast } from 'shared-code';
-import { getPodcastTypeString } from './getPodcastTypeString';
+import { getPodcastTypeAndNumber } from './getPodcastTypeAndNumber';
 import { getPodcastTitleDivider } from './getPodcastTitleDivider';
 
 /**
@@ -12,11 +12,8 @@ import { getPodcastTitleDivider } from './getPodcastTitleDivider';
  */
 export function getFullPodcastTitle(podcast: StrapiPodcast) {
   return (
-    (podcast.type !== 'other'
-      ? getPodcastTypeString(podcast) +
-        ' ' +
-        podcast.number +
-        getPodcastTitleDivider(podcast)
-      : '') + podcast.title
+    getPodcastTypeAndNumber(podcast) +
+    getPodcastTitleDivider(podcast) +
+    podcast.title
   );
 }

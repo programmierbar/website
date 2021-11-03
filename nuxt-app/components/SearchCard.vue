@@ -67,22 +67,20 @@
 </template>
 
 <script lang="ts">
-import {
-  computed,
-  defineComponent,
-  onMounted,
-  PropType,
-  ref,
-} from '@nuxtjs/composition-api';
+import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
+import removeMarkdown from 'remove-markdown';
 import {
   StrapiPodcast,
   StrapiMeetup,
   StrapiPickOfTheDay,
   StrapiSpeaker,
 } from 'shared-code';
-import snarkdown from 'snarkdown';
-import { useImageSrcSet } from '../composables';
-import { getFullPodcastTitle, getFullSpeakerName } from '../helpers';
+import {
+  getImageSrcSet,
+  getFullPodcastTitle,
+  getFullSpeakerName,
+  getSubpagePath,
+} from '../helpers';
 
 type Item =
   | (StrapiPodcast & { itemType: 'podcast' })
@@ -101,12 +99,20 @@ export default defineComponent({
     // Create URL or path for <a> element
     const urlOrPath = computed(() =>
       props.item.itemType === 'podcast'
-        ? `/podcast/${props.item.id}`
+        ? getSubpagePath(
+            'podcast',
+            getFullPodcastTitle(props.item),
+            props.item.id
+          )
         : props.item.itemType === 'meetup'
-        ? `/meetup/${props.item.id}`
+        ? getSubpagePath('meetup', props.item.title, props.item.id)
         : props.item.itemType === 'pick_of_the_day'
         ? props.item.website_url
-        : `/hall-of-fame/${props.item.id}`
+        : getSubpagePath(
+            'hall-of-fame',
+            getFullSpeakerName(props.item),
+            props.item.id
+          )
     );
 
     // Create is external URL boolean
@@ -124,7 +130,7 @@ export default defineComponent({
     );
 
     // Create image src set
-    const imageSrcSet = useImageSrcSet(image.value);
+    const imageSrcSet = computed(() => getImageSrcSet(image.value));
 
     // Create type and date depending on item typ
     const typeAndDate = computed(
@@ -155,16 +161,8 @@ export default defineComponent({
         : getFullSpeakerName(props.item)
     );
 
-    // Lazy load description because DOMParser
-    // is not available on server side
-    const description = ref('');
-    onMounted(() => {
-      description.value =
-        new DOMParser().parseFromString(
-          snarkdown(props.item.description),
-          'text/html'
-        ).documentElement.textContent || '';
-    });
+    // Create plain description text
+    const description = computed(() => removeMarkdown(props.item.description));
 
     return {
       urlOrPath,
