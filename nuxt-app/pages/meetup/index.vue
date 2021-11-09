@@ -70,7 +70,7 @@
     </section>
 
     <!-- Meetups -->
-    <section class="relative my-12 md:my-28 lg:my-40">
+    <section class="relative mt-12 md:mt-28 lg:mt-40 mb-14 md:mb-32 lg:mb-52">
       <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
         <SectionHeading element="h2">
           {{ meetupPage.meetups_heading }}
@@ -111,7 +111,7 @@ export default defineComponent({
   setup() {
     // Query Strapi about page and members
     const meetupPage = useStrapi('meetup-page');
-    const meetups = useStrapi('meetups', '?_limit=-1');
+    const meetups = useStrapi('meetups', '?_limit=-1&_sort=start_at:DESC');
 
     // Set page meta data
     usePageMeta(meetupPage);

@@ -58,7 +58,7 @@ export function useStrapi(
 // Meetups
 export function useStrapi(
   route: 'meetups',
-  param?: '?_limit=-1'
+  param?: `?${string}`
 ): Ref<StrapiMeetup[] | null>;
 export function useStrapi(
   route: 'meetups',
