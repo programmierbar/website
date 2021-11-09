@@ -59,6 +59,8 @@ export default {
     '@nuxtjs/pwa',
     // SVG loading module for Nuxt.js
     '@nuxtjs/svg',
+    // Sitemap Module for Nuxt
+    '@nuxtjs/sitemap',
   ],
 
   generate: {
@@ -108,6 +110,12 @@ export default {
       background_color: '#000000',
       theme_color: '#000000',
     },
+  },
+
+  // https://sitemap.nuxtjs.org/
+  sitemap: {
+    hostname: 'https://www.programmier.bar',
+    exclude: ['/impressum', '/datenschutz'],
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
