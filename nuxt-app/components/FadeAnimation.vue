@@ -1,11 +1,12 @@
 <template>
   <div
     ref="fadeElement"
-    class="transition-all duration-300"
+    class="transition"
     :class="[
       isVisible || (!isFadeIn && fadeOut === 'none')
         ? 'opacity-100'
         : 'opacity-0',
+      duration === 500 ? 'duration-500' : 'duration-300',
       !isVisible &&
         isFadeIn &&
         ((fadeIn === 'from_top' &&
@@ -40,7 +41,7 @@ export default defineComponent({
   props: {
     fadeIn: {
       type: String as PropType<
-        'from_top' | 'from_right' | 'from_bottom' | 'from_left'
+        'normal' | 'from_top' | 'from_right' | 'from_bottom' | 'from_left'
       >,
       required: true,
     },
@@ -49,6 +50,10 @@ export default defineComponent({
         'to_top' | 'to_right' | 'to_bottom' | 'to_left' | 'none'
       >,
       default: 'none',
+    },
+    duration: {
+      type: Number as PropType<300 | 500>,
+      default: 300,
     },
   },
   setup(props) {
