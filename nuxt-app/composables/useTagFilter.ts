@@ -25,7 +25,7 @@ export function useTagFilter<
     | StrapiMeetup
     | StrapiSpeaker
     | StrapiPickOfTheDay
->(input: Ref<Entities[] | null>) {
+>(input: Ref<Entities[] | null | undefined>) {
   /**
    * Get the most frequently occurring tags from the input.
    *

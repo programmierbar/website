@@ -97,14 +97,20 @@ export default defineComponent({
 
     // Create podcast crew memeber list
     const podcastCrewMembers = computed(() =>
-      members.value?.filter((member) => member.task_area === 'podcast_crew')
+      members.value
+        ?.filter((member) => member.task_area === 'podcast_crew')
+        .sort((a, b) =>
+          (a.position || Infinity) < (b.position || Infinity) ? -1 : 1
+        )
     );
 
     // Create behind the scenes memeber list
     const behindTheScenesMembers = computed(() =>
-      members.value?.filter(
-        (member) => member.task_area === 'behind_the_scenes'
-      )
+      members.value
+        ?.filter((member) => member.task_area === 'behind_the_scenes')
+        .sort((a, b) =>
+          (a.position || Infinity) < (b.position || Infinity) ? -1 : 1
+        )
     );
 
     return {

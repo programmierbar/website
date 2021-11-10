@@ -90,7 +90,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from '@nuxtjs/composition-api';
+import { computed, defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   LazyList,
@@ -116,8 +116,15 @@ export default defineComponent({
     // Set page meta data
     usePageMeta(hallOfFamePage);
 
+    // Create sorted speakers
+    const sortedSpeakers = computed(() =>
+      speakers.value?.sort((a, b) =>
+        (a.position || Infinity) < (b.position || Infinity) ? -1 : 1
+      )
+    );
+
     // Create tag filter
-    const tagFilter = useTagFilter(speakers);
+    const tagFilter = useTagFilter(sortedSpeakers);
 
     return {
       hallOfFamePage,
