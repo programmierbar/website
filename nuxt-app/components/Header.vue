@@ -176,8 +176,9 @@
       "
       :class="!menuIsOpen && 'invisible opacity-0 translate-x-20 scale-x-90'"
       :style="
-        (!menuIsOpen || undefined) &&
-        'transition: visibility 0s .3s, opacity .3s, transform .3s'
+        !menuIsOpen
+          ? 'transition: visibility 0s .3s, opacity .3s, transform .3s'
+          : undefined
       "
     >
       <div
