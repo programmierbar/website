@@ -2,16 +2,31 @@
   <div class="w-full h-1/2-screen lg:h-4/6-screen">
     <div class="h-full relative overflow-hidden">
       <div
-        class="w-full h-full absolute top-0 left-0 bg-gray-900 bg-opacity-30"
+        class="
+          w-full
+          h-full
+          absolute
+          z-10
+          top-0
+          left-0
+          bg-gray-900 bg-opacity-30
+        "
       />
-      <img
-        ref="imageElement"
-        class="w-full h-full relative -z-1 object-cover"
-        :src="coverImage.url"
-        :srcset="coverSrcSet"
-        sizes="100vw"
-        :alt="coverImage.alternativeText || ''"
-      />
+      <FadeAnimation
+        class="h-full relative -z-1"
+        fade-in="normal"
+        fade-out="none"
+        :duration="500"
+      >
+        <img
+          ref="imageElement"
+          class="w-full h-full object-cover"
+          :src="coverImage.url"
+          :srcset="coverSrcSet"
+          sizes="100vw"
+          :alt="coverImage.alternativeText || ''"
+        />
+      </FadeAnimation>
     </div>
     <ScrollDownMouse />
   </div>
@@ -27,10 +42,12 @@ import {
 import { StrapiImage } from 'shared-code';
 import { useEventListener, useWindow } from '../composables';
 import { getImageSrcSet } from '../helpers';
+import FadeAnimation from './FadeAnimation.vue';
 import ScrollDownMouse from './ScrollDownMouse.vue';
 
 export default defineComponent({
   components: {
+    FadeAnimation,
     ScrollDownMouse,
   },
   props: {
