@@ -69,6 +69,7 @@ export interface StrapiMember extends StrapiTyp {
   description: string;
   normal_image: StrapiImage;
   action_image: StrapiImage;
+  position: number | null;
   podcasts: StrapiPodcast[];
   picks_of_the_day: StrapiPickOfTheDay[];
   tags: StrapiTag[];
@@ -88,6 +89,7 @@ export interface StrapiSpeaker extends StrapiTyp {
   youtube_url: string | null;
   github_url: string | null;
   website_url: string | null;
+  position: number | null;
   podcasts: StrapiPodcast[];
   picks_of_the_day: StrapiPickOfTheDay[];
   tags: StrapiTag[];
@@ -119,6 +121,7 @@ export interface StrapiMeetup extends StrapiTyp {
   description: string;
   cover_image: StrapiImage;
   youtube_url: string | null;
+  meetup_url: string | null;
   members: StrapiMember[];
   speakers: StrapiSpeaker[];
   tags: StrapiTag[];
