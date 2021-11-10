@@ -45,15 +45,19 @@
       <ScrollDownMouse />
 
       <!-- Video -->
-      <video
-        class="w-full min-h-80 object-cover"
-        :src="homePage.video.url"
-        :alt="homePage.video.alternativeText"
-        autoplay="true"
-        loop="true"
-        muted="true"
-        playsinline
-      />
+      <div class="bg-gray-900">
+        <FadeAnimation fade-in="normal" fade-out="none" :duration="500">
+          <video
+            class="w-full min-h-80 object-cover"
+            :src="homePage.video.url"
+            :alt="homePage.video.alternativeText"
+            autoplay="true"
+            loop="true"
+            muted="true"
+            playsinline
+          />
+        </FadeAnimation>
+      </div>
 
       <!-- Newsticker -->
       <NewsTicker :markdown="homePage.news" />
@@ -76,6 +80,7 @@
 import { defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
+  FadeAnimation,
   NewsTicker,
   PodcastSlider,
   SectionHeading,
@@ -87,6 +92,7 @@ import { useStrapi, usePageMeta } from '../composables';
 export default defineComponent({
   components: {
     Breadcrumbs,
+    FadeAnimation,
     NewsTicker,
     PodcastSlider,
     SectionHeading,
