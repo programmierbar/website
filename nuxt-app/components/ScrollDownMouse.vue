@@ -7,6 +7,7 @@
         h-16
         lg:h-24
         absolute
+        z-20
         -top-10
         lg:-top-14
         hidden
