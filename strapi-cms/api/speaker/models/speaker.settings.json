@@ -78,6 +78,9 @@
       "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
       "unique": true
     },
+    "position": {
+      "type": "integer"
+    },
     "podcasts": {
       "via": "speakers",
       "collection": "podcast"

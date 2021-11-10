@@ -51,6 +51,9 @@
       "required": true,
       "pluginOptions": {}
     },
+    "position": {
+      "type": "integer"
+    },
     "podcasts": {
       "via": "members",
       "collection": "podcast"

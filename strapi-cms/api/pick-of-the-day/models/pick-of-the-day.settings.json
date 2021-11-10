@@ -25,7 +25,9 @@
     "image": {
       "model": "file",
       "via": "related",
-      "allowedTypes": ["images"],
+      "allowedTypes": [
+        "images"
+      ],
       "plugin": "upload",
       "required": true,
       "pluginOptions": {}

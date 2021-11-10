@@ -31,14 +31,20 @@
     "cover_image": {
       "model": "file",
       "via": "related",
-      "allowedTypes": ["images"],
+      "allowedTypes": [
+        "images"
+      ],
       "plugin": "upload",
       "required": true,
       "pluginOptions": {}
     },
+    "meetup_url": {
+      "type": "string",
+      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$"
+    },
     "youtube_url": {
       "type": "string",
-      "regex": "^(http:\\\\/\\\\/|https:\\\\/\\\\/)?[a-z0-9]+([\\\\-\\\\.]{1}[a-z0-9]+)*\\\\.[a-z]{2,5}(:[0-9]{1,5})?(\\\\/.*)?$"
+      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$"
     },
     "members": {
       "via": "meetups",
