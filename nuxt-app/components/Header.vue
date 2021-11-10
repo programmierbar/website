@@ -274,7 +274,6 @@ import {
   ref,
   useRoute,
   useRouter,
-  watch,
 } from '@nuxtjs/composition-api';
 import { useEventListener, useDocument } from '../composables';
 import SocialNetworks from './SocialNetworks.vue';
@@ -300,11 +299,6 @@ export default defineComponent({
       setTimeout(() => {
         menuIsOpen.value = false;
       }, 50);
-    });
-
-    // Disable scrolling while menu is open
-    watch(menuIsOpen, () => {
-      document.body.style.overflow = menuIsOpen.value ? 'hidden' : '';
     });
 
     /**
