@@ -22,18 +22,16 @@
       to="/"
       data-cursor-hover
     >
-      <div @click="closeMenu">
-        <img
-          class="h-7 lg:hidden"
-          :src="require('~/assets/images/brand-icon.svg')"
-          alt="programier.bar Icon"
-        />
-        <img
-          class="h-8 hidden lg:block"
-          :src="require('~/assets/images/brand-logo.svg')"
-          alt="programier.bar Logo"
-        />
-      </div>
+      <img
+        class="h-7 lg:hidden"
+        :src="require('~/assets/images/brand-icon.svg')"
+        alt="programier.bar Icon"
+      />
+      <img
+        class="h-8 hidden lg:block"
+        :src="require('~/assets/images/brand-logo.svg')"
+        alt="programier.bar Logo"
+      />
     </NuxtLink>
 
     <!-- Search form -->
@@ -207,7 +205,6 @@
             v-for="mainMenuItem in mainMenuItems"
             :key="mainMenuItem.href"
             class="text-right"
-            @click="closeMenu"
           >
             <NuxtLink
               class="
@@ -250,11 +247,7 @@
           lg:space-x-8
         "
       >
-        <li
-          v-for="subMenuItem in subMenuItems"
-          :key="subMenuItem.href"
-          @click="closeMenu"
-        >
+        <li v-for="subMenuItem in subMenuItems" :key="subMenuItem.href">
           <NuxtLink
             class="
               text-white
@@ -302,6 +295,13 @@ export default defineComponent({
     // Create search input element reference
     const searchInputElement = ref<HTMLInputElement>();
 
+    // Close menu after each route change
+    router.afterEach(() => {
+      setTimeout(() => {
+        menuIsOpen.value = false;
+      }, 50);
+    });
+
     // Disable scrolling while menu is open
     watch(menuIsOpen, () => {
       document.body.style.overflow = menuIsOpen.value ? 'hidden' : '';
@@ -322,20 +322,17 @@ export default defineComponent({
 
     // Set initial search state when component is mounted or path changes
     onMounted(setInitialSearch);
-    watch(() => route.value.path, setInitialSearch);
+    router.afterEach(setInitialSearch);
 
     // Close and reset search if path does not change to /suche
-    watch(
-      () => route.value.path,
-      (path) => {
-        if (path !== '/suche' && searchIsOpen.value) {
-          searchIsOpen.value = false;
-          if (searchInputElement.value?.value) {
-            searchInputElement.value.value = '';
-          }
+    router.afterEach((to) => {
+      if (to.path !== '/suche' && searchIsOpen.value) {
+        searchIsOpen.value = false;
+        if (searchInputElement.value?.value) {
+          searchInputElement.value.value = '';
         }
       }
-    );
+    });
 
     /**
      * It handles clicking on the burger button.
@@ -409,20 +406,12 @@ export default defineComponent({
     // Add key down event listener
     useEventListener(useDocument(), 'keydown', handleKeyDown);
 
-    /**
-     * It closes the menu.
-     */
-    const closeMenu = () => {
-      menuIsOpen.value = false;
-    };
-
     return {
       menuIsOpen,
       searchIsOpen,
       searchInputElement,
       handleBurgerClick,
       handleSearch,
-      closeMenu,
       mainMenuItems: [
         { label: 'Home', href: '/' },
         { label: 'Podcast', href: '/podcast' },
