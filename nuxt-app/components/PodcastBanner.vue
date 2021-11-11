@@ -164,7 +164,7 @@
       </div>
 
       <!-- Speaker banner image -->
-      <img
+      <FadeAnimation
         v-if="podcast.banner_image"
         class="
           w-52
@@ -178,15 +178,20 @@
           bottom-0
           hidden
           md:block
-          object-cover
-          opacity-90
         "
         :class="podcast.type === 'deep_dive' ? 'mix-blend-multiply' : '-z-1'"
-        :src="podcast.banner_image.url"
-        :srcset="bannerSrcSet"
-        sizes="(min-width: 768px) 400px, 200px"
-        :alt="podcast.banner_image.alternativeText || speakerName"
-      />
+        fade-in="normal"
+        fade-out="none"
+        :duration="500"
+      >
+        <img
+          class="w-full h-full object-cover opacity-90"
+          :src="podcast.banner_image.url"
+          :srcset="bannerSrcSet"
+          sizes="(min-width: 768px) 400px, 200px"
+          :alt="podcast.banner_image.alternativeText || speakerName"
+        />
+      </FadeAnimation>
     </div>
   </div>
 </template>
@@ -200,8 +205,12 @@ import {
   getImageSrcSet,
   getFullSpeakerName,
 } from '../helpers';
+import FadeAnimation from './FadeAnimation.vue';
 
 export default defineComponent({
+  components: {
+    FadeAnimation,
+  },
   props: {
     podcast: {
       type: Object as PropType<StrapiPodcast>,
