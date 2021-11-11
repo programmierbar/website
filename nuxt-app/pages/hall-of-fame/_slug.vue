@@ -60,7 +60,7 @@
           "
         >
           <!-- Profile image -->
-          <img
+          <FadeAnimation
             class="
               w-44
               sm:w-52
@@ -79,9 +79,15 @@
               rounded-full
               overflow-hidden
             "
-            :src="speaker.profile_image.url"
-            :srcset="profileImageSrcSet"
-            sizes="
+            fade-in="normal"
+            fade-out="none"
+            :duration="500"
+          >
+            <img
+              class="w-full h-full object-cover"
+              :src="speaker.profile_image.url"
+              :srcset="profileImageSrcSet"
+              sizes="
               (min-width: 2000px) 480px,
               (min-width: 1536px) 448px,
               (min-width: 1280px) 384px,
@@ -89,8 +95,9 @@
               (min-width: 640px) 208px,
               176px
             "
-            :alt="speaker.profile_image.alternativeText || fullName"
-          />
+              :alt="speaker.profile_image.alternativeText || fullName"
+            />
+          </FadeAnimation>
 
           <!-- Name, Occupation & Links -->
           <div>
@@ -230,6 +237,7 @@ import {
 } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
+  FadeAnimation,
   FeedbackSection,
   LikeButton,
   LinkButton,
@@ -249,6 +257,7 @@ import {
 export default defineComponent({
   components: {
     Breadcrumbs,
+    FadeAnimation,
     FeedbackSection,
     LikeButton,
     LinkButton,
