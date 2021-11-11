@@ -24,6 +24,7 @@
 
       <!-- Search results -->
       <LazyList
+        v-if="searchResults.length"
         class="mt-12 md:mt-16 lg:mt-28"
         :items="searchResults"
         direction="vertical"
@@ -47,6 +48,39 @@
           </li>
         </template>
       </LazyList>
+
+      <!-- Search figure -->
+      <div
+        v-if="!route.query.search && !searchResults.length"
+        class="
+          h-full
+          flex flex-col
+          items-center
+          justify-center
+          space-y-6
+          md:space-y-8
+          lg:space-y-10
+          mt-20
+          md:mt-32
+          lg:mt-52
+        "
+      >
+        <div
+          class="h-32 md:h-44 lg:h-60"
+          v-html="require('../assets/images/search-figure.svg?raw')"
+        />
+        <p
+          class="
+            text-base
+            md:text-lg
+            lg:text-2xl
+            text-lime text-center
+            font-semibold
+          "
+        >
+          Nach was möchtest du suchen?
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -194,7 +228,11 @@ export default defineComponent({
 
     // Set page meta data
     useMeta(() => ({
-      title: `Suche – ${searchResults.value.length} Treffer | programmier.bar`,
+      title: `${
+        route.value.query.search
+          ? `Suche – ${searchResults.value.length} Treffer`
+          : 'Suche nach Podcast-Folgen, Meetups und mehr'
+      } | programmier.bar`,
       meta: [
         { hid: 'description', name: 'description', content: '' },
         { name: 'robots', content: 'noindex, nofollow' },
@@ -210,6 +248,7 @@ export default defineComponent({
     ]);
 
     return {
+      route,
       searchResults,
       breadcrumbs,
     };
