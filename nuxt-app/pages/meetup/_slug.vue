@@ -34,8 +34,41 @@
           {{ meetup.title }}
         </h1>
 
-        <!-- Cover -->
+        <!-- Cover and YouTube -->
+        <a
+          v-if="meetup.youtube_url"
+          class="
+            xl:w-2/3
+            relative
+            flex
+            items-center
+            justify-center
+            mt-10
+            md:mt-12
+            lg:mt-16
+          "
+          :href="meetup.youtube_url"
+          target="_blank"
+          rel="noreferrer"
+          data-cursor-hover
+        >
+          <div
+            class="
+              h-16
+              xs:h-20
+              md:h-24
+              lg:h-36
+              absolute
+              z-10
+              text-blue
+              pointer-events-none
+            "
+            v-html="require('../../assets/icons/play-circle.svg?raw')"
+          />
+          <MeetupCover class="w-full" :meetup="meetup" />
+        </a>
         <MeetupCover
+          v-else
           class="xl:w-2/3 mt-10 md:mt-12 lg:mt-16"
           :meetup="meetup"
         />
