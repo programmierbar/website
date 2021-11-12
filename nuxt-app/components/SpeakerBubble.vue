@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="bubbleElement"
     class="transition-transform duration-500"
     :class="isFocused && 'scale-110'"
   >
@@ -22,8 +23,8 @@
         <div ref="motionElement" class="h-full scale-150 rounded-full">
           <div
             class="h-full scale-65 rounded-full"
-            @mouseenter="() => changeIsFocused(true)"
-            @mouseleave="() => changeIsFocused(false)"
+            @mouseenter="() => setIsFocused(true)"
+            @mouseleave="() => setIsFocused(false)"
           >
             <NuxtLink
               class="h-full relative block rounded-full overflow-hidden"
@@ -80,27 +81,38 @@
                   left-0
                   bottom-0
                   bg-black bg-opacity-80
-                  text-xs
-                  xs:text-sm
-                  sm:text-base
-                  lg:text-lg
-                  xl:text-xl
-                  2xl:text-2xl
-                  text-white
-                  font-light
-                  text-center
                   px-10
+                  md:px-12
+                  lg:px-16
                   pt-5
-                  pb-7
-                  md:px-12 md:pt-7 md:pb-9
-                  lg:px-16 lg:pt-12 lg:pb-16
+                  md:pt-7
+                  lg:pt-12
+                  pb-5
+                  md:pb-9
+                  lg:pb-16
                   transition-opacity
                   duration-300
                   pointer-events-none
                 "
                 :class="isFocused ? 'opacity-100' : 'opacity-0'"
               >
-                {{ speaker.occupation }}
+                <div
+                  class="
+                    text-xs
+                    xs:text-sm
+                    sm:text-base
+                    lg:text-lg
+                    xl:text-xl
+                    2xl:text-2xl
+                    text-white
+                    font-light
+                    text-center
+                    line-clamp-2
+                    md:line-clamp-none
+                  "
+                >
+                  {{ speaker.occupation }}
+                </div>
               </div>
             </NuxtLink>
           </div>
@@ -137,7 +149,7 @@ import {
   ref,
 } from '@nuxtjs/composition-api';
 import { StrapiSpeaker } from 'shared-code';
-import { useMotionParallax } from '../composables';
+import { useMotionParallax, useEventListener, useWindow } from '../composables';
 import { getImageSrcSet, getFullSpeakerName, getSubpagePath } from '../helpers';
 
 export default defineComponent({
@@ -152,20 +164,14 @@ export default defineComponent({
     },
   },
   setup(props) {
+    // Create bubble and motion element reference
+    const bubbleElement = ref<HTMLDivElement>();
+    const motionElement = ref<HTMLDivElement>();
+
     // Create is focused state reference
     const isFocused = ref(false);
 
-    /**
-     * It changes the is focused state based of the given parameter.
-     *
-     * @param nextIsFocused The next is focused state.
-     */
-    const changeIsFocused = (nextIsFocused: boolean) => {
-      isFocused.value = nextIsFocused;
-    };
-
-    // Create motion element an parallax reference
-    const motionElement = ref<HTMLDivElement>();
+    // Use motion parallax
     const motionParallax = useMotionParallax(motionElement);
 
     // Create computed parallax style
@@ -197,10 +203,39 @@ export default defineComponent({
       getImageSrcSet(props.speaker.profile_image)
     );
 
+    /**
+     * It sets the is focused state based of the given parameter.
+     *
+     * @param nextIsFocused The next is focused state.
+     */
+    const setIsFocused = (nextIsFocused: boolean) => {
+      isFocused.value = nextIsFocused;
+    };
+
+    /**
+     * It handles the scroll event and sets the is focused state on touch
+     * devices when the element is in the center of the screen.
+     */
+    const handleScroll = () => {
+      if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        const { innerHeight, scrollY } = window;
+        const { offsetTop, clientHeight } = bubbleElement.value!;
+        isFocused.value =
+          Math.abs(
+            scrollY + innerHeight / 2 - (offsetTop + clientHeight / 2)
+          ) <=
+          clientHeight / 2;
+      }
+    };
+
+    // Add scroll event listener to window object
+    useEventListener(useWindow(), 'scroll', handleScroll);
+
     return {
-      isFocused,
-      changeIsFocused,
+      bubbleElement,
       motionElement,
+      isFocused,
+      setIsFocused,
       parallaxStyle,
       fullName,
       href,
