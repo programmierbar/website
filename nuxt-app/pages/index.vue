@@ -71,7 +71,11 @@
       <SectionHeading class="px-6 md:px-0" element="h2">
         {{ homePage.podcast_heading }}
       </SectionHeading>
-      <PodcastSlider class="mt-10 md:mt-0" :podcasts="homePage.podcasts" />
+      <PodcastSlider
+        class="mt-10 md:mt-0"
+        :podcasts="homePage.podcasts"
+        show-podcast-link
+      />
     </section>
   </div>
 </template>

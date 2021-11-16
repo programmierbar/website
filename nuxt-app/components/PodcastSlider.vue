@@ -1,11 +1,12 @@
 <template>
   <div class="relative">
-    <!-- Podcast list -->
+    <!-- Scroll box -->
     <div
       ref="scrollBoxElement"
       class="
         scroll-box
         flex
+        items-center
         overflow-x-auto
         before:w-6
         md:before:w-48
@@ -16,6 +17,7 @@
         after:flex-shrink-0
       "
     >
+      <!-- Podcast list -->
       <LazyList
         class="flex"
         :items="podcasts"
@@ -27,13 +29,88 @@
             :key="item.id"
             :class="
               index > 0 &&
-              'ml-10 md:ml-16 lg:ml-20 xl:ml-24 2xl:md-28 3xl:ml-32'
+              'ml-10 md:ml-16 lg:ml-20 xl:ml-24 2xl:ml-28 3xl:ml-32'
             "
           >
             <PodcastCard :podcast="item" />
           </li>
         </template>
       </LazyList>
+
+      <!-- Podcast link -->
+      <div
+        v-if="showPodcastLink"
+        class="
+          flex
+          items-end
+          border-b-4
+          md:border-b-5
+          lg:border-b-6
+          border-lime
+          pl-3
+          lg:pl-6
+          pr-5
+          lg:pr-10
+          ml-10
+          md:ml-16
+          lg:ml-20
+          xl:ml-24
+          2xl:ml-28
+          3xl:ml-32
+          mb-14
+          md:mb-32
+        "
+      >
+        <div
+          class="h-40 md:h-48 lg:h-60 relative -bottom-1 lg:-bottom-1.5"
+          v-html="require('../assets/images/podcast-figure.svg?raw')"
+        />
+        <NuxtLink
+          class="
+            podcast-link
+            flex
+            items-end
+            space-x-4
+            md:space-x-5
+            lg:space-x-6
+            text-sm
+            md:text-lg
+            lg:text-xl
+            text-white
+            hover:text-blue
+            font-black
+            uppercase
+            whitespace-nowrap
+            tracking-widest
+            leading-relaxed
+            md:leading-relaxed
+            lg:leading-relaxed
+            transition-colors
+            pb-2
+          "
+          to="/podcast"
+          data-cursor-hover
+        >
+          <div>
+            Alle {{ podcastCount }}<br />
+            Folgen
+          </div>
+          <div class="relative mb-1 lg:mb-2">
+            <div
+              v-for="count of 3"
+              :key="count"
+              class="angle-right h-4 md:h-5 lg:h-6"
+              :class="[
+                count > 1 && 'absolute top-0 opacity-0',
+                count === 2 && 'left-3 md:left-4',
+                count === 3 && 'left-6 md:left-8',
+              ]"
+              :style="`animation-delay: ${count * 150 - 300}ms`"
+              v-html="require('../assets/icons/angle-right.svg?raw')"
+            />
+          </div>
+        </NuxtLink>
+      </div>
     </div>
 
     <!-- Scroll buttons -->
@@ -84,7 +161,7 @@ import {
 } from '@nuxtjs/composition-api';
 import smoothscroll from 'smoothscroll-polyfill';
 import { StrapiPodcast } from 'shared-code';
-import { useEventListener } from '../composables';
+import { useStrapi, useEventListener } from '../composables';
 import LazyList from './LazyList.vue';
 import PodcastCard from './PodcastCard.vue';
 
@@ -98,8 +175,15 @@ export default defineComponent({
       type: Array as PropType<StrapiPodcast[]>,
       required: true,
     },
+    showPodcastLink: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup() {
+    // Query Strapi podcast count
+    const podcastCount = useStrapi('podcasts', '/count');
+
     // Create scroll box element reference
     const scrollBoxElement = ref<HTMLDivElement>();
 
@@ -171,6 +255,7 @@ export default defineComponent({
     useEventListener(scrollBoxElement, 'mousedown', handleScrollPosition);
 
     return {
+      podcastCount,
       scrollBoxElement,
       scrollStartReached,
       scrollEndReached,
@@ -200,5 +285,22 @@ export default defineComponent({
   .scroll-box::before {
     width: calc((100vw - 1536px) / 2 + 2rem);
   }
+}
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.podcast-link:hover .angle-right {
+  animation: fade-in 0.8s ease infinite forwards;
 }
 </style>
