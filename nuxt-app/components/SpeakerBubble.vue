@@ -27,17 +27,24 @@
             @mouseleave="() => setIsFocused(false)"
           >
             <NuxtLink
-              class="h-full relative block rounded-full overflow-hidden"
+              class="h-full block rounded-full"
               :class="`shadow-${color}`"
               :to="href"
               data-cursor-more
             >
-              <!-- Profile image -->
-              <img
-                class="w-full h-full object-cover"
-                :src="speaker.profile_image.url"
-                :srcset="profileImageSrcSet"
-                sizes="
+              <!-- https://gist.github.com/ayamflow/b602ab436ac9f05660d9c15190f4fd7b -->
+              <div
+                class="h-full relative rounded-full overflow-hidden"
+                style="
+                  -webkit-mask-image: -webkit-radial-gradient(white, black);
+                "
+              >
+                <!-- Profile image -->
+                <img
+                  class="w-full h-full object-cover"
+                  :src="speaker.profile_image.url"
+                  :srcset="profileImageSrcSet"
+                  sizes="
                   (min-width: 2000px) 468px,
                   (min-width: 1536px) 437px,
                   (min-width: 1280px) 375px,
@@ -46,72 +53,73 @@
                   (min-width: 520px) 203px,
                   172px
                 "
-                loading="lazy"
-                :alt="speaker.profile_image.alternativeText || fullName"
-              />
+                  loading="lazy"
+                  :alt="speaker.profile_image.alternativeText || fullName"
+                />
 
-              <!-- Image overlay -->
-              <div
-                class="
-                  w-full
-                  h-full
-                  absolute
-                  top-0
-                  left-0
-                  rounded-full
-                  mix-blend-multiply
-                  transition-opacity
-                  duration-300
-                "
-                :class="[
-                  isFocused ? 'opacity-0' : 'opacity-80',
-                  color === 'lime'
-                    ? 'bg-lime'
-                    : color === 'pink'
-                    ? 'bg-pink'
-                    : 'bg-blue',
-                ]"
-              />
-
-              <!-- Occupation -->
-              <div
-                class="
-                  w-full
-                  absolute
-                  left-0
-                  bottom-0
-                  bg-black bg-opacity-80
-                  px-10
-                  md:px-12
-                  lg:px-16
-                  pt-5
-                  md:pt-7
-                  lg:pt-12
-                  pb-5
-                  md:pb-9
-                  lg:pb-16
-                  transition-opacity
-                  duration-300
-                  pointer-events-none
-                "
-                :class="isFocused ? 'opacity-100' : 'opacity-0'"
-              >
+                <!-- Image overlay -->
                 <div
                   class="
-                    text-xs
-                    xs:text-sm
-                    sm:text-base
-                    lg:text-lg
-                    xl:text-xl
-                    2xl:text-2xl
-                    text-white
-                    font-light
-                    text-center
-                    line-clamp-2
-                    md:line-clamp-none
+                    w-full
+                    h-full
+                    absolute
+                    top-0
+                    left-0
+                    rounded-full
+                    mix-blend-multiply
+                    transition-opacity
+                    duration-300
                   "
+                  :class="[
+                    isFocused ? 'opacity-0' : 'opacity-80',
+                    color === 'lime'
+                      ? 'bg-lime'
+                      : color === 'pink'
+                      ? 'bg-pink'
+                      : 'bg-blue',
+                  ]"
+                />
+
+                <!-- Occupation -->
+                <div
+                  class="
+                    w-full
+                    absolute
+                    left-0
+                    bottom-0
+                    bg-black bg-opacity-80
+                    px-10
+                    md:px-12
+                    lg:px-16
+                    pt-5
+                    md:pt-7
+                    lg:pt-12
+                    pb-5
+                    md:pb-9
+                    lg:pb-16
+                    transition-opacity
+                    duration-300
+                    pointer-events-none
+                  "
+                  :class="isFocused ? 'opacity-100' : 'opacity-0'"
                 >
-                  {{ speaker.occupation }}
+                  <div
+                    class="
+                      text-xs
+                      xs:text-sm
+                      sm:text-base
+                      lg:text-lg
+                      xl:text-xl
+                      2xl:text-2xl
+                      text-white
+                      font-light
+                      text-center
+                      line-clamp-2
+                      md:line-clamp-none
+                    "
+                  >
+                    {{ speaker.occupation }}
+                  </div>
                 </div>
               </div>
             </NuxtLink>
