@@ -9,6 +9,7 @@ export { default as LazyList } from './LazyList.vue';
 export { default as LikeButton } from './LikeButton.vue';
 export { default as LinkButton } from './LinkButton.vue';
 export { default as MarkdownToHtml } from './MarkdownToHtml.vue';
+export { default as MeetupCalendarAndMaps } from './MeetupCalendarAndMaps.vue';
 export { default as MeetupCard } from './MeetupCard.vue';
 export { default as MeetupCover } from './MeetupCover.vue';
 export { default as MeetupStartAndEnd } from './MeetupStartAndEnd.vue';

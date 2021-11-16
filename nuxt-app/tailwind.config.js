@@ -98,6 +98,11 @@ module.exports = {
         11: '2.75rem',
         80: '20rem',
       },
+      minWidth: {
+        56: '14rem',
+        76: '19rem',
+        88: '22rem',
+      },
       scale: {
         65: '0.65',
         70: '0.7',

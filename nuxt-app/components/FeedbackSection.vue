@@ -13,6 +13,9 @@
     <div class="relative">
       <NuxtLink
         class="
+          min-w-56
+          md:min-w-76
+          lg:min-w-88
           inline-block
           border-lime border-4
           text-lime
@@ -20,12 +23,11 @@
           text-sm
           md:text-lg
           lg:text-xl
+          text-center
           font-black
           tracking-widest
           uppercase
-          px-16
-          md:px-24
-          lg:px-28
+          px-10
           pt-4
           md:pt-5
           lg:pt-6
