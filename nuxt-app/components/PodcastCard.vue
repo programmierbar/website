@@ -63,19 +63,6 @@
           </strong>
           {{ podcast.title }}
         </h2>
-
-        <div class="hidden md:flex space-x-3 md:spaxe-x-4 mt-4">
-          <a
-            v-for="platform in platforms"
-            :key="platform.name"
-            class="h-7 md:h-8"
-            :href="platform.url"
-            target="_blank"
-            rel="noreferrer"
-            data-cursor-hover
-            v-html="require(`~/assets/logos/${platform.icon}?raw`)"
-          />
-        </div>
       </div>
     </div>
   </div>
@@ -146,32 +133,6 @@ export default defineComponent({
       getSubpagePath('podcast', fullTitle.value, props.podcast.id)
     );
 
-    // Create platform list
-    const platforms = computed(() => [
-      {
-        name: 'Apple Podcasts',
-        icon: 'apple-podcasts-color.svg',
-        url: props.podcast.apple_url || process.env.NUXT_ENV_PODCAST_APPLE_URL,
-      },
-      {
-        name: 'Google Podcasts',
-        icon: 'google-podcasts-color.svg',
-        url:
-          props.podcast.google_url || process.env.NUXT_ENV_PODCAST_GOOGLE_URL,
-      },
-      {
-        name: 'Spotify',
-        icon: 'spotify-color.svg',
-        url:
-          props.podcast.spotify_url || process.env.NUXT_ENV_PODCAST_SPOTIFY_URL,
-      },
-      {
-        name: 'RSS',
-        icon: 'rss-feed-color.svg',
-        url: process.env.NUXT_ENV_PODCAST_RSS_URL,
-      },
-    ]);
-
     return {
       podcastPlayer,
       playOrPausePodcast,
@@ -181,7 +142,6 @@ export default defineComponent({
       divider,
       fullTitle,
       href,
-      platforms,
     };
   },
 });
