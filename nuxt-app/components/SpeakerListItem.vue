@@ -1,28 +1,27 @@
 <template>
   <li class="flex md:items-center flex-col md:flex-row-reverse">
     <!-- Event image -->
-    <img
-      v-if="speaker.event_image"
-      class="
-        md:w-1/2 md:h-60
-        lg:h-80
-        xl:h-96
-        2xl:h-112
-        object-cover
-        md:ml-16
-        lg:ml-20
-      "
-      :src="speaker.event_image.url"
-      :srcset="imageSrcSet"
-      sizes="
+    <NuxtLink
+      class="md:w-1/2 md:h-60 lg:h-80 xl:h-96 2xl:h-112 block md:ml-16 lg:ml-20"
+      :to="href"
+      data-cursor-hover
+    >
+      <img
+        v-if="speaker.event_image"
+        class="w-full h-full object-cover"
+        :src="speaker.event_image.url"
+        :srcset="imageSrcSet"
+        sizes="
           (min-width: 2000px) 696px,
           (min-width: 1536px) 656px,
           (min-width: 768px) 40vw,
           90vw
         "
-      loading="lazy"
-      :alt="speaker.event_image.alternativeText || fullName"
-    />
+        loading="lazy"
+        :alt="speaker.event_image.alternativeText || fullName"
+      />
+    </NuxtLink>
+
     <div class="md:w-1/2 mt-10 md:mt-0">
       <!-- Name -->
       <h3 class="text-xl md:text-2xl lg:text-3xl text-white font-black">
