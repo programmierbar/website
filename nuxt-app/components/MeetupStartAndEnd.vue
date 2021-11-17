@@ -48,7 +48,7 @@ export default defineComponent({
         hour: 'numeric',
         minute: 'numeric',
       });
-      const endString = startDate.toLocaleString('de-DE', {
+      const endString = endDate.toLocaleString('de-DE', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
