@@ -26,6 +26,9 @@
             lg:text-5xl
             text-white
             font-black
+            leading-normal
+            md:leading-normal
+            lg:leading-normal
             mt-12
             md:mt-16
             lg:mt-20
