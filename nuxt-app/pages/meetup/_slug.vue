@@ -58,16 +58,16 @@
           >
             <div
               class="
-                h-16
-                xs:h-20
-                md:h-24
-                lg:h-36
+                h-20
+                xs:h-24
+                md:h-28
+                lg:h-40
                 absolute
                 z-10
-                text-blue
+                text-blue text-opacity-90
                 pointer-events-none
               "
-              v-html="require('../../assets/icons/play-circle.svg?raw')"
+              v-html="require('../../assets/icons/play-circle-filled.svg?raw')"
             />
             <MeetupCover class="w-full" :meetup="meetup" />
           </a>
