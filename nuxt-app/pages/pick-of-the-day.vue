@@ -78,7 +78,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from '@nuxtjs/composition-api';
+import { computed, defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   LazyList,
@@ -104,8 +104,15 @@ export default defineComponent({
     // Set page meta data
     usePageMeta(pickOfTheDayPage);
 
+    // Create sorted picks of the day
+    const sortedPicksOfTheDay = computed(() =>
+      picksOfTheDay.value?.sort((a, b) =>
+        a.published_at < b.published_at ? 1 : -1
+      )
+    );
+
     // Create tag filter
-    const tagFilter = useTagFilter(picksOfTheDay);
+    const tagFilter = useTagFilter(sortedPicksOfTheDay);
 
     return {
       pickOfTheDayPage,
