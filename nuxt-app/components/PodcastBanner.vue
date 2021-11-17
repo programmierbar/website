@@ -82,9 +82,9 @@
             podcastPlayer.podcast &&
             podcastPlayer.podcast.id === podcast.id &&
             !podcastPlayer.paused
-              ? 'pause'
-              : 'play'
-          }-circle.svg?raw`)
+              ? 'pause-circle-filled'
+              : 'play-circle'
+          }.svg?raw`)
         "
       />
 
