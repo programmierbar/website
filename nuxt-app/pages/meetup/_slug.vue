@@ -16,7 +16,7 @@
       >
         <div class="flex items-center justify-between space-x-4">
           <Breadcrumbs :breadcrumbs="breadcrumbs" />
-          <LikeButton />
+          <!-- <LikeButton /> -->
         </div>
 
         <h1
@@ -185,7 +185,7 @@ import {
 import {
   Breadcrumbs,
   FeedbackSection,
-  LikeButton,
+  // LikeButton,
   LinkButton,
   MarkdownToHtml,
   MeetupCalendarAndMaps,
@@ -203,7 +203,7 @@ export default defineComponent({
   components: {
     Breadcrumbs,
     FeedbackSection,
-    LikeButton,
+    // LikeButton,
     LinkButton,
     MarkdownToHtml,
     MeetupCalendarAndMaps,

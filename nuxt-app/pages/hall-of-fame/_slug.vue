@@ -39,7 +39,7 @@
       >
         <div class="flex items-center justify-between space-x-4">
           <Breadcrumbs :breadcrumbs="breadcrumbs" />
-          <LikeButton />
+          <!-- <LikeButton /> -->
         </div>
 
         <SectionHeading class="hidden md:block" element="h2">
@@ -249,7 +249,7 @@ import {
   Breadcrumbs,
   FadeAnimation,
   FeedbackSection,
-  LikeButton,
+  // LikeButton,
   LinkButton,
   MarkdownToHtml,
   PickOfTheDayList,
@@ -269,7 +269,7 @@ export default defineComponent({
     Breadcrumbs,
     FadeAnimation,
     FeedbackSection,
-    LikeButton,
+    // LikeButton,
     LinkButton,
     MarkdownToHtml,
     PickOfTheDayList,

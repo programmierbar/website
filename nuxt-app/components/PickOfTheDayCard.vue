@@ -166,7 +166,7 @@
               />
 
               <!-- Likes -->
-              <LikeButton class="self-end" variant="pick_of_the_day_card" />
+              <!-- <LikeButton class="self-end" variant="pick_of_the_day_card" /> -->
             </div>
           </div>
         </div>
@@ -184,13 +184,13 @@ import {
 } from '@nuxtjs/composition-api';
 import { StrapiPickOfTheDay } from 'shared-code';
 import { getImageSrcSet } from '../helpers';
-import LikeButton from './LikeButton.vue';
+// import LikeButton from './LikeButton.vue';
 import MarkdownToHtml from './MarkdownToHtml.vue';
 import TagList from './TagList.vue';
 
 export default defineComponent({
   components: {
-    LikeButton,
+    // LikeButton,
     MarkdownToHtml,
     TagList,
   },

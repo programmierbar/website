@@ -85,13 +85,13 @@
                 : 'opacity-100 duration-500 delay-200'
             "
           >
-            <button
+            <!-- <button
               class="h-6 text-pink"
               type="button"
               data-cursor-hover
               @click.stop=""
               v-html="require('../assets/icons/heart.svg?raw')"
-            />
+            /> -->
             <div class="w-5 h-6 flex justify-center">
               <button
                 v-if="podcastPlayer.paused"
@@ -235,12 +235,12 @@
             lg:p-0
           "
         >
-          <button
+          <!-- <button
             class="h-6 text-pink"
             type="button"
             data-cursor-hover
             v-html="require('../assets/icons/heart.svg?raw')"
-          />
+          /> -->
           <div class="flex space-x-8">
             <button
               v-if="clipboard.isSupported || share.isSupported"
