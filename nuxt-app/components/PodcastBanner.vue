@@ -237,7 +237,11 @@ export default defineComponent({
 
     // Create local date string
     const date = computed(() =>
-      new Date(props.podcast.published_at).toLocaleDateString()
+      new Date(props.podcast.published_at).toLocaleDateString('de-DE', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      })
     );
 
     // Create podcast type
