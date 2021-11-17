@@ -196,7 +196,17 @@
       <PodcastSlider class="mt-12 md:mt-0" :podcasts="speaker.podcasts" />
       <div
         v-if="podcastCountString"
-        class="flex justify-center mt-12 md:mt-16 lg:mt-20"
+        class="
+          flex
+          justify-center
+          px-6
+          md:pl-48
+          lg:pr-8
+          3xl:px-8
+          mt-12
+          md:mt-16
+          lg:mt-20
+        "
       >
         <LinkButton href="/podcast">
           Alle {{ podcastCountString }} Podcast-Folgen
