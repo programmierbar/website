@@ -126,7 +126,7 @@ export default defineComponent({
         ? props.item.cover_image
         : props.item.itemType === 'pick_of_the_day'
         ? props.item.image
-        : props.item.event_image
+        : props.item.profile_image
     );
 
     // Create image src set
