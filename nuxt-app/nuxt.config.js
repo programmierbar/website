@@ -29,6 +29,14 @@ export default {
       { name: 'format-detection', content: 'telephone=no' },
     ],
     link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+    script: [
+      // Fathom Analytics
+      {
+        src: 'https://ziggy-stardust-six.programmier.bar/script.js',
+        'data-site': 'XSJTTACD',
+        defer: true,
+      },
+    ],
     htmlAttrs: {
       lang: 'de',
     },
@@ -110,6 +118,11 @@ export default {
       background_color: '#000000',
       theme_color: '#000000',
     },
+  },
+
+  // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
+  router: {
+    middleware: ['fathom'],
   },
 
   // https://sitemap.nuxtjs.org/
