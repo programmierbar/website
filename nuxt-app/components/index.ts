@@ -1,4 +1,5 @@
 export { default as Breadcrumbs } from './Breadcrumbs.vue';
+export { default as ContactForm } from './ContactForm.vue';
 export { default as CookieBanner } from './CookieBanner.vue';
 export { default as FadeAnimation } from './FadeAnimation.vue';
 export { default as FeedbackSection } from './FeedbackSection.vue';
