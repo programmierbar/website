@@ -1,5 +1,6 @@
 <template>
   <div class="flex flex-col items-center space-y-6">
+    <!-- Meetup.com Button -->
     <a
       class="
         min-w-56
@@ -32,10 +33,15 @@
     >
       Meetup.com
     </a>
-    <div class="h-10 md:h-12 xl:h-16 flex items-center space-x-6">
+
+    <!-- Calendar and maps icons -->
+    <div
+      v-if="icons.isVisible"
+      class="h-10 md:h-12 xl:h-16 flex items-center space-x-6"
+    >
       <a
         class="h-full"
-        :href="googleCalendarUrl"
+        :href="icons.googleCalendarUrl"
         target="_blank"
         rel="noreferrer"
         data-cursor-hover
@@ -43,16 +49,16 @@
       />
       <a
         class="h-full"
-        :href="appleCalendarUrl"
+        :href="icons.appleCalendarUrl"
         target="_blank"
         rel="noreferrer"
-        :download="titleSlug"
+        :download="icons.titleSlug"
         data-cursor-hover
         v-html="require('../assets/logos/apple-calendar.svg?raw')"
       />
       <a
         class="h-full"
-        :href="googleMapsUrl"
+        :href="icons.googleMapsUrl"
         target="_blank"
         rel="noreferrer"
         data-cursor-hover
@@ -68,7 +74,7 @@ import {
   defineComponent,
   onMounted,
   PropType,
-  ref,
+  reactive,
 } from '@nuxtjs/composition-api';
 import { StrapiMeetup } from 'shared-code';
 import { getUrlSlug } from '../helpers';
@@ -81,6 +87,14 @@ export default defineComponent({
     },
   },
   setup(props) {
+    const icons = reactive({
+      isVisible: false,
+      googleCalendarUrl: '',
+      appleCalendarUrl: '',
+      titleSlug: '',
+      googleMapsUrl: '',
+    });
+
     /**
      * It creates and returns a calendar date string.
      *
@@ -89,57 +103,58 @@ export default defineComponent({
     const getCalendarDate = (isoString: string) =>
       isoString.replace(/([-:]|\.[0-9]+)/g, '');
 
+    // Show icons if meetup is not over yet
+    onMounted(() => {
+      // Check if meetup is not over yet
+      if (new Date(props.meetup.end_at) > new Date()) {
+        // Add Google Calendar URL
+        const { title } = props.meetup;
+        const startAt = getCalendarDate(props.meetup.start_at);
+        const endAt = getCalendarDate(props.meetup.end_at);
+        icons.googleCalendarUrl = encodeURI(
+          `http://www.google.com/calendar/event?action=TEMPLATE&text=${title}&dates=${startAt}/${endAt}`
+        );
+
+        // Add Apple Calendar URL
+        const blob = new Blob(
+          [
+            'BEGIN:VCALENDAR\n',
+            'VERSION:2.0\n',
+            'PRODID:https://www.programmier.bar/\n',
+            'BEGIN:VEVENT\n',
+            `UID:meetup-${props.meetup.id}@programmier.bar\n`,
+            `DTSTAMP:${getCalendarDate(props.meetup.created_at)}\n`,
+            `DTSTART:${getCalendarDate(props.meetup.start_at)}\n`,
+            `DTEND:${getCalendarDate(props.meetup.end_at)}\n`,
+            `SUMMARY:${props.meetup.title}\n`,
+            'END:VEVENT\n',
+            'END:VCALENDAR',
+          ],
+          {
+            type: 'text/calendar',
+          }
+        );
+        icons.appleCalendarUrl = URL.createObjectURL(blob);
+
+        // Add meetup title slug
+        icons.titleSlug = getUrlSlug(props.meetup.title);
+
+        // Add Google Maps URL
+        icons.googleMapsUrl = process.env.NUXT_ENV_GOOGLE_MAPS_URL!;
+
+        // Set icons to visible
+        icons.isVisible = true;
+      }
+    });
+
     // Create Meetup URL
     const meetupUrl = computed(
       () => props.meetup.meetup_url || process.env.NUXT_ENV_MEETUP_URL
     );
 
-    // Create Google Calendar URL
-    const googleCalendarUrl = computed(() => {
-      const { title } = props.meetup;
-      const startAt = getCalendarDate(props.meetup.start_at);
-      const endAt = getCalendarDate(props.meetup.end_at);
-      return encodeURI(
-        `http://www.google.com/calendar/event?action=TEMPLATE&text=${title}&dates=${startAt}/${endAt}`
-      );
-    });
-
-    // Create Apple Calendar URL
-    const appleCalendarUrl = ref<string>();
-    onMounted(() => {
-      const blob = new Blob(
-        [
-          'BEGIN:VCALENDAR\n',
-          'VERSION:2.0\n',
-          'PRODID:https://www.programmier.bar/\n',
-          'BEGIN:VEVENT\n',
-          `UID:meetup-${props.meetup.id}@programmier.bar\n`,
-          `DTSTAMP:${getCalendarDate(props.meetup.created_at)}\n`,
-          `DTSTART:${getCalendarDate(props.meetup.start_at)}\n`,
-          `DTEND:${getCalendarDate(props.meetup.end_at)}\n`,
-          `SUMMARY:${props.meetup.title}\n`,
-          'END:VEVENT\n',
-          'END:VCALENDAR',
-        ],
-        {
-          type: 'text/calendar',
-        }
-      );
-      appleCalendarUrl.value = URL.createObjectURL(blob);
-    });
-
-    // Create meetup title slug
-    const titleSlug = computed(() => getUrlSlug(props.meetup.title));
-
-    // Create Google Maps URL
-    const googleMapsUrl = computed(() => process.env.NUXT_ENV_GOOGLE_MAPS_URL);
-
     return {
+      icons,
       meetupUrl,
-      googleCalendarUrl,
-      appleCalendarUrl,
-      titleSlug,
-      googleMapsUrl,
     };
   },
 });
