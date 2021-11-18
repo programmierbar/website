@@ -253,11 +253,7 @@ export default defineComponent({
     // Create breadcrumb list
     const breadcrumbs = computed(() => [
       { label: 'Meetup', href: '/meetup' },
-      {
-        label: meetup.value
-          ? getTrimmedString(meetup.value.title, 12)
-          : 'Error 404',
-      },
+      { label: meetup.value?.title || '' },
     ]);
 
     // Create related podcasts query string

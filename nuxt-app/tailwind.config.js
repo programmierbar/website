@@ -92,6 +92,9 @@ module.exports = {
       maxHeight: {
         '1/2-screen': '50vh',
       },
+      maxWidth: {
+        '1/2-screen': '50vw',
+      },
       minHeight: {
         8: '2rem',
         9: '2.25rem',

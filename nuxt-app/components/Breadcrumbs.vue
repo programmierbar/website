@@ -14,7 +14,7 @@
       <li
         v-for="breadcrumb of breadcrumbs"
         :key="breadcrumb.label"
-        class="whitespace-nowrap m-0.5"
+        class="max-w-1/2-screen truncate m-0.5"
       >
         //
         <NuxtLink
