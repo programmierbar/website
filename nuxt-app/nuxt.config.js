@@ -71,9 +71,10 @@ export default {
     '@nuxtjs/sitemap',
   ],
 
+  // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
   generate: {
     // https://github.com/nuxt-community/composition-api/issues/44
-    interval: 2000,
+    interval: 1500,
     // Uncomment below to generate single routes
     // crawler: false,
     // exclude: [/^\/(\w|\d|-)*$/],
