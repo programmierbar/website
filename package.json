@@ -3,6 +3,7 @@
   "private": true,
   "license": "MIT",
   "workspaces": [
+    "cloud-functions",
     "nuxt-app",
     "shared-code",
     "strapi-cms"

@@ -2,6 +2,11 @@
   "folders": [{ "path": "." }],
   "settings": {
     "editor.formatOnSave": true,
-    "eslint.workingDirectories": ["./shared-code", "./strapi-cms", "./nuxt-app"]
+    "eslint.workingDirectories": [
+      "./cloud-functions",
+      "./nuxt-app",
+      "./shared-code",
+      "./strapi-cms"
+    ]
   }
 }
