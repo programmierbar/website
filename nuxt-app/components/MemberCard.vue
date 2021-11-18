@@ -95,7 +95,7 @@
     </h2>
 
     <!-- Description -->
-    <p
+    <MarkdownToHtml
       class="
         text-lg
         md:text-xl
@@ -108,9 +108,8 @@
         md:mt-6
         lg:mt-8
       "
-    >
-      <span>{{ member.description }}</span>
-    </p>
+      :markdown="member.description"
+    />
 
     <!-- Occupation -->
     <div
@@ -140,10 +139,14 @@ import {
 } from '@nuxtjs/composition-api';
 import { StrapiMember } from 'shared-code';
 import { getImageSrcSet } from '../helpers';
+import MarkdownToHtml from './MarkdownToHtml.vue';
 
 const initClipPath = 'circle(16.666% at 0 25%)';
 
 export default defineComponent({
+  components: {
+    MarkdownToHtml,
+  },
   props: {
     member: {
       type: Object as PropType<StrapiMember>,
