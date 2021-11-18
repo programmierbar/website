@@ -18,7 +18,7 @@
         loading="lazy"
         :alt="image.alternativeText || heading"
       />
-      <div class="">
+      <div>
         <!-- Type and date -->
         <div
           class="text-xs md:text-base lg:text-xl text-white font-light italic"
@@ -42,6 +42,11 @@
           "
         >
           {{ heading }}
+          <span
+            v-if="isExternalUrl"
+            class="h-4 xl:h-6 inline-block text-white ml-1 mt-px"
+            v-html="require('../assets/icons/leave-site.svg?raw')"
+          />
         </h2>
 
         <!-- Description -->
