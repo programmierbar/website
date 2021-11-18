@@ -27,6 +27,7 @@
 
     <!-- Calendar -->
     <div
+      v-if="calendar.isVisible"
       class="
         w-16
         h-16
@@ -36,32 +37,35 @@
         flex flex-col
         items-center
         justify-center
+        bg-lime
         text-black
       "
-      :class="[
-        isInPast ? 'bg-white' : 'bg-lime',
-        variant === 'default' && 'lg:w-20 lg:h-20',
-      ]"
+      :class="variant === 'default' && 'lg:w-20 lg:h-20'"
     >
       <div
         class="text-sm font-light"
         :class="variant === 'default' && 'lg:text-base'"
       >
-        {{ nameOfMonth }}
+        {{ calendar.nameOfMonth }}
       </div>
       <div
         class="text-3xl font-black"
         :class="variant === 'default' && 'lg:text-4xl'"
       >
-        {{ dayOfMonth }}
+        {{ calendar.dayOfMonth }}
       </div>
-      <div v-if="isInPast" class="w-full h-0.5 absolute bg-pink -rotate-45" />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
+import {
+  computed,
+  defineComponent,
+  onMounted,
+  PropType,
+  reactive,
+} from '@nuxtjs/composition-api';
 import { StrapiMeetup } from 'shared-code';
 import { getImageSrcSet } from '../helpers';
 
@@ -77,15 +81,22 @@ export default defineComponent({
     },
   },
   setup(props) {
-    // Create normal image src set
-    const coverImageSrcSet = computed(() =>
-      getImageSrcSet(props.meetup.cover_image)
-    );
+    // Create show calendar reference
+    const calendar = reactive({
+      isVisible: false,
+      nameOfMonth: '',
+      dayOfMonth: '',
+    });
 
-    // Get name of month
-    const nameOfMonth = computed(
-      () =>
-        [
+    // Show calendar if meetup is not over yet
+    onMounted(() => {
+      // Check if meetup is not over yet
+      if (new Date(props.meetup.end_at) > new Date()) {
+        // Create start at date
+        const startAt = new Date(props.meetup.start_at);
+
+        // Add name of month to calendar
+        calendar.nameOfMonth = [
           'Januar',
           'Febr.',
           'März',
@@ -98,24 +109,24 @@ export default defineComponent({
           'Okt.',
           'Nov.',
           'Dez.',
-        ][new Date(props.meetup.start_at).getMonth()]
-    );
+        ][startAt.getMonth()];
 
-    // Get day of month
-    const dayOfMonth = computed(() =>
-      new Date(props.meetup.start_at).getDate().toString().padStart(2, '0')
-    );
+        // Add day of month to calendar
+        calendar.dayOfMonth = startAt.getDate().toString().padStart(2, '0');
 
-    // Check if Meetup is in past
-    const isInPast = computed(
-      () => Date.now() > new Date(props.meetup.end_at).getTime()
+        // Set calendar to visible
+        calendar.isVisible = true;
+      }
+    });
+
+    // Create normal image src set
+    const coverImageSrcSet = computed(() =>
+      getImageSrcSet(props.meetup.cover_image)
     );
 
     return {
+      calendar,
       coverImageSrcSet,
-      nameOfMonth,
-      dayOfMonth,
-      isInPast,
     };
   },
 });
