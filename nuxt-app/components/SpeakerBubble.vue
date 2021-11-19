@@ -90,13 +90,13 @@
                     bg-black bg-opacity-80
                     px-10
                     md:px-12
-                    lg:px-16
+                    lg:px-24
                     pt-5
                     md:pt-7
                     lg:pt-12
                     pb-5
                     md:pb-9
-                    lg:pb-16
+                    lg:pb-14
                     transition-opacity
                     duration-300
                     pointer-events-none
@@ -117,6 +117,7 @@
                       line-clamp-2
                       md:line-clamp-none
                     "
+                    style="hyphens: auto"
                   >
                     {{ speaker.occupation }}
                   </div>
