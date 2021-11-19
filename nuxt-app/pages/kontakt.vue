@@ -92,12 +92,15 @@
           mt-12
           md:mt-16
           lg:mt-24
+          mb-16
+          md:mb-24
+          lg:mb-40
         "
       >
         <!-- Address heading -->
-        <SectionHeading element="h2">
+        <!-- <SectionHeading element="h2">
           {{ contactPage.address_heading }}
-        </SectionHeading>
+        </SectionHeading> -->
 
         <!-- Business text -->
         <MarkdownToHtml
@@ -118,7 +121,7 @@
       </div>
 
       <!-- Google Maps -->
-      <div
+      <!-- <div
         class="
           md:container md:pr-6 md:pl-48
           lg:pr-8
@@ -131,7 +134,7 @@
         "
       >
         <GoogleMaps class="h-120 lg:h-160 2xl:h-192" />
-      </div>
+      </div> -->
     </section>
   </div>
 </template>
@@ -141,7 +144,7 @@ import { defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   ContactForm,
-  GoogleMaps,
+  // GoogleMaps,
   MarkdownToHtml,
   SectionHeading,
 } from '../components';
@@ -151,7 +154,7 @@ export default defineComponent({
   components: {
     Breadcrumbs,
     ContactForm,
-    GoogleMaps,
+    // GoogleMaps,
     MarkdownToHtml,
     SectionHeading,
   },
