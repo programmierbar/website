@@ -10,7 +10,7 @@ const checkCreatePermission = (ctx, adminAndAuthIsRequired = false) => {
   // Destructur is authenticated admin
   const { state: { userAbility, isAuthenticatedAdmin } = {} } = ctx;
 
-  // Check if user is an authenticated admin, if necessary
+  // Throw error if authentication is required and user is not an admin
   if (adminAndAuthIsRequired && !isAuthenticatedAdmin) {
     throw strapi.errors.forbidden();
   }
