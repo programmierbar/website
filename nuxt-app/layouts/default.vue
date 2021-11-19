@@ -7,14 +7,14 @@
     </main>
     <Footer />
     <PodcastPlayer />
-    <CookieBanner />
+    <!-- <CookieBanner /> -->
   </div>
 </template>
 
 <script>
 import { defineComponent } from '@nuxtjs/composition-api';
 import {
-  CookieBanner,
+  // CookieBanner,
   Footer,
   Header,
   MouseCursor,
@@ -23,7 +23,7 @@ import {
 
 export default defineComponent({
   components: {
-    CookieBanner,
+    // CookieBanner,
     Footer,
     Header,
     MouseCursor,
