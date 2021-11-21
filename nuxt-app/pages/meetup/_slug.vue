@@ -55,6 +55,7 @@
             target="_blank"
             rel="noreferrer"
             data-cursor-hover
+            @click="() => trackGoal(youtubeEventCode)"
           >
             <div
               class="
@@ -200,7 +201,7 @@ import {
   TagList,
 } from '../../components';
 import { useStrapi, useLocaleString } from '../../composables';
-import { getTrimmedString } from '../../helpers';
+import { getTrimmedString, trackGoal } from '../../helpers';
 
 export default defineComponent({
   components: {
@@ -274,6 +275,8 @@ export default defineComponent({
       speakerCountString,
       breadcrumbs,
       relatedPodcasts,
+      youtubeEventCode: process.env.NUXT_ENV_OPEN_YOUTUBE_EVENT!,
+      trackGoal,
     };
   },
   head: {},

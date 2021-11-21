@@ -127,9 +127,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, ref } from '@nuxtjs/composition-api';
+import { defineComponent, PropType, ref, watch } from '@nuxtjs/composition-api';
 import { StrapiTag } from 'shared-code';
 import { useEventListener, useDocument } from '../composables';
+import { trackGoal } from '../helpers';
 import TagList from './TagList.vue';
 
 interface Tag extends StrapiTag {
@@ -156,6 +157,15 @@ export default defineComponent({
 
     // Create filter is open reference
     const filterIsOpen = ref(false);
+
+    // Track analytic events
+    watch(filterIsOpen, () => {
+      if (filterIsOpen.value) {
+        trackGoal(process.env.NUXT_ENV_OPEN_TAG_FILTER_EVENT!);
+      } else {
+        trackGoal(process.env.NUXT_ENV_CLOSE_TAG_FILTER_EVENT!);
+      }
+    });
 
     /**
      * It closes the tag filter when clicked outside.

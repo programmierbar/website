@@ -5,7 +5,8 @@ import {
   watch,
   toRefs,
 } from '@nuxtjs/composition-api';
-import { StrapiPodcast } from '~/../shared-code/lib';
+import { StrapiPodcast } from 'shared-code/lib';
+import { trackGoal } from '../helpers';
 
 // Create global references
 const podcast = ref<StrapiPodcast>();
@@ -40,6 +41,7 @@ export function usePodcastPlayer() {
     if (audioElement.value) {
       audioElement.value.play();
       audioState.paused = false;
+      trackGoal(process.env.NUXT_ENV_PLAY_PODCAST_EVENT!);
     }
   };
 
@@ -50,6 +52,7 @@ export function usePodcastPlayer() {
     if (audioElement.value) {
       audioElement.value.pause();
       audioState.paused = true;
+      trackGoal(process.env.NUXT_ENV_PAUSE_PODCAST_EVENT!);
     }
   };
 

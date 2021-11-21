@@ -58,6 +58,7 @@
                 target="_blank"
                 rel="noreferrer"
                 data-cursor-hover
+                @click="() => trackGoal(platform.eventCode)"
                 v-html="require(`../../assets/logos/${platform.icon}?raw`)"
               />
             </li>
@@ -149,6 +150,7 @@ import {
   getPodcastTypeString,
   getTrimmedString,
   getFullPodcastTitle,
+  trackGoal,
 } from '../../helpers';
 
 export default defineComponent({
@@ -219,25 +221,30 @@ export default defineComponent({
       {
         name: 'Apple Podcast',
         icon: 'apple-podcasts-color.svg',
-        url: podcast.value?.apple_url || process.env.NUXT_ENV_PODCAST_APPLE_URL,
+        url:
+          podcast.value?.apple_url || process.env.NUXT_ENV_PODCAST_APPLE_URL!,
+        eventCode: process.env.NUXT_ENV_OPEN_APPLE_PODCASTS_EVENT!,
       },
       {
         name: 'Google Podcast',
         icon: 'google-podcasts-color.svg',
         url:
-          podcast.value?.google_url || process.env.NUXT_ENV_PODCAST_GOOGLE_URL,
+          podcast.value?.google_url || process.env.NUXT_ENV_PODCAST_GOOGLE_URL!,
+        eventCode: process.env.NUXT_ENV_OPEN_GOOGLE_PODCASTS_EVENT!,
       },
       {
         name: 'Spotify',
         icon: 'spotify-color.svg',
         url:
           podcast.value?.spotify_url ||
-          process.env.NUXT_ENV_PODCAST_SPOTIFY_URL,
+          process.env.NUXT_ENV_PODCAST_SPOTIFY_URL!,
+        eventCode: process.env.NUXT_ENV_OPEN_SPOTIFY_EVENT!,
       },
       {
         name: 'RSS',
         icon: 'rss-feed-color.svg',
-        url: process.env.NUXT_ENV_PODCAST_RSS_URL,
+        url: process.env.NUXT_ENV_PODCAST_RSS_FEED_URL!,
+        eventCode: process.env.NUXT_ENV_OPEN_RSS_FEED_EVENT!,
       },
     ]);
 
@@ -266,6 +273,7 @@ export default defineComponent({
       breadcrumbs,
       platforms,
       relatedPodcasts,
+      trackGoal,
     };
   },
   head: {},

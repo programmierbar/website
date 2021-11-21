@@ -138,7 +138,7 @@ import {
   ref,
 } from '@nuxtjs/composition-api';
 import { StrapiMember } from 'shared-code';
-import { getImageSrcSet } from '../helpers';
+import { getImageSrcSet, trackGoal } from '../helpers';
 import MarkdownToHtml from './MarkdownToHtml.vue';
 
 const initClipPath = 'circle(16.666% at 0 25%)';
@@ -180,6 +180,9 @@ export default defineComponent({
     const clipPathStartMoving = ref(false);
 
     const handleDiscoverEffect = (startEvent: TouchEvent | MouseEvent) => {
+      // Track analytic event
+      trackGoal(process.env.NUXT_ENV_START_DISCOVER_EFFECT_EVENT!);
+
       // Detect and create event type
       const isTouch = startEvent.type === 'touchstart';
       const moveEventType = isTouch ? 'touchmove' : 'mousemove';

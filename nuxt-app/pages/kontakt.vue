@@ -118,6 +118,26 @@
           "
           :markdown="contactPage.address_text"
         />
+
+        <!-- Google Maps -->
+        <a
+          class="
+            block
+            text-base
+            md:text-xl
+            lg:text-2xl
+            text-lime
+            font-bold
+            mt-8
+          "
+          :href="googleMapsUrl"
+          target="_blank"
+          rel="noreferrer"
+          data-cursor-hover
+          @click="() => trackGoal(googleMapsEventCode)"
+        >
+          Google Maps
+        </a>
       </div>
 
       <!-- Google Maps -->
@@ -149,6 +169,7 @@ import {
   SectionHeading,
 } from '../components';
 import { useStrapi, usePageMeta } from '../composables';
+import { trackGoal } from '../helpers';
 
 export default defineComponent({
   components: {
@@ -168,6 +189,9 @@ export default defineComponent({
     return {
       contactPage,
       breadcrumbs: [{ label: 'Kontakt' }],
+      googleMapsUrl: process.env.NUXT_ENV_GOOGLE_MAPS_URL!,
+      googleMapsEventCode: process.env.NUXT_ENV_OPEN_GOOGLE_MAPS_EVENT!,
+      trackGoal,
     };
   },
   head: {},

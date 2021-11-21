@@ -274,8 +274,10 @@ import {
   ref,
   useRoute,
   useRouter,
+  watch,
 } from '@nuxtjs/composition-api';
 import { useEventListener, useDocument } from '../composables';
+import { trackGoal } from '../helpers';
 import SocialNetworks from './SocialNetworks.vue';
 
 export default defineComponent({
@@ -290,6 +292,24 @@ export default defineComponent({
     // Create menu and search is open reference
     const menuIsOpen = ref(false);
     const searchIsOpen = ref(false);
+
+    // Track analytic menu events
+    watch(menuIsOpen, () => {
+      if (menuIsOpen.value) {
+        trackGoal(process.env.NUXT_ENV_OPEN_MENU_EVENT!);
+      } else {
+        trackGoal(process.env.NUXT_ENV_CLOSE_MENU_EVENT!);
+      }
+    });
+
+    // Track analytic search events
+    watch(searchIsOpen, () => {
+      if (searchIsOpen.value) {
+        trackGoal(process.env.NUXT_ENV_OPEN_SEARCH_EVENT!);
+      } else {
+        trackGoal(process.env.NUXT_ENV_CLOSE_SEARCH_EVENT!);
+      }
+    });
 
     // Create search input element reference
     const searchInputElement = ref<HTMLInputElement>();

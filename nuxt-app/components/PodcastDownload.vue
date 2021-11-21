@@ -26,8 +26,9 @@
     <span
       class="pt-0.5 transition-opacity duration-300"
       :class="isLoading && 'opacity-0'"
-      >Download</span
     >
+      Download
+    </span>
     <span
       class="
         h-4
@@ -52,6 +53,7 @@ import {
   downloadExternalFile,
   getUrlSlug,
   getFullPodcastTitle,
+  trackGoal,
 } from '../helpers';
 
 export default defineComponent({
@@ -77,6 +79,9 @@ export default defineComponent({
         props.podcast.audio_file.url,
         getUrlSlug(getFullPodcastTitle(props.podcast))
       );
+
+      // Track analytic event
+      trackGoal(process.env.NUXT_ENV_DOWNLOAD_PODCAST_EVENT!);
 
       // Stop loading
       isLoading.value = false;

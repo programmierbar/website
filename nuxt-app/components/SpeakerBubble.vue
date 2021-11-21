@@ -156,10 +156,16 @@ import {
   defineComponent,
   PropType,
   ref,
+  watch,
 } from '@nuxtjs/composition-api';
 import { StrapiSpeaker } from 'shared-code';
 import { useMotionParallax, useEventListener, useWindow } from '../composables';
-import { getImageSrcSet, getFullSpeakerName, getSubpagePath } from '../helpers';
+import {
+  getImageSrcSet,
+  getFullSpeakerName,
+  getSubpagePath,
+  trackGoal,
+} from '../helpers';
 
 export default defineComponent({
   props: {
@@ -182,6 +188,16 @@ export default defineComponent({
 
     // Use motion parallax
     const motionParallax = useMotionParallax(motionElement);
+
+    // Track analytic event
+    watch(
+      () => motionParallax.isActive,
+      (isActive) => {
+        if (isActive) {
+          trackGoal(process.env.NUXT_ENV_START_MAGNET_EFFECT_EVENT!);
+        }
+      }
+    );
 
     // Create computed parallax style
     const parallaxStyle = computed(() =>

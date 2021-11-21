@@ -30,10 +30,11 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent, onMounted, ref } from '@nuxtjs/composition-api';
 import smoothscroll from 'smoothscroll-polyfill';
 import { useEventListener, useWindow } from '../composables';
+import { trackGoal } from '../helpers';
 
 export default defineComponent({
   setup() {
@@ -57,6 +58,7 @@ export default defineComponent({
      * It scrolls the page down a bit.
      */
     const scrollDown = () => {
+      trackGoal(process.env.NUXT_ENV_CLICK_SCROLL_DOWN_MOUSE_EVENT!);
       const { scrollY, innerHeight } = window;
       window.scrollTo({
         top: scrollY + innerHeight / 2,

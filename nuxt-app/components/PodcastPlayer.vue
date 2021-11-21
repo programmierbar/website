@@ -278,6 +278,7 @@ import {
   getSubpagePath,
   downloadExternalFile,
   getUrlSlug,
+  trackGoal,
 } from '../helpers';
 
 export default defineComponent({
@@ -410,6 +411,9 @@ export default defineComponent({
           podcastPlayer.podcast.audio_file.url,
           getUrlSlug(fullTitle.value)
         );
+
+        // Track analytic event
+        trackGoal(process.env.NUXT_ENV_DOWNLOAD_PODCAST_EVENT!);
 
         // Stop downloading
         isDownloading.value = false;

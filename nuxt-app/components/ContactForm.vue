@@ -130,6 +130,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, watch } from '@nuxtjs/composition-api';
+import { trackGoal } from '../helpers';
 
 type FormState = 'pending' | 'submitting' | 'submitted' | 'error';
 
@@ -177,7 +178,7 @@ export default defineComponent({
 
         // Send form data to Cloud Functions
         const response = await fetch(
-          process.env.NUXT_ENV_SEND_CONTACT_EMAIL_URL as string,
+          process.env.NUXT_ENV_SEND_CONTACT_EMAIL_URL!,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -193,6 +194,9 @@ export default defineComponent({
         if (!response.ok) {
           throw new Error(await response.text());
         }
+
+        // Track analytic event
+        trackGoal(process.env.NUXT_ENV_SEND_CONTACT_FORM_EVENT!);
 
         // Set form state to submitted
         formState.value = 'submitted';

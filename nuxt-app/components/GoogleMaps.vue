@@ -15,7 +15,7 @@ export default defineComponent({
     onMounted(async () => {
       if (mapElement.value) {
         const loader = new Loader({
-          apiKey: process.env.NUXT_ENV_GOOGLE_API_KEY as string,
+          apiKey: process.env.NUXT_ENV_GOOGLE_API_KEY!,
         });
         const google = await loader.load();
         // eslint-disable-next-line no-new

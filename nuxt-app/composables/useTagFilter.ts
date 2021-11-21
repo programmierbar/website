@@ -6,6 +6,7 @@ import {
   StrapiPickOfTheDay,
   StrapiTag,
 } from 'shared-code';
+import { trackGoal } from '../helpers';
 
 interface Tag extends StrapiTag {
   isActive: boolean;
@@ -71,6 +72,15 @@ export function useTagFilter<
 
   // Create tags reference
   const tags = ref<Tag[]>(getTags());
+
+  // Track analytic events
+  watch(tags, (nextTags, prevTags) => {
+    if (prevTags.length === 0 && nextTags.length > 0) {
+      trackGoal(process.env.NUXT_ENV_ADD_TAG_FILTER_EVENT!);
+    } else if (prevTags.length > 0 && nextTags.length === 0) {
+      trackGoal(process.env.NUXT_ENV_REMOVE_TAG_FILTER_EVENT!);
+    }
+  });
 
   // Update tags when input changes
   watch(input, () => {

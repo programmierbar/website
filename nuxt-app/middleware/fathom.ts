@@ -3,8 +3,7 @@
  * https://usefathom.com/docs/integrations/nuxt
  */
 export default function () {
-  if (!process.client) {
-    return;
+  if (process.client) {
+    (<any>window)?.fathom?.trackPageview();
   }
-  (window as typeof window & { fathom?: any }).fathom?.trackPageview();
 }

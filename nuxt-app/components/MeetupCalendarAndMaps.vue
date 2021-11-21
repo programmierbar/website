@@ -30,6 +30,7 @@
       target="_blank"
       rel="noreferrer"
       data-cursor-hover
+      @click="() => trackGoal(meetupEventCode)"
     >
       Meetup.com
     </a>
@@ -45,6 +46,7 @@
         target="_blank"
         rel="noreferrer"
         data-cursor-hover
+        @click="() => trackGoal(googleCalendarEventCode)"
         v-html="require('../assets/logos/google-calendar.svg?raw')"
       />
       <a
@@ -54,6 +56,7 @@
         rel="noreferrer"
         :download="icons.titleSlug"
         data-cursor-hover
+        @click="() => trackGoal(appleCalendarEventCode)"
         v-html="require('../assets/logos/apple-calendar.svg?raw')"
       />
       <a
@@ -62,6 +65,7 @@
         target="_blank"
         rel="noreferrer"
         data-cursor-hover
+        @click="() => trackGoal(googleMapsEventCode)"
         v-html="require('../assets/logos/google-maps.svg?raw')"
       />
     </div>
@@ -77,7 +81,7 @@ import {
   reactive,
 } from '@nuxtjs/composition-api';
 import { StrapiMeetup } from 'shared-code';
-import { getUrlSlug } from '../helpers';
+import { getUrlSlug, trackGoal } from '../helpers';
 
 export default defineComponent({
   props: {
@@ -155,6 +159,13 @@ export default defineComponent({
     return {
       icons,
       meetupUrl,
+      meetupEventCode: process.env.NUXT_ENV_OPEN_MEETUP_EVENT!,
+      googleCalendarEventCode:
+        process.env.NUXT_ENV_OPEN_GOOGLE_CALENDAR_EVENT_EVENT!,
+      appleCalendarEventCode:
+        process.env.NUXT_ENV_DOWNLOAD_CALEDNAR_EVENT_EVENT!,
+      googleMapsEventCode: process.env.NUXT_ENV_OPEN_GOOGLE_MAPS_EVENT!,
+      trackGoal,
     };
   },
 });

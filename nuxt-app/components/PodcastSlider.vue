@@ -162,6 +162,7 @@ import {
 import smoothscroll from 'smoothscroll-polyfill';
 import { StrapiPodcast } from 'shared-code';
 import { useStrapi, useEventListener } from '../composables';
+import { trackGoal } from '../helpers';
 import LazyList from './LazyList.vue';
 import PodcastCard from './PodcastCard.vue';
 
@@ -196,6 +197,11 @@ export default defineComponent({
      * a little to the left or right.
      */
     const scrollTo = (direction: 'left' | 'right') => {
+      if (direction === 'left') {
+        trackGoal(process.env.NUXT_ENV_CLICK_SCROLL_LEFT_ARROW_EVENT!);
+      } else {
+        trackGoal(process.env.NUXT_ENV_CLICK_SCROLL_RIGHT_ARROW_EVENT!);
+      }
       const { innerWidth } = window;
       const { scrollLeft } = scrollBoxElement.value!;
       scrollBoxElement.value!.scrollTo({

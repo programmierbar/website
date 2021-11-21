@@ -11,3 +11,4 @@ export * from './getSubpagePath';
 export * from './getTrimmedString';
 export * from './getUrlSlug';
 export * from './setCookie';
+export * from './trackGoal';
