@@ -127,7 +127,7 @@
         md:from-black
         md:to-transparent
         md:transition-opacity
-        md:duration-200
+        md:duration-500
       "
       :class="[
         index === 1
@@ -220,8 +220,8 @@ export default defineComponent({
     const handleScrollState = () => {
       const { innerWidth } = window;
       const { scrollLeft, scrollWidth } = scrollBoxElement.value!;
-      scrollStartReached.value = scrollLeft === 0;
-      scrollEndReached.value = scrollLeft === scrollWidth - innerWidth;
+      scrollStartReached.value = scrollLeft < 64;
+      scrollEndReached.value = scrollLeft > scrollWidth - innerWidth - 64;
     };
 
     // Update scroll state on mounted
