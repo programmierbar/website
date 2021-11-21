@@ -161,12 +161,14 @@
     <!-- Navigation -->
     <nav
       class="
-        w-full
-        h-full
+        w-screen
+        min-h-screen
+        max-h-screen
         fixed
         z-30
         top-0
         right-0
+        overflow-y-auto
         bg-gray-900
         transition
         duration-300
@@ -181,37 +183,32 @@
     >
       <div
         class="
-          absolute
-          lg:static
-          top-24
-          right-6
+          min-h-screen
           flex flex-col
-          items-end
           space-y-16
-          lg:space-y-0
+          pt-28
+          lg:pt-36
+          pb-6
+          lg:pb-8
+          px-6
+          lg:pl-8 lg:pr-24
+          xl:pr-32
+          2xl:pr-48
         "
       >
         <!-- Main menu -->
         <ul
-          class="
-            lg:absolute lg:top-36 lg:right-48
-            flex flex-col
-            lg:items-end
-            space-y-4
-            lg:space-y-0
-          "
+          class="flex flex-col lg:flex-grow lg:items-end space-y-4 lg:space-y-0"
         >
           <li
             v-for="mainMenuItem in mainMenuItems"
             :key="mainMenuItem.href"
-            class="text-right"
+            class="main-menu-item lg:flex text-right"
           >
             <NuxtLink
               class="
                 block
                 hover:text-lime
-                text-7.5xl-screen
-                lg:text-8.5xl-screen
                 font-bold
                 transition-transform
                 hover:scale-x-105
@@ -230,38 +227,41 @@
           </li>
         </ul>
 
-        <!-- Social networks -->
-        <SocialNetworks class="h-8 lg:absolute lg:bottom-8 lg:right-48" />
-      </div>
+        <div
+          class="
+            flex flex-col
+            lg:flex-row-reverse
+            flex-grow
+            lg:flex-grow-0 lg:items-end
+            justify-between
+            space-y-16
+            lg:space-y-0
+          "
+        >
+          <!-- Social networks -->
+          <SocialNetworks class="h-8 self-end" />
 
-      <!-- Sub menu -->
-      <ul
-        class="
-          absolute
-          bottom-6
-          lg:bottom-8
-          left-6
-          lg:left-8
-          flex
-          space-x-6
-          lg:space-x-8
-        "
-      >
-        <li v-for="subMenuItem in subMenuItems" :key="subMenuItem.href">
-          <NuxtLink
-            class="
-              text-white
-              hover:text-lime hover:underline
-              text-sm
-              lg:text-xl
-            "
-            data-cursor-hover
-            :to="subMenuItem.href"
-          >
-            {{ subMenuItem.label }}
-          </NuxtLink>
-        </li>
-      </ul>
+          <!-- Sub menu -->
+          <ul class="flex items-end space-x-6 lg:space-x-8">
+            <li v-for="subMenuItem in subMenuItems" :key="subMenuItem.href">
+              <NuxtLink
+                class="
+                  flex
+                  text-white
+                  hover:text-lime hover:underline
+                  text-sm
+                  lg:text-xl
+                "
+                style="line-height: 1"
+                data-cursor-hover
+                :to="subMenuItem.href"
+              >
+                {{ subMenuItem.label }}
+              </NuxtLink>
+            </li>
+          </ul>
+        </div>
+      </div>
     </nav>
   </header>
 </template>
@@ -443,3 +443,19 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+.main-menu-item a {
+  font-size: max(5vh, 2rem);
+}
+@media (min-width: 1024px) {
+  .main-menu-item a {
+    font-size: max(6vh, 3rem);
+  }
+}
+@media (min-width: 1536px) {
+  .main-menu-item a {
+    font-size: max(7vh, 4rem);
+  }
+}
+</style>

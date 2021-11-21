@@ -81,10 +81,6 @@ module.exports = {
       transitionDuration: {
         3000: '3000ms',
       },
-      fontSize: {
-        '7.5xl-screen': '5vh',
-        '8.5xl-screen': '7vh',
-      },
       height: {
         '4/6-screen': '66.666667vh',
         '1/2-screen': '50vh',
