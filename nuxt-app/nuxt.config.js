@@ -114,7 +114,7 @@ export default {
       name: 'programmier.bar: Die Plattform für App- und Webentwicklung',
       short_name: 'programmier.bar',
       description:
-        'Wir wollen euch die Möglichkeiten bieten, euer Wissen in den Bereichen App- und Webentwicklung zu vertiefen und einen Blick hinter die Kulissen zu werfen, bei einer ganz entspannten Atmosphäre.',
+        'Podcast, Meetups und Community: Wir bieten euch Deep Dives in Technologien und andere Themen, die uns in der Web- und App-Entwicklung beschäftigen.',
       display: 'standalone',
       background_color: '#000000',
       theme_color: '#000000',
