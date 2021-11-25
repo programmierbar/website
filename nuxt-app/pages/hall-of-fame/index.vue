@@ -70,8 +70,8 @@
           :items="tagFilter.output"
           direction="vertical"
         >
-          <template #default="{ item, index }">
-            <li
+          <template #default="{ item, index, viewportItems, addViewportItem }">
+            <LazyListItem
               :key="item.id"
               :class="[
                 index > 0 && 'mt-10',
@@ -79,9 +79,21 @@
                   ? 'self-end xs:-mt-10 sm:-mt-20 xl:-mt-32 2xl:-mt-60'
                   : 'xs:-mt-5 sm:-mt-10',
               ]"
+              :item="item"
+              :viewport-items="viewportItems"
+              :add-viewport-item="addViewportItem"
             >
-              <SpeakerBubble :speaker="item" :color="bubbleColors[index % 3]" />
-            </li>
+              <template #default="{ isNewToViewport }">
+                <FadeAnimation
+                  :fade-in="isNewToViewport ? 'from_bottom' : 'none'"
+                >
+                  <SpeakerBubble
+                    :speaker="item"
+                    :color="bubbleColors[index % 3]"
+                  />
+                </FadeAnimation>
+              </template>
+            </LazyListItem>
           </template>
         </LazyList>
       </div>
@@ -93,7 +105,9 @@
 import { computed, defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
+  FadeAnimation,
   LazyList,
+  LazyListItem,
   SectionHeading,
   SpeakerBubble,
   TagFilter,
@@ -103,7 +117,9 @@ import { useStrapi, useTagFilter, usePageMeta } from '../../composables';
 export default defineComponent({
   components: {
     Breadcrumbs,
+    FadeAnimation,
     LazyList,
+    LazyListItem,
     SectionHeading,
     SpeakerBubble,
     TagFilter,
