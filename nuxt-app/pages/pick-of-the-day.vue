@@ -52,8 +52,8 @@
         :items="tagFilter.output"
         direction="vertical"
       >
-        <template #default="{ item, index }">
-          <li
+        <template #default="{ item, index, viewportItems, addViewportItem }">
+          <LazyListItem
             :key="item.id"
             class="lg:w-1/2"
             :class="[
@@ -61,16 +61,26 @@
               index > 0 && index % 2 === 0 && 'lg:mt-44',
               index % 2 > 0 && 'lg:self-end lg:-mt-2/7',
             ]"
+            :item="item"
+            :viewport-items="viewportItems"
+            :add-viewport-item="addViewportItem"
           >
-            <PickOfTheDayCard
-              :class="[
-                index % 2 === 0 ? 'lg:origin-left' : 'lg:origin-right',
-                (index + 3) % 4 < 2 ? 'lg:scale-70' : 'lg:scale-110',
-              ]"
-              :pick-of-the-day="item"
-              :variant="(index + 3) % 4 < 2 ? 'small' : 'large'"
-            />
-          </li>
+            <template #default="{ isNewToViewport }">
+              <FadeAnimation
+                :fade-in="isNewToViewport ? 'from_bottom' : 'none'"
+                :threshold="0"
+              >
+                <PickOfTheDayCard
+                  :class="[
+                    index % 2 === 0 ? 'lg:origin-left' : 'lg:origin-right',
+                    (index + 3) % 4 < 2 ? 'lg:scale-70' : 'lg:scale-110',
+                  ]"
+                  :pick-of-the-day="item"
+                  :variant="(index + 3) % 4 < 2 ? 'small' : 'large'"
+                />
+              </FadeAnimation>
+            </template>
+          </LazyListItem>
         </template>
       </LazyList>
     </div>
@@ -81,7 +91,9 @@
 import { computed, defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
+  FadeAnimation,
   LazyList,
+  LazyListItem,
   PickOfTheDayCard,
   SectionHeading,
   TagFilter,
@@ -91,7 +103,9 @@ import { useStrapi, useTagFilter, usePageMeta } from '../composables';
 export default defineComponent({
   components: {
     Breadcrumbs,
+    FadeAnimation,
     LazyList,
+    LazyListItem,
     PickOfTheDayCard,
     SectionHeading,
     TagFilter,
