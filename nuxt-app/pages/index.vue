@@ -46,7 +46,7 @@
 
       <!-- Video -->
       <div class="bg-gray-900">
-        <FadeAnimation fade-in="normal" fade-out="none" :duration="500">
+        <FadeAnimation fade-in="normal" :duration="500" :threshold="0">
           <video
             class="w-full min-h-80 object-cover"
             :src="homePage.video.url"

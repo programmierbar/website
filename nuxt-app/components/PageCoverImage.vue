@@ -15,8 +15,8 @@
       <FadeAnimation
         class="h-full relative -z-1"
         fade-in="normal"
-        fade-out="none"
         :duration="500"
+        :threshold="0"
       >
         <img
           ref="imageElement"
