@@ -201,9 +201,14 @@
           class="flex flex-col lg:flex-grow lg:items-end space-y-4 lg:space-y-0"
         >
           <li
-            v-for="mainMenuItem in mainMenuItems"
+            v-for="(mainMenuItem, index) in mainMenuItems"
             :key="mainMenuItem.href"
             class="main-menu-item lg:flex text-right"
+            :class="menuIsOpen && 'animate'"
+            :style="{
+              animationDuration: `${index * 20 + 300}ms`,
+              animationDelay: `${index * 50 + 200}ms`,
+            }"
           >
             <NuxtLink
               class="
@@ -457,5 +462,14 @@ export default defineComponent({
   .main-menu-item a {
     font-size: max(7vh, 4rem);
   }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+}
+.main-menu-item.animate {
+  animation: fade-in ease both;
 }
 </style>
