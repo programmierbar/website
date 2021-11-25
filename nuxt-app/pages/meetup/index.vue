@@ -76,10 +76,22 @@
           {{ meetupPage.meetups_heading }}
         </SectionHeading>
         <LazyList class="mt-10" :items="meetups" direction="vertical">
-          <template #default="{ item, index }">
-            <li :key="item.id" :class="index > 0 && 'mt-14 md:mt-20 lg:mt-28'">
-              <MeetupCard :meetup="item" />
-            </li>
+          <template #default="{ item, index, viewportItems, addViewportItem }">
+            <LazyListItem
+              :key="item.id"
+              :class="index > 0 && 'mt-14 md:mt-20 lg:mt-28'"
+              :item="item"
+              :viewport-items="viewportItems"
+              :add-viewport-item="addViewportItem"
+            >
+              <template #default="{ isNewToViewport }">
+                <FadeAnimation
+                  :fade-in="isNewToViewport ? 'from_right' : 'none'"
+                >
+                  <MeetupCard :meetup="item" />
+                </FadeAnimation>
+              </template>
+            </LazyListItem>
           </template>
         </LazyList>
       </div>
@@ -91,7 +103,9 @@
 import { computed, defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
+  FadeAnimation,
   LazyList,
+  LazyListItem,
   MarkdownToHtml,
   MeetupCard,
   PageCoverImage,
@@ -102,7 +116,9 @@ import { useStrapi, usePageMeta } from '../../composables';
 export default defineComponent({
   components: {
     Breadcrumbs,
+    FadeAnimation,
     LazyList,
+    LazyListItem,
     MarkdownToHtml,
     MeetupCard,
     PageCoverImage,
