@@ -29,23 +29,28 @@
         :items="searchResults"
         direction="vertical"
       >
-        <template #default="{ item, index }">
-          <li
+        <template #default="{ item, index, viewportItems, addViewportItem }">
+          <LazyListItem
             :key="item.itemType + item.id"
             class="
               border-b-1
               last:border-b-0
-              border-white border-opacity-70
+              border-white/70
               pb-9
               lg:pb-24
               last:pb-0
             "
             :class="index > 0 && 'mt-10 lg:mt-24'"
+            :item="item"
+            :viewport-items="viewportItems"
+            :add-viewport-item="addViewportItem"
           >
-            <FadeAnimation fade-in="from_right">
-              <SearchCard :item="item" />
-            </FadeAnimation>
-          </li>
+            <template #default="{ isNewToViewport }">
+              <FadeAnimation :fade-in="isNewToViewport ? 'from_right' : 'none'">
+                <SearchCard :item="item" />
+              </FadeAnimation>
+            </template>
+          </LazyListItem>
         </template>
       </LazyList>
 
@@ -103,6 +108,7 @@ import {
   Breadcrumbs,
   FadeAnimation,
   LazyList,
+  LazyListItem,
   SearchCard,
   SectionHeading,
 } from '../components';
@@ -113,6 +119,7 @@ export default defineComponent({
     Breadcrumbs,
     FadeAnimation,
     LazyList,
+    LazyListItem,
     SearchCard,
     SectionHeading,
   },
