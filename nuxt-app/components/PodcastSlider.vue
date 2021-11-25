@@ -7,7 +7,7 @@
         scroll-box
         flex
         items-center
-        overflow-x-auto
+        overflow-x-auto overflow-y-hidden
         before:w-6
         md:before:w-48
         3xl:before:w-8
@@ -24,16 +24,26 @@
         direction="horizontal"
         :scroll-element="scrollBoxElement"
       >
-        <template #default="{ item, index }">
-          <li
+        <template #default="{ item, index, viewportItems, addViewportItem }">
+          <LazyListItem
             :key="item.id"
             :class="
               index > 0 &&
               'ml-10 md:ml-16 lg:ml-20 xl:ml-24 2xl:ml-28 3xl:ml-32'
             "
+            :item="item"
+            :viewport-items="viewportItems"
+            :add-viewport-item="addViewportItem"
           >
-            <PodcastCard :podcast="item" />
-          </li>
+            <template #default="{ isNewToViewport }">
+              <FadeAnimation
+                :fade-in="isNewToViewport ? 'from_bottom' : 'none'"
+                :threshold="0"
+              >
+                <PodcastCard :podcast="item" />
+              </FadeAnimation>
+            </template>
+          </LazyListItem>
         </template>
       </LazyList>
 
@@ -163,12 +173,16 @@ import smoothscroll from 'smoothscroll-polyfill';
 import { StrapiPodcast } from 'shared-code';
 import { useStrapi, useEventListener } from '../composables';
 import { trackGoal } from '../helpers';
+import FadeAnimation from './FadeAnimation.vue';
 import LazyList from './LazyList.vue';
+import LazyListItem from './LazyListItem.vue';
 import PodcastCard from './PodcastCard.vue';
 
 export default defineComponent({
   components: {
+    FadeAnimation,
     LazyList,
+    LazyListItem,
     PodcastCard,
   },
   props: {
