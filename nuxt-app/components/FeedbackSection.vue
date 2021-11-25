@@ -17,8 +17,10 @@
           md:min-w-76
           lg:min-w-88
           inline-block
+          hover:bg-lime
           border-lime border-4
           text-lime
+          hover:text-black
           rounded-full
           text-sm
           md:text-lg
@@ -27,6 +29,7 @@
           font-black
           tracking-widest
           uppercase
+          transition-colors
           px-10
           pt-4
           md:pt-5
