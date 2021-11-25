@@ -4,6 +4,8 @@
       v-for="(renderItem, index) in renderItems"
       :item="renderItem"
       :index="index + firstIndex"
+      :viewportItems="viewportItems"
+      :addViewportItem="addViewportItem"
     />
   </ul>
 </template>
@@ -53,7 +55,22 @@ export default defineComponent({
     const paddingStartList = ref<number[]>([]);
     const paddingEndList = ref<number[]>([]);
 
-    // Update state when items changes
+    // Create items to be rendered
+    const renderItems = computed(() =>
+      props.items.slice(firstIndex.value, lastIndex.value + 1)
+    );
+
+    // Create viewport items reference
+    const viewportItems = ref(new Set());
+
+    /**
+     * It adds a item to the viewport items.
+     */
+    const addViewportItem = (item: unknown) => {
+      viewportItems.value = new Set(viewportItems.value.add(item));
+    };
+
+    // Reset state references when items changes
     watch(
       () => props.items,
       () => {
@@ -74,12 +91,8 @@ export default defineComponent({
           lastIndex.value + 1,
           props.items.length
         );
+        viewportItems.value = new Set();
       }
-    );
-
-    // Create items to be rendered
-    const renderItems = computed(() =>
-      props.items.slice(firstIndex.value, lastIndex.value + 1)
     );
 
     // Create list style with padding start and end
@@ -140,15 +153,23 @@ export default defineComponent({
           const { marginTop, marginRight, marginBottom, marginLeft } =
             window.getComputedStyle(itemElement.value);
 
-          // Add item size + margin to padding list
-          paddingList.value.push(
+          const padding =
             props.direction === 'vertical'
               ? height + parseInt(marginTop) + parseInt(marginBottom)
-              : width + parseInt(marginLeft) + parseInt(marginRight)
-          );
+              : width + parseInt(marginLeft) + parseInt(marginRight);
 
-          // Remove item element from list
-          index.value += scrollDirection === 'up' ? -1 : 1;
+          // TODO: nextTick() was added because with the current implemen-
+          // tation, Vue doesn't always update the list items specifically,
+          // completely re-rendering the list and breaking animation. This
+          // behavior must be debugged so that nextTick() can be removed in
+          // the future.
+          nextTick(() => {
+            // Add item size + margin to padding list
+            paddingList.value.push(padding);
+
+            // Remove item element from list
+            index.value += scrollDirection === 'up' ? -1 : 1;
+          });
         }
       }
     };
@@ -252,6 +273,8 @@ export default defineComponent({
     return {
       lazyListElement,
       firstIndex,
+      viewportItems,
+      addViewportItem,
       renderItems,
       style,
     };
