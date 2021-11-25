@@ -1,58 +1,58 @@
 <template>
   <div
     class="transition-all"
-    :class="podcastPlayer.podcast ? 'h-16 md:h-20' : 'h-0 invisible'"
+    :class="podcastPlayer.podcast ? 'h-16 xl:h-20' : 'h-0 invisible'"
   >
     <div
       class="
         w-full
-        lg:h-20
+        xl:h-20
         fixed
         z-20
         left-0
         bottom-0
         flex flex-col
-        lg:flex-row
+        xl:flex-row
         bg-lime
         transition-transform
         duration-300
-        lg:space-x-16 lg:px-8
+        xl:space-x-16 xl:px-8
       "
       :class="
         !podcastPlayer.podcast
           ? 'translate-y-full'
           : !isExpanded
-          ? 'translate-y-44 lg:translate-y-0'
+          ? 'translate-y-44 xl:translate-y-0'
           : 'translate-y-0'
       "
       data-cursor-black
     >
       <div
         class="
-          lg:w-1/4
+          xl:w-1/4
           h-16
-          lg:h-full
+          xl:h-full
           flex
           items-center
           justify-between
           px-6
-          lg:px-0
+          xl:px-0
         "
         @click="expandPlayer"
       >
         <!-- Podcast infos -->
-        <div class="w-2/3 lg:w-full flex items-center">
+        <div class="w-2/3 xl:w-full flex items-center">
           <NuxtLink
             v-if="href"
             class="w-full inline-block"
-            :class="!isExpanded && 'pointer-events-none md:pointer-events-auto'"
+            :class="!isExpanded && 'pointer-events-none xl:pointer-events-auto'"
             :to="href"
             data-cursor-hover
           >
             <h3
               class="
                 text-sm
-                lg:text-base
+                xl:text-base
                 text-black
                 font-black
                 whitespace-nowrap
@@ -75,7 +75,7 @@
           </NuxtLink>
         </div>
 
-        <div class="relative lg:hidden">
+        <div class="relative xl:hidden">
           <!-- Like, play and stop icon -->
           <div
             class="flex space-x-5 transition-opacity"
@@ -129,23 +129,23 @@
       </div>
 
       <div
-        class="lg:w-3/4 flex flex-col lg:flex-row lg:items-center lg:space-x-16"
+        class="xl:w-3/4 flex flex-col xl:flex-row xl:items-center xl:space-x-16"
       >
         <!-- Backword, play, pause and forward icon -->
         <div
-          class="h-24 flex items-center justify-center space-x-12 lg:space-x-8"
+          class="h-24 flex items-center justify-center space-x-12 xl:space-x-8"
         >
           <button
-            class="h-9 lg:h-7"
+            class="h-9 xl:h-7"
             type="button"
             data-cursor-hover
             @click="podcastPlayer.backward"
             v-html="require('../assets/icons/15-sec-backwards.svg?raw')"
           />
-          <div class="w-6 lg:w-5 flex justify-center">
+          <div class="w-6 xl:w-5 flex justify-center">
             <button
               v-if="podcastPlayer.paused"
-              class="h-9 lg:h-7"
+              class="h-9 xl:h-7"
               type="button"
               data-cursor-hover
               @click="podcastPlayer.play"
@@ -153,7 +153,7 @@
             />
             <button
               v-else
-              class="h-9 lg:h-7"
+              class="h-9 xl:h-7"
               type="button"
               data-cursor-hover
               @click="podcastPlayer.pause"
@@ -161,7 +161,7 @@
             />
           </div>
           <button
-            class="h-9 lg:h-7"
+            class="h-9 xl:h-7"
             type="button"
             data-cursor-hover
             @click="podcastPlayer.forward"
@@ -173,13 +173,13 @@
         <div
           class="
             flex flex-wrap
-            lg:flex-nowrap lg:flex-grow lg:items-center
+            xl:flex-nowrap xl:flex-grow xl:items-center
             justify-between
             order-first
-            lg:order-none lg:space-x-4
+            xl:order-none xl:space-x-4
           "
         >
-          <div class="text-sm lg:text-base mt-3 lg:mt-0.5 ml-6 lg:ml-0">
+          <div class="text-sm xl:text-base mt-3 xl:mt-0.5 ml-6 xl:ml-0">
             {{ currentTimeString }}
           </div>
           <input
@@ -187,9 +187,9 @@
             class="
               current-time-input
               w-full
-              lg:w-auto lg:h-8
+              xl:w-auto xl:h-8
               order-first
-              lg:order-none
+              xl:order-none
             "
             type="range"
             min="0"
@@ -199,13 +199,13 @@
             data-cursor-hover
             @change="changeCurrentTime"
           />
-          <div class="text-sm lg:text-base mt-3 lg:mt-0.5 mr-6 lg:mr-0">
+          <div class="text-sm xl:text-base mt-3 xl:mt-0.5 mr-6 xl:mr-0">
             {{ durationString }}
           </div>
         </div>
 
         <!-- Volumeslider -->
-        <div class="w-32 hidden lg:flex items-center space-x-4">
+        <div class="w-32 hidden xl:flex items-center space-x-4">
           <img
             class="h-6"
             :src="require('~/assets/icons/sound.svg')"
@@ -227,12 +227,12 @@
         <div
           class="
             flex flex-row-reverse
-            lg:flex-row
+            xl:flex-row
             justify-between
-            lg:space-x-8
+            xl:space-x-8
             px-6
             py-3
-            lg:p-0
+            xl:p-0
           "
         >
           <!-- <button
@@ -348,7 +348,7 @@ export default defineComponent({
      * It expands the podcast player on mobile devices.
      */
     const expandPlayer = () => {
-      if (window.innerWidth <= 768) {
+      if (window.innerWidth < 1280) {
         isExpanded.value = true;
       }
     };
