@@ -12,21 +12,15 @@
           bg-gray-900 bg-opacity-30
         "
       />
-      <FadeAnimation
-        class="h-full relative -z-1"
-        fade-in="normal"
-        :duration="500"
-        :threshold="0"
-      >
-        <img
-          ref="imageElement"
-          class="w-full h-full object-cover"
-          :src="coverImage.url"
-          :srcset="coverSrcSet"
-          sizes="100vw"
-          :alt="coverImage.alternativeText || ''"
-        />
-      </FadeAnimation>
+
+      <img
+        ref="imageElement"
+        class="w-full h-full object-cover"
+        :src="coverImage.url"
+        :srcset="coverSrcSet"
+        sizes="100vw"
+        :alt="coverImage.alternativeText || ''"
+      />
     </div>
     <ScrollDownMouse />
   </div>
@@ -42,12 +36,10 @@ import {
 import { StrapiImage } from 'shared-code';
 import { useEventListener, useWindow } from '../composables';
 import { getImageSrcSet } from '../helpers';
-import FadeAnimation from './FadeAnimation.vue';
 import ScrollDownMouse from './ScrollDownMouse.vue';
 
 export default defineComponent({
   components: {
-    FadeAnimation,
     ScrollDownMouse,
   },
   props: {

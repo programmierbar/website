@@ -46,17 +46,15 @@
 
       <!-- Video -->
       <div class="bg-gray-900">
-        <FadeAnimation fade-in="normal" :duration="500" :threshold="0">
-          <video
-            class="w-full min-h-80 object-cover"
-            :src="homePage.video.url"
-            :alt="homePage.video.alternativeText"
-            autoplay="true"
-            loop="true"
-            muted="true"
-            playsinline
-          />
-        </FadeAnimation>
+        <video
+          class="w-full min-h-80 object-cover"
+          :src="homePage.video.url"
+          :alt="homePage.video.alternativeText"
+          autoplay="true"
+          loop="true"
+          muted="true"
+          playsinline
+        />
       </div>
 
       <!-- Newsticker -->
@@ -84,7 +82,6 @@
 import { defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
-  FadeAnimation,
   NewsTicker,
   PodcastSlider,
   SectionHeading,
@@ -96,7 +93,6 @@ import { useStrapi, useLoadingScreen, usePageMeta } from '../composables';
 export default defineComponent({
   components: {
     Breadcrumbs,
-    FadeAnimation,
     NewsTicker,
     PodcastSlider,
     SectionHeading,
