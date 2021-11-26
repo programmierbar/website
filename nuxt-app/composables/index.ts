@@ -3,6 +3,7 @@ export * from './useClipboard';
 export * from './useDocument';
 export * from './useEventListener';
 export * from './useIntersectionObserver';
+export * from './useLoadingScreen';
 export * from './useLocaleString';
 export * from './useMediaQuery';
 export * from './useMotionParallax';

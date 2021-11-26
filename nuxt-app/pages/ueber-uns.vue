@@ -78,7 +78,7 @@ import {
   PageCoverImage,
   SectionHeading,
 } from '../components';
-import { useStrapi, usePageMeta } from '../composables';
+import { useStrapi, useLoadingScreen, usePageMeta } from '../composables';
 
 export default defineComponent({
   components: {
@@ -91,6 +91,9 @@ export default defineComponent({
     // Query Strapi about page and members
     const aboutPage = useStrapi('about-page');
     const members = useStrapi('members');
+
+    // Set loading screen
+    useLoadingScreen(aboutPage, members);
 
     // Set page meta data
     usePageMeta(aboutPage);

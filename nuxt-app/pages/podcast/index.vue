@@ -114,7 +114,12 @@ import {
   SectionHeading,
   TagFilter,
 } from '../../components';
-import { useStrapi, useTagFilter, usePageMeta } from '../../composables';
+import {
+  useStrapi,
+  useLoadingScreen,
+  usePageMeta,
+  useTagFilter,
+} from '../../composables';
 
 export default defineComponent({
   components: {
@@ -128,6 +133,9 @@ export default defineComponent({
     // Query Strapi about page and members
     const podcastPage = useStrapi('podcast-page');
     const podcasts = useStrapi('podcasts', '?_limit=-1');
+
+    // Set loading screen
+    useLoadingScreen(podcastPage, podcasts);
 
     // Set page meta data
     usePageMeta(podcastPage);

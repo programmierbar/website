@@ -47,7 +47,7 @@
 <script lang="ts">
 import { defineComponent, useMeta } from '@nuxtjs/composition-api';
 import { Breadcrumbs, MarkdownToHtml, SectionHeading } from '../components';
-import { useStrapi } from '../composables';
+import { useStrapi, useLoadingScreen } from '../composables';
 
 export default defineComponent({
   components: {
@@ -58,6 +58,9 @@ export default defineComponent({
   setup() {
     // Query Strapi privacy-page
     const privacyPage = useStrapi('privacy-page');
+
+    // Set loading screen
+    useLoadingScreen(privacyPage);
 
     // Set page meta data
     useMeta({

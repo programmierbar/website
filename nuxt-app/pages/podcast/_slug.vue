@@ -145,7 +145,11 @@ import {
   SpeakerList,
   TagList,
 } from '../../components';
-import { useStrapi, useLocaleString } from '../../composables';
+import {
+  useStrapi,
+  useLoadingScreen,
+  useLocaleString,
+} from '../../composables';
 import {
   getPodcastTypeString,
   getTrimmedString,
@@ -184,6 +188,9 @@ export default defineComponent({
     // Query Strapi pick of the day and speaker count
     const pickOfTheDayCount = useStrapi('picks-of-the-day', '/count');
     const speakerCount = useStrapi('speakers', '/count');
+
+    // Set loading screen
+    useLoadingScreen(podcast, pickOfTheDayCount, speakerCount);
 
     // Convert number to local string
     const pickOfTheDayCountString = useLocaleString(pickOfTheDayCount);

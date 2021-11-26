@@ -98,7 +98,12 @@ import {
   SectionHeading,
   TagFilter,
 } from '../components';
-import { useStrapi, useTagFilter, usePageMeta } from '../composables';
+import {
+  useStrapi,
+  useLoadingScreen,
+  usePageMeta,
+  useTagFilter,
+} from '../composables';
 
 export default defineComponent({
   components: {
@@ -114,6 +119,9 @@ export default defineComponent({
     // Query Strapi pick of the day page and picks of the day
     const pickOfTheDayPage = useStrapi('pick-of-the-day-page');
     const picksOfTheDay = useStrapi('picks-of-the-day', '?_limit=-1');
+
+    // Set loading screen
+    useLoadingScreen(pickOfTheDayPage, picksOfTheDay);
 
     // Set page meta data
     usePageMeta(pickOfTheDayPage);

@@ -111,7 +111,7 @@ import {
   PageCoverImage,
   SectionHeading,
 } from '../../components';
-import { useStrapi, usePageMeta } from '../../composables';
+import { useStrapi, useLoadingScreen, usePageMeta } from '../../composables';
 
 export default defineComponent({
   components: {
@@ -128,6 +128,9 @@ export default defineComponent({
     // Query Strapi about page and members
     const meetupPage = useStrapi('meetup-page');
     const meetups = useStrapi('meetups', '?_limit=-1');
+
+    // Set loading screen
+    useLoadingScreen(meetupPage, meetups);
 
     // Set page meta data
     usePageMeta(meetupPage);

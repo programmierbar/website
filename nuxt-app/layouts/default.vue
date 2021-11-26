@@ -3,6 +3,7 @@
     <MouseCursor />
     <Header />
     <main class="min-h-screen">
+      <LoadingScreen />
       <Nuxt />
     </main>
     <Footer />
@@ -17,6 +18,7 @@ import {
   // CookieBanner,
   Footer,
   Header,
+  LoadingScreen,
   MouseCursor,
   PodcastPlayer,
 } from '../components';
@@ -26,6 +28,7 @@ export default defineComponent({
     // CookieBanner,
     Footer,
     Header,
+    LoadingScreen,
     MouseCursor,
     PodcastPlayer,
   },

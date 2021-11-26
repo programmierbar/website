@@ -112,7 +112,12 @@ import {
   SpeakerBubble,
   TagFilter,
 } from '../../components';
-import { useStrapi, useTagFilter, usePageMeta } from '../../composables';
+import {
+  useStrapi,
+  useLoadingScreen,
+  usePageMeta,
+  useTagFilter,
+} from '../../composables';
 
 export default defineComponent({
   components: {
@@ -128,6 +133,9 @@ export default defineComponent({
     // Query Strapi hall of fame page and speakers
     const hallOfFamePage = useStrapi('hall-of-fame-page');
     const speakers = useStrapi('speakers', '?_limit=-1');
+
+    // Set loading screen
+    useLoadingScreen(hallOfFamePage, speakers);
 
     // Set page meta data
     usePageMeta(hallOfFamePage);

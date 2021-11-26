@@ -47,7 +47,7 @@
 <script lang="ts">
 import { defineComponent, useMeta } from '@nuxtjs/composition-api';
 import { Breadcrumbs, MarkdownToHtml, SectionHeading } from '../components';
-import { useStrapi } from '../composables';
+import { useStrapi, useLoadingScreen } from '../composables';
 
 export default defineComponent({
   components: {
@@ -58,6 +58,9 @@ export default defineComponent({
   setup() {
     // Query Strapi imprint-page
     const imprintPage = useStrapi('imprint-page');
+
+    // Set loading screen
+    useLoadingScreen(imprintPage);
 
     // Set page meta data
     useMeta({

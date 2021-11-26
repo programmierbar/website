@@ -91,7 +91,7 @@ import {
   ScrollDownMouse,
   TypedText,
 } from '../components';
-import { useStrapi, usePageMeta } from '../composables';
+import { useStrapi, useLoadingScreen, usePageMeta } from '../composables';
 
 export default defineComponent({
   components: {
@@ -106,6 +106,9 @@ export default defineComponent({
   setup() {
     // Query Strapi home-page
     const homePage = useStrapi('home-page');
+
+    // Set loading screen
+    useLoadingScreen(homePage);
 
     // Set page meta data
     usePageMeta(homePage);

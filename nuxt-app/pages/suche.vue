@@ -83,7 +83,7 @@
             font-semibold
           "
         >
-          Nach was möchtest du suchen?
+          Wonach suchst du?
         </p>
       </div>
     </div>
@@ -112,7 +112,7 @@ import {
   SearchCard,
   SectionHeading,
 } from '../components';
-import { useStrapi } from '../composables';
+import { useStrapi, useLoadingScreen } from '../composables';
 
 export default defineComponent({
   components: {
@@ -132,6 +132,9 @@ export default defineComponent({
     const meetups = useStrapi('meetups', '?_limit=-1');
     const picksOfTheDay = useStrapi('picks-of-the-day', '?_limit=-1');
     const speakers = useStrapi('speakers', '?_limit=-1');
+
+    // Set loading screen
+    useLoadingScreen(podcasts, meetups, picksOfTheDay, speakers);
 
     /**
      * It filters the list by the keys and search crumbs.

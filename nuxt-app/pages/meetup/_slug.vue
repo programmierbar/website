@@ -200,7 +200,11 @@ import {
   SpeakerList,
   TagList,
 } from '../../components';
-import { useStrapi, useLocaleString } from '../../composables';
+import {
+  useStrapi,
+  useLoadingScreen,
+  useLocaleString,
+} from '../../composables';
 import { getTrimmedString, trackGoal } from '../../helpers';
 
 export default defineComponent({
@@ -234,6 +238,9 @@ export default defineComponent({
     // Query Strapi speaker count and convert it to local string
     const speakerCount = useStrapi('speakers', '/count');
     const speakerCountString = useLocaleString(speakerCount);
+
+    // Set loading screen
+    useLoadingScreen(meetup, speakerCount);
 
     // Set page meta data
     useMeta(() =>

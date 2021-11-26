@@ -168,7 +168,7 @@ import {
   MarkdownToHtml,
   SectionHeading,
 } from '../components';
-import { useStrapi, usePageMeta } from '../composables';
+import { useStrapi, useLoadingScreen, usePageMeta } from '../composables';
 import { trackGoal } from '../helpers';
 
 export default defineComponent({
@@ -182,6 +182,9 @@ export default defineComponent({
   setup() {
     // Query Strapi contact-page
     const contactPage = useStrapi('contact-page');
+
+    // Set loading screen
+    useLoadingScreen(contactPage);
 
     // Set page meta data
     usePageMeta(contactPage);
