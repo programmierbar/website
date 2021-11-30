@@ -336,7 +336,7 @@ export default defineComponent({
       // did not lead to the desired result.
       setTimeout(() => {
         menuIsOpen.value = false;
-      });
+      }, 100);
     };
 
     /**
