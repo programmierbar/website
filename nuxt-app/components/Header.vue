@@ -329,7 +329,14 @@ export default defineComponent({
      * It closes the menu.
      */
     const closeMenu = () => {
-      menuIsOpen.value = false;
+      // TODO: setTimeout() was added because on slow devices it causes the
+      // menu to close only after the page below it has loaded. Probably the
+      // reason is that the page change blocks the main thread and by
+      // setTimeout() the menu is closed afterwards. nextTick() unfortunately
+      // did not lead to the desired result.
+      setTimeout(() => {
+        menuIsOpen.value = false;
+      });
     };
 
     /**
