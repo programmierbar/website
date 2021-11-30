@@ -21,6 +21,7 @@
       :class="menuIsOpen ? 'bg-gray-900' : 'bg-black'"
       to="/"
       data-cursor-hover
+      @click.native="closeMenu"
     >
       <img
         class="h-7 lg:hidden"
@@ -226,6 +227,7 @@
               "
               data-cursor-hover
               :to="mainMenuItem.href"
+              @click.native="closeMenu"
             >
               {{ mainMenuItem.label }}
             </NuxtLink>
@@ -260,6 +262,7 @@
                 style="line-height: 1"
                 data-cursor-hover
                 :to="subMenuItem.href"
+                @click.native="closeMenu"
               >
                 {{ subMenuItem.label }}
               </NuxtLink>
@@ -319,12 +322,12 @@ export default defineComponent({
     // Create search input element reference
     const searchInputElement = ref<HTMLInputElement>();
 
-    // Close menu after each route change
-    router.afterEach(() => {
-      setTimeout(() => {
-        menuIsOpen.value = false;
-      }, 50);
-    });
+    /**
+     * It closes the menu.
+     */
+    const closeMenu = () => {
+      menuIsOpen.value = false;
+    };
 
     /**
      * It sets the initial value of the search
@@ -429,6 +432,7 @@ export default defineComponent({
       menuIsOpen,
       searchIsOpen,
       searchInputElement,
+      closeMenu,
       handleBurgerClick,
       handleSearch,
       mainMenuItems: [
