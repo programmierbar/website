@@ -129,6 +129,23 @@
               lg:pb-4
             "
           >
+            <!-- Podcast episode -->
+            <a
+              class="
+                text-xs
+                xs:text-sm
+                md:text-base
+                text-black
+                italic
+                underline
+              "
+              :href="podcastHref"
+              data-cursor-hover
+            >
+              <strong>{{ podcastTypeAndNumber }}</strong>
+              {{ podcastTitleDivider }}{{ pickOfTheDay.podcast.title }}
+            </a>
+
             <!-- Description -->
             <MarkdownToHtml
               class="text-sm xs:text-base md:text-lg 2xl:text-xl text-black"
@@ -183,7 +200,13 @@ import {
   useRouter,
 } from '@nuxtjs/composition-api';
 import { StrapiPickOfTheDay } from 'shared-code';
-import { getImageSrcSet } from '../helpers';
+import {
+  getImageSrcSet,
+  getFullPodcastTitle,
+  getPodcastTypeAndNumber,
+  getPodcastTitleDivider,
+  getSubpagePath,
+} from '../helpers';
 // import LikeButton from './LikeButton.vue';
 import MarkdownToHtml from './MarkdownToHtml.vue';
 import TagList from './TagList.vue';
@@ -213,9 +236,31 @@ export default defineComponent({
       getImageSrcSet(props.pickOfTheDay.image)
     );
 
+    // Create podcast href to podcast subpage
+    const podcastHref = computed(() =>
+      getSubpagePath(
+        'podcast',
+        getFullPodcastTitle(props.pickOfTheDay.podcast),
+        props.pickOfTheDay.podcast.id
+      )
+    );
+
+    // Create podcast type and number
+    const podcastTypeAndNumber = computed(() =>
+      getPodcastTypeAndNumber(props.pickOfTheDay.podcast)
+    );
+
+    // Create podcast title divider
+    const podcastTitleDivider = computed(() =>
+      getPodcastTitleDivider(props.pickOfTheDay.podcast)
+    );
+
     return {
       router,
       imageSrcSet,
+      podcastHref,
+      podcastTypeAndNumber,
+      podcastTitleDivider,
     };
   },
 });
