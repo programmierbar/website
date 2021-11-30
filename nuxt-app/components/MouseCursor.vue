@@ -6,7 +6,7 @@
         w-8
         h-8
         fixed
-        z-50
+        z-60
         -left-4
         -top-4
         flex
@@ -58,7 +58,7 @@
     </div>
     <div
       ref="delayedDotElement"
-      class="w-2 h-2 fixed z-50 -top-1 -left-1 rounded-full"
+      class="w-2 h-2 fixed z-60 -top-1 -left-1 rounded-full"
       :class="[
         cursorMode === 'black' ? 'bg-black' : 'bg-lime',
         (!cursorMode ||
