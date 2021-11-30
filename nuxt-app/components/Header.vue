@@ -161,6 +161,7 @@
 
     <!-- Navigation -->
     <nav
+      ref="menuElement"
       class="
         w-screen
         min-h-screen
@@ -181,6 +182,7 @@
           ? 'transition: visibility 0s .3s, opacity .3s, transform .3s'
           : undefined
       "
+      tabindex="-1"
     >
       <div
         class="
@@ -321,6 +323,7 @@ export default defineComponent({
 
     // Create search input element reference
     const searchInputElement = ref<HTMLInputElement>();
+    const menuElement = ref<HTMLElement>();
 
     /**
      * It closes the menu.
@@ -405,6 +408,20 @@ export default defineComponent({
       const { metaKey, shiftKey } = event;
       const key = event.key.toLowerCase();
 
+      // Open menu if closed and meta key and "m" is pressed
+      if (!menuIsOpen.value && metaKey && key === 'm') {
+        menuIsOpen.value = true;
+        nextTick(() => menuElement.value?.focus());
+
+        // Otherwise close it if menu is open and
+        // escape or meta key and "m" is pressed
+      } else if (
+        menuIsOpen.value &&
+        (key === 'escape' || (metaKey && key === 'm'))
+      ) {
+        menuIsOpen.value = false;
+      }
+
       // Open search if closed and meta key and
       // "k" or shift key and "/" is pressed
       if (
@@ -432,6 +449,7 @@ export default defineComponent({
       menuIsOpen,
       searchIsOpen,
       searchInputElement,
+      menuElement,
       closeMenu,
       handleBurgerClick,
       handleSearch,
