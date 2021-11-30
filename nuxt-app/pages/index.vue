@@ -1,5 +1,5 @@
 <template>
-  <div v-if="homePage">
+  <div v-if="homePage && sortedPodcasts">
     <section
       class="
         container
@@ -71,7 +71,7 @@
       </SectionHeading>
       <PodcastSlider
         class="mt-10 md:mt-0"
-        :podcasts="homePage.podcasts"
+        :podcasts="sortedPodcasts"
         show-podcast-link
       />
     </section>
@@ -79,7 +79,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from '@nuxtjs/composition-api';
+import { computed, defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   NewsTicker,
@@ -109,8 +109,16 @@ export default defineComponent({
     // Set page meta data
     usePageMeta(homePage);
 
+    // Create sorted podcasts
+    const sortedPodcasts = computed(() =>
+      homePage.value?.podcasts.sort((a, b) =>
+        a.published_at < b.published_at ? 1 : -1
+      )
+    );
+
     return {
       homePage,
+      sortedPodcasts,
       breadcrumbs: [{ label: 'Home' }],
     };
   },
