@@ -73,6 +73,7 @@ export default {
 
   // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
   generate: {
+    fallback: '404.html',
     // https://github.com/nuxt-community/composition-api/issues/44
     interval: 1500,
     // Uncomment below to generate single routes
