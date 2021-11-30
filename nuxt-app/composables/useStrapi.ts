@@ -1,5 +1,13 @@
 /* eslint-disable no-redeclare */
-import { computed, Ref, unref, useStatic } from '@nuxtjs/composition-api';
+import {
+  computed,
+  Ref,
+  ref,
+  unref,
+  useContext,
+  useStatic,
+  watch,
+} from '@nuxtjs/composition-api';
 import {
   StrapiAboutPage,
   StrapiContactPage,
@@ -103,28 +111,41 @@ export function useStrapi(route: 'privacy-page'): Ref<StrapiPrivacyPage | null>;
  * @returns The requested data.
  */
 export function useStrapi(route: string, param?: Ref<string> | string) {
+  // Add Nuxt.js context
+  const context = useContext();
+
+  // Create error reference
+  const error = ref('');
+
+  // Force error page if an error has occurred
+  watch(error, () => {
+    if (error.value) {
+      context.error({ statusCode: 404, message: error.value });
+    }
+  });
+
+  // Create hash code
   const hashCode = computed(() =>
     unref(param) ? `${getHashCode(unref(param))}` : 'list'
   );
+
+  // Return useStatic composables
   return useStatic(
     async () => {
-      try {
-        const response = await fetch(
-          `${process.env.NUXT_ENV_STRAPI_CMS}/${route}${unref(param) || ''}`
-        );
-        const data = await response.json();
-        if (process.env.NUXT_ENV_STRAPI_CMS?.includes('http://localhost')) {
-          return JSON.parse(
-            JSON.stringify(data).replace(
-              /"url":"\/uploads\//g,
-              `"url":"${process.env.NUXT_ENV_STRAPI_CMS}/uploads/`
-            )
-          );
-        }
-        return data;
-      } catch {
+      // Fetch data from our Strapi CMS
+      const response = await fetch(
+        `${process.env.NUXT_ENV_STRAPI_CMS}/${route}${unref(param) || ''}`
+      );
+
+      // Set errors if one has occurred
+      if (!response.ok) {
+        error.value = await response.text();
         return null;
       }
+
+      // Return data from our Strapi CMS
+      const data = await response.json();
+      return data;
     },
     hashCode,
     route
