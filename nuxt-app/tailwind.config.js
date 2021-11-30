@@ -120,10 +120,10 @@ module.exports = {
       },
       transitionDelay: {
         0: '0s',
-        3000: '3000ms',
       },
       transitionDuration: {
         0: '0s',
+        3000: '3s',
       },
       translate: {
         '3/20': '15%',
