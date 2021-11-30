@@ -78,9 +78,6 @@ module.exports = {
         5: '5px',
         6: '6px',
       },
-      transitionDuration: {
-        3000: '3000ms',
-      },
       height: {
         '4/6-screen': '66.666667vh',
         '1/2-screen': '50vh',
@@ -120,6 +117,13 @@ module.exports = {
         '2/7': '28%',
         '2/5-screen': '40vh',
         '1/2-screen': '50vh',
+      },
+      transitionDelay: {
+        0: '0s',
+        3000: '3000ms',
+      },
+      transitionDuration: {
+        0: '0s',
       },
       translate: {
         '3/20': '15%',

@@ -76,7 +76,17 @@
     </div>
 
     <!-- Content box -->
-    <div class="w-full lg:h-full lg:absolute lg:top-0 lg:left-0 lg:p-4 xl:p-6">
+    <div
+      class="
+        lg:invisible lg:group-hover:visible
+        w-full
+        lg:h-full lg:absolute lg:top-0 lg:left-0 lg:p-4
+        xl:p-6
+        transition-all
+        duration-0
+        lg:delay-300 lg:group-hover:delay-0
+      "
+    >
       <div class="w-full lg:h-full relative">
         <!-- Background color -->
         <div
