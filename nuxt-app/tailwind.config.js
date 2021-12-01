@@ -120,6 +120,7 @@ module.exports = {
       },
       transitionDelay: {
         0: '0s',
+        400: '.4s',
       },
       transitionDuration: {
         0: '0s',

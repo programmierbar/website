@@ -148,6 +148,13 @@
                 text-black
                 italic
                 underline
+                lg:translate-y-4
+                lg:group-hover:translate-y-0
+                lg:transition-transform
+                lg:duration-0
+                lg:group-hover:duration-500
+                lg:delay-300
+                lg:group-hover:delay-200
               "
               :href="podcastHref"
               data-cursor-hover
@@ -158,7 +165,22 @@
 
             <!-- Description -->
             <MarkdownToHtml
-              class="text-sm xs:text-base md:text-lg 2xl:text-xl text-black"
+              class="
+                text-sm
+                xs:text-base
+                md:text-lg
+                2xl:text-xl
+                text-black
+                lg:opacity-0
+                lg:translate-y-3
+                lg:group-hover:opacity-100
+                lg:group-hover:translate-y-0
+                lg:transition
+                lg:duration-0
+                lg:group-hover:duration-500
+                lg:delay-300
+                lg:group-hover:delay-400
+              "
               :markdown="pickOfTheDay.description"
               variant="pick_of_the_day_card"
             />
@@ -174,6 +196,15 @@
                 md:justify-end
                 space-x-6
                 md:space-x-0 md:space-y-6
+                lg:opacity-0
+                lg:translate-y-2
+                lg:group-hover:opacity-100
+                lg:group-hover:translate-y-0
+                lg:transition
+                lg:duration-0
+                lg:group-hover:duration-500
+                lg:delay-300
+                lg:group-hover:delay-500
               "
             >
               <!-- Tags -->
