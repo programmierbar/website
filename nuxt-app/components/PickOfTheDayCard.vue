@@ -140,7 +140,7 @@
             "
           >
             <!-- Podcast episode -->
-            <a
+            <NuxtLink
               class="
                 text-xs
                 xs:text-sm
@@ -156,12 +156,12 @@
                 lg:delay-300
                 lg:group-hover:delay-200
               "
-              :href="podcastHref"
+              :to="podcastHref"
               data-cursor-hover
             >
               <strong>{{ podcastTypeAndNumber }}</strong>
               {{ podcastTitleDivider }}{{ pickOfTheDay.podcast.title }}
-            </a>
+            </NuxtLink>
 
             <!-- Description -->
             <MarkdownToHtml
