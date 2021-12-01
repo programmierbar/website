@@ -25,9 +25,7 @@
     "image": {
       "model": "file",
       "via": "related",
-      "allowedTypes": [
-        "images"
-      ],
+      "allowedTypes": ["images"],
       "plugin": "upload",
       "required": true,
       "pluginOptions": {}
@@ -36,7 +34,7 @@
       "type": "string",
       "required": true,
       "unique": true,
-      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$"
+      "regex": "^(https?:\\/\\/[^\\s$.?#].[^\\s]*|)$"
     },
     "podcast": {
       "via": "picks_of_the_day",

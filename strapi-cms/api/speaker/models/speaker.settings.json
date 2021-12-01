@@ -50,32 +50,32 @@
     },
     "twitter_url": {
       "type": "string",
-      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
+      "regex": "^(https?:\\/\\/[^\\s$.?#].[^\\s]*|)$",
       "unique": true
     },
     "linkedin_url": {
       "type": "string",
-      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
+      "regex": "^(https?:\\/\\/[^\\s$.?#].[^\\s]*|)$",
       "unique": true
     },
     "instagram_url": {
       "type": "string",
-      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
+      "regex": "^(https?:\\/\\/[^\\s$.?#].[^\\s]*|)$",
       "unique": true
     },
     "youtube_url": {
       "type": "string",
-      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
+      "regex": "^(https?:\\/\\/[^\\s$.?#].[^\\s]*|)$",
       "unique": true
     },
     "website_url": {
       "type": "string",
-      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
+      "regex": "^(https?:\\/\\/[^\\s$.?#].[^\\s]*|)$",
       "unique": true
     },
     "github_url": {
       "type": "string",
-      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$",
+      "regex": "^(https?:\\/\\/[^\\s$.?#].[^\\s]*|)$",
       "unique": true
     },
     "position": {

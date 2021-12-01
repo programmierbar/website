@@ -24,12 +24,7 @@
     },
     "type": {
       "type": "enumeration",
-      "enum": [
-        "deep_dive",
-        "cto_special",
-        "news",
-        "other"
-      ],
+      "enum": ["deep_dive", "cto_special", "news", "other"],
       "required": true
     },
     "number": {
@@ -54,9 +49,7 @@
     "audio_file": {
       "model": "file",
       "via": "related",
-      "allowedTypes": [
-        "files"
-      ],
+      "allowedTypes": ["files"],
       "plugin": "upload",
       "required": true,
       "pluginOptions": {}
@@ -64,9 +57,7 @@
     "cover_image": {
       "model": "file",
       "via": "related",
-      "allowedTypes": [
-        "images"
-      ],
+      "allowedTypes": ["images"],
       "plugin": "upload",
       "required": true,
       "pluginOptions": {}
@@ -74,28 +65,26 @@
     "banner_image": {
       "model": "file",
       "via": "related",
-      "allowedTypes": [
-        "images"
-      ],
+      "allowedTypes": ["images"],
       "plugin": "upload",
       "required": false,
       "pluginOptions": {}
     },
     "audio_url": {
       "type": "string",
-      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$"
+      "regex": "^(https?:\\/\\/[^\\s$.?#].[^\\s]*|)$"
     },
     "apple_url": {
       "type": "string",
-      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$"
+      "regex": "^(https?:\\/\\/[^\\s$.?#].[^\\s]*|)$"
     },
     "google_url": {
       "type": "string",
-      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$"
+      "regex": "^(https?:\\/\\/[^\\s$.?#].[^\\s]*|)$"
     },
     "spotify_url": {
       "type": "string",
-      "regex": "^https?:\\/\\/[^\\s$.?#].[^\\s]*$"
+      "regex": "^(https?:\\/\\/[^\\s$.?#].[^\\s]*|)$"
     },
     "members": {
       "via": "podcasts",
