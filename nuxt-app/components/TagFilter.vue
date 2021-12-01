@@ -111,11 +111,16 @@
               lg:my-1
               overflow-y-auto
               origin-top-right
-              transition-all
+              transition
               duration-200
               xl:duration-300
             "
-            :class="!filterIsOpen && 'opacity-0 scale-0'"
+            :class="!filterIsOpen && 'invisible opacity-0 scale-0'"
+            :style="
+              !filterIsOpen
+                ? 'transition: visibility 0s .2s, opacity .2s, transform .2s'
+                : undefined
+            "
             :tags="tags"
             :on-click="toggleTag"
             variant="tag_filter"
