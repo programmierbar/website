@@ -72,7 +72,7 @@
       },
       {
         "source": "/meetup/https/wwwmeetupcom/de-de/programmierbar/events/265178978",
-        "destination": "/meetup/progressive-web-apps-3",
+        "destination": "/meetup/flutter-wunderschoene-apps-fuer-mobile-und-web-10",
         "type": 301
       },
       {
@@ -102,7 +102,7 @@
       },
       {
         "source": "/meetup/livestream-elm-functional-programming",
-        "destination": "/meetup/progressive-web-apps-3",
+        "destination": "/meetup/live-podcast-elm-einstiegsdroge-fuer-functional-programming-21",
         "type": 301
       },
       {
@@ -148,11 +148,6 @@
       {
         "source": "/podcast-episodes/folge-30-der-lebenslauf-eines-features",
         "destination": "/podcast/deep-dive-30-wie-entsteht-ein-neues-feature-in-unseren-apps-35",
-        "type": 301
-      },
-      {
-        "source": "/podcast-episodes/folge-26-urlaub-und-krankheiten",
-        "destination": "/podcast/deep-dive-51-unit-testing-56",
         "type": 301
       },
       {
@@ -242,7 +237,7 @@
       },
       {
         "source": "/podcast-episodes/folge-8-ab-testing-warum-bei-einer-gruppe-kein-weg-daran-vorbeifhrt-und-bei-der-anderen-doch",
-        "destination": "/podcast/deep-dive-12-docker-und-die-wundervolle-welt-der-containerisierung-17",
+        "destination": "/podcast/deep-dive-8-a-b-testing-was-und-wie-9",
         "type": 301
       },
       {
@@ -282,7 +277,7 @@
       },
       {
         "source": "/podcast-episodes/folge-0-wir-stellen-uns-vor",
-        "destination": "/podcast/deep-dive-30-wie-entsteht-ein-neues-feature-in-unseren-apps-35",
+        "destination": "/podcast/spezialfolge-1-herzlich-willkommen-bei-der-programmier-bar-1",
         "type": 301
       },
       {
@@ -517,7 +512,7 @@
       },
       {
         "source": "/podcast-episodes/news-49/20",
-        "destination": "/podcast/news-16-21-apple-event-april-2021-116",
+        "destination": "/podcast/news-49-20-typescript-4-1-php-8-0-app-privacy-details-heisse-programmiersprachen-83",
         "type": 301
       },
       {
@@ -537,7 +532,7 @@
       },
       {
         "source": "/podcast-episodes/news-5120",
-        "destination": "/podcast/news-16-21-apple-event-april-2021-116",
+        "destination": "/podcast/news-50-20-slack-akquise-javascript-wird-25-scrum-guide-update-beste-apps-2020-85",
         "type": 301
       },
       {
@@ -582,7 +577,7 @@
       },
       {
         "source": "/podcast-episodes/news-04/21",
-        "destination": "/podcast/news-16-21-apple-event-april-2021-116",
+        "destination": "/podcast/news-04-21-apache-superset-nakama-3-0-chrome-88-intellij-wird-20-bigquery-ui-96",
         "type": 301
       },
       {
@@ -697,7 +692,7 @@
       },
       {
         "source": "/podcast-episodes/news-19/21",
-        "destination": "/podcast/news-16-21-apple-event-april-2021-116",
+        "destination": "/podcast/news-19-21-ein-potpourri-kleiner-updates-120",
         "type": 301
       },
       {
@@ -847,7 +842,7 @@
       },
       {
         "source": "/podcast-episodes/folge-93-supabase-mit-thor-schaeff",
-        "destination": "/podcast/cto-special-4-andre-basse-geschaeftsfuehrer-des-spiegel-tech-lab-101",
+        "destination": "/podcast/deep-dive-93-supabase-mit-thor-schaeff-161",
         "type": 301
       },
       {
@@ -857,62 +852,87 @@
       },
       {
         "source": "/podcast-episodes/cto-special-9-sven-hezel-von-24metrics",
-        "destination": "/podcast/cto-special-3-muewue-von-otto-93",
+        "destination": "/podcast/cto-special-9-sven-hezel-von-24metrics-163",
         "type": 301
       },
       {
         "source": "/podcast-episodes/news-41/21-android-12-/-kubernetes-cluster-api-/-eslint-8-/-epic-vs-apple-/-tesla-county-fair",
-        "destination": "/podcast/news-36-21-history-api-w3c-und-css-nesting-module-draft-github-co-pilot-apples-csam-scanning-151",
+        "destination": "/podcast/news-41-21-android-12-kubernetes-cluster-api-eslint-8-epic-vs-apple-tesla-county-fair-164",
         "type": 301
       },
       {
         "source": "/podcast-episodes/folge-94-terraform-mit-jrn-stenkamp-von-hashicorp",
-        "destination": "/podcast/deep-dive-92-blazor-mit-christian-weyer-von-thinktecture-143",
+        "destination": "/podcast/deep-dive-94-terraform-mit-joern-stenkamp-von-hashicorp-165",
         "type": 301
       },
       {
         "source": "/podcast-episodes/news-42/21-apple-oktober-event-/-m1-pro-max-/-macbook-pro-/-airpods-3",
-        "destination": "/podcast/news-16-21-apple-event-april-2021-116",
+        "destination": "/podcast/news-42-21-apple-oktober-event-m1-pro-max-macbook-pro-airpods-3-166",
         "type": 301
       },
       {
         "source": "/podcast-episodes/news-43/21-vs-code-im-browser-/-nuxt-3-/-google-abogebhren",
-        "destination": "/podcast/news-18-21-swift-5-4-basecamp-google-i-o-programm-apple-vs-epic-119",
+        "destination": "/podcast/news-43-21-vs-code-im-browser-nuxt-3-google-abogebuehren-167",
         "type": 301
       },
       {
         "source": "/podcast-episodes/folge-95-elixir-und-phoenix-mit-ren-fhring-von-5minds",
-        "destination": "/podcast/deep-dive-57-ddd-event-sourcing-und-cqrs-mit-golo-roden-von-the-native-web-62",
+        "destination": "/podcast/deep-dive-95-elixir-und-phoenix-mit-rene-foehring-von-5minds-170",
         "type": 301
       },
       {
         "source": "/podcast-episodes/news-44/21-meta-facebook-/-unocss-/-android-dev-summit-/-github-universe",
-        "destination": "/podcast/news-12-21-facebooks-att-android-12-developer-preview-2-spring-native-node-15-12-109",
+        "destination": "/podcast/news-44-21-meta-facebook-unocss-android-dev-summit-github-universe-172",
+        "type": 301
+      },
+      {
+        "source": "/podcast-episodes/news-45/21-google-pathways-/-nextjs-12-/-angular-13-/-firefox-colorways-/-knative-10",
+        "destination": "/podcast/news-45-21-google-pathways-next-js-12-angular-13-firefox-colorways-knative-1-0-173",
+        "type": 301
+      },
+      {
+        "source": "/podcast-episodes/news-46/21-npm-infiltrierung-/-typescript-45-/-firebase-summit-/-lightship-/-apples-weihnachten",
+        "destination": "/podcast/news-46-21-npm-infiltrierung-typescript-4-5-firebase-summit-lightship-apples-weihnachten-175",
+        "type": 301
+      },
+      {
+        "source": "/podcast-episodes/news-47/21-npm-sicherheitslcken-/-ed-sheerans-metaverse-konzert-/-git-sparse-index-/-react-18-/-hydrogen-/-owas-top-10",
+        "destination": "/podcast/news-47-21-npm-sicherheitsluecken-ed-sheerans-metaverse-konzert-git-sparse-index-react-18-hydrogen-owas-top-10-176",
         "type": 301
       },
       {
         "source": "/podcast-episodes/cto-special-10-andreas-westendoerpf-von-emma-the-sleep-company",
-        "destination": "/podcast/cto-special-4-andre-basse-geschaeftsfuehrer-des-spiegel-tech-lab-101",
+        "destination": "/podcast/cto-special-10-andreas-westendoerpf-von-emma-the-sleep-company-171",
+        "type": 301
+      },
+      {
+        "source": "/podcast-episodes/folge-96-chaos-engineering-mit-benjamin-wilms-von-steadybit",
+        "destination": "/podcast/deep-dive-96-chaos-engineering-mit-benjamin-wilms-von-steadybit-174",
+        "type": 301
+      },
+      {
+        "source": "/podcast-episodes/folge-97-nextjs-mit-fabian-hiller",
+        "destination": "/podcast/deep-dive-97-next-js-mit-fabian-hiller-177",
         "type": 301
       },
       {
         "source": "/podcast-episodes/category/Deep+Dive",
-        "destination": "/podcast/deep-dive-51-unit-testing-56",
+        "destination": "/podcast",
         "type": 301
       },
       {
         "source": "/podcast-episodes/category/News",
-        "destination": "/podcast/deep-dive-51-unit-testing-56",
+        "destination": "/podcast",
         "type": 301
       },
       {
         "source": "/podcast-episodes/category/Podcast",
-        "destination": "/podcast/deep-dive-51-unit-testing-56",
+        "destination": "/podcast",
         "type": 301
       },
       {
         "source": "/podcast-episodes/category/CTO",
-        "destination": "/podcast/deep-dive-51-unit-testing-56",
+        "destination": "/podcast",
         "type": 301
       }
     ]
