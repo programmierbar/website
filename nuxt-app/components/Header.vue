@@ -69,7 +69,7 @@
           font-light
         "
         :class="!searchIsOpen && 'invisible transition-all delay-300'"
-        type="seach"
+        type="search"
         spellcheck="false"
       />
       <button
