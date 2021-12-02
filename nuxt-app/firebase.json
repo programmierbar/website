@@ -31,7 +31,37 @@
         "type": 301
       },
       {
+        "source": "/feedback",
+        "destination": "/kontakt",
+        "type": 301
+      },
+      {
+        "source": "/live",
+        "destination": "/",
+        "type": 301
+      },
+      {
         "source": "/podcast-episodes",
+        "destination": "/podcast",
+        "type": 301
+      },
+      {
+        "source": "/podcast-episodes/category/Deep+Dive",
+        "destination": "/podcast",
+        "type": 301
+      },
+      {
+        "source": "/podcast-episodes/category/News",
+        "destination": "/podcast",
+        "type": 301
+      },
+      {
+        "source": "/podcast-episodes/category/Podcast",
+        "destination": "/podcast",
+        "type": 301
+      },
+      {
+        "source": "/podcast-episodes/category/CTO",
         "destination": "/podcast",
         "type": 301
       },
