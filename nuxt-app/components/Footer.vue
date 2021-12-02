@@ -17,7 +17,7 @@
         <img
           class="h-6 lg:h-8"
           :src="require('~/assets/images/brand-logo.svg')"
-          alt="programier.bar Logo"
+          alt="programmier.bar Logo"
         />
       </NuxtLink>
     </div>
