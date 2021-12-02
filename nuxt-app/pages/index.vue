@@ -34,7 +34,7 @@
         <img
           class="h-6 md:h-8 lg:h-16 inline"
           :src="require('~/assets/images/brand-logo.svg')"
-          alt="programier.bar Logo"
+          alt="programmier.bar Logo"
         />:
         <TypedText :text="homePage.intro_text" />
       </h1>
