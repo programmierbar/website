@@ -26,12 +26,12 @@
       <img
         class="h-7 lg:hidden"
         :src="require('~/assets/images/brand-icon.svg')"
-        alt="programier.bar Icon"
+        alt="programmier.bar Icon"
       />
       <img
         class="h-8 hidden lg:block"
         :src="require('~/assets/images/brand-logo.svg')"
-        alt="programier.bar Logo"
+        alt="programmier.bar Logo"
       />
     </NuxtLink>
 
