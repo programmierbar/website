@@ -48,6 +48,7 @@
 import { defineComponent, useMeta } from '@nuxtjs/composition-api';
 import { Breadcrumbs, MarkdownToHtml, SectionHeading } from '../components';
 import { useStrapi, useLoadingScreen } from '../composables';
+import { getMetaInfo } from '../helpers';
 
 export default defineComponent({
   components: {
@@ -63,13 +64,14 @@ export default defineComponent({
     useLoadingScreen(imprintPage);
 
     // Set page meta data
-    useMeta({
-      title: 'Impressum | programmier.bar',
-      meta: [
-        { hid: 'description', name: 'description', content: '' },
-        { name: 'robots', content: 'noindex, nofollow' },
-      ],
-    });
+    useMeta(
+      getMetaInfo({
+        type: 'website',
+        path: '/impressum',
+        title: 'Impressum',
+        noIndex: true,
+      })
+    );
 
     return {
       imprintPage,

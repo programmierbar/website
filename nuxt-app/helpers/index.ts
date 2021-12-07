@@ -4,6 +4,7 @@ export * from './getFullPodcastTitle';
 export * from './getFullSpeakerName';
 export * from './getHashCode';
 export * from './getImageSrcSet';
+export * from './getMetaInfo';
 export * from './getPodcastTitleDivider';
 export * from './getPodcastTypeAndNumber';
 export * from './getPodcastTypeString';

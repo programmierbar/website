@@ -113,6 +113,7 @@ import {
   SectionHeading,
 } from '../components';
 import { useStrapi, useLoadingScreen } from '../composables';
+import { getMetaInfo } from '../helpers';
 
 export default defineComponent({
   components: {
@@ -237,17 +238,16 @@ export default defineComponent({
     });
 
     // Set page meta data
-    useMeta(() => ({
-      title: `${
-        route.value.query.search
+    useMeta(() =>
+      getMetaInfo({
+        type: 'website',
+        path: route.value.path,
+        title: route.value.query.search
           ? `Suche – ${searchResults.value.length} Treffer`
-          : 'Suche nach Podcast-Folgen, Meetups und mehr'
-      } | programmier.bar`,
-      meta: [
-        { hid: 'description', name: 'description', content: '' },
-        { name: 'robots', content: 'noindex, nofollow' },
-      ],
-    }));
+          : 'Suche nach Podcast-Folgen, Meetups und mehr',
+        noIndex: true,
+      })
+    );
 
     // Create breadcrumbs
     const breadcrumbs = computed(() => [

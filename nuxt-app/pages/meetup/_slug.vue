@@ -205,7 +205,7 @@ import {
   useLoadingScreen,
   useLocaleString,
 } from '../../composables';
-import { getTrimmedString, trackGoal } from '../../helpers';
+import { getMetaInfo, trackGoal } from '../../helpers';
 
 export default defineComponent({
   components: {
@@ -245,16 +245,14 @@ export default defineComponent({
     // Set page meta data
     useMeta(() =>
       meetup.value
-        ? {
-            title: `${meetup.value.title} | programmier.bar`,
-            meta: [
-              {
-                hid: 'description',
-                name: 'description',
-                content: getTrimmedString(meetup.value.description, 160),
-              },
-            ],
-          }
+        ? getMetaInfo({
+            type: 'article',
+            path: route.value.path,
+            title: meetup.value.title,
+            description: meetup.value.description,
+            image: meetup.value.cover_image,
+            publishedAt: meetup.value.published_at.split('T')[0],
+          })
         : {}
     );
 

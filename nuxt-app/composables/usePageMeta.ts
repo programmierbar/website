@@ -8,6 +8,7 @@ import {
   StrapiHallOfFamePage,
   StrapiPickOfTheDayPage,
 } from 'shared-code';
+import { getMetaInfo } from '../helpers';
 
 /**
  * Composable to set the meta data of a page.
@@ -29,18 +30,14 @@ export function usePageMeta(
   const route = useRoute();
   useMeta(() =>
     page.value
-      ? {
-          title:
-            page.value.meta_title +
-            (route.value.path !== '/' ? ' | programmier.bar' : ''),
-          meta: [
-            {
-              hid: 'description',
-              name: 'description',
-              content: page.value.meta_description,
-            },
-          ],
-        }
+      ? getMetaInfo({
+          type: 'website',
+          path: route.value.path,
+          title: page.value.meta_title,
+          description: page.value.meta_description,
+          image:
+            'cover_image' in page.value ? page.value.cover_image : undefined,
+        })
       : {}
   );
 }

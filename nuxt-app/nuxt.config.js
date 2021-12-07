@@ -11,19 +11,12 @@ export default {
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    title: 'programmier.bar: Die Plattform für App- und Webentwicklung',
     meta: [
       { charset: 'utf-8' },
       {
         name: 'viewport',
         content:
           'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
-      },
-      {
-        hid: 'description',
-        name: 'description',
-        content:
-          'Wir wollen euch die Möglichkeiten bieten, euer Wissen in den Bereichen App- und Webentwicklung zu vertiefen und einen Blick hinter die Kulissen zu werfen, bei einer ganz entspannten Atmosphäre.',
       },
       { name: 'theme-color', content: '#000000' },
       { name: 'format-detection', content: 'telephone=no' },
@@ -75,7 +68,7 @@ export default {
   generate: {
     fallback: '404.html',
     // https://github.com/nuxt-community/composition-api/issues/44
-    interval: 1500,
+    interval: 4000,
     // Uncomment below to generate single routes
     // crawler: false,
     // exclude: [/^\/(\w|\d|-)*$/],

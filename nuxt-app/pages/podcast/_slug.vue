@@ -152,7 +152,7 @@ import {
 } from '../../composables';
 import {
   getPodcastTypeString,
-  getTrimmedString,
+  getMetaInfo,
   getFullPodcastTitle,
   trackGoal,
 } from '../../helpers';
@@ -199,16 +199,15 @@ export default defineComponent({
     // Set page meta data
     useMeta(() =>
       podcast.value
-        ? {
-            title: `${getFullPodcastTitle(podcast.value)} | programmier.bar`,
-            meta: [
-              {
-                hid: 'description',
-                name: 'description',
-                content: getTrimmedString(podcast.value.description, 160),
-              },
-            ],
-          }
+        ? getMetaInfo({
+            type: 'podcast',
+            path: route.value.path,
+            title: getFullPodcastTitle(podcast.value),
+            description: podcast.value.description,
+            publishedAt: podcast.value.published_at.split('T')[0],
+            image: podcast.value.cover_image,
+            audioUrl: podcast.value.audio_url || undefined,
+          })
         : {}
     );
 

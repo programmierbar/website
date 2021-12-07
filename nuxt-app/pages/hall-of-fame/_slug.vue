@@ -258,7 +258,7 @@ import {
 import {
   getImageSrcSet,
   getFullSpeakerName,
-  getTrimmedString,
+  getMetaInfo,
   trackGoal,
 } from '../../helpers';
 
@@ -313,16 +313,15 @@ export default defineComponent({
     // Set page meta data
     useMeta(() =>
       speaker.value
-        ? {
-            title: `Speaker – ${fullName.value} | programmier.bar`,
-            meta: [
-              {
-                hid: 'description',
-                name: 'description',
-                content: getTrimmedString(speaker.value.description, 160),
-              },
-            ],
-          }
+        ? getMetaInfo({
+            type: 'profile',
+            path: route.value.path,
+            title: `Speaker – ${fullName.value}`,
+            description: speaker.value.description,
+            image: speaker.value.profile_image,
+            firstName: speaker.value.first_name,
+            lastName: speaker.value.last_name,
+          })
         : {}
     );
 
