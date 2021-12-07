@@ -114,7 +114,8 @@
             lg:absolute
             lg:top-0
             lg:left-0
-            lg:overflow-auto
+            lg:overflow-y-auto
+            lg:overscroll-y-contain
             lg:opacity-0
             lg:group-hover:opacity-100
             lg:transition-opacity

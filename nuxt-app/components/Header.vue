@@ -172,6 +172,7 @@
         top-0
         right-0
         overflow-y-auto
+        overscroll-y-contain
         bg-gray-900
         transition
         duration-300
