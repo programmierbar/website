@@ -64,13 +64,17 @@ export const sendContactEmail = functions
           subject: 'Wir haben deine Nachricht erhalten',
           html: `
             <p>Hallo ${clientData.name},</p>
-            <p>danke für deine Nachricht!</p>
-            <p>Du erhältst in wenigen Tagen eine Antwort von uns.</p>
+            <p>danke für deine Nachricht! Du erhältst in wenigen Tagen eine Antwort von uns.</p>
             <p>Deine Nachricht:</p>
             <blockquote style="margin-left: 10px; padding-left: 10px; border-left: solid 2px #00A1FF;">
               ${clientData.message.replace(/\n/g, '<br />')}
             </blockquote>
-            <p>Bitte antworte nicht auf diese E-Mail – sie wurde automatisch generiert.</p>
+            <p>
+              Falls es sich bei deinem Anliegen um einen Bug auf unserer Webseite handelt, kannst du gern einen 
+              <a href="https://github.com/programmierbar/website/pulls">Pull Request</a>
+              erstellen. 🤓
+            </p>
+            <p>Bitte antworte nicht auf diese automatisch generierte E-Mail.</p>
             <p>Liebe Grüße</p>
             <p>dein programmier.bar Team</p>
             <p>
