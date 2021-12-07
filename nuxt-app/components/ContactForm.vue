@@ -223,7 +223,7 @@ export default defineComponent({
 
 <style lang="postcss" scoped>
 .text-input {
-  @apply w-full bg-gray-800 border-2 border-gray-800 text-white text-base md:text-xl lg:text-2xl font-light p-4 md:p-6 lg:p-8;
+  @apply w-full appearance-none bg-gray-800 border-2 border-gray-800 rounded-none text-white text-base md:text-xl lg:text-2xl font-light p-4 md:p-6 lg:p-8;
 }
 .contact-form.error .text-input:invalid {
   @apply border-pink;

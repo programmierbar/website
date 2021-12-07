@@ -59,6 +59,7 @@
         ref="searchInputElement"
         class="
           w-full
+          appearance-none
           bg-transparent
           border-b-2 border-white
           rounded-none
@@ -69,7 +70,7 @@
           font-light
         "
         :class="!searchIsOpen && 'invisible transition-all delay-300'"
-        type="search"
+        type="text"
         spellcheck="false"
       />
       <button

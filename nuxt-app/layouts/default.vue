@@ -59,7 +59,9 @@ input[type='range'] {
 }
 input[type='range']::-webkit-slider-thumb {
   appearance: none;
+  border: none;
   border-radius: 50%;
+  box-shadow: none;
   transition: all 0.2s ease;
 }
 input[type='range']::-moz-range-thumb {
