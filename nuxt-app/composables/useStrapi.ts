@@ -24,6 +24,7 @@ import {
   StrapiPrivacyPage,
   StrapiSpeaker,
 } from 'shared-code';
+import { STRAPI_CMS_URL } from '../config';
 import { getHashCode } from '../helpers';
 
 // Members
@@ -134,7 +135,7 @@ export function useStrapi(route: string, param?: Ref<string> | string) {
     async () => {
       // Fetch data from our Strapi CMS
       const response = await fetch(
-        `${process.env.NUXT_ENV_STRAPI_CMS}/${route}${unref(param) || ''}`
+        `${STRAPI_CMS_URL}/${route}${unref(param) || ''}`
       );
 
       // Set errors if one has occurred

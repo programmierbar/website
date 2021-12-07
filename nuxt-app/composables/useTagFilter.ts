@@ -6,6 +6,7 @@ import {
   StrapiPickOfTheDay,
   StrapiTag,
 } from 'shared-code';
+import { ADD_TAG_FILTER_EVENT_ID, REMOVE_TAG_FILTER_EVENT_ID } from '../config';
 import { trackGoal } from '../helpers';
 
 interface Tag extends StrapiTag {
@@ -76,9 +77,9 @@ export function useTagFilter<
   // Track analytic events
   watch(tags, (nextTags, prevTags) => {
     if (prevTags.length === 0 && nextTags.length > 0) {
-      trackGoal(process.env.NUXT_ENV_ADD_TAG_FILTER_EVENT!);
+      trackGoal(ADD_TAG_FILTER_EVENT_ID);
     } else if (prevTags.length > 0 && nextTags.length === 0) {
-      trackGoal(process.env.NUXT_ENV_REMOVE_TAG_FILTER_EVENT!);
+      trackGoal(REMOVE_TAG_FILTER_EVENT_ID);
     }
   });
 

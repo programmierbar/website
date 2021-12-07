@@ -271,6 +271,7 @@
 
 <script lang="ts">
 import { computed, defineComponent, ref, watch } from '@nuxtjs/composition-api';
+import { DOWNLOAD_PODCAST_EVENT_ID } from '../config';
 import { usePodcastPlayer, useClipboard, useShare } from '../composables';
 import {
   getFullPodcastTitle,
@@ -413,7 +414,7 @@ export default defineComponent({
         );
 
         // Track analytic event
-        trackGoal(process.env.NUXT_ENV_DOWNLOAD_PODCAST_EVENT!);
+        trackGoal(DOWNLOAD_PODCAST_EVENT_ID);
 
         // Stop downloading
         isDownloading.value = false;

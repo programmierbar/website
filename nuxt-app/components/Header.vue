@@ -288,6 +288,12 @@ import {
   useRouter,
   watch,
 } from '@nuxtjs/composition-api';
+import {
+  OPEN_MENU_EVENT_ID,
+  CLOSE_MENU_EVENT_ID,
+  OPEN_SEARCH_EVENT_ID,
+  CLOSE_SEARCH_EVENT_ID,
+} from '../config';
 import { useEventListener, useDocument } from '../composables';
 import { trackGoal } from '../helpers';
 import SocialNetworks from './SocialNetworks.vue';
@@ -308,18 +314,18 @@ export default defineComponent({
     // Track analytic menu events
     watch(menuIsOpen, () => {
       if (menuIsOpen.value) {
-        trackGoal(process.env.NUXT_ENV_OPEN_MENU_EVENT!);
+        trackGoal(OPEN_MENU_EVENT_ID);
       } else {
-        trackGoal(process.env.NUXT_ENV_CLOSE_MENU_EVENT!);
+        trackGoal(CLOSE_MENU_EVENT_ID);
       }
     });
 
     // Track analytic search events
     watch(searchIsOpen, () => {
       if (searchIsOpen.value) {
-        trackGoal(process.env.NUXT_ENV_OPEN_SEARCH_EVENT!);
+        trackGoal(OPEN_SEARCH_EVENT_ID);
       } else {
-        trackGoal(process.env.NUXT_ENV_CLOSE_SEARCH_EVENT!);
+        trackGoal(CLOSE_SEARCH_EVENT_ID);
       }
     });
 

@@ -134,7 +134,7 @@
           target="_blank"
           rel="noreferrer"
           data-cursor-hover
-          @click="() => trackGoal(googleMapsEventCode)"
+          @click="() => trackGoal(OPEN_GOOGLE_MAPS_EVENT_ID)"
         >
           Google Maps
         </a>
@@ -161,6 +161,7 @@
 
 <script lang="ts">
 import { defineComponent } from '@nuxtjs/composition-api';
+import { GOOGLE_MAPS_URL, OPEN_GOOGLE_MAPS_EVENT_ID } from '../config';
 import {
   Breadcrumbs,
   ContactForm,
@@ -192,8 +193,8 @@ export default defineComponent({
     return {
       contactPage,
       breadcrumbs: [{ label: 'Kontakt' }],
-      googleMapsUrl: process.env.NUXT_ENV_GOOGLE_MAPS_URL!,
-      googleMapsEventCode: process.env.NUXT_ENV_OPEN_GOOGLE_MAPS_EVENT!,
+      googleMapsUrl: GOOGLE_MAPS_URL,
+      OPEN_GOOGLE_MAPS_EVENT_ID,
       trackGoal,
     };
   },

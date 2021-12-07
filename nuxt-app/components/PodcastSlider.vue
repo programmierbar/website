@@ -171,6 +171,10 @@ import {
 } from '@nuxtjs/composition-api';
 import smoothscroll from 'smoothscroll-polyfill';
 import { StrapiPodcast } from 'shared-code';
+import {
+  CLICK_SCROLL_LEFT_ARROW_EVENT_ID,
+  CLICK_SCROLL_RIGHT_ARROW_EVENT_ID,
+} from '../config';
 import { useStrapi, useEventListener } from '../composables';
 import { trackGoal } from '../helpers';
 import FadeAnimation from './FadeAnimation.vue';
@@ -212,9 +216,9 @@ export default defineComponent({
      */
     const scrollTo = (direction: 'left' | 'right') => {
       if (direction === 'left') {
-        trackGoal(process.env.NUXT_ENV_CLICK_SCROLL_LEFT_ARROW_EVENT!);
+        trackGoal(CLICK_SCROLL_LEFT_ARROW_EVENT_ID);
       } else {
-        trackGoal(process.env.NUXT_ENV_CLICK_SCROLL_RIGHT_ARROW_EVENT!);
+        trackGoal(CLICK_SCROLL_RIGHT_ARROW_EVENT_ID);
       }
       const { innerWidth } = window;
       const { scrollLeft } = scrollBoxElement.value!;

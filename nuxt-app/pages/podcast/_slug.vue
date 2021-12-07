@@ -58,7 +58,7 @@
                 target="_blank"
                 rel="noreferrer"
                 data-cursor-hover
-                @click="() => trackGoal(platform.eventCode)"
+                @click="() => trackGoal(platform.eventId)"
                 v-html="require(`../../assets/logos/${platform.icon}?raw`)"
               />
             </li>
@@ -131,6 +131,16 @@ import {
   useRoute,
   useRouter,
 } from '@nuxtjs/composition-api';
+import {
+  APPLE_PODCASTS_URL,
+  BUZZSPROUT_RSS_FEED_URL,
+  GOOGLE_PODCASTS_URL,
+  OPEN_APPLE_PODCASTS_EVENT_ID,
+  OPEN_GOOGLE_PODCASTS_EVENT_ID,
+  OPEN_RSS_FEED_EVENT_ID,
+  OPEN_SPOTIFY_EVENT_ID,
+  SPOTIFY_URL,
+} from '../../config';
 import {
   Breadcrumbs,
   FeedbackSection,
@@ -227,30 +237,26 @@ export default defineComponent({
       {
         name: 'Apple Podcast',
         icon: 'apple-podcasts-color.svg',
-        url:
-          podcast.value?.apple_url || process.env.NUXT_ENV_PODCAST_APPLE_URL!,
-        eventCode: process.env.NUXT_ENV_OPEN_APPLE_PODCASTS_EVENT!,
+        url: podcast.value?.apple_url || APPLE_PODCASTS_URL,
+        eventId: OPEN_APPLE_PODCASTS_EVENT_ID,
       },
       {
         name: 'Google Podcast',
         icon: 'google-podcasts-color.svg',
-        url:
-          podcast.value?.google_url || process.env.NUXT_ENV_PODCAST_GOOGLE_URL!,
-        eventCode: process.env.NUXT_ENV_OPEN_GOOGLE_PODCASTS_EVENT!,
+        url: podcast.value?.google_url || GOOGLE_PODCASTS_URL,
+        eventId: OPEN_GOOGLE_PODCASTS_EVENT_ID,
       },
       {
         name: 'Spotify',
         icon: 'spotify-color.svg',
-        url:
-          podcast.value?.spotify_url ||
-          process.env.NUXT_ENV_PODCAST_SPOTIFY_URL!,
-        eventCode: process.env.NUXT_ENV_OPEN_SPOTIFY_EVENT!,
+        url: podcast.value?.spotify_url || SPOTIFY_URL,
+        eventId: OPEN_SPOTIFY_EVENT_ID,
       },
       {
         name: 'RSS',
         icon: 'rss-feed-color.svg',
-        url: process.env.NUXT_ENV_PODCAST_RSS_FEED_URL!,
-        eventCode: process.env.NUXT_ENV_OPEN_RSS_FEED_EVENT!,
+        url: BUZZSPROUT_RSS_FEED_URL,
+        eventId: OPEN_RSS_FEED_EVENT_ID,
       },
     ]);
 

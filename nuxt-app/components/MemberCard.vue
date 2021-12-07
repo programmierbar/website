@@ -138,6 +138,7 @@ import {
   ref,
 } from '@nuxtjs/composition-api';
 import { StrapiMember } from 'shared-code';
+import { START_DISCOVER_EFFECT_EVENT_ID } from '../config';
 import { getImageSrcSet, trackGoal } from '../helpers';
 import MarkdownToHtml from './MarkdownToHtml.vue';
 
@@ -181,7 +182,7 @@ export default defineComponent({
 
     const handleDiscoverEffect = (startEvent: TouchEvent | MouseEvent) => {
       // Track analytic event
-      trackGoal(process.env.NUXT_ENV_START_DISCOVER_EFFECT_EVENT!);
+      trackGoal(START_DISCOVER_EFFECT_EVENT_ID);
 
       // Detect and create event type
       const isTouch = startEvent.type === 'touchstart';

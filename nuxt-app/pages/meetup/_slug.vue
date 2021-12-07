@@ -55,7 +55,7 @@
             target="_blank"
             rel="noreferrer"
             data-cursor-hover
-            @click="() => trackGoal(youtubeEventCode)"
+            @click="() => trackGoal(OPEN_YOUTUBE_EVENT_ID)"
           >
             <div
               class="
@@ -186,6 +186,7 @@ import {
   useRoute,
   useRouter,
 } from '@nuxtjs/composition-api';
+import { OPEN_YOUTUBE_EVENT_ID } from '../../config';
 import {
   Breadcrumbs,
   FeedbackSection,
@@ -280,7 +281,7 @@ export default defineComponent({
       speakerCountString,
       breadcrumbs,
       relatedPodcasts,
-      youtubeEventCode: process.env.NUXT_ENV_OPEN_YOUTUBE_EVENT!,
+      OPEN_YOUTUBE_EVENT_ID,
       trackGoal,
     };
   },

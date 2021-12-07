@@ -30,7 +30,7 @@
       target="_blank"
       rel="noreferrer"
       data-cursor-hover
-      @click="() => trackGoal(meetupEventCode)"
+      @click="() => trackGoal(OPEN_MEETUP_EVENT_ID)"
     >
       Meetup.com
     </a>
@@ -46,7 +46,7 @@
         target="_blank"
         rel="noreferrer"
         data-cursor-hover
-        @click="() => trackGoal(googleCalendarEventCode)"
+        @click="() => trackGoal(OPEN_GOOGLE_CALENDAR_EVENT_EVENT_ID)"
         v-html="require('../assets/logos/google-calendar.svg?raw')"
       />
       <a
@@ -56,7 +56,7 @@
         rel="noreferrer"
         :download="icons.titleSlug"
         data-cursor-hover
-        @click="() => trackGoal(appleCalendarEventCode)"
+        @click="() => trackGoal(DOWNLOAD_CALEDNAR_EVENT_EVENT_ID)"
         v-html="require('../assets/logos/apple-calendar.svg?raw')"
       />
       <a
@@ -65,7 +65,7 @@
         target="_blank"
         rel="noreferrer"
         data-cursor-hover
-        @click="() => trackGoal(googleMapsEventCode)"
+        @click="() => trackGoal(OPEN_GOOGLE_MAPS_EVENT_ID)"
         v-html="require('../assets/logos/google-maps.svg?raw')"
       />
     </div>
@@ -81,6 +81,14 @@ import {
   reactive,
 } from '@nuxtjs/composition-api';
 import { StrapiMeetup } from 'shared-code';
+import {
+  DOWNLOAD_CALEDNAR_EVENT_EVENT_ID,
+  GOOGLE_MAPS_URL,
+  MEETUP_URL,
+  OPEN_GOOGLE_CALENDAR_EVENT_EVENT_ID,
+  OPEN_GOOGLE_MAPS_EVENT_ID,
+  OPEN_MEETUP_EVENT_ID,
+} from '../config';
 import { getUrlSlug, trackGoal } from '../helpers';
 
 export default defineComponent({
@@ -144,7 +152,7 @@ export default defineComponent({
         icons.titleSlug = getUrlSlug(props.meetup.title);
 
         // Add Google Maps URL
-        icons.googleMapsUrl = process.env.NUXT_ENV_GOOGLE_MAPS_URL!;
+        icons.googleMapsUrl = GOOGLE_MAPS_URL;
 
         // Set icons to visible
         icons.isVisible = true;
@@ -152,19 +160,15 @@ export default defineComponent({
     });
 
     // Create Meetup URL
-    const meetupUrl = computed(
-      () => props.meetup.meetup_url || process.env.NUXT_ENV_MEETUP_URL
-    );
+    const meetupUrl = computed(() => props.meetup.meetup_url || MEETUP_URL);
 
     return {
       icons,
       meetupUrl,
-      meetupEventCode: process.env.NUXT_ENV_OPEN_MEETUP_EVENT!,
-      googleCalendarEventCode:
-        process.env.NUXT_ENV_OPEN_GOOGLE_CALENDAR_EVENT_EVENT!,
-      appleCalendarEventCode:
-        process.env.NUXT_ENV_DOWNLOAD_CALEDNAR_EVENT_EVENT!,
-      googleMapsEventCode: process.env.NUXT_ENV_OPEN_GOOGLE_MAPS_EVENT!,
+      OPEN_MEETUP_EVENT_ID,
+      OPEN_GOOGLE_CALENDAR_EVENT_EVENT_ID,
+      DOWNLOAD_CALEDNAR_EVENT_EVENT_ID,
+      OPEN_GOOGLE_MAPS_EVENT_ID,
       trackGoal,
     };
   },

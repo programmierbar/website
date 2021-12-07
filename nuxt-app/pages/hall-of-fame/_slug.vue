@@ -135,7 +135,7 @@
                   target="_blank"
                   rel="noreferrer"
                   data-cursor-hover
-                  @click="() => trackGoal(platform.eventCode)"
+                  @click="() => trackGoal(platform.eventId)"
                   v-html="require(`../../assets/logos/${platform.icon}?raw`)"
                 />
               </li>
@@ -239,6 +239,14 @@ import {
   useRoute,
   useRouter,
 } from '@nuxtjs/composition-api';
+import {
+  OPEN_SPEAKER_GITHUB_EVENT_ID,
+  OPEN_SPEAKER_INSTAGRAM_EVENT_ID,
+  OPEN_SPEAKER_LINKEDIN_EVENT_ID,
+  OPEN_SPEAKER_TWITTER_EVENT_ID,
+  OPEN_SPEAKER_WEBSITE_EVENT_ID,
+  OPEN_SPEAKER_YOUTUBE_EVENT_ID,
+} from '../../config';
 import {
   Breadcrumbs,
   FeedbackSection,
@@ -344,43 +352,43 @@ export default defineComponent({
             name: 'Twitter',
             icon: 'twitter-color.svg',
             url: speaker.value?.twitter_url,
-            eventCode: process.env.NUXT_ENV_OPEN_SPEAKER_TWITTER_EVENT!,
+            eventId: OPEN_SPEAKER_TWITTER_EVENT_ID,
           },
           {
             name: 'LinkedIn',
             icon: 'linkedin-color.svg',
             url: speaker.value?.linkedin_url,
-            eventCode: process.env.NUXT_ENV_OPEN_SPEAKER_LINKEDIN_EVENT!,
+            eventId: OPEN_SPEAKER_LINKEDIN_EVENT_ID,
           },
           {
             name: 'Instagram',
             icon: 'instagram-color.svg',
             url: speaker.value?.instagram_url,
-            eventCode: process.env.NUXT_ENV_OPEN_SPEAKER_INSTAGRAM_EVENT!,
+            eventId: OPEN_SPEAKER_INSTAGRAM_EVENT_ID,
           },
           {
             name: 'GitHub',
             icon: 'github.svg',
             url: speaker.value?.github_url,
-            eventCode: process.env.NUXT_ENV_OPEN_SPEAKER_GITHUB_EVENT!,
+            eventId: OPEN_SPEAKER_GITHUB_EVENT_ID,
           },
           {
             name: 'YouTube',
             icon: 'youtube-color.svg',
             url: speaker.value?.youtube_url,
-            eventCode: process.env.NUXT_ENV_OPEN_SPEAKER_YOUTUBE_EVENT!,
+            eventId: OPEN_SPEAKER_YOUTUBE_EVENT_ID,
           },
           {
             name: 'Website',
             icon: 'website-color.svg',
             url: speaker.value?.website_url,
-            eventCode: process.env.NUXT_ENV_OPEN_SPEAKER_WEBSITE_EVENT!,
+            eventId: OPEN_SPEAKER_WEBSITE_EVENT_ID,
           },
         ].filter((platform) => platform.url) as {
           name: string;
           icon: string;
           url: string;
-          eventCode: string;
+          eventId: string;
         }[]
     );
 

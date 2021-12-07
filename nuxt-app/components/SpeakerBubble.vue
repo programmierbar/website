@@ -159,6 +159,7 @@ import {
   watch,
 } from '@nuxtjs/composition-api';
 import { StrapiSpeaker } from 'shared-code';
+import { START_MAGNET_EFFECT_EVENT_ID } from '../config';
 import { useMotionParallax, useEventListener, useWindow } from '../composables';
 import {
   getImageSrcSet,
@@ -194,7 +195,7 @@ export default defineComponent({
       () => motionParallax.isActive,
       (isActive) => {
         if (isActive) {
-          trackGoal(process.env.NUXT_ENV_START_MAGNET_EFFECT_EVENT!);
+          trackGoal(START_MAGNET_EFFECT_EVENT_ID);
         }
       }
     );

@@ -1,6 +1,12 @@
 import { MetaInfo } from 'vue-meta/types/vue-meta';
 import removeMarkdown from 'remove-markdown';
 import { StrapiImage } from 'shared-code';
+import {
+  BUZZSPROUT_TRACKING_URL,
+  TWITTER_HANDLE,
+  WEBSITE_NAME,
+  WEBSITE_URL,
+} from '../config';
 import { getTrimmedString } from './getTrimmedString';
 
 interface Data {
@@ -37,13 +43,13 @@ export function getMetaInfo({
   noIndex,
 }: Data): MetaInfo {
   // Create URL of current site
-  const siteUrl = process.env.NUXT_ENV_WEBSITE_URL + path;
+  const siteUrl = WEBSITE_URL + path;
 
   // Trim title and add website name for subpages
   const trimmedTitle =
     path === '/'
       ? getTrimmedString(title, 60)
-      : getTrimmedString(title, 40) + ' | ' + process.env.NUXT_ENV_WEBSITE_NAME;
+      : getTrimmedString(title, 40) + ' | ' + WEBSITE_NAME;
 
   // Trim description, remove markdown, and replace multiple whitespace
   // characters, including line breaks, with a single space
@@ -101,12 +107,12 @@ export function getMetaInfo({
       {
         hid: 'twitter:site',
         name: 'twitter:site',
-        content: process.env.NUXT_ENV_TWITTER_HANDLE!,
+        content: TWITTER_HANDLE,
       },
       {
         hid: 'twitter:creator',
         name: 'twitter:creator',
-        content: process.env.NUXT_ENV_TWITTER_HANDLE!,
+        content: TWITTER_HANDLE,
       },
       {
         hid: 'twitter:title',
@@ -180,8 +186,7 @@ export function getMetaInfo({
 
   // Add audio to meta info if available
   if (audioUrl) {
-    const audioTrackingUrl =
-      process.env.NUXT_ENV_BUZZSPROUT_TRACKING_URL + audioUrl;
+    const audioTrackingUrl = BUZZSPROUT_TRACKING_URL + '/' + audioUrl;
     metaInfo.meta = metaInfo.meta?.concat([
       // Open Graph protocol
       {

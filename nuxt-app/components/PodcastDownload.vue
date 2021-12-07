@@ -49,6 +49,7 @@
 <script lang="ts">
 import { defineComponent, PropType, ref } from '@nuxtjs/composition-api';
 import { StrapiPodcast } from 'shared-code';
+import { DOWNLOAD_PODCAST_EVENT_ID } from '../config';
 import {
   downloadExternalFile,
   getUrlSlug,
@@ -81,7 +82,7 @@ export default defineComponent({
       );
 
       // Track analytic event
-      trackGoal(process.env.NUXT_ENV_DOWNLOAD_PODCAST_EVENT!);
+      trackGoal(DOWNLOAD_PODCAST_EVENT_ID);
 
       // Stop loading
       isLoading.value = false;

@@ -11,7 +11,7 @@
         target="_blank"
         rel="noreferrer"
         data-cursor-hover
-        @click="() => trackGoal(socialNetwork.eventCode)"
+        @click="() => trackGoal(socialNetwork.eventId)"
         v-html="require(`../assets/logos/${socialNetwork.icon}?raw`)"
       />
     </li>
@@ -20,6 +20,13 @@
 
 <script lang="ts">
 import { defineComponent } from '@nuxtjs/composition-api';
+import {
+  OPEN_GITHUB_EVENT_ID,
+  OPEN_INTAGRAM_EVENT_ID,
+  OPEN_MEETUP_EVENT_ID,
+  OPEN_TWITTER_EVENT_ID,
+  OPEN_YOUTUBE_EVENT_ID,
+} from '../config';
 import { trackGoal } from '../helpers';
 
 export default defineComponent({
@@ -30,31 +37,31 @@ export default defineComponent({
           label: 'Twitter',
           icon: 'twitter.svg',
           href: 'https://twitter.com/programmierbar',
-          eventCode: process.env.NUXT_ENV_OPEN_TWITTER_EVENT!,
+          eventId: OPEN_TWITTER_EVENT_ID,
         },
         {
           label: 'GitHub',
           icon: 'github.svg',
           href: 'https://github.com/programmierbar',
-          eventCode: process.env.NUXT_ENV_OPEN_GITHUB_EVENT!,
+          eventId: OPEN_GITHUB_EVENT_ID,
         },
         {
           label: 'Meetup',
           icon: 'meetup.svg',
           href: 'https://www.meetup.com/de-DE/programmierbar/',
-          eventCode: process.env.NUXT_ENV_OPEN_MEETUP_EVENT!,
+          eventId: OPEN_MEETUP_EVENT_ID,
         },
         {
           label: 'YouTube',
           icon: 'youtube.svg',
           href: 'https://www.youtube.com/channel/UCi9Odm-45QGUBRs5KiF1-HQ',
-          eventCode: process.env.NUXT_ENV_OPEN_YOUTUBE_EVENT!,
+          eventId: OPEN_YOUTUBE_EVENT_ID,
         },
         {
           label: 'Instagram',
           icon: 'instagram.svg',
           href: 'https://www.instagram.com/programmier.bar',
-          eventCode: process.env.NUXT_ENV_OPEN_INTAGRAM_EVENT!,
+          eventId: OPEN_INTAGRAM_EVENT_ID,
         },
       ],
       trackGoal,

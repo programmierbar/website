@@ -134,6 +134,7 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, watch } from '@nuxtjs/composition-api';
 import { StrapiTag } from 'shared-code';
+import { CLOSE_TAG_FILTER_EVENT_ID, OPEN_TAG_FILTER_EVENT_ID } from '../config';
 import { useEventListener, useDocument } from '../composables';
 import { trackGoal } from '../helpers';
 import TagList from './TagList.vue';
@@ -166,9 +167,9 @@ export default defineComponent({
     // Track analytic events
     watch(filterIsOpen, () => {
       if (filterIsOpen.value) {
-        trackGoal(process.env.NUXT_ENV_OPEN_TAG_FILTER_EVENT!);
+        trackGoal(OPEN_TAG_FILTER_EVENT_ID);
       } else {
-        trackGoal(process.env.NUXT_ENV_CLOSE_TAG_FILTER_EVENT!);
+        trackGoal(CLOSE_TAG_FILTER_EVENT_ID);
       }
     });
 
