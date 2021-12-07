@@ -9,9 +9,6 @@
     "strapi-cms"
   ],
   "devDependencies": {
-    "eslint": "^7.32.0",
-    "lerna": "^4.0.0",
-    "prettier": "^2.3.2",
-    "typescript": "^4.4.4"
+    "lerna": "^4.0.0"
   }
 }
