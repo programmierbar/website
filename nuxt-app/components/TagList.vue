@@ -8,7 +8,8 @@
         <button
           class="font-light rounded-full transition-colors"
           :class="[
-            variant === 'default' && 'hover:bg-lime',
+            variant === 'default' &&
+              'hover:bg-lime hover:selection:bg-black hover:selection:text-white',
             variant === 'pick_of_the_day_card' &&
               'hover:bg-opacity-0 border-2 border-gray-800 text-xs xs:text-sm xl:text-lg px-3 py-0.5 md:px-5 md:py-1 lg:px-3 lg:py-0.5 xl:px-5 xl:py-1 m-1.5 md:m-2 lg:m-1.5 xl:m-2',
             (variant === 'default' || variant === 'pick_of_the_day_card') &&
@@ -16,7 +17,7 @@
             (variant === 'default' || variant === 'tag_filter') &&
               'text-sm md:text-base lg:text-lg px-5 py-1 m-1.5 md:m-2',
             variant === 'tag_filter' && tag.isActive
-              ? 'bg-lime text-black'
+              ? 'bg-lime selection:bg-black text-black selection:text-white'
               : 'bg-gray-800 text-white',
           ]"
           type="button"

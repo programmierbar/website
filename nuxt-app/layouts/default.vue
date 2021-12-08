@@ -35,15 +35,19 @@ export default defineComponent({
 });
 </script>
 
-<style>
+<style lang="postcss">
 /* Body */
 body {
   font-family: 'Museo Sans', sans-serif;
   font-weight: 500;
 }
 
+/* Other */
 * {
   -webkit-tap-highlight-color: transparent;
+}
+*::selection {
+  @apply bg-lime text-black;
 }
 
 /* SVG */

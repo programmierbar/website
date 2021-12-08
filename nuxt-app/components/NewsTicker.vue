@@ -12,7 +12,15 @@
     data-cursor-black
   >
     <p
-      class="news-ticker text-xl lg:text-4xl italic whitespace-nowrap"
+      class="
+        news-ticker
+        selection:bg-black
+        text-xl
+        lg:text-4xl
+        selection:text-white
+        italic
+        whitespace-nowrap
+      "
       :style="style"
     >
       <span v-for="occurrence in 4" :key="occurrence">

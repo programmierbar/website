@@ -104,14 +104,14 @@
           "
           :class="[
             podcast.type === 'deep_dive' && podcast.banner_image
-              ? 'text-blue md:text-black'
+              ? 'md:selection:bg-black text-blue md:text-black md:selection:text-white'
               : podcast.type === 'cto_special'
               ? 'text-black'
               : podcast.type === 'deep_dive' || podcast.type === 'news'
               ? 'text-blue'
               : 'text-white',
             podcast.type === 'cto_special' &&
-              'inline-block bg-lime px-2 pt-3 pb-2',
+              'inline-block bg-lime selection:bg-black selection:text-white px-2 pt-3 pb-2',
           ]"
         >
           {{ type }} {{ podcast.number }} –
@@ -128,7 +128,7 @@
           :class="[
             podcast.type === 'deep_dive'
               ? podcast.banner_image
-                ? 'text-lime md:text-black'
+                ? 'text-lime md:text-black md:selection:text-white md:selection:bg-black'
                 : 'text-lime'
               : podcast.type === 'cto_special'
               ? 'text-blue'

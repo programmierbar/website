@@ -27,11 +27,13 @@
         >
           <h2
             class="
+              selection:bg-black
               text-base
               md:text-xl
               xl:text-2xl
               2xl:text-3xl
               text-black
+              selection:text-white
               font-black
             "
           >

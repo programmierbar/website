@@ -52,6 +52,9 @@ export default defineComponent({
 .markdown-to-html a {
   @apply text-lime hover:text-blue font-bold transition-colors;
 }
+.markdown-to-html.pick-of-the-day-card *::selection {
+  @apply bg-black text-white;
+}
 .markdown-to-html.pick-of-the-day-card a {
   @apply text-pink hover:text-blue;
 }
