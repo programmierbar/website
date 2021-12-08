@@ -1,6 +1,6 @@
 <template>
   <div class="w-48 md:w-64 lg:w-96 relative">
-    <NuxtLink :to="href" data-cursor-more>
+    <NuxtLink :to="href" draggable="false" data-cursor-more>
       <!-- Podcast cover -->
       <img
         class="w-48 md:w-64 lg:w-96 h-48 md:h-64 lg:h-96 pointer-events-none"
