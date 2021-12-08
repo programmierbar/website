@@ -116,24 +116,26 @@ export default defineComponent({
      * It handels the movement, visibility and mode of the mouse cursor.
      */
     const handleMouseCursor = (event: MouseEvent) => {
-      // Move mouse cursor based on mouse move event
-      const transform = `translate(${event.clientX}px, ${event.clientY}px)`;
-      mainCursorElement.value!.style.transform = transform;
-      delayedDotElement.value!.style.transform = transform;
+      if (window.matchMedia('(pointer: fine)').matches) {
+        // Move mouse cursor based on mouse move event
+        const transform = `translate(${event.clientX}px, ${event.clientY}px)`;
+        mainCursorElement.value!.style.transform = transform;
+        delayedDotElement.value!.style.transform = transform;
 
-      // Set cursor mode based on nodes of composed path
-      cursorMode.value =
-        event
-          .composedPath()
-          .reduce<CursorMode | false | undefined>(
-            (cursorMode, currentNode) =>
-              cursorMode ||
-              (currentNode instanceof HTMLElement &&
-                cursorModes.find((cursorMode) =>
-                  currentNode.hasAttribute(`data-cursor-${cursorMode}`)
-                )),
-            undefined
-          ) || 'default';
+        // Set cursor mode based on nodes of composed path
+        cursorMode.value =
+          event
+            .composedPath()
+            .reduce<CursorMode | false | undefined>(
+              (cursorMode, currentNode) =>
+                cursorMode ||
+                (currentNode instanceof HTMLElement &&
+                  cursorModes.find((cursorMode) =>
+                    currentNode.hasAttribute(`data-cursor-${cursorMode}`)
+                  )),
+              undefined
+            ) || 'default';
+      }
     };
 
     // Add mouse move event listener
