@@ -16,6 +16,8 @@
         lg:after:w-8
         after:flex-shrink-0
       "
+      @mousedown="changeScrollPosition"
+      @scroll="detectScrollState"
     >
       <!-- Podcast list -->
       <LazyList
@@ -175,7 +177,7 @@ import {
   CLICK_SCROLL_LEFT_ARROW_EVENT_ID,
   CLICK_SCROLL_RIGHT_ARROW_EVENT_ID,
 } from '../config';
-import { useStrapi, useEventListener } from '../composables';
+import { useStrapi } from '../composables';
 import { trackGoal } from '../helpers';
 import FadeAnimation from './FadeAnimation.vue';
 import LazyList from './LazyList.vue';
@@ -210,6 +212,23 @@ export default defineComponent({
     const scrollStartReached = ref(true);
     const scrollEndReached = ref(true);
 
+    // Add smooth scroll polyfill
+    onMounted(smoothscroll.polyfill);
+
+    /**
+     * It detects whether the start or the end of the scrolling area
+     * has been reached, depending on the scrolling position.
+     */
+    const detectScrollState = () => {
+      const { innerWidth } = window;
+      const { scrollLeft, scrollWidth } = scrollBoxElement.value!;
+      scrollStartReached.value = scrollLeft < 64;
+      scrollEndReached.value = scrollLeft > scrollWidth - innerWidth - 64;
+    };
+
+    // Update scroll state on mounted
+    onMounted(detectScrollState);
+
     /**
      * It programmatically scrolls the slider
      * a little to the left or right.
@@ -228,62 +247,53 @@ export default defineComponent({
       });
     };
 
-    // Add smooth scroll polyfill
-    onMounted(smoothscroll.polyfill);
-
     /**
-     * It detects whether the start or the end of the scrolling area
-     * has been reached, depending on the scrolling position.
+     * It changes the scroll position of the scroll box
+     * element when the user drags its content.
      */
-    const handleScrollState = () => {
-      const { innerWidth } = window;
-      const { scrollLeft, scrollWidth } = scrollBoxElement.value!;
-      scrollStartReached.value = scrollLeft < 64;
-      scrollEndReached.value = scrollLeft > scrollWidth - innerWidth - 64;
-    };
+    const changeScrollPosition = () => {
+      // Create last client X variable
+      let lastClientX: number;
 
-    // Update scroll state on mounted
-    onMounted(handleScrollState);
-
-    // Add scroll event listener to scroll box element
-    useEventListener(scrollBoxElement, 'scroll', handleScrollState);
-
-    // Create mouse position variable
-    let mousePosition: number | null = null;
-
-    /**
-     * Handles the scroll position of the scroll box element.
-     */
-    const handleScrollPosition = () => {
-      // Change scroll position on mouse movement
+      /**
+       * It changes the scroll position when the mouse
+       * moves and disables pointer events.
+       *
+       * @param event Mouse event object.
+       */
       const handleScrollMove = (event: MouseEvent) => {
-        if (mousePosition) {
-          scrollBoxElement.value!.scrollLeft += mousePosition - event.clientX;
+        if (lastClientX) {
+          scrollBoxElement.value!.scrollLeft += lastClientX - event.clientX;
+        } else {
           scrollBoxElement.value!.style.pointerEvents = 'none';
+          scrollBoxElement.value!.style.userSelect = 'none';
         }
-        mousePosition = event.clientX;
+        lastClientX = event.clientX;
       };
-      window.addEventListener('mousemove', handleScrollMove);
 
-      // Reset mouse position and remove event listeners
+      /**
+       * It removes the event listener and resets the style attribute.
+       */
       const handleScrollStop = () => {
         window.removeEventListener('mousemove', handleScrollMove);
         window.removeEventListener('mouseup', handleScrollStop, true);
         scrollBoxElement.value!.style.pointerEvents = '';
-        mousePosition = null;
+        scrollBoxElement.value!.style.userSelect = '';
       };
+
+      // Add mousemove and mouseup event listener
+      window.addEventListener('mousemove', handleScrollMove);
       window.addEventListener('mouseup', handleScrollStop, true);
     };
-
-    // Add mouse down event listener to scroll box element
-    useEventListener(scrollBoxElement, 'mousedown', handleScrollPosition);
 
     return {
       podcastCount,
       scrollBoxElement,
       scrollStartReached,
       scrollEndReached,
+      detectScrollState,
       scrollTo,
+      changeScrollPosition,
     };
   },
 });
