@@ -50,7 +50,7 @@
         duration-300
       "
       :class="[
-        searchIsOpen ? 'w-36 xs:w-60 md:w-80' : 'w-10 lg:w-14',
+        searchIsOpen ? 'w-1/2 xs:w-60 md:w-80' : 'w-10 lg:w-14',
         menuIsOpen ? 'bg-gray-900' : 'bg-black',
       ]"
       @submit.prevent="handleSearch"
@@ -61,16 +61,21 @@
           w-full
           appearance-none
           bg-transparent
+          selection:bg-blue
           border-b-2 border-white
           rounded-none
           outline-none
           text-lg
           lg:text-2xl
-          text-blue text-center
+          text-blue
+          placeholder-blue-600
+          selection:text-black
+          text-center
           font-light
         "
         :class="!searchIsOpen && 'invisible transition-all delay-300'"
         type="text"
+        :placeholder="searchPlaceholder"
         spellcheck="false"
       />
       <button
@@ -310,6 +315,13 @@ export default defineComponent({
     const menuIsOpen = ref(false);
     const searchIsOpen = ref(false);
 
+    // Create search placeholder reference
+    const searchPlaceholder = ref('');
+
+    // Create search input element reference
+    const searchInputElement = ref<HTMLInputElement>();
+    const menuElement = ref<HTMLElement>();
+
     // Track analytic menu events
     watch(menuIsOpen, () => {
       if (menuIsOpen.value) {
@@ -328,9 +340,14 @@ export default defineComponent({
       }
     });
 
-    // Create search input element reference
-    const searchInputElement = ref<HTMLInputElement>();
-    const menuElement = ref<HTMLElement>();
+    // Set serach placeholder depending on device type and operating system
+    onMounted(() => {
+      if (window.matchMedia('(pointer: fine)').matches) {
+        searchPlaceholder.value = navigator.platform.includes('Mac')
+          ? '⌘K'
+          : 'Ctrl K';
+      }
+    });
 
     /**
      * It closes the menu.
@@ -462,6 +479,7 @@ export default defineComponent({
     return {
       menuIsOpen,
       searchIsOpen,
+      searchPlaceholder,
       searchInputElement,
       menuElement,
       closeMenu,
