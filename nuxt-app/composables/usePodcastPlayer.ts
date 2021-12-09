@@ -72,12 +72,14 @@ export function usePodcastPlayer() {
   /**
    * It rewinds the audio file 15 seconds.
    */
-  const backward = () => setCurrentTime(audioState.currentTime - 15);
+  const backward = () =>
+    setCurrentTime(Math.max(audioState.currentTime - 15, 0));
 
   /**
    * It fast-forwards the audio file 15 seconds.
    */
-  const forward = () => setCurrentTime(audioState.currentTime + 15);
+  const forward = () =>
+    setCurrentTime(Math.min(audioState.currentTime + 15, audioState.duration));
 
   /**
    * It sets the give podcast as the current one.
