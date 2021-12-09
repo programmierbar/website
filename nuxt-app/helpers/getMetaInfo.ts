@@ -201,7 +201,7 @@ export function getMetaInfo({
         property: 'twitter:player',
         content:
           audioUrl.replace(/\.mp3$/, '') +
-          'client_source=twitter_card&player_type=full_screen',
+          '?client_source=twitter_card&player_type=full_screen',
       },
       {
         hid: 'twitter:player:width',
