@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isVisible" class="w-full fixed z-40 left-0 bottom-0 bg-pink">
+  <div v-if="isVisible" class="w-full fixed z-50 left-0 bottom-0 bg-pink">
     <div
       class="
         flex flex-col

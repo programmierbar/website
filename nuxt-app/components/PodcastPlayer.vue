@@ -8,7 +8,7 @@
         w-full
         xl:h-20
         fixed
-        z-20
+        z-40
         left-0
         bottom-0
         flex flex-col

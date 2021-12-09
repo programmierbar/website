@@ -4,7 +4,7 @@
     <NuxtLink
       class="
         fixed
-        z-50
+        z-60
         top-5
         left-0
         py-3
@@ -39,7 +39,7 @@
     <form
       class="
         fixed
-        z-50
+        z-60
         top-7
         right-18
         lg:right-24
@@ -109,7 +109,7 @@
         h-8
         lg:h-10
         fixed
-        z-50
+        z-60
         top-7
         right-4
         lg:right-5
@@ -173,7 +173,7 @@
         min-h-screen
         max-h-screen
         fixed
-        z-40
+        z-50
         top-0
         right-0
         overflow-y-auto
