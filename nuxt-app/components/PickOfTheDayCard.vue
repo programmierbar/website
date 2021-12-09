@@ -133,13 +133,16 @@
               items-start
               justify-end
               space-y-6
-              px-4
               pt-8
-              pb-4
-              md:px-6 md:pt-10 md:pb-6
-              lg:px-4 lg:pt-14
+              md:pt-10
+              lg:pt-16
               xl:pt-20
+              pb-4
+              md:pb-6
               lg:pb-4
+              px-4
+              md:px-6
+              lg:px-4
             "
           >
             <!-- Podcast episode -->
@@ -147,7 +150,7 @@
               class="
                 text-xs
                 xs:text-sm
-                md:text-base
+                xl:text-base
                 text-black
                 italic
                 underline
@@ -171,7 +174,7 @@
               class="
                 text-sm
                 xs:text-base
-                md:text-lg
+                xl:text-lg
                 2xl:text-xl
                 text-black
                 lg:opacity-0
