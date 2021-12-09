@@ -193,8 +193,7 @@
           space-y-16
           pt-28
           lg:pt-36
-          pb-6
-          lg:pb-8
+          pb-8
           px-6
           lg:pl-8 lg:pr-24
           xl:pr-32
@@ -488,7 +487,7 @@ export default defineComponent({
 
 <style scoped>
 .main-menu-item a {
-  font-size: max(5vh, 2rem);
+  font-size: max(4.5vh, 1.75rem);
 }
 @media (min-width: 1024px) {
   .main-menu-item a {
