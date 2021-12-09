@@ -22,7 +22,7 @@
         !podcastPlayer.podcast
           ? 'translate-y-full'
           : !isExpanded
-          ? 'translate-y-44 xl:translate-y-0'
+          ? 'translate-y-[11.15rem] xl:translate-y-0'
           : 'translate-y-0'
       "
       data-cursor-black
@@ -30,13 +30,15 @@
       <div
         class="
           xl:w-1/4
-          h-16
+          h-14
           xl:h-full
           flex
           items-center
           justify-between
           px-6
           xl:px-0
+          pt-2.5
+          xl:pt-0
         "
         @click="expandPlayer"
       >
@@ -75,14 +77,19 @@
           </NuxtLink>
         </div>
 
-        <div class="relative xl:hidden">
+        <div class="h-8 relative xl:hidden">
           <!-- Like, play and stop icon -->
           <div
-            class="flex space-x-5 transition-opacity"
+            class="h-full flex space-x-5 transition-opacity"
             :class="
               isExpanded
-                ? 'opacity-0 pointer-events-none'
-                : 'opacity-100 duration-500 delay-200'
+                ? 'invisible opacity-0 pointer-events-none'
+                : 'duration-500 delay-200'
+            "
+            :style="
+              isExpanded
+                ? 'transition: visibility 0s .15s, opacity .15s'
+                : undefined
             "
           >
             <!-- <button
@@ -92,10 +99,10 @@
               @click.stop=""
               v-html="require('../assets/icons/heart.svg?raw')"
             /> -->
-            <div class="w-5 h-6 flex justify-center">
+            <div class="w-8 h-full flex justify-center">
               <button
                 v-if="podcastPlayer.paused"
-                class="h-full"
+                class="h-full p-1.25"
                 type="button"
                 data-cursor-hover
                 @click.stop="podcastPlayer.play"
@@ -103,7 +110,7 @@
               />
               <button
                 v-else
-                class="h-full"
+                class="h-full p-1.25"
                 type="button"
                 data-cursor-hover
                 @click.stop="podcastPlayer.pause"
@@ -114,11 +121,16 @@
 
           <!-- Collapse icon -->
           <button
-            class="h-5 absolute top-px right-0 transition-opacity"
+            class="h-full absolute top-px right-0 transition-opacity p-1.5"
             :class="
               isExpanded
-                ? 'opacity-100  duration-500 delay-200'
-                : 'opacity-0 pointer-events-none'
+                ? 'duration-500 delay-200'
+                : 'invisible opacity-0 pointer-events-none'
+            "
+            :style="
+              !isExpanded
+                ? 'transition: visibility 0s .15s, opacity .15s'
+                : undefined
             "
             type="button"
             data-cursor-hover
@@ -134,6 +146,8 @@
         <!-- Backword, play, pause and forward icon -->
         <div
           class="h-24 flex items-center justify-center space-x-12 xl:space-x-8"
+          :class="!isExpanded && 'invisible xl:visible'"
+          :style="!isExpanded ? 'transition: visibility 0s 0.3s' : undefined"
         >
           <button
             class="h-9 xl:h-7"
@@ -179,7 +193,7 @@
             xl:order-none xl:space-x-4
           "
         >
-          <div class="text-sm xl:text-base mt-3 xl:mt-0.5 ml-6 xl:ml-0">
+          <div class="text-sm xl:text-base m-0.5 ml-6 xl:ml-0">
             {{ currentTimeString }}
           </div>
           <input
@@ -187,6 +201,7 @@
             class="
               current-time-input
               w-full
+              h-6
               xl:w-auto xl:h-8
               order-first
               xl:order-none
@@ -199,7 +214,7 @@
             data-cursor-hover
             @change="changeCurrentTime"
           />
-          <div class="text-sm xl:text-base mt-3 xl:mt-0.5 mr-6 xl:mr-0">
+          <div class="text-sm xl:text-base mt-0.5 mr-6 xl:mr-0">
             {{ durationString }}
           </div>
         </div>
@@ -234,6 +249,8 @@
             py-3
             xl:p-0
           "
+          :class="!isExpanded && 'invisible xl:visible'"
+          :style="!isExpanded ? 'transition: visibility 0s 0.3s' : undefined"
         >
           <!-- <button
             class="h-6 text-pink"
@@ -444,7 +461,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="postcss">
+<style lang="postcss" scoped>
 .current-time-input::-webkit-slider-thumb {
   @apply w-4 h-4 bg-transparent -mt-1.5;
 }
@@ -454,23 +471,23 @@ export default defineComponent({
 .current-time-input::-webkit-slider-runnable-track {
   --progress-color: theme('colors.pink.500');
   --track-color: theme('colors.black');
-  @apply h-1.25;
+  @apply h-1.25 rounded-none;
 }
 .current-time-input::-moz-range-progress {
-  @apply h-1.25 bg-pink;
+  @apply h-1.25 bg-pink rounded-none;
 }
 .current-time-input::-moz-range-track {
-  @apply h-1.25 bg-black;
+  @apply h-1.25 bg-black rounded-none;
 }
-@media (min-width: 768px) {
+@media (min-width: 1280px) {
   .current-time-input::-webkit-slider-runnable-track {
-    @apply h-1.5;
+    @apply h-1.5 rounded;
   }
   .current-time-input::-moz-range-progress {
-    @apply h-1.5;
+    @apply h-1.5 rounded;
   }
   .current-time-input::-moz-range-track {
-    @apply h-1.5;
+    @apply h-1.5 rounded;
   }
 }
 
