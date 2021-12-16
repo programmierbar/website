@@ -68,7 +68,7 @@ export default {
   generate: {
     fallback: '404.html',
     // https://github.com/nuxt-community/composition-api/issues/44
-    interval: 4000,
+    interval: 1500,
     // Uncomment below to generate single routes
     // crawler: false,
     // exclude: [/^\/(\w|\d|-)*$/],
