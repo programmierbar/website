@@ -121,6 +121,7 @@ export interface StrapiMeetup extends StrapiTyp {
   end_at: string;
   description: string;
   cover_image: StrapiImage;
+  gallery_images: StrapiImage[];
   youtube_url: string | null;
   meetup_url: string | null;
   members: StrapiMember[];

@@ -36,6 +36,14 @@
       "required": true,
       "pluginOptions": {}
     },
+    "gallery_images": {
+      "collection": "file",
+      "via": "related",
+      "allowedTypes": ["images"],
+      "plugin": "upload",
+      "required": false,
+      "pluginOptions": {}
+    },
     "meetup_url": {
       "type": "string",
       "regex": "^(https?:\\/\\/[^\\s$.?#].[^\\s]*|)$"
