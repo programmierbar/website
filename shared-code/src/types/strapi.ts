@@ -96,6 +96,7 @@ export interface StrapiSpeaker extends StrapiTyp {
 }
 
 export interface StrapiPodcast extends StrapiTyp {
+  is_private: boolean;
   type: 'deep_dive' | 'cto_special' | 'news' | 'other';
   number: string;
   title: string;
