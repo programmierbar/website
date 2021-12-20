@@ -22,7 +22,7 @@
 import { defineComponent } from '@nuxtjs/composition-api';
 import {
   OPEN_GITHUB_EVENT_ID,
-  OPEN_INTAGRAM_EVENT_ID,
+  OPEN_INSTAGRAM_EVENT_ID,
   OPEN_MEETUP_EVENT_ID,
   OPEN_TWITTER_EVENT_ID,
   OPEN_YOUTUBE_EVENT_ID,
@@ -61,7 +61,7 @@ export default defineComponent({
           label: 'Instagram',
           icon: 'instagram.svg',
           href: 'https://www.instagram.com/programmier.bar',
-          eventId: OPEN_INTAGRAM_EVENT_ID,
+          eventId: OPEN_INSTAGRAM_EVENT_ID,
         },
       ],
       trackGoal,
