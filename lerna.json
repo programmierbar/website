@@ -2,5 +2,11 @@
   "version": "0.0.0",
   "npmClient": "yarn",
   "useWorkspaces": true,
-  "packages": ["cloud-functions", "nuxt-app", "shared-code", "strapi-cms"]
+  "packages": [
+    "cloud-functions",
+    "directus-cms",
+    "nuxt-app",
+    "shared-code",
+    "strapi-cms"
+  ]
 }

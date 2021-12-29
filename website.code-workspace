@@ -4,6 +4,7 @@
     "editor.formatOnSave": true,
     "eslint.workingDirectories": [
       "./cloud-functions",
+      "./directus-cms",
       "./nuxt-app",
       "./shared-code",
       "./strapi-cms"

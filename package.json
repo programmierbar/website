@@ -4,6 +4,7 @@
   "license": "MIT",
   "workspaces": [
     "cloud-functions",
+    "directus-cms",
     "nuxt-app",
     "shared-code",
     "strapi-cms"
