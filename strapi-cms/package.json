@@ -1,7 +1,8 @@
 {
   "name": "strapi-cms",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
   "description": "A Strapi application",
   "scripts": {
     "dev": "strapi develop",
@@ -39,6 +40,5 @@
   "engines": {
     "node": ">=12.0.0",
     "npm": "^6.0.0"
-  },
-  "license": "MIT"
+  }
 }

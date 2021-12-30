@@ -1,8 +1,9 @@
 {
   "name": "shared-code",
   "version": "0.0.0",
-  "main": "lib/index.js",
+  "private": true,
   "license": "MIT",
+  "main": "lib/index.js",
   "scripts": {
     "build": "npx tsc",
     "lint": "npx eslint \"src/**/*\" && npx tsc --noEmit"
