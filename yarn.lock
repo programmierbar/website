@@ -8349,7 +8349,7 @@ direction@^1.0.4:
   resolved "https://registry.yarnpkg.com/direction/-/direction-1.0.4.tgz#2b86fb686967e987088caf8b89059370d4837442"
   integrity sha512-GYqKi1aH7PJXxdhTeZBFrg8vUBeKXi+cNprXsC1kpJcbcVnV9wBsrOu1cQEdG0WeQwlfHiy3XvnKfIrJ2R0NzQ==
 
-directus@^9.4.1:
+directus@^9.4.2:
   version "9.4.2"
   resolved "https://registry.yarnpkg.com/directus/-/directus-9.4.2.tgz#757fec52117cd2d3f8799b5ef7726e1f58681912"
   integrity sha512-3RUCRhrPaBm74eCz0O9y8/M1avG9hMtTMLsHKKF3o0QQ4LM9fRhA+EnzAcNCUHfoy/U3WVtt+c6VW3VKbTJM/g==
