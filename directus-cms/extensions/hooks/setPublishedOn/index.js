@@ -48,11 +48,13 @@ module.exports = ({ filter }, { logger, services: { ItemsService } }) => {
           });
 
           // Get item from item service by its key
-          const item = await itemsService.readOne(metadata.keys?.[0]);
+          const item = await itemsService.readOne(
+            metadata.keys && metadata.keys[0]
+          );
 
           // Return payload with "published_on" set to current
           // timestamp, if it is not already set
-          if (!item?.published_on) {
+          if (!(item && item.published_on)) {
             logger.info(
               `${HOOK_NAME} hook: Set "published_on" at "${metadata.collection}" item with ID "${metadata.keys[0]}"`
             );

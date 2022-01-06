@@ -72,11 +72,15 @@ module.exports = (
                     // Check if all required fields are set
                     const requiredFieldsAreSet = fields.every(
                       (field) =>
-                        (!field.schema?.required &&
-                          !field.meta.conditions?.some(
-                            (condition) =>
-                              condition.rule.status?._eq === 'published' &&
-                              condition.required
+                        (!(field.schema && field.schema.required) &&
+                          !(
+                            field.meta.conditions &&
+                            field.meta.conditions.some(
+                              (condition) =>
+                                condition.rule.status &&
+                                condition.rule.status._eq === 'published' &&
+                                condition.required
+                            )
                           )) ||
                         item[field.field]
                     );

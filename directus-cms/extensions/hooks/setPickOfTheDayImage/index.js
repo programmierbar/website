@@ -25,7 +25,7 @@ module.exports = ({ filter }, { logger, services: { FilesService } }) => {
       // create screenshot of website and return payload with "image"
       if (metadata.collection === 'picks_of_the_day' && payload.website_url) {
         // Create necessary variables
-        let puppeteerBrowser, puppeteerPage, tmpFilePath, imageId;
+        let puppeteerBrowser, tmpFilePath, imageId;
 
         try {
           // Launch puppeteer browser
@@ -34,7 +34,7 @@ module.exports = ({ filter }, { logger, services: { FilesService } }) => {
 
           // Create new page and set viewport size
           logger.info(`${HOOK_NAME} hook: Puppeteer: Create new page`);
-          puppeteerPage = await puppeteerBrowser.newPage();
+          const puppeteerPage = await puppeteerBrowser.newPage();
           await puppeteerPage.setViewport({ width: 1366, height: 768 });
 
           // Goto "website_url" and wait for content and animations
@@ -112,13 +112,15 @@ module.exports = ({ filter }, { logger, services: { FilesService } }) => {
           await postSlackMessage(
             `Achtung: Der Screenshot für einen Pick of the Day konnte nicht automatisch erstellt werden. Der Screenshoot muss nun manuell über den folgenden Link hinzugefügt werden: ${
               process.env.PUBLIC_URL
-            }admin/content/picks_of_the_day/${metadata.keys?.[0] || ''}`
+            }admin/content/picks_of_the_day/${
+              (metadata.keys && metadata.keys[0]) || ''
+            }`
           );
 
           // Close puppeteer browser and delete temporary file
         } finally {
           logger.info(`${HOOK_NAME} hook: Cleanup process`);
-          await puppeteerBrowser?.close();
+          puppeteerBrowser && (await puppeteerBrowser.close());
           if (tmpFilePath) {
             fs.unlinkSync(tmpFilePath);
           }
@@ -128,7 +130,7 @@ module.exports = ({ filter }, { logger, services: { FilesService } }) => {
         if (imageId) {
           logger.info(
             `${HOOK_NAME} hook: Set "image" at ${
-              metadata.keys?.[0]
+              metadata.keys && metadata.keys[0]
                 ? `"${metadata.collection}" item with ID "${metadata.keys[0]}"`
                 : `newly created "${metadata.collection}" item`
             }`

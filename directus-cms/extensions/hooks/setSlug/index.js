@@ -21,7 +21,7 @@ module.exports = ({ filter }, { logger, services: { ItemsService } }) => {
     function logInfo() {
       logger.info(
         `${HOOK_NAME} hook: Set "slug" at ${
-          metadata.keys?.[0]
+          metadata.keys && metadata.keys[0]
             ? `"${metadata.collection}" item with ID "${metadata.keys[0]}"`
             : `newly created "${metadata.collection}" item`
         }`
