@@ -3,22 +3,21 @@
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "bootstrap": "npx directus bootstrap",
     "start": "npx directus start",
-    "snapshot-schema": "npx directus schema snapshot ./data-model.json --format json",
-    "apply-schema": "npx directus schema apply ./data-model.json"
+    "snapshot-schema": "npx directus schema snapshot ./schema.json --format json",
+    "apply-schema": "npx directus schema apply ./schema.json"
   },
   "dependencies": {
+    "@slack/web-api": "^6.5.1",
     "directus": "^9.4.1",
+    "puppeteer": "^13.0.1",
+    "shared-code": "0.0.0",
     "sqlite3": "^5.0.2"
   },
   "devDependencies": {
-    "form-data": "^4.0.0",
-    "marked": "^4.0.8",
-    "node-fetch": "^3.1.0",
-    "prettier": "^2.5.1",
-    "uuid": "^8.3.2"
+    "prettier": "^2.5.1"
   }
 }

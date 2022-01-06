@@ -1,4 +1,10 @@
+# database
 database/*
 !database/.gitkeep
+
+# uploads
 uploads/*
 !uploads/.gitkeep
+
+# env files
+.env.*
