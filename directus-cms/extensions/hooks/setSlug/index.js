@@ -6,7 +6,10 @@ const {
 
 const HOOK_NAME = 'setSlug';
 
-module.exports = ({ filter }, { logger, services: { ItemsService } }) => {
+module.exports = (
+  { filter },
+  { exceptions: { BaseException }, logger, services: { ItemsService } }
+) => {
   /**
    * It creates the URL slug for speakers, podcasts
    * and meetups and retuns it with the payload.
@@ -128,6 +131,7 @@ module.exports = ({ filter }, { logger, services: { ItemsService } }) => {
       // Handle unknown errors
     } catch (error) {
       logger.error(`${HOOK_NAME} hook: Error: ${error.message}`);
+      throw new BaseException(error.message, 500, 'UNKNOWN');
     }
 
     // Otherwise just return payload

@@ -4,7 +4,12 @@ const HOOK_NAME = 'schedulePublication';
 
 module.exports = (
   { schedule },
-  { getSchema, logger, services: { FieldsService, ItemsService } }
+  {
+    exceptions: { BaseException },
+    getSchema,
+    logger,
+    services: { FieldsService, ItemsService },
+  }
 ) => {
   /**
    * It runs a cron job every minute that publishes items automatically.
@@ -138,6 +143,7 @@ module.exports = (
       // Handle unknown errors
     } catch (error) {
       logger.error(`${HOOK_NAME} hook: Error: ${error.message}`);
+      throw new BaseException(error.message, 500, 'UNKNOWN');
     }
   });
 };

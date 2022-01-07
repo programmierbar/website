@@ -1,6 +1,9 @@
 const HOOK_NAME = 'setPublishedOn';
 
-module.exports = ({ filter }, { logger, services: { ItemsService } }) => {
+module.exports = (
+  { filter },
+  { exceptions: { BaseException }, logger, services: { ItemsService } }
+) => {
   /**
    * It handles the filter logic that sets the "published_on"
    * field on newly created or updated items, if necessary.
@@ -69,6 +72,7 @@ module.exports = ({ filter }, { logger, services: { ItemsService } }) => {
       // Handle unknown errors
     } catch (error) {
       logger.error(`${HOOK_NAME} hook: Error: ${error.message}`);
+      throw new BaseException(error.message, 500, 'UNKNOWN');
     }
 
     // Otherwise just return payload
