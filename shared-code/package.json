@@ -5,8 +5,8 @@
   "license": "MIT",
   "main": "lib/index.js",
   "scripts": {
-    "build": "npx tsc",
-    "lint": "npx eslint \"src/**/*\" && npx tsc --noEmit"
+    "build": "npx --package typescript tsc",
+    "lint": "npx eslint \"src/**/*\" && npx --package typescript tsc --noEmit"
   },
   "dependencies": {},
   "devDependencies": {
