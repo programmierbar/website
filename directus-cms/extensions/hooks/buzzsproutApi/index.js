@@ -143,12 +143,16 @@ module.exports = (
             },
             {
               published_on: {
-                _gt: (new Date(publishedOn).getFullYear() - 1).toString(),
+                _gte: `${new Date(
+                  publishedOn
+                ).getFullYear()}-01-01T00:00:00.000Z`,
               },
             },
             {
               published_on: {
-                _lt: (new Date(publishedOn).getFullYear() + 1).toString(),
+                _lt: `${
+                  new Date(publishedOn).getFullYear() + 1
+                }-01-01T00:00:00.000Z`,
               },
             },
           ],
@@ -261,7 +265,7 @@ module.exports = (
         tagItemsService.readOne(
           (
             await podcastTagItemsService.readOne(podcastTagId)
-          ).tag_id
+          ).tag
         )
       )
     );
@@ -533,7 +537,7 @@ module.exports = (
 
             // Get podcast item from podcast item service by key
             const podcastItem = await podcastItemsService.readOne(
-              podcastTagItem.podcast_id
+              podcastTagItem.podcast
             );
 
             // If "buzzsprout_id" is set, update podcast episode at Buzzsprout
