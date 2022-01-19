@@ -353,9 +353,10 @@ module.exports = (
           updateData.buzzsprout_id = buzzsproutData.id;
         }
 
-        // If "audio_file", "type", "number" or "title"
-        // changed, add "audio_url" to update data
+        // If "audio_url" is not set or "audio_file", "type", "number"
+        // or "title" changed, add "audio_url" to update data
         if (
+          !podcastItem.audio_url ||
           payload.audio_file ||
           payload.type ||
           payload.number ||
