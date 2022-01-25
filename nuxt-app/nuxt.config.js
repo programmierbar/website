@@ -1,9 +1,5 @@
-import {
-  getFullPodcastTitle,
-  getFullSpeakerName,
-  getSubpagePath,
-} from './helpers';
-import { getStrapiCollection } from './tools/getStrapiCollection';
+import { directus } from './services';
+import { DIRECTUS_CMS_URL } from './config';
 
 export default {
   // Target: https://go.nuxtjs.dev/config-target
@@ -52,6 +48,8 @@ export default {
     '@nuxtjs/tailwindcss',
     // https://composition-api.nuxtjs.org/
     '@nuxtjs/composition-api/module',
+    // https://image.nuxtjs.org/
+    '@nuxt/image',
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
@@ -67,37 +65,21 @@ export default {
   // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
   generate: {
     fallback: '404.html',
-    // https://github.com/nuxt-community/composition-api/issues/44
-    interval: 1500,
-    // Uncomment below to generate single routes
-    // crawler: false,
-    // exclude: [/^\/(\w|\d|-)*$/],
-    // routes: ['/route/to/generate'],
-    async routes() {
-      const [podcasts, speakers, meetups] = await Promise.all([
-        getStrapiCollection('podcasts'),
-        getStrapiCollection('speakers'),
-        getStrapiCollection('meetups'),
-      ]);
-      const routes = [];
-      podcasts.forEach((podcast) => {
-        routes.push(
-          getSubpagePath('podcast', getFullPodcastTitle(podcast), podcast.id)
-        );
-      });
-      speakers.forEach((speaker) => {
-        routes.push(
-          getSubpagePath(
-            'hall-of-fame',
-            getFullSpeakerName(speaker),
-            speaker.id
-          )
-        );
-      });
-      meetups.forEach((meetup) => {
-        routes.push(getSubpagePath('meetup', meetup.title, meetup.id));
-      });
-      return routes;
+    concurrency: 10,
+    routes() {
+      return [
+        { name: 'podcasts', path: 'podcast' },
+        { name: 'speakers', path: 'hall-of-fame' },
+        { name: 'meetups', path: 'meetup' },
+      ].reduce(
+        async (list, { name, path }) => [
+          ...(await list),
+          ...(
+            await directus.items(name).readMany({ fields: ['slug'], limit: -1 })
+          ).data.map(({ slug }) => `/${path}/${slug}`),
+        ],
+        Promise.resolve([])
+      );
     },
   },
 
@@ -124,6 +106,23 @@ export default {
   sitemap: {
     hostname: 'https://www.programmier.bar',
     exclude: ['/impressum', '/datenschutz'],
+  },
+
+  // https://image.nuxtjs.org/
+  image: {
+    domains: [DIRECTUS_CMS_URL.replace(/^https?:\/\//, '')],
+    alias: {
+      cms: `${DIRECTUS_CMS_URL}/assets`,
+    },
+    screens: {
+      xs: 520,
+      sm: 640,
+      md: 768,
+      lg: 1024,
+      xl: 1280,
+      '2xl': 1536,
+      '3xl': 2000,
+    },
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build

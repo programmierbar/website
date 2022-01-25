@@ -19,12 +19,12 @@
       <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
       <!-- Heading -->
-      <SectionHeading class="mt-8 md:mt-0" element="h1"
-        >Datenschutz</SectionHeading
-      >
+      <SectionHeading class="mt-8 md:mt-0" element="h1">
+        {{ privacyPage.heading }}
+      </SectionHeading>
 
       <!-- Text -->
-      <MarkdownToHtml
+      <InnerHtml
         class="
           text-base
           md:text-xl
@@ -38,7 +38,7 @@
           mt-8
           md:mt-16
         "
-        :markdown="privacyPage.text"
+        :html="privacyPage.text"
       />
     </div>
   </div>
@@ -46,19 +46,23 @@
 
 <script lang="ts">
 import { defineComponent, useMeta } from '@nuxtjs/composition-api';
-import { Breadcrumbs, MarkdownToHtml, SectionHeading } from '../components';
-import { useStrapi, useLoadingScreen } from '../composables';
+import { Breadcrumbs, InnerHtml, SectionHeading } from '../components';
+import { useAsyncData, useLoadingScreen } from '../composables';
 import { getMetaInfo } from '../helpers';
+import { directus } from '../services';
+import { PrivacyPage } from '../types';
 
 export default defineComponent({
   components: {
     Breadcrumbs,
-    MarkdownToHtml,
+    InnerHtml,
     SectionHeading,
   },
   setup() {
-    // Query Strapi privacy-page
-    const privacyPage = useStrapi('privacy-page');
+    // Query privacy page
+    const privacyPage = useAsyncData(
+      () => directus.singleton('privacy_page').read() as Promise<PrivacyPage>
+    );
 
     // Set loading screen
     useLoadingScreen(privacyPage);

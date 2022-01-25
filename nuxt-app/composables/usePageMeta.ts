@@ -1,32 +1,19 @@
 import { useMeta, useRoute, Ref } from '@nuxtjs/composition-api';
-import {
-  StrapiHomePage,
-  StrapiAboutPage,
-  StrapiMeetupPage,
-  StrapiPodcastPage,
-  StrapiContactPage,
-  StrapiHallOfFamePage,
-  StrapiPickOfTheDayPage,
-} from 'shared-code';
 import { getMetaInfo } from '../helpers';
+import { FileItem } from '../types';
+
+interface PageMeta {
+  meta_title: string;
+  meta_description: string;
+  cover_image?: FileItem;
+}
 
 /**
  * Composable to set the meta data of a page.
  *
  * @param page A page from our CMS.
  */
-export function usePageMeta(
-  page: Ref<
-    | StrapiHomePage
-    | StrapiAboutPage
-    | StrapiMeetupPage
-    | StrapiPodcastPage
-    | StrapiContactPage
-    | StrapiHallOfFamePage
-    | StrapiPickOfTheDayPage
-    | null
-  >
-) {
+export function usePageMeta(page: Ref<PageMeta | null | undefined>) {
   const route = useRoute();
   useMeta(() =>
     page.value
@@ -35,8 +22,7 @@ export function usePageMeta(
           path: route.value.path,
           title: page.value.meta_title,
           description: page.value.meta_description,
-          image:
-            'cover_image' in page.value ? page.value.cover_image : undefined,
+          image: page.value.cover_image,
         })
       : {}
   );

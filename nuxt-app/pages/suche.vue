@@ -94,16 +94,12 @@
 import {
   computed,
   defineComponent,
-  Ref,
+  onMounted,
   useMeta,
   useRoute,
+  ref,
+  watch,
 } from '@nuxtjs/composition-api';
-import {
-  StrapiPodcast,
-  StrapiMeetup,
-  StrapiPickOfTheDay,
-  StrapiSpeaker,
-} from 'shared-code';
 import {
   Breadcrumbs,
   FadeAnimation,
@@ -112,8 +108,15 @@ import {
   SearchCard,
   SectionHeading,
 } from '../components';
-import { useStrapi, useLoadingScreen } from '../composables';
 import { getMetaInfo } from '../helpers';
+import { directus } from '../services';
+import {
+  PodcastSearchItem,
+  MeetupSearchItem,
+  PickOfTheDaySearchItem,
+  SpeakerSearchItem,
+  SearchItem,
+} from '../types';
 
 export default defineComponent({
   components: {
@@ -128,114 +131,121 @@ export default defineComponent({
     // Add route
     const route = useRoute();
 
-    // Query podcasts, meetups, picks of the day and speakers from strapi
-    const podcasts = useStrapi('podcasts', '?_limit=-1');
-    const meetups = useStrapi('meetups', '?_limit=-1');
-    const picksOfTheDay = useStrapi('picks-of-the-day', '?_limit=-1');
-    const speakers = useStrapi('speakers', '?_limit=-1');
+    // Create search results reference
+    const searchResults = ref<SearchItem[]>([]);
 
-    // Set loading screen
-    useLoadingScreen(podcasts, meetups, picksOfTheDay, speakers);
+    // Create timeout variable
+    let timeout: NodeJS.Timeout;
 
     /**
-     * It filters the list by the keys and search crumbs.
+     * It fetches the search results from our Directus CMS.
      *
-     * @param itemType The type of list items.
-     * @param list The list to be filtered.
-     * @param keys The searchable keys of the list.
-     * @param searchCrumbs The search crumbs.
-     *
-     * @returns The filtered list.
+     * @param search The search string.
      */
-    const getFilteredData = <
-      ListItem extends
-        | StrapiPodcast
-        | StrapiMeetup
-        | StrapiPickOfTheDay
-        | StrapiSpeaker,
-      ItemType extends 'podcast' | 'meetup' | 'pick_of_the_day' | 'speaker'
-    >(
-      itemType: ItemType,
-      list: Ref<ListItem[] | null>,
-      keys: (keyof ListItem)[],
-      searchCrumbs: string[]
-    ): (ListItem & { itemType: ItemType })[] =>
-      // Filter list
-      (list.value || [])
-        .filter((item) =>
-          // Check if every search crumb is included
-          // in value of keys or in tags
-          searchCrumbs.every(
-            (searchCrumb) =>
-              keys.some((key) => {
-                const value = item[key];
-                if (typeof value === 'string') {
-                  return value.toLowerCase().includes(searchCrumb);
-                }
-                return false;
-              }) ||
-              item.tags.some((tag) =>
-                tag.name.toLowerCase().includes(searchCrumb)
-              )
-          )
-        )
-        // Add item type to object
-        .map((item) => ({ ...item, itemType }));
+    const fetchSearchResults = (search: string) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(async () => {
+        searchResults.value = search
+          ? (
+              await Promise.all([
+                // Podcasts
+                ...((
+                  (
+                    await directus.items('podcasts').readMany({
+                      search,
+                      limit: 10,
+                      fields: [
+                        'id',
+                        'slug',
+                        'published_on',
+                        'type',
+                        'number',
+                        'title',
+                        'description',
+                        'cover_image.*',
+                      ],
+                    })
+                  ).data || []
+                ).map((podcast) => ({
+                  ...podcast,
+                  item_type: 'podcast',
+                })) as PodcastSearchItem[]),
 
-    // Get search results
-    const searchResults = computed(() => {
-      // Get search text from URL query
-      const searchText = route.value.query.search as string;
+                // Meetups
+                ...((
+                  (
+                    await directus.items('meetups').readMany({
+                      search,
+                      limit: 10,
+                      fields: [
+                        'id',
+                        'slug',
+                        'published_on',
+                        'title',
+                        'description',
+                        'cover_image.*',
+                      ],
+                    })
+                  ).data || []
+                ).map((meetup) => ({
+                  ...meetup,
+                  item_type: 'meetup',
+                })) as MeetupSearchItem[]),
 
-      // Create an return seach results if a search text is specified
-      if (searchText) {
-        // Split search text in search crumbs
-        const searchCrumbs = searchText
-          .replace(/([^\s\w-_#:.äöüß])/gi, '')
-          .replace(/(\s|-|_|#|:|\.)+/g, ' ')
-          .toLowerCase()
-          .split(' ');
+                // Picks of the day
+                ...((
+                  (
+                    await directus.items('picks_of_the_day').readMany({
+                      search,
+                      limit: 10,
+                      fields: [
+                        'id',
+                        'published_on',
+                        'name',
+                        'website_url',
+                        'description',
+                        'image.*',
+                      ],
+                    })
+                  ).data || []
+                ).map((pickOfTheDay) => ({
+                  ...pickOfTheDay,
+                  item_type: 'pick_of_the_day',
+                })) as PickOfTheDaySearchItem[]),
 
-        // Filter, sort an return podcasts, meetups,
-        // picks of the day and speakers
-        return [
-          ...getFilteredData(
-            'podcast',
-            podcasts,
-            ['type', 'number', 'description', 'transcript'],
-            searchCrumbs
-          ),
-          ...getFilteredData(
-            'meetup',
-            meetups,
-            ['title', 'description'],
-            searchCrumbs
-          ),
-          ...getFilteredData(
-            'pick_of_the_day',
-            picksOfTheDay,
-            ['name', 'description'],
-            searchCrumbs
-          ),
-          ...getFilteredData(
-            'speaker',
-            speakers,
-            [
-              'academic_title',
-              'first_name',
-              'last_name',
-              'occupation',
-              'website_url',
-              'description',
-            ],
-            searchCrumbs
-          ),
-        ].sort((a, b) => (a.published_at < b.published_at ? 1 : -1));
-      }
+                // Speaker
+                ...((
+                  (
+                    await directus.items('speakers').readMany({
+                      search,
+                      limit: 10,
+                      fields: [
+                        'id',
+                        'slug',
+                        'published_on',
+                        'academic_title',
+                        'first_name',
+                        'last_name',
+                        'description',
+                        'profile_image.*',
+                      ],
+                    })
+                  ).data || []
+                ).map((speaker) => ({
+                  ...speaker,
+                  item_type: 'speaker',
+                })) as SpeakerSearchItem[]),
+              ])
+            ).sort((a, b) => (a.published_on < b.published_on ? 1 : -1))
+          : [];
+      }, 200);
+    };
 
-      // Otherwise return an empty array
-      return [];
-    });
+    // Fetch initial search results
+    onMounted(() => fetchSearchResults(route.value.query.search as string));
+
+    // Refetch search results when search changes
+    watch(() => route.value.query.search as string, fetchSearchResults);
 
     // Set page meta data
     useMeta(() =>

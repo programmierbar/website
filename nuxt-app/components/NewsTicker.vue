@@ -35,31 +35,22 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent } from '@nuxtjs/composition-api';
+import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
 
 export default defineComponent({
   props: {
-    markdown: {
-      type: String,
+    news: {
+      type: Array as PropType<string[]>,
       required: true,
     },
   },
   setup(props) {
-    // Create news list
-    const news = computed(() =>
-      props.markdown
-        ?.replace(/(^- |\n- )/g, '|')
-        .split('|')
-        .slice(1)
-    );
-
     // Create style with animation duration
     const style = computed(
-      () => `animation-duration: ${props.markdown.length * 0.2}s`
+      () => `animation-duration: ${props.news.join().length * 0.2}s`
     );
 
     return {
-      news,
       style,
     };
   },

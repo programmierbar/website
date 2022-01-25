@@ -7,6 +7,6 @@ import { computed, Ref } from '@nuxtjs/composition-api';
  *
  * @returns The local string.
  */
-export function useLocaleString(ref: Ref<number | null>) {
+export function useLocaleString(ref: Ref<number | undefined>) {
   return computed(() => ref.value?.toLocaleString('de-DE') || null);
 }

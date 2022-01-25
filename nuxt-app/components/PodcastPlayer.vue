@@ -288,16 +288,10 @@
 
 <script lang="ts">
 import { computed, defineComponent, ref, watch } from '@nuxtjs/composition-api';
+import { getFullPodcastTitle, getPodcastTypeAndNumber } from 'shared-code';
 import { DOWNLOAD_PODCAST_EVENT_ID } from '../config';
 import { usePodcastPlayer, useClipboard, useShare } from '../composables';
-import {
-  getFullPodcastTitle,
-  getPodcastTypeAndNumber,
-  getSubpagePath,
-  downloadExternalFile,
-  getUrlSlug,
-  trackGoal,
-} from '../helpers';
+import { downloadExternalFile, trackGoal } from '../helpers';
 
 export default defineComponent({
   setup() {
@@ -326,10 +320,7 @@ export default defineComponent({
 
     // Create href to podcast subpage
     const href = computed(
-      () =>
-        fullTitle.value &&
-        podcastPlayer.podcast?.id &&
-        getSubpagePath('podcast', fullTitle.value, podcastPlayer.podcast.id)
+      () => podcastPlayer.podcast && `/podcast/${podcastPlayer.podcast.slug}`
     );
 
     /**
@@ -426,8 +417,8 @@ export default defineComponent({
 
         // Download file
         await downloadExternalFile(
-          podcastPlayer.podcast.audio_file.url,
-          getUrlSlug(fullTitle.value)
+          podcastPlayer.podcast.audio_url,
+          podcastPlayer.podcast.slug
         );
 
         // Track analytic event

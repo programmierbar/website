@@ -48,19 +48,14 @@
 
 <script lang="ts">
 import { defineComponent, PropType, ref } from '@nuxtjs/composition-api';
-import { StrapiPodcast } from 'shared-code';
 import { DOWNLOAD_PODCAST_EVENT_ID } from '../config';
-import {
-  downloadExternalFile,
-  getUrlSlug,
-  getFullPodcastTitle,
-  trackGoal,
-} from '../helpers';
+import { downloadExternalFile, trackGoal } from '../helpers';
+import { PodcastItem } from '../types';
 
 export default defineComponent({
   props: {
     podcast: {
-      type: Object as PropType<StrapiPodcast>,
+      type: Object as PropType<Pick<PodcastItem, 'slug' | 'audio_url'>>,
       required: true,
     },
   },
@@ -76,10 +71,7 @@ export default defineComponent({
       isLoading.value = true;
 
       // Download file
-      await downloadExternalFile(
-        props.podcast.audio_file.url,
-        getUrlSlug(getFullPodcastTitle(props.podcast))
-      );
+      await downloadExternalFile(props.podcast.audio_url, props.podcast.slug);
 
       // Track analytic event
       trackGoal(DOWNLOAD_PODCAST_EVENT_ID);

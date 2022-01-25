@@ -16,7 +16,7 @@
               'hover:text-black',
             (variant === 'default' || variant === 'tag_filter') &&
               'text-sm md:text-base lg:text-lg px-4 md:px-5 pt-1.25 pb-1',
-            variant === 'tag_filter' && tag.isActive
+            variant === 'tag_filter' && tag.is_active
               ? 'bg-lime selection:bg-black text-black selection:text-white'
               : 'bg-gray-800 text-white',
           ]"
@@ -33,10 +33,10 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from '@nuxtjs/composition-api';
-import { StrapiTag } from 'shared-code';
+import { TagItem } from '../types';
 
-interface Tag extends StrapiTag {
-  isActive?: boolean;
+interface Tag extends Pick<TagItem, 'id' | 'name'> {
+  is_active?: boolean;
 }
 
 export default defineComponent({

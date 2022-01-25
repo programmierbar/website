@@ -1,16 +1,10 @@
 import { computed, reactive, Ref, ref, watch } from '@nuxtjs/composition-api';
-import {
-  StrapiPodcast,
-  StrapiMeetup,
-  StrapiSpeaker,
-  StrapiPickOfTheDay,
-  StrapiTag,
-} from 'shared-code';
 import { ADD_TAG_FILTER_EVENT_ID, REMOVE_TAG_FILTER_EVENT_ID } from '../config';
 import { trackGoal } from '../helpers';
+import { TagItem } from '../types';
 
-interface Tag extends StrapiTag {
-  isActive: boolean;
+interface Tag extends Pick<TagItem, 'id' | 'name'> {
+  is_active: boolean;
   occurrence: number;
 }
 
@@ -22,11 +16,7 @@ interface Tag extends StrapiTag {
  * @returns State and methods to use the tag filter.
  */
 export function useTagFilter<
-  Entities extends
-    | StrapiPodcast
-    | StrapiMeetup
-    | StrapiSpeaker
-    | StrapiPickOfTheDay
+  Entities extends { tags: Pick<TagItem, 'id' | 'name'>[] }
 >(input: Ref<Entities[] | null | undefined>) {
   /**
    * Get the most frequently occurring tags from the input.
@@ -51,8 +41,8 @@ export function useTagFilter<
         } else {
           tagList.push({
             ...entityTag,
-            isActive:
-              prevTags?.find(({ id }) => id === entityTag.id)?.isActive ||
+            is_active:
+              prevTags?.find(({ id }) => id === entityTag.id)?.is_active ||
               false,
             occurrence: 1,
           });
@@ -96,14 +86,14 @@ export function useTagFilter<
   const toggleTag = (_: any, index: number) => {
     tags.value.splice(index, 1, {
       ...tags.value[index],
-      isActive: !tags.value[index].isActive,
+      is_active: !tags.value[index].is_active,
     });
   };
 
   // Apply filter and create output
   const output = computed(() => {
     // Get all active tags
-    const activeTags = tags.value.filter((tag) => tag.isActive);
+    const activeTags = tags.value.filter((tag) => tag.is_active);
 
     // Filters input if there is an active tag
     if (activeTags.length) {

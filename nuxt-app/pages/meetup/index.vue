@@ -15,7 +15,7 @@
         >
           {{ meetupPage.intro_heading }}
         </SectionHeading>
-        <MarkdownToHtml
+        <InnerHtml
           class="
             text-lg
             md:text-2xl
@@ -28,9 +28,9 @@
             mt-8
             md:mt-16
           "
-          :markdown="meetupPage.intro_text_1"
+          :html="meetupPage.intro_text_1"
         />
-        <MarkdownToHtml
+        <InnerHtml
           class="
             text-base
             md:text-xl
@@ -44,11 +44,11 @@
             mt-8
             md:mt-6
           "
-          :markdown="meetupPage.intro_text_2"
+          :html="meetupPage.intro_text_2"
         />
 
         <!-- Corona info -->
-        <MarkdownToHtml
+        <InnerHtml
           class="
             text-sm
             md:text-lg
@@ -64,7 +64,7 @@
             md:mt-20
             lg::mt-32
           "
-          :markdown="meetupPage.corona_text"
+          :html="meetupPage.corona_text"
         />
       </div>
     </section>
@@ -73,7 +73,7 @@
     <section class="relative mt-12 md:mt-28 lg:mt-40 mb-14 md:mb-32 lg:mb-52">
       <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
         <SectionHeading element="h2">
-          {{ meetupPage.meetups_heading }}
+          {{ meetupPage.meetup_heading }}
         </SectionHeading>
         <LazyList class="mt-10" :items="meetups" direction="vertical">
           <template #default="{ item, index, viewportItems, addViewportItem }">
@@ -104,30 +104,63 @@ import { computed, defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   FadeAnimation,
+  InnerHtml,
   LazyList,
   LazyListItem,
-  MarkdownToHtml,
   MeetupCard,
   PageCoverImage,
   SectionHeading,
 } from '../../components';
-import { useStrapi, useLoadingScreen, usePageMeta } from '../../composables';
+import { useAsyncData, useLoadingScreen, usePageMeta } from '../../composables';
+import { directus } from '../../services';
+import { MeetupPage, MeetupItem } from '../../types';
 
 export default defineComponent({
   components: {
     Breadcrumbs,
     FadeAnimation,
+    InnerHtml,
     LazyList,
     LazyListItem,
-    MarkdownToHtml,
     MeetupCard,
     PageCoverImage,
     SectionHeading,
   },
   setup() {
-    // Query Strapi about page and members
-    const meetupPage = useStrapi('meetup-page');
-    const meetups = useStrapi('meetups', '?_limit=-1');
+    // Query meetup page and meetups
+    const pageData = useAsyncData(async () => {
+      const [meetupPage, meetups] = await Promise.all([
+        // Meetup page
+        directus
+          .singleton('meetup_page')
+          .read({ fields: '*.*' }) as Promise<MeetupPage>,
+
+        // Meetups
+        (
+          await directus.items('meetups').readMany({
+            fields: [
+              'id',
+              'slug',
+              'start_on',
+              'end_on',
+              'title',
+              'description',
+              'cover_image.*',
+            ],
+            sort: ['-start_on'],
+            limit: -1,
+          })
+        ).data as Pick<
+          MeetupItem,
+          'id' | 'start_on' | 'end_on' | 'title' | 'description' | 'cover_image'
+        >[],
+      ]);
+      return { meetupPage, meetups };
+    });
+
+    // Extract about page and members from page data
+    const meetupPage = computed(() => pageData.value?.meetupPage);
+    const meetups = computed(() => pageData.value?.meetups);
 
     // Set loading screen
     useLoadingScreen(meetupPage, meetups);
@@ -135,14 +168,9 @@ export default defineComponent({
     // Set page meta data
     usePageMeta(meetupPage);
 
-    // Create sorted meetups
-    const sortedMeetups = computed(() =>
-      meetups.value?.sort((a, b) => (a.start_at < b.start_at ? 1 : -1))
-    );
-
     return {
       meetupPage,
-      meetups: sortedMeetups,
+      meetups,
       breadcrumbs: [{ label: 'Meetup' }],
     };
   },

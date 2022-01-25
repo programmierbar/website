@@ -1,5 +1,5 @@
 interface Speaker {
-  academic_title?: string;
+  academic_title?: string | null;
   first_name: string;
   last_name: string;
 }

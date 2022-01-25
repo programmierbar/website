@@ -13,13 +13,11 @@
         "
       />
 
-      <img
-        ref="imageElement"
+      <DirectusImage
+        ref="imageComponent"
         class="w-full h-full object-cover"
-        :src="coverImage.url"
-        :srcset="coverSrcSet"
-        sizes="100vw"
-        :alt="coverImage.alternativeText || ''"
+        :image="coverImage"
+        sizes="xs:100vw sm:100vw md:100vw lg:100vw xl:100vw 2xl:100vw 3xl:100vw"
       />
     </div>
     <ScrollDownMouse />
@@ -28,49 +26,46 @@
 
 <script lang="ts">
 import {
-  computed,
+  ComponentInstance,
   defineComponent,
   PropType,
   ref,
 } from '@nuxtjs/composition-api';
-import { StrapiImage } from 'shared-code';
 import { useEventListener, useWindow } from '../composables';
-import { getImageSrcSet } from '../helpers';
+import { FileItem } from '../types';
+import DirectusImage from './DirectusImage.vue';
 import ScrollDownMouse from './ScrollDownMouse.vue';
 
 export default defineComponent({
   components: {
+    DirectusImage,
     ScrollDownMouse,
   },
   props: {
     coverImage: {
-      type: Object as PropType<StrapiImage>,
+      type: Object as PropType<FileItem>,
       required: true,
     },
   },
-  setup(props) {
-    // Create podcast cover element reference
-    const imageElement = ref<HTMLImageElement>();
-
-    // Create cover src set
-    const coverSrcSet = computed(() => getImageSrcSet(props.coverImage));
+  setup() {
+    // Create image component reference
+    const imageComponent = ref<ComponentInstance>();
 
     /**
      * It handles the scroll event and adds a
      * parallax effect to the image element.
      */
     const handleScroll = () => {
-      imageElement.value!.style.transform = `translateY(${
-        window.scrollY * 0.15
-      }px)`;
+      (
+        imageComponent.value!.$el as HTMLImageElement
+      ).style.transform = `translateY(${window.scrollY * 0.15}px)`;
     };
 
     // Add scroll event listener
     useEventListener(useWindow(), 'scroll', handleScroll);
 
     return {
-      imageElement,
-      coverSrcSet,
+      imageComponent,
     };
   },
 });

@@ -6,20 +6,20 @@
 
 <script lang="ts">
 import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
-import { StrapiMeetup } from 'shared-code';
+import { MeetupItem } from '../types';
 
 export default defineComponent({
   props: {
     meetup: {
-      type: Object as PropType<StrapiMeetup>,
+      type: Object as PropType<Pick<MeetupItem, 'start_on' | 'end_on'>>,
       required: true,
     },
   },
   setup(props) {
     // Get start and end time
     const startAndEndTime = computed(() => {
-      const startDate = new Date(props.meetup.start_at);
-      const endDate = new Date(props.meetup.end_at);
+      const startDate = new Date(props.meetup.start_on);
+      const endDate = new Date(props.meetup.end_on);
 
       // If start and end are on the same day
       if (startDate.toDateString() === endDate.toDateString()) {

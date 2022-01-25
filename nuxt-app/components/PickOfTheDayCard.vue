@@ -51,28 +51,17 @@
         />
 
         <!-- Background image -->
-        <img
+        <DirectusImage
           v-if="pickOfTheDay.image"
           class="w-full h-full object-cover"
-          :src="pickOfTheDay.image.url"
-          :srcset="imageSrcSet"
+          :image="pickOfTheDay.image"
+          :alt="pickOfTheDay.name"
           :sizes="
             variant === 'large'
-              ? `
-              (min-width: 1536px) 722px,
-              (min-width: 1024px) 43vw,
-              (min-width: 768px) 74vw,
-              90vw
-            `
-              : `
-              (min-width: 1536px) 460px,
-              (min-width: 1024px) 28vw,
-              (min-width: 768px) 74vw,
-              90vw
-            `
+              ? 'xs:90vw sm:90vw md:74vw lg:43vw xl:43vw 2xl:722px'
+              : 'xs:90vw sm:90vw md:74vw lg:28vw xl:28vw 2xl:460px'
           "
           loading="lazy"
-          :alt="pickOfTheDay.image.alternativeText || pickOfTheDay.name"
         />
       </div>
     </div>
@@ -147,6 +136,7 @@
           >
             <!-- Podcast episode -->
             <NuxtLink
+              v-if="pickOfTheDay.podcast"
               class="
                 text-xs
                 xs:text-sm
@@ -170,7 +160,7 @@
             </NuxtLink>
 
             <!-- Description -->
-            <MarkdownToHtml
+            <InnerHtml
               class="
                 text-sm
                 xs:text-base
@@ -187,7 +177,7 @@
                 lg:delay-300
                 lg:group-hover:delay-400
               "
-              :markdown="pickOfTheDay.description"
+              :html="pickOfTheDay.description"
               variant="pick_of_the_day_card"
             />
 
@@ -246,27 +236,34 @@ import {
   PropType,
   useRouter,
 } from '@nuxtjs/composition-api';
-import { StrapiPickOfTheDay } from 'shared-code';
-import {
-  getImageSrcSet,
-  getFullPodcastTitle,
-  getPodcastTypeAndNumber,
-  getPodcastTitleDivider,
-  getSubpagePath,
-} from '../helpers';
+import { getPodcastTypeAndNumber, getPodcastTitleDivider } from 'shared-code';
+import { PickOfTheDayItem, PodcastItem, TagItem } from '../types';
+import DirectusImage from './DirectusImage.vue';
 // import LikeButton from './LikeButton.vue';
-import MarkdownToHtml from './MarkdownToHtml.vue';
+import InnerHtml from './InnerHtml.vue';
 import TagList from './TagList.vue';
 
 export default defineComponent({
   components: {
+    DirectusImage,
     // LikeButton,
-    MarkdownToHtml,
+    InnerHtml,
     TagList,
   },
   props: {
     pickOfTheDay: {
-      type: Object as PropType<StrapiPickOfTheDay>,
+      type: Object as PropType<
+        Pick<
+          PickOfTheDayItem,
+          'name' | 'website_url' | 'description' | 'image'
+        > & {
+          podcast: Pick<
+            PodcastItem,
+            'slug' | 'type' | 'number' | 'title'
+          > | null;
+          tags: Pick<TagItem, 'id' | 'name'>[];
+        }
+      >,
       required: true,
     },
     variant: {
@@ -278,33 +275,29 @@ export default defineComponent({
     // Add router
     const router = useRouter();
 
-    // Create image src set
-    const imageSrcSet = computed(() =>
-      getImageSrcSet(props.pickOfTheDay.image)
-    );
-
     // Create podcast href to podcast subpage
-    const podcastHref = computed(() =>
-      getSubpagePath(
-        'podcast',
-        getFullPodcastTitle(props.pickOfTheDay.podcast),
-        props.pickOfTheDay.podcast.id
-      )
+    const podcastHref = computed(
+      () =>
+        props.pickOfTheDay.podcast &&
+        `/podcast/${props.pickOfTheDay.podcast.slug}`
     );
 
     // Create podcast type and number
-    const podcastTypeAndNumber = computed(() =>
-      getPodcastTypeAndNumber(props.pickOfTheDay.podcast)
+    const podcastTypeAndNumber = computed(
+      () =>
+        props.pickOfTheDay.podcast &&
+        getPodcastTypeAndNumber(props.pickOfTheDay.podcast)
     );
 
     // Create podcast title divider
-    const podcastTitleDivider = computed(() =>
-      getPodcastTitleDivider(props.pickOfTheDay.podcast)
+    const podcastTitleDivider = computed(
+      () =>
+        props.pickOfTheDay.podcast &&
+        getPodcastTitleDivider(props.pickOfTheDay.podcast)
     );
 
     return {
       router,
-      imageSrcSet,
       podcastHref,
       podcastTypeAndNumber,
       podcastTitleDivider,

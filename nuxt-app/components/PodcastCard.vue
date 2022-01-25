@@ -2,13 +2,12 @@
   <div class="w-48 md:w-64 lg:w-96 relative">
     <NuxtLink :to="href" draggable="false" data-cursor-more>
       <!-- Podcast cover -->
-      <img
+      <DirectusImage
         class="w-48 md:w-64 lg:w-96 h-48 md:h-64 lg:h-96 pointer-events-none"
-        :src="podcast.cover_image.url"
-        :srcset="coverSrcSet"
-        sizes="(min-width: 1024px) 384px, (min-width: 768px) 256px, 192px"
+        :image="podcast.cover_image"
+        :alt="fullTitle"
+        sizes="xs:192px md:256px lg:384px"
         loading="lazy"
-        :alt="podcast.cover_image.alternativeText || fullTitle"
       />
     </NuxtLink>
 
@@ -70,20 +69,34 @@
 
 <script lang="ts">
 import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
-import { StrapiPodcast } from 'shared-code';
-import { usePodcastPlayer } from '../composables';
 import {
-  getImageSrcSet,
-  getPodcastTypeString,
+  getPodcastType,
   getPodcastTitleDivider,
   getFullPodcastTitle,
-  getSubpagePath,
-} from '../helpers';
+} from 'shared-code';
+import { usePodcastPlayer } from '../composables';
+import { PodcastItem } from '../types';
+import DirectusImage from './DirectusImage.vue';
 
 export default defineComponent({
+  components: {
+    DirectusImage,
+  },
   props: {
     podcast: {
-      type: Object as PropType<StrapiPodcast>,
+      type: Object as PropType<
+        Pick<
+          PodcastItem,
+          | 'id'
+          | 'slug'
+          | 'published_on'
+          | 'type'
+          | 'number'
+          | 'title'
+          | 'cover_image'
+          | 'audio_url'
+        >
+      >,
       required: true,
     },
   },
@@ -107,20 +120,15 @@ export default defineComponent({
 
     // Create local date string
     const date = computed(() =>
-      new Date(props.podcast.published_at).toLocaleDateString('de-DE', {
+      new Date(props.podcast.published_on).toLocaleDateString('de-DE', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
       })
     );
 
-    // Create cover src set
-    const coverSrcSet = computed(() =>
-      getImageSrcSet(props.podcast.cover_image)
-    );
-
     // Create podcast type
-    const type = computed(() => getPodcastTypeString(props.podcast));
+    const type = computed(() => getPodcastType(props.podcast));
 
     // Create divider between podcast type and title
     const divider = computed(() => getPodcastTitleDivider(props.podcast));
@@ -129,15 +137,12 @@ export default defineComponent({
     const fullTitle = computed(() => getFullPodcastTitle(props.podcast));
 
     // Create href to podcast subpage
-    const href = computed(() =>
-      getSubpagePath('podcast', fullTitle.value, props.podcast.id)
-    );
+    const href = computed(() => `/podcast/${props.podcast.slug}`);
 
     return {
       podcastPlayer,
       playOrPausePodcast,
       date,
-      coverSrcSet,
       type,
       divider,
       fullTitle,

@@ -1,7 +1,7 @@
 import { MetaInfo } from 'vue-meta/types/vue-meta';
-import removeMarkdown from 'remove-markdown';
-import { StrapiImage } from 'shared-code';
+import { FileItem } from '../types';
 import {
+  DIRECTUS_CMS_URL,
   BUZZSPROUT_TRACKING_URL,
   TWITTER_HANDLE,
   WEBSITE_NAME,
@@ -14,7 +14,7 @@ interface Data {
   path: string;
   title: string;
   description?: string;
-  image?: StrapiImage;
+  image?: FileItem;
   audioUrl?: string;
   publishedAt?: string;
   firstName?: string;
@@ -54,7 +54,7 @@ export function getMetaInfo({
   // Trim description, remove markdown, and replace multiple whitespace
   // characters, including line breaks, with a single space
   const trimmedDescription = getTrimmedString(
-    removeMarkdown(description).replace(/\s+/g, ' '),
+    description.replace(/<[^<>]+>/g, '').replace(/\s+/g, ' '),
     160
   );
 
@@ -128,11 +128,16 @@ export function getMetaInfo({
   };
 
   // Add image to meta info if available
-  if (image) {
-    const imageUrl = image.formats.lg?.url || image.url;
-    const imageType = image.formats.lg?.mime || image.mime;
-    const imageWidth = (image.formats.lg?.width || image.width).toString();
-    const imageHeight = (image.formats.lg?.height || image.height).toString();
+  if (image && image.width && image.height) {
+    const imageMinSize = 512;
+    const widthIsSmaller = image.width < image.height;
+    const imageWidth = widthIsSmaller
+      ? Math.round((image.width / image.height) * imageMinSize)
+      : imageMinSize;
+    const imageHeight = !widthIsSmaller
+      ? Math.round((image.height / image.width) * imageMinSize)
+      : imageMinSize;
+    const imageUrl = `${DIRECTUS_CMS_URL}/assets/${image.id}?width=${imageWidth}&height=${imageHeight}&fit=cover&quality=70`;
     metaInfo.meta = metaInfo.meta?.concat([
       // Open Graph protocol
       {
@@ -143,17 +148,17 @@ export function getMetaInfo({
       {
         hid: 'og:image:type',
         property: 'og:image:type',
-        content: imageType,
+        content: image.type,
       },
       {
         hid: 'og:image:width',
         property: 'og:image:width',
-        content: imageWidth,
+        content: imageWidth.toString(),
       },
       {
         hid: 'og:image:height',
         property: 'og:image:height',
-        content: imageHeight,
+        content: imageHeight.toString(),
       },
 
       // Twitter Cards
@@ -165,20 +170,20 @@ export function getMetaInfo({
     ]);
 
     // Add alternative text if available
-    if (image.alternativeText) {
+    if (image.title) {
       metaInfo.meta = metaInfo.meta?.concat([
         // Open Graph protocol
         {
           hid: 'og:image:alt',
           property: 'og:image:alt',
-          content: image.alternativeText,
+          content: image.title,
         },
 
         // Twitter Cards
         {
           hid: 'twitter:image:alt',
           property: 'twitter:image:alt',
-          content: image.alternativeText,
+          content: image.title,
         },
       ]);
     }

@@ -16,7 +16,7 @@
           </SectionHeading>
 
           <!-- Description -->
-          <MarkdownToHtml
+          <InnerHtml
             class="
               text-base
               md:text-xl
@@ -28,7 +28,7 @@
               mt-8
               md:mt-14
             "
-            :markdown="podcast.description"
+            :html="podcast.description"
           />
 
           <!-- Podcast tags -->
@@ -131,6 +131,7 @@ import {
   useRoute,
   useRouter,
 } from '@nuxtjs/composition-api';
+import { getPodcastType, getFullPodcastTitle } from 'shared-code';
 import {
   APPLE_PODCASTS_URL,
   BUZZSPROUT_RSS_FEED_URL,
@@ -143,10 +144,10 @@ import {
 } from '../../config';
 import {
   Breadcrumbs,
+  InnerHtml,
   FeedbackSection,
   // LikeButton,
   LinkButton,
-  MarkdownToHtml,
   PickOfTheDayList,
   PodcastBanner,
   PodcastSlider,
@@ -156,24 +157,26 @@ import {
   TagList,
 } from '../../components';
 import {
-  useStrapi,
+  useAsyncData,
   useLoadingScreen,
   useLocaleString,
 } from '../../composables';
+import { getMetaInfo, trackGoal } from '../../helpers';
+import { directus } from '../../services';
 import {
-  getPodcastTypeString,
-  getMetaInfo,
-  getFullPodcastTitle,
-  trackGoal,
-} from '../../helpers';
+  PodcastItem,
+  SpeakerItem,
+  TagItem,
+  PickOfTheDayItem,
+} from '../../types';
 
 export default defineComponent({
   components: {
     Breadcrumbs,
+    InnerHtml,
     FeedbackSection,
     // LikeButton,
     LinkButton,
-    MarkdownToHtml,
     PickOfTheDayList,
     PodcastBanner,
     PodcastSlider,
@@ -183,21 +186,185 @@ export default defineComponent({
     TagList,
   },
   setup() {
-    // Add router
+    // Add route and router
+    const route = useRoute();
     const router = useRouter();
 
-    // Get route and podcast ID param
-    const route = useRoute();
-    const podcastIdPath = computed(
-      () => `/${route.value.params.slug.split('-').pop()}` as const
-    );
+    // Query podcast, pick of the day,
+    // speaker count and related podcasts
+    const pageData = useAsyncData(async () => {
+      const [podcast, pickOfTheDayCount, speakerCount] = await Promise.all([
+        // Podcast
+        (
+          await directus.items('podcasts').readMany({
+            fields: [
+              'id',
+              'published_on',
+              'type',
+              'number',
+              'title',
+              'description',
+              'cover_image.*',
+              'banner_image.*',
+              'audio_url',
+              'apple_url',
+              'google_url',
+              'spotify_url',
+              'speakers.speaker.id',
+              'speakers.speaker.slug',
+              'speakers.speaker.academic_title',
+              'speakers.speaker.first_name',
+              'speakers.speaker.last_name',
+              'speakers.speaker.description',
+              'speakers.speaker.event_image.*',
+              'picks_of_the_day.id',
+              'picks_of_the_day.name',
+              'picks_of_the_day.website_url',
+              'picks_of_the_day.description',
+              'picks_of_the_day.image.*',
+              'tags.tag.id',
+              'tags.tag.name',
+            ],
+            filter: { slug: route.value.params.slug },
+            limit: 1,
+          })
+        ).data?.map(({ speakers, tags, ...rest }) => ({
+          ...rest,
+          speakers: (
+            speakers as {
+              speaker: Pick<
+                SpeakerItem,
+                | 'id'
+                | 'slug'
+                | 'academic_title'
+                | 'first_name'
+                | 'last_name'
+                | 'description'
+                | 'event_image'
+              >;
+            }[]
+          )
+            .map(({ speaker }) => speaker)
+            .filter((speaker) => speaker),
+          tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
+            .map(({ tag }) => tag)
+            .filter((tag) => tag),
+        }))[0] as Pick<
+          PodcastItem,
+          | 'id'
+          | 'slug'
+          | 'published_on'
+          | 'type'
+          | 'number'
+          | 'title'
+          | 'description'
+          | 'cover_image'
+          | 'banner_image'
+          | 'audio_url'
+          | 'apple_url'
+          | 'google_url'
+          | 'spotify_url'
+          | 'tags'
+        > & {
+          speakers: Pick<
+            SpeakerItem,
+            | 'id'
+            | 'slug'
+            | 'academic_title'
+            | 'first_name'
+            | 'last_name'
+            | 'description'
+            | 'event_image'
+          >[];
+          picks_of_the_day: Pick<
+            PickOfTheDayItem,
+            'id' | 'name' | 'website_url' | 'description' | 'image'
+          >[];
+        },
 
-    // Query Strapi podcast
-    const podcast = useStrapi('podcasts', podcastIdPath);
+        // Pick of the day count
+        (
+          await directus.items('picks_of_the_day').readMany({
+            limit: 0,
+            meta: 'total_count',
+          })
+        ).meta?.total_count,
 
-    // Query Strapi pick of the day and speaker count
-    const pickOfTheDayCount = useStrapi('picks-of-the-day', '/count');
-    const speakerCount = useStrapi('speakers', '/count');
+        // Speaker count
+        (
+          await directus.items('speakers').readMany({
+            limit: 0,
+            meta: 'total_count',
+          })
+        ).meta?.total_count,
+      ]);
+
+      // Throw error if podcast does not exist
+      if (!podcast) {
+        throw new Error('The podcast was not found.');
+      }
+
+      // Query related podcasts
+      const relatedPodcasts = (
+        podcast.tags.length
+          ? (
+              await directus.items('podcasts').readMany({
+                fields: [
+                  'id',
+                  'slug',
+                  'published_on',
+                  'type',
+                  'number',
+                  'title',
+                  'cover_image.*',
+                  'audio_url',
+                ],
+                filter: {
+                  _and: [
+                    {
+                      id: {
+                        _neq: podcast.id,
+                      },
+                    },
+                    {
+                      tags: {
+                        tag: {
+                          name: {
+                            _in: podcast.tags.map(({ name }) => name),
+                          },
+                        },
+                      },
+                    },
+                  ],
+                } as any,
+                sort: ['-published_on'],
+                limit: 15,
+              })
+            ).data
+          : []
+      ) as Pick<
+        PodcastItem,
+        | 'id'
+        | 'slug'
+        | 'published_on'
+        | 'type'
+        | 'number'
+        | 'title'
+        | 'cover_image'
+        | 'audio_url'
+      >[];
+
+      // Return podcast, pick of the day and
+      // speaker count and related podcasts
+      return { podcast, pickOfTheDayCount, speakerCount, relatedPodcasts };
+    });
+
+    // Extract podcast, pick of the day, speaker
+    // and related podcasts count from page data
+    const podcast = computed(() => pageData.value?.podcast);
+    const pickOfTheDayCount = computed(() => pageData.value?.pickOfTheDayCount);
+    const speakerCount = computed(() => pageData.value?.speakerCount);
+    const relatedPodcasts = computed(() => pageData.value?.relatedPodcasts);
 
     // Set loading screen
     useLoadingScreen(podcast, pickOfTheDayCount, speakerCount);
@@ -214,7 +381,7 @@ export default defineComponent({
             path: route.value.path,
             title: getFullPodcastTitle(podcast.value),
             description: podcast.value.description,
-            publishedAt: podcast.value.published_at.split('T')[0],
+            publishedAt: podcast.value.published_on.split('T')[0],
             image: podcast.value.cover_image,
             audioUrl: podcast.value.audio_url || undefined,
           })
@@ -222,9 +389,7 @@ export default defineComponent({
     );
 
     // Create podcast type
-    const type = computed(
-      () => podcast.value && getPodcastTypeString(podcast.value)
-    );
+    const type = computed(() => podcast.value && getPodcastType(podcast.value));
 
     // Create breadcrumb list
     const breadcrumbs = computed(() => [
@@ -259,23 +424,6 @@ export default defineComponent({
         eventId: OPEN_RSS_FEED_EVENT_ID,
       },
     ]);
-
-    // Create related podcasts query string
-    const relatedPodcastsQuery = computed(() =>
-      podcast.value && podcast.value.tags.length
-        ? (`?${podcast.value.tags
-            .map(
-              (tag, index) =>
-                `_where[_or][${index}][0][id_ne]=${
-                  podcast.value!.id
-                }&_where[_or][${index}][1][tags_in]=${tag.id}`
-            )
-            .join('&')}&_sort=published_at:DESC` as const)
-        : ('?_limit=0' as const)
-    );
-
-    // Query related podcast from Strapi
-    const relatedPodcasts = useStrapi('podcasts', relatedPodcastsQuery);
 
     return {
       router,

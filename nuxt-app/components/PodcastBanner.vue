@@ -164,7 +164,7 @@
       </div>
 
       <!-- Speaker banner image -->
-      <img
+      <DirectusImage
         v-if="podcast.banner_image"
         class="
           w-52
@@ -182,14 +182,9 @@
           opacity-90
         "
         :class="podcast.type === 'deep_dive' ? 'mix-blend-multiply' : '-z-1'"
-        :src="podcast.banner_image.url"
-        :srcset="bannerSrcSet"
-        sizes="
-          (min-width: 1024px) 448px,
-          (min-width: 768px) 384px,
-          0px
-        "
-        :alt="podcast.banner_image.alternativeText || speakerName"
+        :image="podcast.banner_image"
+        :alt="speakerName"
+        sizes="md:384px lg:448px"
       />
     </div>
   </div>
@@ -197,18 +192,35 @@
 
 <script lang="ts">
 import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
-import { StrapiPodcast } from 'shared-code';
+import { getPodcastType, getFullSpeakerName } from 'shared-code';
 import { usePodcastPlayer } from '../composables';
-import {
-  getPodcastTypeString,
-  getImageSrcSet,
-  getFullSpeakerName,
-} from '../helpers';
+import { PodcastItem, SpeakerItem } from '../types';
+import DirectusImage from './DirectusImage.vue';
 
 export default defineComponent({
+  components: {
+    DirectusImage,
+  },
   props: {
     podcast: {
-      type: Object as PropType<StrapiPodcast>,
+      type: Object as PropType<
+        Pick<
+          PodcastItem,
+          | 'id'
+          | 'published_on'
+          | 'slug'
+          | 'type'
+          | 'number'
+          | 'title'
+          | 'banner_image'
+          | 'audio_url'
+        > & {
+          speakers: Pick<
+            SpeakerItem,
+            'academic_title' | 'first_name' | 'last_name'
+          >[];
+        }
+      >,
       required: true,
     },
   },
@@ -232,7 +244,7 @@ export default defineComponent({
 
     // Create local date string
     const date = computed(() =>
-      new Date(props.podcast.published_at).toLocaleDateString('de-DE', {
+      new Date(props.podcast.published_on).toLocaleDateString('de-DE', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -240,14 +252,7 @@ export default defineComponent({
     );
 
     // Create podcast type
-    const type = computed(() => getPodcastTypeString(props.podcast));
-
-    // Create banner src set
-    const bannerSrcSet = computed(() =>
-      props.podcast.banner_image
-        ? getImageSrcSet(props.podcast.banner_image)
-        : undefined
-    );
+    const type = computed(() => getPodcastType(props.podcast));
 
     // Create speaker name
     const speakerName = computed(() => {
@@ -260,7 +265,6 @@ export default defineComponent({
       playOrPausePodcast,
       date,
       type,
-      bannerSrcSet,
       speakerName,
     };
   },

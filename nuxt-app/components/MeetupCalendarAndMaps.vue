@@ -80,7 +80,6 @@ import {
   PropType,
   reactive,
 } from '@nuxtjs/composition-api';
-import { StrapiMeetup } from 'shared-code';
 import {
   DOWNLOAD_CALEDNAR_EVENT_EVENT_ID,
   GOOGLE_MAPS_URL,
@@ -89,12 +88,24 @@ import {
   OPEN_GOOGLE_MAPS_EVENT_ID,
   OPEN_MEETUP_EVENT_ID,
 } from '../config';
-import { getUrlSlug, trackGoal } from '../helpers';
+import { trackGoal } from '../helpers';
+import { MeetupItem } from '../types';
 
 export default defineComponent({
   props: {
     meetup: {
-      type: Object as PropType<StrapiMeetup>,
+      type: Object as PropType<
+        Pick<
+          MeetupItem,
+          | 'id'
+          | 'slug'
+          | 'published_on'
+          | 'start_on'
+          | 'end_on'
+          | 'title'
+          | 'meetup_url'
+        >
+      >,
       required: true,
     },
   },
@@ -118,11 +129,11 @@ export default defineComponent({
     // Show icons if meetup is not over yet
     onMounted(() => {
       // Check if meetup is not over yet
-      if (new Date(props.meetup.end_at) > new Date()) {
+      if (new Date(props.meetup.end_on) > new Date()) {
         // Add Google Calendar URL
         const { title } = props.meetup;
-        const startAt = getCalendarDate(props.meetup.start_at);
-        const endAt = getCalendarDate(props.meetup.end_at);
+        const startAt = getCalendarDate(props.meetup.start_on);
+        const endAt = getCalendarDate(props.meetup.end_on);
         icons.googleCalendarUrl = encodeURI(
           `http://www.google.com/calendar/event?action=TEMPLATE&text=${title}&dates=${startAt}/${endAt}`
         );
@@ -135,9 +146,9 @@ export default defineComponent({
             'PRODID:https://www.programmier.bar/\n',
             'BEGIN:VEVENT\n',
             `UID:meetup-${props.meetup.id}@programmier.bar\n`,
-            `DTSTAMP:${getCalendarDate(props.meetup.created_at)}\n`,
-            `DTSTART:${getCalendarDate(props.meetup.start_at)}\n`,
-            `DTEND:${getCalendarDate(props.meetup.end_at)}\n`,
+            `DTSTAMP:${getCalendarDate(props.meetup.published_on)}\n`,
+            `DTSTART:${getCalendarDate(props.meetup.start_on)}\n`,
+            `DTEND:${getCalendarDate(props.meetup.end_on)}\n`,
             `SUMMARY:${props.meetup.title}\n`,
             'END:VEVENT\n',
             'END:VCALENDAR',
@@ -149,7 +160,7 @@ export default defineComponent({
         icons.appleCalendarUrl = URL.createObjectURL(blob);
 
         // Add meetup title slug
-        icons.titleSlug = getUrlSlug(props.meetup.title);
+        icons.titleSlug = props.meetup.slug;
 
         // Add Google Maps URL
         icons.googleMapsUrl = GOOGLE_MAPS_URL;

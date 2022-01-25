@@ -1,5 +1,5 @@
 <template>
-  <div v-if="aboutPage && members">
+  <div v-if="aboutPage && podcastCrewMembers && behindTheScenesMembers">
     <section class="relative overflow-hidden md:overflow-unset">
       <!-- Page cover -->
       <PageCoverImage :cover-image="aboutPage.cover_image" />
@@ -15,7 +15,7 @@
         >
           {{ aboutPage.podcast_crew_heading }}
         </SectionHeading>
-        <p
+        <InnerHtml
           class="
             text-lg
             md:text-2xl
@@ -25,12 +25,12 @@
             leading-normal
             md:leading-normal
             lg:leading-normal
+            space-y-8
             mt-8
             md:mt-16
           "
-        >
-          {{ aboutPage.intro_text }}
-        </p>
+          :html="aboutPage.intro_text"
+        />
 
         <!-- Podcast crew members -->
         <ul class="flex justify-between flex-wrap">
@@ -74,51 +74,111 @@
 import { computed, defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
+  InnerHtml,
   MemberCard,
   PageCoverImage,
   SectionHeading,
 } from '../components';
-import { useStrapi, useLoadingScreen, usePageMeta } from '../composables';
+import { useAsyncData, useLoadingScreen, usePageMeta } from '../composables';
+import { directus } from '../services';
+import { AboutPage, MemberItem } from '../types';
 
 export default defineComponent({
   components: {
     Breadcrumbs,
+    InnerHtml,
     MemberCard,
     PageCoverImage,
     SectionHeading,
   },
   setup() {
-    // Query Strapi about page and members
-    const aboutPage = useStrapi('about-page');
-    const members = useStrapi('members');
+    // Query about page and members
+    const pageData = useAsyncData(async () => {
+      const [aboutPage, podcastCrewMembers, behindTheScenesMembers] =
+        await Promise.all([
+          // About page
+          directus
+            .singleton('about_page')
+            .read({ fields: '*.*' }) as Promise<AboutPage>,
+
+          // Podcast crew members
+          (
+            await directus.items('members').readMany({
+              fields: [
+                'id',
+                'first_name',
+                'last_name',
+                'task_area',
+                'occupation',
+                'description',
+                'normal_image.*',
+                'action_image.*',
+              ],
+              filter: {
+                task_area: 'podcast_crew',
+              },
+            })
+          ).data as Pick<
+            MemberItem,
+            | 'id'
+            | 'first_name'
+            | 'last_name'
+            | 'task_area'
+            | 'occupation'
+            | 'description'
+            | 'normal_image'
+            | 'action_image'
+          >[],
+
+          // Behind the Scenes members
+          (
+            await directus.items('members').readMany({
+              fields: [
+                'id',
+                'first_name',
+                'last_name',
+                'task_area',
+                'occupation',
+                'description',
+                'normal_image.*',
+                'action_image.*',
+              ],
+              filter: {
+                task_area: 'behind_the_scenes',
+              },
+            })
+          ).data as Pick<
+            MemberItem,
+            | 'id'
+            | 'first_name'
+            | 'last_name'
+            | 'task_area'
+            | 'occupation'
+            | 'description'
+            | 'normal_image'
+            | 'action_image'
+          >[],
+        ]);
+      return { aboutPage, podcastCrewMembers, behindTheScenesMembers };
+    });
+
+    // Extract about page and members
+    const aboutPage = computed(() => pageData.value?.aboutPage);
+    const podcastCrewMembers = computed(
+      () => pageData.value?.podcastCrewMembers
+    );
+    const behindTheScenesMembers = computed(
+      () => pageData.value?.behindTheScenesMembers
+    );
 
     // Set loading screen
-    useLoadingScreen(aboutPage, members);
+    useLoadingScreen(aboutPage, podcastCrewMembers, behindTheScenesMembers);
 
     // Set page meta data
     usePageMeta(aboutPage);
 
-    // Create podcast crew memeber list
-    const podcastCrewMembers = computed(() =>
-      members.value
-        ?.filter((member) => member.task_area === 'podcast_crew')
-        .sort((a, b) =>
-          (a.position || Infinity) < (b.position || Infinity) ? -1 : 1
-        )
-    );
-
-    // Create behind the scenes memeber list
-    const behindTheScenesMembers = computed(() =>
-      members.value
-        ?.filter((member) => member.task_area === 'behind_the_scenes')
-        .sort((a, b) =>
-          (a.position || Infinity) < (b.position || Infinity) ? -1 : 1
-        )
-    );
-
     return {
       aboutPage,
-      members,
       podcastCrewMembers,
       behindTheScenesMembers,
       breadcrumbs: [{ label: 'Über uns' }],

@@ -5,12 +5,15 @@ import {
   watch,
   toRefs,
 } from '@nuxtjs/composition-api';
-import { StrapiPodcast } from 'shared-code';
 import { PAUSE_PODCAST_EVENT_ID, PLAY_PODCAST_EVENT_ID } from '../config';
 import { trackGoal } from '../helpers';
+import { PodcastItem } from '../types';
 
 // Create global references
-const podcast = ref<StrapiPodcast>();
+const podcast =
+  ref<
+    Pick<PodcastItem, 'id' | 'slug' | 'type' | 'number' | 'title' | 'audio_url'>
+  >();
 const audioElement = ref<HTMLAudioElement>();
 const audioState = reactive({
   volume: 1,
@@ -86,7 +89,12 @@ export function usePodcastPlayer() {
    *
    * @param nextPodcast The next podcast.
    */
-  const setPodcast = (nextPodcast: StrapiPodcast) => {
+  const setPodcast = (
+    nextPodcast: Pick<
+      PodcastItem,
+      'id' | 'slug' | 'type' | 'number' | 'title' | 'audio_url'
+    >
+  ) => {
     if (audioElement.value) {
       // Pause prevoius podcast if necessary
       if (!audioState.paused) {
@@ -95,8 +103,7 @@ export function usePodcastPlayer() {
 
       // Set next podcast
       podcast.value = nextPodcast;
-      audioElement.value.src =
-        nextPodcast.audio_url || nextPodcast.audio_file.url;
+      audioElement.value.src = nextPodcast.audio_url;
 
       // Update state when metadata has loaded
       audioElement.value.addEventListener('loadedmetadata', () => {

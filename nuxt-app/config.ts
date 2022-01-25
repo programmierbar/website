@@ -1,5 +1,5 @@
 // Webiste config
-export const STRAPI_CMS_URL = 'https://programmierbar-323408.ey.r.appspot.com';
+export const DIRECTUS_CMS_URL = 'https://admin.programmier.bar';
 export const SEND_CONTACT_EMAIL_URL =
   'https://europe-west3-programmierbar-323408.cloudfunctions.net/sendContactEmail';
 export const BUZZSPROUT_TRACKING_URL =

@@ -60,7 +60,7 @@
           "
         >
           <!-- Profile image -->
-          <img
+          <DirectusImage
             class="
               w-44
               sm:w-52
@@ -79,17 +79,9 @@
               rounded-full
               overflow-hidden
             "
-            :src="speaker.profile_image.url"
-            :srcset="profileImageSrcSet"
-            sizes="
-              (min-width: 2000px) 480px,
-              (min-width: 1536px) 448px,
-              (min-width: 1280px) 384px,
-              (min-width: 1024px) 320px,
-              (min-width: 640px) 208px,
-              176px
-            "
-            :alt="speaker.profile_image.alternativeText || fullName"
+            :image="speaker.profile_image"
+            :alt="fullName"
+            sizes="xs:176px sm:208px lg:320px xl:384px 2xl:448 3xl:480px"
           />
 
           <!-- Name, Occupation & Links -->
@@ -144,7 +136,7 @@
         </div>
 
         <!-- Description -->
-        <MarkdownToHtml
+        <InnerHtml
           class="
             text-base
             md:text-xl
@@ -157,7 +149,7 @@
             md:mt-24
             xl:mt-36
           "
-          :markdown="speaker.description"
+          :html="speaker.description"
         />
 
         <!-- Speaker tags -->
@@ -239,6 +231,7 @@ import {
   useRoute,
   useRouter,
 } from '@nuxtjs/composition-api';
+import { getFullSpeakerName } from 'shared-code';
 import {
   OPEN_SPEAKER_GITHUB_EVENT_ID,
   OPEN_SPEAKER_INSTAGRAM_EVENT_ID,
@@ -249,55 +242,173 @@ import {
 } from '../../config';
 import {
   Breadcrumbs,
+  DirectusImage,
   FeedbackSection,
+  InnerHtml,
   // LikeButton,
   LinkButton,
-  MarkdownToHtml,
   PickOfTheDayList,
   PodcastSlider,
   TagList,
   SectionHeading,
 } from '../../components';
 import {
-  useStrapi,
+  useAsyncData,
   useLoadingScreen,
   useLocaleString,
 } from '../../composables';
+import { getMetaInfo, trackGoal } from '../../helpers';
+import { directus } from '../../services';
 import {
-  getImageSrcSet,
-  getFullSpeakerName,
-  getMetaInfo,
-  trackGoal,
-} from '../../helpers';
+  SpeakerItem,
+  PodcastItem,
+  TagItem,
+  PickOfTheDayItem,
+} from '../../types';
 
 export default defineComponent({
   components: {
     Breadcrumbs,
+    DirectusImage,
     FeedbackSection,
+    InnerHtml,
     // LikeButton,
     LinkButton,
-    MarkdownToHtml,
     PickOfTheDayList,
     PodcastSlider,
     TagList,
     SectionHeading,
   },
   setup() {
-    // Add router
+    // Add route and router
+    const route = useRoute();
     const router = useRouter();
 
-    // Get route and speaker ID param
-    const route = useRoute();
-    const speakerIdPath = computed(
-      () => `/${route.value.params.slug.split('-').pop()}` as const
-    );
+    // Query speaker, podcast and pick of the day count
+    const pageData = useAsyncData(async () => {
+      // Query speaker, podcast and pick of the day count async
+      const [speaker, podcastCount, pickOfTheDayCount] = await Promise.all([
+        // Speaker
+        (
+          await directus.items('speakers').readMany({
+            fields: [
+              'academic_title',
+              'first_name',
+              'last_name',
+              'occupation',
+              'description',
+              'profile_image.*',
+              'website_url',
+              'twitter_url',
+              'linkedin_url',
+              'youtube_url',
+              'github_url',
+              'instagram_url',
+              'podcasts.podcast.id',
+              'podcasts.podcast.slug',
+              'podcasts.podcast.published_on',
+              'podcasts.podcast.type',
+              'podcasts.podcast.number',
+              'podcasts.podcast.title',
+              'podcasts.podcast.cover_image.*',
+              'podcasts.podcast.audio_url',
+              'picks_of_the_day.id',
+              'picks_of_the_day.name',
+              'picks_of_the_day.website_url',
+              'picks_of_the_day.description',
+              'picks_of_the_day.image.*',
+              'tags.tag.id',
+              'tags.tag.name',
+            ],
+            filter: { slug: route.value.params.slug },
+            limit: 1,
+          })
+        ).data?.map(({ podcasts, tags, ...rest }) => ({
+          ...rest,
+          podcasts: (
+            podcasts as {
+              podcast: Pick<
+                PodcastItem,
+                | 'id'
+                | 'slug'
+                | 'published_on'
+                | 'type'
+                | 'number'
+                | 'title'
+                | 'cover_image'
+                | 'audio_url'
+              >;
+            }[]
+          )
+            .map(({ podcast }) => podcast)
+            .filter((podcast) => podcast),
+          tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
+            .map(({ tag }) => tag)
+            .filter((tag) => tag),
+          // TODO: Fix types and remove "as unknown"
+        }))[0] as unknown as Pick<
+          SpeakerItem,
+          | 'academic_title'
+          | 'first_name'
+          | 'last_name'
+          | 'occupation'
+          | 'description'
+          | 'profile_image'
+          | 'website_url'
+          | 'twitter_url'
+          | 'linkedin_url'
+          | 'youtube_url'
+          | 'github_url'
+          | 'instagram_url'
+          | 'tags'
+        > & {
+          podcasts: Pick<
+            PodcastItem,
+            | 'id'
+            | 'slug'
+            | 'published_on'
+            | 'type'
+            | 'number'
+            | 'title'
+            | 'cover_image'
+            | 'audio_url'
+          >[];
+          picks_of_the_day: Pick<
+            PickOfTheDayItem,
+            'id' | 'name' | 'website_url' | 'description' | 'image'
+          >[];
+        },
 
-    // Query Strapi speaker
-    const speaker = useStrapi('speakers', speakerIdPath);
+        // Podcast count
+        (
+          await directus.items('podcasts').readMany({
+            limit: 0,
+            meta: 'total_count',
+          })
+        ).meta?.total_count,
 
-    // Query Strapi podcast and pick of the day count
-    const podcastCount = useStrapi('podcasts', '/count');
-    const pickOfTheDayCount = useStrapi('picks-of-the-day', '/count');
+        // Pick of the day count
+        (
+          await directus.items('picks_of_the_day').readMany({
+            limit: 0,
+            meta: 'total_count',
+          })
+        ).meta?.total_count,
+      ]);
+
+      // Throw error if speaker does not exist
+      if (!speaker) {
+        throw new Error('The speaker was not found.');
+      }
+
+      // Return speaker, podcast and pick of the day count
+      return { speaker, podcastCount, pickOfTheDayCount };
+    });
+
+    // Extract speaker, podcast and pick of the day count from page data
+    const speaker = computed(() => pageData.value?.speaker);
+    const podcastCount = computed(() => pageData.value?.podcastCount);
+    const pickOfTheDayCount = computed(() => pageData.value?.pickOfTheDayCount);
 
     // Set loading screen
     useLoadingScreen(speaker, podcastCount, pickOfTheDayCount);
@@ -314,8 +425,8 @@ export default defineComponent({
     );
 
     // Create full name
-    const fullName = computed(() =>
-      speaker.value ? getFullSpeakerName(speaker.value) : undefined
+    const fullName = computed(
+      () => speaker.value && getFullSpeakerName(speaker.value)
     );
 
     // Set page meta data
@@ -338,11 +449,6 @@ export default defineComponent({
       { label: 'Hall of Fame', href: '/hall-of-fame' },
       { label: fullName.value || '' },
     ]);
-
-    // Create profile image src set
-    const profileImageSrcSet = computed(() =>
-      speaker.value ? getImageSrcSet(speaker.value.profile_image) : undefined
-    );
 
     // Create platform list
     const platforms = computed(
@@ -400,7 +506,6 @@ export default defineComponent({
       pickOfTheDayCountString,
       breadcrumbs,
       fullName,
-      profileImageSrcSet,
       platforms,
       trackGoal,
     };

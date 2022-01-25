@@ -50,9 +50,7 @@
 
 <script lang="ts">
 import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
-import removeMarkdown from 'remove-markdown';
-import { StrapiMeetup } from 'shared-code';
-import { getSubpagePath } from '../helpers';
+import { MeetupItem } from '../types';
 import LinkButton from './LinkButton.vue';
 import MeetupCover from './MeetupCover.vue';
 import MeetupStartAndEnd from './MeetupStartAndEnd.vue';
@@ -65,7 +63,17 @@ export default defineComponent({
   },
   props: {
     meetup: {
-      type: Object as PropType<StrapiMeetup>,
+      type: Object as PropType<
+        Pick<
+          MeetupItem,
+          | 'slug'
+          | 'start_on'
+          | 'end_on'
+          | 'title'
+          | 'description'
+          | 'cover_image'
+        >
+      >,
       required: true,
     },
     variant: {
@@ -75,13 +83,11 @@ export default defineComponent({
   },
   setup(props) {
     // Create href to meetup subpage
-    const href = computed(() =>
-      getSubpagePath('meetup', props.meetup.title, props.meetup.id)
-    );
+    const href = computed(() => `/meetup/${props.meetup.slug}`);
 
     // Create plain description text
     const description = computed(() =>
-      removeMarkdown(props.meetup.description)
+      props.meetup.description.replace(/<[^<>]+>/g, '')
     );
 
     return {

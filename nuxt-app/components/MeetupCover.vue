@@ -1,28 +1,16 @@
 <template>
   <div class="group relative overflow-hidden">
     <!-- Image -->
-    <img
+    <DirectusImage
       class="w-full group-hover:scale-105 transition-transform duration-300"
-      :src="meetup.cover_image.url"
-      :srcset="coverImageSrcSet"
+      :image="meetup.cover_image"
+      :alt="meetup.title"
       :sizes="
         variant === 'meetup_card'
-          ? `
-            (min-width: 1536px) 524px,
-            (min-width: 1280px) 30vw,
-            (min-width: 1024px) 40vw,
-            (min-width: 768px) 70vw,
-            90vw
-          `
-          : `
-            (min-width: 1536px) 875px,
-            (min-width: 1280px) 50vw,
-            (min-width: 768px) 70vw,
-            90vw
-          `
+          ? 'xs:90vw sm:90vw md:70vw lg:40vw xl:30vw 2xl:524px'
+          : 'xs:90vw sm:90vw md:70vw lg:70vw xl:50vw 2xl:875px'
       "
       :loading="variant === 'meetup_card' ? 'lazy' : 'auto'"
-      :alt="meetup.cover_image.alternativeText || meetup.title"
     />
 
     <!-- Calendar -->
@@ -60,19 +48,23 @@
 
 <script lang="ts">
 import {
-  computed,
   defineComponent,
   onMounted,
   PropType,
   reactive,
 } from '@nuxtjs/composition-api';
-import { StrapiMeetup } from 'shared-code';
-import { getImageSrcSet } from '../helpers';
+import { MeetupItem } from '../types';
+import DirectusImage from './DirectusImage.vue';
 
 export default defineComponent({
+  components: {
+    DirectusImage,
+  },
   props: {
     meetup: {
-      type: Object as PropType<StrapiMeetup>,
+      type: Object as PropType<
+        Pick<MeetupItem, 'start_on' | 'end_on' | 'title' | 'cover_image'>
+      >,
       required: true,
     },
     variant: {
@@ -91,9 +83,9 @@ export default defineComponent({
     // Show calendar if meetup is not over yet
     onMounted(() => {
       // Check if meetup is not over yet
-      if (new Date(props.meetup.end_at) > new Date()) {
+      if (new Date(props.meetup.end_on) > new Date()) {
         // Create start at date
-        const startAt = new Date(props.meetup.start_at);
+        const startAt = new Date(props.meetup.start_on);
 
         // Add name of month to calendar
         calendar.nameOfMonth = [
@@ -119,14 +111,8 @@ export default defineComponent({
       }
     });
 
-    // Create normal image src set
-    const coverImageSrcSet = computed(() =>
-      getImageSrcSet(props.meetup.cover_image)
-    );
-
     return {
       calendar,
-      coverImageSrcSet,
     };
   },
 });

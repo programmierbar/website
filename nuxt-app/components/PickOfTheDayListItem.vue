@@ -17,18 +17,13 @@
       <div class="w-56 md:w-44 lg:w-48 flex-shrink-0">
         <div class="w-full relative bg-gray-900" style="padding-top: 56.25%">
           <!-- Image -->
-          <img
+          <DirectusImage
             v-if="pickOfTheDay.image"
             class="w-full h-full absolute top-0 left-0 object-cover"
-            :src="pickOfTheDay.image.url"
-            :srcset="imageSrcSet"
-            sizes="
-              (min-width: 1024px) 192px,
-              (min-width: 768px) 176px,
-              224px
-            "
+            :image="pickOfTheDay.image"
+            :alt="pickOfTheDay.name"
+            sizes="xs:224px md:176px lg:192px"
             loading="lazy"
-            :alt="pickOfTheDay.image.alternativeText || pickOfTheDay.name"
           />
         </div>
       </div>
@@ -64,30 +59,27 @@
 
 <script lang="ts">
 import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
-import removeMarkdown from 'remove-markdown';
-import { StrapiPickOfTheDay } from 'shared-code';
-import { getImageSrcSet } from '../helpers';
+import { PickOfTheDayItem } from '../types';
+import DirectusImage from './DirectusImage.vue';
 
 export default defineComponent({
+  components: {
+    DirectusImage,
+  },
   props: {
     pickOfTheDay: {
-      type: Object as PropType<StrapiPickOfTheDay>,
+      type: Object as PropType<
+        Pick<PickOfTheDayItem, 'name' | 'website_url' | 'description' | 'image'>
+      >,
       required: true,
     },
   },
   setup(props) {
-    // Create image src set
-    const imageSrcSet = computed(() =>
-      getImageSrcSet(props.pickOfTheDay.image)
-    );
-
-    // Create plain description text
     const description = computed(() =>
-      removeMarkdown(props.pickOfTheDay.description)
+      props.pickOfTheDay.description.replace(/<[^<>]+>/g, '')
     );
 
     return {
-      imageSrcSet,
       description,
     };
   },

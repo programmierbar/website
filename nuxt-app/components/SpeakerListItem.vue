@@ -6,19 +6,13 @@
       :to="href"
       data-cursor-hover
     >
-      <img
+      <DirectusImage
         v-if="speaker.event_image"
         class="w-full h-full object-cover"
-        :src="speaker.event_image.url"
-        :srcset="imageSrcSet"
-        sizes="
-          (min-width: 2000px) 696px,
-          (min-width: 1536px) 656px,
-          (min-width: 768px) 40vw,
-          90vw
-        "
+        :image="speaker.event_image"
+        :alt="fullName"
+        sizes="xs:90vw sm:90vw md:40vw lg:40vw xl:40vw 2xl:656px 3xl:696px"
         loading="lazy"
-        :alt="speaker.event_image.alternativeText || fullName"
       />
     </NuxtLink>
 
@@ -54,42 +48,45 @@
 
 <script lang="ts">
 import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
-import removeMarkdown from 'remove-markdown';
-import { StrapiSpeaker } from 'shared-code';
-import { getImageSrcSet, getFullSpeakerName, getSubpagePath } from '../helpers';
+import { getFullSpeakerName } from 'shared-code';
+import { SpeakerItem } from '../types';
+import DirectusImage from './DirectusImage.vue';
 import LinkButton from './LinkButton.vue';
 
 export default defineComponent({
   components: {
+    DirectusImage,
     LinkButton,
   },
   props: {
     speaker: {
-      type: Object as PropType<StrapiSpeaker>,
+      type: Object as PropType<
+        Pick<
+          SpeakerItem,
+          | 'slug'
+          | 'academic_title'
+          | 'first_name'
+          | 'last_name'
+          | 'description'
+          | 'event_image'
+        >
+      >,
       required: true,
     },
   },
   setup(props) {
-    // Create image src set
-    const imageSrcSet = computed(() =>
-      getImageSrcSet(props.speaker.event_image)
-    );
-
     // Create get full name function
     const fullName = computed(() => getFullSpeakerName(props.speaker));
 
     // Create plain description text
     const description = computed(() =>
-      removeMarkdown(props.speaker.description)
+      props.speaker.description.replace(/<[^<>]+>/g, '')
     );
 
     // Create href to speaker's subpage
-    const href = computed(() =>
-      getSubpagePath('hall-of-fame', fullName.value, props.speaker.id)
-    );
+    const href = computed(() => `/hall-of-fame/${props.speaker.slug}`);
 
     return {
-      imageSrcSet,
       fullName,
       description,
       href,

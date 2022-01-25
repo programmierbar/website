@@ -1,3 +1,4 @@
+export * from './useAsyncData';
 export * from './useBodyElement';
 export * from './useClipboard';
 export * from './useDocument';
@@ -13,6 +14,5 @@ export * from './usePageMeta';
 export * from './usePodcastPlayer';
 export * from './useScrollParallax';
 export * from './useShare';
-export * from './useStrapi';
 export * from './useTagFilter';
 export * from './useWindow';

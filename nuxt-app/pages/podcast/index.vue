@@ -15,7 +15,7 @@
         >
           {{ podcastPage.intro_heading }}
         </SectionHeading>
-        <p
+        <InnerHtml
           class="
             text-lg
             md:text-2xl
@@ -28,10 +28,9 @@
             mt-8
             md:mt-16
           "
-        >
-          {{ podcastPage.intro_text_1 }}
-        </p>
-        <p
+          :html="podcastPage.intro_text_1"
+        />
+        <InnerHtml
           class="
             text-base
             md:text-xl
@@ -45,9 +44,8 @@
             mt-8
             md:mt-6
           "
-        >
-          {{ podcastPage.intro_text_2 }}
-        </p>
+          :html="podcastPage.intro_text_2"
+        />
       </div>
     </section>
 
@@ -109,30 +107,81 @@
 import { computed, defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
+  InnerHtml,
   PageCoverImage,
   PodcastSlider,
   SectionHeading,
   TagFilter,
 } from '../../components';
 import {
-  useStrapi,
+  useAsyncData,
   useLoadingScreen,
   usePageMeta,
   useTagFilter,
 } from '../../composables';
+import { directus } from '../../services';
+import { PodcastPage, PodcastItem, TagItem } from '../../types';
 
 export default defineComponent({
   components: {
     Breadcrumbs,
+    InnerHtml,
     PageCoverImage,
     PodcastSlider,
     SectionHeading,
     TagFilter,
   },
   setup() {
-    // Query Strapi about page and members
-    const podcastPage = useStrapi('podcast-page');
-    const podcasts = useStrapi('podcasts', '?_limit=-1');
+    // Query about page and members
+    const pageData = useAsyncData(async () => {
+      const [podcastPage, podcasts] = await Promise.all([
+        // Podcast page
+        directus
+          .singleton('podcast_page')
+          .read({ fields: '*.*' }) as Promise<PodcastPage>,
+
+        // Podcasts
+        (
+          await directus.items('podcasts').readMany({
+            fields: [
+              'id',
+              'slug',
+              'published_on',
+              'type',
+              'number',
+              'title',
+              'cover_image.*',
+              'audio_url',
+              'tags.tag.id',
+              'tags.tag.name',
+            ],
+            sort: ['-published_on'],
+            limit: -1,
+          })
+        ).data?.map(({ tags, ...rest }) => ({
+          ...rest,
+          tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
+            .map(({ tag }) => tag)
+            .filter((tag) => tag),
+        })) as Pick<
+          PodcastItem,
+          | 'id'
+          | 'slug'
+          | 'published_on'
+          | 'type'
+          | 'number'
+          | 'title'
+          | 'cover_image'
+          | 'audio_url'
+          | 'tags'
+        >[],
+      ]);
+      return { podcastPage, podcasts };
+    });
+
+    // Extract about page and members from page data
+    const podcastPage = computed(() => pageData.value?.podcastPage);
+    const podcasts = computed(() => pageData.value?.podcasts);
 
     // Set loading screen
     useLoadingScreen(podcastPage, podcasts);
@@ -145,23 +194,17 @@ export default defineComponent({
 
     // Create deep dive podcasts list
     const deepDivePodcasts = computed(() =>
-      tagFilter.output
-        .filter((podcast) => podcast.type === 'deep_dive')
-        .sort((a, b) => (a.published_at < b.published_at ? 1 : -1))
+      tagFilter.output.filter((podcast) => podcast.type === 'deep_dive')
     );
 
     // Create CTO special podcasts list
     const ctoSpecialPodcasts = computed(() =>
-      tagFilter.output
-        .filter((podcast) => podcast.type === 'cto_special')
-        .sort((a, b) => (a.published_at < b.published_at ? 1 : -1))
+      tagFilter.output.filter((podcast) => podcast.type === 'cto_special')
     );
 
     // Create news podcasts list
     const newsPodcasts = computed(() =>
-      tagFilter.output
-        .filter((podcast) => podcast.type === 'news')
-        .sort((a, b) => (a.published_at < b.published_at ? 1 : -1))
+      tagFilter.output.filter((podcast) => podcast.type === 'news')
     );
 
     return {

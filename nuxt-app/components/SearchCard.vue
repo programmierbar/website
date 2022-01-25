@@ -10,13 +10,12 @@
       data-cursor-more
     >
       <!-- Image -->
-      <img
+      <DirectusImage
         class="w-32 md:w-48 lg:w-72 h-32 md:h-48 lg:h-72 object-cover"
-        :src="image.url"
-        :srcset="imageSrcSet"
-        sizes="(min-width: 1024px) 288px, (min-width: 768px) 192px, 128px"
+        :image="image"
+        :alt="heading"
+        sizes="xs:128px md:192px lg:288px"
         loading="lazy"
-        :alt="image.alternativeText || heading"
       />
       <div>
         <!-- Type and date -->
@@ -73,82 +72,58 @@
 
 <script lang="ts">
 import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
-import removeMarkdown from 'remove-markdown';
-import {
-  StrapiPodcast,
-  StrapiMeetup,
-  StrapiPickOfTheDay,
-  StrapiSpeaker,
-} from 'shared-code';
-import {
-  getImageSrcSet,
-  getFullPodcastTitle,
-  getFullSpeakerName,
-  getSubpagePath,
-} from '../helpers';
-
-type Item =
-  | (StrapiPodcast & { itemType: 'podcast' })
-  | (StrapiMeetup & { itemType: 'meetup' })
-  | (StrapiPickOfTheDay & { itemType: 'pick_of_the_day' })
-  | (StrapiSpeaker & { itemType: 'speaker' });
+import { getFullPodcastTitle, getFullSpeakerName } from 'shared-code';
+import { SearchItem } from '../types';
+import DirectusImage from './DirectusImage.vue';
 
 export default defineComponent({
+  components: {
+    DirectusImage,
+  },
   props: {
     item: {
-      type: Object as PropType<Item>,
+      type: Object as PropType<SearchItem>,
       required: true,
     },
   },
   setup(props) {
     // Create URL or path for <a> element
     const urlOrPath = computed(() =>
-      props.item.itemType === 'podcast'
-        ? getSubpagePath(
-            'podcast',
-            getFullPodcastTitle(props.item),
-            props.item.id
-          )
-        : props.item.itemType === 'meetup'
-        ? getSubpagePath('meetup', props.item.title, props.item.id)
-        : props.item.itemType === 'pick_of_the_day'
+      props.item.item_type === 'podcast'
+        ? `/podcast/${props.item.slug}`
+        : props.item.item_type === 'meetup'
+        ? `/meetup/${props.item.slug}`
+        : props.item.item_type === 'pick_of_the_day'
         ? props.item.website_url
-        : getSubpagePath(
-            'hall-of-fame',
-            getFullSpeakerName(props.item),
-            props.item.id
-          )
+        : `/hall-of-fame/${props.item.slug}`
     );
 
     // Create is external URL boolean
     const isExternalUrl = computed(
-      () => props.item.itemType === 'pick_of_the_day'
+      () => props.item.item_type === 'pick_of_the_day'
     );
 
     // Get image depending on item typ
     const image = computed(() =>
-      props.item.itemType === 'podcast' || props.item.itemType === 'meetup'
+      props.item.item_type === 'podcast' || props.item.item_type === 'meetup'
         ? props.item.cover_image
-        : props.item.itemType === 'pick_of_the_day'
+        : props.item.item_type === 'pick_of_the_day'
         ? props.item.image
         : props.item.profile_image
     );
 
-    // Create image src set
-    const imageSrcSet = computed(() => getImageSrcSet(image.value));
-
     // Create type and date depending on item typ
     const typeAndDate = computed(
       () =>
-        (props.item.itemType === 'podcast'
+        (props.item.item_type === 'podcast'
           ? 'Podcast'
-          : props.item.itemType === 'meetup'
+          : props.item.item_type === 'meetup'
           ? 'Meetup'
-          : props.item.itemType === 'pick_of_the_day'
+          : props.item.item_type === 'pick_of_the_day'
           ? 'Pick of the Day'
           : 'Speaker') +
         ' // ' +
-        new Date(props.item.published_at).toLocaleDateString('de-DE', {
+        new Date(props.item.published_on).toLocaleDateString('de-DE', {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit',
@@ -157,23 +132,24 @@ export default defineComponent({
 
     // Create heading depending on item typ
     const heading = computed(() =>
-      props.item.itemType === 'podcast'
+      props.item.item_type === 'podcast'
         ? getFullPodcastTitle(props.item)
-        : props.item.itemType === 'meetup'
+        : props.item.item_type === 'meetup'
         ? props.item.title
-        : props.item.itemType === 'pick_of_the_day'
+        : props.item.item_type === 'pick_of_the_day'
         ? props.item.name
         : getFullSpeakerName(props.item)
     );
 
     // Create plain description text
-    const description = computed(() => removeMarkdown(props.item.description));
+    const description = computed(() =>
+      props.item.description.replace(/<[^<>]+>/g, '')
+    );
 
     return {
       urlOrPath,
       isExternalUrl,
       image,
-      imageSrcSet,
       typeAndDate,
       heading,
       description,

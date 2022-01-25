@@ -1,5 +1,5 @@
 <template>
-  <div v-if="homePage && sortedPodcasts">
+  <div v-if="homePage && podcastCount">
     <section
       class="
         container
@@ -36,7 +36,7 @@
           :src="require('~/assets/images/brand-logo.svg')"
           alt="programmier.bar Logo"
         />:
-        <TypedText :text="homePage.intro_text" />
+        <TypedText :text="homePage.intro_heading" />
       </h1>
     </section>
 
@@ -48,8 +48,8 @@
       <div class="bg-gray-900">
         <video
           class="w-full min-h-80 object-cover"
-          :src="homePage.video.url"
-          :alt="homePage.video.alternativeText"
+          :src="videoUrl"
+          :alt="homePage.video.title || ''"
           autoplay="true"
           loop="true"
           muted="true"
@@ -58,7 +58,7 @@
       </div>
 
       <!-- Newsticker -->
-      <NewsTicker :markdown="homePage.news" />
+      <NewsTicker :news="homePage.news" />
     </section>
 
     <!-- Podcasts -->
@@ -71,7 +71,8 @@
       </SectionHeading>
       <PodcastSlider
         class="mt-10 md:mt-0"
-        :podcasts="sortedPodcasts"
+        :podcasts="homePage.podcasts"
+        :podcast-count="podcastCount"
         show-podcast-link
       />
     </section>
@@ -80,6 +81,7 @@
 
 <script lang="ts">
 import { computed, defineComponent } from '@nuxtjs/composition-api';
+import { DIRECTUS_CMS_URL } from '../config';
 import {
   Breadcrumbs,
   NewsTicker,
@@ -88,7 +90,9 @@ import {
   ScrollDownMouse,
   TypedText,
 } from '../components';
-import { useStrapi, useLoadingScreen, usePageMeta } from '../composables';
+import { useAsyncData, useLoadingScreen, usePageMeta } from '../composables';
+import { directus } from '../services';
+import { HomePage, PodcastItem } from '../types';
 
 export default defineComponent({
   components: {
@@ -100,8 +104,65 @@ export default defineComponent({
     TypedText,
   },
   setup() {
-    // Query Strapi home-page
-    const homePage = useStrapi('home-page');
+    // Query home page and podcast count
+    const pageData = useAsyncData(async () => {
+      const [homePage, podcastCount] = await Promise.all([
+        // Home page
+        directus
+          .singleton('home_page')
+          .read({
+            fields: [
+              '*',
+              'video.*',
+              'podcasts.podcast.id',
+              'podcasts.podcast.slug',
+              'podcasts.podcast.published_on',
+              'podcasts.podcast.type',
+              'podcasts.podcast.number',
+              'podcasts.podcast.title',
+              'podcasts.podcast.cover_image.*',
+              'podcasts.podcast.audio_url',
+            ],
+          })
+          .then(
+            (homePage) =>
+              homePage && {
+                ...homePage,
+                news: (homePage.news as { text: string }[]).map(
+                  ({ text }) => text
+                ),
+                podcasts: (
+                  homePage.podcasts as {
+                    podcast: Pick<
+                      PodcastItem,
+                      | 'id'
+                      | 'slug'
+                      | 'published_on'
+                      | 'type'
+                      | 'number'
+                      | 'title'
+                      | 'cover_image'
+                      | 'audio_url'
+                    >;
+                  }[]
+                ).map(({ podcast }) => podcast),
+              }
+          ) as Promise<HomePage>,
+
+        // Podcast count
+        (
+          await directus.items('podcasts').readMany({
+            limit: 0,
+            meta: 'total_count',
+          })
+        ).meta?.total_count,
+      ]);
+      return { homePage, podcastCount };
+    });
+
+    // Extract home page and podcast count from page data
+    const homePage = computed(() => pageData.value?.homePage);
+    const podcastCount = computed(() => pageData.value?.podcastCount);
 
     // Set loading screen
     useLoadingScreen(homePage);
@@ -109,17 +170,16 @@ export default defineComponent({
     // Set page meta data
     usePageMeta(homePage);
 
-    // Create sorted podcasts
-    const sortedPodcasts = computed(() =>
-      homePage.value?.podcasts.sort((a, b) =>
-        a.published_at < b.published_at ? 1 : -1
-      )
+    // Create Video URL
+    const videoUrl = computed(
+      () => homePage && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`
     );
 
     return {
       homePage,
-      sortedPodcasts,
+      podcastCount,
       breadcrumbs: [{ label: 'Home' }],
+      videoUrl,
     };
   },
   head: {},

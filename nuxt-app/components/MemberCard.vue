@@ -36,24 +36,17 @@
       />
 
       <!-- Normal image -->
-      <img
+      <DirectusImage
         class="w-full absolute top-0 left-0 object-cover pointer-events-none"
-        :src="member.normal_image.url"
-        :srcset="normalImageSrcSet"
-        sizes="
-          (min-width: 1536px) 589px,
-          (min-width: 1280px) 487px,
-          (min-width: 1024px) 384px,
-          (min-width: 768px) 288px,
-          90vw
-        "
+        :image="member.normal_image"
+        :alt="fullName"
+        sizes="xs:90vw sm:90vw md:288px lg:384px xl:487px 2xl:589px"
         loading="lazy"
-        :alt="member.normal_image.alternativeText || fullName"
       />
 
       <!-- Action image -->
-      <img
-        ref="clipPathElement"
+      <DirectusImage
+        ref="clipPathComponent"
         class="w-full absolute top-0 left-0 object-cover"
         :class="[
           !clipPathIsMoving && 'transition-all ease-linear',
@@ -64,17 +57,10 @@
             : '',
         ]"
         :style="{ clipPath: initClipPath }"
-        :src="member.action_image.url"
-        :srcset="actionImageSrcSet"
-        sizes="
-          (min-width: 1536px) 589px,
-          (min-width: 1280px) 487px,
-          (min-width: 1024px) 384px,
-          (min-width: 768px) 288px,
-          90vw
-        "
+        :image="member.action_image"
+        :alt="fullName"
+        sizes="xs:90vw sm:90vw md:288px lg:384px xl:487px 2xl:589px"
         loading="lazy"
-        :alt="member.normal_image.alternativeText || fullName"
       />
     </div>
 
@@ -95,7 +81,7 @@
     </h2>
 
     <!-- Description -->
-    <MarkdownToHtml
+    <InnerHtml
       class="
         text-lg
         md:text-xl
@@ -108,7 +94,7 @@
         md:mt-6
         lg:mt-8
       "
-      :markdown="member.description"
+      :html="member.description"
     />
 
     <!-- Occupation -->
@@ -132,25 +118,39 @@
 
 <script lang="ts">
 import {
+  ComponentInstance,
   computed,
   defineComponent,
   PropType,
   ref,
 } from '@nuxtjs/composition-api';
-import { StrapiMember } from 'shared-code';
-import { START_DISCOVER_EFFECT_EVENT_ID } from '../config';
-import { getImageSrcSet, trackGoal } from '../helpers';
-import MarkdownToHtml from './MarkdownToHtml.vue';
+import { START_DISCOVER_EFFECT_EVENT_ID, DIRECTUS_CMS_URL } from '../config';
+import { trackGoal } from '../helpers';
+import { MemberItem } from '../types';
+import DirectusImage from './DirectusImage.vue';
+import InnerHtml from './InnerHtml.vue';
 
 const initClipPath = 'circle(16.666% at 0 25%)';
 
 export default defineComponent({
   components: {
-    MarkdownToHtml,
+    DirectusImage,
+    InnerHtml,
   },
   props: {
     member: {
-      type: Object as PropType<StrapiMember>,
+      type: Object as PropType<
+        Pick<
+          MemberItem,
+          | 'first_name'
+          | 'last_name'
+          | 'task_area'
+          | 'occupation'
+          | 'description'
+          | 'normal_image'
+          | 'action_image'
+        >
+      >,
       required: true,
     },
     color: {
@@ -164,17 +164,9 @@ export default defineComponent({
       () => `${props.member.first_name} ${props.member.last_name}`
     );
 
-    // Create normal and action image src set
-    const normalImageSrcSet = computed(() =>
-      getImageSrcSet(props.member.normal_image)
-    );
-    const actionImageSrcSet = computed(() =>
-      getImageSrcSet(props.member.action_image)
-    );
-
     // Create element references
     const cursorElements = ref<HTMLDivElement[]>();
-    const clipPathElement = ref<HTMLImageElement>();
+    const clipPathComponent = ref<ComponentInstance>();
 
     // Create state references
     const clipPathIsMoving = ref(false);
@@ -202,7 +194,9 @@ export default defineComponent({
         const position = isTouch
           ? (moveEvent as TouchEvent).targetTouches[0]
           : (moveEvent as MouseEvent);
-        const clipPath = clipPathElement.value!.getBoundingClientRect();
+        const clipPath = (
+          clipPathComponent.value!.$el as HTMLImageElement
+        ).getBoundingClientRect();
 
         // If event position is inside area run discover effect
         if (
@@ -225,7 +219,9 @@ export default defineComponent({
           // Update cursor and clip path position
           const x = position.clientX - clipPath.left;
           const y = position.clientY - clipPath.top;
-          clipPathElement.value!.style.clipPath = `circle(41.666% at ${x}px ${y}px)`;
+          (
+            clipPathComponent.value!.$el as HTMLImageElement
+          ).style.clipPath = `circle(41.666% at ${x}px ${y}px)`;
           cursorElements.value?.forEach((element) => {
             element.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(2.5)`;
           });
@@ -255,7 +251,8 @@ export default defineComponent({
         clipPathIsMoving.value = false;
 
         // Clean up cursor and clip path position
-        clipPathElement.value!.style.clipPath = initClipPath;
+        (clipPathComponent.value!.$el as HTMLImageElement).style.clipPath =
+          initClipPath;
         cursorElements.value?.forEach(
           (element) => (element.style.transform = '')
         );
@@ -270,12 +267,11 @@ export default defineComponent({
     };
 
     return {
+      DIRECTUS_CMS_URL,
       fullName,
-      normalImageSrcSet,
-      actionImageSrcSet,
       cursorElements,
       initClipPath,
-      clipPathElement,
+      clipPathComponent,
       clipPathIsMoving,
       clipPathStartMoving,
       handleDiscoverEffect,

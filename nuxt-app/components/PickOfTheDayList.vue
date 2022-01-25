@@ -10,7 +10,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from '@nuxtjs/composition-api';
-import { StrapiPickOfTheDay } from 'shared-code';
+import { PickOfTheDayItem } from '../types';
 import PickOfTheDayListItem from './PickOfTheDayListItem.vue';
 
 export default defineComponent({
@@ -19,7 +19,12 @@ export default defineComponent({
   },
   props: {
     picksOfTheDay: {
-      type: Array as PropType<StrapiPickOfTheDay[]>,
+      type: Array as PropType<
+        Pick<
+          PickOfTheDayItem,
+          'id' | 'name' | 'website_url' | 'description' | 'image'
+        >[]
+      >,
       required: true,
     },
   },

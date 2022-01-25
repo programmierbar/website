@@ -11,23 +11,22 @@
     "lint": "eslint --ext \".ts,.vue\" --ignore-path .gitignore ."
   },
   "dependencies": {
+    "@directus/sdk": "^9.4.3",
     "@googlemaps/js-api-loader": "^1.12.11",
     "@nuxtjs/composition-api": "^0.31.0",
     "@nuxtjs/pwa": "^3.3.5",
     "@nuxtjs/sitemap": "^2.4.0",
     "@tailwindcss/line-clamp": "^0.2.2",
     "@types/google.maps": "^3.47.0",
-    "@types/remove-markdown": "^0.3.1",
     "@types/smoothscroll-polyfill": "^0.3.1",
     "core-js": "^3.19.3",
     "nuxt": "^2.15.8",
-    "remove-markdown": "^0.3.0",
     "shared-code": "0.0.0",
-    "smoothscroll-polyfill": "^0.4.4",
-    "snarkdown": "^2.0.0"
+    "smoothscroll-polyfill": "^0.4.4"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.16.3",
+    "@nuxt/image": "^0.6.0",
     "@nuxt/types": "^2.15.8",
     "@nuxt/typescript-build": "^2.1.0",
     "@nuxt/typescript-runtime": "^2.1.0",

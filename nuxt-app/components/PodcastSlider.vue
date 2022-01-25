@@ -51,7 +51,7 @@
 
       <!-- Podcast link -->
       <div
-        v-if="showPodcastLink"
+        v-if="showPodcastLink && podcastCount"
         class="
           flex
           items-end
@@ -172,13 +172,12 @@ import {
   ref,
 } from '@nuxtjs/composition-api';
 import smoothscroll from 'smoothscroll-polyfill';
-import { StrapiPodcast } from 'shared-code';
 import {
   CLICK_SCROLL_LEFT_ARROW_EVENT_ID,
   CLICK_SCROLL_RIGHT_ARROW_EVENT_ID,
 } from '../config';
-import { useStrapi } from '../composables';
 import { trackGoal } from '../helpers';
+import { PodcastItem } from '../types';
 import FadeAnimation from './FadeAnimation.vue';
 import LazyList from './LazyList.vue';
 import LazyListItem from './LazyListItem.vue';
@@ -193,8 +192,24 @@ export default defineComponent({
   },
   props: {
     podcasts: {
-      type: Array as PropType<StrapiPodcast[]>,
+      type: Array as PropType<
+        Pick<
+          PodcastItem,
+          | 'id'
+          | 'slug'
+          | 'published_on'
+          | 'type'
+          | 'number'
+          | 'title'
+          | 'cover_image'
+          | 'audio_url'
+        >[]
+      >,
       required: true,
+    },
+    podcastCount: {
+      type: Number,
+      default: 0,
     },
     showPodcastLink: {
       type: Boolean,
@@ -202,9 +217,6 @@ export default defineComponent({
     },
   },
   setup() {
-    // Query Strapi podcast count
-    const podcastCount = useStrapi('podcasts', '/count');
-
     // Create scroll box element reference
     const scrollBoxElement = ref<HTMLDivElement>();
 
@@ -287,7 +299,6 @@ export default defineComponent({
     };
 
     return {
-      podcastCount,
       scrollBoxElement,
       scrollStartReached,
       scrollEndReached,

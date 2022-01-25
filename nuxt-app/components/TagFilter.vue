@@ -133,14 +133,14 @@
 
 <script lang="ts">
 import { defineComponent, PropType, ref, watch } from '@nuxtjs/composition-api';
-import { StrapiTag } from 'shared-code';
 import { CLOSE_TAG_FILTER_EVENT_ID, OPEN_TAG_FILTER_EVENT_ID } from '../config';
 import { useEventListener, useDocument } from '../composables';
 import { trackGoal } from '../helpers';
+import { TagItem } from '../types';
 import TagList from './TagList.vue';
 
-interface Tag extends StrapiTag {
-  isActive?: boolean;
+interface Tag extends Pick<TagItem, 'id' | 'name'> {
+  is_active?: boolean;
 }
 
 export default defineComponent({

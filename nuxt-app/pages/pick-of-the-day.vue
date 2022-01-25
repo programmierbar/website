@@ -22,7 +22,7 @@
       <SectionHeading class="mt-8 md:mt-0" element="h1">
         {{ pickOfTheDayPage.intro_heading }}
       </SectionHeading>
-      <p
+      <InnerHtml
         class="
           text-lg
           md:text-2xl
@@ -35,9 +35,8 @@
           mt-8
           md:mt-16
         "
-      >
-        {{ pickOfTheDayPage.intro_text }}
-      </p>
+        :html="pickOfTheDayPage.intro_text"
+      />
 
       <!-- Tag Filter -->
       <TagFilter
@@ -92,6 +91,7 @@ import { computed, defineComponent } from '@nuxtjs/composition-api';
 import {
   Breadcrumbs,
   FadeAnimation,
+  InnerHtml,
   LazyList,
   LazyListItem,
   PickOfTheDayCard,
@@ -99,16 +99,24 @@ import {
   TagFilter,
 } from '../components';
 import {
-  useStrapi,
+  useAsyncData,
   useLoadingScreen,
   usePageMeta,
   useTagFilter,
 } from '../composables';
+import { directus } from '../services';
+import {
+  PickOfTheDayPage,
+  PickOfTheDayItem,
+  PodcastItem,
+  TagItem,
+} from '../types';
 
 export default defineComponent({
   components: {
     Breadcrumbs,
     FadeAnimation,
+    InnerHtml,
     LazyList,
     LazyListItem,
     PickOfTheDayCard,
@@ -116,9 +124,55 @@ export default defineComponent({
     TagFilter,
   },
   setup() {
-    // Query Strapi pick of the day page and picks of the day
-    const pickOfTheDayPage = useStrapi('pick-of-the-day-page');
-    const picksOfTheDay = useStrapi('picks-of-the-day', '?_limit=-1');
+    // Query pick of the day page and picks of the day
+    const pageData = useAsyncData(async () => {
+      const [pickOfTheDayPage, picksOfTheDay] = await Promise.all([
+        // Pick of the Day page
+        directus
+          .singleton('pick_of_the_day_page')
+          .read() as Promise<PickOfTheDayPage>,
+
+        // Picks of the day
+        (
+          await directus.items('picks_of_the_day').readMany({
+            fields: [
+              'id',
+              'name',
+              'website_url',
+              'description',
+              'image.*',
+              'podcast.slug',
+              'podcast.type',
+              'podcast.number',
+              'podcast.title',
+              'tags.tag.id',
+              'tags.tag.name',
+            ],
+            limit: -1,
+            sort: ['-published_on'],
+          })
+        ).data?.map(({ tags, ...rest }) => ({
+          ...rest,
+          tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
+            .map(({ tag }) => tag)
+            .filter((tag) => tag),
+        })) as (Pick<
+          PickOfTheDayItem,
+          'id' | 'name' | 'website_url' | 'description' | 'image'
+        > & {
+          podcast: Pick<
+            PodcastItem,
+            'slug' | 'type' | 'number' | 'title'
+          > | null;
+          tags: Pick<TagItem, 'id' | 'name'>[];
+        })[],
+      ]);
+      return { pickOfTheDayPage, picksOfTheDay };
+    });
+
+    // Extract pick of the day page and picks of the day from page data
+    const pickOfTheDayPage = computed(() => pageData.value?.pickOfTheDayPage);
+    const picksOfTheDay = computed(() => pageData.value?.picksOfTheDay);
 
     // Set loading screen
     useLoadingScreen(pickOfTheDayPage, picksOfTheDay);
@@ -126,15 +180,8 @@ export default defineComponent({
     // Set page meta data
     usePageMeta(pickOfTheDayPage);
 
-    // Create sorted picks of the day
-    const sortedPicksOfTheDay = computed(() =>
-      picksOfTheDay.value?.sort((a, b) =>
-        a.published_at < b.published_at ? 1 : -1
-      )
-    );
-
     // Create tag filter
-    const tagFilter = useTagFilter(sortedPicksOfTheDay);
+    const tagFilter = useTagFilter(picksOfTheDay);
 
     return {
       pickOfTheDayPage,

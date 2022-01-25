@@ -40,21 +40,12 @@
                 "
               >
                 <!-- Profile image -->
-                <img
+                <DirectusImage
                   class="w-full h-full object-cover"
-                  :src="speaker.profile_image.url"
-                  :srcset="profileImageSrcSet"
-                  sizes="
-                  (min-width: 2000px) 468px,
-                  (min-width: 1536px) 437px,
-                  (min-width: 1280px) 375px,
-                  (min-width: 1024px) 312px,
-                  (min-width: 640px) 250px,
-                  (min-width: 520px) 203px,
-                  172px
-                "
+                  :image="speaker.profile_image"
+                  :alt="fullName"
+                  sizes="xs:203px sm:250px lg:312px xl:375px 2xl:437px 3xl:468px"
                   loading="lazy"
-                  :alt="speaker.profile_image.alternativeText || fullName"
                 />
 
                 <!-- Image overlay -->
@@ -158,20 +149,30 @@ import {
   ref,
   watch,
 } from '@nuxtjs/composition-api';
-import { StrapiSpeaker } from 'shared-code';
+import { getFullSpeakerName } from 'shared-code';
 import { START_MAGNET_EFFECT_EVENT_ID } from '../config';
 import { useMotionParallax, useEventListener, useWindow } from '../composables';
-import {
-  getImageSrcSet,
-  getFullSpeakerName,
-  getSubpagePath,
-  trackGoal,
-} from '../helpers';
+import { trackGoal } from '../helpers';
+import { SpeakerItem } from '../types';
+import DirectusImage from './DirectusImage.vue';
 
 export default defineComponent({
+  components: {
+    DirectusImage,
+  },
   props: {
     speaker: {
-      type: Object as PropType<StrapiSpeaker>,
+      type: Object as PropType<
+        Pick<
+          SpeakerItem,
+          | 'slug'
+          | 'academic_title'
+          | 'first_name'
+          | 'last_name'
+          | 'occupation'
+          | 'profile_image'
+        >
+      >,
       required: true,
     },
     color: {
@@ -215,19 +216,7 @@ export default defineComponent({
     const fullName = computed(() => getFullSpeakerName(props.speaker));
 
     // Create href to speaker's subpage
-    const href = computed(() =>
-      getSubpagePath(
-        'hall-of-fame',
-        fullName.value,
-        props.speaker.id,
-        `?color=${props.color}` as const
-      )
-    );
-
-    // Create profile image src set
-    const profileImageSrcSet = computed(() =>
-      getImageSrcSet(props.speaker.profile_image)
-    );
+    const href = computed(() => `/hall-of-fame/${props.speaker.slug}`);
 
     /**
      * It sets the is focused state based of the given parameter.
@@ -265,7 +254,6 @@ export default defineComponent({
       parallaxStyle,
       fullName,
       href,
-      profileImageSrcSet,
     };
   },
 });
