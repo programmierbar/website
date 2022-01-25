@@ -6,8 +6,7 @@
     "cloud-functions",
     "directus-cms",
     "nuxt-app",
-    "shared-code",
-    "strapi-cms"
+    "shared-code"
   ],
   "devDependencies": {
     "lerna": "^4.0.0"
