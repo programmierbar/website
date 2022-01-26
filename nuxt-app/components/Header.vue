@@ -435,20 +435,26 @@ export default defineComponent({
      * It handles key down events.
      */
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Get keys from event
-      const { metaKey, shiftKey } = event;
+      // Get keys and target from event
+      const { metaKey, shiftKey, target } = event;
       const key = event.key.toLowerCase();
 
-      // Open menu if closed and meta key and "m" is pressed
-      if (!menuIsOpen.value && metaKey && key === 'm') {
+      // Check if target is an input element
+      const targetIsInput =
+        target instanceof HTMLElement &&
+        (target.nodeName === 'TEXTAREA' || target.nodeName === 'INPUT');
+
+      // Open menu if closed, "m" is pressed
+      // and target is not an input element
+      if (!menuIsOpen.value && key === 'm' && !targetIsInput) {
         menuIsOpen.value = true;
         nextTick(() => menuElement.value?.focus());
 
-        // Otherwise close it if menu is open and
-        // escape or meta key and "m" is pressed
+        // Otherwise close it if menu is open and escape or "m"
+        // is pressed, while target ist not an input element
       } else if (
         menuIsOpen.value &&
-        (key === 'escape' || (metaKey && key === 'm'))
+        (key === 'escape' || (key === 'm' && !targetIsInput))
       ) {
         menuIsOpen.value = false;
       }
