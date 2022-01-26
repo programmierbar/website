@@ -1,4 +1,3 @@
-export * from './downloadExternalFile';
 export * from './getCookie';
 export * from './getHashCode';
 export * from './getMetaInfo';

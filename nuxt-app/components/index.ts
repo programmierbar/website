@@ -25,7 +25,6 @@ export { default as PickOfTheDayCard } from './PickOfTheDayCard.vue';
 export { default as PickOfTheDayList } from './PickOfTheDayList.vue';
 export { default as PodcastBanner } from './PodcastBanner.vue';
 export { default as PodcastCard } from './PodcastCard.vue';
-export { default as PodcastDownload } from './PodcastDownload.vue';
 export { default as PodcastPlayer } from './PodcastPlayer.vue';
 export { default as PodcastSlider } from './PodcastSlider.vue';
 export { default as ScrollDownMouse } from './ScrollDownMouse.vue';

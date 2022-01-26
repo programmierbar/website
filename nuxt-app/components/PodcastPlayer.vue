@@ -267,17 +267,13 @@
               @click="sharePodcast"
               v-html="require('../assets/icons/share.svg?raw')"
             />
-            <button
+            <a
               class="w-6 h-6 flex justify-center"
-              :class="isDownloading && 'animate-spin'"
-              type="button"
+              :href="downloadUrl"
+              download
               data-cursor-hover
-              @click="downloadPodcast"
-              v-html="
-                require(isDownloading
-                  ? '../assets/icons/semicircle.svg?raw'
-                  : '../assets/icons/download.svg?raw')
-              "
+              @click="() => trackGoal(DOWNLOAD_PODCAST_EVENT_ID)"
+              v-html="require('../assets/icons/download.svg?raw')"
             />
           </div>
         </div>
@@ -289,9 +285,9 @@
 <script lang="ts">
 import { computed, defineComponent, ref, watch } from '@nuxtjs/composition-api';
 import { getFullPodcastTitle, getPodcastTypeAndNumber } from 'shared-code';
-import { DOWNLOAD_PODCAST_EVENT_ID } from '../config';
+import { BUZZSPROUT_TRACKING_URL, DOWNLOAD_PODCAST_EVENT_ID } from '../config';
 import { usePodcastPlayer, useClipboard, useShare } from '../composables';
-import { downloadExternalFile, trackGoal } from '../helpers';
+import { trackGoal } from '../helpers';
 
 export default defineComponent({
   setup() {
@@ -300,9 +296,8 @@ export default defineComponent({
     const clipboard = useClipboard();
     const share = useShare();
 
-    // Create is expanded and downloading reference
+    // Create is expanded reference
     const isExpanded = ref(false);
-    const isDownloading = ref(false);
 
     // Create podcast type and number
     const typeAndNumber = computed(
@@ -321,6 +316,13 @@ export default defineComponent({
     // Create href to podcast subpage
     const href = computed(
       () => podcastPlayer.podcast && `/podcast/${podcastPlayer.podcast.slug}`
+    );
+
+    // Create download URL
+    const downloadUrl = computed(
+      () =>
+        podcastPlayer.podcast &&
+        `${BUZZSPROUT_TRACKING_URL}/${podcastPlayer.podcast.audio_url}?download=true`
     );
 
     /**
@@ -407,35 +409,13 @@ export default defineComponent({
       }
     );
 
-    /**
-     * It downloads the audio file of a podcast episode.
-     */
-    const downloadPodcast = async () => {
-      if (podcastPlayer.podcast && fullTitle.value) {
-        // Start downloading
-        isDownloading.value = true;
-
-        // Download file
-        await downloadExternalFile(
-          podcastPlayer.podcast.audio_url,
-          podcastPlayer.podcast.slug
-        );
-
-        // Track analytic event
-        trackGoal(DOWNLOAD_PODCAST_EVENT_ID);
-
-        // Stop downloading
-        isDownloading.value = false;
-      }
-    };
-
     return {
       isExpanded,
-      isDownloading,
       expandPlayer,
       collapsePlayer,
       podcastPlayer,
       href,
+      downloadUrl,
       typeAndNumber,
       title,
       currentTimeString,
@@ -446,7 +426,8 @@ export default defineComponent({
       clipboard,
       changeCurrentTime,
       sharePodcast,
-      downloadPodcast,
+      trackGoal,
+      DOWNLOAD_PODCAST_EVENT_ID,
     };
   },
 });

@@ -49,7 +49,33 @@
           <!-- Pocast download and platform links -->
           <ul class="flex items-center space-x-4 mt-12 md:mt-14">
             <li>
-              <PodcastDownload :podcast="podcast" />
+              <a
+                class="
+                  relative
+                  flex
+                  items-center
+                  justify-center
+                  border-lime border-3
+                  md:border-4
+                  rounded-full
+                  text-sm
+                  md:text-base
+                  lg:text-lg
+                  text-lime
+                  font-black
+                  tracking-widest
+                  uppercase
+                  px-4
+                  md:px-8
+                  py-0.5
+                "
+                :href="downloadUrl"
+                download
+                data-cursor-hover
+                @click="() => trackGoal(DOWNLOAD_PODCAST_EVENT_ID)"
+              >
+                Download
+              </a>
             </li>
             <li v-for="platform of platforms" :key="platform.name">
               <a
@@ -133,6 +159,8 @@ import {
 } from '@nuxtjs/composition-api';
 import { getPodcastType, getFullPodcastTitle } from 'shared-code';
 import {
+  BUZZSPROUT_TRACKING_URL,
+  DOWNLOAD_PODCAST_EVENT_ID,
   APPLE_PODCASTS_URL,
   BUZZSPROUT_RSS_FEED_URL,
   GOOGLE_PODCASTS_URL,
@@ -151,7 +179,6 @@ import {
   PickOfTheDayList,
   PodcastBanner,
   PodcastSlider,
-  PodcastDownload,
   SectionHeading,
   SpeakerList,
   TagList,
@@ -180,7 +207,6 @@ export default defineComponent({
     PickOfTheDayList,
     PodcastBanner,
     PodcastSlider,
-    PodcastDownload,
     SectionHeading,
     SpeakerList,
     TagList,
@@ -391,6 +417,13 @@ export default defineComponent({
     // Create podcast type
     const type = computed(() => podcast.value && getPodcastType(podcast.value));
 
+    // Create download URL
+    const downloadUrl = computed(
+      () =>
+        podcast.value &&
+        `${BUZZSPROUT_TRACKING_URL}/${podcast.value.audio_url}?download=true`
+    );
+
     // Create breadcrumb list
     const breadcrumbs = computed(() => [
       { label: 'Podcast', href: '/podcast' },
@@ -430,10 +463,12 @@ export default defineComponent({
       podcast,
       pickOfTheDayCountString,
       speakerCountString,
+      downloadUrl,
       breadcrumbs,
       platforms,
       relatedPodcasts,
       trackGoal,
+      DOWNLOAD_PODCAST_EVENT_ID,
     };
   },
   head: {},
