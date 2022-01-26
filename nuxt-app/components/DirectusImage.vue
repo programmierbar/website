@@ -6,13 +6,14 @@
     :height="image.height"
     :sizes="sizes"
     :loading="loading"
+    :format="format"
     quality="80"
     fit="cover"
   />
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from '@nuxtjs/composition-api';
+import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
 import { FileItem } from '../types';
 import { DIRECTUS_CMS_URL } from '../config';
 
@@ -35,8 +36,12 @@ export default defineComponent({
       default: undefined,
     },
   },
-  setup() {
+  setup(props) {
+    // Create image format
+    const format = computed(() => props.image.type.split('/')[1]);
+
     return {
+      format,
       DIRECTUS_CMS_URL,
     };
   },
