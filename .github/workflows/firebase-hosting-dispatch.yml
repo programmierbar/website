@@ -1,0 +1,19 @@
+# We use this GitHub action to deploy the
+# website when content changes in our CMS
+
+name: Deploy to Firebase Hosting on dispatch
+'on': repository_dispatch
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: >-
+          yarn install --ignore-engines && cd shared-code && yarn build && cd ../nuxt-app && yarn
+          generate
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROGRAMMIERBAR_323408 }}'
+          channelId: live
+          projectId: programmierbar-323408
