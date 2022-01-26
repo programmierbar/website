@@ -1,8 +1,11 @@
 {
+  "functions": {
+    "source": "./cloud-functions"
+  },
   "hosting": {
     "cleanUrls": true,
     "trailingSlash": false,
-    "public": "./build",
+    "public": "./nuxt-app/dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [
       {

@@ -7,7 +7,7 @@
     "dev": "nuxt",
     "build": "nuxt build",
     "start": "nuxt start",
-    "generate": "nuxt generate && rsync -auv dist/* build/",
+    "generate": "nuxt generate",
     "lint": "eslint --ext \".ts,.vue\" --ignore-path .gitignore ."
   },
   "dependencies": {

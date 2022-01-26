@@ -65,7 +65,7 @@ export default {
   // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
   generate: {
     fallback: '404.html',
-    concurrency: 10,
+    concurrency: 5,
     routes() {
       return [
         { name: 'podcasts', path: 'podcast' },
