@@ -16,6 +16,7 @@ export interface PodcastSearchItem
     | 'title'
     | 'description'
     | 'cover_image'
+    | 'tags'
   > {
   item_type: 'podcast';
 }
@@ -23,7 +24,13 @@ export interface PodcastSearchItem
 export interface MeetupSearchItem
   extends Pick<
     MeetupItem,
-    'id' | 'slug' | 'published_on' | 'title' | 'description' | 'cover_image'
+    | 'id'
+    | 'slug'
+    | 'published_on'
+    | 'title'
+    | 'description'
+    | 'cover_image'
+    | 'tags'
   > {
   item_type: 'meetup';
 }
@@ -31,7 +38,13 @@ export interface MeetupSearchItem
 export interface PickOfTheDaySearchItem
   extends Pick<
     PickOfTheDayItem,
-    'id' | 'published_on' | 'name' | 'website_url' | 'description' | 'image'
+    | 'id'
+    | 'published_on'
+    | 'name'
+    | 'website_url'
+    | 'description'
+    | 'image'
+    | 'tags'
   > {
   item_type: 'pick_of_the_day';
 }
@@ -47,6 +60,7 @@ export interface SpeakerSearchItem
     | 'last_name'
     | 'description'
     | 'profile_image'
+    | 'tags'
   > {
   item_type: 'speaker';
 }
