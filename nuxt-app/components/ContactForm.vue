@@ -53,6 +53,9 @@
         required
       />
 
+      <!-- Spam protection -->
+      <input v-model="spam" class="hidden" type="phone" name="phone" required />
+
       <!-- Error -->
       <p
         v-if="formError"
@@ -131,7 +134,7 @@
 <script lang="ts">
 import { defineComponent, ref, watch } from '@nuxtjs/composition-api';
 import { SEND_CONTACT_EMAIL_URL, SEND_CONTACT_FORM_EVENT_ID } from '../config';
-import { trackGoal } from '../helpers';
+import { sleep, trackGoal } from '../helpers';
 
 type FormState = 'pending' | 'submitting' | 'submitted' | 'error';
 
@@ -141,6 +144,7 @@ export default defineComponent({
     const name = ref('');
     const email = ref('');
     const message = ref('');
+    const spam = ref('');
 
     // Create form state an error references
     const formState = ref<FormState>('pending');
@@ -166,44 +170,57 @@ export default defineComponent({
      */
     const submitForm = async (event: Event) => {
       try {
-        // Report validity and throw error if necessary
-        const formElement = event.target as HTMLFormElement;
-        if (formElement.reportValidity && !formElement.reportValidity()) {
-          throw new Error(
-            'Ein Pflichtfeld wurde nicht ausgefüllt oder eine deiner Angaben ist ungültig.'
-          );
+        if (!spam.value) {
+          // Add value to required spam field
+          spam.value = '1234';
+
+          // Stop code execution for 100ms while
+          // spam value is entered into the form
+          await sleep(100);
+
+          // Report validity and throw error if necessary
+          const formElement = event.target as HTMLFormElement;
+          if (formElement.reportValidity && !formElement.reportValidity()) {
+            throw new Error(
+              'Ein Pflichtfeld wurde nicht ausgefüllt oder eine deiner Angaben ist ungültig.'
+            );
+          }
+
+          // Set form state to submitting
+          formState.value = 'submitting';
+
+          // Send form data to Cloud Functions
+          const response = await fetch(SEND_CONTACT_EMAIL_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: name.value,
+              email: email.value,
+              message: message.value,
+            }),
+          });
+
+          // Check response and throw error if necessary
+          if (!response.ok) {
+            throw new Error(await response.text());
+          }
+
+          // Track analytic event
+          trackGoal(SEND_CONTACT_FORM_EVENT_ID);
+
+          // Set form state to submitted
+          formState.value = 'submitted';
         }
-
-        // Set form state to submitting
-        formState.value = 'submitting';
-
-        // Send form data to Cloud Functions
-        const response = await fetch(SEND_CONTACT_EMAIL_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: name.value,
-            email: email.value,
-            message: message.value,
-          }),
-        });
-
-        // Check response and throw error if necessary
-        if (!response.ok) {
-          throw new Error(await response.text());
-        }
-
-        // Track analytic event
-        trackGoal(SEND_CONTACT_FORM_EVENT_ID);
-
-        // Set form state to submitted
-        formState.value = 'submitted';
 
         // Handle errors
       } catch (error: any) {
         // Set form state and error
         formState.value = 'error';
         formError.value = error.message;
+
+        // Remove value from required spam field
+      } finally {
+        spam.value = '';
       }
     };
 
@@ -211,6 +228,7 @@ export default defineComponent({
       name,
       email,
       message,
+      spam,
       formState,
       formError,
       submitForm,
