@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: >-
-          yarn install && cd shared-code && yarn build && cd ../nuxt-app && yarn
+          yarn install --ignore-engines && cd shared-code && yarn build && cd ../nuxt-app && yarn
           generate
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
