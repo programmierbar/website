@@ -36,9 +36,8 @@
           mt-5
           md:mt-10
         "
-      >
-        {{ description }}
-      </p>
+        v-html="description"
+      />
 
       <!-- Link -->
       <LinkButton class="mt-6" :href="href">Mehr Infos</LinkButton>

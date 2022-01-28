@@ -62,9 +62,8 @@
             mt-4
             lg:mt-8
           "
-        >
-          {{ description }}
-        </p>
+          v-html="description"
+        />
       </div>
     </component>
   </div>

@@ -38,9 +38,8 @@
           space-y-8
           mt-6
         "
-      >
-        {{ description }}
-      </p>
+        v-html="description"
+      />
 
       <!-- Likes -->
       <LinkButton class="mt-6" :href="href">Mehr Infos</LinkButton>

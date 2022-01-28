@@ -49,9 +49,8 @@
             space-y-8
             mt-2
           "
-        >
-          {{ description }}
-        </p>
+          v-html="description"
+        />
       </div>
     </a>
   </li>
