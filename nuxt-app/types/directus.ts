@@ -254,15 +254,6 @@ export interface DirectusHomePage {
   video: string | DirectusFileItem;
   news: { text: string }[];
   podcast_heading: string;
-  podcasts: (
-    | number
-    | {
-        id: number;
-        home_page: string | DirectusHomePage;
-        podcast: string | DirectusPodcastItem;
-        sort: number;
-      }
-  )[];
 }
 
 export interface DirectusPodcastPage {

@@ -1,4 +1,4 @@
-import type { FileItem, PodcastItem } from './items';
+import type { FileItem } from './items';
 
 export interface HomePage {
   meta_title: string;
@@ -7,17 +7,6 @@ export interface HomePage {
   video: FileItem;
   news: string[];
   podcast_heading: string;
-  podcasts: Pick<
-    PodcastItem,
-    | 'id'
-    | 'slug'
-    | 'published_on'
-    | 'type'
-    | 'number'
-    | 'title'
-    | 'cover_image'
-    | 'audio_url'
-  >[];
 }
 
 export interface PodcastPage {

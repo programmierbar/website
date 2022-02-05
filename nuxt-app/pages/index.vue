@@ -1,5 +1,5 @@
 <template>
-  <div v-if="homePage && podcastCount">
+  <div v-if="homePage && latestPodcasts && podcastCount">
     <section
       class="
         container
@@ -63,7 +63,7 @@
 
     <!-- Podcasts -->
     <section
-      v-if="homePage.podcasts.length"
+      v-if="latestPodcasts.length"
       class="relative py-16 md:py-28 lg:py-36 md:my-14 lg:my-24"
     >
       <SectionHeading class="px-6 md:px-0" element="h2">
@@ -71,7 +71,7 @@
       </SectionHeading>
       <PodcastSlider
         class="mt-10 md:mt-0"
-        :podcasts="homePage.podcasts"
+        :podcasts="latestPodcasts"
         :podcast-count="podcastCount"
         show-podcast-link
       />
@@ -104,25 +104,14 @@ export default defineComponent({
     TypedText,
   },
   setup() {
-    // Query home page and podcast count
+    // Query home page, latest podcasts and podcast count
     const pageData = useAsyncData(async () => {
-      const [homePage, podcastCount] = await Promise.all([
+      const [homePage, latestPodcasts, podcastCount] = await Promise.all([
         // Home page
         directus
           .singleton('home_page')
           .read({
-            fields: [
-              '*',
-              'video.*',
-              'podcasts.podcast.id',
-              'podcasts.podcast.slug',
-              'podcasts.podcast.published_on',
-              'podcasts.podcast.type',
-              'podcasts.podcast.number',
-              'podcasts.podcast.title',
-              'podcasts.podcast.cover_image.*',
-              'podcasts.podcast.audio_url',
-            ],
+            fields: ['*', 'video.*'],
           })
           .then(
             (homePage) =>
@@ -131,23 +120,36 @@ export default defineComponent({
                 news: (homePage.news as { text: string }[]).map(
                   ({ text }) => text
                 ),
-                podcasts: (
-                  homePage.podcasts as {
-                    podcast: Pick<
-                      PodcastItem,
-                      | 'id'
-                      | 'slug'
-                      | 'published_on'
-                      | 'type'
-                      | 'number'
-                      | 'title'
-                      | 'cover_image'
-                      | 'audio_url'
-                    >;
-                  }[]
-                ).map(({ podcast }) => podcast),
               }
           ) as Promise<HomePage>,
+
+        // Latest podcasts
+        (
+          await directus.items('podcasts').readMany({
+            fields: [
+              'id',
+              'slug',
+              'published_on',
+              'type',
+              'number',
+              'title',
+              'cover_image.*',
+              'audio_url',
+            ],
+            sort: ['-published_on'],
+            limit: 10,
+          })
+        ).data as Pick<
+          PodcastItem,
+          | 'id'
+          | 'slug'
+          | 'published_on'
+          | 'type'
+          | 'number'
+          | 'title'
+          | 'cover_image'
+          | 'audio_url'
+        >[],
 
         // Podcast count
         (
@@ -157,11 +159,12 @@ export default defineComponent({
           })
         ).meta?.total_count,
       ]);
-      return { homePage, podcastCount };
+      return { homePage, latestPodcasts, podcastCount };
     });
 
-    // Extract home page and podcast count from page data
+    // Extract home page, latest podcasts and podcast count from page data
     const homePage = computed(() => pageData.value?.homePage);
+    const latestPodcasts = computed(() => pageData.value?.latestPodcasts);
     const podcastCount = computed(() => pageData.value?.podcastCount);
 
     // Set loading screen
@@ -177,6 +180,7 @@ export default defineComponent({
 
     return {
       homePage,
+      latestPodcasts,
       podcastCount,
       breadcrumbs: [{ label: 'Home' }],
       videoUrl,
