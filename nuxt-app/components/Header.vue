@@ -436,7 +436,7 @@ export default defineComponent({
      */
     const handleKeyDown = (event: KeyboardEvent) => {
       // Get keys and target from event
-      const { metaKey, shiftKey, target } = event;
+      const { metaKey, target } = event;
       const key = event.key.toLowerCase();
 
       // Check if target is an input element
@@ -459,11 +459,11 @@ export default defineComponent({
         menuIsOpen.value = false;
       }
 
-      // Open search if closed and meta key and
-      // "k" or shift key and "/" is pressed
+      // Open search if closed and meta key and "k" or "/"
+      // key is pressed and target is not an input element
       if (
         !searchIsOpen.value &&
-        ((metaKey && key === 'k') || (shiftKey && key === '/'))
+        ((metaKey && key === 'k') || (key === '/' && !targetIsInput))
       ) {
         event.preventDefault();
         searchIsOpen.value = true;
