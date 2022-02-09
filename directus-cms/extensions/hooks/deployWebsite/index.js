@@ -11,9 +11,10 @@ module.exports = (
   /**
    * It handles the action and deploys our website, if necessary.
    *
+   * @param type The filter typ.
    * @param data The action data.
    */
-  async function handleAction({ metadata, context }) {
+  async function handleAction(type, { payload, metadata, context }) {
     try {
       // Log start info
       logger.info(
@@ -36,8 +37,12 @@ module.exports = (
           metadata.key || metadata.keys[0]
         );
 
-        // Deploy website only if it is a published items
-        if (item.status === 'published') {
+        // Deploy website only if it is a published item or
+        // action type is "update" and status has changed
+        if (
+          item.status === 'published' ||
+          (type === 'update' && payload.status)
+        ) {
           // Create GitHub App JWT
           const githubAppJwt = jwt.sign(
             {
@@ -135,14 +140,14 @@ module.exports = (
   /**
    * It deploys our website on created items, if necessary.
    */
-  action('tags.items.create', ({ payload, ...metadata }, context) =>
-    handleAction({ metadata, context })
+  action('items.create', ({ payload, ...metadata }, context) =>
+    handleAction('create', { payload, metadata, context })
   );
 
   /**
    * It deploys our website on updated items, if necessary.
    */
-  action('tags.items.update', ({ payload, ...metadata }, context) =>
-    handleAction({ metadata, context })
+  action('items.update', ({ payload, ...metadata }, context) =>
+    handleAction('update', { payload, metadata, context })
   );
 };
