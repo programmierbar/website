@@ -435,7 +435,7 @@ export default defineComponent({
         ? getMetaInfo({
             type: 'profile',
             path: route.value.path,
-            title: `${fullName.value}`,
+            title: fullName.value || 'Speaker',
             description: speaker.value.description,
             image: speaker.value.profile_image,
             firstName: speaker.value.first_name,
