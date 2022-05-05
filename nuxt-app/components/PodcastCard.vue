@@ -1,6 +1,11 @@
 <template>
   <div class="w-48 md:w-64 lg:w-96 relative">
-    <NuxtLink :to="href" draggable="false" data-cursor-more>
+    <NuxtLink
+      class="relative z-10"
+      :to="href"
+      draggable="false"
+      data-cursor-more
+    >
       <!-- Podcast cover -->
       <DirectusImage
         class="w-48 md:w-64 lg:w-96 h-48 md:h-64 lg:h-96 pointer-events-none"
