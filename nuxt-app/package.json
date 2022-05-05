@@ -13,6 +13,7 @@
   "dependencies": {
     "@directus/sdk": "^9.4.3",
     "@googlemaps/js-api-loader": "^1.12.11",
+    "@lostdesign/nuxt-fathom": "^1.0.3",
     "@nuxtjs/composition-api": "^0.31.0",
     "@nuxtjs/pwa": "^3.3.5",
     "@nuxtjs/sitemap": "^2.4.0",
@@ -20,6 +21,7 @@
     "@types/google.maps": "^3.47.0",
     "@types/smoothscroll-polyfill": "^0.3.1",
     "core-js": "^3.19.3",
+    "fathom-client": "^3.4.1",
     "nuxt": "^2.15.8",
     "shared-code": "0.0.0",
     "smoothscroll-polyfill": "^0.4.4"

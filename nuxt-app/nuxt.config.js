@@ -18,14 +18,6 @@ export default {
       { name: 'format-detection', content: 'telephone=no' },
     ],
     link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
-    script: [
-      // Fathom Analytics
-      {
-        src: 'https://ziggy-stardust-six.programmier.bar/script.js',
-        'data-site': 'XSJTTACD',
-        defer: true,
-      },
-    ],
     htmlAttrs: {
       lang: 'de',
     },
@@ -60,6 +52,8 @@ export default {
     '@nuxtjs/svg',
     // Sitemap Module for Nuxt
     '@nuxtjs/sitemap',
+    // Fathom Analytics
+    '@lostdesign/nuxt-fathom',
   ],
 
   // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
@@ -97,15 +91,20 @@ export default {
     },
   },
 
-  // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
-  router: {
-    middleware: ['fathom'],
-  },
-
   // https://sitemap.nuxtjs.org/
   sitemap: {
     hostname: 'https://www.programmier.bar',
     exclude: ['/impressum', '/datenschutz'],
+  },
+
+  // Fathom Analytics
+  fathom: {
+    namespace: 'fathom', // optional
+    spa: 'history', // recommended
+    siteId: 'XSJTTACD',
+    url: 'https://ziggy-stardust-six.programmier.bar/script.js',
+    honorDNT: false,
+    canonical: true,
   },
 
   // https://image.nuxtjs.org/

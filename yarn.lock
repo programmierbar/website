@@ -2779,6 +2779,11 @@
     npmlog "^4.1.2"
     write-file-atomic "^3.0.3"
 
+"@lostdesign/nuxt-fathom@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@lostdesign/nuxt-fathom/-/nuxt-fathom-1.0.3.tgz#1d5d40287adbccdf43f072496f485e1bb3b4628e"
+  integrity sha512-DOStEVgSt9ncmxmLSlW/lwG6nRmFqcN4XdM+V0lin+UKUzpqCeItcLZTFhOuHeTQrMj1uwwZm8EcG8xmcTBJnQ==
+
 "@mapbox/node-pre-gyp@^1.0.7":
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/@mapbox/node-pre-gyp/-/node-pre-gyp-1.0.8.tgz#32abc8a5c624bc4e46c43d84dfb8b26d33a96f58"
@@ -8254,6 +8259,11 @@ fastq@^1.6.0:
   integrity sha512-YpkpUnK8od0o1hmeSc7UUs/eB/vIPWJYjKck2QKIzAf71Vm1AAQ3EbuZB3g2JIy+pg+ERD0vqI79KyZiB2e2Nw==
   dependencies:
     reusify "^1.0.4"
+
+fathom-client@^3.4.1:
+  version "3.4.1"
+  resolved "https://registry.yarnpkg.com/fathom-client/-/fathom-client-3.4.1.tgz#b50fcb0381b846d3dcf5af0f81ea60a8e5675bcf"
+  integrity sha512-iQFKx9B9RDeGLzgNqsaXWg3Fvu7yfq1Z8GjpAG3DP8IoGoPRWOOktpM7DUKiUzoE3d37hdvDQvkqUHfNzVwimg==
 
 faye-websocket@0.11.4:
   version "0.11.4"
