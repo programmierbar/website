@@ -1,4 +1,4 @@
-import fathom from 'fathom-client';
+import * as fathom from 'fathom-client';
 
 /**
  * A helper function that tracks goals with Fathom Analytics.
