@@ -167,9 +167,7 @@
       <DirectusImage
         v-if="podcast.banner_image"
         class="
-          w-52
-          md:w-96
-          lg:w-112
+          w-auto
           h-52
           md:h-96
           lg:h-112
