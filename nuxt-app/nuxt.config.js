@@ -77,6 +77,12 @@ export default {
     },
   },
 
+  // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
+  router: {
+    // Fathom Analytics
+    middleware: ['fathom'],
+  },
+
   // PWA module configuration: https://go.nuxtjs.dev/pwa
   pwa: {
     manifest: {
