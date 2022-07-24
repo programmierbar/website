@@ -11,4 +11,4 @@ Source code of: [https://www.programmier.bar/](https://www.programmier.bar/)
 
 ## Feedback
 
-We welcome any form of [feedback](https://www.programmier.bar/kontakt). If you are interested, you can also create a pull request directly.
+We welcome any form of [feedback](https://www.programmier.bar/kontakt)! If you are interested, you can also create a pull request directly.
