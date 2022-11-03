@@ -260,31 +260,38 @@ module.exports = (
       })
     );
 
-    // Create podcast tag items service instance
-    const podcastTagItemsService = new ItemsService('podcast_tags', {
-      accountability: context.accountability,
-      schema: context.schema,
-    });
+    let tagItems = [];
+    try {
+      // Create podcast tag items service instance
+      const podcastTagItemsService = new ItemsService('podcast_tags', {
+        accountability: context.accountability,
+        schema: context.schema,
+      });
 
-    // Create tag items service instance
-    const tagItemsService = new ItemsService('tags', {
-      accountability: context.accountability,
-      schema: context.schema,
-    });
+      // Create tag items service instance
+      const tagItemsService = new ItemsService('tags', {
+        accountability: context.accountability,
+        schema: context.schema,
+      });
 
-    // Log info
-    logger.info(`${HOOK_NAME} hook: Query tag items from Directus`);
+      // Log info
+      logger.info(`${HOOK_NAME} hook: Query tag items from Directus`);
 
-    // Get tag items from tag item service by keys
-    const tagItems = await Promise.all(
-      podcastItem.tags.map(async (podcastTagId) =>
-        tagItemsService.readOne(
-          (
-            await podcastTagItemsService.readOne(podcastTagId)
-          ).tag
+      // Get tag items from tag item service by keys
+      tagItems = await Promise.all(
+        podcastItem.tags.map(async (podcastTagId) =>
+          tagItemsService.readOne(
+            (
+              await podcastTagItemsService.readOne(podcastTagId)
+            ).tag
+          )
         )
-      )
-    );
+      );
+    } catch (error) {
+      logger.error(
+        `${HOOK_NAME} hook: Could not query tags "${error.message}"`
+      );
+    }
 
     // Return podcast data
     return {
@@ -409,7 +416,6 @@ module.exports = (
       // Handle unknown errors
     } catch (error) {
       logger.error(`${HOOK_NAME} hook: Error: ${error.message}`);
-      logger.error(error);
       throw new BaseException(error.message, 500, 'UNKNOWN');
     }
   }
