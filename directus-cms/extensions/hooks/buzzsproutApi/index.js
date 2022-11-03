@@ -19,6 +19,13 @@ module.exports = (
     // Create is creation boolean
     const isCreation = typeof podcastData.buzzsprout_id !== 'number';
 
+    // Log start info
+    logger.info(
+      `${HOOK_NAME} hook: ${
+        isCreation ? 'Create' : 'Update'
+      } podcast episode at Buzzsprout`
+    );
+
     // Create published on timestamp
     const publishedOn = podcastData.published_on || new Date().toISOString();
 
@@ -211,6 +218,9 @@ module.exports = (
    * @returns The podcast data.
    */
   async function getPodcastData(podcastItem, { context }) {
+    // Log start info
+    logger.info(`${HOOK_NAME} hook: Query podcast data from Directus`);
+
     // Create member items service instance
     const memberItemsService = new ItemsService('members', {
       accountability: context.accountability,
@@ -228,6 +238,9 @@ module.exports = (
       accountability: context.accountability,
       schema: context.schema,
     });
+
+    // Log info
+    logger.info(`${HOOK_NAME} hook: Query pick of the day items from Directus`);
 
     // Get pick of the day items with member or speaker
     const pickOfTheDayItems = await Promise.all(
@@ -258,6 +271,9 @@ module.exports = (
       accountability: context.accountability,
       schema: context.schema,
     });
+
+    // Log info
+    logger.info(`${HOOK_NAME} hook: Query tag items from Directus`);
 
     // Get tag items from tag item service by keys
     const tagItems = await Promise.all(
@@ -329,6 +345,11 @@ module.exports = (
             payload.cover_image ||
             payload.audio_file))
       ) {
+        // Log info
+        logger.info(
+          `${HOOK_NAME} hook: Podcast creation or update required at Buzzsprout.`
+        );
+
         // Get podcast data
         const podcastData = await getPodcastData(podcastItem, {
           context,
@@ -377,11 +398,18 @@ module.exports = (
             updateData
           );
         }
+
+        // Otherwies log info
+      } else {
+        logger.info(
+          `${HOOK_NAME} hook: Podcast creation or update at Buzzsprout is skipped.`
+        );
       }
 
       // Handle unknown errors
     } catch (error) {
       logger.error(`${HOOK_NAME} hook: Error: ${error.message}`);
+      logger.error(error);
       throw new BaseException(error.message, 500, 'UNKNOWN');
     }
   }
