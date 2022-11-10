@@ -256,6 +256,7 @@ export default defineComponent({
           })
         ).data?.map(({ speakers, tags, ...rest }) => ({
           ...rest,
+          slug: route.value.params.slug,
           speakers: (
             speakers as {
               speaker: Pick<
