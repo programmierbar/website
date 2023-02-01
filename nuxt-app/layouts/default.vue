@@ -171,4 +171,12 @@ input[type='range']::-moz-range-track {
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: 'DM Mono';
+  src: url('~/assets/fonts/DMMono-Light.woff2') format('woff2'),
+    url('~/assets/fonts/DMMono-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
 </style>

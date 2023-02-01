@@ -19,6 +19,7 @@ export interface DirectusPodcastItem {
   banner_image: string | DirectusFileItem | null;
   audio_url: string;
   description: string;
+  transcription: string | null;
   apple_url: string;
   google_url: string;
   spotify_url: string;

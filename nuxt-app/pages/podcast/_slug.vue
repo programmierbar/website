@@ -89,6 +89,12 @@
               />
             </li>
           </ul>
+          <PodcastTranscript
+            v-if="podcast.transcript"
+            :name="podcast.slug"
+            :body="podcast.transcript"
+            class="mt-12"
+          />
         </div>
       </div>
     </article>
@@ -182,6 +188,7 @@ import {
   SectionHeading,
   SpeakerList,
   TagList,
+  PodcastTranscript,
 } from '../../components';
 import {
   useAsyncData,
@@ -210,6 +217,7 @@ export default defineComponent({
     SectionHeading,
     SpeakerList,
     TagList,
+    PodcastTranscript,
   },
   setup() {
     // Add route and router
@@ -230,6 +238,7 @@ export default defineComponent({
               'number',
               'title',
               'description',
+              'transcript',
               'cover_image.*',
               'banner_image.*',
               'audio_url',
@@ -285,6 +294,7 @@ export default defineComponent({
           | 'number'
           | 'title'
           | 'description'
+          | 'transcript'
           | 'cover_image'
           | 'banner_image'
           | 'audio_url'

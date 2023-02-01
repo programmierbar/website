@@ -135,6 +135,9 @@ module.exports = {
         70: '70',
       },
     },
+    fontFamily: {
+      mono: '"DM Mono", monospace',
+    },
   },
   variants: {
     extend: {},

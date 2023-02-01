@@ -19,6 +19,7 @@ export interface PodcastItem {
   banner_image: FileItem | null;
   audio_url: string;
   description: string;
+  transcript: string | null;
   apple_url: string;
   google_url: string;
   spotify_url: string;
