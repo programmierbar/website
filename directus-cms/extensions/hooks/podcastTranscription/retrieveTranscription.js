@@ -102,7 +102,7 @@ module.exports =
 
       // Handle unknown errors
     } catch (error) {
-      logger.error(`${HOOK_NAME} hook: Error: ${error.message}`);
+      logger.error(`${HOOK_NAME} hook: Error: ${error}`);
       throw new BaseException(error.message, 500, 'UNKNOWN');
     }
   };
