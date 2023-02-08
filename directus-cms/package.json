@@ -5,10 +5,12 @@
   "license": "MIT",
   "type": "commonjs",
   "scripts": {
+    "migrate:db": "directus database migrate:latest",
     "bootstrap": "directus bootstrap",
-    "start": "npx directus start",
-    "snapshot-schema": "npx directus schema snapshot ./schema.json --format json",
-    "apply-schema": "npx directus schema apply ./schema.json"
+    "build": "yarn workspace shared-code build && rm .env && yarn migrate:db && yarn bootstrap",
+    "start": "directus start",
+    "snapshot-schema": "directus schema snapshot ./schema.json --format json",
+    "apply-schema": "directus schema apply ./schema.json"
   },
   "dependencies": {
     "@slack/web-api": "^6.5.1",
