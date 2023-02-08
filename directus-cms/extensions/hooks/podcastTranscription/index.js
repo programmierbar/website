@@ -1,11 +1,11 @@
-// const retrievePodcast = require('./retrieveTranscription');
+const retrievePodcast = require('./retrieveTranscription');
 const triggerTranscription = require('./triggerTranscription');
 
-module.exports = ({ action }, config) => {
+module.exports = ({ schedule, action }, config) => {
   /**
    * It runs a cron job every minute that publishes items automatically.
    */
-  // schedule('*/1 * * * *', retrievePodcast(config));
+  schedule('*/1 * * * *', retrievePodcast(config));
 
   const trigger = triggerTranscription(config);
 
