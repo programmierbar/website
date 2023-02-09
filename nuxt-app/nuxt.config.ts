@@ -28,8 +28,6 @@ export default defineNuxtConfig({
   modules: [
     // https://go.nuxtjs.dev/pwa
     // '@nuxtjs/pwa',
-    // // SVG loading module for Nuxt.js
-    // '@nuxtjs/svg',
 
     // Fathom Analytics
     // '@lostdesign/nuxt-fathom',
