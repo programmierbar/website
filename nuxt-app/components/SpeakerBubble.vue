@@ -5,7 +5,17 @@
     :class="isFocused && 'scale-110'"
   >
     <div
-      class="w-44 xs:w-52 sm:w-64 lg:w-80 xl:w-96 2xl:w-112 3xl:w-120 transition-transform ease-linear"
+      class="
+        w-44
+        xs:w-52
+        sm:w-64
+        lg:w-80
+        xl:w-96
+        2xl:w-112
+        3xl:w-120
+        transition-transform
+        ease-linear
+      "
       :class="isFocused ? 'duration-200' : 'duration-400'"
       :style="parallaxStyle"
     >
@@ -31,6 +41,7 @@
               >
                 <!-- Profile image -->
                 <DirectusImage
+                  v-if="speaker.profile_image"
                   class="w-full h-full object-cover"
                   :image="speaker.profile_image"
                   :alt="fullName"
@@ -40,7 +51,17 @@
 
                 <!-- Image overlay -->
                 <div
-                  class="w-full h-full absolute top-0 left-0 rounded-full mix-blend-multiply transition-opacity duration-300"
+                  class="
+                    w-full
+                    h-full
+                    absolute
+                    top-0
+                    left-0
+                    rounded-full
+                    mix-blend-multiply
+                    transition-opacity
+                    duration-300
+                  "
                   :class="[
                     isFocused ? 'opacity-0' : 'opacity-80',
                     color === 'lime'
@@ -53,11 +74,41 @@
 
                 <!-- Occupation -->
                 <div
-                  class="w-full absolute left-0 bottom-0 bg-black bg-opacity-80 px-10 md:px-12 lg:px-24 pt-5 md:pt-7 lg:pt-12 pb-5 md:pb-9 lg:pb-14 transition-opacity duration-300 pointer-events-none"
+                  class="
+                    w-full
+                    absolute
+                    left-0
+                    bottom-0
+                    bg-black bg-opacity-80
+                    px-10
+                    md:px-12
+                    lg:px-24
+                    pt-5
+                    md:pt-7
+                    lg:pt-12
+                    pb-5
+                    md:pb-9
+                    lg:pb-14
+                    transition-opacity
+                    duration-300
+                    pointer-events-none
+                  "
                   :class="isFocused ? 'opacity-100' : 'opacity-0'"
                 >
                   <div
-                    class="text-xs xs:text-sm sm:text-base lg:text-lg xl:text-xl 2xl:text-2xl text-white font-light text-center line-clamp-2 md:line-clamp-none"
+                    class="
+                      text-xs
+                      xs:text-sm
+                      sm:text-base
+                      lg:text-lg
+                      xl:text-xl
+                      2xl:text-2xl
+                      text-white
+                      font-light
+                      text-center
+                      line-clamp-2
+                      md:line-clamp-none
+                    "
                     style="hyphens: auto"
                   >
                     {{ speaker.occupation }}
@@ -71,7 +122,18 @@
 
       <!-- Name -->
       <h2
-        class="text-sm xs:text-base sm:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-white text-center font-light italic mt-6"
+        class="
+          text-sm
+          xs:text-base
+          sm:text-lg
+          lg:text-xl
+          xl:text-2xl
+          2xl:text-3xl
+          text-white text-center
+          font-light
+          italic
+          mt-6
+        "
         :class="isFocused && 'font-normal'"
       >
         {{ fullName }}

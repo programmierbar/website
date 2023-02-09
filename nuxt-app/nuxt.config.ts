@@ -1,6 +1,7 @@
 import { directus } from './services';
 import { DIRECTUS_CMS_URL } from './config';
 import svgLoader from 'vite-svg-loader';
+import { resolve } from 'path';
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -8,8 +9,7 @@ export default defineNuxtConfig({
   ssr: false,
 
   alias: {
-    'shared-code': '../../shared-code/src',
-    'shared-code/*': '../../shared-code/src/*',
+    'shared-code': resolve(__dirname, '../shared-code/src'),
   },
   // Global CSS: https://go.nuxtjs.dev/config-css
   css: [],

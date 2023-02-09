@@ -1,7 +1,17 @@
 <template>
   <div v-if="hallOfFamePage && speakers" class="relative">
     <div
-      class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-32 md:pt-40 lg:pt-56 2xl:pt-64"
+      class="
+        container
+        px-6
+        md:pl-48
+        lg:pr-8
+        3xl:px-8
+        pt-32
+        md:pt-40
+        lg:pt-56
+        2xl:pt-64
+      "
     >
       <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
@@ -10,7 +20,18 @@
         {{ hallOfFamePage.intro_heading }}
       </SectionHeading>
       <InnerHtml
-        class="text-lg md:text-2xl lg:text-3xl text-white md:font-bold leading-normal md:leading-normal lg:leading-normal mt-8 md:mt-16"
+        class="
+          text-lg
+          md:text-2xl
+          lg:text-3xl
+          text-white
+          md:font-bold
+          leading-normal
+          md:leading-normal
+          lg:leading-normal
+          mt-8
+          md:mt-16
+        "
         :html="hallOfFamePage.intro_text"
       />
     </div>
@@ -25,7 +46,23 @@
 
       <!-- Speaker bubbles -->
       <div
-        class="container overflow-hidden md:overflow-unset px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-10 xs:pt-14 sm:pt-16 lg:pt-20 xl:pt-32 pb-24 md:pb-32 lg:pb-52"
+        class="
+          container
+          overflow-hidden
+          md:overflow-unset
+          px-6
+          md:pl-48
+          lg:pr-8
+          3xl:px-8
+          pt-10
+          xs:pt-14
+          sm:pt-16
+          lg:pt-20
+          xl:pt-32
+          pb-24
+          md:pb-32
+          lg:pb-52
+        "
       >
         <LazyList
           class="flex flex-col items-baseline"
@@ -66,9 +103,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import { useLoadingScreen, usePageMeta, useTagFilter } from '../../composables';
-import { directus } from '../../services';
-import { HallOfFamePage, SpeakerItem, TagItem } from '../../types';
+import { useLoadingScreen, usePageMeta, useTagFilter } from '~/composables';
+import { directus } from '~/services';
+import { HallOfFamePage, SpeakerItem, TagItem } from '~/types';
+import LazyList from '~/components/LazyList.vue';
+import LazyListItem from '~/components/LazyListItem.vue';
 
 const breadcrumbs = [{ label: 'Hall of Fame' }];
 const bubbleColors = ['pink', 'blue', 'lime'] as const;
