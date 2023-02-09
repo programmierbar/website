@@ -29,7 +29,7 @@
               <div
                 class="h-4 md:h-5 lg:h-6 transition-transform duration-200 xl:duration-300"
                 :class="filterIsOpen && 'rotate-90'"
-                v-html="require('../assets/icons/angle-left.svg?raw')"
+                v-html="angleLeftIcon"
               />
               <div
                 class="text-sm md:text-base lg:text-xl font-bold pt-px md:pt-0.5 lg:pt-1 translate-x-2 transition-opacity duration-200 xl:duration-300"
@@ -59,75 +59,58 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, ref, watch } from 'vue';
-import { CLOSE_TAG_FILTER_EVENT_ID, OPEN_TAG_FILTER_EVENT_ID } from '../config';
-import { useEventListener, useDocument } from '../composables';
-import { trackGoal } from '../helpers';
-import { TagItem } from '../types';
+<script setup lang="ts">
+import angleLeftIcon from '~/assets/icons/angle-left.svg?raw';
+import { ref, watch } from 'vue';
+import { CLOSE_TAG_FILTER_EVENT_ID, OPEN_TAG_FILTER_EVENT_ID } from '~/config';
+import { useEventListener, useDocument } from '~/composables';
+import { trackGoal } from '~/helpers';
+import { TagItem } from '~/types';
 import TagList from './TagList.vue';
+const props = defineProps<{
+  tags: Tag[];
+  toggleTag: (tag: Tag, index: number) => void;
+}>();
+const { tags, toggleTag } = toRefs(props);
 
 interface Tag extends Pick<TagItem, 'id' | 'name'> {
   is_active?: boolean;
 }
 
-export default defineComponent({
-  components: {
-    TagList,
-  },
-  props: {
-    tags: {
-      type: Array as PropType<Tag[]>,
-      required: true,
-    },
-    toggleTag: {
-      type: Function as PropType<(_: any, index: number) => void>,
-      required: true,
-    },
-  },
-  setup() {
-    // Create tag filter element reference
-    const tagFilterElement = ref<HTMLDivElement>();
+// Create tag filter element reference
+const tagFilterElement = ref<HTMLDivElement>();
 
-    // Create filter is open reference
-    const filterIsOpen = ref(false);
+// Create filter is open reference
+const filterIsOpen = ref(false);
 
-    // Track analytic events
-    watch(filterIsOpen, () => {
-      if (filterIsOpen.value) {
-        trackGoal(OPEN_TAG_FILTER_EVENT_ID);
-      } else {
-        trackGoal(CLOSE_TAG_FILTER_EVENT_ID);
-      }
-    });
-
-    /**
-     * It closes the tag filter when clicked outside.
-     */
-    const handleClick = (event: Event) => {
-      if (
-        filterIsOpen.value &&
-        !tagFilterElement.value!.contains(event.target as Node)
-      ) {
-        filterIsOpen.value = false;
-      }
-    };
-
-    // Add click event listener
-    useEventListener(useDocument(), 'click', handleClick);
-
-    /**
-     * It opens or closes the filter.
-     */
-    const toggleFilter = () => {
-      filterIsOpen.value = !filterIsOpen.value;
-    };
-
-    return {
-      tagFilterElement,
-      filterIsOpen,
-      toggleFilter,
-    };
-  },
+// Track analytic events
+watch(filterIsOpen, () => {
+  if (filterIsOpen.value) {
+    trackGoal(OPEN_TAG_FILTER_EVENT_ID);
+  } else {
+    trackGoal(CLOSE_TAG_FILTER_EVENT_ID);
+  }
 });
+
+/**
+ * It closes the tag filter when clicked outside.
+ */
+const handleClick = (event: Event) => {
+  if (
+    filterIsOpen.value &&
+    !tagFilterElement.value!.contains(event.target as Node)
+  ) {
+    filterIsOpen.value = false;
+  }
+};
+
+// Add click event listener
+useEventListener(useDocument(), 'click', handleClick);
+
+/**
+ * It opens or closes the filter.
+ */
+const toggleFilter = () => {
+  filterIsOpen.value = !filterIsOpen.value;
+};
 </script>

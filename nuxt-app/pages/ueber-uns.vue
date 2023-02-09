@@ -58,121 +58,96 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent } from 'vue';
-import {
-  Breadcrumbs,
-  InnerHtml,
-  MemberCard,
-  PageCoverImage,
-  SectionHeading,
-} from '../components';
-import { useAsyncData, useLoadingScreen, usePageMeta } from '../composables';
+<script setup lang="ts">
+import { computed } from 'vue';
+
+import { useLoadingScreen, usePageMeta } from '../composables';
 import { directus } from '../services';
 import { AboutPage, MemberItem } from '../types';
 
-export default defineComponent({
-  components: {
-    Breadcrumbs,
-    InnerHtml,
-    MemberCard,
-    PageCoverImage,
-    SectionHeading,
-  },
-  setup() {
-    // Query about page and members
-    const pageData = useAsyncData(async () => {
-      const [aboutPage, podcastCrewMembers, behindTheScenesMembers] =
-        await Promise.all([
-          // About page
-          directus
-            .singleton('about_page')
-            .read({ fields: '*.*' }) as Promise<AboutPage>,
+const breadcrumbs = [{ label: 'Über uns' }];
+const memberColors = ['pink', 'blue', 'lime'] as const;
 
-          // Podcast crew members
-          (
-            await directus.items('members').readMany({
-              fields: [
-                'id',
-                'first_name',
-                'last_name',
-                'task_area',
-                'occupation',
-                'description',
-                'normal_image.*',
-                'action_image.*',
-              ],
-              filter: {
-                task_area: 'podcast_crew',
-              },
-            })
-          ).data as Pick<
-            MemberItem,
-            | 'id'
-            | 'first_name'
-            | 'last_name'
-            | 'task_area'
-            | 'occupation'
-            | 'description'
-            | 'normal_image'
-            | 'action_image'
-          >[],
+// Query about page and members
+const { data: pageData } = useAsyncData(async () => {
+  const [aboutPage, podcastCrewMembers, behindTheScenesMembers] =
+    await Promise.all([
+      // About page
+      directus
+        .singleton('about_page')
+        .read({ fields: '*.*' }) as Promise<AboutPage>,
 
-          // Behind the Scenes members
-          (
-            await directus.items('members').readMany({
-              fields: [
-                'id',
-                'first_name',
-                'last_name',
-                'task_area',
-                'occupation',
-                'description',
-                'normal_image.*',
-                'action_image.*',
-              ],
-              filter: {
-                task_area: 'behind_the_scenes',
-              },
-            })
-          ).data as Pick<
-            MemberItem,
-            | 'id'
-            | 'first_name'
-            | 'last_name'
-            | 'task_area'
-            | 'occupation'
-            | 'description'
-            | 'normal_image'
-            | 'action_image'
-          >[],
-        ]);
-      return { aboutPage, podcastCrewMembers, behindTheScenesMembers };
-    });
+      // Podcast crew members
+      (
+        await directus.items('members').readByQuery({
+          fields: [
+            'id',
+            'first_name',
+            'last_name',
+            'task_area',
+            'occupation',
+            'description',
+            'normal_image.*',
+            'action_image.*',
+          ],
+          filter: {
+            task_area: 'podcast_crew',
+          },
+        })
+      ).data as Pick<
+        MemberItem,
+        | 'id'
+        | 'first_name'
+        | 'last_name'
+        | 'task_area'
+        | 'occupation'
+        | 'description'
+        | 'normal_image'
+        | 'action_image'
+      >[],
 
-    // Extract about page and members
-    const aboutPage = computed(() => pageData.value?.aboutPage);
-    const podcastCrewMembers = computed(
-      () => pageData.value?.podcastCrewMembers
-    );
-    const behindTheScenesMembers = computed(
-      () => pageData.value?.behindTheScenesMembers
-    );
-
-    // Set loading screen
-    useLoadingScreen(aboutPage, podcastCrewMembers, behindTheScenesMembers);
-
-    // Set page meta data
-    usePageMeta(aboutPage);
-
-    return {
-      aboutPage,
-      podcastCrewMembers,
-      behindTheScenesMembers,
-      breadcrumbs: [{ label: 'Über uns' }],
-      memberColors: ['pink', 'blue', 'lime'] as const,
-    };
-  },
-  head: {},
+      // Behind the Scenes members
+      (
+        await directus.items('members').readByQuery({
+          fields: [
+            'id',
+            'first_name',
+            'last_name',
+            'task_area',
+            'occupation',
+            'description',
+            'normal_image.*',
+            'action_image.*',
+          ],
+          filter: {
+            task_area: 'behind_the_scenes',
+          },
+        })
+      ).data as Pick<
+        MemberItem,
+        | 'id'
+        | 'first_name'
+        | 'last_name'
+        | 'task_area'
+        | 'occupation'
+        | 'description'
+        | 'normal_image'
+        | 'action_image'
+      >[],
+    ]);
+  return { aboutPage, podcastCrewMembers, behindTheScenesMembers };
 });
+
+// Extract about page and members
+const aboutPage = computed(() => pageData.value?.aboutPage);
+const podcastCrewMembers = computed(() => pageData.value?.podcastCrewMembers);
+const behindTheScenesMembers = computed(
+  () => pageData.value?.behindTheScenesMembers
+);
+
+// Set loading screen
+useLoadingScreen(aboutPage, podcastCrewMembers, behindTheScenesMembers);
+
+// Set page meta data
+usePageMeta(aboutPage);
 </script>

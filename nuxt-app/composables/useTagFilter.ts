@@ -1,4 +1,4 @@
-import { computed, reactive, Ref, ref, watch } from '@nuxtjs/composition-api';
+import { computed, reactive, Ref, ref, watch } from 'vue';
 import { ADD_TAG_FILTER_EVENT_ID, REMOVE_TAG_FILTER_EVENT_ID } from '../config';
 import { trackGoal } from '../helpers';
 import { TagItem } from '../types';

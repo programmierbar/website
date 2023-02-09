@@ -19,44 +19,28 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, useMeta } from 'vue';
-import { Breadcrumbs, InnerHtml, SectionHeading } from '../components';
-import { useAsyncData, useLoadingScreen } from '../composables';
+<script setup lang="ts">
+import { useLoadingScreen } from '../composables';
 import { getMetaInfo } from '../helpers';
 import { directus } from '../services';
 import { PrivacyPage } from '../types';
 
-export default defineComponent({
-  components: {
-    Breadcrumbs,
-    InnerHtml,
-    SectionHeading,
-  },
-  setup() {
-    // Query privacy page
-    const privacyPage = useAsyncData(
-      () => directus.singleton('privacy_page').read() as Promise<PrivacyPage>
-    );
+const breadcrumbs = [{ label: 'Datenschutz' }];
+// Query privacy page
+const { data: privacyPage } = useAsyncData(
+  () => directus.singleton('privacy_page').read() as Promise<PrivacyPage>
+);
 
-    // Set loading screen
-    useLoadingScreen(privacyPage);
+// Set loading screen
+useLoadingScreen(privacyPage);
 
-    // Set page meta data
-    useMeta(
-      getMetaInfo({
-        type: 'website',
-        path: '/datenschutz',
-        title: 'Datenschutz',
-        noIndex: true,
-      })
-    );
-
-    return {
-      privacyPage,
-      breadcrumbs: [{ label: 'Datenschutz' }],
-    };
-  },
-  head: {},
-});
+// Set page meta data
+useHead(
+  getMetaInfo({
+    type: 'website',
+    path: '/datenschutz',
+    title: 'Datenschutz',
+    noIndex: true,
+  })
+);
 </script>

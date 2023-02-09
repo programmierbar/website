@@ -42,15 +42,7 @@
         data-cursor-hover
         type="button"
         @click="playOrPausePodcast"
-        v-html="
-          require(`../assets/icons/${
-            podcastPlayer.podcast &&
-            podcastPlayer.podcast.id === podcast.id &&
-            !podcastPlayer.paused
-              ? 'pause-circle-filled'
-              : 'play-circle'
-          }.svg?raw`)
-        "
+        v-html="playOrPauseIcon"
       />
 
       <!-- Podcast episode info -->
@@ -118,83 +110,74 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import pauseCircleFilledIcon from '~/assets/icons/pause-circle-filled.svg?raw';
+import playCircleIcon from '~/assets/icons/play-circle.svg?raw';
+import { computed } from 'vue';
 import { getPodcastType, getFullSpeakerName } from 'shared-code';
-import { usePodcastPlayer } from '../composables';
-import { PodcastItem, SpeakerItem } from '../types';
+import { usePodcastPlayer } from '~/composables';
+import { PodcastItem, SpeakerItem } from '~/types';
 import DirectusImage from './DirectusImage.vue';
 
-export default defineComponent({
-  components: {
-    DirectusImage,
-  },
-  props: {
-    podcast: {
-      type: Object as PropType<
-        Pick<
-          PodcastItem,
-          | 'id'
-          | 'published_on'
-          | 'slug'
-          | 'type'
-          | 'number'
-          | 'title'
-          | 'banner_image'
-          | 'audio_url'
-        > & {
-          speakers: Pick<
-            SpeakerItem,
-            'academic_title' | 'first_name' | 'last_name'
-          >[];
-        }
-      >,
-      required: true,
-    },
-  },
-  setup(props) {
-    // Use podcast player
-    const podcastPlayer = usePodcastPlayer();
+const props = defineProps<{
+  podcast: Pick<
+    PodcastItem,
+    | 'id'
+    | 'published_on'
+    | 'slug'
+    | 'type'
+    | 'number'
+    | 'title'
+    | 'banner_image'
+    | 'audio_url'
+  > & {
+    speakers: Pick<
+      SpeakerItem,
+      'academic_title' | 'first_name' | 'last_name'
+    >[];
+  };
+}>();
 
-    /**
-     * It plays or pauses the podcast.
-     */
-    const playOrPausePodcast = () => {
-      if (podcastPlayer.podcast?.id !== props.podcast.id) {
-        podcastPlayer.setPodcast(props.podcast);
-      }
-      if (podcastPlayer.paused) {
-        podcastPlayer.play();
-      } else {
-        podcastPlayer.pause();
-      }
-    };
+// Use podcast player
+const podcastPlayer = usePodcastPlayer();
 
-    // Create local date string
-    const date = computed(() =>
-      new Date(props.podcast.published_on).toLocaleDateString('de-DE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      })
-    );
+const playOrPauseIcon = computed(() => {
+  const isPause =
+    podcastPlayer.podcast &&
+    podcastPlayer.podcast.id === props.podcast.id &&
+    !podcastPlayer.paused;
 
-    // Create podcast type
-    const type = computed(() => getPodcastType(props.podcast));
+  return isPause ? pauseCircleFilledIcon : playCircleIcon;
+});
+/**
+ * It plays or pauses the podcast.
+ */
+const playOrPausePodcast = () => {
+  if (podcastPlayer.podcast?.id !== props.podcast.id) {
+    podcastPlayer.setPodcast(props.podcast);
+  }
+  if (podcastPlayer.paused) {
+    podcastPlayer.play();
+  } else {
+    podcastPlayer.pause();
+  }
+};
 
-    // Create speaker name
-    const speakerName = computed(() => {
-      const firstSpeaker = props.podcast.speakers[0];
-      return firstSpeaker ? getFullSpeakerName(firstSpeaker) : undefined;
-    });
+// Create local date string
+const date = computed(() =>
+  new Date(props.podcast.published_on).toLocaleDateString('de-DE', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+);
 
-    return {
-      podcastPlayer,
-      playOrPausePodcast,
-      date,
-      type,
-      speakerName,
-    };
-  },
+// Create podcast type
+const type = computed(() => getPodcastType(props.podcast));
+
+// Create speaker name
+const speakerName = computed(() => {
+  const firstSpeaker = props.podcast.speakers[0];
+  return firstSpeaker ? getFullSpeakerName(firstSpeaker) : undefined;
 });
 </script>

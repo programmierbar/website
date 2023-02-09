@@ -1,4 +1,4 @@
-import { reactive, Ref } from '@nuxtjs/composition-api';
+import { reactive, Ref } from 'vue';
 import { useEventListener } from '.';
 
 /**

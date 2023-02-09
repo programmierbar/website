@@ -1,4 +1,4 @@
-import { ref, watch } from '@nuxtjs/composition-api';
+import { ref, watch } from 'vue';
 import { useEventListener } from './useEventListener';
 import { useWindow } from './useWindow';
 

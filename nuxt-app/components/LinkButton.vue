@@ -19,23 +19,20 @@
           count === 3 && 'left-6 md:left-8',
         ]"
         :style="`animation-delay: ${count * 150 - 300}ms`"
-        v-html="require('../assets/icons/angle-right.svg?raw')"
+        v-html="angleRightIcon"
       />
     </div>
   </NuxtLink>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import angleRightIcon from '~/assets/icons/angle-right.svg?raw';
 
-export default defineComponent({
-  props: {
-    href: {
-      type: String,
-      required: true,
-    },
-  },
-});
+const { href } = toRefs(
+  defineProps<{
+    href: string;
+  }>()
+);
 </script>
 
 <style lang="postcss" scoped>

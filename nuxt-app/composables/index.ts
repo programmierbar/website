@@ -1,4 +1,3 @@
-export * from './useAsyncData';
 export * from './useBodyElement';
 export * from './useClipboard';
 export * from './useDocument';

@@ -31,12 +31,12 @@
       <div
         v-if="cursorMode === 'arrow-left'"
         class="h-8 relative -left-12 text-blue"
-        v-html="require('~/assets/icons/angle-left.svg?raw')"
+        v-html="angleLeftIcon"
       />
       <div
         v-if="cursorMode === 'arrow-right'"
         class="h-8 relative left-12 text-blue"
-        v-html="require('~/assets/icons/angle-right.svg?raw')"
+        v-html="angleRightIcon"
       />
     </div>
     <div
@@ -62,8 +62,10 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
+<script setup lang="ts">
+import angleLeftIcon from '~/assets/icons/angle-left.svg?raw';
+import angleRightIcon from '~/assets/icons/angle-right.svg?raw';
+import { ref } from 'vue';
 import { useEventListener, useWindow } from '../composables';
 
 type CursorMode =
@@ -85,52 +87,41 @@ const cursorModes: CursorMode[] = [
   'arrow-left',
   'arrow-right',
 ];
+// Create element and state references
+const mainCursorElement = ref<HTMLDivElement>();
+const delayedDotElement = ref<HTMLDivElement>();
 
-export default defineComponent({
-  setup() {
-    // Create element and state references
-    const mainCursorElement = ref<HTMLDivElement>();
-    const delayedDotElement = ref<HTMLDivElement>();
+// Create cursor mode references
+const cursorMode = ref<CursorMode>();
 
-    // Create cursor mode references
-    const cursorMode = ref<CursorMode>();
+/**
+ * It handels the movement, visibility and mode of the mouse cursor.
+ */
+const handleMouseCursor = (event: MouseEvent) => {
+  if (window.matchMedia('(pointer: fine)').matches) {
+    // Move mouse cursor based on mouse move event
+    const transform = `translate(${event.clientX}px, ${event.clientY}px)`;
+    mainCursorElement.value!.style.transform = transform;
+    delayedDotElement.value!.style.transform = transform;
 
-    /**
-     * It handels the movement, visibility and mode of the mouse cursor.
-     */
-    const handleMouseCursor = (event: MouseEvent) => {
-      if (window.matchMedia('(pointer: fine)').matches) {
-        // Move mouse cursor based on mouse move event
-        const transform = `translate(${event.clientX}px, ${event.clientY}px)`;
-        mainCursorElement.value!.style.transform = transform;
-        delayedDotElement.value!.style.transform = transform;
+    // Set cursor mode based on nodes of composed path
+    cursorMode.value =
+      event
+        .composedPath()
+        .reduce<CursorMode | false | undefined>(
+          (cursorMode, currentNode) =>
+            cursorMode ||
+            (currentNode instanceof HTMLElement &&
+              cursorModes.find((cursorMode) =>
+                currentNode.hasAttribute(`data-cursor-${cursorMode}`)
+              )),
+          undefined
+        ) || 'default';
+  }
+};
 
-        // Set cursor mode based on nodes of composed path
-        cursorMode.value =
-          event
-            .composedPath()
-            .reduce<CursorMode | false | undefined>(
-              (cursorMode, currentNode) =>
-                cursorMode ||
-                (currentNode instanceof HTMLElement &&
-                  cursorModes.find((cursorMode) =>
-                    currentNode.hasAttribute(`data-cursor-${cursorMode}`)
-                  )),
-              undefined
-            ) || 'default';
-      }
-    };
-
-    // Add mouse move event listener
-    useEventListener(useWindow(), 'mousemove', handleMouseCursor);
-
-    return {
-      mainCursorElement,
-      delayedDotElement,
-      cursorMode,
-    };
-  },
-});
+// Add mouse move event listener
+useEventListener(useWindow(), 'mousemove', handleMouseCursor);
 </script>
 
 <style scoped>

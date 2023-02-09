@@ -1,4 +1,4 @@
-import { reactive, ref, watch } from '@nuxtjs/composition-api';
+import { reactive, ref, watch } from 'vue';
 import { useNavigator } from './useNavigator';
 
 /**

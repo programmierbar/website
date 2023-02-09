@@ -3,7 +3,7 @@
     <div
       class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-32 md:pt-40 lg:pt-56 2xl:pt-64 pb-20 md:pb-32 lg:pb-52"
     >
-      <Breadcrumbs :breadcrumbs="breadcrumbs" />
+      <Breadcrumbs :breadcrumbs="[{ label: 'Seite nicht gefunden' }]" />
 
       <!-- Heading -->
       <SectionHeading class="mt-8 md:mt-0" element="h1">
@@ -66,34 +66,34 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, useMeta } from 'vue';
-import { Breadcrumbs, SectionHeading } from '../components';
-import { useLoadingScreen } from '../composables';
+<script setup lang="ts">
+import { useLoadingScreen } from './composables';
 
-export default defineComponent({
-  components: {
-    Breadcrumbs,
-    SectionHeading,
+// Disable loading screen
+useLoadingScreen();
+
+// Set page meta data
+useHead({
+  title: 'Error 404 – Seite nicht gefunden | programmier.bar',
+  meta: [
+    { hid: 'description', name: 'description', content: '' },
+    { name: 'robots', content: 'noindex, nofollow' },
+    { charset: 'utf-8' },
+    {
+      name: 'viewport',
+      content:
+        'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
+    },
+    { name: 'theme-color', content: '#000000' },
+    { name: 'format-detection', content: 'telephone=no' },
+  ],
+  link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+  htmlAttrs: {
+    lang: 'de',
   },
-  setup() {
-    // Disable loading screen
-    useLoadingScreen();
-
-    // Set page meta data
-    useMeta({
-      title: 'Error 404 – Seite nicht gefunden | programmier.bar',
-      meta: [
-        { hid: 'description', name: 'description', content: '' },
-        { name: 'robots', content: 'noindex, nofollow' },
-      ],
-    });
-
-    return {
-      breadcrumbs: [{ label: 'Seite nicht gefunden' }],
-    };
+  bodyAttrs: {
+    class: 'bg-black',
   },
-  head: {},
 });
 </script>
 

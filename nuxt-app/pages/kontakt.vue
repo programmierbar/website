@@ -46,47 +46,25 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import { GOOGLE_MAPS_URL, OPEN_GOOGLE_MAPS_EVENT_ID } from '../config';
-import {
-  Breadcrumbs,
-  ContactForm,
-  InnerHtml,
-  SectionHeading,
-} from '../components';
-import { useAsyncData, useLoadingScreen, usePageMeta } from '../composables';
+
+import { useLoadingScreen, usePageMeta } from '../composables';
 import { trackGoal } from '../helpers';
 import { directus } from '../services';
 import { ContactPage } from '../types';
 
-export default defineComponent({
-  components: {
-    Breadcrumbs,
-    ContactForm,
-    InnerHtml,
-    SectionHeading,
-  },
-  setup() {
-    // Query contact page
-    const contactPage = useAsyncData(
-      () => directus.singleton('contact_page').read() as Promise<ContactPage>
-    );
+const breadcrumbs = [{ label: 'Kontakt' }];
+const googleMapsUrl = GOOGLE_MAPS_URL;
 
-    // Set loading screen
-    useLoadingScreen(contactPage);
+// Query contact page
+const { data: contactPage } = useAsyncData(
+  () => directus.singleton('contact_page').read() as Promise<ContactPage>
+);
 
-    // Set page meta data
-    usePageMeta(contactPage);
+// Set loading screen
+useLoadingScreen(contactPage);
 
-    return {
-      contactPage,
-      breadcrumbs: [{ label: 'Kontakt' }],
-      googleMapsUrl: GOOGLE_MAPS_URL,
-      OPEN_GOOGLE_MAPS_EVENT_ID,
-      trackGoal,
-    };
-  },
-  head: {},
-});
+// Set page meta data
+usePageMeta(contactPage);
 </script>

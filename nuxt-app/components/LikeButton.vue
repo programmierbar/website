@@ -10,7 +10,7 @@
       "
       type="button"
       data-cursor-hover
-      v-html="require('../assets/icons/heart.svg?raw')"
+      v-html="heartIcon"
     />
     <div
       class="md:text-lg text-pink font-black mt-1"
@@ -26,15 +26,12 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import heartIcon from '~/assets/icons/heart.svg?raw';
 
-export default defineComponent({
-  props: {
-    variant: {
-      type: String as PropType<'default' | 'pick_of_the_day_card'>,
-      default: 'default',
-    },
-  },
-});
+const { variant } = toRefs(
+  defineProps<{
+    variant: 'default' | 'pick_of_the_day_card';
+  }>()
+);
 </script>

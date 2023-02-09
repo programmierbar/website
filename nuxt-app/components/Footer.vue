@@ -5,11 +5,7 @@
     <!-- Logo -->
     <div class="lg:w-1/4">
       <NuxtLink class="inline-block" to="/" data-cursor-hover>
-        <img
-          class="h-6 lg:h-8"
-          :src="require('~/assets/images/brand-logo.svg')"
-          alt="programmier.bar Logo"
-        />
+        <div class="h-6 lg:h-8" alt="programmier.bar Logo" v-html="brandLogo" />
       </NuxtLink>
     </div>
 
@@ -59,31 +55,22 @@
   </footer>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import brandLogo from '~/assets/images/brand-logo.svg?raw';
 import SocialNetworks from './SocialNetworks.vue';
 
-export default defineComponent({
-  components: {
-    SocialNetworks,
-  },
-  setup() {
-    return {
-      mainMenuItems: [
-        { label: 'Home', href: '/' },
-        { label: 'Podcast', href: '/podcast' },
-        { label: 'Meetup', href: '/meetup' },
-        { label: 'Hall of Fame', href: '/hall-of-fame' },
-        { label: 'Pick of the Day', href: '/pick-of-the-day' },
-        { label: 'Über uns', href: '/ueber-uns' },
-      ],
-      subMenuItems: [
-        { label: 'Kontakt', href: '/kontakt' },
-        { label: 'Impressum', href: '/impressum' },
-        { label: 'Datenschutz', href: '/datenschutz' },
-      ],
-      fullYear: new Date().getFullYear(),
-    };
-  },
-});
+const mainMenuItems = [
+  { label: 'Home', href: '/' },
+  { label: 'Podcast', href: '/podcast' },
+  { label: 'Meetup', href: '/meetup' },
+  { label: 'Hall of Fame', href: '/hall-of-fame' },
+  { label: 'Pick of the Day', href: '/pick-of-the-day' },
+  { label: 'Über uns', href: '/ueber-uns' },
+];
+const subMenuItems = [
+  { label: 'Kontakt', href: '/kontakt' },
+  { label: 'Impressum', href: '/impressum' },
+  { label: 'Datenschutz', href: '/datenschutz' },
+];
+const fullYear = new Date().getFullYear();
 </script>

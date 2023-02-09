@@ -19,44 +19,29 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, useMeta } from 'vue';
-import { Breadcrumbs, InnerHtml, SectionHeading } from '../components';
-import { useAsyncData, useLoadingScreen } from '../composables';
+<script setup lang="ts">
+import { useLoadingScreen } from '../composables';
 import { getMetaInfo } from '../helpers';
 import { directus } from '../services';
 import { ImprintPage } from '../types';
 
-export default defineComponent({
-  components: {
-    Breadcrumbs,
-    InnerHtml,
-    SectionHeading,
-  },
-  setup() {
-    // Query imprint page
-    const imprintPage = useAsyncData(
-      () => directus.singleton('imprint_page').read() as Promise<ImprintPage>
-    );
+const breadcrumbs = [{ label: 'Impressum' }];
 
-    // Set loading screen
-    useLoadingScreen(imprintPage);
+// Query imprint page
+const { data: imprintPage } = await useAsyncData(
+  () => directus.singleton('imprint_page').read() as Promise<ImprintPage>
+);
 
-    // Set page meta data
-    useMeta(
-      getMetaInfo({
-        type: 'website',
-        path: '/impressum',
-        title: 'Impressum',
-        noIndex: true,
-      })
-    );
+// Set loading screen
+useLoadingScreen(imprintPage);
 
-    return {
-      imprintPage,
-      breadcrumbs: [{ label: 'Impressum' }],
-    };
-  },
-  head: {},
-});
+// Set page meta data
+useHead(
+  getMetaInfo({
+    type: 'website',
+    path: '/impressum',
+    title: 'Impressum',
+    noIndex: true,
+  })
+);
 </script>

@@ -28,7 +28,7 @@
           >
             <div
               class="h-20 xs:h-24 md:h-28 lg:h-40 absolute z-10 text-blue text-opacity-90 pointer-events-none"
-              v-html="require('../../assets/icons/play-circle-filled.svg?raw')"
+              v-html="playCircleFilledIcon"
             />
             <MeetupCover class="w-full" :meetup="meetup" />
           </a>
@@ -118,119 +118,55 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, useMeta, useRoute, useRouter } from 'vue';
-import { OPEN_YOUTUBE_EVENT_ID } from '../../config';
-import {
-  Breadcrumbs,
-  InnerHtml,
-  FeedbackSection,
-  // LikeButton,
-  LinkButton,
-  MeetupCalendarAndMaps,
-  MeetupCover,
-  MeetupStartAndEnd,
-  PodcastSlider,
-  SectionHeading,
-  SpeakerList,
-  TagList,
-} from '../../components';
-import {
-  useAsyncData,
-  useLoadingScreen,
-  useLocaleString,
-} from '../../composables';
-import { getMetaInfo, trackGoal } from '../../helpers';
-import { directus } from '../../services';
-import { MeetupItem, SpeakerItem, TagItem, PodcastItem } from '../../types';
+<script setup lang="ts">
+import playCircleFilledIcon from '~/assets/icons/play-circle-filled.svg?raw';
+import { computed } from 'vue';
+import { OPEN_YOUTUBE_EVENT_ID } from '~/config';
+import { useLoadingScreen, useLocaleString } from '~/composables';
+import { getMetaInfo, trackGoal } from '~/helpers';
+import { directus } from '~/services';
+import { MeetupItem, SpeakerItem, TagItem, PodcastItem } from '~/types';
 
-export default defineComponent({
-  components: {
-    Breadcrumbs,
-    InnerHtml,
-    FeedbackSection,
-    // LikeButton,
-    LinkButton,
-    MeetupCalendarAndMaps,
-    MeetupCover,
-    MeetupStartAndEnd,
-    PodcastSlider,
-    SectionHeading,
-    SpeakerList,
-    TagList,
-  },
-  setup() {
-    // Add route and router
-    const route = useRoute();
-    const router = useRouter();
+// Add route and router
+const route = useRoute();
+const router = useRouter();
 
-    // Query meetup, speaker count and related podcast
-    const pageData = useAsyncData(async () => {
-      // Query meetup and speaker count async
-      const [meetup, speakerCount] = await Promise.all([
-        // Speaker
-        (
-          await directus.items('meetups').readMany({
-            fields: [
-              'id',
-              'slug',
-              'published_on',
-              'start_on',
-              'end_on',
-              'title',
-              'description',
-              'cover_image.*',
-              'meetup_url',
-              'youtube_url',
-              'speakers.speaker.id',
-              'speakers.speaker.slug',
-              'speakers.speaker.academic_title',
-              'speakers.speaker.first_name',
-              'speakers.speaker.last_name',
-              'speakers.speaker.description',
-              'speakers.speaker.event_image.*',
-              'tags.tag.id',
-              'tags.tag.name',
-            ],
-            filter: { slug: route.value.params.slug },
-            limit: 1,
-          })
-        ).data?.map(({ speakers, tags, ...rest }) => ({
-          ...rest,
-          speakers: (
-            speakers as {
-              speaker: Pick<
-                SpeakerItem,
-                | 'id'
-                | 'slug'
-                | 'academic_title'
-                | 'first_name'
-                | 'last_name'
-                | 'description'
-                | 'event_image'
-              >;
-            }[]
-          )
-            .map(({ speaker }) => speaker)
-            .filter((speaker) => speaker),
-          tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
-            .map(({ tag }) => tag)
-            .filter((tag) => tag),
-        }))[0] as Pick<
-          MeetupItem,
-          | 'id'
-          | 'slug'
-          | 'published_on'
-          | 'start_on'
-          | 'end_on'
-          | 'title'
-          | 'description'
-          | 'cover_image'
-          | 'meetup_url'
-          | 'youtube_url'
-          | 'tags'
-        > & {
-          speakers: Pick<
+// Query meetup, speaker count and related podcast
+const { data: pageData } = useAsyncData(async () => {
+  // Query meetup and speaker count async
+  const [meetup, speakerCount] = await Promise.all([
+    // Speaker
+    (
+      await directus.items('meetups').readByQuery({
+        fields: [
+          'id',
+          'slug',
+          'published_on',
+          'start_on',
+          'end_on',
+          'title',
+          'description',
+          'cover_image.*',
+          'meetup_url',
+          'youtube_url',
+          'speakers.speaker.id',
+          'speakers.speaker.slug',
+          'speakers.speaker.academic_title',
+          'speakers.speaker.first_name',
+          'speakers.speaker.last_name',
+          'speakers.speaker.description',
+          'speakers.speaker.event_image.*',
+          'tags.tag.id',
+          'tags.tag.name',
+        ],
+        filter: { slug: route.params.slug },
+        limit: 1,
+      })
+    ).data?.map(({ speakers, tags, ...rest }) => ({
+      ...rest,
+      speakers: (
+        speakers as {
+          speaker: Pick<
             SpeakerItem,
             | 'id'
             | 'slug'
@@ -239,109 +175,127 @@ export default defineComponent({
             | 'last_name'
             | 'description'
             | 'event_image'
-          >[];
-        },
-
-        // Speaker count
-        (
-          await directus.items('speakers').readMany({
-            limit: 0,
-            meta: 'total_count',
-          })
-        ).meta?.total_count,
-      ]);
-
-      // Throw error if meetup does not exist
-      if (!meetup) {
-        throw new Error('The meetup was not found.');
-      }
-
-      // Query related podcasts
-      const relatedPodcasts = (
-        meetup.tags.length
-          ? (
-              await directus.items('podcasts').readMany({
-                fields: [
-                  'id',
-                  'slug',
-                  'published_on',
-                  'type',
-                  'number',
-                  'title',
-                  'cover_image.*',
-                  'audio_url',
-                ],
-                filter: {
-                  tags: {
-                    tag: {
-                      name: {
-                        _in: meetup.tags.map(({ name }) => name),
-                      },
-                    },
-                  },
-                } as any,
-                sort: ['-published_on'],
-                limit: 15,
-              })
-            ).data
-          : []
-      ) as Pick<
-        PodcastItem,
+          >;
+        }[]
+      )
+        .map(({ speaker }) => speaker)
+        .filter((speaker) => speaker),
+      tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
+        .map(({ tag }) => tag)
+        .filter((tag) => tag),
+    }))[0] as Pick<
+      MeetupItem,
+      | 'id'
+      | 'slug'
+      | 'published_on'
+      | 'start_on'
+      | 'end_on'
+      | 'title'
+      | 'description'
+      | 'cover_image'
+      | 'meetup_url'
+      | 'youtube_url'
+      | 'tags'
+    > & {
+      speakers: Pick<
+        SpeakerItem,
         | 'id'
         | 'slug'
-        | 'published_on'
-        | 'type'
-        | 'number'
-        | 'title'
-        | 'cover_image'
-        | 'audio_url'
+        | 'academic_title'
+        | 'first_name'
+        | 'last_name'
+        | 'description'
+        | 'event_image'
       >[];
+    },
 
-      // Return meetup, speaker count and related podcast
-      return { meetup, speakerCount, relatedPodcasts };
-    });
+    // Speaker count
+    (
+      await directus.items('speakers').readByQuery({
+        limit: 0,
+        meta: 'total_count',
+      })
+    ).meta?.total_count,
+  ]);
 
-    // Extract meetup, speaker count and related podcasts from page data
-    const meetup = computed(() => pageData.value?.meetup);
-    const speakerCount = computed(() => pageData.value?.speakerCount);
-    const relatedPodcasts = computed(() => pageData.value?.relatedPodcasts);
+  // Throw error if meetup does not exist
+  if (!meetup) {
+    throw new Error('The meetup was not found.');
+  }
 
-    // Convert speaker count to local string
-    const speakerCountString = useLocaleString(speakerCount);
-
-    // Set loading screen
-    useLoadingScreen(meetup, speakerCount);
-
-    // Set page meta data
-    useMeta(() =>
-      meetup.value
-        ? getMetaInfo({
-            type: 'article',
-            path: route.value.path,
-            title: meetup.value.title,
-            description: meetup.value.description,
-            image: meetup.value.cover_image,
-            publishedAt: meetup.value.published_on.split('T')[0],
+  // Query related podcasts
+  const relatedPodcasts = (
+    meetup.tags.length
+      ? (
+          await directus.items('podcasts').readByQuery({
+            fields: [
+              'id',
+              'slug',
+              'published_on',
+              'type',
+              'number',
+              'title',
+              'cover_image.*',
+              'audio_url',
+            ],
+            filter: {
+              tags: {
+                tag: {
+                  name: {
+                    _in: meetup.tags.map(({ name }) => name),
+                  },
+                },
+              },
+            } as any,
+            sort: ['-published_on'],
+            limit: 15,
           })
-        : {}
-    );
+        ).data
+      : []
+  ) as Pick<
+    PodcastItem,
+    | 'id'
+    | 'slug'
+    | 'published_on'
+    | 'type'
+    | 'number'
+    | 'title'
+    | 'cover_image'
+    | 'audio_url'
+  >[];
 
-    // Create breadcrumb list
-    const breadcrumbs = computed(() => [
-      { label: 'Meetup', href: '/meetup' },
-      { label: meetup.value?.title || '' },
-    ]);
-
-    return {
-      router,
-      meetup,
-      speakerCountString,
-      breadcrumbs,
-      relatedPodcasts,
-      OPEN_YOUTUBE_EVENT_ID,
-      trackGoal,
-    };
-  },
-  head: {},
+  // Return meetup, speaker count and related podcast
+  return { meetup, speakerCount, relatedPodcasts };
 });
+
+// Extract meetup, speaker count and related podcasts from page data
+const meetup = computed(() => pageData.value?.meetup);
+const speakerCount = computed(() => pageData.value?.speakerCount);
+const relatedPodcasts = computed(() => pageData.value?.relatedPodcasts);
+
+// Convert speaker count to local string
+const speakerCountString = useLocaleString(speakerCount);
+
+// Set loading screen
+useLoadingScreen(meetup, speakerCount);
+
+// Set page meta data
+useHead(() =>
+  meetup.value
+    ? getMetaInfo({
+        type: 'article',
+        path: route.path,
+        title: meetup.value.title,
+        description: meetup.value.description,
+        image: meetup.value.cover_image,
+        publishedAt: meetup.value.published_on.split('T')[0],
+      })
+    : {}
+);
+
+// Create breadcrumb list
+const breadcrumbs = computed(() => [
+  { label: 'Meetup', href: '/meetup' },
+  { label: meetup.value?.title || '' },
+]);
 </script>

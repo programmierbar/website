@@ -62,81 +62,52 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent } from 'vue';
-import {
-  Breadcrumbs,
-  FadeAnimation,
-  InnerHtml,
-  LazyList,
-  LazyListItem,
-  MeetupCard,
-  PageCoverImage,
-  SectionHeading,
-} from '../../components';
-import { useAsyncData, useLoadingScreen, usePageMeta } from '../../composables';
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useLoadingScreen, usePageMeta } from '../../composables';
 import { directus } from '../../services';
 import { MeetupPage, MeetupItem } from '../../types';
 
-export default defineComponent({
-  components: {
-    Breadcrumbs,
-    FadeAnimation,
-    InnerHtml,
-    LazyList,
-    LazyListItem,
-    MeetupCard,
-    PageCoverImage,
-    SectionHeading,
-  },
-  setup() {
-    // Query meetup page and meetups
-    const pageData = useAsyncData(async () => {
-      const [meetupPage, meetups] = await Promise.all([
-        // Meetup page
-        directus
-          .singleton('meetup_page')
-          .read({ fields: '*.*' }) as Promise<MeetupPage>,
+const breadcrumbs = [{ label: 'Meetup' }];
 
-        // Meetups
-        (
-          await directus.items('meetups').readMany({
-            fields: [
-              'id',
-              'slug',
-              'start_on',
-              'end_on',
-              'title',
-              'description',
-              'cover_image.*',
-            ],
-            sort: ['-start_on'],
-            limit: -1,
-          })
-        ).data as Pick<
-          MeetupItem,
-          'id' | 'start_on' | 'end_on' | 'title' | 'description' | 'cover_image'
-        >[],
-      ]);
-      return { meetupPage, meetups };
-    });
+// Query meetup page and meetups
+const { data: pageData } = useAsyncData(async () => {
+  const [meetupPage, meetups] = await Promise.all([
+    // Meetup page
+    directus
+      .singleton('meetup_page')
+      .read({ fields: '*.*' }) as Promise<MeetupPage>,
 
-    // Extract about page and members from page data
-    const meetupPage = computed(() => pageData.value?.meetupPage);
-    const meetups = computed(() => pageData.value?.meetups);
-
-    // Set loading screen
-    useLoadingScreen(meetupPage, meetups);
-
-    // Set page meta data
-    usePageMeta(meetupPage);
-
-    return {
-      meetupPage,
-      meetups,
-      breadcrumbs: [{ label: 'Meetup' }],
-    };
-  },
-  head: {},
+    // Meetups
+    (
+      await directus.items('meetups').readByQuery({
+        fields: [
+          'id',
+          'slug',
+          'start_on',
+          'end_on',
+          'title',
+          'description',
+          'cover_image.*',
+        ],
+        sort: ['-start_on'],
+        limit: -1,
+      })
+    ).data as Pick<
+      MeetupItem,
+      'id' | 'start_on' | 'end_on' | 'title' | 'description' | 'cover_image'
+    >[],
+  ]);
+  return { meetupPage, meetups };
 });
+
+// Extract about page and members from page data
+const meetupPage = computed(() => pageData.value?.meetupPage);
+const meetups = computed(() => pageData.value?.meetups);
+
+// Set loading screen
+useLoadingScreen(meetupPage, meetups);
+
+// Set page meta data
+usePageMeta(meetupPage);
 </script>

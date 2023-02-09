@@ -18,7 +18,7 @@
           </h2>
           <div
             class="h-4 lg:h-5 xl:h-6 text-black -mt-1"
-            v-html="require('../assets/icons/leave-site.svg?raw')"
+            v-html="leaveSiteIcon"
           />
         </a>
 
@@ -64,7 +64,7 @@
             <NuxtLink
               v-if="pickOfTheDay.podcast"
               class="text-xs xs:text-sm xl:text-base text-black italic underline lg:translate-y-4 lg:group-hover:translate-y-0 lg:transition-transform lg:duration-0 lg:group-hover:duration-500 lg:delay-300 lg:group-hover:delay-200"
-              :to="podcastHref"
+              :to="podcastHref ?? undefined"
               data-cursor-hover
             >
               <strong>{{ podcastTypeAndNumber }}</strong>
@@ -107,74 +107,46 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, PropType, useRouter } from 'vue';
+<script setup lang="ts">
+import leaveSiteIcon from '~/assets/icons/leave-site.svg?raw';
+import { computed } from 'vue';
 import { getPodcastTypeAndNumber, getPodcastTitleDivider } from 'shared-code';
-import { PickOfTheDayItem, PodcastItem, TagItem } from '../types';
+import { PickOfTheDayItem, PodcastItem, TagItem } from '~/types';
 import DirectusImage from './DirectusImage.vue';
-// import LikeButton from './LikeButton.vue';
 import InnerHtml from './InnerHtml.vue';
 import TagList from './TagList.vue';
 
-export default defineComponent({
-  components: {
-    DirectusImage,
-    // LikeButton,
-    InnerHtml,
-    TagList,
-  },
-  props: {
-    pickOfTheDay: {
-      type: Object as PropType<
-        Pick<
-          PickOfTheDayItem,
-          'name' | 'website_url' | 'description' | 'image'
-        > & {
-          podcast: Pick<
-            PodcastItem,
-            'slug' | 'type' | 'number' | 'title'
-          > | null;
-          tags: Pick<TagItem, 'id' | 'name'>[];
-        }
-      >,
-      required: true,
-    },
-    variant: {
-      type: String as PropType<'small' | 'large'>,
-      required: true,
-    },
-  },
-  setup(props) {
-    // Add router
-    const router = useRouter();
+const props = defineProps<{
+  pickOfTheDay: Pick<
+    PickOfTheDayItem,
+    'name' | 'website_url' | 'description' | 'image'
+  > & {
+    podcast: Pick<PodcastItem, 'slug' | 'type' | 'number' | 'title'> | null;
+    tags: Pick<TagItem, 'id' | 'name'>[];
+  };
+  variant: 'small' | 'large';
+}>();
 
-    // Create podcast href to podcast subpage
-    const podcastHref = computed(
-      () =>
-        props.pickOfTheDay.podcast &&
-        `/podcast/${props.pickOfTheDay.podcast.slug}`
-    );
+// Add router
+const router = useRouter();
 
-    // Create podcast type and number
-    const podcastTypeAndNumber = computed(
-      () =>
-        props.pickOfTheDay.podcast &&
-        getPodcastTypeAndNumber(props.pickOfTheDay.podcast)
-    );
+// Create podcast href to podcast subpage
+const podcastHref = computed(
+  () =>
+    props.pickOfTheDay.podcast && `/podcast/${props.pickOfTheDay.podcast.slug}`
+);
 
-    // Create podcast title divider
-    const podcastTitleDivider = computed(
-      () =>
-        props.pickOfTheDay.podcast &&
-        getPodcastTitleDivider(props.pickOfTheDay.podcast)
-    );
+// Create podcast type and number
+const podcastTypeAndNumber = computed(
+  () =>
+    props.pickOfTheDay.podcast &&
+    getPodcastTypeAndNumber(props.pickOfTheDay.podcast)
+);
 
-    return {
-      router,
-      podcastHref,
-      podcastTypeAndNumber,
-      podcastTitleDivider,
-    };
-  },
-});
+// Create podcast title divider
+const podcastTitleDivider = computed(
+  () =>
+    props.pickOfTheDay.podcast &&
+    getPodcastTitleDivider(props.pickOfTheDay.podcast)
+);
 </script>

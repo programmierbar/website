@@ -65,7 +65,7 @@
                   rel="noreferrer"
                   data-cursor-hover
                   @click="() => trackGoal(platform.eventId)"
-                  v-html="require(`../../assets/logos/${platform.icon}?raw`)"
+                  v-html="platform.icon"
                 />
               </li>
             </ul>
@@ -139,8 +139,14 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, useMeta, useRoute, useRouter } from 'vue';
+<script setup lang="ts">
+import twitterIcon from '~/assets/logos/twitter-color.svg?raw';
+import linkedinIcon from '~/assets/logos/linkedin-color.svg?raw';
+import instagramIcon from '~/assets/logos/instagram-color.svg?raw';
+import githubIcon from '~/assets/logos/github.svg?raw';
+import youtubeIcon from '~/assets/logos/youtube-color.svg?raw';
+import websiteIcon from '~/assets/logos/website-color.svg?raw';
+import { computed } from 'vue';
 import { getFullSpeakerName } from 'shared-code';
 import {
   OPEN_SPEAKER_GITHUB_EVENT_ID,
@@ -149,130 +155,61 @@ import {
   OPEN_SPEAKER_TWITTER_EVENT_ID,
   OPEN_SPEAKER_WEBSITE_EVENT_ID,
   OPEN_SPEAKER_YOUTUBE_EVENT_ID,
-} from '../../config';
-import {
-  Breadcrumbs,
-  DirectusImage,
-  FeedbackSection,
-  InnerHtml,
-  // LikeButton,
-  LinkButton,
-  PickOfTheDayList,
-  PodcastSlider,
-  TagList,
-  SectionHeading,
-} from '../../components';
-import {
-  useAsyncData,
-  useLoadingScreen,
-  useLocaleString,
-} from '../../composables';
-import { getMetaInfo, trackGoal } from '../../helpers';
-import { directus } from '../../services';
-import {
-  SpeakerItem,
-  PodcastItem,
-  TagItem,
-  PickOfTheDayItem,
-} from '../../types';
+} from '~/config';
 
-export default defineComponent({
-  components: {
-    Breadcrumbs,
-    DirectusImage,
-    FeedbackSection,
-    InnerHtml,
-    // LikeButton,
-    LinkButton,
-    PickOfTheDayList,
-    PodcastSlider,
-    TagList,
-    SectionHeading,
-  },
-  setup() {
-    // Add route and router
-    const route = useRoute();
-    const router = useRouter();
+import { useLoadingScreen, useLocaleString } from '~/composables';
+import { getMetaInfo, trackGoal } from '~/helpers';
+import { directus } from '~/services';
+import { SpeakerItem, PodcastItem, TagItem, PickOfTheDayItem } from '~/types';
 
-    // Query speaker, podcast and pick of the day count
-    const pageData = useAsyncData(async () => {
-      // Query speaker, podcast and pick of the day count async
-      const [speaker, podcastCount, pickOfTheDayCount] = await Promise.all([
-        // Speaker
-        (
-          await directus.items('speakers').readMany({
-            fields: [
-              'academic_title',
-              'first_name',
-              'last_name',
-              'occupation',
-              'description',
-              'profile_image.*',
-              'website_url',
-              'twitter_url',
-              'linkedin_url',
-              'youtube_url',
-              'github_url',
-              'instagram_url',
-              'podcasts.podcast.id',
-              'podcasts.podcast.slug',
-              'podcasts.podcast.published_on',
-              'podcasts.podcast.type',
-              'podcasts.podcast.number',
-              'podcasts.podcast.title',
-              'podcasts.podcast.cover_image.*',
-              'podcasts.podcast.audio_url',
-              'picks_of_the_day.id',
-              'picks_of_the_day.name',
-              'picks_of_the_day.website_url',
-              'picks_of_the_day.description',
-              'picks_of_the_day.image.*',
-              'tags.tag.id',
-              'tags.tag.name',
-            ],
-            filter: { slug: route.value.params.slug },
-            limit: 1,
-          })
-        ).data?.map(({ podcasts, tags, ...rest }) => ({
-          ...rest,
-          podcasts: (
-            podcasts as {
-              podcast: Pick<
-                PodcastItem,
-                | 'id'
-                | 'slug'
-                | 'published_on'
-                | 'type'
-                | 'number'
-                | 'title'
-                | 'cover_image'
-                | 'audio_url'
-              >;
-            }[]
-          )
-            .map(({ podcast }) => podcast)
-            .filter((podcast) => podcast),
-          tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
-            .map(({ tag }) => tag)
-            .filter((tag) => tag),
-          // TODO: Fix types and remove "as unknown"
-        }))[0] as unknown as Pick<
-          SpeakerItem,
-          | 'academic_title'
-          | 'first_name'
-          | 'last_name'
-          | 'occupation'
-          | 'description'
-          | 'profile_image'
-          | 'website_url'
-          | 'twitter_url'
-          | 'linkedin_url'
-          | 'youtube_url'
-          | 'github_url'
-          | 'instagram_url'
-          | 'tags'
-        > & {
-          podcasts: Pick<
+// Add route and router
+const route = useRoute();
+const router = useRouter();
+
+// Query speaker, podcast and pick of the day count
+const { data: pageData } = useAsyncData(async () => {
+  // Query speaker, podcast and pick of the day count async
+  const [speaker, podcastCount, pickOfTheDayCount] = await Promise.all([
+    // Speaker
+    (
+      await directus.items('speakers').readByQuery({
+        fields: [
+          'academic_title',
+          'first_name',
+          'last_name',
+          'occupation',
+          'description',
+          'profile_image.*',
+          'website_url',
+          'twitter_url',
+          'linkedin_url',
+          'youtube_url',
+          'github_url',
+          'instagram_url',
+          'podcasts.podcast.id',
+          'podcasts.podcast.slug',
+          'podcasts.podcast.published_on',
+          'podcasts.podcast.type',
+          'podcasts.podcast.number',
+          'podcasts.podcast.title',
+          'podcasts.podcast.cover_image.*',
+          'podcasts.podcast.audio_url',
+          'picks_of_the_day.id',
+          'picks_of_the_day.name',
+          'picks_of_the_day.website_url',
+          'picks_of_the_day.description',
+          'picks_of_the_day.image.*',
+          'tags.tag.id',
+          'tags.tag.name',
+        ],
+        filter: { slug: route.params.slug },
+        limit: 1,
+      })
+    ).data?.map(({ podcasts, tags, ...rest }) => ({
+      ...rest,
+      podcasts: (
+        podcasts as {
+          podcast: Pick<
             PodcastItem,
             | 'id'
             | 'slug'
@@ -282,144 +219,162 @@ export default defineComponent({
             | 'title'
             | 'cover_image'
             | 'audio_url'
-          >[];
-          picks_of_the_day: Pick<
-            PickOfTheDayItem,
-            'id' | 'name' | 'website_url' | 'description' | 'image'
-          >[];
-        },
-
-        // Podcast count
-        (
-          await directus.items('podcasts').readMany({
-            limit: 0,
-            meta: 'total_count',
-          })
-        ).meta?.total_count,
-
-        // Pick of the day count
-        (
-          await directus.items('picks_of_the_day').readMany({
-            limit: 0,
-            meta: 'total_count',
-          })
-        ).meta?.total_count,
-      ]);
-
-      // Throw error if speaker does not exist
-      if (!speaker) {
-        throw new Error('The speaker was not found.');
-      }
-
-      // Return speaker, podcast and pick of the day count
-      return { speaker, podcastCount, pickOfTheDayCount };
-    });
-
-    // Extract speaker, podcast and pick of the day count from page data
-    const speaker = computed(() => pageData.value?.speaker);
-    const podcastCount = computed(() => pageData.value?.podcastCount);
-    const pickOfTheDayCount = computed(() => pageData.value?.pickOfTheDayCount);
-
-    // Set loading screen
-    useLoadingScreen(speaker, podcastCount, pickOfTheDayCount);
-
-    // Convert number to local string
-    const podcastCountString = useLocaleString(podcastCount);
-    const pickOfTheDayCountString = useLocaleString(pickOfTheDayCount);
-
-    // Get color from search param
-    const color = computed(
-      () =>
-        new URLSearchParams(route.value.fullPath.split('?')[1]).get('color') ||
-        'blue'
-    );
-
-    // Create full name
-    const fullName = computed(
-      () => speaker.value && getFullSpeakerName(speaker.value)
-    );
-
-    // Set page meta data
-    useMeta(() =>
-      speaker.value
-        ? getMetaInfo({
-            type: 'profile',
-            path: route.value.path,
-            title: fullName.value || 'Speaker',
-            description: speaker.value.description,
-            image: speaker.value.profile_image,
-            firstName: speaker.value.first_name,
-            lastName: speaker.value.last_name,
-          })
-        : {}
-    );
-
-    // Create breadcrumb list
-    const breadcrumbs = computed(() => [
-      { label: 'Hall of Fame', href: '/hall-of-fame' },
-      { label: fullName.value || '' },
-    ]);
-
-    // Create platform list
-    const platforms = computed(
-      () =>
-        [
-          {
-            name: 'Twitter',
-            icon: 'twitter-color.svg',
-            url: speaker.value?.twitter_url,
-            eventId: OPEN_SPEAKER_TWITTER_EVENT_ID,
-          },
-          {
-            name: 'LinkedIn',
-            icon: 'linkedin-color.svg',
-            url: speaker.value?.linkedin_url,
-            eventId: OPEN_SPEAKER_LINKEDIN_EVENT_ID,
-          },
-          {
-            name: 'Instagram',
-            icon: 'instagram-color.svg',
-            url: speaker.value?.instagram_url,
-            eventId: OPEN_SPEAKER_INSTAGRAM_EVENT_ID,
-          },
-          {
-            name: 'GitHub',
-            icon: 'github.svg',
-            url: speaker.value?.github_url,
-            eventId: OPEN_SPEAKER_GITHUB_EVENT_ID,
-          },
-          {
-            name: 'YouTube',
-            icon: 'youtube-color.svg',
-            url: speaker.value?.youtube_url,
-            eventId: OPEN_SPEAKER_YOUTUBE_EVENT_ID,
-          },
-          {
-            name: 'Website',
-            icon: 'website-color.svg',
-            url: speaker.value?.website_url,
-            eventId: OPEN_SPEAKER_WEBSITE_EVENT_ID,
-          },
-        ].filter((platform) => platform.url) as {
-          name: string;
-          icon: string;
-          url: string;
-          eventId: string;
+          >;
         }[]
-    );
+      )
+        .map(({ podcast }) => podcast)
+        .filter((podcast) => podcast),
+      tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
+        .map(({ tag }) => tag)
+        .filter((tag) => tag),
+      // TODO: Fix types and remove "as unknown"
+    }))[0] as unknown as Pick<
+      SpeakerItem,
+      | 'academic_title'
+      | 'first_name'
+      | 'last_name'
+      | 'occupation'
+      | 'description'
+      | 'profile_image'
+      | 'website_url'
+      | 'twitter_url'
+      | 'linkedin_url'
+      | 'youtube_url'
+      | 'github_url'
+      | 'instagram_url'
+      | 'tags'
+    > & {
+      podcasts: Pick<
+        PodcastItem,
+        | 'id'
+        | 'slug'
+        | 'published_on'
+        | 'type'
+        | 'number'
+        | 'title'
+        | 'cover_image'
+        | 'audio_url'
+      >[];
+      picks_of_the_day: Pick<
+        PickOfTheDayItem,
+        'id' | 'name' | 'website_url' | 'description' | 'image'
+      >[];
+    },
 
-    return {
-      router,
-      color,
-      speaker,
-      podcastCountString,
-      pickOfTheDayCountString,
-      breadcrumbs,
-      fullName,
-      platforms,
-      trackGoal,
-    };
-  },
-  head: {},
+    // Podcast count
+    (
+      await directus.items('podcasts').readByQuery({
+        limit: 0,
+        meta: 'total_count',
+      })
+    ).meta?.total_count,
+
+    // Pick of the day count
+    (
+      await directus.items('picks_of_the_day').readByQuery({
+        limit: 0,
+        meta: 'total_count',
+      })
+    ).meta?.total_count,
+  ]);
+
+  // Throw error if speaker does not exist
+  if (!speaker) {
+    throw new Error('The speaker was not found.');
+  }
+
+  // Return speaker, podcast and pick of the day count
+  return { speaker, podcastCount, pickOfTheDayCount };
 });
+
+// Extract speaker, podcast and pick of the day count from page data
+const speaker = computed(() => pageData.value?.speaker);
+const podcastCount = computed(() => pageData.value?.podcastCount);
+const pickOfTheDayCount = computed(() => pageData.value?.pickOfTheDayCount);
+
+// Set loading screen
+useLoadingScreen(speaker, podcastCount, pickOfTheDayCount);
+
+// Convert number to local string
+const podcastCountString = useLocaleString(podcastCount);
+const pickOfTheDayCountString = useLocaleString(pickOfTheDayCount);
+
+// Get color from search param
+const color = computed(
+  () => new URLSearchParams(route.fullPath.split('?')[1]).get('color') || 'blue'
+);
+
+// Create full name
+const fullName = computed(
+  () => speaker.value && getFullSpeakerName(speaker.value)
+);
+
+// Set page meta data
+useHead(() =>
+  speaker.value
+    ? getMetaInfo({
+        type: 'profile',
+        path: route.path,
+        title: fullName.value || 'Speaker',
+        description: speaker.value.description,
+        image: speaker.value.profile_image,
+        firstName: speaker.value.first_name,
+        lastName: speaker.value.last_name,
+      })
+    : {}
+);
+
+// Create breadcrumb list
+const breadcrumbs = computed(() => [
+  { label: 'Hall of Fame', href: '/hall-of-fame' },
+  { label: fullName.value || '' },
+]);
+
+// Create platform list
+const platforms = computed(
+  () =>
+    [
+      {
+        name: 'Twitter',
+        icon: twitterIcon,
+        url: speaker.value?.twitter_url,
+        eventId: OPEN_SPEAKER_TWITTER_EVENT_ID,
+      },
+      {
+        name: 'LinkedIn',
+        icon: linkedinIcon,
+        url: speaker.value?.linkedin_url,
+        eventId: OPEN_SPEAKER_LINKEDIN_EVENT_ID,
+      },
+      {
+        name: 'Instagram',
+        icon: instagramIcon,
+        url: speaker.value?.instagram_url,
+        eventId: OPEN_SPEAKER_INSTAGRAM_EVENT_ID,
+      },
+      {
+        name: 'GitHub',
+        icon: githubIcon,
+        url: speaker.value?.github_url,
+        eventId: OPEN_SPEAKER_GITHUB_EVENT_ID,
+      },
+      {
+        name: 'YouTube',
+        icon: youtubeIcon,
+        url: speaker.value?.youtube_url,
+        eventId: OPEN_SPEAKER_YOUTUBE_EVENT_ID,
+      },
+      {
+        name: 'Website',
+        icon: websiteIcon,
+        url: speaker.value?.website_url,
+        eventId: OPEN_SPEAKER_WEBSITE_EVENT_ID,
+      },
+    ].filter((platform) => platform.url) as {
+      name: string;
+      icon: string;
+      url: string;
+      eventId: string;
+    }[]
+);
 </script>

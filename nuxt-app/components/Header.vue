@@ -8,16 +8,16 @@
       data-cursor-hover
       @click.native="closeMenu"
     >
-      <img
+      <div
         class="h-7 lg:hidden"
-        :src="require('~/assets/images/brand-icon.svg')"
+        v-html="brandIcon"
         alt="programmier.bar Icon"
-      />
-      <img
+      ></div>
+      <div
         class="h-8 hidden lg:block"
-        :src="require('~/assets/images/brand-logo.svg')"
+        v-html="brandLogo"
         alt="programmier.bar Logo"
-      />
+      ></div>
     </NuxtLink>
 
     <!-- Search form -->
@@ -42,7 +42,7 @@
         :type="searchIsOpen ? 'submit' : 'button'"
         data-cursor-hover
         @click.stop.prevent="handleSearch"
-        v-html="require('~/assets/icons/search.svg?raw')"
+        v-html="searchSVG"
       />
     </form>
 
@@ -106,9 +106,7 @@
             <NuxtLink
               class="block hover:text-lime font-bold transition-transform hover:scale-x-105 origin-right"
               :class="
-                $nuxt.$route.path === mainMenuItem.href
-                  ? 'text-lime'
-                  : 'text-white'
+                route.path === mainMenuItem.href ? 'text-lime' : 'text-white'
               "
               data-cursor-hover
               :to="mainMenuItem.href"
@@ -145,16 +143,11 @@
   </header>
 </template>
 
-<script lang="ts">
-import {
-  defineComponent,
-  onMounted,
-  nextTick,
-  ref,
-  useRoute,
-  useRouter,
-  watch,
-} from 'vue';
+<script setup lang="ts">
+import brandIcon from '~/assets/images/brand-icon.svg?raw';
+import brandLogo from '~/assets/images/brand-logo.svg?raw';
+import searchSVG from '~/assets/icons/search.svg?raw';
+import { onMounted, nextTick, ref, watch } from 'vue';
 import {
   OPEN_MENU_EVENT_ID,
   CLOSE_MENU_EVENT_ID,
@@ -165,211 +158,193 @@ import { useEventListener, useDocument } from '../composables';
 import { trackGoal } from '../helpers';
 import SocialNetworks from './SocialNetworks.vue';
 
-export default defineComponent({
-  components: {
-    SocialNetworks,
-  },
-  setup() {
-    // Add route und router
-    const route = useRoute();
-    const router = useRouter();
+const mainMenuItems = [
+  { label: 'Home', href: '/' },
+  { label: 'Podcast', href: '/podcast' },
+  { label: 'Meetup', href: '/meetup' },
+  { label: 'Hall of Fame', href: '/hall-of-fame' },
+  { label: 'Pick of the Day', href: '/pick-of-the-day' },
+  { label: 'Über uns', href: '/ueber-uns' },
+];
+const subMenuItems = [
+  { label: 'Kontakt', href: '/kontakt' },
+  { label: 'Impressum', href: '/impressum' },
+  { label: 'Datenschutz', href: '/datenschutz' },
+];
 
-    // Create menu and search is open reference
-    const menuIsOpen = ref(false);
-    const searchIsOpen = ref(false);
+// Add route und router
+const route = useRoute();
+const router = useRouter();
 
-    // Create search placeholder reference
-    const searchPlaceholder = ref('');
+// Create menu and search is open reference
+const menuIsOpen = ref(false);
+const searchIsOpen = ref(false);
 
-    // Create search input element reference
-    const searchInputElement = ref<HTMLInputElement>();
-    const menuElement = ref<HTMLElement>();
+// Create search placeholder reference
+const searchPlaceholder = ref('');
 
-    // Track analytic menu events
-    watch(menuIsOpen, () => {
-      if (menuIsOpen.value) {
-        trackGoal(OPEN_MENU_EVENT_ID);
-      } else {
-        trackGoal(CLOSE_MENU_EVENT_ID);
-      }
-    });
+// Create search input element reference
+const searchInputElement = ref<HTMLInputElement>();
+const menuElement = ref<HTMLElement>();
 
-    // Track analytic search events
-    watch(searchIsOpen, () => {
-      if (searchIsOpen.value) {
-        trackGoal(OPEN_SEARCH_EVENT_ID);
-      } else {
-        trackGoal(CLOSE_SEARCH_EVENT_ID);
-      }
-    });
-
-    // Set serach placeholder depending on device type and operating system
-    onMounted(() => {
-      if (window.matchMedia('(pointer: fine)').matches) {
-        searchPlaceholder.value = navigator.platform.includes('Mac')
-          ? '⌘K'
-          : 'Ctrl K';
-      }
-    });
-
-    /**
-     * It closes the menu.
-     */
-    const closeMenu = () => {
-      // TODO: setTimeout() was added because on slow devices it causes the
-      // menu to close only after the page below it has loaded. Probably the
-      // reason is that the page change blocks the main thread and by
-      // setTimeout() the menu is closed afterwards. nextTick() unfortunately
-      // did not lead to the desired result.
-      setTimeout(() => {
-        menuIsOpen.value = false;
-      }, 100);
-    };
-
-    /**
-     * It sets the initial value of the search
-     * input element and opens the search form.
-     */
-    const setInitialSearch = () => {
-      if (route.value.path === '/suche' && searchInputElement.value) {
-        searchInputElement.value.value =
-          (route.value.query.search as string) || '';
-        searchIsOpen.value = true;
-        nextTick(() => searchInputElement.value?.focus());
-      }
-    };
-
-    // Set initial search state when component is mounted or path changes
-    onMounted(setInitialSearch);
-    router.afterEach(setInitialSearch);
-
-    // Close and reset search if path does not change to /suche
-    router.afterEach((to) => {
-      if (to.path !== '/suche' && searchIsOpen.value) {
-        searchIsOpen.value = false;
-        if (searchInputElement.value?.value) {
-          searchInputElement.value.value = '';
-        }
-      }
-    });
-
-    /**
-     * It handles clicking on the burger button.
-     */
-    const handleBurgerClick = () => {
-      if (searchIsOpen.value) {
-        searchIsOpen.value = false;
-        if (menuIsOpen.value) {
-          menuIsOpen.value = false;
-        }
-      } else {
-        menuIsOpen.value = !menuIsOpen.value;
-      }
-    };
-
-    /**
-     * It handles the search by open it or forwarding
-     * or replacing the location.
-     */
-    const handleSearch = (event: Event) => {
-      if (searchIsOpen.value) {
-        const location = {
-          path: '/suche',
-          query: { search: searchInputElement.value?.value || '' },
-        };
-        if (event.type !== 'input' && location.query.search) {
-          router.push(location);
-        } else {
-          router.replace(location);
-        }
-        if (menuIsOpen.value) {
-          menuIsOpen.value = false;
-        }
-      } else {
-        searchIsOpen.value = true;
-        nextTick(() => searchInputElement.value?.focus());
-      }
-    };
-
-    // Add input event listener to search input element
-    useEventListener(searchInputElement, 'input', handleSearch);
-
-    /**
-     * It handles key down events.
-     */
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Get keys and target from event
-      const { metaKey, target } = event;
-      const key = event.key.toLowerCase();
-
-      // Check if target is an input element
-      const targetIsInput =
-        target instanceof HTMLElement &&
-        (target.nodeName === 'TEXTAREA' || target.nodeName === 'INPUT');
-
-      // Open menu if closed, "m" is pressed
-      // and target is not an input element
-      if (!menuIsOpen.value && key === 'm' && !targetIsInput) {
-        menuIsOpen.value = true;
-        nextTick(() => menuElement.value?.focus());
-
-        // Otherwise close it if menu is open and escape or "m"
-        // is pressed, while target ist not an input element
-      } else if (
-        menuIsOpen.value &&
-        (key === 'escape' || (key === 'm' && !targetIsInput))
-      ) {
-        menuIsOpen.value = false;
-      }
-
-      // Open search if closed and meta key and "k" or "/"
-      // key is pressed and target is not an input element
-      if (
-        !searchIsOpen.value &&
-        ((metaKey && key === 'k') || (key === '/' && !targetIsInput))
-      ) {
-        event.preventDefault();
-        searchIsOpen.value = true;
-        nextTick(() => searchInputElement.value?.focus());
-
-        // Otherwise close it if search is open and
-        // escape or meta key and "k" is pressed
-      } else if (
-        searchIsOpen.value &&
-        (key === 'escape' || (metaKey && key === 'k'))
-      ) {
-        searchIsOpen.value = false;
-      }
-    };
-
-    // Add key down event listener
-    useEventListener(useDocument(), 'keydown', handleKeyDown);
-
-    return {
-      menuIsOpen,
-      searchIsOpen,
-      searchPlaceholder,
-      searchInputElement,
-      menuElement,
-      closeMenu,
-      handleBurgerClick,
-      handleSearch,
-      mainMenuItems: [
-        { label: 'Home', href: '/' },
-        { label: 'Podcast', href: '/podcast' },
-        { label: 'Meetup', href: '/meetup' },
-        { label: 'Hall of Fame', href: '/hall-of-fame' },
-        { label: 'Pick of the Day', href: '/pick-of-the-day' },
-        { label: 'Über uns', href: '/ueber-uns' },
-      ],
-      subMenuItems: [
-        { label: 'Kontakt', href: '/kontakt' },
-        { label: 'Impressum', href: '/impressum' },
-        { label: 'Datenschutz', href: '/datenschutz' },
-      ],
-    };
-  },
+// Track analytic menu events
+watch(menuIsOpen, () => {
+  if (menuIsOpen.value) {
+    trackGoal(OPEN_MENU_EVENT_ID);
+  } else {
+    trackGoal(CLOSE_MENU_EVENT_ID);
+  }
 });
+
+// Track analytic search events
+watch(searchIsOpen, () => {
+  if (searchIsOpen.value) {
+    trackGoal(OPEN_SEARCH_EVENT_ID);
+  } else {
+    trackGoal(CLOSE_SEARCH_EVENT_ID);
+  }
+});
+
+// Set serach placeholder depending on device type and operating system
+onMounted(() => {
+  if (window.matchMedia('(pointer: fine)').matches) {
+    searchPlaceholder.value = navigator.platform.includes('Mac')
+      ? '⌘K'
+      : 'Ctrl K';
+  }
+});
+
+/**
+ * It closes the menu.
+ */
+const closeMenu = () => {
+  // TODO: setTimeout() was added because on slow devices it causes the
+  // menu to close only after the page below it has loaded. Probably the
+  // reason is that the page change blocks the main thread and by
+  // setTimeout() the menu is closed afterwards. nextTick() unfortunately
+  // did not lead to the desired result.
+  setTimeout(() => {
+    menuIsOpen.value = false;
+  }, 100);
+};
+
+/**
+ * It sets the initial value of the search
+ * input element and opens the search form.
+ */
+const setInitialSearch = () => {
+  if (route.path === '/suche' && searchInputElement.value) {
+    searchInputElement.value.value = (route.query.search as string) || '';
+    searchIsOpen.value = true;
+    nextTick(() => searchInputElement.value?.focus());
+  }
+};
+
+// Set initial search state when component is mounted or path changes
+onMounted(setInitialSearch);
+router.afterEach(setInitialSearch);
+
+// Close and reset search if path does not change to /suche
+router.afterEach((to) => {
+  if (to.path !== '/suche' && searchIsOpen.value) {
+    searchIsOpen.value = false;
+    if (searchInputElement.value?.value) {
+      searchInputElement.value.value = '';
+    }
+  }
+});
+
+/**
+ * It handles clicking on the burger button.
+ */
+const handleBurgerClick = () => {
+  if (searchIsOpen.value) {
+    searchIsOpen.value = false;
+    if (menuIsOpen.value) {
+      menuIsOpen.value = false;
+    }
+  } else {
+    menuIsOpen.value = !menuIsOpen.value;
+  }
+};
+
+/**
+ * It handles the search by open it or forwarding
+ * or replacing the location.
+ */
+const handleSearch = (event: Event) => {
+  if (searchIsOpen.value) {
+    const location = {
+      path: '/suche',
+      query: { search: searchInputElement.value?.value || '' },
+    };
+    if (event.type !== 'input' && location.query.search) {
+      router.push(location);
+    } else {
+      router.replace(location);
+    }
+    if (menuIsOpen.value) {
+      menuIsOpen.value = false;
+    }
+  } else {
+    searchIsOpen.value = true;
+    nextTick(() => searchInputElement.value?.focus());
+  }
+};
+
+// Add input event listener to search input element
+useEventListener(searchInputElement, 'input', handleSearch);
+
+/**
+ * It handles key down events.
+ */
+const handleKeyDown = (event: KeyboardEvent) => {
+  // Get keys and target from event
+  const { metaKey, target } = event;
+  const key = event.key.toLowerCase();
+
+  // Check if target is an input element
+  const targetIsInput =
+    target instanceof HTMLElement &&
+    (target.nodeName === 'TEXTAREA' || target.nodeName === 'INPUT');
+
+  // Open menu if closed, "m" is pressed
+  // and target is not an input element
+  if (!menuIsOpen.value && key === 'm' && !targetIsInput) {
+    menuIsOpen.value = true;
+    nextTick(() => menuElement.value?.focus());
+
+    // Otherwise close it if menu is open and escape or "m"
+    // is pressed, while target ist not an input element
+  } else if (
+    menuIsOpen.value &&
+    (key === 'escape' || (key === 'm' && !targetIsInput))
+  ) {
+    menuIsOpen.value = false;
+  }
+
+  // Open search if closed and meta key and "k" or "/"
+  // key is pressed and target is not an input element
+  if (
+    !searchIsOpen.value &&
+    ((metaKey && key === 'k') || (key === '/' && !targetIsInput))
+  ) {
+    event.preventDefault();
+    searchIsOpen.value = true;
+    nextTick(() => searchInputElement.value?.focus());
+
+    // Otherwise close it if search is open and
+    // escape or meta key and "k" is pressed
+  } else if (
+    searchIsOpen.value &&
+    (key === 'escape' || (metaKey && key === 'k'))
+  ) {
+    searchIsOpen.value = false;
+  }
+};
+
+// Add key down event listener
+useEventListener(useDocument(), 'keydown', handleKeyDown);
 </script>
 
 <style scoped>

@@ -9,11 +9,12 @@
       <h1
         class="text-2xl md:text-3xl lg:text-6xl text-white font-black leading-normal md:leading-normal lg:leading-normal mt-3 md:mt-6"
       >
-        <img
+        <div
           class="h-6 md:h-8 lg:h-16 inline"
-          :src="require('~/assets/images/brand-logo.svg')"
+          v-html="brandLogoIcon"
           alt="programmier.bar Logo"
-        />:
+        />
+        :
         <TypedText :text="homePage.intro_heading" />
       </h1>
     </section>
@@ -57,113 +58,86 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent } from 'vue';
+<script setup lang="ts">
+import brandLogoIcon from '~/assets/images/brand-logo.svg?raw';
+import { computed } from 'vue';
 import { DIRECTUS_CMS_URL } from '../config';
-import {
-  Breadcrumbs,
-  NewsTicker,
-  PodcastSlider,
-  SectionHeading,
-  ScrollDownMouse,
-  TypedText,
-} from '../components';
-import { useAsyncData, useLoadingScreen, usePageMeta } from '../composables';
+
+import { useLoadingScreen, usePageMeta } from '../composables';
 import { directus } from '../services';
 import { HomePage, PodcastItem } from '../types';
 
-export default defineComponent({
-  components: {
-    Breadcrumbs,
-    NewsTicker,
-    PodcastSlider,
-    SectionHeading,
-    ScrollDownMouse,
-    TypedText,
-  },
-  setup() {
-    // Query home page, latest podcasts and podcast count
-    const pageData = useAsyncData(async () => {
-      const [homePage, latestPodcasts, podcastCount] = await Promise.all([
-        // Home page
-        directus
-          .singleton('home_page')
-          .read({
-            fields: ['*', 'video.*'],
-          })
-          .then(
-            (homePage) =>
-              homePage && {
-                ...homePage,
-                news: (homePage.news as { text: string }[]).map(
-                  ({ text }) => text
-                ),
-              }
-          ) as Promise<HomePage>,
+const breadcrumbs = [{ label: 'Home' }];
 
-        // Latest podcasts
-        (
-          await directus.items('podcasts').readMany({
-            fields: [
-              'id',
-              'slug',
-              'published_on',
-              'type',
-              'number',
-              'title',
-              'cover_image.*',
-              'audio_url',
-            ],
-            sort: ['-published_on'],
-            limit: 10,
-          })
-        ).data as Pick<
-          PodcastItem,
-          | 'id'
-          | 'slug'
-          | 'published_on'
-          | 'type'
-          | 'number'
-          | 'title'
-          | 'cover_image'
-          | 'audio_url'
-        >[],
+// Query home page, latest podcasts and podcast count
+const { data: pageData } = useAsyncData(async () => {
+  const [homePage, latestPodcasts, podcastCount] = await Promise.all([
+    // Home page
+    directus
+      .singleton('home_page')
+      .read({
+        fields: ['*', 'video.*'],
+      })
+      .then(
+        (homePage) =>
+          homePage && {
+            ...homePage,
+            news: (homePage.news as { text: string }[]).map(({ text }) => text),
+          }
+      ) as Promise<HomePage>,
 
-        // Podcast count
-        (
-          await directus.items('podcasts').readMany({
-            limit: 0,
-            meta: 'total_count',
-          })
-        ).meta?.total_count,
-      ]);
-      return { homePage, latestPodcasts, podcastCount };
-    });
+    // Latest podcasts
+    (
+      await directus.items('podcasts').readByQuery({
+        fields: [
+          'id',
+          'slug',
+          'published_on',
+          'type',
+          'number',
+          'title',
+          'cover_image.*',
+          'audio_url',
+        ],
+        sort: ['-published_on'],
+        limit: 10,
+      })
+    ).data as Pick<
+      PodcastItem,
+      | 'id'
+      | 'slug'
+      | 'published_on'
+      | 'type'
+      | 'number'
+      | 'title'
+      | 'cover_image'
+      | 'audio_url'
+    >[],
 
-    // Extract home page, latest podcasts and podcast count from page data
-    const homePage = computed(() => pageData.value?.homePage);
-    const latestPodcasts = computed(() => pageData.value?.latestPodcasts);
-    const podcastCount = computed(() => pageData.value?.podcastCount);
-
-    // Set loading screen
-    useLoadingScreen(homePage);
-
-    // Set page meta data
-    usePageMeta(homePage);
-
-    // Create Video URL
-    const videoUrl = computed(
-      () => homePage && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`
-    );
-
-    return {
-      homePage,
-      latestPodcasts,
-      podcastCount,
-      breadcrumbs: [{ label: 'Home' }],
-      videoUrl,
-    };
-  },
-  head: {},
+    // Podcast count
+    (
+      await directus.items('podcasts').readByQuery({
+        limit: 0,
+        meta: 'total_count',
+      })
+    ).meta?.total_count,
+  ]);
+  return { homePage, latestPodcasts, podcastCount };
 });
+
+// Extract home page, latest podcasts and podcast count from page data
+const homePage = computed(() => pageData.value?.homePage);
+const latestPodcasts = computed(() => pageData.value?.latestPodcasts);
+const podcastCount = computed(() => pageData.value?.podcastCount);
+
+// Set loading screen
+useLoadingScreen(homePage);
+
+// Set page meta data
+usePageMeta(homePage);
+
+// Create Video URL
+const videoUrl = computed(
+  () => homePage && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`
+);
 </script>

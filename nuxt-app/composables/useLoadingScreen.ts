@@ -1,4 +1,4 @@
-import { reactive, ref, Ref, watch } from '@nuxtjs/composition-api';
+import { reactive, ref, Ref, watch } from 'vue';
 
 // Global is loading state
 const isLoading = ref(false);

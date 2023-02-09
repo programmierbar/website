@@ -12,7 +12,7 @@
       </NuxtLink>
       <div
         class="h-32 md:h-40 lg:h-48 absolute -z-1 -top-20 md:-top-24 lg:-top-32 -right-32 md:-right-44 lg:-right-48"
-        v-html="require('../assets/images/feedback-figure.svg?raw')"
+        v-html="feedbackFigure"
       />
     </div>
     <SocialNetworks class="h-8 md:h-9 lg:h-10 mt-10" />
@@ -20,6 +20,7 @@
 </template>
 
 <script>
+import feedbackFigure from '~/assets/images/feedback-figure.svg';
 import { defineComponent } from 'vue';
 import SocialNetworks from './SocialNetworks.vue';
 
