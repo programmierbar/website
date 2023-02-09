@@ -41,6 +41,7 @@
       <div
         class="
           font-mono
+          whitespace-pre-line
           text-white text-sm
           md:text-base
           lg:text-lg
@@ -50,7 +51,7 @@
           pt-8
         "
       >
-        {{ body }}
+        {{ body.trim() }}
       </div>
     </div>
     <div
