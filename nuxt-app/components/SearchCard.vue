@@ -1,12 +1,8 @@
 <template>
   <div>
-    <component
-      :is="isExternalUrl ? 'a' : 'nuxt-link'"
+    <nuxt-link
       class="block lg:flex space-y-6 lg:space-y-0 lg:space-x-12"
-      :href="isExternalUrl ? urlOrPath : undefined"
-      :target="isExternalUrl ? '_blank' : undefined"
-      :rel="isExternalUrl ? 'noreferrer' : undefined"
-      :to="isExternalUrl ? undefined : urlOrPath"
+      :to="urlOrPath"
       data-cursor-more
     >
       <!-- Image -->
@@ -27,7 +23,18 @@
 
         <!-- Heading -->
         <h2
-          class="text-xl md:text-3xl lg:text-4xl text-white font-black leading-snug lg:leading-snug line-clamp-2 mt-2 lg:mt-5"
+          class="
+            text-xl
+            md:text-3xl
+            lg:text-4xl
+            text-white
+            font-black
+            leading-snug
+            lg:leading-snug
+            line-clamp-2
+            mt-2
+            lg:mt-5
+          "
         >
           {{ heading }}
           <span
@@ -39,11 +46,22 @@
 
         <!-- Description -->
         <p
-          class="text-sm md:text-lg lg:text-xl text-white font-light leading-normal lg:leading-relaxed line-clamp-4 mt-4 lg:mt-8"
+          class="
+            text-sm
+            md:text-lg
+            lg:text-xl
+            text-white
+            font-light
+            leading-normal
+            lg:leading-relaxed
+            line-clamp-4
+            mt-4
+            lg:mt-8
+          "
           v-html="description"
         />
       </div>
-    </component>
+    </nuxt-link>
   </div>
 </template>
 
