@@ -32,7 +32,7 @@
         "
       >
         <div
-          class="h-6 md:h-8 lg:h-16 inline-block first:inline"
+          class="h-6 md:h-8 lg:h-16 inline-block inline-child"
           v-html="brandLogoIcon"
           alt="programmier.bar Logo"
         />
@@ -163,3 +163,9 @@ const videoUrl = computed(
   () => homePage && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`
 );
 </script>
+
+<style>
+.inline-child > svg {
+  display: inline;
+}
+</style>
