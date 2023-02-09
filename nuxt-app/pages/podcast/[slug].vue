@@ -32,14 +32,14 @@
           />
 
           <!-- Podcast tags -->
-          <!-- TODO: Replace router.push() with <a> element -->
+          <!-- TODO: Replace navigateTo() with <a> element -->
           <TagList
             v-if="podcast.tags.length"
             class="mt-10 md:mt-14"
             :tags="podcast.tags"
             :on-click="
               (tag) =>
-                router.push({
+                navigateTo({
                   path: '/suche',
                   query: { search: tag.name },
                 })

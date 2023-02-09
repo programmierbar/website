@@ -2,8 +2,8 @@
   <nuxt-img
     :src="`${DIRECTUS_CMS_URL}/assets/${image.id}`"
     :alt="image.title || alt"
-    :width="image.width"
-    :height="image.height"
+    :width="image.width ?? 0"
+    :height="image.height ?? 0"
     :sizes="sizes"
     :loading="loading"
     :format="format"

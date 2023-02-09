@@ -5,14 +5,37 @@
       <div class="w-full h-full absolute top-0 left-0 bg-white">
         <!-- Link & heading -->
         <a
-          class="absolute z-10 inline-flex items-center space-x-3 bg-lime px-4 pt-4 pb-3 m-4 md:m-6 lg:m-4 xl:m-6"
+          class="
+            absolute
+            z-10
+            inline-flex
+            items-center
+            space-x-3
+            bg-lime
+            px-4
+            pt-4
+            pb-3
+            m-4
+            md:m-6
+            lg:m-4
+            xl:m-6
+          "
           :href="pickOfTheDay.website_url"
           target="_blank"
           rel="noreferrer"
           data-cursor-hover
         >
           <h2
-            class="selection:bg-black text-base md:text-xl xl:text-2xl 2xl:text-3xl text-black selection:text-white font-black"
+            class="
+              selection:bg-black
+              text-base
+              md:text-xl
+              xl:text-2xl
+              2xl:text-3xl
+              text-black
+              selection:text-white
+              font-black
+            "
           >
             {{ pickOfTheDay.name }}
           </h2>
@@ -45,25 +68,90 @@
 
     <!-- Content box -->
     <div
-      class="lg:invisible lg:group-hover:visible w-full lg:h-full lg:absolute lg:top-0 lg:left-0 lg:p-4 xl:p-6 transition-all duration-0 lg:delay-300 lg:group-hover:delay-0"
+      class="
+        lg:invisible lg:group-hover:visible
+        w-full
+        lg:h-full lg:absolute lg:top-0 lg:left-0 lg:p-4
+        xl:p-6
+        transition-all
+        duration-0
+        lg:delay-300 lg:group-hover:delay-0
+      "
     >
       <div class="w-full lg:h-full relative">
         <!-- Background color -->
         <div
-          class="w-full h-full absolute top-0 left-0 bg-lime lg:scale-0 lg:group-hover:scale-100 lg:origin-top-left lg:transition-transform lg:duration-300"
+          class="
+            w-full
+            h-full
+            absolute
+            top-0
+            left-0
+            bg-lime
+            lg:scale-0
+            lg:group-hover:scale-100
+            lg:origin-top-left
+            lg:transition-transform
+            lg:duration-300
+          "
         />
 
         <!-- Content -->
         <div
-          class="w-full lg:h-full relative lg:absolute lg:top-0 lg:left-0 lg:overflow-y-auto lg:overscroll-y-contain lg:opacity-0 lg:group-hover:opacity-100 lg:transition-opacity lg:duration-300 lg:group-hover:duration-700 lg:group-hover:delay-300"
+          class="
+            w-full
+            lg:h-full
+            relative
+            lg:absolute
+            lg:top-0
+            lg:left-0
+            lg:overflow-y-auto
+            lg:overscroll-y-contain
+            lg:opacity-0
+            lg:group-hover:opacity-100
+            lg:transition-opacity
+            lg:duration-300
+            lg:group-hover:duration-700
+            lg:group-hover:delay-300
+          "
         >
           <div
-            class="min-h-full flex flex-col items-start justify-end space-y-6 pt-8 md:pt-10 lg:pt-16 xl:pt-20 pb-4 md:pb-6 lg:pb-4 px-4 md:px-6 lg:px-4"
+            class="
+              min-h-full
+              flex flex-col
+              items-start
+              justify-end
+              space-y-6
+              pt-8
+              md:pt-10
+              lg:pt-16
+              xl:pt-20
+              pb-4
+              md:pb-6
+              lg:pb-4
+              px-4
+              md:px-6
+              lg:px-4
+            "
           >
             <!-- Podcast episode -->
             <NuxtLink
               v-if="pickOfTheDay.podcast"
-              class="text-xs xs:text-sm xl:text-base text-black italic underline lg:translate-y-4 lg:group-hover:translate-y-0 lg:transition-transform lg:duration-0 lg:group-hover:duration-500 lg:delay-300 lg:group-hover:delay-200"
+              class="
+                text-xs
+                xs:text-sm
+                xl:text-base
+                text-black
+                italic
+                underline
+                lg:translate-y-4
+                lg:group-hover:translate-y-0
+                lg:transition-transform
+                lg:duration-0
+                lg:group-hover:duration-500
+                lg:delay-300
+                lg:group-hover:delay-200
+              "
               :to="podcastHref ?? undefined"
               data-cursor-hover
             >
@@ -73,16 +161,50 @@
 
             <!-- Description -->
             <InnerHtml
-              class="text-sm xs:text-base xl:text-lg 2xl:text-xl text-black lg:opacity-0 lg:translate-y-3 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 lg:transition lg:duration-0 lg:group-hover:duration-500 lg:delay-300 lg:group-hover:delay-400"
+              class="
+                text-sm
+                xs:text-base
+                xl:text-lg
+                2xl:text-xl
+                text-black
+                lg:opacity-0
+                lg:translate-y-3
+                lg:group-hover:opacity-100
+                lg:group-hover:translate-y-0
+                lg:transition
+                lg:duration-0
+                lg:group-hover:duration-500
+                lg:delay-300
+                lg:group-hover:delay-400
+              "
               :html="pickOfTheDay.description"
               variant="pick_of_the_day_card"
             />
 
             <div
-              class="w-full flex md:flex-col items-end md:items-start justify-end md:justify-end space-x-6 md:space-x-0 md:space-y-6 lg:opacity-0 lg:translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 lg:transition lg:duration-0 lg:group-hover:duration-500 lg:delay-300 lg:group-hover:delay-500"
+              class="
+                w-full
+                flex
+                md:flex-col
+                items-end
+                md:items-start
+                justify-end
+                md:justify-end
+                space-x-6
+                md:space-x-0 md:space-y-6
+                lg:opacity-0
+                lg:translate-y-2
+                lg:group-hover:opacity-100
+                lg:group-hover:translate-y-0
+                lg:transition
+                lg:duration-0
+                lg:group-hover:duration-500
+                lg:delay-300
+                lg:group-hover:delay-500
+              "
             >
               <!-- Tags -->
-              <!-- TODO: Replace router.push() with <a> element -->
+              <!-- TODO: Replace navigateTo() with <a> element -->
               <TagList
                 v-if="pickOfTheDay.tags.length"
                 class="flex-grow"
@@ -90,7 +212,7 @@
                 variant="pick_of_the_day_card"
                 :on-click="
                   (tag) =>
-                    router.push({
+                    navigateTo({
                       path: '/suche',
                       query: { search: tag.name },
                     })
