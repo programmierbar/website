@@ -1,7 +1,20 @@
 <template>
   <div v-if="pickOfTheDayPage && picksOfTheDay" class="relative">
     <div
-      class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-32 md:pt-40 lg:pt-56 2xl:pt-64 pb-20 md:pb-32 lg:pb-52"
+      class="
+        container
+        px-6
+        md:pl-48
+        lg:pr-8
+        3xl:px-8
+        pt-32
+        md:pt-40
+        lg:pt-56
+        2xl:pt-64
+        pb-20
+        md:pb-32
+        lg:pb-52
+      "
     >
       <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
@@ -10,7 +23,18 @@
         {{ pickOfTheDayPage.intro_heading }}
       </SectionHeading>
       <InnerHtml
-        class="text-lg md:text-2xl lg:text-3xl text-white md:font-bold leading-normal md:leading-normal lg:leading-normal mt-8 md:mt-16"
+        class="
+          text-lg
+          md:text-2xl
+          lg:text-3xl
+          text-white
+          md:font-bold
+          leading-normal
+          md:leading-normal
+          lg:leading-normal
+          mt-8
+          md:mt-16
+        "
         :html="pickOfTheDayPage.intro_text"
       />
 
@@ -65,14 +89,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import { useLoadingScreen, usePageMeta, useTagFilter } from '../composables';
-import { directus } from '../services';
+import { useLoadingScreen, usePageMeta, useTagFilter } from '~/composables';
+import { directus } from '~/services';
 import {
   PickOfTheDayPage,
   PickOfTheDayItem,
   PodcastItem,
   TagItem,
-} from '../types';
+} from '~/types';
+import LazyListItem from '~/components/LazyListItem.vue';
+import LazyList from '~/components/LazyList.vue';
 
 const breadcrumbs = [{ label: 'Pick of the Day' }];
 
