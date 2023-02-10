@@ -1,16 +1,7 @@
 <template>
   <div v-if="isVisible" class="w-full fixed z-50 left-0 bottom-0 bg-pink">
     <div
-      class="
-        flex flex-col
-        lg:flex-row
-        space-y-5
-        lg:space-y-0 lg:space-x-8
-        xl:space-x-24
-        container
-        p-6
-        lg:p-8
-      "
+      class="flex flex-col lg:flex-row space-y-5 lg:space-y-0 lg:space-x-8 xl:space-x-24 container p-6 lg:p-8"
     >
       <!-- Text -->
       <p class="text-sm lg:text-lg text-lime font-bold">
@@ -29,33 +20,12 @@
 
       <!-- Buttons -->
       <div
-        class="
-          flex
-          lg:flex-col
-          self-end
-          lg:self-center
-          space-x-4
-          lg:space-x-0 lg:space-y-3
-        "
+        class="flex lg:flex-col self-end lg:self-center space-x-4 lg:space-x-0 lg:space-y-3"
       >
         <button
           v-for="number of 2"
           :key="number"
-          class="
-            w-28
-            lg:w-48
-            pt-1
-            lg:pt-2
-            pb-0.5
-            lg:pb-1.5
-            border-2
-            lg:border-3
-            rounded-full
-            text-sm
-            lg:text-xl
-            font-black
-            transition-colors
-          "
+          class="w-28 lg:w-48 pt-1 lg:pt-2 pb-0.5 lg:pb-1.5 border-2 lg:border-3 rounded-full text-sm lg:text-xl font-black transition-colors"
           :class="
             number === 1
               ? 'hover:bg-lime focus:bg-lime border-lime text-lime hover:text-black focus:text-black'
@@ -73,7 +43,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from '@nuxtjs/composition-api';
+import { defineComponent, onMounted, ref } from 'vue';
 import { useEventListener, useDocument } from '../composables';
 import { getCookie, setCookie } from '../helpers';
 

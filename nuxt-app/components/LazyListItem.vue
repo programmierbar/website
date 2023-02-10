@@ -5,12 +5,7 @@
 </template>
 
 <script lang="ts">
-import {
-  computed,
-  defineComponent,
-  PropType,
-  ref,
-} from '@nuxtjs/composition-api';
+import { computed, defineComponent, PropType, ref } from 'vue';
 import { useIntersectionObserver } from '../composables';
 
 export default defineComponent({

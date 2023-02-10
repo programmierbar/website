@@ -8,15 +8,7 @@
     <div class="lg:w-1/2 xl:w-7/12">
       <!-- Time -->
       <MeetupStartAndEnd
-        class="
-          text-xs
-          md:text-sm
-          lg:text-base
-          text-white
-          font-light
-          italic
-          mt-8
-        "
+        class="text-xs md:text-sm lg:text-base text-white font-light italic mt-8"
         :meetup="meetup"
       />
 
@@ -27,17 +19,7 @@
 
       <!-- Description -->
       <p
-        class="
-          text-base
-          md:text-xl
-          lg:text-2xl
-          text-white
-          font-light
-          leading-normal
-          line-clamp-4
-          space-y-8
-          mt-6
-        "
+        class="text-base md:text-xl lg:text-2xl text-white font-light leading-normal line-clamp-4 space-y-8 mt-6"
         v-html="description"
       />
 
@@ -48,7 +30,7 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
+import { computed, defineComponent, PropType } from 'vue';
 import { MeetupItem } from '../types';
 import LinkButton from './LinkButton.vue';
 import MeetupCover from './MeetupCover.vue';

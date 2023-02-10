@@ -32,7 +32,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from '@nuxtjs/composition-api';
+import { defineComponent, PropType } from 'vue';
 import { TagItem } from '../types';
 
 interface Tag extends Pick<TagItem, 'id' | 'name'> {

@@ -29,12 +29,12 @@
           md:text-base
           text-ellipsis
           font-extralight
-          whitespace-nowrap
+          whitespace-pre-line
           w-1/2
           md:w-3/4
         "
       >
-        {{ `/transkript/programmierbar/${name}` }}
+        {{ `/transkript/programmierbar/${name}`.trim() }}
       </div>
     </div>
     <div class="relative bg-gray-900 w-full overflow-auto scrollbar:!w-1.5">
@@ -61,7 +61,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from '@nuxtjs/composition-api';
+import { defineComponent } from 'vue';
 
 export default defineComponent({
   props: {

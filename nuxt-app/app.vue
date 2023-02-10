@@ -4,7 +4,7 @@
     <Header />
     <main class="min-h-screen">
       <LoadingScreen />
-      <Nuxt />
+      <nuxt-page />
     </main>
     <Footer />
     <PodcastPlayer />
@@ -12,25 +12,24 @@
   </div>
 </template>
 
-<script>
-import { defineComponent } from '@nuxtjs/composition-api';
-import {
-  // CookieBanner,
-  Footer,
-  Header,
-  LoadingScreen,
-  MouseCursor,
-  PodcastPlayer,
-} from '../components';
-
-export default defineComponent({
-  components: {
-    // CookieBanner,
-    Footer,
-    Header,
-    LoadingScreen,
-    MouseCursor,
-    PodcastPlayer,
+<script setup lang="ts">
+useHead({
+  meta: [
+    { charset: 'utf-8' },
+    {
+      name: 'viewport',
+      content:
+        'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
+    },
+    { name: 'theme-color', content: '#000000' },
+    { name: 'format-detection', content: 'telephone=no' },
+  ],
+  link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+  htmlAttrs: {
+    lang: 'de',
+  },
+  bodyAttrs: {
+    class: 'bg-black',
   },
 });
 </script>

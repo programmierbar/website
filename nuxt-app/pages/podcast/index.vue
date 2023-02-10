@@ -16,34 +16,11 @@
           {{ podcastPage.intro_heading }}
         </SectionHeading>
         <InnerHtml
-          class="
-            text-lg
-            md:text-2xl
-            lg:text-3xl
-            text-white
-            md:font-bold
-            leading-normal
-            md:leading-normal
-            lg:leading-normal
-            mt-8
-            md:mt-16
-          "
+          class="text-lg md:text-2xl lg:text-3xl text-white md:font-bold leading-normal md:leading-normal lg:leading-normal mt-8 md:mt-16"
           :html="podcastPage.intro_text_1"
         />
         <InnerHtml
-          class="
-            text-base
-            md:text-xl
-            lg:text-2xl
-            text-white
-            font-light
-            md:font-normal
-            leading-normal
-            md:leading-normal
-            lg:leading-normal
-            mt-8
-            md:mt-6
-          "
+          class="text-base md:text-xl lg:text-2xl text-white font-light md:font-normal leading-normal md:leading-normal lg:leading-normal mt-8 md:mt-6"
           :html="podcastPage.intro_text_2"
         />
       </div>
@@ -82,17 +59,7 @@
       <!-- News podcasts -->
       <section
         v-if="newsPodcasts.length"
-        class="
-          relative
-          py-8
-          md:py-10
-          lg:py-16
-          md:mt-12
-          lg:mt-16
-          mb-8
-          md:mb-28
-          lg:mb-40
-        "
+        class="relative py-8 md:py-10 lg:py-16 md:mt-12 lg:mt-16 mb-8 md:mb-28 lg:mb-40"
       >
         <SectionHeading class="px-6 md:px-0" element="h2">
           {{ podcastPage.news_heading }}
@@ -103,120 +70,87 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent } from '@nuxtjs/composition-api';
-import {
-  Breadcrumbs,
-  InnerHtml,
-  PageCoverImage,
-  PodcastSlider,
-  SectionHeading,
-  TagFilter,
-} from '../../components';
-import {
-  useAsyncData,
-  useLoadingScreen,
-  usePageMeta,
-  useTagFilter,
-} from '../../composables';
+<script setup lang="ts">
+import { computed } from 'vue';
+
+import { useLoadingScreen, usePageMeta, useTagFilter } from '../../composables';
 import { directus } from '../../services';
 import { PodcastPage, PodcastItem, TagItem } from '../../types';
 
-export default defineComponent({
-  components: {
-    Breadcrumbs,
-    InnerHtml,
-    PageCoverImage,
-    PodcastSlider,
-    SectionHeading,
-    TagFilter,
-  },
-  setup() {
-    // Query about page and members
-    const pageData = useAsyncData(async () => {
-      const [podcastPage, podcasts] = await Promise.all([
-        // Podcast page
-        directus
-          .singleton('podcast_page')
-          .read({ fields: '*.*' }) as Promise<PodcastPage>,
+const breadcrumbs = [{ label: 'Podcast' }];
 
-        // Podcasts
-        (
-          await directus.items('podcasts').readMany({
-            fields: [
-              'id',
-              'slug',
-              'published_on',
-              'type',
-              'number',
-              'title',
-              'cover_image.*',
-              'audio_url',
-              'tags.tag.id',
-              'tags.tag.name',
-            ],
-            sort: ['-published_on'],
-            limit: -1,
-          })
-        ).data?.map(({ tags, ...rest }) => ({
-          ...rest,
-          tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
-            .map(({ tag }) => tag)
-            .filter((tag) => tag),
-        })) as Pick<
-          PodcastItem,
-          | 'id'
-          | 'slug'
-          | 'published_on'
-          | 'type'
-          | 'number'
-          | 'title'
-          | 'cover_image'
-          | 'audio_url'
-          | 'tags'
-        >[],
-      ]);
-      return { podcastPage, podcasts };
-    });
+// Query about page and members
+const { data: pageData } = useAsyncData(async () => {
+  const [podcastPage, podcasts] = await Promise.all([
+    // Podcast page
+    directus
+      .singleton('podcast_page')
+      .read({ fields: '*.*' }) as Promise<PodcastPage>,
 
-    // Extract about page and members from page data
-    const podcastPage = computed(() => pageData.value?.podcastPage);
-    const podcasts = computed(() => pageData.value?.podcasts);
-
-    // Set loading screen
-    useLoadingScreen(podcastPage, podcasts);
-
-    // Set page meta data
-    usePageMeta(podcastPage);
-
-    // Create podcast tag filter
-    const tagFilter = useTagFilter(podcasts);
-
-    // Create deep dive podcasts list
-    const deepDivePodcasts = computed(() =>
-      tagFilter.output.filter((podcast) => podcast.type === 'deep_dive')
-    );
-
-    // Create CTO special podcasts list
-    const ctoSpecialPodcasts = computed(() =>
-      tagFilter.output.filter((podcast) => podcast.type === 'cto_special')
-    );
-
-    // Create news podcasts list
-    const newsPodcasts = computed(() =>
-      tagFilter.output.filter((podcast) => podcast.type === 'news')
-    );
-
-    return {
-      podcastPage,
-      podcasts,
-      breadcrumbs: [{ label: 'Podcast' }],
-      tagFilter,
-      deepDivePodcasts,
-      ctoSpecialPodcasts,
-      newsPodcasts,
-    };
-  },
-  head: {},
+    // Podcasts
+    (
+      await directus.items('podcasts').readByQuery({
+        fields: [
+          'id',
+          'slug',
+          'published_on',
+          'type',
+          'number',
+          'title',
+          'cover_image.*',
+          'audio_url',
+          'tags.tag.id',
+          'tags.tag.name',
+        ],
+        sort: ['-published_on'],
+        limit: -1,
+      })
+    ).data?.map(({ tags, ...rest }) => ({
+      ...rest,
+      tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
+        .map(({ tag }) => tag)
+        .filter((tag) => tag),
+    })) as Pick<
+      PodcastItem,
+      | 'id'
+      | 'slug'
+      | 'published_on'
+      | 'type'
+      | 'number'
+      | 'title'
+      | 'cover_image'
+      | 'audio_url'
+      | 'tags'
+    >[],
+  ]);
+  return { podcastPage, podcasts };
 });
+
+// Extract about page and members from page data
+const podcastPage = computed(() => pageData.value?.podcastPage);
+const podcasts = computed(() => pageData.value?.podcasts);
+
+// Set loading screen
+useLoadingScreen(podcastPage, podcasts);
+
+// Set page meta data
+usePageMeta(podcastPage);
+
+// Create podcast tag filter
+const tagFilter = useTagFilter(podcasts);
+
+// Create deep dive podcasts list
+const deepDivePodcasts = computed(() =>
+  tagFilter.output.filter((podcast) => podcast.type === 'deep_dive')
+);
+
+// Create CTO special podcasts list
+const ctoSpecialPodcasts = computed(() =>
+  tagFilter.output.filter((podcast) => podcast.type === 'cto_special')
+);
+
+// Create news podcasts list
+const newsPodcasts = computed(() =>
+  tagFilter.output.filter((podcast) => podcast.type === 'news')
+);
 </script>

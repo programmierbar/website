@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from '@nuxtjs/composition-api';
+import { defineComponent, onMounted, ref } from 'vue';
 import { Loader } from '@googlemaps/js-api-loader';
 import { GOOGLE_PUBLIC_API_KEY } from '../config';
 

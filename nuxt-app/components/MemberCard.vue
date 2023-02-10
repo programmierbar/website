@@ -6,15 +6,7 @@
         v-for="i of 2"
         :key="i"
         ref="cursorElements"
-        class="
-          w-1/3
-          h-1/3
-          absolute
-          left-0
-          -translate-x-1/2 -translate-y-1/2
-          rounded-full
-          overflow-hidden
-        "
+        class="w-1/3 h-1/3 absolute left-0 -translate-x-1/2 -translate-y-1/2 rounded-full overflow-hidden"
         :class="[
           i === 1
             ? 'z-10'
@@ -66,50 +58,20 @@
 
     <!-- Full name -->
     <h2
-      class="
-        text-xl
-        md:text-2xl
-        lg:text-3xl
-        text-white
-        font-black
-        mt-10
-        md:mt-12
-        lg:mt-16
-      "
+      class="text-xl md:text-2xl lg:text-3xl text-white font-black mt-10 md:mt-12 lg:mt-16"
     >
       {{ fullName }}
     </h2>
 
     <!-- Description -->
     <InnerHtml
-      class="
-        text-lg
-        md:text-xl
-        lg:text-2xl
-        text-white
-        font-light
-        leading-normal
-        whitespace-pre-line
-        mt-5
-        md:mt-6
-        lg:mt-8
-      "
+      class="text-lg md:text-xl lg:text-2xl text-white font-light leading-normal whitespace-pre-line mt-5 md:mt-6 lg:mt-8"
       :html="member.description"
     />
 
     <!-- Occupation -->
     <div
-      class="
-        text-base
-        md:text-lg
-        lg:text-xl
-        text-white
-        font-bold
-        uppercase
-        mt-6
-        md:mt-7
-        lg:mt-10
-      "
+      class="text-base md:text-lg lg:text-xl text-white font-bold uppercase mt-6 md:mt-7 lg:mt-10"
     >
       {{ member.occupation }}
     </div>
@@ -123,7 +85,7 @@ import {
   defineComponent,
   PropType,
   ref,
-} from '@nuxtjs/composition-api';
+} from 'vue';
 import { START_DISCOVER_EFFECT_EVENT_ID, DIRECTUS_CMS_URL } from '../config';
 import { trackGoal } from '../helpers';
 import { MemberItem } from '../types';

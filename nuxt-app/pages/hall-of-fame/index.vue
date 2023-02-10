@@ -100,105 +100,71 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent } from '@nuxtjs/composition-api';
-import {
-  Breadcrumbs,
-  FadeAnimation,
-  InnerHtml,
-  LazyList,
-  LazyListItem,
-  SectionHeading,
-  SpeakerBubble,
-  TagFilter,
-} from '../../components';
-import {
-  useAsyncData,
-  useLoadingScreen,
-  usePageMeta,
-  useTagFilter,
-} from '../../composables';
-import { directus } from '../../services';
-import { HallOfFamePage, SpeakerItem, TagItem } from '../../types';
+<script setup lang="ts">
+import { computed } from 'vue';
 
-export default defineComponent({
-  components: {
-    Breadcrumbs,
-    FadeAnimation,
-    InnerHtml,
-    LazyList,
-    LazyListItem,
-    SectionHeading,
-    SpeakerBubble,
-    TagFilter,
-  },
-  setup() {
-    // Query hall of fame page and speakers
-    const pageData = useAsyncData(async () => {
-      const [hallOfFamePage, speakers] = await Promise.all([
-        // Hall of fame page
-        directus
-          .singleton('hall_of_fame_page')
-          .read() as Promise<HallOfFamePage>,
+import { useLoadingScreen, usePageMeta, useTagFilter } from '~/composables';
+import { directus } from '~/services';
+import { HallOfFamePage, SpeakerItem, TagItem } from '~/types';
+import LazyList from '~/components/LazyList.vue';
+import LazyListItem from '~/components/LazyListItem.vue';
 
-        // Speakers
-        (
-          await directus.items('speakers').readMany({
-            fields: [
-              'id',
-              'slug',
-              'academic_title',
-              'first_name',
-              'last_name',
-              'occupation',
-              'profile_image.*',
-              'tags.tag.id',
-              'tags.tag.name',
-            ],
-            limit: -1,
-            sort: ['sort', '-published_on'],
-          })
-        ).data?.map(({ tags, ...rest }) => ({
-          ...rest,
-          tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
-            .map(({ tag }) => tag)
-            .filter((tag) => tag),
-        })) as Pick<
-          SpeakerItem,
-          | 'id'
-          | 'slug'
-          | 'academic_title'
-          | 'first_name'
-          | 'last_name'
-          | 'occupation'
-          | 'profile_image'
-          | 'tags'
-        >[],
-      ]);
-      return { hallOfFamePage, speakers };
-    });
+const breadcrumbs = [{ label: 'Hall of Fame' }];
+const bubbleColors = ['pink', 'blue', 'lime'] as const;
 
-    // Extract hall of fame page and speakers from page data
-    const hallOfFamePage = computed(() => pageData.value?.hallOfFamePage);
-    const speakers = computed(() => pageData.value?.speakers);
+// Query hall of fame page and speakers
+const { data: pageData } = useAsyncData(async () => {
+  const [hallOfFamePage, speakers] = await Promise.all([
+    // Hall of fame page
+    directus.singleton('hall_of_fame_page').read() as Promise<HallOfFamePage>,
 
-    // Set loading screen
-    useLoadingScreen(hallOfFamePage, speakers);
-
-    // Set page meta data
-    usePageMeta(hallOfFamePage);
-
-    // Create tag filter
-    const tagFilter = useTagFilter(speakers);
-
-    return {
-      hallOfFamePage,
-      speakers,
-      breadcrumbs: [{ label: 'Hall of Fame' }],
-      bubbleColors: ['pink', 'blue', 'lime'] as const,
-      tagFilter,
-    };
-  },
-  head: {},
+    // Speakers
+    (
+      await directus.items('speakers').readByQuery({
+        fields: [
+          'id',
+          'slug',
+          'academic_title',
+          'first_name',
+          'last_name',
+          'occupation',
+          'profile_image.*',
+          'tags.tag.id',
+          'tags.tag.name',
+        ],
+        limit: -1,
+        sort: ['sort', '-published_on'],
+      })
+    ).data?.map(({ tags, ...rest }) => ({
+      ...rest,
+      tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
+        .map(({ tag }) => tag)
+        .filter((tag) => tag),
+    })) as Pick<
+      SpeakerItem,
+      | 'id'
+      | 'slug'
+      | 'academic_title'
+      | 'first_name'
+      | 'last_name'
+      | 'occupation'
+      | 'profile_image'
+      | 'tags'
+    >[],
+  ]);
+  return { hallOfFamePage, speakers };
 });
+
+// Extract hall of fame page and speakers from page data
+const hallOfFamePage = computed(() => pageData.value?.hallOfFamePage);
+const speakers = computed(() => pageData.value?.speakers);
+
+// Set loading screen
+useLoadingScreen(hallOfFamePage, speakers);
+
+// Set page meta data
+usePageMeta(hallOfFamePage);
+
+// Create tag filter
+const tagFilter = useTagFilter(speakers);
 </script>

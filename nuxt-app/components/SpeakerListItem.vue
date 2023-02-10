@@ -24,18 +24,7 @@
 
       <!-- Description -->
       <p
-        class="
-          text-base
-          md:text-xl
-          lg:text-2xl
-          text-white
-          font-light
-          leading-normal
-          line-clamp-4
-          space-y-8
-          mt-5
-          md:mt-10
-        "
+        class="text-base md:text-xl lg:text-2xl text-white font-light leading-normal line-clamp-4 space-y-8 mt-5 md:mt-10"
         v-html="description"
       />
 
@@ -46,7 +35,7 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
+import { computed, defineComponent, PropType } from 'vue';
 import { getFullSpeakerName } from 'shared-code';
 import { SpeakerItem } from '../types';
 import DirectusImage from './DirectusImage.vue';

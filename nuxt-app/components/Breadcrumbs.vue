@@ -1,15 +1,7 @@
 <template>
   <div>
     <ul
-      class="
-        flex flex-wrap
-        text-sm
-        lg:text-lg
-        text-pink
-        font-black
-        uppercase
-        -m-0.5
-      "
+      class="flex flex-wrap text-sm lg:text-lg text-pink font-black uppercase -m-0.5"
     >
       <li
         v-for="breadcrumb of breadcrumbs"
@@ -32,7 +24,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from '@nuxtjs/composition-api';
+import { defineComponent, PropType } from 'vue';
 
 export default defineComponent({
   props: {

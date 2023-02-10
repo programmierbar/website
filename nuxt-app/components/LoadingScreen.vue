@@ -11,23 +11,14 @@
       class="w-screen h-screen fixed z-30 top-0 left-0 bg-black"
     >
       <div
-        class="
-          loading-bar
-          w-full
-          h-1
-          bg-lime
-          scale-x-75
-          origin-left
-          transition-transform
-          duration-3000
-        "
+        class="loading-bar w-full h-1 bg-lime scale-x-75 origin-left transition-transform duration-3000"
       />
     </div>
   </transition>
 </template>
 
 <script lang="ts">
-import { defineComponent } from '@nuxtjs/composition-api';
+import { defineComponent } from 'vue';
 import { useLoadingScreen } from '../composables';
 
 export default defineComponent({

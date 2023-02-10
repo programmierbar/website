@@ -2,13 +2,7 @@
   <li>
     <!-- Website URL -->
     <a
-      class="
-        group
-        flex flex-col
-        md:flex-row md:items-center md:space-x-8
-        space-y-6
-        md:space-y-0
-      "
+      class="group flex flex-col md:flex-row md:items-center md:space-x-8 space-y-6 md:space-y-0"
       :href="pickOfTheDay.website_url"
       target="_blank"
       rel="noreferrer"
@@ -34,21 +28,10 @@
           <h3 class="text-lg md:text-xl lg:text-2xl font-black">
             {{ pickOfTheDay.name }}
           </h3>
-          <div
-            class="h-4 lg:h-5 xl:h-6 -mt-1"
-            v-html="require('../assets/icons/leave-site.svg?raw')"
-          />
+          <div class="h-4 lg:h-5 xl:h-6 -mt-1" v-html="leaveSiteIcon" />
         </div>
         <p
-          class="
-            text-base
-            md:text-xl
-            lg:text-2xl
-            font-light
-            leading-normal
-            space-y-8
-            mt-2
-          "
+          class="text-base md:text-xl lg:text-2xl font-light leading-normal space-y-8 mt-2"
           v-html="description"
         />
       </div>
@@ -56,31 +39,20 @@
   </li>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
-import { PickOfTheDayItem } from '../types';
+<script setup lang="ts">
+import leaveSiteIcon from '~/assets/icons/leave-site.svg?raw';
+import { computed } from 'vue';
+import { PickOfTheDayItem } from '~/types';
 import DirectusImage from './DirectusImage.vue';
 
-export default defineComponent({
-  components: {
-    DirectusImage,
-  },
-  props: {
-    pickOfTheDay: {
-      type: Object as PropType<
-        Pick<PickOfTheDayItem, 'name' | 'website_url' | 'description' | 'image'>
-      >,
-      required: true,
-    },
-  },
-  setup(props) {
-    const description = computed(() =>
-      props.pickOfTheDay.description.replace(/<[^<>]+>/g, '')
-    );
+const props = defineProps<{
+  pickOfTheDay: Pick<
+    PickOfTheDayItem,
+    'name' | 'website_url' | 'description' | 'image'
+  >;
+}>();
 
-    return {
-      description,
-    };
-  },
-});
+const description = computed(() =>
+  props.pickOfTheDay.description.replace(/<[^<>]+>/g, '')
+);
 </script>

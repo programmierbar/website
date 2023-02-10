@@ -1,9 +1,4 @@
-import {
-  onBeforeUnmount,
-  onMounted,
-  Ref,
-  watch,
-} from '@nuxtjs/composition-api';
+import { onBeforeUnmount, onMounted, Ref, watch } from 'vue';
 
 /**
  * Composable for observing DOM changes of an

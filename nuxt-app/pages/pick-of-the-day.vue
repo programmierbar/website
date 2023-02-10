@@ -1,20 +1,7 @@
 <template>
   <div v-if="pickOfTheDayPage && picksOfTheDay" class="relative">
     <div
-      class="
-        container
-        px-6
-        md:pl-48
-        lg:pr-8
-        3xl:px-8
-        pt-32
-        md:pt-40
-        lg:pt-56
-        2xl:pt-64
-        pb-20
-        md:pb-32
-        lg:pb-52
-      "
+      class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-32 md:pt-40 lg:pt-56 2xl:pt-64 pb-20 md:pb-32 lg:pb-52"
     >
       <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
@@ -23,18 +10,7 @@
         {{ pickOfTheDayPage.intro_heading }}
       </SectionHeading>
       <InnerHtml
-        class="
-          text-lg
-          md:text-2xl
-          lg:text-3xl
-          text-white
-          md:font-bold
-          leading-normal
-          md:leading-normal
-          lg:leading-normal
-          mt-8
-          md:mt-16
-        "
+        class="text-lg md:text-2xl lg:text-3xl text-white md:font-bold leading-normal md:leading-normal lg:leading-normal mt-8 md:mt-16"
         :html="pickOfTheDayPage.intro_text"
       />
 
@@ -86,24 +62,10 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent } from '@nuxtjs/composition-api';
-import {
-  Breadcrumbs,
-  FadeAnimation,
-  InnerHtml,
-  LazyList,
-  LazyListItem,
-  PickOfTheDayCard,
-  SectionHeading,
-  TagFilter,
-} from '../components';
-import {
-  useAsyncData,
-  useLoadingScreen,
-  usePageMeta,
-  useTagFilter,
-} from '../composables';
+<script setup lang="ts">
+import { computed } from 'vue';
+
+import { useLoadingScreen, usePageMeta, useTagFilter } from '../composables';
 import { directus } from '../services';
 import {
   PickOfTheDayPage,
@@ -112,84 +74,61 @@ import {
   TagItem,
 } from '../types';
 
-export default defineComponent({
-  components: {
-    Breadcrumbs,
-    FadeAnimation,
-    InnerHtml,
-    LazyList,
-    LazyListItem,
-    PickOfTheDayCard,
-    SectionHeading,
-    TagFilter,
-  },
-  setup() {
-    // Query pick of the day page and picks of the day
-    const pageData = useAsyncData(async () => {
-      const [pickOfTheDayPage, picksOfTheDay] = await Promise.all([
-        // Pick of the Day page
-        directus
-          .singleton('pick_of_the_day_page')
-          .read() as Promise<PickOfTheDayPage>,
+const breadcrumbs = [{ label: 'Pick of the Day' }];
 
-        // Picks of the day
-        (
-          await directus.items('picks_of_the_day').readMany({
-            fields: [
-              'id',
-              'name',
-              'website_url',
-              'description',
-              'image.*',
-              'podcast.slug',
-              'podcast.type',
-              'podcast.number',
-              'podcast.title',
-              'tags.tag.id',
-              'tags.tag.name',
-            ],
-            limit: -1,
-            sort: ['-published_on'],
-          })
-        ).data?.map(({ tags, ...rest }) => ({
-          ...rest,
-          tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
-            .map(({ tag }) => tag)
-            .filter((tag) => tag),
-        })) as (Pick<
-          PickOfTheDayItem,
-          'id' | 'name' | 'website_url' | 'description' | 'image'
-        > & {
-          podcast: Pick<
-            PodcastItem,
-            'slug' | 'type' | 'number' | 'title'
-          > | null;
-          tags: Pick<TagItem, 'id' | 'name'>[];
-        })[],
-      ]);
-      return { pickOfTheDayPage, picksOfTheDay };
-    });
+// Query pick of the day page and picks of the day
+const { data: pageData } = useAsyncData(async () => {
+  const [pickOfTheDayPage, picksOfTheDay] = await Promise.all([
+    // Pick of the Day page
+    directus
+      .singleton('pick_of_the_day_page')
+      .read() as Promise<PickOfTheDayPage>,
 
-    // Extract pick of the day page and picks of the day from page data
-    const pickOfTheDayPage = computed(() => pageData.value?.pickOfTheDayPage);
-    const picksOfTheDay = computed(() => pageData.value?.picksOfTheDay);
-
-    // Set loading screen
-    useLoadingScreen(pickOfTheDayPage, picksOfTheDay);
-
-    // Set page meta data
-    usePageMeta(pickOfTheDayPage);
-
-    // Create tag filter
-    const tagFilter = useTagFilter(picksOfTheDay);
-
-    return {
-      pickOfTheDayPage,
-      picksOfTheDay,
-      breadcrumbs: [{ label: 'Pick of the Day' }],
-      tagFilter,
-    };
-  },
-  head: {},
+    // Picks of the day
+    (
+      await directus.items('picks_of_the_day').readByQuery({
+        fields: [
+          'id',
+          'name',
+          'website_url',
+          'description',
+          'image.*',
+          'podcast.slug',
+          'podcast.type',
+          'podcast.number',
+          'podcast.title',
+          'tags.tag.id',
+          'tags.tag.name',
+        ],
+        limit: -1,
+        sort: ['-published_on'],
+      })
+    ).data?.map(({ tags, ...rest }) => ({
+      ...rest,
+      tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
+        .map(({ tag }) => tag)
+        .filter((tag) => tag),
+    })) as (Pick<
+      PickOfTheDayItem,
+      'id' | 'name' | 'website_url' | 'description' | 'image'
+    > & {
+      podcast: Pick<PodcastItem, 'slug' | 'type' | 'number' | 'title'> | null;
+      tags: Pick<TagItem, 'id' | 'name'>[];
+    })[],
+  ]);
+  return { pickOfTheDayPage, picksOfTheDay };
 });
+
+// Extract pick of the day page and picks of the day from page data
+const pickOfTheDayPage = computed(() => pageData.value?.pickOfTheDayPage);
+const picksOfTheDay = computed(() => pageData.value?.picksOfTheDay);
+
+// Set loading screen
+useLoadingScreen(pickOfTheDayPage, picksOfTheDay);
+
+// Set page meta data
+usePageMeta(pickOfTheDayPage);
+
+// Create tag filter
+const tagFilter = useTagFilter(picksOfTheDay);
 </script>

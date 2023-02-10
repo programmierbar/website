@@ -1,23 +1,7 @@
 <template>
   <div class="relative flex justify-center">
     <button
-      class="
-        w-8
-        lg:w-12
-        h-16
-        lg:h-24
-        absolute
-        z-20
-        -top-10
-        lg:-top-14
-        hidden
-        md:flex
-        justify-center
-        border-4
-        lg:border-6
-        border-lime
-        rounded-full
-      "
+      class="w-8 lg:w-12 h-16 lg:h-24 absolute z-20 -top-10 lg:-top-14 hidden md:flex justify-center border-4 lg:border-6 border-lime rounded-full"
       :class="!opacity && 'invisible'"
       :style="{ opacity }"
       type="button"
@@ -31,7 +15,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from '@nuxtjs/composition-api';
+import { defineComponent, onMounted, ref } from 'vue';
 import smoothscroll from 'smoothscroll-polyfill';
 import { CLICK_SCROLL_DOWN_MOUSE_EVENT_ID } from '../config';
 import { useEventListener, useWindow } from '../composables';

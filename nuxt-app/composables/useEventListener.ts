@@ -1,10 +1,5 @@
 /* eslint-disable no-redeclare */
-import {
-  onBeforeUnmount,
-  onMounted,
-  Ref,
-  watch,
-} from '@nuxtjs/composition-api';
+import { onBeforeUnmount, onMounted, Ref, watch } from 'vue';
 
 /**
  * Composable to add an event listener to an HTML

@@ -1,14 +1,6 @@
 <template>
   <form
-    class="
-      contact-form
-      flex flex-col
-      items-center
-      lg:items-end
-      space-y-10
-      md:space-y-14
-      lg:space-y-20
-    "
+    class="contact-form flex flex-col items-center lg:items-end space-y-10 md:space-y-14 lg:space-y-20"
     :class="formState"
     novalidate
     @submit.prevent="submitForm"
@@ -59,15 +51,7 @@
       <!-- Error -->
       <p
         v-if="formError"
-        class="
-          text-base
-          md:text-xl
-          lg:text-2xl
-          text-pink
-          mt-10
-          md:mt-12
-          lg:mt-16
-        "
+        class="text-base md:text-xl lg:text-2xl text-pink mt-10 md:mt-12 lg:mt-16"
       >
         {{ formError }}
       </p>
@@ -75,39 +59,7 @@
 
     <!-- Button -->
     <button
-      class="
-        w-64
-        md:w-80
-        lg:w-112
-        h-14
-        md:h-16
-        lg:h-20
-        relative
-        border-4
-        md:border-5
-        lg:border-6
-        border-lime
-        rounded-full
-        overflow-hidden
-        text-sm
-        md:text-lg
-        lg:text-xl
-        font-black
-        uppercase
-        tracking-widest
-        transition-colors
-        duration-500
-        after:w-full
-        after:h-full
-        after:absolute
-        after:-z-1
-        after:top-0
-        after:left-0
-        after:bg-lime
-        after:rounded-full
-        after:origin-left
-        after:transition-transform
-      "
+      class="w-64 md:w-80 lg:w-112 h-14 md:h-16 lg:h-20 relative border-4 md:border-5 lg:border-6 border-lime rounded-full overflow-hidden text-sm md:text-lg lg:text-xl font-black uppercase tracking-widest transition-colors duration-500 after:w-full after:h-full after:absolute after:-z-1 after:top-0 after:left-0 after:bg-lime after:rounded-full after:origin-left after:transition-transform"
       :class="[
         formState === 'submitted' ? 'text-black' : 'text-lime',
         formState === 'submitting'
@@ -132,7 +84,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch } from '@nuxtjs/composition-api';
+import { defineComponent, ref, watch } from 'vue';
 import { SEND_CONTACT_EMAIL_URL, SEND_CONTACT_FORM_EVENT_ID } from '../config';
 import { sleep, trackGoal } from '../helpers';
 

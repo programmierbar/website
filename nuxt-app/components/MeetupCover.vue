@@ -16,18 +16,7 @@
     <!-- Calendar -->
     <div
       v-if="calendar.isVisible"
-      class="
-        w-16
-        h-16
-        absolute
-        top-0
-        right-0
-        flex flex-col
-        items-center
-        justify-center
-        bg-lime
-        text-black
-      "
+      class="w-16 h-16 absolute top-0 right-0 flex flex-col items-center justify-center bg-lime text-black"
       :class="variant === 'default' && 'lg:w-20 lg:h-20'"
     >
       <div
@@ -47,12 +36,7 @@
 </template>
 
 <script lang="ts">
-import {
-  defineComponent,
-  onMounted,
-  PropType,
-  reactive,
-} from '@nuxtjs/composition-api';
+import { defineComponent, onMounted, PropType, reactive } from 'vue';
 import { MeetupItem } from '../types';
 import DirectusImage from './DirectusImage.vue';
 

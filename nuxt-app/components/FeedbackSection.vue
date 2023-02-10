@@ -57,20 +57,13 @@
           md:-right-44
           lg:-right-48
         "
-        v-html="require('../assets/images/feedback-figure.svg?raw')"
+        v-html="feedbackFigure"
       />
     </div>
     <SocialNetworks class="h-8 md:h-9 lg:h-10 mt-10" />
   </section>
 </template>
 
-<script>
-import { defineComponent } from '@nuxtjs/composition-api';
-import SocialNetworks from './SocialNetworks.vue';
-
-export default defineComponent({
-  components: {
-    SocialNetworks,
-  },
-});
+<script setup>
+import feedbackFigure from '~/assets/images/feedback-figure.svg';
 </script>

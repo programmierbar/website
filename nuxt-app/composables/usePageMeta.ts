@@ -1,6 +1,7 @@
-import { useMeta, useRoute, Ref } from '@nuxtjs/composition-api';
+import { Ref } from 'vue';
 import { getMetaInfo } from '../helpers';
 import { FileItem } from '../types';
+import { useRoute, useHead } from '#app';
 
 interface PageMeta {
   meta_title: string;
@@ -15,11 +16,11 @@ interface PageMeta {
  */
 export function usePageMeta(page: Ref<PageMeta | null | undefined>) {
   const route = useRoute();
-  useMeta(() =>
+  useHead(() =>
     page.value
       ? getMetaInfo({
           type: 'website',
-          path: route.value.path,
+          path: route.path,
           title: page.value.meta_title,
           description: page.value.meta_description,
           image: page.value.cover_image,

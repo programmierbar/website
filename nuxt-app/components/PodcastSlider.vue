@@ -75,7 +75,7 @@
       >
         <div
           class="h-40 md:h-48 lg:h-60 relative -bottom-1 lg:-bottom-1.5"
-          v-html="require('../assets/images/podcast-figure.svg?raw')"
+          v-html="podcastFigureIcon"
         />
         <NuxtLink
           class="
@@ -118,7 +118,7 @@
                 count === 3 && 'left-6 md:left-8',
               ]"
               :style="`animation-delay: ${count * 150 - 300}ms`"
-              v-html="require('../assets/icons/angle-right.svg?raw')"
+              v-html="angleRightIcon"
             />
           </div>
         </NuxtLink>
@@ -164,150 +164,124 @@
   </div>
 </template>
 
-<script lang="ts">
-import {
-  defineComponent,
-  onMounted,
-  PropType,
-  ref,
-} from '@nuxtjs/composition-api';
+<script setup lang="ts">
+import podcastFigureIcon from '~/assets/images/podcast-figure.svg?raw';
+import angleRightIcon from '~/assets/icons/angle-right.svg?raw';
+import { onMounted, ref } from 'vue';
 import smoothscroll from 'smoothscroll-polyfill';
 import {
   CLICK_SCROLL_LEFT_ARROW_EVENT_ID,
   CLICK_SCROLL_RIGHT_ARROW_EVENT_ID,
-} from '../config';
-import { trackGoal } from '../helpers';
-import { PodcastItem } from '../types';
+} from '~/config';
+import { trackGoal } from '~/helpers';
+import { PodcastItem } from '~/types';
 import FadeAnimation from './FadeAnimation.vue';
 import LazyList from './LazyList.vue';
 import LazyListItem from './LazyListItem.vue';
 import PodcastCard from './PodcastCard.vue';
 
-export default defineComponent({
-  components: {
-    FadeAnimation,
-    LazyList,
-    LazyListItem,
-    PodcastCard,
-  },
-  props: {
-    podcasts: {
-      type: Array as PropType<
-        Pick<
-          PodcastItem,
-          | 'id'
-          | 'slug'
-          | 'published_on'
-          | 'type'
-          | 'number'
-          | 'title'
-          | 'cover_image'
-          | 'audio_url'
-        >[]
-      >,
-      required: true,
-    },
-    podcastCount: {
-      type: Number,
-      default: 0,
-    },
-    showPodcastLink: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  setup() {
-    // Create scroll box element reference
-    const scrollBoxElement = ref<HTMLDivElement>();
+withDefaults(
+  defineProps<{
+    podcasts: Pick<
+      PodcastItem,
+      | 'id'
+      | 'slug'
+      | 'published_on'
+      | 'type'
+      | 'number'
+      | 'title'
+      | 'cover_image'
+      | 'audio_url'
+    >[];
+    podcastCount?: number;
+    showPodcastLink?: boolean;
+  }>(),
+  {
+    podcastCount: 0,
+    showPodcastLink: false,
+  }
+);
 
-    // Create scroll start and end reached reference
-    const scrollStartReached = ref(true);
-    const scrollEndReached = ref(true);
+// Create scroll box element reference
+const scrollBoxElement = ref<HTMLDivElement>();
 
-    // Add smooth scroll polyfill
-    onMounted(smoothscroll.polyfill);
+// Create scroll start and end reached reference
+const scrollStartReached = ref(true);
+const scrollEndReached = ref(true);
 
-    /**
-     * It detects whether the start or the end of the scrolling area
-     * has been reached, depending on the scrolling position.
-     */
-    const detectScrollState = () => {
-      const { innerWidth } = window;
-      const { scrollLeft, scrollWidth } = scrollBoxElement.value!;
-      scrollStartReached.value = scrollLeft < 64;
-      scrollEndReached.value = scrollLeft > scrollWidth - innerWidth - 64;
-    };
+// Add smooth scroll polyfill
+onMounted(smoothscroll.polyfill);
 
-    // Update scroll state on mounted
-    onMounted(detectScrollState);
+/**
+ * It detects whether the start or the end of the scrolling area
+ * has been reached, depending on the scrolling position.
+ */
+const detectScrollState = () => {
+  const { innerWidth } = window;
+  const { scrollLeft, scrollWidth } = scrollBoxElement.value!;
+  scrollStartReached.value = scrollLeft < 64;
+  scrollEndReached.value = scrollLeft > scrollWidth - innerWidth - 64;
+};
 
-    /**
-     * It programmatically scrolls the slider
-     * a little to the left or right.
-     */
-    const scrollTo = (direction: 'left' | 'right') => {
-      if (direction === 'left') {
-        trackGoal(CLICK_SCROLL_LEFT_ARROW_EVENT_ID);
-      } else {
-        trackGoal(CLICK_SCROLL_RIGHT_ARROW_EVENT_ID);
-      }
-      const { innerWidth } = window;
-      const { scrollLeft } = scrollBoxElement.value!;
-      scrollBoxElement.value!.scrollTo({
-        left: scrollLeft + innerWidth * 0.4 * (direction === 'left' ? -1 : 1),
-        behavior: 'smooth',
-      });
-    };
+// Update scroll state on mounted
+onMounted(detectScrollState);
 
-    /**
-     * It changes the scroll position of the scroll box
-     * element when the user drags its content.
-     */
-    const changeScrollPosition = () => {
-      // Create last client X variable
-      let lastClientX: number;
+/**
+ * It programmatically scrolls the slider
+ * a little to the left or right.
+ */
+const scrollTo = (direction: 'left' | 'right') => {
+  if (direction === 'left') {
+    trackGoal(CLICK_SCROLL_LEFT_ARROW_EVENT_ID);
+  } else {
+    trackGoal(CLICK_SCROLL_RIGHT_ARROW_EVENT_ID);
+  }
+  const { innerWidth } = window;
+  const { scrollLeft } = scrollBoxElement.value!;
+  scrollBoxElement.value!.scrollTo({
+    left: scrollLeft + innerWidth * 0.4 * (direction === 'left' ? -1 : 1),
+    behavior: 'smooth',
+  });
+};
 
-      /**
-       * It changes the scroll position when the mouse
-       * moves and disables pointer events.
-       *
-       * @param event Mouse event object.
-       */
-      const handleScrollMove = (event: MouseEvent) => {
-        if (lastClientX) {
-          scrollBoxElement.value!.scrollLeft += lastClientX - event.clientX;
-        } else {
-          scrollBoxElement.value!.style.pointerEvents = 'none';
-          scrollBoxElement.value!.style.userSelect = 'none';
-        }
-        lastClientX = event.clientX;
-      };
+/**
+ * It changes the scroll position of the scroll box
+ * element when the user drags its content.
+ */
+const changeScrollPosition = () => {
+  // Create last client X variable
+  let lastClientX: number;
 
-      /**
-       * It removes the event listener and resets the style attribute.
-       */
-      const handleScrollStop = () => {
-        window.removeEventListener('mousemove', handleScrollMove);
-        window.removeEventListener('mouseup', handleScrollStop, true);
-        scrollBoxElement.value!.style.pointerEvents = '';
-        scrollBoxElement.value!.style.userSelect = '';
-      };
+  /**
+   * It changes the scroll position when the mouse
+   * moves and disables pointer events.
+   *
+   * @param event Mouse event object.
+   */
+  const handleScrollMove = (event: MouseEvent) => {
+    if (lastClientX) {
+      scrollBoxElement.value!.scrollLeft += lastClientX - event.clientX;
+    } else {
+      scrollBoxElement.value!.style.pointerEvents = 'none';
+      scrollBoxElement.value!.style.userSelect = 'none';
+    }
+    lastClientX = event.clientX;
+  };
 
-      // Add mousemove and mouseup event listener
-      window.addEventListener('mousemove', handleScrollMove);
-      window.addEventListener('mouseup', handleScrollStop, true);
-    };
+  /**
+   * It removes the event listener and resets the style attribute.
+   */
+  const handleScrollStop = () => {
+    window.removeEventListener('mousemove', handleScrollMove);
+    window.removeEventListener('mouseup', handleScrollStop, true);
+    scrollBoxElement.value!.style.pointerEvents = '';
+    scrollBoxElement.value!.style.userSelect = '';
+  };
 
-    return {
-      scrollBoxElement,
-      scrollStartReached,
-      scrollEndReached,
-      detectScrollState,
-      scrollTo,
-      changeScrollPosition,
-    };
-  },
-});
+  // Add mousemove and mouseup event listener
+  window.addEventListener('mousemove', handleScrollMove);
+  window.addEventListener('mouseup', handleScrollStop, true);
+};
 </script>
 
 <style lang="postcss" scoped>

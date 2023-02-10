@@ -2,15 +2,7 @@
   <div class="w-full h-1/2-screen lg:h-4/6-screen">
     <div class="h-full relative overflow-hidden">
       <div
-        class="
-          w-full
-          h-full
-          absolute
-          z-10
-          top-0
-          left-0
-          bg-gray-900 bg-opacity-30
-        "
+        class="w-full h-full absolute z-10 top-0 left-0 bg-gray-900 bg-opacity-30"
       />
 
       <DirectusImage
@@ -25,12 +17,7 @@
 </template>
 
 <script lang="ts">
-import {
-  ComponentInstance,
-  defineComponent,
-  PropType,
-  ref,
-} from '@nuxtjs/composition-api';
+import { ComponentInstance, defineComponent, PropType, ref } from 'vue';
 import { useEventListener, useWindow } from '../composables';
 import { FileItem } from '../types';
 import DirectusImage from './DirectusImage.vue';

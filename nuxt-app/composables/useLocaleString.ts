@@ -1,4 +1,4 @@
-import { computed, Ref } from '@nuxtjs/composition-api';
+import { computed, Ref } from 'vue';
 
 /**
  * Composable that converts a number to a local string.

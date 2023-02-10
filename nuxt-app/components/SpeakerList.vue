@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from '@nuxtjs/composition-api';
+import { defineComponent, PropType } from 'vue';
 import { SpeakerItem } from '../types';
 import SpeakerListItem from './SpeakerListItem.vue';
 

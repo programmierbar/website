@@ -41,6 +41,7 @@
               >
                 <!-- Profile image -->
                 <DirectusImage
+                  v-if="speaker.profile_image"
                   class="w-full h-full object-cover"
                   :image="speaker.profile_image"
                   :alt="fullName"
@@ -142,13 +143,7 @@
 </template>
 
 <script lang="ts">
-import {
-  computed,
-  defineComponent,
-  PropType,
-  ref,
-  watch,
-} from '@nuxtjs/composition-api';
+import { computed, defineComponent, PropType, ref, watch } from 'vue';
 import { getFullSpeakerName } from 'shared-code';
 import { START_MAGNET_EFFECT_EVENT_ID } from '../config';
 import { useMotionParallax, useEventListener, useWindow } from '../composables';

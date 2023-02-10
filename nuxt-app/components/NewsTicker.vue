@@ -1,26 +1,10 @@
 <template>
   <div
-    class="
-      h-20
-      lg:h-36
-      flex
-      items-center
-      justify-center
-      bg-lime
-      overflow-hidden
-    "
+    class="h-20 lg:h-36 flex items-center justify-center bg-lime overflow-hidden"
     data-cursor-black
   >
     <p
-      class="
-        news-ticker
-        selection:bg-black
-        text-xl
-        lg:text-4xl
-        selection:text-white
-        italic
-        whitespace-nowrap
-      "
+      class="news-ticker selection:bg-black text-xl lg:text-4xl selection:text-white italic whitespace-nowrap"
       :style="style"
     >
       <span v-for="occurrence in 4" :key="occurrence">
@@ -35,7 +19,7 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType } from '@nuxtjs/composition-api';
+import { computed, defineComponent, PropType } from 'vue';
 
 export default defineComponent({
   props: {

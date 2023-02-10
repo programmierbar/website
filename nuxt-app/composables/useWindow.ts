@@ -1,4 +1,4 @@
-import { onMounted, ref } from '@nuxtjs/composition-api';
+import { onMounted, ref } from 'vue';
 
 /**
  * Composable for secure access of the window object.
