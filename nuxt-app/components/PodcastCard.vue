@@ -1,11 +1,6 @@
 <template>
   <div class="w-48 md:w-64 lg:w-96 relative">
-    <NuxtLink
-      class="relative z-10"
-      :to="href"
-      draggable="false"
-      data-cursor-more
-    >
+    <NuxtLink class="relative" :to="href" draggable="false" data-cursor-more>
       <!-- Podcast cover -->
       <DirectusImage
         class="w-48 md:w-64 lg:w-96 h-48 md:h-64 lg:h-96 pointer-events-none"
@@ -18,7 +13,16 @@
 
     <!-- Podcast date -->
     <div
-      class="hidden md:block text-sm lg:text-base text-white font-light italic mt-4"
+      class="
+        hidden
+        md:block
+        text-sm
+        lg:text-base
+        text-white
+        font-light
+        italic
+        mt-4
+      "
     >
       {{ date }}
     </div>
@@ -36,7 +40,14 @@
       <div class="w-4/5">
         <!-- Podcast title -->
         <h2
-          class="text-sm md:text-lg lg:text-xl text-white font-light line-clamp-2"
+          class="
+            text-sm
+            md:text-lg
+            lg:text-xl
+            text-white
+            font-light
+            line-clamp-2
+          "
         >
           <strong v-if="podcast.type !== 'other'" class="font-black">
             {{ type }} {{ podcast.number }}{{ divider }}
