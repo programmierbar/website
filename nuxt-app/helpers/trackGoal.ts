@@ -7,6 +7,7 @@
  * @param value The value of the event.
  */
 export function trackGoal(eventId: string, value?: number): void {
-  console.log(`Tracking goal: ${eventId} (${value})`);
+  // TODO: Add Goal tracking for fathom
+  // console.log(`Tracking goal: ${eventId} (${value})`);
   // fathom.trackGoal(eventId, value || 0);
 }

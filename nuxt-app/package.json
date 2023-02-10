@@ -16,6 +16,7 @@
     "@tailwindcss/line-clamp": "^0.2.2",
     "@types/google.maps": "^3.47.0",
     "@types/smoothscroll-polyfill": "^0.3.1",
+    "@ubclaunchpad/vue-fathom": "^2.0.0",
     "core-js": "^3.19.3",
     "smoothscroll-polyfill": "^0.4.4",
     "vite-svg-loader": "^4.0.0"
