@@ -18,8 +18,10 @@
     "@types/smoothscroll-polyfill": "^0.3.1",
     "@ubclaunchpad/vue-fathom": "^2.0.0",
     "core-js": "^3.19.3",
+    "h3-zod": "^0.3.10",
     "smoothscroll-polyfill": "^0.4.4",
-    "vite-svg-loader": "^4.0.0"
+    "vite-svg-loader": "^4.0.0",
+    "zod": "^3.20.6"
   },
   "devDependencies": {
     "@nuxt/image-edge": "^1.0.0-27919678.2f5b64b",

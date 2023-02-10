@@ -1,7 +1,6 @@
 // Webiste config
 export const DIRECTUS_CMS_URL = 'https://admin.programmier.bar';
-export const SEND_CONTACT_EMAIL_URL =
-  'https://europe-west3-programmierbar-323408.cloudfunctions.net/sendContactEmail';
+export const SEND_CONTACT_EMAIL_URL = '/api/email';
 export const BUZZSPROUT_TRACKING_URL =
   'https://chtbl.com/track/E24551/https://www.podtrac.com/pts/redirect.mp3';
 
