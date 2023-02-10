@@ -7,7 +7,7 @@ const transporter = nodemailer.createTransport({
   secure: true,
   auth: {
     user: 'noreply@programmier.bar',
-    pass: useRuntimeConfig().NOREPLY_PB_EMAIL_PASSWORD,
+    pass: useRuntimeConfig().emailPassword,
   },
 });
 
