@@ -19,7 +19,7 @@
         <div
           v-for="index in 3"
           :key="index"
-          class="rounded-full bg-gray-700 h-2.5 w-2.5"
+          class="rounded-full bg-gray-600 h-2.5 w-2.5"
         ></div>
       </div>
       <div
@@ -29,7 +29,7 @@
           md:text-base
           text-ellipsis
           font-extralight
-          whitespace-pre-line
+          whitespace-nowrap
           w-1/2
           md:w-3/4
         "

@@ -11,14 +11,14 @@
             variant === 'default' &&
               'hover:bg-lime hover:selection:bg-black hover:selection:text-white',
             variant === 'pick_of_the_day_card' &&
-              'hover:bg-opacity-0 border-2 border-gray-800 text-xs xs:text-sm xl:text-base px-3 md:px-4 lg:px-3 xl:px-4 pt-0.75 md:pt-1.25 lg:pt-0.75 xl:pt-1.25 pb-0.5 md:pb-1 lg:pb-0.5 xl:pb-1 lg:m-1.5 xl:m-2',
+              'hover:bg-opacity-0 border-2 border-gray-700 text-xs xs:text-sm xl:text-base px-3 md:px-4 lg:px-3 xl:px-4 pt-0.75 md:pt-1.25 lg:pt-0.75 xl:pt-1.25 pb-0.5 md:pb-1 lg:pb-0.5 xl:pb-1 lg:m-1.5 xl:m-2',
             (variant === 'default' || variant === 'pick_of_the_day_card') &&
               'hover:text-black',
             (variant === 'default' || variant === 'tag_filter') &&
               'text-sm md:text-base lg:text-lg px-4 md:px-5 pt-1.25 pb-1',
             variant === 'tag_filter' && tag.is_active
               ? 'bg-lime selection:bg-black text-black selection:text-white'
-              : 'bg-gray-800 text-white',
+              : 'bg-gray-700 text-white',
           ]"
           type="button"
           data-cursor-hover
