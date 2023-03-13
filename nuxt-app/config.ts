@@ -9,9 +9,6 @@ export const WEBSITE_URL = 'https://www.programmier.bar';
 export const WEBSITE_NAME = 'programmier.bar';
 export const TWITTER_HANDLE = '@programmierbar';
 
-// API keys
-export const GOOGLE_PUBLIC_API_KEY = 'AIzaSyDKHb5gW6UdylYnLUM2gdNRe-ZBBilXKhs';
-
 // External URLs
 export const APPLE_PODCASTS_URL =
   'https://podcasts.apple.com/us/podcast/programmier-bar-der-podcast-f%C3%BCr-app-und-webentwicklung/id1371409964';
