@@ -6,7 +6,7 @@ import { resolve } from 'path';
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   // Target: https://go.nuxtjs.dev/config-target
-  ssr: false,
+  ssr: true,
 
   alias: {
     'shared-code': resolve(__dirname, '../shared-code/src'),
