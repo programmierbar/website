@@ -40,8 +40,8 @@ export default defineNuxtConfig({
     '@nuxt/image-edge',
     // // Sitemap Module for Nuxt
     // '@nuxtjs/sitemap',
-    'nuxt-simple-sitemap',
   ],
+
   // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
   hooks: {
     async 'nitro:config'(nitroConfig) {
@@ -90,11 +90,11 @@ export default defineNuxtConfig({
   //   },
   // },
 
-  // https://nuxt.com/modules/simple-sitemap
-  sitemap: {
-    siteUrl: 'https://www.programmier.bar',
-    exclude: ['/impressum', '/datenschutz'],
-  },
+  // https://sitemap.nuxtjs.org/
+  // sitemap: {
+  //   hostname: 'https://www.programmier.bar',
+  //   exclude: ['/impressum', '/datenschutz'],
+  // },
 
   // // Fathom Analytics
   // fathom: {
