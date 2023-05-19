@@ -8,7 +8,7 @@ on:
         required: true
 defaults:
   run:
-    working-directory: directus_cms
+    working-directory: directus-cms
 jobs:
   build_and_push:
     runs-on: ubuntu-latest
