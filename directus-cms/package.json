@@ -4,15 +4,12 @@
   "private": true,
   "license": "MIT",
   "type": "commonjs",
-  "engines": {
-    "node": "17.x"
-  },
   "scripts": {
     "build:shared": "npx tsc ../shared-code/index.ts --outDir ./shared-code",
     "pre:build": "npm run build:shared",
     "migrate:db": "directus database migrate:latest",
     "bootstrap": "directus bootstrap",
-    "build": "rm .env && yarn migrate:db && yarn bootstrap",
+    "build": "yarn migrate:db && yarn bootstrap",
     "pre:start": "npm run build:shared",
     "start": "directus start",
     "snapshot-schema": "directus schema snapshot ./schema.json --format json",
