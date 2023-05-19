@@ -1,11 +1,6 @@
 name: Build and publish Directus CMS
 
-on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Image version'
-        required: true
+on: workflow_dispatch
 jobs:
   build_and_push:
     runs-on: ubuntu-latest
@@ -21,6 +16,6 @@ jobs:
       - name: Log in to DO Container Registry
         run: doctl registry login --expiry-seconds 600
       - name: Tag image
-        run: docker tag programmierbar/cms registry.digitalocean.com/programmierbar/cms:${{github.event.inputs.version }}
+        run: docker tag programmierbar/cms registry.digitalocean.com/programmierbar/cms:latest
       - name: Push image to DO Container Registry
-        run: docker push registry.digitalocean.com/programmierbar/cms:${{ github.event.inputs.version }}
+        run: docker push registry.digitalocean.com/programmierbar/cms:latest
