@@ -18,12 +18,14 @@
     "@ubclaunchpad/vue-fathom": "^2.0.0",
     "core-js": "^3.19.3",
     "h3-zod": "^0.3.10",
+    "nodemailer": "^6.9.2",
     "smoothscroll-polyfill": "^0.4.4",
     "vite-svg-loader": "^4.0.0",
     "zod": "^3.20.6"
   },
   "devDependencies": {
     "@nuxt/image-edge": "^1.0.0-27919678.2f5b64b",
+    "@types/nodemailer": "^6.4.8",
     "eslint": "^8.4.1",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-nuxt": "^3.1.0",

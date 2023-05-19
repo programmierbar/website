@@ -9,7 +9,7 @@ export default defineNuxtConfig({
   ssr: true,
 
   alias: {
-    'shared-code': resolve(__dirname, '../shared-code/src'),
+    'shared-code': resolve(__dirname, '../shared-code'),
   },
   // Global CSS: https://go.nuxtjs.dev/config-css
   css: [],

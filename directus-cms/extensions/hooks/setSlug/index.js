@@ -2,7 +2,7 @@ const {
   getUrlSlug,
   getFullSpeakerName,
   getFullPodcastTitle,
-} = require('shared-code');
+} = require('../../../shared-code');
 
 const HOOK_NAME = 'setSlug';
 

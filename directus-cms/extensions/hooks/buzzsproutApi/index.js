@@ -1,5 +1,5 @@
 const axios = require('axios').default;
-const { getFullPodcastTitle, getUrlSlug } = require('shared-code');
+const { getFullPodcastTitle, getUrlSlug } = require('../../../shared-code');
 
 const HOOK_NAME = 'buzzsproutApi';
 
