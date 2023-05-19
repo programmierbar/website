@@ -24,7 +24,6 @@ jobs:
       - name: Log in to DO Container Registry
         run: doctl registry login --expiry-seconds 600
       - name: Tag image
-        run: docker tag programmierbar/cms \
-          registry.digitalocean.com/programmierbar/cms:${{github.event.inputs.version }}
+        run: docker tag programmierbar/cms registry.digitalocean.com/programmierbar/cms:${{github.event.inputs.version }}
       - name: Push image to DO Container Registry
         run: docker push registry.digitalocean.com/programmierbar/cms:${{ github.event.inputs.version }}
