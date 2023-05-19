@@ -2,16 +2,18 @@
 FROM node:lts
 
 # Set working directory
-WORKDIR /usr/src/app
+WORKDIR /usr/src/app/directus-cms
 
 # Add package.json and package-lock.json (if available)
-COPY package*.json ./
-
+COPY directus-cms/package*.json .
 # Install dependencies
 RUN npm install
 
+COPY shared-code ../shared-code
+RUN npm run build:shared
+
 # Copy the rest of the application
-COPY . .
+COPY directus-cms .
 
 # Start the app
 CMD [ "npm", "run", "start" ]

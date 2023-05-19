@@ -10,7 +10,6 @@
     "migrate:db": "directus database migrate:latest",
     "bootstrap": "directus bootstrap",
     "build": "yarn migrate:db && yarn bootstrap",
-    "pre:start": "npm run build:shared",
     "start": "directus start",
     "snapshot-schema": "directus schema snapshot ./schema.json --format json",
     "apply-schema": "directus schema apply ./schema.json"
