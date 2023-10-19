@@ -11,14 +11,11 @@ build
 dist
 lib
 
-# misc
-.DS_Store
-*.pem
+# IDEs
+/.idea
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*å
+# misc
+*.pem
 
 # deploy files
 app.yaml
