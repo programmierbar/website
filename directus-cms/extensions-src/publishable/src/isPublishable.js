@@ -3,12 +3,14 @@ function isPublishable(item, fields) {
     (field) => {
 
       const hasValue = Boolean(item[field.field]);
-      const isNotRequiredInSchema = !(field.schema && field.schema.required);
+      const isRequiredInSchema = (field.schema && field.schema.required);
+
       const hasConditions = Boolean(field.meta.conditions);
 
-      let atLeastOneConditionMet = false;
+      let isRequiredOnPublished = false;
+
       if (hasConditions) {
-        atLeastOneConditionMet = field.meta.conditions.some(
+        isRequiredOnPublished = field.meta.conditions.some(
           (condition) =>
             condition.rule.status &&
             condition.rule.status._eq === 'published' &&
@@ -16,12 +18,15 @@ function isPublishable(item, fields) {
         );
       }
 
+      const isOptional = !isRequiredInSchema && !isRequiredOnPublished;
+
       console.log(`Validating field`, {
         name: field.field,
         hasValue: hasValue,
-        isNotRequiredInSchema: isNotRequiredInSchema,
+        isRequiredInSchema: isRequiredInSchema,
         hasConditions: hasConditions,
-        atLeastOneConditionMet: atLeastOneConditionMet,
+        isRequiredOnPublished: isRequiredOnPublished,
+        isOptional: isOptional,
       });
 
       /*return (!(field.schema && field.schema.required) &&
@@ -38,7 +43,7 @@ function isPublishable(item, fields) {
           );
     }*/
 
-      return hasValue || isNotRequiredInSchema || (hasConditions && atLeastOneConditionMet);
+      return hasValue || isOptional;
 
     });
 
