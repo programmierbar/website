@@ -1,4 +1,5 @@
 const postSlackMessage = require('../../../helpers/postSlackMessage');
+const { isPublishable } = require('./../../shared/isPublishable');
 
 const HOOK_NAME = 'schedulePublication';
 
@@ -75,20 +76,7 @@ module.exports = (
                 await Promise.all(
                   items.map(async (item) => {
                     // Check if all required fields are set
-                    const requiredFieldsAreSet = fields.every(
-                      (field) =>
-                        (!(field.schema && field.schema.required) &&
-                          !(
-                            field.meta.conditions &&
-                            field.meta.conditions.some(
-                              (condition) =>
-                                condition.rule.status &&
-                                condition.rule.status._eq === 'published' &&
-                                condition.required
-                            )
-                          )) ||
-                        item[field.field]
-                    );
+                    const requiredFieldsAreSet = isPublishable(item, fields);
 
                     // Get primary key
                     const primaryKey = item[collectionSchema.primary];

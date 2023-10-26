@@ -12,6 +12,7 @@ export default {
   types: ['alias'],
   localTypes: ['presentation'],
   group: 'presentation',
+  hideLabel: true,
   options: null,
   //preview: PreviewSVG,
 };
