@@ -5,15 +5,33 @@ FROM node:lts
 WORKDIR /usr/src/app/directus-cms
 
 # Add package.json and package-lock.json (if available)
-COPY directus-cms/package*.json .
+COPY directus-cms/package.json .
+COPY directus-cms/yarn.lock .
+
 # Install dependencies
-RUN npm install
+RUN yarn install
 
 COPY shared-code ../shared-code
 RUN npm run build:shared
 
 # Copy the rest of the application
 COPY directus-cms .
+
+# Set working directory to interface extension
+WORKDIR /usr/src/app/directus-cms/extensions-src/publishable
+
+# Install publishable interface extension dependencies
+RUN npm install
+
+# Build the extension
+RUN npm run build
+
+# Symlink built extension into directus extension dir to make it available at runtime
+# RUN rm /usr/src/app/directus-cms/extensions/directus-extension-interface-publishable
+RUN npm run link ../../extensions
+
+# Set working directory back to directus project root
+WORKDIR /usr/src/app/directus-cms
 
 # Start the app
 CMD [ "npm", "run", "start" ]
