@@ -5,8 +5,7 @@
   "license": "MIT",
   "type": "commonjs",
   "scripts": {
-    "build:shared": "npx tsc ../shared-code/index.ts --outDir ./shared-code",
-    "pre:build": "npm run build:shared",
+    "prebuild": "npx tsc ../shared-code/index.ts --outDir ./shared-code",
     "migrate:db": "directus database migrate:latest",
     "bootstrap": "directus bootstrap",
     "build": "yarn migrate:db && yarn bootstrap",
@@ -18,7 +17,8 @@
     "@slack/web-api": "^6.5.1",
     "axios": "^0.24.0",
     "directus": "10.1.1",
-    "jsonwebtoken": "^8.5.1"
+    "jsonwebtoken": "^8.5.1",
+    "typescript": "^5.2.2"
   },
   "devDependencies": {
     "prettier": "^2.5.1"
