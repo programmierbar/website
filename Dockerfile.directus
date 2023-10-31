@@ -12,7 +12,7 @@ COPY directus-cms/yarn.lock .
 RUN yarn install
 
 COPY shared-code ../shared-code
-RUN npm run build:shared
+RUN yarn run build
 
 # Copy the rest of the application
 COPY directus-cms .
@@ -27,14 +27,13 @@ RUN npm install
 RUN npm run build
 
 # Symlink built extension into directus extension dir to make it available at runtime
-# RUN rm /usr/src/app/directus-cms/extensions/directus-extension-interface-publishable
 RUN npm run link ../../extensions
 
 # Set working directory back to directus project root
 WORKDIR /usr/src/app/directus-cms
 
 # Start the app
-CMD [ "npm", "run", "start" ]
+CMD [ "yarn", "run", "start" ]
 
 # Expose port
 EXPOSE 8055

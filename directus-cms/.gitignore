@@ -10,3 +10,5 @@ uploads/*
 .env.*
 
 shared-code
+
+extensions/directus-extension-interface-publishable

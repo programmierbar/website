@@ -5,10 +5,10 @@
   "license": "MIT",
   "type": "commonjs",
   "scripts": {
-    "prebuild": "npx tsc ../shared-code/index.ts --outDir ./shared-code",
+    "build": "npx tsc ../shared-code/index.ts --outDir ./shared-code",
     "migrate:db": "directus database migrate:latest",
+    "prebootstrap": "yarn migrate:db",
     "bootstrap": "directus bootstrap",
-    "build": "yarn migrate:db && yarn bootstrap",
     "start": "directus start",
     "snapshot-schema": "directus schema snapshot ./schema.json --format json",
     "apply-schema": "directus schema apply ./schema.json"

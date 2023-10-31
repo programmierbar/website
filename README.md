@@ -39,6 +39,17 @@ You can find the default login credentials in the `.env` file.
 If you need pre-defined data structures available, you can run `yarn run apply-schema` 
 (Please be aware that - for now - the included schema is not guaranteed to be in sync with the production schema).
 
+#### Extensions
+
+All extensions that are plain JavaScript and **do not** require a build process are located in `directus-cms/extensions`.
+They will automatically be loaded at runtime.
+
+Extension that **do** require a build process are located in `directus-cms/extensions-src`.
+Here, every extension is its own independent subproject that needs to be build and symlinked.
+
+While each extension can technically be different, you can refer to our docker build process
+to see how they are being build: [Dockerfile.directus](./Dockerfile.directus) 
+
 ## Feedback 😍 ♥️ 
 
 We welcome any form of [feedback](https://www.programmier.bar/kontakt)! If you are interested, you can also create a pull request directly.

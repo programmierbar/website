@@ -4,6 +4,9 @@
 /node_modules
 **/node_modules
 
+# built shared code
+directus-cms/shared-code
+
 /.pnp
 .pnp.js
 
