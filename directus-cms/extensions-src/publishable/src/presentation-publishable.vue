@@ -3,18 +3,18 @@ import { useApi } from '@directus/extensions-sdk';
 import { isPublishable } from './../../../extensions/shared/isPublishable.js';
 import { onMounted, ref } from 'vue';
 
-const props = defineProps({ collection: null, primaryKey: null });
+const props = defineProps<{ collection: string; primaryKey: string }>();
 
 const publishable = ref(false);
 
-function loadItem(collection, primaryKey) {
+function loadItem(collection: string, primaryKey: string) {
   console.log('loadItem', collection, primaryKey);
   const api = useApi();
   const response = api.get(`/items/${collection}/${primaryKey}`);
 
   return response;
 }
-function loadFields(collection) {
+function loadFields(collection: string) {
   const api = useApi();
   const response = api.get(`/fields/${collection}`);
 
