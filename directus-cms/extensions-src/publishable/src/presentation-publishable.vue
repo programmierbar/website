@@ -1,61 +1,48 @@
-<script>
+<script setup lang="ts">
 import { useApi } from '@directus/extensions-sdk';
 import { isPublishable } from './../../../extensions/shared/isPublishable.js';
+import { onMounted, ref } from 'vue';
 
-export default {
-  props: {
-    collection: null,
-    primaryKey: null,
-  },
-  data() {
-    return {
-      publishable: null,
-    };
-  },
-  mounted() {
-    Promise.all([
-      this.loadItem(this.collection, this.primaryKey),
-      this.loadFields(this.collection),
-    ])
-    .then(([itemResponse, fieldResponse]) => {
-      const itemData = itemResponse.data.data;
-      const fieldData = fieldResponse.data.data;
+const props = defineProps({ collection: null, primaryKey: null });
 
-      let testResult = isPublishable(itemData, fieldData);
+const publishable = ref(false);
 
-      this.publishable = testResult;
-    })
-    .catch(error => {
-      console.error(error);
-    });
-  },
-  methods: {
-    loadItem: function(collection, primaryKey) {
-      const api = useApi();
-      const response = api.get(`/items/${collection}/${primaryKey}`);
+function loadItem(collection, primaryKey) {
+  console.log('loadItem', collection, primaryKey);
+  const api = useApi();
+  const response = api.get(`/items/${collection}/${primaryKey}`);
 
-      return response;
-    },
-    loadFields: function(collection) {
-      const api = useApi();
-      const response = api.get(`/fields/${collection}`);
+  return response;
+}
+function loadFields(collection) {
+  const api = useApi();
+  const response = api.get(`/fields/${collection}`);
 
-      return response;
-    },
-  },
-};
+  return response;
+}
+
+onMounted(async () => {
+  const [itemResponse, fieldResponse] = await Promise.all([
+    loadItem(props.collection, props.primaryKey),
+    loadFields(props.collection),
+  ]);
+  const itemData = itemResponse.data.data;
+  const fieldData = fieldResponse.data.data;
+
+  publishable.value = isPublishable(itemData, fieldData);
+});
 </script>
 
 <template>
-  <div v-if='publishable === true'>
+  <div v-if="publishable === true">
     <v-icon name="check_circle" left />
     Can be published.
   </div>
-  <div v-else-if='publishable === false'>
+  <div v-else-if="publishable === false">
     <v-icon name="unpublished" left />
     Can not be published.
   </div>
-  <div v-else-if='publishable === null'>
+  <div v-else-if="publishable === null">
     <v-progress-circular indeterminate />
     Publishable state not yet determined...
   </div>
