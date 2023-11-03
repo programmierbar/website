@@ -48,6 +48,12 @@
                     class="mt-8 space-y-8 text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl"
                     :html="meetup.description"
                 />
+                <p class="text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl">Bitte beachte auch unsere <NuxtLink
+                  class="hover:text-lime hover:underline"
+                  data-cursor-hover
+                  :to="'/verhaltensregeln'"
+                >Verhaltensregeln</NuxtLink
+                >.</p>
 
                 <!-- Meetup tags -->
                 <!-- TODO: Replace navigateTo() with <a> element -->
