@@ -1,0 +1,12 @@
+###
+# Fetches a current schema snapshot from the production instance (You will need to provide your own Bearer auth token)
+# The bearer token can be taken from any recent request you made to the instance in your webbrowser.
+#
+# @Schema
+GET https://admin.programmier.bar/schema/snapshot
+accept: application/json, text/plain, */*
+authorization: Bearer {{bearer-auth-token}}
+cache-control: no-cache
+
+###
+
