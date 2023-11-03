@@ -8,7 +8,6 @@ const props = defineProps<{ collection: string; primaryKey: string }>();
 const publishable = ref(false);
 
 function loadItem(collection: string, primaryKey: string) {
-  console.log('loadItem', collection, primaryKey);
   const api = useApi();
   const response = api.get(`/items/${collection}/${primaryKey}`);
 

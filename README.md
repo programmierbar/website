@@ -48,7 +48,15 @@ Extension that **do** require a build process are located in `directus-cms/exten
 Here, every extension is its own independent subproject that needs to be build and symlinked.
 
 While each extension can technically be different, you can refer to our docker build process
-to see how they are being build: [Dockerfile.directus](./Dockerfile.directus) 
+to see how they are being build: [Dockerfile.directus](./Dockerfile.directus)
+
+##### Publishable Interface Extension
+
+Navigate to `directus-cms/extensions-src/publishable` and run the following commands:
+
+* `npm install`
+* `npm run build`
+* `npm run link ../../extensions`
 
 ## Feedback 😍 ♥️ 
 
