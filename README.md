@@ -37,7 +37,8 @@ _All commands should be run from within `./directus-cms/`_
 You can find the default login credentials in the `.env` file.
 
 If you need pre-defined data structures available, you can run `yarn run apply-schema` 
-(Please be aware that - for now - the included schema is not guaranteed to be in sync with the production schema).
+Please be aware that - for now - the included schema is not guaranteed to be in sync with the production schema.
+For instructions on how to obtain a recent schema.json file, please see `directus-cms/_requests/Directus.http`.
 
 #### Extensions
 
