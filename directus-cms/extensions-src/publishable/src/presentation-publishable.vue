@@ -21,14 +21,16 @@ function loadFields(collection: string) {
 }
 
 onMounted(async () => {
-  const [itemResponse, fieldResponse] = await Promise.all([
-    loadItem(props.collection, props.primaryKey),
-    loadFields(props.collection),
-  ]);
-  const itemData = itemResponse.data.data;
-  const fieldData = fieldResponse.data.data;
+  if (props.primaryKey !== '+') {
+    const [itemResponse, fieldResponse] = await Promise.all([
+      loadItem(props.collection, props.primaryKey),
+      loadFields(props.collection),
+    ]);
+    const itemData = itemResponse.data.data;
+    const fieldData = fieldResponse.data.data;
 
-  publishable.value = isPublishable(itemData, fieldData);
+    publishable.value = isPublishable(itemData, fieldData);
+  }
 });
 </script>
 
