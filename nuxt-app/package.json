@@ -19,6 +19,7 @@
     "core-js": "^3.19.3",
     "h3-zod": "^0.3.10",
     "nodemailer": "^6.9.2",
+    "nuxt-jsonld": "^2.0.8",
     "smoothscroll-polyfill": "^0.4.4",
     "vite-svg-loader": "^4.0.0",
     "zod": "^3.20.6"

@@ -40,6 +40,7 @@ export default defineNuxtConfig({
     '@nuxt/image-edge',
     // // Sitemap Module for Nuxt
     // '@nuxtjs/sitemap',
+    'nuxt-jsonld',
   ],
 
   // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router

@@ -3911,6 +3911,14 @@ nuxi@3.5.0:
   optionalDependencies:
     fsevents "~2.3.2"
 
+nuxt-jsonld@^2.0.8:
+  version "2.0.8"
+  resolved "https://registry.yarnpkg.com/nuxt-jsonld/-/nuxt-jsonld-2.0.8.tgz#88381c2cbe683192dbd3b772ba5e2b7c56a01a35"
+  integrity sha512-EnrEdh8q5TKqrY1ZaIU9xe9iqHc0bj/QR5b8BEO2ckWXIR6rHV+XxWMfdHMgGbo6fzrZTLTtlWUG2q0L7q45HQ==
+  dependencies:
+    pathe "^1.1.0"
+    schema-dts "^1.1.2"
+
 nuxt@^3.1.2:
   version "3.5.0"
   resolved "https://registry.npmjs.org/nuxt/-/nuxt-3.5.0.tgz"
@@ -4858,6 +4866,11 @@ safe-buffer@~5.1.0, safe-buffer@~5.1.1:
   version "2.1.2"
   resolved "https://registry.npmjs.org/safer-buffer/-/safer-buffer-2.1.2.tgz"
   integrity sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==
+
+schema-dts@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/schema-dts/-/schema-dts-1.1.2.tgz#82ccf71b5dcb80065a1cc5941888507a4ce1e44b"
+  integrity sha512-MpNwH0dZJHinVxk9bT8XUdjKTxMYrA5bLtrrGmFA6PTLwlOKnhi67XoRd6/ty+Djt6ZC0slR57qFhZDNMI6DhQ==
 
 schema-utils@^3.0.0:
   version "3.1.2"
