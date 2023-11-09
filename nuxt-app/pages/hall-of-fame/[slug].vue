@@ -239,13 +239,13 @@ import {
   OPEN_SPEAKER_TWITTER_EVENT_ID,
   OPEN_SPEAKER_WEBSITE_EVENT_ID,
   OPEN_SPEAKER_YOUTUBE_EVENT_ID,
-  DIRECTUS_CMS_URL,
 } from '~/config';
 
 import { useLoadingScreen, useLocaleString } from '~/composables';
 import { getMetaInfo, trackGoal } from '~/helpers';
 import { directus } from '~/services';
 import { SpeakerItem, PodcastItem, TagItem, PickOfTheDayItem } from '~/types';
+import { generatePersonFromSpeaker } from '~/helpers/jsonLdGenerator';
 
 // Add route and router
 const route = useRoute();
@@ -394,29 +394,7 @@ const fullName = computed(
   () => speaker.value && getFullSpeakerName(speaker.value)
 );
 
-// TODO: Why is this giving linting errors?
-useJsonld(() => {
-  if (!speaker.value) {
-    return null;
-  }
-
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Person',
-    givenName	: speaker.value.first_name,
-    familyName: speaker.value.last_name,
-    jobTitle : speaker.value.occupation,
-    image: `${DIRECTUS_CMS_URL}/assets/${speaker.value.profile_image.id}`,
-    sameAs : [
-      speaker.value?.twitter_url,
-      speaker.value?.linkedin_url,
-      speaker.value?.instagram_url,
-      speaker.value?.github_url,
-      speaker.value?.youtube_url,
-      speaker.value?.website_url,
-    ].filter((url) => (url && url.length > 0)),
-  };
-});
+useJsonld(generatePersonFromSpeaker(speaker.value));
 
 // Set page meta data
 useHead(() =>
