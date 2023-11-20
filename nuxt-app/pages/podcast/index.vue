@@ -66,6 +66,17 @@
         </SectionHeading>
         <PodcastSlider class="mt-10 md:mt-0" :podcasts="newsPodcasts" />
       </section>
+
+      <!-- Other podcasts -->
+      <section
+        v-if="otherPodcasts.length"
+        class="relative py-8 md:py-10 lg:py-16 md:mt-12 lg:mt-16 mb-8 md:mb-28 lg:mb-40"
+      >
+        <SectionHeading class="px-6 md:px-0" element="h2">
+          {{ podcastPage.other_heading }}
+        </SectionHeading>
+        <PodcastSlider class="mt-10 md:mt-0" :podcasts="otherPodcasts" />
+      </section>
     </div>
   </div>
 </template>
@@ -152,5 +163,10 @@ const ctoSpecialPodcasts = computed(() =>
 // Create news podcasts list
 const newsPodcasts = computed(() =>
   tagFilter.output.filter((podcast) => podcast.type === 'news')
+);
+
+// Create news podcasts list
+const otherPodcasts = computed(() =>
+  tagFilter.output.filter((podcast) => podcast.type === 'other')
 );
 </script>
