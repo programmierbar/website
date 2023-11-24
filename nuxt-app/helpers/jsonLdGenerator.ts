@@ -1,6 +1,6 @@
 import { JsonLD } from 'nuxt-jsonld/dist/types/index.d';
-import { Person, CreativeWorkSeries } from 'schema-dts';
-import { DIRECTUS_CMS_URL } from '~/config';
+import { Person, PodcastEpisode, PodcastSeries, WithContext } from 'schema-dts';
+import { DIRECTUS_CMS_URL, BUZZSPROUT_RSS_FEED_URL } from '~/config';
 import { FileItem, MemberItem, PodcastItem, SpeakerItem } from '~/types';
 import { getPodcastType } from 'shared-code';
 
@@ -13,8 +13,9 @@ function generatePodcastUrl(podcast: PodcastItem): string {
   return `${DIRECTUS_CMS_URL}/podcast/${podcast.slug}`;
 }
 
-function generatePersonFromSpeaker(speaker: SpeakerItem): Person {
+function generatePersonFromSpeaker(speaker: SpeakerItem): WithContext<Person> {
   return {
+    '@context': 'https://schema.org',
     '@type': 'Person',
     givenName: speaker.first_name,
     familyName: speaker.last_name,
@@ -31,8 +32,9 @@ function generatePersonFromSpeaker(speaker: SpeakerItem): Person {
   };
 }
 
-function generatePersonFromMember(member: MemberItem): Person {
+function generatePersonFromMember(member: MemberItem): WithContext<Person> {
   return {
+    '@context': 'https://schema.org',
     '@type': 'Person',
     givenName: member.first_name,
     familyName: member.last_name,
@@ -41,12 +43,14 @@ function generatePersonFromMember(member: MemberItem): Person {
   };
 }
 
-function generateCreativeWorkSeries(): CreativeWorkSeries {
+function generatePodcastSeries(): WithContext<PodcastSeries> {
   return {
-    '@type': 'CreativeWorkSeries',
+    '@context': 'https://schema.org',
+    '@type': 'PodcastSeries',
     name: 'programmier.bar',
     url: 'https://programmier.bar',
     mainEntityOfPage: 'https://programmier.bar',
+    webFeed: BUZZSPROUT_RSS_FEED_URL,
     sameAs: [
       'https://twitter.com/programmierbar',
       'https://www.linkedin.com/company/programmier-bar',
@@ -67,9 +71,9 @@ function generatePodcastEpisodeFromPodcast(
     ...(podcast.members ?? []).map(generatePersonFromMember),
   ];
 
-  const partOfSeries = generateCreativeWorkSeries();
+  const partOfSeries = generatePodcastSeries();
 
-  const podcastEpisode: JsonLD = {
+  const podcastEpisode: WithContext<PodcastEpisode> = {
     '@context': 'https://schema.org',
     '@type': 'PodcastEpisode',
     name: podcast.title,
@@ -88,5 +92,5 @@ function generatePodcastEpisodeFromPodcast(
 export {
   generatePersonFromSpeaker,
   generatePodcastEpisodeFromPodcast,
-  generateCreativeWorkSeries,
+  generatePodcastSeries,
 };

@@ -88,7 +88,7 @@ import { DIRECTUS_CMS_URL } from '../config';
 import { useLoadingScreen, usePageMeta } from '../composables';
 import { directus } from '../services';
 import { HomePage, PodcastItem } from '../types';
-import { generateCreativeWorkSeries, generatePodcastEpisodeFromPodcast } from '~/helpers/jsonLdGenerator';
+import { generatePodcastSeries } from '~/helpers/jsonLdGenerator';
 
 const breadcrumbs = [{ label: 'Home' }];
 
@@ -159,7 +159,7 @@ useLoadingScreen(homePage);
 // Set page meta data
 usePageMeta(homePage);
 
-useJsonld(generateCreativeWorkSeries());
+useJsonld(generatePodcastSeries());
 
 // Create Video URL
 const videoUrl = computed(

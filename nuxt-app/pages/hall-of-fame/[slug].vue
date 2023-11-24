@@ -394,7 +394,9 @@ const fullName = computed(
   () => speaker.value && getFullSpeakerName(speaker.value)
 );
 
-useJsonld(generatePersonFromSpeaker(speaker.value));
+if (speaker.value) {
+  useJsonld(generatePersonFromSpeaker(speaker.value));
+}
 
 // Set page meta data
 useHead(() =>
