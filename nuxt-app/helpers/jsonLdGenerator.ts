@@ -77,13 +77,13 @@ function generatePodcastEpisodeFromPodcast(
     '@context': 'https://schema.org',
     '@type': 'PodcastEpisode',
     name: podcast.title,
-    partOfSeries: partOfSeries ?? undefined,
+    partOfSeries,
     image: generateImageUrl(podcast.cover_image),
     description: podcast.description,
     datePublished: podcast.published_on,
     episodeNumber: `${type} ${podcast.number}`,
     url: generatePodcastUrl(podcast),
-    ...(creator && { creator }),
+    creator,
   };
 
   return podcastEpisode;
