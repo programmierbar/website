@@ -245,6 +245,7 @@ import { useLoadingScreen, useLocaleString } from '~/composables';
 import { getMetaInfo, trackGoal } from '~/helpers';
 import { directus } from '~/services';
 import { SpeakerItem, PodcastItem, TagItem, PickOfTheDayItem } from '~/types';
+import { generatePersonFromSpeaker } from '~/helpers/jsonLdGenerator';
 
 // Add route and router
 const route = useRoute();
@@ -392,6 +393,10 @@ const color = computed(
 const fullName = computed(
   () => speaker.value && getFullSpeakerName(speaker.value)
 );
+
+if (speaker.value) {
+  useJsonld(generatePersonFromSpeaker(speaker.value));
+}
 
 // Set page meta data
 useHead(() =>

@@ -178,7 +178,8 @@ import {
 import { useLoadingScreen, useLocaleString } from '~/composables';
 import { getMetaInfo, trackGoal } from '~/helpers';
 import { directus } from '~/services';
-import { PodcastItem, SpeakerItem, TagItem, PickOfTheDayItem } from '~/types';
+import { PodcastItem, SpeakerItem, TagItem, PickOfTheDayItem, MemberItem } from '~/types';
+import { generatePodcastEpisodeFromPodcast } from '~/helpers/jsonLdGenerator';
 // Add route and router
 const route = useRoute();
 const router = useRouter();
@@ -207,10 +208,18 @@ const { data: pageData } = useAsyncData(async () => {
           'speakers.speaker.id',
           'speakers.speaker.slug',
           'speakers.speaker.academic_title',
+          'speakers.speaker.occupation',
           'speakers.speaker.first_name',
           'speakers.speaker.last_name',
           'speakers.speaker.description',
           'speakers.speaker.event_image.*',
+          'speakers.speaker.profile_image.*',
+          'members.member.id',
+          'members.member.first_name',
+          'members.member.last_name',
+          'members.member.occupation',
+          'members.member.description',
+          'members.member.normal_image.*',
           'picks_of_the_day.id',
           'picks_of_the_day.name',
           'picks_of_the_day.website_url',
@@ -222,7 +231,7 @@ const { data: pageData } = useAsyncData(async () => {
         filter: { slug: route.params.slug },
         limit: 1,
       })
-    ).data?.map(({ speakers, tags, ...rest }) => ({
+    ).data?.map(({ speakers, members, tags, ...rest }) => ({
       ...rest,
       slug: route.params.slug,
       speakers: (
@@ -232,15 +241,32 @@ const { data: pageData } = useAsyncData(async () => {
             | 'id'
             | 'slug'
             | 'academic_title'
+            | 'occupation'
             | 'first_name'
             | 'last_name'
             | 'description'
+            | 'profile_image'
             | 'event_image'
           >;
         }[]
       )
         .map(({ speaker }) => speaker)
         .filter((speaker) => speaker),
+      members: (
+        members as {
+          member: Pick<
+            MemberItem,
+            | 'id'
+            | 'first_name'
+            | 'last_name'
+            | 'description'
+            | 'normal_image'
+            | 'occupation'
+          >;
+        }[]
+      )
+        .map(({ member }) => member)
+        .filter((member) => member),
       tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[])
         .map(({ tag }) => tag)
         .filter((tag) => tag),
@@ -383,6 +409,8 @@ useHead(() =>
       })
     : {}
 );
+
+useJsonld(generatePodcastEpisodeFromPodcast(podcast.value));
 
 // Create podcast type
 const type = computed(() => podcast.value && getPodcastType(podcast.value));
