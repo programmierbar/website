@@ -1,13 +1,13 @@
 export default eventHandler(function (context) {
-  const incomingUrl = context.path;
-  const toMatch = incomingUrl.substring(0, 22);
+  const incomingPath = context.path;
+  const toMatch = '/.well-known/webfinger';
 
-  if (toMatch !== '/.well-known/webfinger') {
+  if (!incomingPath.startsWith(toMatch)) {
     return;
   }
 
   const externalHost = 'https://social.programmier.bar';
-  const redirectUrl = `${externalHost}${incomingUrl}`;
+  const redirectUrl = `${externalHost}${incomingPath}`;
 
   // Set the response status and location header for redirection
   // And end the response to complete the redirection
