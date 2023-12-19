@@ -15,6 +15,10 @@
         v-html="socialNetwork.icon"
       ></a>
     </li>
+    <li style='display: none;'>
+      <!-- Only required for mastodon verification -->
+      <a rel="me" href="https://social.programmier.bar/@podcast">Mastodon</a>
+    </li>
   </ul>
 </template>
 
