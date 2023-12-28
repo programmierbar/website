@@ -17,8 +17,22 @@
       />
     </div>
 
+    <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-32 md:pt-40 lg:pt-56 2xl:pt-64 pb-12 md:pb-24 lg:pb-32">
+      <p
+        class="text-lg md:text-2xl lg:text-3xl text-white md:font-bold leading-normal md:leading-normal lg:leading-normal mt-8 md:mt-16"
+      >
+        Du kannst uns eine Sprachnachricht hinterlassen:
+      </p>
+      <div class="podinbox-inline-widget my-2" show="5a333faaa601dc55"></div>
+    </div>
+
     <!-- Contact form -->
     <div class="container md:pr-6 md:pl-48 lg:pr-8 3xl:px-8">
+      <p
+        class="text-lg md:text-2xl lg:text-3xl text-white md:font-bold leading-normal md:leading-normal lg:leading-normal mt-8 md:mt-16"
+      >
+        Oder uns eine Nachricht schreiben:
+      </p>
       <ContactForm />
     </div>
 
@@ -67,4 +81,16 @@ useLoadingScreen(contactPage);
 
 // Set page meta data
 usePageMeta(contactPage);
+
+useHead({
+  script: [
+    {
+      src: 'https://podinbox.com/widget.js',
+      async: true,
+      'podinbox-origin': 'https://podinbox.com',
+      tagPosition: 'bodyClose',
+    }
+  ],
+});
+
 </script>
