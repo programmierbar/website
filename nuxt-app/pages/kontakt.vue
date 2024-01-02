@@ -23,7 +23,7 @@
       >
         Du kannst uns eine Sprachnachricht hinterlassen:
       </p>
-      <div class="podinbox-inline-widget pt-2 pb-2" show="5a333faaa601dc55"></div>
+      <iframe src="https://www.speakpipe.com/widget/inline/bvxj64wpxs38ecdhe2dq78zbabn2qjc4" allow="microphone" width="100%" height="200" frameborder="0"></iframe>
     </div>
 
     <!-- Contact form -->
@@ -85,9 +85,8 @@ usePageMeta(contactPage);
 useHead({
   script: [
     {
-      src: 'https://podinbox.com/widget.js',
+      src: 'https://www.speakpipe.com/widget/loader.js',
       async: true,
-      'podinbox-origin': 'https://podinbox.com',
       tagPosition: 'bodyClose',
     }
   ],
