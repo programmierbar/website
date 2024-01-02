@@ -1,7 +1,7 @@
 <template>
   <div v-if="contactPage" class="relative">
     <div
-      class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-32 md:pt-40 lg:pt-56 2xl:pt-64 pb-12 md:pb-24 lg:pb-32"
+      class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-32 md:pt-40 lg:pt-56 2xl:pt-64 pb-2"
     >
       <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
@@ -17,23 +17,23 @@
       />
     </div>
 
-    <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-32 md:pt-40 lg:pt-56 2xl:pt-64 pb-12 md:pb-24 lg:pb-32">
+    <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-2 pb-2">
       <p
         class="text-lg md:text-2xl lg:text-3xl text-white md:font-bold leading-normal md:leading-normal lg:leading-normal mt-8 md:mt-16"
       >
         Du kannst uns eine Sprachnachricht hinterlassen:
       </p>
-      <div class="podinbox-inline-widget my-2" show="5a333faaa601dc55"></div>
+      <div class="podinbox-inline-widget pt-2 pb-2" show="5a333faaa601dc55"></div>
     </div>
 
     <!-- Contact form -->
-    <div class="container md:pr-6 md:pl-48 lg:pr-8 3xl:px-8">
+    <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-2 pb-2">
       <p
         class="text-lg md:text-2xl lg:text-3xl text-white md:font-bold leading-normal md:leading-normal lg:leading-normal mt-8 md:mt-16"
       >
         Oder uns eine Nachricht schreiben:
       </p>
-      <ContactForm />
+      <ContactForm class="pt-2 pb-2" />
     </div>
 
     <div
