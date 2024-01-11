@@ -85,9 +85,9 @@ usePageMeta(contactPage);
 useHead({
   script: [
     {
-      src: 'https://podinbox.com/widget.js',
+      src: 'https://fanlist.com/widget.js',
       async: true,
-      'podinbox-origin': 'https://podinbox.com',
+      'podinbox-origin': 'https://fanlist.com',
       tagPosition: 'bodyClose',
     }
   ],
