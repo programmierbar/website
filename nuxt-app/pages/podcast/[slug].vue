@@ -160,6 +160,7 @@ import appleIcon from '~/assets/logos/apple-podcasts-color.svg?raw';
 import googleIcon from '~/assets/logos/google-podcasts-color.svg?raw';
 import spotifyIcon from '~/assets/logos/spotify-color.svg?raw';
 import rssIcon from '~/assets/logos/rss-feed-color.svg?raw';
+import youTubeIcon from '~/assets/logos/youtube-color.svg?raw';
 import { computed } from 'vue';
 import { getPodcastType, getFullPodcastTitle } from 'shared-code';
 import {
@@ -173,6 +174,8 @@ import {
   OPEN_RSS_FEED_EVENT_ID,
   OPEN_SPOTIFY_EVENT_ID,
   SPOTIFY_URL,
+  YOUTUBE_PODCAST_URL,
+  OPEN_YOUTUBE_PODCAST_URL_EVENT_ID,
 } from '~/config';
 
 import { useLoadingScreen, useLocaleString } from '~/composables';
@@ -447,6 +450,12 @@ const platforms = computed(() => [
     icon: spotifyIcon,
     url: podcast.value?.spotify_url || SPOTIFY_URL,
     eventId: OPEN_SPOTIFY_EVENT_ID,
+  },
+  {
+    name: 'YouTube',
+    icon: youTubeIcon,
+    url: YOUTUBE_PODCAST_URL,
+    eventId: OPEN_YOUTUBE_PODCAST_URL_EVENT_ID,
   },
   {
     name: 'RSS',
