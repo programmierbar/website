@@ -18,6 +18,8 @@ export const SPOTIFY_URL =
   'https://open.spotify.com/show/0ik0sXv9paTQCeThcOLCCJ';
 export const BUZZSPROUT_RSS_FEED_URL =
   'https://feeds.buzzsprout.com/176239.rss';
+export const YOUTUBE_PODCAST_URL =
+  'https://www.youtube.com/playlist?list=PLdL7w42vTISATGJPlvPa91GEMOSHqbWZY';
 export const MEETUP_URL = 'https://www.meetup.com/programmierbar';
 export const GOOGLE_MAPS_URL = 'https://goo.gl/maps/7h8a14WPPQkQL4LB8';
 
@@ -28,6 +30,7 @@ export const OPEN_SPOTIFY_EVENT_ID = 'DI0ZKGUH';
 export const OPEN_GOOGLE_PODCASTS_EVENT_ID = 'UIBOTSAI';
 export const OPEN_APPLE_PODCASTS_EVENT_ID = 'PKU17OFR';
 export const OPEN_RSS_FEED_EVENT_ID = 'JCUNNGSR';
+export const OPEN_YOUTUBE_PODCAST_URL_EVENT_ID = 'Open YouTube Podcast Url';
 export const DOWNLOAD_PODCAST_EVENT_ID = 'NZKCHXM1';
 export const OPEN_TWITTER_EVENT_ID = 'A4JMBMZF';
 export const OPEN_GITHUB_EVENT_ID = '8XRK6ZUR';
