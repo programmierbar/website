@@ -174,6 +174,12 @@ module.exports = (
       buzzsproutData.artist = 'programmier.bar';
     }
 
+    if (!env.BUZZSPROUT_API_TOKEN) {
+      logger.warning(`${HOOK_NAME} hook: Buzzsprout Hook aborted early, because no API token was set.`);
+      logger.info(`${HOOK_NAME} hook: Would have sent this data: ${JSON.stringify(buzzsproutData)}`);
+      return;
+    }
+
     try {
       // Create or update podcast episode at Buzzsprout
       const buzzsproutResponse = await axios({
@@ -375,6 +381,13 @@ module.exports = (
         payload,
         context,
       });
+
+      if (!buzzsproutData) {
+        logger.info(
+          `${HOOK_NAME} hook: Aborting hook, because no Buzzsprout data was received.`
+        );
+        return;
+      }
 
       // Create update data object
       const updateData = {};
