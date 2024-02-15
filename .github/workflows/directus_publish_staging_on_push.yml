@@ -1,0 +1,25 @@
+name: Build and publish Directus CMS Staging System
+
+on:
+  push:
+    branches:
+      - 'staging'
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+      - name: Build image
+        run: docker build -t programmierbar/cms:staging -f Dockerfile.directus .
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Log in to DO Container Registry
+        run: doctl registry login --expiry-seconds 600
+      - name: Tag image
+        run: docker tag programmierbar/cms:staging registry.digitalocean.com/programmierbar/cms:staging
+      - name: Push image to DO Container Registry
+        run: docker push registry.digitalocean.com/programmierbar/cms:staging
