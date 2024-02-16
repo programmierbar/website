@@ -1,8 +1,19 @@
 const jwt = require('jsonwebtoken');
 const axios = require('axios').default;
 const postSlackMessage = require('../../../helpers/postSlackMessage');
+const { environment } = require('../../../utils/environment');
 
 const HOOK_NAME = 'deployWebsite';
+
+if (!environment.isProduction()) {
+  console.info(
+    `${HOOK_NAME} hook: Environment is not production, hook overwritten.`
+  );
+
+  module.exports = () => {}
+
+  return;
+}
 
 module.exports = (
   { action },

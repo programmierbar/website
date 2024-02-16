@@ -1,7 +1,18 @@
 const axios = require('axios').default;
 const { getFullPodcastTitle, getUrlSlug } = require('../../../shared-code');
+const { environment } = require('./../../../utils/environment');
 
 const HOOK_NAME = 'buzzsproutApi';
+
+if (!environment.isProduction()) {
+  console.info(
+    `${HOOK_NAME} hook: Environment is not production, hook overwritten.`
+  );
+
+  module.exports = () => {}
+
+  return;
+}
 
 module.exports = (
   { action },
@@ -172,6 +183,12 @@ module.exports = (
       buzzsproutData.episode_number = currentYearPodcastItems.length + 1;
       buzzsproutData.season_number = new Date(publishedOn).getFullYear() - 2019;
       buzzsproutData.artist = 'programmier.bar';
+    }
+
+    if (!env.BUZZSPROUT_API_TOKEN) {
+      logger.warning(`${HOOK_NAME} hook: Buzzsprout Hook aborted early, because no API token was set.`);
+      logger.info(`${HOOK_NAME} hook: Would have sent this data: ${JSON.stringify(buzzsproutData)}`);
+      return;
     }
 
     try {
@@ -375,6 +392,13 @@ module.exports = (
         payload,
         context,
       });
+
+      if (!buzzsproutData) {
+        logger.info(
+          `${HOOK_NAME} hook: Aborting hook, because no Buzzsprout data was received.`
+        );
+        return;
+      }
 
       // Create update data object
       const updateData = {};

@@ -1,11 +1,10 @@
-// Webiste config
-export const DIRECTUS_CMS_URL = 'https://admin.programmier.bar';
+// Website config
+export const DIRECTUS_CMS_URL = process.env.DIRECTUS_CMS_URL || 'https://admin.programmier.bar';
 export const SEND_CONTACT_EMAIL_URL = '/api/email';
 export const BUZZSPROUT_TRACKING_URL =
   'https://chtbl.com/track/E24551/https://www.podtrac.com/pts/redirect.mp3';
 
-// programmier.bar
-export const WEBSITE_URL = 'https://www.programmier.bar';
+export const WEBSITE_URL = process.env.WEBSITE_URL || 'https://www.programmier.bar';
 export const WEBSITE_NAME = 'programmier.bar';
 export const TWITTER_HANDLE = '@programmierbar';
 

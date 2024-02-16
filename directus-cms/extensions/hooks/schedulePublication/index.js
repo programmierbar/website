@@ -1,7 +1,18 @@
 const postSlackMessage = require('../../../helpers/postSlackMessage');
 const { isPublishable } = require('./../../shared/isPublishable');
+const { environment } = require('../../../utils/environment');
 
 const HOOK_NAME = 'schedulePublication';
+
+if (!environment.isProduction()) {
+  console.info(
+    `${HOOK_NAME} hook: Environment is not production, hook overwritten.`
+  );
+
+  module.exports = () => {}
+
+  return;
+}
 
 module.exports = (
   { schedule },

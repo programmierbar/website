@@ -1,5 +1,18 @@
 const retrievePodcast = require('./retrieveTranscription');
 const triggerTranscription = require('./triggerTranscription');
+const { environment } = require('../../../utils/environment');
+
+const HOOK_NAME = 'podcastTranscription';
+
+if (!environment.isProduction()) {
+  console.info(
+    `${HOOK_NAME} hook: Environment is not production, hook overwritten.`
+  );
+
+  module.exports = () => {}
+
+  return;
+}
 
 module.exports = ({ schedule, action }, config) => {
   /**
