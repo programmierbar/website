@@ -1,7 +1,18 @@
 const axios = require('axios').default;
 const { getFullPodcastTitle, getUrlSlug } = require('../../../shared-code');
+const { environment } = require('./../../../utils/environment');
 
 const HOOK_NAME = 'buzzsproutApi';
+
+if (!environment.isProduction()) {
+  console.info(
+    `${HOOK_NAME} hook: Environment is not production, hook overwritten.`
+  );
+
+  module.exports = () => {}
+
+  return;
+}
 
 module.exports = (
   { action },
