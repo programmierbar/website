@@ -59,12 +59,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-
+import { computed, type ComputedRef } from 'vue';
 import { useLoadingScreen, usePageMeta } from '../composables';
-import { directus } from '../services';
-import type { AboutPage, MemberItem } from '../types';
+import type { DirectusAboutPage } from '../types';
+import { useDirectus } from '~/composables/useDirectus';
 
+let directus = useDirectus()
 const breadcrumbs = [{ label: 'Über uns' }];
 const memberColors = ['pink', 'blue', 'lime'] as const;
 
@@ -73,73 +73,28 @@ const { data: pageData } = useAsyncData(async () => {
   const [aboutPage, podcastCrewMembers, behindTheScenesMembers] =
     await Promise.all([
       // About page
-      directus
-        .singleton('about_page')
-        .read({ fields: '*.*' }) as Promise<AboutPage>,
-
+      (
+        await directus.getAboutPage()
+      ),
       // Podcast crew members
       (
-        await directus.items('members').readByQuery({
-          fields: [
-            'id',
-            'first_name',
-            'last_name',
-            'task_area',
-            'occupation',
-            'description',
-            'normal_image.*',
-            'action_image.*',
-          ],
-          filter: {
-            task_area: 'podcast_crew',
-          },
+        await directus.getMembers({
+          task_area: {'_eq': 'podcast_crew'},
         })
-      ).data as Pick<
-        MemberItem,
-        | 'id'
-        | 'first_name'
-        | 'last_name'
-        | 'task_area'
-        | 'occupation'
-        | 'description'
-        | 'normal_image'
-        | 'action_image'
-      >[],
-
+      ),
       // Behind the Scenes members
       (
-        await directus.items('members').readByQuery({
-          fields: [
-            'id',
-            'first_name',
-            'last_name',
-            'task_area',
-            'occupation',
-            'description',
-            'normal_image.*',
-            'action_image.*',
-          ],
-          filter: {
-            task_area: 'behind_the_scenes',
-          },
+        await directus.getMembers({
+          task_area: {'_eq': 'behind_the_scenes'},
         })
-      ).data as Pick<
-        MemberItem,
-        | 'id'
-        | 'first_name'
-        | 'last_name'
-        | 'task_area'
-        | 'occupation'
-        | 'description'
-        | 'normal_image'
-        | 'action_image'
-      >[],
+      ),
     ]);
+
   return { aboutPage, podcastCrewMembers, behindTheScenesMembers };
 });
 
 // Extract about page and members
-const aboutPage = computed(() => pageData.value?.aboutPage);
+const aboutPage: ComputedRef<DirectusAboutPage | undefined> = computed(() => pageData.value?.aboutPage);
 const podcastCrewMembers = computed(() => pageData.value?.podcastCrewMembers);
 const behindTheScenesMembers = computed(
   () => pageData.value?.behindTheScenesMembers

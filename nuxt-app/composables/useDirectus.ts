@@ -1,6 +1,6 @@
-import { directus } from '~/services';
-import { aggregate, readItems, readSingleton } from '@directus/sdk';
-import type { DirectusPodcastItem } from '~/types';
+import { directus, type Collections } from '~/services';
+import { aggregate, type QueryFilter, readItems, readSingleton } from '@directus/sdk';
+import type { DirectusMemberItem, DirectusPodcastItem } from '~/types';
 
 export type LatestPodcasts = Pick<
   DirectusPodcastItem,
@@ -18,6 +18,12 @@ export function useDirectus() {
   async function getHomepage() {
     return await directus.request(readSingleton('home_page', {
       fields: ['*', 'video.*'],
+    }));
+  }
+
+  async function getAboutPage() {
+    return await directus.request(readSingleton('about_page', {
+      fields: ['*', 'cover_image.*'],
     }));
   }
 
@@ -48,5 +54,23 @@ export function useDirectus() {
     return Number(result.pop()?.count);
   }
 
-  return { getHomepage, getLatestPodcasts, getPodcastCount };
+  async function getMembers(filter: QueryFilter<Collections, DirectusMemberItem>) {
+    return await directus.request(
+      readItems('members', {
+        fields: [
+          'id',
+          'first_name',
+          'last_name',
+          'task_area',
+          'occupation',
+          'description',
+          'normal_image.*',
+          'action_image.*',
+        ],
+        filter,
+      })
+    );
+  }
+
+  return { getHomepage, getAboutPage, getMembers, getLatestPodcasts, getPodcastCount };
 }
