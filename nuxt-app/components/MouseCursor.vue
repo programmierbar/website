@@ -108,15 +108,10 @@ const handleMouseCursor = (event: MouseEvent) => {
     cursorMode.value =
       event
         .composedPath()
-        .reduce<CursorMode | false | undefined>(
-          (cursorMode, currentNode) =>
-            cursorMode ||
-            (currentNode instanceof HTMLElement &&
-              cursorModes.find((cursorMode) =>
-                currentNode.hasAttribute(`data-cursor-${cursorMode}`)
-              )),
-          undefined
-        ) || 'default';
+        .reduce<
+          CursorMode | false | undefined
+        >((cursorMode, currentNode) => cursorMode || (currentNode instanceof HTMLElement && cursorModes.find((cursorMode) => currentNode.hasAttribute(`data-cursor-${cursorMode}`))), undefined) ||
+      'default';
   }
 };
 

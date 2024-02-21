@@ -2,17 +2,7 @@
   <div v-if="meetup">
     <article class="relative">
       <div
-        class="
-          container
-          px-6
-          md:pl-48
-          lg:pr-8
-          3xl:px-8
-          pt-32
-          md:pt-40
-          lg:pt-56
-          2xl:pt-64
-        "
+        class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-32 md:pt-40 lg:pt-56 2xl:pt-64"
       >
         <div class="flex items-center justify-between space-x-4">
           <Breadcrumbs :breadcrumbs="breadcrumbs" />
@@ -20,19 +10,7 @@
         </div>
 
         <h1
-          class="
-            text-2xl
-            md:text-4xl
-            lg:text-5xl
-            text-white
-            font-black
-            leading-normal
-            md:leading-normal
-            lg:leading-normal
-            mt-12
-            md:mt-16
-            lg:mt-20
-          "
+          class="text-2xl md:text-4xl lg:text-5xl text-white font-black leading-normal md:leading-normal lg:leading-normal mt-12 md:mt-16 lg:mt-20"
         >
           {{ meetup.title }}
         </h1>
@@ -41,16 +19,7 @@
           <!-- Cover and YouTube -->
           <a
             v-if="meetup.youtube_url"
-            class="
-              xl:w-2/3
-              relative
-              flex
-              items-center
-              justify-center
-              mt-10
-              md:mt-12
-              lg:mt-16
-            "
+            class="xl:w-2/3 relative flex items-center justify-center mt-10 md:mt-12 lg:mt-16"
             :href="meetup.youtube_url"
             target="_blank"
             rel="noreferrer"
@@ -58,16 +27,7 @@
             @click="() => trackGoal(OPEN_YOUTUBE_EVENT_ID)"
           >
             <div
-              class="
-                h-20
-                xs:h-24
-                md:h-28
-                lg:h-40
-                absolute
-                z-10
-                text-blue text-opacity-90
-                pointer-events-none
-              "
+              class="h-20 xs:h-24 md:h-28 lg:h-40 absolute z-10 text-blue text-opacity-90 pointer-events-none"
               v-html="playCircleFilledIcon"
             />
             <MeetupCover class="w-full" :meetup="meetup" />
@@ -87,17 +47,7 @@
 
         <!-- Start and end time -->
         <MeetupStartAndEnd
-          class="
-            text-sm
-            md:text-lg
-            lg:text-xl
-            text-lime
-            font-bold
-            italic
-            mt-10
-            md:mt-16
-            lg:mt-24
-          "
+          class="text-sm md:text-lg lg:text-xl text-lime font-bold italic mt-10 md:mt-16 lg:mt-24"
           :meetup="meetup"
         />
 
@@ -106,17 +56,7 @@
           Meetup Infos
         </SectionHeading>
         <InnerHtml
-          class="
-            text-base
-            md:text-xl
-            lg:text-2xl
-            text-white
-            font-light
-            leading-normal
-            space-y-8
-            mt-8
-            md:mt-14
-          "
+          class="text-base md:text-xl lg:text-2xl text-white font-light leading-normal space-y-8 mt-8 md:mt-14"
           :html="meetup.description"
         />
 

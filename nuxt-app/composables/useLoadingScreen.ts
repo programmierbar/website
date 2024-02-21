@@ -1,4 +1,4 @@
-import type { Ref} from 'vue';
+import type { Ref } from 'vue';
 import { reactive, ref, watch } from 'vue';
 
 // Global is loading state

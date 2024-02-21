@@ -2,22 +2,7 @@
   <header :class="menuIsOpen && 'menu-is-open'">
     <!-- Logo -->
     <NuxtLink
-      class="
-        fixed
-        z-60
-        top-5
-        left-0
-        py-3
-        lg:pt-5
-        pr-4
-        lg:pr-5 lg:pb-4
-        pl-6
-        lg:pl-8
-        bg-opacity-75
-        backdrop-filter backdrop-blur
-        transition-colors
-        duration-300
-      "
+      class="fixed z-60 top-5 left-0 py-3 lg:pt-5 pr-4 lg:pr-5 lg:pb-4 pl-6 lg:pl-8 bg-opacity-75 backdrop-filter backdrop-blur transition-colors duration-300"
       :class="menuIsOpen ? 'bg-gray-900' : 'bg-black'"
       to="/"
       data-cursor-hover
@@ -37,18 +22,7 @@
 
     <!-- Search form -->
     <form
-      class="
-        fixed
-        z-60
-        top-7
-        right-18
-        lg:right-24
-        flex
-        bg-opacity-75
-        backdrop-filter backdrop-blur
-        transition-all
-        duration-300
-      "
+      class="fixed z-60 top-7 right-18 lg:right-24 flex bg-opacity-75 backdrop-filter backdrop-blur transition-all duration-300"
       :class="[
         searchIsOpen ? 'w-1/2 xs:w-60 md:w-80' : 'w-10 lg:w-14',
         menuIsOpen ? 'bg-gray-900' : 'bg-black',
@@ -57,42 +31,14 @@
     >
       <input
         ref="searchInputElement"
-        class="
-          w-full
-          appearance-none
-          bg-transparent
-          selection:bg-blue
-          border-b-2 border-white
-          rounded-none
-          outline-none
-          text-lg
-          lg:text-2xl
-          text-blue
-          placeholder-blue-600
-          selection:text-black
-          text-center
-          font-light
-        "
+        class="w-full appearance-none bg-transparent selection:bg-blue border-b-2 border-white rounded-none outline-none text-lg lg:text-2xl text-blue placeholder-blue-600 selection:text-black text-center font-light"
         :class="!searchIsOpen && 'invisible transition-all delay-300'"
         type="text"
         :placeholder="searchPlaceholder"
         spellcheck="false"
       />
       <button
-        class="
-          w-6
-          lg:w-8
-          h-7
-          lg:h-9
-          text-white
-          flex-shrink-0
-          box-content
-          py-1.5
-          lg:py-2.5
-          px-2
-          lg:px-3
-          rounded-none
-        "
+        class="w-6 lg:w-8 h-7 lg:h-9 text-white flex-shrink-0 box-content py-1.5 lg:py-2.5 px-2 lg:px-3 rounded-none"
         :type="searchIsOpen ? 'submit' : 'button'"
         data-cursor-hover
         @click.stop.prevent="handleSearch"
@@ -102,28 +48,7 @@
 
     <!-- Burger icon -->
     <button
-      class="
-        group
-        w-6
-        lg:w-8
-        h-8
-        lg:h-10
-        fixed
-        z-60
-        top-7
-        right-4
-        lg:right-5
-        box-content
-        py-1
-        lg:py-2
-        px-2
-        lg:px-3
-        rounded-none
-        bg-opacity-75
-        backdrop-filter backdrop-blur
-        transition-colors
-        duration-300
-      "
+      class="group w-6 lg:w-8 h-8 lg:h-10 fixed z-60 top-7 right-4 lg:right-5 box-content py-1 lg:py-2 px-2 lg:px-3 rounded-none bg-opacity-75 backdrop-filter backdrop-blur transition-colors duration-300"
       :class="menuIsOpen ? 'bg-gray-900 rotate-180' : 'bg-black'"
       type="button"
       data-cursor-hover
@@ -131,15 +56,7 @@
     >
       <div class="relative flex items-center justify-center">
         <div
-          class="
-            w-full
-            h-1
-            lg:h-1.5
-            absolute
-            right-0
-            bg-white
-            transition-transform
-          "
+          class="w-full h-1 lg:h-1.5 absolute right-0 bg-white transition-transform"
           :class="
             menuIsOpen || searchIsOpen
               ? 'translate-y-0 -rotate-45'
@@ -147,15 +64,7 @@
           "
         />
         <div
-          class="
-            w-full
-            h-1
-            lg:h-1.5
-            absolute
-            right-0
-            bg-white
-            transition-transform
-          "
+          class="w-full h-1 lg:h-1.5 absolute right-0 bg-white transition-transform"
           :class="
             menuIsOpen || searchIsOpen
               ? 'translate-y-0 translate-x-0 scale-x-100 rotate-45'
@@ -168,21 +77,7 @@
     <!-- Navigation -->
     <nav
       ref="menuElement"
-      class="
-        w-screen
-        min-h-screen
-        max-h-screen
-        fixed
-        z-50
-        top-0
-        right-0
-        overflow-y-auto
-        overscroll-y-contain
-        bg-gray-900
-        transition
-        duration-300
-        origin-right
-      "
+      class="w-screen min-h-screen max-h-screen fixed z-50 top-0 right-0 overflow-y-auto overscroll-y-contain bg-gray-900 transition duration-300 origin-right"
       :class="!menuIsOpen && 'invisible opacity-0 translate-x-20 scale-x-90'"
       :style="
         !menuIsOpen
@@ -192,18 +87,7 @@
       tabindex="-1"
     >
       <div
-        class="
-          min-h-screen
-          flex flex-col
-          space-y-16
-          pt-28
-          lg:pt-36
-          pb-8
-          px-6
-          lg:pl-8 lg:pr-24
-          xl:pr-32
-          2xl:pr-48
-        "
+        class="min-h-screen flex flex-col space-y-16 pt-28 lg:pt-36 pb-8 px-6 lg:pl-8 lg:pr-24 xl:pr-32 2xl:pr-48"
       >
         <!-- Main menu -->
         <ul
@@ -220,14 +104,7 @@
             }"
           >
             <NuxtLink
-              class="
-                block
-                hover:text-lime
-                font-bold
-                transition-transform
-                hover:scale-x-105
-                origin-right
-              "
+              class="block hover:text-lime font-bold transition-transform hover:scale-x-105 origin-right"
               :class="
                 route.path === mainMenuItem.href ? 'text-lime' : 'text-white'
               "
@@ -241,15 +118,7 @@
         </ul>
 
         <div
-          class="
-            flex flex-col
-            lg:flex-row-reverse
-            flex-grow
-            lg:flex-grow-0 lg:items-end
-            justify-between
-            space-y-16
-            lg:space-y-0
-          "
+          class="flex flex-col lg:flex-row-reverse flex-grow lg:flex-grow-0 lg:items-end justify-between space-y-16 lg:space-y-0"
         >
           <!-- Social networks -->
           <SocialNetworks class="h-8 self-end" />
@@ -258,13 +127,7 @@
           <ul class="flex items-end space-x-6 lg:space-x-8">
             <li v-for="subMenuItem in subMenuItems" :key="subMenuItem.href">
               <NuxtLink
-                class="
-                  flex
-                  text-white
-                  hover:text-lime hover:underline
-                  text-sm
-                  lg:text-xl
-                "
+                class="flex text-white hover:text-lime hover:underline text-sm lg:text-xl"
                 style="line-height: 1"
                 data-cursor-hover
                 :to="subMenuItem.href"

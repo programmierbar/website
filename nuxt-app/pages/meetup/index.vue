@@ -16,54 +16,17 @@
           {{ meetupPage.intro_heading }}
         </SectionHeading>
         <InnerHtml
-          class="
-            text-lg
-            md:text-2xl
-            lg:text-3xl
-            text-white
-            font-bold
-            leading-normal
-            md:leading-normal
-            lg:leading-normal
-            mt-8
-            md:mt-16
-          "
+          class="text-lg md:text-2xl lg:text-3xl text-white font-bold leading-normal md:leading-normal lg:leading-normal mt-8 md:mt-16"
           :html="meetupPage.intro_text_1"
         />
         <InnerHtml
-          class="
-            text-base
-            md:text-xl
-            lg:text-2xl
-            text-white
-            font-light
-            md:font-normal
-            leading-normal
-            md:leading-normal
-            lg:leading-normal
-            mt-8
-            md:mt-6
-          "
+          class="text-base md:text-xl lg:text-2xl text-white font-light md:font-normal leading-normal md:leading-normal lg:leading-normal mt-8 md:mt-6"
           :html="meetupPage.intro_text_2"
         />
 
         <!-- Corona info -->
         <InnerHtml
-          class="
-            text-sm
-            md:text-lg
-            lg:text-xl
-            text-lime
-            font-bold
-            leading-relaxed
-            md:leading-relaxed
-            lg:leading-relaxed
-            italic
-            space-y-6
-            mt-10
-            md:mt-20
-            lg::mt-32
-          "
+          class="text-sm md:text-lg lg:text-xl text-lime font-bold leading-relaxed md:leading-relaxed lg:leading-relaxed italic space-y-6 mt-10 md:mt-20 lg::mt-32"
           :html="meetupPage.corona_text"
         />
       </div>

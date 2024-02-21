@@ -13,16 +13,7 @@
 
     <!-- Podcast date -->
     <div
-      class="
-        hidden
-        md:block
-        text-sm
-        lg:text-base
-        text-white
-        font-light
-        italic
-        mt-4
-      "
+      class="hidden md:block text-sm lg:text-base text-white font-light italic mt-4"
     >
       {{ date }}
     </div>
@@ -40,14 +31,7 @@
       <div class="w-4/5">
         <!-- Podcast title -->
         <h2
-          class="
-            text-sm
-            md:text-lg
-            lg:text-xl
-            text-white
-            font-light
-            line-clamp-2
-          "
+          class="text-sm md:text-lg lg:text-xl text-white font-light line-clamp-2"
         >
           <strong v-if="podcast.type !== 'other'" class="font-black">
             {{ type }} {{ podcast.number }}{{ divider }}

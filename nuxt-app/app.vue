@@ -108,7 +108,8 @@ input[type='range']::-moz-range-track {
 } */
 @font-face {
   font-family: 'Museo Sans';
-  src: url('~/assets/fonts/museo-sans-300-italic.woff2') format('woff2'),
+  src:
+    url('~/assets/fonts/museo-sans-300-italic.woff2') format('woff2'),
     url('~/assets/fonts/museo-sans-300-italic.woff') format('woff');
   font-weight: 300;
   font-style: italic;
@@ -116,7 +117,8 @@ input[type='range']::-moz-range-track {
 }
 @font-face {
   font-family: 'Museo Sans';
-  src: url('~/assets/fonts/museo-sans-300.woff2') format('woff2'),
+  src:
+    url('~/assets/fonts/museo-sans-300.woff2') format('woff2'),
     url('~/assets/fonts/museo-sans-300.woff') format('woff');
   font-weight: 300;
   font-style: normal;
@@ -124,7 +126,8 @@ input[type='range']::-moz-range-track {
 }
 @font-face {
   font-family: 'Museo Sans';
-  src: url('~/assets/fonts/museo-sans-500-italic.woff2') format('woff2'),
+  src:
+    url('~/assets/fonts/museo-sans-500-italic.woff2') format('woff2'),
     url('~/assets/fonts/museo-sans-500-italic.woff') format('woff');
   font-weight: 500;
   font-style: italic;
@@ -132,7 +135,8 @@ input[type='range']::-moz-range-track {
 }
 @font-face {
   font-family: 'Museo Sans';
-  src: url('~/assets/fonts/museo-sans-500.woff2') format('woff2'),
+  src:
+    url('~/assets/fonts/museo-sans-500.woff2') format('woff2'),
     url('~/assets/fonts/museo-sans-500.woff') format('woff');
   font-weight: 500;
   font-style: normal;
@@ -140,7 +144,8 @@ input[type='range']::-moz-range-track {
 }
 @font-face {
   font-family: 'Museo Sans';
-  src: url('~/assets/fonts/museo-sans-700-italic.woff2') format('woff2'),
+  src:
+    url('~/assets/fonts/museo-sans-700-italic.woff2') format('woff2'),
     url('~/assets/fonts/museo-sans-700-italic.woff') format('woff');
   font-weight: 700;
   font-style: italic;
@@ -148,7 +153,8 @@ input[type='range']::-moz-range-track {
 }
 @font-face {
   font-family: 'Museo Sans';
-  src: url('~/assets/fonts/museo-sans-700.woff2') format('woff2'),
+  src:
+    url('~/assets/fonts/museo-sans-700.woff2') format('woff2'),
     url('~/assets/fonts/museo-sans-700.woff') format('woff');
   font-weight: 700;
   font-style: normal;
@@ -156,7 +162,8 @@ input[type='range']::-moz-range-track {
 }
 @font-face {
   font-family: 'Museo Sans';
-  src: url('~/assets/fonts/museo-sans-900-italic.woff2') format('woff2'),
+  src:
+    url('~/assets/fonts/museo-sans-900-italic.woff2') format('woff2'),
     url('~/assets/fonts/museo-sans-900-italic.woff') format('woff');
   font-weight: 900;
   font-style: italic;
@@ -164,7 +171,8 @@ input[type='range']::-moz-range-track {
 }
 @font-face {
   font-family: 'Museo Sans';
-  src: url('~/assets/fonts/museo-sans-900.woff2') format('woff2'),
+  src:
+    url('~/assets/fonts/museo-sans-900.woff2') format('woff2'),
     url('~/assets/fonts/museo-sans-900.woff') format('woff');
   font-weight: 900;
   font-style: normal;
@@ -172,7 +180,8 @@ input[type='range']::-moz-range-track {
 }
 @font-face {
   font-family: 'DM Mono';
-  src: url('~/assets/fonts/DMMono-Light.woff2') format('woff2'),
+  src:
+    url('~/assets/fonts/DMMono-Light.woff2') format('woff2'),
     url('~/assets/fonts/DMMono-Light.woff') format('woff');
   font-weight: 300;
   font-style: normal;

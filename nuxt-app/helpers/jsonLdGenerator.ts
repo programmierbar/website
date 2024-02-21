@@ -1,5 +1,10 @@
 import type { JsonLD } from 'nuxt-jsonld/dist/types/index.d';
-import type { Person, PodcastEpisode, PodcastSeries, WithContext } from 'schema-dts';
+import type {
+  Person,
+  PodcastEpisode,
+  PodcastSeries,
+  WithContext,
+} from 'schema-dts';
 import { DIRECTUS_CMS_URL, BUZZSPROUT_RSS_FEED_URL } from '~/config';
 import type { FileItem, MemberItem, PodcastItem, SpeakerItem } from '~/types';
 import { getPodcastType } from 'shared-code';
@@ -73,6 +78,7 @@ function generatePodcastEpisodeFromPodcast(
 
   const partOfSeries = generatePodcastSeries();
 
+  // noinspection UnnecessaryLocalVariableJS
   const podcastEpisode: WithContext<PodcastEpisode> = {
     '@context': 'https://schema.org',
     '@type': 'PodcastEpisode',

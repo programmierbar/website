@@ -3,19 +3,7 @@
     <!-- Scroll box -->
     <div
       ref="scrollBoxElement"
-      class="
-        scroll-box
-        flex
-        items-center
-        overflow-x-auto overflow-y-hidden
-        before:w-6
-        md:before:w-48
-        3xl:before:w-8
-        before:flex-shrink-0
-        after:w-6
-        lg:after:w-8
-        after:flex-shrink-0
-      "
+      class="scroll-box flex items-center overflow-x-auto overflow-y-hidden before:w-6 md:before:w-48 3xl:before:w-8 before:flex-shrink-0 after:w-6 lg:after:w-8 after:flex-shrink-0"
       @mousedown="changeScrollPosition"
       @scroll="detectScrollState"
     >
@@ -52,54 +40,14 @@
       <!-- Podcast link -->
       <div
         v-if="showPodcastLink && podcastCount"
-        class="
-          flex
-          items-end
-          border-b-4
-          md:border-b-5
-          lg:border-b-6
-          border-lime
-          pl-3
-          lg:pl-6
-          pr-5
-          lg:pr-10
-          ml-10
-          md:ml-16
-          lg:ml-20
-          xl:ml-24
-          2xl:ml-28
-          3xl:ml-32
-          mb-14
-          md:mb-32
-        "
+        class="flex items-end border-b-4 md:border-b-5 lg:border-b-6 border-lime pl-3 lg:pl-6 pr-5 lg:pr-10 ml-10 md:ml-16 lg:ml-20 xl:ml-24 2xl:ml-28 3xl:ml-32 mb-14 md:mb-32"
       >
         <div
           class="h-40 md:h-48 lg:h-60 relative -bottom-1 lg:-bottom-1.5"
           v-html="podcastFigureIcon"
         />
         <NuxtLink
-          class="
-            podcast-link
-            flex
-            items-end
-            space-x-4
-            md:space-x-5
-            lg:space-x-6
-            text-sm
-            md:text-lg
-            lg:text-xl
-            text-white
-            hover:text-blue
-            font-black
-            uppercase
-            whitespace-nowrap
-            tracking-widest
-            leading-relaxed
-            md:leading-relaxed
-            lg:leading-relaxed
-            transition-colors
-            pb-2
-          "
+          class="podcast-link flex items-end space-x-4 md:space-x-5 lg:space-x-6 text-sm md:text-lg lg:text-xl text-white hover:text-blue font-black uppercase whitespace-nowrap tracking-widest leading-relaxed md:leading-relaxed lg:leading-relaxed transition-colors pb-2"
           to="/podcast"
           data-cursor-hover
         >
@@ -129,18 +77,7 @@
     <button
       v-for="index of 2"
       :key="index"
-      class="
-        hidden
-        md:block md:w-40
-        3xl:w-80
-        md:h-full
-        md:absolute
-        md:top-0
-        md:from-black
-        md:to-transparent
-        md:transition-opacity
-        md:duration-500
-      "
+      class="hidden md:block md:w-40 3xl:w-80 md:h-full md:absolute md:top-0 md:from-black md:to-transparent md:transition-opacity md:duration-500"
       :class="[
         index === 1
           ? 'md:left-0 md:bg-gradient-to-r'

@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Ref} from 'vue';
+import type { Ref } from 'vue';
 import { computed, nextTick, ref, watch } from 'vue';
 import { useEventListener, useWindow } from '../composables';
 

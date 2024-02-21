@@ -23,18 +23,7 @@
 
         <!-- Heading -->
         <h2
-          class="
-            text-xl
-            md:text-3xl
-            lg:text-4xl
-            text-white
-            font-black
-            leading-snug
-            lg:leading-snug
-            line-clamp-2
-            mt-2
-            lg:mt-5
-          "
+          class="text-xl md:text-3xl lg:text-4xl text-white font-black leading-snug lg:leading-snug line-clamp-2 mt-2 lg:mt-5"
         >
           {{ heading }}
           <span
@@ -46,18 +35,7 @@
 
         <!-- Description -->
         <p
-          class="
-            text-sm
-            md:text-lg
-            lg:text-xl
-            text-white
-            font-light
-            leading-normal
-            lg:leading-relaxed
-            line-clamp-4
-            mt-4
-            lg:mt-8
-          "
+          class="text-sm md:text-lg lg:text-xl text-white font-light leading-normal lg:leading-relaxed line-clamp-4 mt-4 lg:mt-8"
           v-html="description"
         />
       </div>
@@ -81,10 +59,10 @@ const urlOrPath = computed(() =>
   props.item.item_type === 'podcast'
     ? `/podcast/${props.item.slug}`
     : props.item.item_type === 'meetup'
-    ? `/meetup/${props.item.slug}`
-    : props.item.item_type === 'pick_of_the_day'
-    ? props.item.website_url
-    : `/hall-of-fame/${props.item.slug}`
+      ? `/meetup/${props.item.slug}`
+      : props.item.item_type === 'pick_of_the_day'
+        ? props.item.website_url
+        : `/hall-of-fame/${props.item.slug}`
 );
 
 // Create is external URL boolean
@@ -97,8 +75,8 @@ const image = computed(() =>
   props.item.item_type === 'podcast' || props.item.item_type === 'meetup'
     ? props.item.cover_image
     : props.item.item_type === 'pick_of_the_day'
-    ? props.item.image
-    : props.item.profile_image
+      ? props.item.image
+      : props.item.profile_image
 );
 
 // Create type and date depending on item typ
@@ -107,10 +85,10 @@ const typeAndDate = computed(
     (props.item.item_type === 'podcast'
       ? 'Podcast'
       : props.item.item_type === 'meetup'
-      ? 'Meetup'
-      : props.item.item_type === 'pick_of_the_day'
-      ? 'Pick of the Day'
-      : 'Speaker') +
+        ? 'Meetup'
+        : props.item.item_type === 'pick_of_the_day'
+          ? 'Pick of the Day'
+          : 'Speaker') +
     ' // ' +
     new Date(props.item.published_on).toLocaleDateString('de-DE', {
       year: 'numeric',
@@ -124,10 +102,10 @@ const heading = computed(() =>
   props.item.item_type === 'podcast'
     ? getFullPodcastTitle(props.item)
     : props.item.item_type === 'meetup'
-    ? props.item.title
-    : props.item.item_type === 'pick_of_the_day'
-    ? props.item.name
-    : getFullSpeakerName(props.item)
+      ? props.item.title
+      : props.item.item_type === 'pick_of_the_day'
+        ? props.item.name
+        : getFullSpeakerName(props.item)
 );
 
 // Create plain description text

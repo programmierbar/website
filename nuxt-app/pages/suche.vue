@@ -1,20 +1,7 @@
 <template>
   <div class="min-h-screen relative overflow-hidden md:overflow-unset">
     <div
-      class="
-        container
-        px-6
-        md:pl-48
-        lg:pr-8
-        3xl:px-8
-        pt-32
-        md:pt-40
-        lg:pt-56
-        2xl:pt-64
-        pb-20
-        md:pb-32
-        lg:pb-52
-      "
+      class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-32 md:pt-40 lg:pt-56 2xl:pt-64 pb-20 md:pb-32 lg:pb-52"
     >
       <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
@@ -32,14 +19,7 @@
         <template #default="{ item, index, viewportItems, addViewportItem }">
           <LazyListItem
             :key="item.itemType + item.id"
-            class="
-              border-b-1
-              last:border-b-0
-              border-white/70
-              pb-9
-              lg:pb-24
-              last:pb-0
-            "
+            class="border-b-1 last:border-b-0 border-white/70 pb-9 lg:pb-24 last:pb-0"
             :class="index > 0 && 'mt-10 lg:mt-24'"
             :item="item"
             :viewport-items="viewportItems"
@@ -57,28 +37,11 @@
       <!-- Search figure -->
       <div
         v-if="!route.query.search && !searchResults.length"
-        class="
-          h-full
-          flex flex-col
-          items-center
-          justify-center
-          space-y-6
-          md:space-y-8
-          lg:space-y-10
-          mt-20
-          md:mt-32
-          lg:mt-52
-        "
+        class="h-full flex flex-col items-center justify-center space-y-6 md:space-y-8 lg:space-y-10 mt-20 md:mt-32 lg:mt-52"
       >
         <div class="h-32 md:h-44 lg:h-60" v-html="searchFigureIcon" />
         <p
-          class="
-            text-base
-            md:text-lg
-            lg:text-2xl
-            text-lime text-center
-            font-semibold
-          "
+          class="text-base md:text-lg lg:text-2xl text-lime text-center font-semibold"
         >
           Wonach suchst du?
         </p>
@@ -234,7 +197,7 @@ const isMatchingItem = <
     | PodcastSearchItem
     | MeetupSearchItem
     | PickOfTheDaySearchItem
-    | SpeakerSearchItem
+    | SpeakerSearchItem,
 >(
   searchCrumbs: string[],
   searchItem: SearchItem,

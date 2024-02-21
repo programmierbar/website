@@ -1,35 +1,13 @@
 <template>
   <div v-if="homePage && latestPodcasts && podcastCount">
     <section
-      class="
-        container
-        px-6
-        lg:px-8
-        pt-32
-        md:pt-40
-        lg:pt-56
-        2xl:pt-64
-        pb-24
-        md:pb-32
-        lg:pb-52
-      "
+      class="container px-6 lg:px-8 pt-32 md:pt-40 lg:pt-56 2xl:pt-64 pb-24 md:pb-32 lg:pb-52"
     >
       <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
       <!-- Page intro -->
       <h1
-        class="
-          text-2xl
-          md:text-3xl
-          lg:text-6xl
-          text-white
-          font-black
-          leading-normal
-          md:leading-normal
-          lg:leading-normal
-          mt-3
-          md:mt-6
-        "
+        class="text-2xl md:text-3xl lg:text-6xl text-white font-black leading-normal md:leading-normal lg:leading-normal mt-3 md:mt-6"
       >
         <div
           class="h-6 md:h-8 lg:h-16 inline-block inline-child"
@@ -163,7 +141,8 @@ useJsonld(generatePodcastSeries());
 
 // Create Video URL
 const videoUrl = computed(
-  () => homePage.value && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`
+  () =>
+    homePage.value && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`
 );
 </script>
 

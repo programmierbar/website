@@ -3,39 +3,19 @@
     <article class="relative">
       <!-- Overlay gradient top -->
       <div
-        class="
-          w-full
-          h-32
-          absolute
-          -z-1
-          left-0
-          top-0
-          bg-gradient-to-b
-          to-transparent
-          opacity-40
-        "
+        class="w-full h-32 absolute -z-1 left-0 top-0 bg-gradient-to-b to-transparent opacity-40"
         :class="
           color === 'lime'
             ? 'from-lime'
             : color === 'pink'
-            ? 'from-pink'
-            : 'from-blue'
+              ? 'from-pink'
+              : 'from-blue'
         "
       />
 
       <!-- Speaker content -->
       <div
-        class="
-          container
-          px-6
-          md:pl-48
-          lg:pr-8
-          3xl:px-8
-          pt-32
-          md:pt-40
-          lg:pt-56
-          2xl:pt-64
-        "
+        class="container px-6 md:pl-48 lg:pr-8 3xl:px-8 pt-32 md:pt-40 lg:pt-56 2xl:pt-64"
       >
         <div class="flex items-center justify-between space-x-4">
           <Breadcrumbs :breadcrumbs="breadcrumbs" />
@@ -47,38 +27,11 @@
         </SectionHeading>
 
         <div
-          class="
-            flex flex-col
-            xs:flex-row xs:items-center xs:space-x-10
-            md:space-x-14
-            lg:space-x-16
-            space-y-10
-            xs:space-y-0
-            mt-14
-            md:mt-24
-            xl:mt-36
-          "
+          class="flex flex-col xs:flex-row xs:items-center xs:space-x-10 md:space-x-14 lg:space-x-16 space-y-10 xs:space-y-0 mt-14 md:mt-24 xl:mt-36"
         >
           <!-- Profile image -->
           <DirectusImage
-            class="
-              w-44
-              sm:w-52
-              lg:w-80
-              xl:w-96
-              2xl:w-112
-              3xl:w-120
-              h-44
-              sm:h-52
-              lg:h-80
-              xl:h-96
-              2xl:h-112
-              3xl:h-120
-              flex-shrink-0
-              object-cover
-              rounded-full
-              overflow-hidden
-            "
+            class="w-44 sm:w-52 lg:w-80 xl:w-96 2xl:w-112 3xl:w-120 h-44 sm:h-52 lg:h-80 xl:h-96 2xl:h-112 3xl:h-120 flex-shrink-0 object-cover rounded-full overflow-hidden"
             :image="speaker.profile_image"
             :alt="fullName"
             sizes="xs:176px sm:208px lg:320px xl:384px 2xl:448 3xl:480px"
@@ -87,35 +40,19 @@
           <!-- Name, Occupation & Links -->
           <div>
             <h1
-              class="
-                text-4xl
-                sm:text-5xl
-                lg:text-7xl
-                xl:text-8xl
-                2xl:text-9xl
-                leading-tight
-                font-black
-              "
+              class="text-4xl sm:text-5xl lg:text-7xl xl:text-8xl 2xl:text-9xl leading-tight font-black"
               :class="
                 color === 'lime'
                   ? 'text-lime'
                   : color === 'pink'
-                  ? 'text-pink'
-                  : 'text-blue'
+                    ? 'text-pink'
+                    : 'text-blue'
               "
             >
               {{ fullName }}
             </h1>
             <div
-              class="
-                text-base
-                md:text-xl
-                lg:text-2xl
-                text-white
-                font-bold
-                mt-6
-                md:mt-8
-              "
+              class="text-base md:text-xl lg:text-2xl text-white font-bold mt-6 md:mt-8"
             >
               {{ speaker.occupation }}
             </div>
@@ -137,18 +74,7 @@
 
         <!-- Description -->
         <InnerHtml
-          class="
-            text-base
-            md:text-xl
-            lg:text-2xl
-            text-white
-            font-light
-            leading-normal
-            space-y-8
-            mt-8
-            md:mt-24
-            xl:mt-36
-          "
+          class="text-base md:text-xl lg:text-2xl text-white font-light leading-normal space-y-8 mt-8 md:mt-24 xl:mt-36"
           :html="speaker.description"
         />
 
@@ -182,17 +108,7 @@
       <PodcastSlider class="mt-12 md:mt-0" :podcasts="speaker.podcasts" />
       <div
         v-if="podcastCountString"
-        class="
-          flex
-          justify-center
-          px-6
-          md:pl-48
-          lg:pr-8
-          3xl:px-8
-          mt-12
-          md:mt-16
-          lg:mt-20
-        "
+        class="flex justify-center px-6 md:pl-48 lg:pr-8 3xl:px-8 mt-12 md:mt-16 lg:mt-20"
       >
         <LinkButton href="/podcast">
           Alle {{ podcastCountString }} Podcast-Folgen
@@ -244,7 +160,12 @@ import {
 import { useLoadingScreen, useLocaleString } from '~/composables';
 import { getMetaInfo, trackGoal } from '~/helpers';
 import { directus } from '~/services';
-import type { SpeakerItem, PodcastItem, TagItem, PickOfTheDayItem } from '~/types';
+import type {
+  SpeakerItem,
+  PodcastItem,
+  TagItem,
+  PickOfTheDayItem,
+} from '~/types';
 import { generatePersonFromSpeaker } from '~/helpers/jsonLdGenerator';
 
 // Add route and router

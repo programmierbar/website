@@ -11,16 +11,16 @@
           i === 1
             ? 'z-10'
             : color === 'lime'
-            ? 'bg-lime'
-            : color === 'pink'
-            ? 'bg-pink'
-            : 'bg-blue',
+              ? 'bg-lime'
+              : color === 'pink'
+                ? 'bg-pink'
+                : 'bg-blue',
           clipPathIsMoving ? 'top-0' : 'top-1/4 transition-all ease-linear',
           clipPathStartMoving
             ? 'duration-100'
             : !clipPathIsMoving
-            ? 'duration-200'
-            : '',
+              ? 'duration-200'
+              : '',
         ]"
         :data-cursor-none="i === 1"
         @touchstart.prevent="handleDiscoverEffect"
@@ -45,8 +45,8 @@
           clipPathStartMoving
             ? 'duration-100'
             : !clipPathIsMoving
-            ? 'duration-200'
-            : '',
+              ? 'duration-200'
+              : '',
         ]"
         :style="{ clipPath: initClipPath }"
         :image="member.action_image"
@@ -79,14 +79,8 @@
 </template>
 
 <script lang="ts">
-import type {
-  ComponentInstance,
-  PropType} from 'vue';
-import {
-  computed,
-  defineComponent,
-  ref,
-} from 'vue';
+import type { ComponentInstance, PropType } from 'vue';
+import { computed, defineComponent, ref } from 'vue';
 import { START_DISCOVER_EFFECT_EVENT_ID, DIRECTUS_CMS_URL } from '../config';
 import { trackGoal } from '../helpers';
 import type { MemberItem } from '../types';
@@ -182,9 +176,8 @@ export default defineComponent({
           // Update cursor and clip path position
           const x = position.clientX - clipPath.left;
           const y = position.clientY - clipPath.top;
-          (
-            clipPathComponent.value!.$el as HTMLImageElement
-          ).style.clipPath = `circle(41.666% at ${x}px ${y}px)`;
+          (clipPathComponent.value!.$el as HTMLImageElement).style.clipPath =
+            `circle(41.666% at ${x}px ${y}px)`;
           cursorElements.value?.forEach((element) => {
             element.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(2.5)`;
           });

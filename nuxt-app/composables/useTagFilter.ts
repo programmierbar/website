@@ -1,4 +1,4 @@
-import type { Ref} from 'vue';
+import type { Ref } from 'vue';
 import { computed, reactive, ref, watch } from 'vue';
 import { ADD_TAG_FILTER_EVENT_ID, REMOVE_TAG_FILTER_EVENT_ID } from '../config';
 import { trackGoal } from '../helpers';
@@ -17,7 +17,7 @@ interface Tag extends Pick<TagItem, 'id' | 'name'> {
  * @returns State and methods to use the tag filter.
  */
 export function useTagFilter<
-  Entities extends { tags: Pick<TagItem, 'id' | 'name'>[] }
+  Entities extends { tags: Pick<TagItem, 'id' | 'name'>[] },
 >(input: Ref<Entities[] | null | undefined>) {
   /**
    * Get the most frequently occurring tags from the input.
@@ -82,6 +82,7 @@ export function useTagFilter<
   /**
    * It toggles the active state of a tag.
    *
+   * @param _ The tag itself
    * @param index The index of a tag.
    */
   const toggleTag = (_: any, index: number) => {

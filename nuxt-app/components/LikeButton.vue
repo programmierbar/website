@@ -29,9 +29,10 @@
 <script setup lang="ts">
 import heartIcon from '~/assets/icons/heart.svg?raw';
 
-const { variant } = toRefs(
-  defineProps<{
-    variant: 'default' | 'pick_of_the_day_card';
-  }>()
-);
+const { variant } =
+  toRefs(
+    defineProps<{
+      variant: 'default' | 'pick_of_the_day_card';
+    }>()
+  );
 </script>

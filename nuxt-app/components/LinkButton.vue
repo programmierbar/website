@@ -1,22 +1,6 @@
 <template>
   <NuxtLink
-    class="
-      link-button
-      inline-flex
-      items-center
-      space-x-4
-      md:space-x-5
-      lg:space-x-6
-      text-sm
-      md:text-lg
-      lg:text-xl
-      text-white
-      hover:text-blue
-      font-black
-      uppercase
-      tracking-widest
-      transition-colors
-    "
+    class="link-button inline-flex items-center space-x-4 md:space-x-5 lg:space-x-6 text-sm md:text-lg lg:text-xl text-white hover:text-blue font-black uppercase tracking-widest transition-colors"
     :to="href"
     data-cursor-hover
   >

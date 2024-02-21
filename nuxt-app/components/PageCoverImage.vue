@@ -17,7 +17,7 @@
 </template>
 
 <script lang="ts">
-import type { ComponentInstance, PropType} from 'vue';
+import type { ComponentInstance, PropType } from 'vue';
 import { defineComponent, ref } from 'vue';
 import { useEventListener, useWindow } from '../composables';
 import type { FileItem } from '../types';
@@ -44,9 +44,8 @@ export default defineComponent({
      * parallax effect to the image element.
      */
     const handleScroll = () => {
-      (
-        imageComponent.value!.$el as HTMLImageElement
-      ).style.transform = `translateY(${window.scrollY * 0.15}px)`;
+      (imageComponent.value!.$el as HTMLImageElement).style.transform =
+        `translateY(${window.scrollY * 0.15}px)`;
     };
 
     // Add scroll event listener

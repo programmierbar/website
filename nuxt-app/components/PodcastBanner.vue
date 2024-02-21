@@ -15,8 +15,8 @@
         podcast.type === 'cto_special'
           ? 'from-blue'
           : podcast.type === 'news'
-          ? 'from-pink'
-          : 'from-lime',
+            ? 'from-pink'
+            : 'from-lime',
         podcast.type === 'deep_dive' && podcast.banner_image && 'md:hidden',
       ]"
     />
@@ -56,10 +56,10 @@
             podcast.type === 'deep_dive' && podcast.banner_image
               ? 'md:selection:bg-black text-blue md:text-black md:selection:text-white'
               : podcast.type === 'cto_special'
-              ? 'text-black'
-              : podcast.type === 'deep_dive' || podcast.type === 'news'
-              ? 'text-blue'
-              : 'text-white',
+                ? 'text-black'
+                : podcast.type === 'deep_dive' || podcast.type === 'news'
+                  ? 'text-blue'
+                  : 'text-white',
             podcast.type === 'cto_special' &&
               'inline-block bg-lime selection:bg-black selection:text-white px-2 pt-3 pb-2',
           ]"
@@ -74,10 +74,10 @@
                 ? 'text-lime md:text-black md:selection:text-white md:selection:bg-black'
                 : 'text-lime'
               : podcast.type === 'cto_special'
-              ? 'text-blue'
-              : podcast.type === 'news'
-              ? 'text-pink'
-              : 'text-white',
+                ? 'text-blue'
+                : podcast.type === 'news'
+                  ? 'text-pink'
+                  : 'text-white',
             podcast.type === 'cto_special'
               ? 'mt-5 md:mt-7 lg:mt-9'
               : 'mt-3 md:mt-5 lg:mt-7',

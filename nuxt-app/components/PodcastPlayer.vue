@@ -9,8 +9,8 @@
         !podcastPlayer.podcast
           ? 'translate-y-full'
           : !isExpanded
-          ? 'translate-y-[11.15rem] xl:translate-y-0'
-          : 'translate-y-0'
+            ? 'translate-y-[11.15rem] xl:translate-y-0'
+            : 'translate-y-0'
       "
       data-cursor-black
     >
@@ -171,7 +171,7 @@
 
         <!-- Volumeslider -->
         <div class="w-32 hidden xl:flex items-center space-x-4">
-          <div class="h-6" alt="Sound" v-html="soundIcon" />
+          <div class="h-6" v-html="soundIcon" />
           <input
             v-model="podcastPlayer.volume"
             class="volume-input h-8"

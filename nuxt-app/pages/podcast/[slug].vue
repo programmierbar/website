@@ -17,17 +17,7 @@
 
           <!-- Description -->
           <InnerHtml
-            class="
-              text-base
-              md:text-xl
-              lg:text-2xl
-              text-white
-              font-light
-              leading-normal
-              space-y-8
-              mt-8
-              md:mt-14
-            "
+            class="text-base md:text-xl lg:text-2xl text-white font-light leading-normal space-y-8 mt-8 md:mt-14"
             :html="podcast.description"
           />
 
@@ -50,25 +40,7 @@
           <ul class="flex items-center space-x-4 mt-12 md:mt-14">
             <li>
               <a
-                class="
-                  relative
-                  flex
-                  items-center
-                  justify-center
-                  border-lime border-3
-                  md:border-4
-                  rounded-full
-                  text-sm
-                  md:text-base
-                  lg:text-lg
-                  text-lime
-                  font-black
-                  tracking-widest
-                  uppercase
-                  px-4
-                  md:px-8
-                  py-0.5
-                "
+                class="relative flex items-center justify-center border-lime border-3 md:border-4 rounded-full text-sm md:text-base lg:text-lg text-lime font-black tracking-widest uppercase px-4 md:px-8 py-0.5"
                 :href="downloadUrl"
                 download
                 data-cursor-hover
@@ -181,7 +153,13 @@ import {
 import { useLoadingScreen, useLocaleString } from '~/composables';
 import { getMetaInfo, trackGoal } from '~/helpers';
 import { directus } from '~/services';
-import type { PodcastItem, SpeakerItem, TagItem, PickOfTheDayItem, MemberItem } from '~/types';
+import type {
+  PodcastItem,
+  SpeakerItem,
+  TagItem,
+  PickOfTheDayItem,
+  MemberItem,
+} from '~/types';
 import { generatePodcastEpisodeFromPodcast } from '~/helpers/jsonLdGenerator';
 // Add route and router
 const route = useRoute();

@@ -8,7 +8,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "eslint": "eslint --fix ."
+    "eslint": "eslint --fix .",
+    "prettier": "prettier . --write"
   },
   "dependencies": {
     "@directus/sdk": "^9.4.3",

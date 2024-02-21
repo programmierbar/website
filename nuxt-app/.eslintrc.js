@@ -4,11 +4,7 @@ module.exports = {
     browser: true,
     node: true,
   },
-  extends: [
-    '@nuxt/eslint-config',
-    'plugin:nuxt/recommended',
-    'prettier',
-  ],
+  extends: ['@nuxt/eslint-config', 'plugin:nuxt/recommended', 'prettier'],
   plugins: [],
   // add your custom rules here
   rules: {

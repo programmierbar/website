@@ -1,5 +1,5 @@
 /* eslint-disable no-redeclare */
-import type { Ref} from 'vue';
+import type { Ref } from 'vue';
 import { onBeforeUnmount, onMounted, watch } from 'vue';
 
 /**
@@ -13,7 +13,7 @@ import { onBeforeUnmount, onMounted, watch } from 'vue';
 export function useEventListener<
   T extends HTMLElement,
   U extends HTMLElementEventMap,
-  V extends keyof U
+  V extends keyof U,
 >(
   target: Ref<T | undefined | null>,
   type: V,
@@ -22,7 +22,7 @@ export function useEventListener<
 export function useEventListener<
   T extends MediaQueryList,
   U extends MediaQueryListEventMap,
-  V extends keyof U
+  V extends keyof U,
 >(
   target: Ref<T | undefined | null>,
   type: V,
@@ -31,7 +31,7 @@ export function useEventListener<
 export function useEventListener<
   T extends Document,
   U extends DocumentEventMap,
-  V extends keyof U
+  V extends keyof U,
 >(
   target: Ref<T | undefined | null>,
   type: V,
@@ -40,7 +40,7 @@ export function useEventListener<
 export function useEventListener<
   T extends Window,
   U extends WindowEventMap,
-  V extends keyof U
+  V extends keyof U,
 >(
   target: Ref<T | undefined | null>,
   type: V,
