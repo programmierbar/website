@@ -1,4 +1,4 @@
-import { Directus } from '@directus/sdk';
+import { createDirectus, rest } from '@directus/sdk';
 import { DIRECTUS_CMS_URL } from '../config';
 import type {
   DirectusHomePage,
@@ -18,7 +18,7 @@ import type {
   DirectusTagItem,
 } from '../types';
 
-type Collections = {
+export type Collections = {
   home_page: DirectusHomePage;
   podcast_page: DirectusPodcastPage;
   meetup_page: DirectusMeetupPage;
@@ -36,4 +36,4 @@ type Collections = {
   tags: DirectusTagItem;
 };
 
-export const directus = new Directus<Collections>(DIRECTUS_CMS_URL);
+export const directus = createDirectus(DIRECTUS_CMS_URL).with(rest());
