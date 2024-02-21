@@ -30,8 +30,9 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType } from 'vue';
-import { MeetupItem } from '../types';
+import type { PropType } from 'vue';
+import { computed, defineComponent } from 'vue';
+import type { MeetupItem } from '../types';
 import LinkButton from './LinkButton.vue';
 import MeetupCover from './MeetupCover.vue';
 import MeetupStartAndEnd from './MeetupStartAndEnd.vue';

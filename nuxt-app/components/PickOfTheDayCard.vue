@@ -233,7 +233,7 @@
 import leaveSiteIcon from '~/assets/icons/leave-site.svg?raw';
 import { computed } from 'vue';
 import { getPodcastTypeAndNumber, getPodcastTitleDivider } from 'shared-code';
-import { PickOfTheDayItem, PodcastItem, TagItem } from '~/types';
+import type { PickOfTheDayItem, PodcastItem, TagItem } from '~/types';
 import DirectusImage from './DirectusImage.vue';
 import InnerHtml from './InnerHtml.vue';
 import TagList from './TagList.vue';

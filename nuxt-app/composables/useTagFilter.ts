@@ -1,7 +1,8 @@
-import { computed, reactive, Ref, ref, watch } from 'vue';
+import type { Ref} from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { ADD_TAG_FILTER_EVENT_ID, REMOVE_TAG_FILTER_EVENT_ID } from '../config';
 import { trackGoal } from '../helpers';
-import { TagItem } from '../types';
+import type { TagItem } from '../types';
 
 interface Tag extends Pick<TagItem, 'id' | 'name'> {
   is_active: boolean;

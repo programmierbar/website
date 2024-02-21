@@ -63,7 +63,7 @@ import {
   OPEN_MEETUP_EVENT_ID,
 } from '../config';
 import { trackGoal } from '../helpers';
-import { MeetupItem } from '../types';
+import type { MeetupItem } from '../types';
 
 const icons = reactive({
   isVisible: false,

@@ -1,5 +1,5 @@
-import { MetaInfo } from 'vue-meta/types/vue-meta';
-import { FileItem } from '../types';
+import type { MetaInfo } from 'vue-meta/types/vue-meta';
+import type { FileItem } from '../types';
 import {
   DIRECTUS_CMS_URL,
   BUZZSPROUT_TRACKING_URL,

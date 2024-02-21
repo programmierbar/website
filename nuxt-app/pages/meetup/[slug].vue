@@ -185,7 +185,7 @@ import { OPEN_YOUTUBE_EVENT_ID } from '~/config';
 import { useLoadingScreen, useLocaleString } from '~/composables';
 import { getMetaInfo, trackGoal } from '~/helpers';
 import { directus } from '~/services';
-import { MeetupItem, SpeakerItem, TagItem, PodcastItem } from '~/types';
+import type { MeetupItem, SpeakerItem, TagItem, PodcastItem } from '~/types';
 
 // Add route and router
 const route = useRoute();

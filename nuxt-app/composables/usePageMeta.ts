@@ -1,6 +1,6 @@
-import { Ref } from 'vue';
+import type { Ref } from 'vue';
 import { getMetaInfo } from '../helpers';
-import { FileItem } from '../types';
+import type { FileItem } from '../types';
 import { useRoute, useHead } from '#app';
 
 interface PageMeta {

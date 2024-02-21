@@ -116,7 +116,7 @@ import playCircleIcon from '~/assets/icons/play-circle.svg?raw';
 import { computed } from 'vue';
 import { getPodcastType, getFullSpeakerName } from 'shared-code';
 import { usePodcastPlayer } from '~/composables';
-import { PodcastItem, SpeakerItem } from '~/types';
+import type { PodcastItem, SpeakerItem } from '~/types';
 import DirectusImage from './DirectusImage.vue';
 
 const props = defineProps<{

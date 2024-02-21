@@ -91,7 +91,7 @@ import { computed } from 'vue';
 
 import { useLoadingScreen, usePageMeta, useTagFilter } from '~/composables';
 import { directus } from '~/services';
-import {
+import type {
   PickOfTheDayPage,
   PickOfTheDayItem,
   PodcastItem,

@@ -171,7 +171,7 @@
 
         <!-- Volumeslider -->
         <div class="w-32 hidden xl:flex items-center space-x-4">
-          <div class="h-6" v-html="soundIcon" alt="Sound" />
+          <div class="h-6" alt="Sound" v-html="soundIcon" />
           <input
             v-model="podcastPlayer.volume"
             class="volume-input h-8"

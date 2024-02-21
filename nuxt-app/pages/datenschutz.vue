@@ -23,7 +23,7 @@
 import { useLoadingScreen } from '../composables';
 import { getMetaInfo } from '../helpers';
 import { directus } from '../services';
-import { PrivacyPage } from '../types';
+import type { PrivacyPage } from '../types';
 
 const breadcrumbs = [{ label: 'Datenschutz' }];
 // Query privacy page

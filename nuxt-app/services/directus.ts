@@ -1,6 +1,6 @@
 import { Directus } from '@directus/sdk';
 import { DIRECTUS_CMS_URL } from '../config';
-import {
+import type {
   DirectusHomePage,
   DirectusPodcastPage,
   DirectusMeetupPage,

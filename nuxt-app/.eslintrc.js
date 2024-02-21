@@ -5,8 +5,7 @@ module.exports = {
     node: true,
   },
   extends: [
-    '@nuxtjs',
-    '@nuxtjs/eslint-config-typescript',
+    '@nuxt/eslint-config',
     'plugin:nuxt/recommended',
     'prettier',
   ],
@@ -14,5 +13,6 @@ module.exports = {
   // add your custom rules here
   rules: {
     'vue/multi-word-component-names': 0,
+    '@typescript-eslint/consistent-type-imports': 'error',
   },
 };

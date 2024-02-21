@@ -65,7 +65,7 @@ import { ref, watch } from 'vue';
 import { CLOSE_TAG_FILTER_EVENT_ID, OPEN_TAG_FILTER_EVENT_ID } from '~/config';
 import { useEventListener, useDocument } from '~/composables';
 import { trackGoal } from '~/helpers';
-import { TagItem } from '~/types';
+import type { TagItem } from '~/types';
 import TagList from './TagList.vue';
 const props = defineProps<{
   tags: Tag[];

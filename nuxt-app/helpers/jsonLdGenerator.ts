@@ -1,7 +1,7 @@
-import { JsonLD } from 'nuxt-jsonld/dist/types/index.d';
-import { Person, PodcastEpisode, PodcastSeries, WithContext } from 'schema-dts';
+import type { JsonLD } from 'nuxt-jsonld/dist/types/index.d';
+import type { Person, PodcastEpisode, PodcastSeries, WithContext } from 'schema-dts';
 import { DIRECTUS_CMS_URL, BUZZSPROUT_RSS_FEED_URL } from '~/config';
-import { FileItem, MemberItem, PodcastItem, SpeakerItem } from '~/types';
+import type { FileItem, MemberItem, PodcastItem, SpeakerItem } from '~/types';
 import { getPodcastType } from 'shared-code';
 
 function generateImageUrl(image?: FileItem): string {

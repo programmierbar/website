@@ -36,8 +36,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, PropType, reactive } from 'vue';
-import { MeetupItem } from '../types';
+import type { PropType} from 'vue';
+import { defineComponent, onMounted, reactive } from 'vue';
+import type { MeetupItem } from '../types';
 import DirectusImage from './DirectusImage.vue';
 
 export default defineComponent({

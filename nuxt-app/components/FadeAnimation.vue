@@ -39,7 +39,8 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType, ref } from 'vue';
+import type { PropType} from 'vue';
+import { computed, defineComponent, ref } from 'vue';
 import { useIntersectionObserver } from '../composables';
 
 export default defineComponent({

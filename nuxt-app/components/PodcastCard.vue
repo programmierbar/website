@@ -69,7 +69,7 @@ import {
   getFullPodcastTitle,
 } from 'shared-code';
 import { usePodcastPlayer } from '~/composables';
-import { PodcastItem } from '~/types';
+import type { PodcastItem } from '~/types';
 import DirectusImage from './DirectusImage.vue';
 
 const props = defineProps<{

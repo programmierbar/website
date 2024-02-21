@@ -95,7 +95,7 @@ import { getUrlSlug } from 'shared-code';
 import { useLoadingScreen } from '~/composables';
 import { getMetaInfo } from '~/helpers';
 import { directus } from '~/services';
-import {
+import type {
   PodcastSearchItem,
   MeetupSearchItem,
   PickOfTheDaySearchItem,

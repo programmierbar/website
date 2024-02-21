@@ -1,7 +1,7 @@
 import { ref, reactive, onMounted, watch, toRefs } from 'vue';
 import { PAUSE_PODCAST_EVENT_ID, PLAY_PODCAST_EVENT_ID } from '../config';
 import { trackGoal } from '../helpers';
-import { PodcastItem } from '../types';
+import type { PodcastItem } from '../types';
 
 // Create global references
 const podcast =

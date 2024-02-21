@@ -52,7 +52,7 @@ import { GOOGLE_MAPS_URL, OPEN_GOOGLE_MAPS_EVENT_ID } from '../config';
 import { useLoadingScreen, usePageMeta } from '../composables';
 import { trackGoal } from '../helpers';
 import { directus } from '../services';
-import { ContactPage } from '../types';
+import type { ContactPage } from '../types';
 
 const breadcrumbs = [{ label: 'Kontakt' }];
 const googleMapsUrl = GOOGLE_MAPS_URL;

@@ -63,7 +63,7 @@ import { computed } from 'vue';
 
 import { useLoadingScreen, usePageMeta } from '../composables';
 import { directus } from '../services';
-import { AboutPage, MemberItem } from '../types';
+import type { AboutPage, MemberItem } from '../types';
 
 const breadcrumbs = [{ label: 'Über uns' }];
 const memberColors = ['pink', 'blue', 'lime'] as const;

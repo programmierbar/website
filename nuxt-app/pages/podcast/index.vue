@@ -86,7 +86,7 @@ import { computed } from 'vue';
 
 import { useLoadingScreen, usePageMeta, useTagFilter } from '../../composables';
 import { directus } from '../../services';
-import { PodcastPage, PodcastItem, TagItem } from '../../types';
+import type { PodcastPage, PodcastItem, TagItem } from '../../types';
 
 const breadcrumbs = [{ label: 'Podcast' }];
 

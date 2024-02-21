@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import leaveSiteIcon from '~/assets/icons/leave-site.svg?raw';
 import { computed } from 'vue';
-import { PickOfTheDayItem } from '~/types';
+import type { PickOfTheDayItem } from '~/types';
 import DirectusImage from './DirectusImage.vue';
 
 const props = defineProps<{

@@ -143,12 +143,13 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType, ref, watch } from 'vue';
+import type { PropType} from 'vue';
+import { computed, defineComponent, ref, watch } from 'vue';
 import { getFullSpeakerName } from 'shared-code';
 import { START_MAGNET_EFFECT_EVENT_ID } from '../config';
 import { useMotionParallax, useEventListener, useWindow } from '../composables';
 import { trackGoal } from '../helpers';
-import { SpeakerItem } from '../types';
+import type { SpeakerItem } from '../types';
 import DirectusImage from './DirectusImage.vue';
 
 export default defineComponent({

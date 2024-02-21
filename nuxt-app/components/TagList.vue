@@ -32,8 +32,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
-import { TagItem } from '../types';
+import type { PropType } from 'vue';
+import { defineComponent } from 'vue';
+import type { TagItem } from '../types';
 
 interface Tag extends Pick<TagItem, 'id' | 'name'> {
   is_active?: boolean;

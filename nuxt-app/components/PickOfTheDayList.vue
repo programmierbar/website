@@ -9,8 +9,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
-import { PickOfTheDayItem } from '../types';
+import type { PropType } from 'vue';
+import { defineComponent } from 'vue';
+import type { PickOfTheDayItem } from '../types';
 import PickOfTheDayListItem from './PickOfTheDayListItem.vue';
 
 export default defineComponent({

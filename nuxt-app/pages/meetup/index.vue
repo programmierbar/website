@@ -103,7 +103,7 @@
 import { computed } from 'vue';
 import { useLoadingScreen, usePageMeta } from '~/composables';
 import { directus } from '~/services';
-import { MeetupPage, MeetupItem } from '~/types';
+import type { MeetupPage, MeetupItem } from '~/types';
 import LazyList from '~/components/LazyList.vue';
 import LazyListItem from '~/components/LazyListItem.vue';
 

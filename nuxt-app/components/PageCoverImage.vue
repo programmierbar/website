@@ -17,9 +17,10 @@
 </template>
 
 <script lang="ts">
-import { ComponentInstance, defineComponent, PropType, ref } from 'vue';
+import type { ComponentInstance, PropType} from 'vue';
+import { defineComponent, ref } from 'vue';
 import { useEventListener, useWindow } from '../composables';
-import { FileItem } from '../types';
+import type { FileItem } from '../types';
 import DirectusImage from './DirectusImage.vue';
 import ScrollDownMouse from './ScrollDownMouse.vue';
 

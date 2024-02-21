@@ -23,7 +23,7 @@
 import { useLoadingScreen } from '../composables';
 import { getMetaInfo } from '../helpers';
 import { directus } from '../services';
-import { ImprintPage } from '../types';
+import type { ImprintPage } from '../types';
 
 const breadcrumbs = [{ label: 'Impressum' }];
 

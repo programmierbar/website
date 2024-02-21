@@ -25,13 +25,13 @@
     >
       <div
         class="h-7 lg:hidden"
-        v-html="brandIcon"
         alt="programmier.bar Icon"
+        v-html="brandIcon"
       ></div>
       <div
         class="h-8 hidden lg:block"
-        v-html="brandLogo"
         alt="programmier.bar Logo"
+        v-html="brandLogo"
       ></div>
     </NuxtLink>
 

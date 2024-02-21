@@ -9,8 +9,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
-import { SpeakerItem } from '../types';
+import type { PropType } from 'vue';
+import { defineComponent } from 'vue';
+import type { SpeakerItem } from '../types';
 import SpeakerListItem from './SpeakerListItem.vue';
 
 export default defineComponent({

@@ -174,7 +174,7 @@ import {
   CLICK_SCROLL_RIGHT_ARROW_EVENT_ID,
 } from '~/config';
 import { trackGoal } from '~/helpers';
-import { PodcastItem } from '~/types';
+import type { PodcastItem } from '~/types';
 import FadeAnimation from './FadeAnimation.vue';
 import LazyList from './LazyList.vue';
 import LazyListItem from './LazyListItem.vue';

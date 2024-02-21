@@ -1,4 +1,5 @@
-import { onBeforeUnmount, onMounted, Ref, watch } from 'vue';
+import type { Ref} from 'vue';
+import { onBeforeUnmount, onMounted, watch } from 'vue';
 
 /**
  * Composable for observing DOM changes of an

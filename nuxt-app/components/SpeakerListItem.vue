@@ -35,9 +35,10 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType } from 'vue';
+import type { PropType } from 'vue';
+import { computed, defineComponent } from 'vue';
 import { getFullSpeakerName } from 'shared-code';
-import { SpeakerItem } from '../types';
+import type { SpeakerItem } from '../types';
 import DirectusImage from './DirectusImage.vue';
 import LinkButton from './LinkButton.vue';
 

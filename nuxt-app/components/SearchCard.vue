@@ -69,7 +69,7 @@
 import leaveSiteIcon from '~/assets/icons/leave-site.svg?raw';
 import { computed } from 'vue';
 import { getFullPodcastTitle, getFullSpeakerName } from 'shared-code';
-import { SearchItem } from '~/types';
+import type { SearchItem } from '~/types';
 import DirectusImage from './DirectusImage.vue';
 
 const props = defineProps<{

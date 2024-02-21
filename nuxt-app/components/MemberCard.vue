@@ -79,16 +79,17 @@
 </template>
 
 <script lang="ts">
-import {
+import type {
   ComponentInstance,
+  PropType} from 'vue';
+import {
   computed,
   defineComponent,
-  PropType,
   ref,
 } from 'vue';
 import { START_DISCOVER_EFFECT_EVENT_ID, DIRECTUS_CMS_URL } from '../config';
 import { trackGoal } from '../helpers';
-import { MemberItem } from '../types';
+import type { MemberItem } from '../types';
 import DirectusImage from './DirectusImage.vue';
 import InnerHtml from './InnerHtml.vue';
 

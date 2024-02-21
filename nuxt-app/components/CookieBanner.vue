@@ -71,7 +71,7 @@ export default defineComponent({
      * It handles keydown events and answers the cookie question.
      */
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isVisible) {
+      if (isVisible.value) {
         // Get selected key
         const key = event.key.toLowerCase();
 

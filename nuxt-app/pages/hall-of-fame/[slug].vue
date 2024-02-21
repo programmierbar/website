@@ -244,7 +244,7 @@ import {
 import { useLoadingScreen, useLocaleString } from '~/composables';
 import { getMetaInfo, trackGoal } from '~/helpers';
 import { directus } from '~/services';
-import { SpeakerItem, PodcastItem, TagItem, PickOfTheDayItem } from '~/types';
+import type { SpeakerItem, PodcastItem, TagItem, PickOfTheDayItem } from '~/types';
 import { generatePersonFromSpeaker } from '~/helpers/jsonLdGenerator';
 
 // Add route and router

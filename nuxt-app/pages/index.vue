@@ -33,8 +33,8 @@
       >
         <div
           class="h-6 md:h-8 lg:h-16 inline-block inline-child"
-          v-html="brandLogoIcon"
           alt="programmier.bar Logo"
+          v-html="brandLogoIcon"
         />
         :
         <TypedText :text="homePage.intro_heading" />
@@ -87,7 +87,7 @@ import { DIRECTUS_CMS_URL } from '../config';
 
 import { useLoadingScreen, usePageMeta } from '../composables';
 import { directus } from '../services';
-import { HomePage, PodcastItem } from '../types';
+import type { HomePage, PodcastItem } from '../types';
 import { generatePodcastSeries } from '~/helpers/jsonLdGenerator';
 
 const breadcrumbs = [{ label: 'Home' }];
@@ -163,7 +163,7 @@ useJsonld(generatePodcastSeries());
 
 // Create Video URL
 const videoUrl = computed(
-  () => homePage && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`
+  () => homePage.value && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`
 );
 </script>
 

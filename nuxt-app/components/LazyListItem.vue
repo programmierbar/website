@@ -1,11 +1,12 @@
 <template>
   <li ref="itemElement">
-    <slot :isNewToViewport="isNewToViewport" />
+    <slot :is-new-to-viewport="isNewToViewport" />
   </li>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType, ref } from 'vue';
+import type { PropType} from 'vue';
+import { computed, defineComponent, ref } from 'vue';
 import { useIntersectionObserver } from '../composables';
 
 export default defineComponent({

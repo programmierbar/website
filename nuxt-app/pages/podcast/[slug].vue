@@ -181,7 +181,7 @@ import {
 import { useLoadingScreen, useLocaleString } from '~/composables';
 import { getMetaInfo, trackGoal } from '~/helpers';
 import { directus } from '~/services';
-import { PodcastItem, SpeakerItem, TagItem, PickOfTheDayItem, MemberItem } from '~/types';
+import type { PodcastItem, SpeakerItem, TagItem, PickOfTheDayItem, MemberItem } from '~/types';
 import { generatePodcastEpisodeFromPodcast } from '~/helpers/jsonLdGenerator';
 // Add route and router
 const route = useRoute();

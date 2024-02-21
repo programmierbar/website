@@ -5,8 +5,9 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType } from 'vue';
-import { MeetupItem } from '../types';
+import type { PropType } from 'vue';
+import { computed, defineComponent } from 'vue';
+import type { MeetupItem } from '../types';
 
 export default defineComponent({
   props: {

@@ -4,14 +4,15 @@
       v-for="(renderItem, index) in renderItems"
       :item="renderItem"
       :index="index + firstIndex"
-      :viewportItems="viewportItems"
-      :addViewportItem="addViewportItem"
+      :viewport-items="viewportItems"
+      :add-viewport-item="addViewportItem"
     />
   </ul>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, Ref, watch } from 'vue';
+import type { Ref} from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useEventListener, useWindow } from '../composables';
 
 const props = defineProps<{

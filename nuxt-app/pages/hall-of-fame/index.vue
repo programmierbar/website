@@ -105,7 +105,7 @@ import { computed } from 'vue';
 
 import { useLoadingScreen, usePageMeta, useTagFilter } from '~/composables';
 import { directus } from '~/services';
-import { HallOfFamePage, SpeakerItem, TagItem } from '~/types';
+import type { HallOfFamePage, SpeakerItem, TagItem } from '~/types';
 import LazyList from '~/components/LazyList.vue';
 import LazyListItem from '~/components/LazyListItem.vue';
 
