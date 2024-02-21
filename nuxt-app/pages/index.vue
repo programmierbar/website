@@ -114,8 +114,12 @@ useJsonld(generatePodcastSeries());
 // Create Video URL
 const videoUrl = computed(() => {
   if (!isString(homePage.value?.video)) {
-    homePage.value && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`;
+    return (
+      homePage.value && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`
+    );
   }
+
+  return undefined;
 });
 </script>
 
