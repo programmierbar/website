@@ -38,7 +38,7 @@
       </div>
 
       <!-- Newsticker -->
-      <NewsTicker :news="homePage.news" />
+      <NewsTicker :news="newsTicker" />
     </section>
 
     <!-- Podcasts -->
@@ -76,18 +76,9 @@ const directus = useDirectus();
 // Query home page, latest podcasts and podcast count
 const { data: pageData } = useAsyncData(async () => {
   const [homePage, latestPodcasts, podcastCount] = await Promise.all([
-    // Home page
-    await directus.getHomepage({
-      fields: ['*', 'video.*'],
-    }),
-
-    // Latest podcasts
+    await directus.getHomepage(),
     await directus.getLatestPodcasts(),
-
-    // Podcast count
-    directus.aggregateItems('podcasts', {
-      aggregate: { count: '*' },
-    }),
+    await directus.getPodcastCount()
   ]);
 
   return { homePage, latestPodcasts, podcastCount };
@@ -102,6 +93,13 @@ const latestPodcasts: ComputedRef<LatestPodcasts | undefined> = computed(
 );
 
 const podcastCount = computed(() => pageData.value?.podcastCount);
+const newsTicker = computed(() => {
+  if (!pageData.value) return [];
+
+  return pageData.value.homePage.news.map((newsObject => {
+    return newsObject.text
+  }))
+});
 
 // Set loading screen
 useLoadingScreen(homePage);
