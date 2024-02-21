@@ -3,10 +3,6 @@
     "@directus/sdk": {
       "versions": "15.0.1",
       "reason": "Manual only"
-    },
-    "nuxt": {
-      "versions": "3.10.2",
-      "reason": "Manual only"
     }
   }
 }
