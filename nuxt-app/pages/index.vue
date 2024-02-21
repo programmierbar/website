@@ -26,6 +26,7 @@
       <!-- Video -->
       <div class="bg-gray-900">
         <video
+          v-if="!isString(homePage.video)"
           class="w-full min-h-80 object-cover"
           :src="videoUrl"
           :alt="homePage.video.title || ''"
@@ -60,77 +61,46 @@
 
 <script setup lang="ts">
 import brandLogoIcon from '~/assets/images/brand-logo.svg?raw';
-import { computed } from 'vue';
+import { computed, type ComputedRef } from 'vue';
 import { DIRECTUS_CMS_URL } from '../config';
 
 import { useLoadingScreen, usePageMeta } from '../composables';
-import { directus } from '../services';
-import type { HomePage, PodcastItem } from '../types';
+import type { DirectusHomePage } from '../types';
 import { generatePodcastSeries } from '~/helpers/jsonLdGenerator';
-import { useDirectus } from '~/composables/useDirectus';
+import { type LatestPodcasts, useDirectus } from '~/composables/useDirectus';
+import { isString } from '@vue/shared';
 
 const breadcrumbs = [{ label: 'Home' }];
-const directus = useDirectus()
-
-type LatestPodcasts = Pick<
-  PodcastItem,
-  | 'id'
-  | 'slug'
-  | 'published_on'
-  | 'type'
-  | 'number'
-  | 'title'
-  | 'cover_image'
-  | 'audio_url'
->[]
+const directus = useDirectus();
 
 // Query home page, latest podcasts and podcast count
 const { data: pageData } = useAsyncData(async () => {
   const [homePage, latestPodcasts, podcastCount] = await Promise.all([
     // Home page
-    await directus.getSingleton('home_page', {
-      fields: ['*', 'video.*']
-    })
-      .then(
-        (homePage) =>
-          homePage && {
-            ...homePage,
-            news: (homePage.news as { text: string }[]).map(({ text }) => text),
-          }
-      ),
+    await directus.getHomepage({
+      fields: ['*', 'video.*'],
+    }),
 
     // Latest podcasts
-    (
-      await directus.getItems('podcasts', {
-        fields: ['id',
-          'slug',
-          'published_on',
-          'type',
-          'number',
-          'title',
-          'cover_image.*',
-          'audio_url',],
-        sort: ['-published_on'],
-        limit: 10,
-      })
-    ),
+    await directus.getLatestPodcasts(),
 
     // Podcast count
-    (
-      directus.aggregateItems('podcasts', {
-        aggregate: { count: '*' }
-      })
-    ),
-  ]) as [HomePage, LatestPodcasts, any];
+    directus.aggregateItems('podcasts', {
+      aggregate: { count: '*' },
+    }),
+  ]);
 
   return { homePage, latestPodcasts, podcastCount };
 });
 
-console.log(pageData.value?.podcastCount)
-
 // Extract home page, latest podcasts and podcast count from page data
-const homePage = computed(() => pageData.value?.homePage);
-const latestPodcasts = computed(() => pageData.value?.latestPodcasts);
+const homePage: ComputedRef<DirectusHomePage | undefined> = computed(
+  () => pageData.value?.homePage
+);
+const latestPodcasts: ComputedRef<LatestPodcasts | undefined> = computed(
+  () => pageData.value?.latestPodcasts
+);
+
 const podcastCount = computed(() => pageData.value?.podcastCount);
 
 // Set loading screen
@@ -142,10 +112,11 @@ usePageMeta(homePage);
 useJsonld(generatePodcastSeries());
 
 // Create Video URL
-const videoUrl = computed(
-  () =>
-    homePage.value && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`
-);
+const videoUrl = computed(() => {
+  if (!isString(homePage.value?.video)) {
+    homePage.value && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`;
+  }
+});
 </script>
 
 <style>

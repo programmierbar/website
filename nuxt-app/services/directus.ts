@@ -1,20 +1,20 @@
 import { createDirectus, rest } from '@directus/sdk';
 import { DIRECTUS_CMS_URL } from '../config';
 import type {
-  DirectusHomePage,
-  DirectusPodcastPage,
-  DirectusMeetupPage,
-  DirectusHallOfFamePage,
-  DirectusPickOfTheDayPage,
   DirectusAboutPage,
   DirectusContactPage,
+  DirectusHallOfFamePage,
+  DirectusHomePage,
   DirectusImprintPage,
-  DirectusPrivacyPage,
-  DirectusPodcastItem,
   DirectusMeetupItem,
+  DirectusMeetupPage,
   DirectusMemberItem,
-  DirectusSpeakerItem,
   DirectusPickOfTheDayItem,
+  DirectusPickOfTheDayPage,
+  DirectusPodcastItem,
+  DirectusPodcastPage,
+  DirectusPrivacyPage,
+  DirectusSpeakerItem,
   DirectusTagItem,
 } from '../types';
 
@@ -28,12 +28,13 @@ export type Collections = {
   contact_page: DirectusContactPage;
   imprint_page: DirectusImprintPage;
   privacy_page: DirectusPrivacyPage;
-  podcasts: DirectusPodcastItem;
-  meetups: DirectusMeetupItem;
-  members: DirectusMemberItem;
-  speakers: DirectusSpeakerItem;
-  picks_of_the_day: DirectusPickOfTheDayItem;
-  tags: DirectusTagItem;
+  podcasts: DirectusPodcastItem[];
+  meetups: DirectusMeetupItem[];
+  members: DirectusMemberItem[];
+  speakers: DirectusSpeakerItem[];
+  picks_of_the_day: DirectusPickOfTheDayItem[];
+  tags: DirectusTagItem[];
 };
 
-export const directus = createDirectus(DIRECTUS_CMS_URL).with(rest());
+export const directus =
+  createDirectus<Collections>(DIRECTUS_CMS_URL).with(rest());

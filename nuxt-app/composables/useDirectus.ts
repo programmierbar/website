@@ -1,39 +1,44 @@
 import { type Collections, directus } from '~/services';
-import {
-  aggregate,
-  type AggregationOptions,
-  type Query,
-  readItems,
-  readSingleton,
-} from '@directus/sdk';
+import { type Query, readItems, readSingleton } from '@directus/sdk';
+import type { DirectusHomePage, DirectusPodcastItem } from '~/types';
+
+export type LatestPodcasts = Pick<
+  DirectusPodcastItem,
+  | 'id'
+  | 'slug'
+  | 'published_on'
+  | 'type'
+  | 'number'
+  | 'title'
+  | 'cover_image'
+  | 'audio_url'
+>[];
 
 export function useDirectus() {
-  async function getSingleton(
-    collectionName: keyof Collections,
-    query_object: Query<any, any>
+  async function getHomepage(
+    query_object: Query<Collections, DirectusHomePage>
   ) {
+    return await directus.request(readSingleton('home_page', query_object));
+  }
+
+  async function getLatestPodcasts() {
     return await directus.request(
-      readSingleton(collectionName.toString(), query_object)
+      readItems('podcasts', {
+        fields: [
+          'id',
+          'slug',
+          'published_on',
+          'type',
+          'number',
+          'title',
+          'cover_image',
+          'audio_url',
+        ],
+        sort: ['-published_on'],
+        limit: 10,
+      })
     );
   }
 
-  async function getItems(
-    collectionName: keyof Collections,
-    query_object: Query<any, any>
-  ) {
-    return await directus.request(
-      readItems(collectionName.toString(), query_object)
-    );
-  }
-
-  async function aggregateItems(
-    collectionName: keyof Collections,
-    options: AggregationOptions<any, any>
-  ) {
-    return await directus.request(
-      aggregate(collectionName.toString(), options)
-    );
-  }
-
-  return { getSingleton, getItems, aggregateItems };
+  return { getHomepage, getLatestPodcasts };
 }
