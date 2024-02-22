@@ -26,7 +26,6 @@
       <!-- Video -->
       <div class="bg-gray-900">
         <video
-          v-if="!isString(homePage.video)"
           class="w-full min-h-80 object-cover"
           :src="videoUrl"
           :alt="homePage.video.title || ''"
@@ -110,15 +109,8 @@ usePageMeta(homePage);
 useJsonld(generatePodcastSeries());
 
 // Create Video URL
-const videoUrl = computed(() => {
-  if (!isString(homePage.value?.video)) {
-    return (
-      homePage.value && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`
-    );
-  }
+const videoUrl = computed(() => homePage.value && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`);
 
-  return undefined;
-});
 </script>
 
 <style>

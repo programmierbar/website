@@ -252,7 +252,7 @@ export interface DirectusHomePage {
   meta_title: string;
   meta_description: string;
   intro_heading: string;
-  video: string | DirectusFileItem;
+  video: DirectusFileItem;
   news: { text: string }[];
   podcast_heading: string;
 }
@@ -297,7 +297,7 @@ export interface DirectusPickOfTheDayPage {
 export interface DirectusAboutPage {
   meta_title: string;
   meta_description: string;
-  cover_image: string | DirectusFileItem;
+  cover_image: DirectusFileItem;
   intro_text: string;
   podcast_crew_heading: string;
   behind_the_scenes_heading: string;
