@@ -54,13 +54,13 @@
 </template>
 
 <script setup lang="ts">
-import brandLogoIcon from '~/assets/images/brand-logo.svg?raw';
-import { type LatestPodcasts, useDirectus } from '~/composables/useDirectus';
-import { generatePodcastSeries } from '~/helpers/jsonLdGenerator';
-import { computed, type ComputedRef } from 'vue';
-import { useLoadingScreen, usePageMeta } from '../composables';
-import { DIRECTUS_CMS_URL } from '../config';
-import type { DirectusHomePage } from '../types';
+import brandLogoIcon from '~/assets/images/brand-logo.svg?raw'
+import { useDirectus, type LatestPodcasts } from '~/composables/useDirectus'
+import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
+import { computed, type ComputedRef } from 'vue'
+import { useLoadingScreen, usePageMeta } from '../composables'
+import { DIRECTUS_CMS_URL } from '../config'
+import type { DirectusHomePage } from '../types'
 
 const breadcrumbs = [{ label: 'Home' }]
 const directus = useDirectus()
@@ -98,7 +98,7 @@ usePageMeta(homePage)
 useJsonld(generatePodcastSeries())
 
 // Create Video URL
-const videoUrl = computed(() => homePage.value && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`);
+const videoUrl = computed(() => homePage.value && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`)
 </script>
 
 <style>
