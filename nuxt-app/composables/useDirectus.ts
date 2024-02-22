@@ -24,6 +24,38 @@ export function useDirectus() {
         )
     }
 
+    async function getPrivacyPage() {
+        return await directus.request(
+            readSingleton('privacy_page', {
+                fields: ['*'],
+            })
+        )
+    }
+
+    async function getImprintPage() {
+        return await directus.request(
+            readSingleton('imprint_page', {
+                fields: ['*'],
+            })
+        )
+    }
+
+    async function getContactPage() {
+        return await directus.request(
+            readSingleton('contact_page', {
+                fields: ['*'],
+            })
+        )
+    }
+
+    async function getPicksOfTheDayPage() {
+        return await directus.request(
+            readSingleton('pick_of_the_day_page', {
+                fields: ['*', 'cover_image.*'],
+            })
+        )
+    }
+
     async function getLatestPodcasts() {
         return await directus.request(
             readItems('podcasts', {
@@ -65,6 +97,9 @@ export function useDirectus() {
     return {
         getHomepage,
         getAboutPage,
+        getPrivacyPage,
+        getImprintPage,
+        getContactPage,
         getMembers,
         getLatestPodcasts,
         getPodcastCount,

@@ -1,6 +1,6 @@
 <template>
     <div v-if="imprintPage" class="relative">
-        <div class="3xl:px-8 container px-6 pb-20 pt-32 md:pb-32 md:pl-48 md:pt-40 lg:pb-52 lg:pr-8 lg:pt-56 2xl:pt-64">
+        <div class="container px-6 pb-20 pt-32 md:pb-32 md:pl-48 md:pt-40 lg:pb-52 lg:pr-8 lg:pt-56 2xl:pt-64 3xl:px-8">
             <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
             <!-- Heading -->
@@ -18,17 +18,15 @@
 </template>
 
 <script setup lang="ts">
+import { useDirectus } from '~/composables/useDirectus'
 import { useLoadingScreen } from '../composables'
 import { getMetaInfo } from '../helpers'
-import { directus } from '../services'
-import type { ImprintPage } from '../types'
 
+const directus = useDirectus()
 const breadcrumbs = [{ label: 'Impressum' }]
 
 // Query imprint page
-const { data: imprintPage } = await useAsyncData(
-    () => directus.singleton('imprint_page').read() as Promise<ImprintPage>
-)
+const { data: imprintPage } = await useAsyncData(() => directus.getImprintPage())
 
 // Set loading screen
 useLoadingScreen(imprintPage)
