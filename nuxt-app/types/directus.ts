@@ -194,8 +194,8 @@ export interface DirectusPickOfTheDayItem {
     name: string
     website_url: string
     description: string
-    image: string | DirectusFileItem
-    podcast: string | DirectusPodcastItem
+    image: DirectusFileItem
+    podcast: DirectusPodcastItem
     tags: (
         | number
         | {

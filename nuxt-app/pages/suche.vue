@@ -1,6 +1,6 @@
 <template>
-    <div class="md:overflow-unset relative min-h-screen overflow-hidden">
-        <div class="3xl:px-8 container px-6 pb-20 pt-32 md:pb-32 md:pl-48 md:pt-40 lg:pb-52 lg:pr-8 lg:pt-56 2xl:pt-64">
+    <div class="relative min-h-screen overflow-hidden md:overflow-unset">
+        <div class="container px-6 pb-20 pt-32 md:pb-32 md:pl-48 md:pt-40 lg:pb-52 lg:pr-8 lg:pt-56 2xl:pt-64 3xl:px-8">
             <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
             <SectionHeading class="mt-8 md:mt-0" element="h1"> Suchergebnisse </SectionHeading>
@@ -36,7 +36,7 @@
                 class="mt-20 flex h-full flex-col items-center justify-center space-y-6 md:mt-32 md:space-y-8 lg:mt-52 lg:space-y-10"
             >
                 <div class="h-32 md:h-44 lg:h-60" v-html="searchFigureIcon" />
-                <p class="text-lime text-center text-base font-semibold md:text-lg lg:text-2xl">Wonach suchst du?</p>
+                <p class="text-center text-base font-semibold text-lime md:text-lg lg:text-2xl">Wonach suchst du?</p>
             </div>
         </div>
     </div>
@@ -131,7 +131,7 @@ const { data: searchItems } = useAsyncData(async () => {
         })) as PickOfTheDaySearchItem[]),
 
         // Speaker
-        ...((
+        ...(
             (
                 await directus.items('speakers').readByQuery({
                     fields: [
@@ -153,7 +153,7 @@ const { data: searchItems } = useAsyncData(async () => {
             ...rest,
             item_type: 'speaker',
             tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
-        })) as SpeakerSearchItem[]),
+        })),
     ])
 })
 

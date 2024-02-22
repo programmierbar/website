@@ -1,14 +1,5 @@
 import type { FileItem } from './items'
 
-export interface HomePage {
-    meta_title: string
-    meta_description: string
-    intro_heading: string
-    video: FileItem
-    news: string[]
-    podcast_heading: string
-}
-
 export interface PodcastPage {
     meta_title: string
     meta_description: string
@@ -38,38 +29,4 @@ export interface HallOfFamePage {
     meta_description: string
     intro_heading: string
     intro_text: string
-}
-
-export interface PickOfTheDayPage {
-    meta_title: string
-    meta_description: string
-    intro_heading: string
-    intro_text: string
-}
-
-export interface AboutPage {
-    meta_title: string
-    meta_description: string
-    cover_image: FileItem
-    intro_text: string
-    podcast_crew_heading: string
-    behind_the_scenes_heading: string
-}
-
-export interface ContactPage {
-    meta_title: string
-    meta_description: string
-    intro_heading: string
-    intro_text: string
-    detail_text: string
-}
-
-export interface ImprintPage {
-    heading: string
-    text: string
-}
-
-export interface PrivacyPage {
-    heading: string
-    text: string
 }

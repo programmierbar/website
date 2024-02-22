@@ -1,6 +1,6 @@
 <template>
     <div v-if="pickOfTheDayPage && picksOfTheDay" class="relative">
-        <div class="3xl:px-8 container px-6 pb-20 pt-32 md:pb-32 md:pl-48 md:pt-40 lg:pb-52 lg:pr-8 lg:pt-56 2xl:pt-64">
+        <div class="container px-6 pb-20 pt-32 md:pb-32 md:pl-48 md:pt-40 lg:pb-52 lg:pr-8 lg:pt-56 2xl:pt-64 3xl:px-8">
             <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
             <!-- Page intro -->
@@ -57,38 +57,20 @@
 import LazyList from '~/components/LazyList.vue'
 import LazyListItem from '~/components/LazyListItem.vue'
 import { useLoadingScreen, usePageMeta, useTagFilter } from '~/composables'
-import { directus } from '~/services'
-import type { PickOfTheDayItem, PickOfTheDayPage, PodcastItem, TagItem } from '~/types'
-import { computed } from 'vue'
+import { useDirectus } from '~/composables/useDirectus'
+import type { DirectusPickOfTheDayPage, PickOfTheDayItem, PodcastItem, TagItem } from '~/types'
+import { computed, type ComputedRef } from 'vue'
 
+const directus = useDirectus()
 const breadcrumbs = [{ label: 'Pick of the Day' }]
 
 // Query pick of the day page and picks of the day
 const { data: pageData } = useAsyncData(async () => {
     const [pickOfTheDayPage, picksOfTheDay] = await Promise.all([
         // Pick of the Day page
-        directus.singleton('pick_of_the_day_page').read() as Promise<PickOfTheDayPage>,
-
-        // Picks of the day
-        (
-            await directus.items('picks_of_the_day').readByQuery({
-                fields: [
-                    'id',
-                    'name',
-                    'website_url',
-                    'description',
-                    'image.*',
-                    'podcast.slug',
-                    'podcast.type',
-                    'podcast.number',
-                    'podcast.title',
-                    'tags.tag.id',
-                    'tags.tag.name',
-                ],
-                limit: -1,
-                sort: ['-published_on'],
-            })
-        ).data?.map(({ tags, ...rest }) => ({
+        await directus.getPicksOfTheDayPage(),
+        // Picks of the Day
+        (await directus.getPicksOfTheDay()).map(({ tags, ...rest }) => ({
             ...rest,
             tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
         })) as (Pick<PickOfTheDayItem, 'id' | 'name' | 'website_url' | 'description' | 'image'> & {
@@ -96,11 +78,14 @@ const { data: pageData } = useAsyncData(async () => {
             tags: Pick<TagItem, 'id' | 'name'>[]
         })[],
     ])
+
     return { pickOfTheDayPage, picksOfTheDay }
 })
 
 // Extract pick of the day page and picks of the day from page data
-const pickOfTheDayPage = computed(() => pageData.value?.pickOfTheDayPage)
+const pickOfTheDayPage: ComputedRef<DirectusPickOfTheDayPage | undefined> = computed(
+    () => pageData.value?.pickOfTheDayPage
+)
 const picksOfTheDay = computed(() => pageData.value?.picksOfTheDay)
 
 // Set loading screen
