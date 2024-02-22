@@ -1,5 +1,5 @@
-import { reactive, ref, watch } from 'vue';
-import { useNavigator } from './useNavigator';
+import { reactive, ref, watch } from 'vue'
+import { useNavigator } from './useNavigator'
 
 /**
  * Composable for secure use of the share API.
@@ -7,19 +7,19 @@ import { useNavigator } from './useNavigator';
  * @returns A reference to the share API.
  */
 export function useShare() {
-  const navigator = useNavigator();
-  const isSupported = ref(false);
+    const navigator = useNavigator()
+    const isSupported = ref(false)
 
-  watch(navigator, () => {
-    isSupported.value = !!navigator.value?.share;
-  });
+    watch(navigator, () => {
+        isSupported.value = !!navigator.value?.share
+    })
 
-  const share = (data: ShareData) => {
-    navigator.value?.share(data);
-  };
+    const share = (data: ShareData) => {
+        navigator.value?.share(data)
+    }
 
-  return reactive({
-    isSupported,
-    share,
-  });
+    return reactive({
+        isSupported,
+        share,
+    })
 }

@@ -1,4 +1,4 @@
-import { onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue'
 
 /**
  * Composable for secure access of the document object.
@@ -6,11 +6,11 @@ import { onMounted, ref } from 'vue';
  * @returns A reference to the document object.
  */
 export function useBodyElement() {
-  const bodyElement = ref<HTMLElement>();
+    const bodyElement = ref<HTMLElement>()
 
-  onMounted(() => {
-    bodyElement.value = document.body;
-  });
+    onMounted(() => {
+        bodyElement.value = document.body
+    })
 
-  return bodyElement;
+    return bodyElement
 }

@@ -1,41 +1,44 @@
 {
-  "name": "nuxt-app",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "eslint": "eslint --fix .",
-    "prettier": "prettier . --write"
-  },
-  "dependencies": {
-    "@directus/sdk": "^15.0.1",
-    "@nuxtjs/tailwindcss": "^6.11.4",
-    "@tailwindcss/line-clamp": "^0.4.4",
-    "@types/google.maps": "^3.55.3",
-    "@types/smoothscroll-polyfill": "^0.3.4",
-    "@ubclaunchpad/vue-fathom": "^2.0.0",
-    "core-js": "^3.36.0",
-    "h3-zod": "^0.5.3",
-    "nodemailer": "^6.9.9",
-    "nuxt-jsonld": "^2.0.8",
-    "smoothscroll-polyfill": "^0.4.4",
-    "vite-svg-loader": "^5.1.0",
-    "zod": "^3.22.4"
-  },
-  "devDependencies": {
-    "@nuxt/eslint-config": "^0.2.0",
-    "@nuxt/image-edge": "^1.3.0-28468005.8ad772e",
-    "@types/nodemailer": "^6.4.14",
-    "eslint": "^8.56.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-nuxt": "^4.0.0",
-    "eslint-plugin-vue": "^9.21.1",
-    "nuxt": "^3.10.2",
-    "postcss": "^8.4.35",
-    "prettier": "3.2.5"
-  }
+    "name": "nuxt-app",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "build": "nuxt build",
+        "dev": "nuxt dev",
+        "generate": "nuxt generate",
+        "preview": "nuxt preview",
+        "postinstall": "nuxt prepare",
+        "eslint": "eslint --fix .",
+        "prettier": "prettier . --write"
+    },
+    "dependencies": {
+        "@directus/sdk": "^15.0.1",
+        "@nuxtjs/tailwindcss": "^6.11.4",
+        "@tailwindcss/line-clamp": "^0.4.4",
+        "@types/google.maps": "^3.55.3",
+        "@types/smoothscroll-polyfill": "^0.3.4",
+        "@ubclaunchpad/vue-fathom": "^2.0.0",
+        "@vue/compiler-sfc": "^3.4.19",
+        "core-js": "^3.36.0",
+        "h3-zod": "^0.5.3",
+        "nodemailer": "^6.9.9",
+        "nuxt-jsonld": "^2.0.8",
+        "smoothscroll-polyfill": "^0.4.4",
+        "vite-svg-loader": "^5.1.0",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@ianvs/prettier-plugin-sort-imports": "^4.1.1",
+        "@nuxt/eslint-config": "^0.2.0",
+        "@nuxt/image-edge": "^1.3.0-28468005.8ad772e",
+        "@types/nodemailer": "^6.4.14",
+        "eslint": "^8.56.0",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-nuxt": "^4.0.0",
+        "eslint-plugin-vue": "^9.21.1",
+        "nuxt": "^3.10.2",
+        "postcss": "^8.4.35",
+        "prettier": "^3.2.5",
+        "prettier-plugin-tailwindcss": "^0.5.11"
+    }
 }

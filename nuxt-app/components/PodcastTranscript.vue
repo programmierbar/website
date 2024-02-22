@@ -1,52 +1,42 @@
 <template>
-  <div
-    class="rounded-xl relative w-full max-h-96 flex flex-col overflow-hidden"
-  >
-    <div
-      class="relative top-0 left-0 bg-gray-800 w-full py-2 flex items-center justify-center"
-    >
-      <div class="absolute left-3 flex flex-row gap-1.5">
-        <div
-          v-for="index in 3"
-          :key="index"
-          class="rounded-full bg-gray-600 h-2.5 w-2.5"
-        ></div>
-      </div>
-      <div
-        class="truncate text-center text-white text-opacity-60 text-sm md:text-base text-ellipsis font-extralight whitespace-nowrap w-1/2 md:w-3/4"
-      >
-        {{ `/transkript/programmierbar/${name}`.trim() }}
-      </div>
+    <div class="relative flex max-h-96 w-full flex-col overflow-hidden rounded-xl">
+        <div class="relative left-0 top-0 flex w-full items-center justify-center bg-gray-800 py-2">
+            <div class="absolute left-3 flex flex-row gap-1.5">
+                <div v-for="index in 3" :key="index" class="h-2.5 w-2.5 rounded-full bg-gray-600"></div>
+            </div>
+            <div
+                class="w-1/2 truncate text-ellipsis whitespace-nowrap text-center text-sm font-extralight text-white text-opacity-60 md:w-3/4 md:text-base"
+            >
+                {{ `/transkript/programmierbar/${name}`.trim() }}
+            </div>
+        </div>
+        <div class="scrollbar:!w-1.5 relative w-full overflow-auto bg-gray-900">
+            <div
+                class="whitespace-pre-line px-8 pb-32 pt-8 font-mono text-sm text-white md:px-16 md:text-base lg:text-lg"
+            >
+                {{ body.trim() }}
+            </div>
+        </div>
+        <div class="absolute bottom-0 h-24 w-full bg-gradient-to-t from-black"></div>
     </div>
-    <div class="relative bg-gray-900 w-full overflow-auto scrollbar:!w-1.5">
-      <div
-        class="font-mono whitespace-pre-line text-white text-sm md:text-base lg:text-lg px-8 md:px-16 pb-32 pt-8"
-      >
-        {{ body.trim() }}
-      </div>
-    </div>
-    <div
-      class="absolute bottom-0 bg-gradient-to-t from-black h-24 w-full"
-    ></div>
-  </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent } from 'vue'
 
 export default defineComponent({
-  props: {
-    name: {
-      type: String,
-      required: true,
+    props: {
+        name: {
+            type: String,
+            required: true,
+        },
+        body: {
+            type: String,
+            required: true,
+        },
     },
-    body: {
-      type: String,
-      required: true,
+    setup() {
+        return {}
     },
-  },
-  setup() {
-    return {};
-  },
-});
+})
 </script>

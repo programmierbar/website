@@ -1,2 +1,2 @@
-export * from './sendEmail';
-export * from './schema';
+export * from './sendEmail'
+export * from './schema'
