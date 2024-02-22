@@ -28,9 +28,9 @@
                     class="min-h-80 w-full object-cover"
                     :src="videoUrl"
                     :alt="homePage.video.title || ''"
-                    autoplay="true"
-                    loop="true"
-                    muted="true"
+                    autoplay
+                    loop
+                    muted
                     playsinline
                 />
             </div>
@@ -55,14 +55,14 @@
 </template>
 
 <script setup lang="ts">
-import { isString } from '@vue/shared'
-import brandLogoIcon from '~/assets/images/brand-logo.svg?raw'
-import { useDirectus, type LatestPodcasts } from '~/composables/useDirectus'
-import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
-import { computed, type ComputedRef } from 'vue'
-import { useLoadingScreen, usePageMeta } from '../composables'
-import { DIRECTUS_CMS_URL } from '../config'
-import type { DirectusHomePage } from '../types'
+import { isString } from '@vue/shared';
+import brandLogoIcon from '~/assets/images/brand-logo.svg?raw';
+import { type LatestPodcasts, useDirectus } from '~/composables/useDirectus';
+import { generatePodcastSeries } from '~/helpers/jsonLdGenerator';
+import { computed, type ComputedRef } from 'vue';
+import { useLoadingScreen, usePageMeta } from '../composables';
+import { DIRECTUS_CMS_URL } from '../config';
+import type { DirectusHomePage } from '../types';
 
 const breadcrumbs = [{ label: 'Home' }]
 const directus = useDirectus()
