@@ -1,39 +1,37 @@
-import { sendEmail, EmailSchema } from '../utils';
-import { zh } from 'h3-zod';
+import { zh } from 'h3-zod'
+import { EmailSchema, sendEmail } from '../utils'
 
 export default defineEventHandler(async (event) => {
-  // Get parsed client data
-  const clientData = await zh
-    .useValidatedBody(event, EmailSchema)
-    .catch((e) => {
-      const data = JSON.parse(e.data);
-      const {
-        path: [key],
-        message,
-      } = data.issues[0];
+    // Get parsed client data
+    const clientData = await zh.useValidatedBody(event, EmailSchema).catch((e) => {
+        const data = JSON.parse(e.data)
+        const {
+            path: [key],
+            message,
+        } = data.issues[0]
 
-      throw createError({ statusCode: 400, message: `${key}: ${message}` });
-    });
+        throw createError({ statusCode: 400, message: `${key}: ${message}` })
+    })
 
-  // Send email with user's message to us
-  console.debug("Send email with user's message to us");
-  await sendEmail({
-    to: 'programmier.bar <podcast@programmier.bar>',
-    subject: 'Kontaktformular Nachricht',
-    html: `
+    // Send email with user's message to us
+    console.debug("Send email with user's message to us")
+    await sendEmail({
+        to: 'programmier.bar <podcast@programmier.bar>',
+        subject: 'Kontaktformular Nachricht',
+        html: `
             <p>Name: ${clientData.name}</p>
             <p>E-Mail: ${clientData.email}</p>
             <p>Nachricht:</p>
             <p>${clientData.message.replace(/\n/g, '<br />')}</p>
           `,
-  }).catch(genericError);
+    }).catch(genericError)
 
-  // Send confirmation email to user
-  console.debug('Send confirmation email to user');
-  await sendEmail({
-    to: `${clientData.name} <${clientData.email}>`,
-    subject: 'Wir haben deine Nachricht erhalten',
-    html: `
+    // Send confirmation email to user
+    console.debug('Send confirmation email to user')
+    await sendEmail({
+        to: `${clientData.name} <${clientData.email}>`,
+        subject: 'Wir haben deine Nachricht erhalten',
+        html: `
             <p>Hallo ${clientData.name},</p>
             <p>danke für deine Nachricht! Du erhältst in wenigen Tagen eine Antwort von uns.</p>
             <p>Deine Nachricht:</p>
@@ -64,16 +62,16 @@ export default defineEventHandler(async (event) => {
               Geschäftsführung: Dominik Anders, Jens Abke, Sebastian Schmitt
             </p>
           `,
-  }).catch(genericError);
+    }).catch(genericError)
 
-  return 'Deine Nachricht wurde an uns versendet.';
-});
+    return 'Deine Nachricht wurde an uns versendet.'
+})
 
 const genericError = (e: any) => {
-  console.error(e);
-  throw createError({
-    statusCode: 400,
-    message:
-      'Oh nein! Ein unerwarteter Fehler ist aufgetreten. Bei Bedarf kannst du uns unter "podcast@programmier.bar" kontaktieren.',
-  });
-};
+    console.error(e)
+    throw createError({
+        statusCode: 400,
+        message:
+            'Oh nein! Ein unerwarteter Fehler ist aufgetreten. Bei Bedarf kannst du uns unter "podcast@programmier.bar" kontaktieren.',
+    })
+}

@@ -6,8 +6,8 @@
  * @returns The value of the cookie.
  */
 export function getCookie(name: string) {
-  return document.cookie
-    .split('; ')
-    .find((cookie) => name === cookie.split('=')[0])
-    ?.split('=')[1];
+    return document.cookie
+        .split('; ')
+        .find((cookie) => name === cookie.split('=')[0])
+        ?.split('=')[1]
 }

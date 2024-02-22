@@ -1,177 +1,177 @@
-const colors = require('tailwindcss/colors');
-const plugin = require('tailwindcss/plugin');
+const colors = require('tailwindcss/colors')
+const plugin = require('tailwindcss/plugin')
 
 module.exports = {
-  mode: 'jit',
-  content: ['./pages/**/*.{html,js}', './components/**/*.{html,js}'],
-  theme: {
-    colors: {
-      transparent: 'transparent',
-      current: 'currentColor',
-      black: colors.black,
-      white: colors.white,
-      gray: {
-        500: '#2D3135',
-        600: '#36363E',
-        700: '#262829',
-        800: '#1A1A1A',
-        900: '#131415',
-      },
-      blue: {
-        DEFAULT: '#00A1FF',
-        50: '#E5F6FF',
-        100: '#CCECFF',
-        200: '#99D9FF',
-        300: '#66C7FF',
-        400: '#33B4FF',
-        500: '#00A1FF',
-        600: '#0081CC',
-        700: '#006199',
-        800: '#004066',
-        900: '#002033',
-      },
-      lime: {
-        DEFAULT: '#CFFF00',
-        50: '#FAFFE5',
-        100: '#F5FFCC',
-        200: '#ECFF99',
-        300: '#E2FF66',
-        400: '#D9FF33',
-        500: '#CFFF00',
-        600: '#A6CC00',
-        700: '#7C9900',
-        800: '#536600',
-        900: '#293300',
-      },
-      pink: {
-        DEFAULT: '#E92980',
-        50: '#FEF9FC',
-        100: '#FCE2EE',
-        200: '#F7B4D2',
-        300: '#F385B7',
-        400: '#EE579B',
-        500: '#E92980',
-        600: '#CA1567',
-        700: '#9C104F',
-        800: '#6E0B38',
-        900: '#3F0720',
-      },
-    },
-    container: {
-      center: true,
-      screens: {
-        DEFAULT: '100%',
-        sm: '100%',
-        md: '100%',
-        lg: '100%',
-        xl: '100%',
-        '2xl': '1536px',
-      },
-    },
-    screens: {
-      xs: '520px',
-      sm: '640px',
-      md: '768px',
-      lg: '1024px',
-      xl: '1280px',
-      '2xl': '1536px',
-      '3xl': '2000px',
-    },
-    extend: {
-      borderWidth: {
-        1: '1px',
-        3: '3px',
-        5: '5px',
-        6: '6px',
-      },
-      height: {
-        '4/6-screen': '66.666667vh',
-        '1/2-screen': '50vh',
-      },
-      maxHeight: {
-        '1/2-screen': '50vh',
-      },
-      maxWidth: {
-        '1/2-screen': '50vw',
-      },
-      minHeight: {
-        8: '2rem',
-        9: '2.25rem',
-        11: '2.75rem',
-        80: '20rem',
-      },
-      minWidth: {
-        56: '14rem',
-        76: '19rem',
-        88: '22rem',
-      },
-      scale: {
-        65: '0.65',
-        70: '0.7',
-        80: '0.8',
-        200: '2',
-        250: '2.5',
-      },
-      spacing: {
-        0.75: '0.1875rem',
-        1.25: '0.3rem',
-        18: '4.5rem',
-        112: '28rem',
-        120: '30rem',
-        160: '40rem',
-        192: '48rem',
-        '2/7': '28%',
-        '2/5-screen': '40vh',
-        '1/2-screen': '50vh',
-      },
-      transitionDelay: {
-        0: '0s',
-        400: '.4s',
-      },
-      transitionDuration: {
-        0: '0s',
-        3000: '3s',
-      },
-      translate: {
-        '3/20': '15%',
-      },
-      zIndex: {
-        '-1': '-1',
-        60: '60',
-        70: '70',
-      },
-    },
-    fontFamily: {
-      mono: '"DM Mono", monospace',
-    },
-  },
-  variants: {
-    extend: {},
-  },
-  plugins: [
-    require('@tailwindcss/line-clamp'),
-    plugin(function ({ addUtilities }) {
-      const newUtilities = {
-        '.overflow-unset': {
-          overflow: 'unset',
+    mode: 'jit',
+    content: ['./pages/**/*.{html,js}', './components/**/*.{html,js}'],
+    theme: {
+        colors: {
+            transparent: 'transparent',
+            current: 'currentColor',
+            black: colors.black,
+            white: colors.white,
+            gray: {
+                500: '#2D3135',
+                600: '#36363E',
+                700: '#262829',
+                800: '#1A1A1A',
+                900: '#131415',
+            },
+            blue: {
+                DEFAULT: '#00A1FF',
+                50: '#E5F6FF',
+                100: '#CCECFF',
+                200: '#99D9FF',
+                300: '#66C7FF',
+                400: '#33B4FF',
+                500: '#00A1FF',
+                600: '#0081CC',
+                700: '#006199',
+                800: '#004066',
+                900: '#002033',
+            },
+            lime: {
+                DEFAULT: '#CFFF00',
+                50: '#FAFFE5',
+                100: '#F5FFCC',
+                200: '#ECFF99',
+                300: '#E2FF66',
+                400: '#D9FF33',
+                500: '#CFFF00',
+                600: '#A6CC00',
+                700: '#7C9900',
+                800: '#536600',
+                900: '#293300',
+            },
+            pink: {
+                DEFAULT: '#E92980',
+                50: '#FEF9FC',
+                100: '#FCE2EE',
+                200: '#F7B4D2',
+                300: '#F385B7',
+                400: '#EE579B',
+                500: '#E92980',
+                600: '#CA1567',
+                700: '#9C104F',
+                800: '#6E0B38',
+                900: '#3F0720',
+            },
         },
-        '.vertical-rl': {
-          writingMode: 'vertical-rl',
+        container: {
+            center: true,
+            screens: {
+                DEFAULT: '100%',
+                sm: '100%',
+                md: '100%',
+                lg: '100%',
+                xl: '100%',
+                '2xl': '1536px',
+            },
         },
-        '.scroll-snap-x': {
-          scrollSnapType: 'x mandatory',
+        screens: {
+            xs: '520px',
+            sm: '640px',
+            md: '768px',
+            lg: '1024px',
+            xl: '1280px',
+            '2xl': '1536px',
+            '3xl': '2000px',
         },
-        '.scroll-snap-center': {
-          scrollSnapAlign: 'center',
+        extend: {
+            borderWidth: {
+                1: '1px',
+                3: '3px',
+                5: '5px',
+                6: '6px',
+            },
+            height: {
+                '4/6-screen': '66.666667vh',
+                '1/2-screen': '50vh',
+            },
+            maxHeight: {
+                '1/2-screen': '50vh',
+            },
+            maxWidth: {
+                '1/2-screen': '50vw',
+            },
+            minHeight: {
+                8: '2rem',
+                9: '2.25rem',
+                11: '2.75rem',
+                80: '20rem',
+            },
+            minWidth: {
+                56: '14rem',
+                76: '19rem',
+                88: '22rem',
+            },
+            scale: {
+                65: '0.65',
+                70: '0.7',
+                80: '0.8',
+                200: '2',
+                250: '2.5',
+            },
+            spacing: {
+                0.75: '0.1875rem',
+                1.25: '0.3rem',
+                18: '4.5rem',
+                112: '28rem',
+                120: '30rem',
+                160: '40rem',
+                192: '48rem',
+                '2/7': '28%',
+                '2/5-screen': '40vh',
+                '1/2-screen': '50vh',
+            },
+            transitionDelay: {
+                0: '0s',
+                400: '.4s',
+            },
+            transitionDuration: {
+                0: '0s',
+                3000: '3s',
+            },
+            translate: {
+                '3/20': '15%',
+            },
+            zIndex: {
+                '-1': '-1',
+                60: '60',
+                70: '70',
+            },
         },
-        '.scrollbar-none': {
-          scrollbarWidth: 'none',
-          '&::-webkit-scrollbar': {
-            display: 'none',
-          },
+        fontFamily: {
+            mono: '"DM Mono", monospace',
         },
-      };
-      addUtilities(newUtilities);
-    }),
-  ],
-};
+    },
+    variants: {
+        extend: {},
+    },
+    plugins: [
+        require('@tailwindcss/line-clamp'),
+        plugin(function ({ addUtilities }) {
+            const newUtilities = {
+                '.overflow-unset': {
+                    overflow: 'unset',
+                },
+                '.vertical-rl': {
+                    writingMode: 'vertical-rl',
+                },
+                '.scroll-snap-x': {
+                    scrollSnapType: 'x mandatory',
+                },
+                '.scroll-snap-center': {
+                    scrollSnapAlign: 'center',
+                },
+                '.scrollbar-none': {
+                    scrollbarWidth: 'none',
+                    '&::-webkit-scrollbar': {
+                        display: 'none',
+                    },
+                },
+            }
+            addUtilities(newUtilities)
+        }),
+    ],
+}

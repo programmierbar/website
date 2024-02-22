@@ -1,5 +1,5 @@
-import type { Ref } from 'vue';
-import { computed } from 'vue';
+import type { Ref } from 'vue'
+import { computed } from 'vue'
 
 /**
  * Composable that converts a number to a local string.
@@ -9,5 +9,5 @@ import { computed } from 'vue';
  * @returns The local string.
  */
 export function useLocaleString(ref: Ref<number | undefined>) {
-  return computed(() => ref.value?.toLocaleString('de-DE') || null);
+    return computed(() => ref.value?.toLocaleString('de-DE') || null)
 }
