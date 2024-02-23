@@ -71,7 +71,8 @@
 </template>
 
 <script setup lang="ts">
-// TODO - Check why initial loading is slower than on live site. Probably because of the tags
+// TODO - I have the feeling that the initial load is slower.
+//  Check why initial loading is slower than on live site. Probably because of the tags composable
 import { useLoadingScreen, usePageMeta } from '~/composables'
 import { useDirectus, type LatestPodcasts } from '~/composables/useDirectus'
 import { useTagFilterNew } from '~/composables/useTagFilterNew'
