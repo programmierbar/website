@@ -71,11 +71,12 @@
 </template>
 
 <script setup lang="ts">
+// TODO - Check why initial loading is slower than on live site. Probably because of the tags
+import { useLoadingScreen, usePageMeta } from '~/composables'
 import { useDirectus, type LatestPodcasts } from '~/composables/useDirectus'
 import { useTagFilterNew } from '~/composables/useTagFilterNew'
 import type { DirectusPodcastPage } from '~/types'
 import { computed, type ComputedRef } from 'vue'
-import { useLoadingScreen, usePageMeta } from '../../composables'
 
 const breadcrumbs = [{ label: 'Podcast' }]
 const directus = useDirectus()

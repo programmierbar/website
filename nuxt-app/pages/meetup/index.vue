@@ -36,7 +36,7 @@
                 <LazyList class="mt-10" :items="meetups" direction="vertical">
                     <template #default="{ item, index, viewportItems, addViewportItem }">
                         <LazyListItem
-                            :key="index"
+                            :key="item.id"
                             :class="index > 0 && 'mt-14 md:mt-20 lg:mt-28'"
                             :item="item"
                             :viewport-items="viewportItems"
