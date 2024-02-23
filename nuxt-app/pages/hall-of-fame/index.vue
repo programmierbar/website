@@ -1,6 +1,6 @@
 <template>
     <div v-if="hallOfFamePage && speakers" class="relative">
-        <div class="3xl:px-8 container px-6 pt-32 md:pl-48 md:pt-40 lg:pr-8 lg:pt-56 2xl:pt-64">
+        <div class="container px-6 pt-32 md:pl-48 md:pt-40 lg:pr-8 lg:pt-56 2xl:pt-64 3xl:px-8">
             <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
             <!-- Page intro -->
@@ -16,14 +16,14 @@
         <div>
             <!-- Tag Filter -->
             <TagFilter
-                class="3xl:px-8 container mt-12 px-6 md:mt-20 md:pl-48 lg:mt-32 lg:pr-8"
+                class="container mt-12 px-6 md:mt-20 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8"
                 :tags="tagFilter.tags"
                 :toggle-tag="tagFilter.toggleTag"
             />
 
             <!-- Speaker bubbles -->
             <div
-                class="md:overflow-unset 3xl:px-8 xs:pt-14 container overflow-hidden px-6 pb-24 pt-10 sm:pt-16 md:pb-32 md:pl-48 lg:pb-52 lg:pr-8 lg:pt-20 xl:pt-32"
+                class="container overflow-hidden px-6 pb-24 pt-10 xs:pt-14 sm:pt-16 md:pb-32 md:pl-48 md:overflow-unset lg:pb-52 lg:pr-8 lg:pt-20 xl:pt-32 3xl:px-8"
             >
                 <LazyList class="flex flex-col items-baseline" :items="tagFilter.output" direction="vertical">
                     <template #default="{ item, index, viewportItems, addViewportItem }">
@@ -31,7 +31,7 @@
                             :key="item.id"
                             :class="[
                                 index > 0 && 'mt-10',
-                                index % 2 ? 'xs:-mt-10 self-end sm:-mt-20 xl:-mt-32 2xl:-mt-60' : 'xs:-mt-5 sm:-mt-10',
+                                index % 2 ? 'self-end xs:-mt-10 sm:-mt-20 xl:-mt-32 2xl:-mt-60' : 'xs:-mt-5 sm:-mt-10',
                             ]"
                             :item="item"
                             :viewport-items="viewportItems"

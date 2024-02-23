@@ -6,7 +6,7 @@
     >
         <!-- Overlay gradient top -->
         <div
-            class="-z-1 absolute left-0 top-0 h-32 w-full bg-gradient-to-b to-transparent opacity-40"
+            class="absolute left-0 top-0 -z-1 h-32 w-full bg-gradient-to-b to-transparent opacity-40"
             :class="[
                 podcast.type === 'cto_special' ? 'from-blue' : podcast.type === 'news' ? 'from-pink' : 'from-lime',
                 podcast.type === 'deep_dive' && podcast.banner_image && 'md:hidden',
@@ -21,7 +21,7 @@
 
         <!-- Main content -->
         <div
-            class="3xl:space-x-12 container relative flex items-center space-x-6 px-6 pb-8 pt-28 md:space-x-8 md:px-8 md:py-32 lg:py-36"
+            class="container relative flex items-center space-x-6 px-6 pb-8 pt-28 md:space-x-8 md:px-8 md:py-32 lg:py-36 3xl:space-x-12"
         >
             <!-- Play or stop button -->
             <button
@@ -46,7 +46,7 @@
                                 ? 'text-blue'
                                 : 'text-white',
                         podcast.type === 'cto_special' &&
-                            'bg-lime inline-block px-2 pb-2 pt-3 selection:bg-black selection:text-white',
+                            'inline-block bg-lime px-2 pb-2 pt-3 selection:bg-black selection:text-white',
                     ]"
                 >
                     {{ type }} {{ podcast.number }} –
@@ -79,7 +79,7 @@
             <!-- Speaker banner image -->
             <DirectusImage
                 v-if="podcast.banner_image"
-                class="lg:h-112 absolute bottom-0 right-0 hidden h-52 w-auto object-cover opacity-90 md:block md:h-96"
+                class="absolute bottom-0 right-0 hidden h-52 w-auto object-cover opacity-90 md:block md:h-96 lg:h-112"
                 :class="podcast.type === 'deep_dive' ? 'mix-blend-multiply' : '-z-1'"
                 :image="podcast.banner_image"
                 :alt="speakerName"

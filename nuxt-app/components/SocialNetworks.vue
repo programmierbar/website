@@ -2,7 +2,7 @@
     <ul class="flex space-x-5">
         <li v-for="socialNetwork in socialNetworks" :key="socialNetwork.href" class="h-full">
             <a
-                class="hover:text-lime block h-full text-white"
+                class="block h-full text-white hover:text-lime"
                 :href="socialNetwork.href"
                 target="_blank"
                 rel="noreferrer"

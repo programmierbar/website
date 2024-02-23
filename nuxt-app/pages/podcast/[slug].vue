@@ -5,7 +5,7 @@
             <PodcastBanner :podcast="podcast" />
 
             <div class="relative mt-8 md:mt-14">
-                <div class="3xl:px-8 container px-6 md:pl-48 lg:pr-8">
+                <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
                     <div class="flex items-center justify-between space-x-4">
                         <Breadcrumbs :breadcrumbs="breadcrumbs" />
                         <!-- <LikeButton /> -->
@@ -38,7 +38,7 @@
                     <ul class="mt-12 flex items-center space-x-4 md:mt-14">
                         <li>
                             <a
-                                class="border-lime border-3 text-lime relative flex items-center justify-center rounded-full px-4 py-0.5 text-sm font-black uppercase tracking-widest md:border-4 md:px-8 md:text-base lg:text-lg"
+                                class="relative flex items-center justify-center rounded-full border-3 border-lime px-4 py-0.5 text-sm font-black uppercase tracking-widest text-lime md:border-4 md:px-8 md:text-base lg:text-lg"
                                 :href="downloadUrl"
                                 download
                                 data-cursor-hover
@@ -71,7 +71,7 @@
 
         <!-- Picks of the day -->
         <section v-if="podcast.picks_of_the_day.length" class="relative">
-            <div class="3xl:px-8 container mt-20 px-6 md:mt-32 md:pl-48 lg:mt-40 lg:pr-8">
+            <div class="container mt-20 px-6 md:mt-32 md:pl-48 lg:mt-40 lg:pr-8 3xl:px-8">
                 <SectionHeading element="h2">Picks of the Day</SectionHeading>
                 <PickOfTheDayList class="mt-12 md:mt-0" :picks-of-the-day="podcast.picks_of_the_day" />
                 <div v-if="pickOfTheDayCountString" class="mt-12 flex justify-center md:mt-16 lg:mt-20">
@@ -84,7 +84,7 @@
 
         <!-- Speakers -->
         <section v-if="podcast.speakers.length" class="relative">
-            <div class="3xl:px-8 container mt-20 px-6 md:mt-32 md:pl-48 lg:mt-40 lg:pr-8">
+            <div class="container mt-20 px-6 md:mt-32 md:pl-48 lg:mt-40 lg:pr-8 3xl:px-8">
                 <SectionHeading element="h2">Speaker Info</SectionHeading>
                 <SpeakerList class="mt-12 md:mt-0" :speakers="podcast.speakers" />
                 <div v-if="speakerCountString" class="mt-12 flex justify-center md:mt-20 lg:mt-28">
@@ -99,7 +99,7 @@
             <PodcastSlider class="mt-12 md:mt-0" :podcasts="relatedPodcasts" />
         </section>
 
-        <FeedbackSection class="3xl:px-0 mb-20 mt-16 md:mb-32 md:mt-24 md:pl-40 lg:mb-40 lg:mt-32" />
+        <FeedbackSection class="mb-20 mt-16 md:mb-32 md:mt-24 md:pl-40 lg:mb-40 lg:mt-32 3xl:px-0" />
     </div>
 </template>
 

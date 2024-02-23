@@ -2,7 +2,7 @@
     <div class="flex flex-col items-center space-y-6">
         <!-- Meetup.com Button -->
         <a
-            class="md:min-w-76 lg:min-w-88 border-lime text-lime inline-block min-w-56 rounded-full border-4 px-10 pb-3 pt-4 text-center text-sm font-black uppercase tracking-widest md:pb-4 md:pt-5 md:text-lg lg:pb-5 lg:pt-6 lg:text-xl xl:w-full xl:min-w-min"
+            class="inline-block min-w-56 rounded-full border-4 border-lime px-10 pb-3 pt-4 text-center text-sm font-black uppercase tracking-widest text-lime md:min-w-76 md:pb-4 md:pt-5 md:text-lg lg:min-w-88 lg:pb-5 lg:pt-6 lg:text-xl xl:w-full xl:min-w-min"
             :href="meetupUrl"
             target="_blank"
             rel="noreferrer"

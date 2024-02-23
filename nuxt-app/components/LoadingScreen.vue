@@ -7,7 +7,7 @@
         :duration="{ enter: 3000, leave: 500 }"
     >
         <div v-if="isLoading" class="fixed left-0 top-0 z-30 h-screen w-screen bg-black">
-            <div class="loading-bar bg-lime duration-3000 h-1 w-full origin-left scale-x-75 transition-transform" />
+            <div class="loading-bar h-1 w-full origin-left scale-x-75 bg-lime transition-transform duration-3000" />
         </div>
     </transition>
 </template>

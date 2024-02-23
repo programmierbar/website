@@ -47,14 +47,14 @@
             <input v-model="spam" class="hidden" type="phone" name="phone" required />
 
             <!-- Error -->
-            <p v-if="formError" class="text-pink mt-10 text-base md:mt-12 md:text-xl lg:mt-16 lg:text-2xl">
+            <p v-if="formError" class="mt-10 text-base text-pink md:mt-12 md:text-xl lg:mt-16 lg:text-2xl">
                 {{ formError }}
             </p>
         </div>
 
         <!-- Button -->
         <button
-            class="lg:w-112 md:border-5 lg:border-6 border-lime after:-z-1 after:bg-lime relative h-14 w-64 overflow-hidden rounded-full border-4 text-sm font-black uppercase tracking-widest transition-colors duration-500 after:absolute after:left-0 after:top-0 after:h-full after:w-full after:origin-left after:rounded-full after:transition-transform md:h-16 md:w-80 md:text-lg lg:h-20 lg:text-xl"
+            class="relative h-14 w-64 overflow-hidden rounded-full border-4 border-lime text-sm font-black uppercase tracking-widest transition-colors duration-500 after:absolute after:left-0 after:top-0 after:-z-1 after:h-full after:w-full after:origin-left after:rounded-full after:bg-lime after:transition-transform md:h-16 md:w-80 md:border-5 md:text-lg lg:h-20 lg:w-112 lg:border-6 lg:text-xl"
             :class="[
                 formState === 'submitted' ? 'text-black' : 'text-lime',
                 formState === 'submitting'
@@ -62,7 +62,7 @@
                     : formState === 'submitted'
                       ? 'after:scale-x-100'
                       : 'after:scale-x-0',
-                formState === 'submitting' ? 'after:duration-3000 text-transparent' : 'after:duration-1000',
+                formState === 'submitting' ? 'text-transparent after:duration-3000' : 'after:duration-1000',
             ]"
             style="will-change: transform"
             type="submit"

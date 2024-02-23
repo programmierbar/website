@@ -3,7 +3,7 @@
         <!-- Scroll box -->
         <div
             ref="scrollBoxElement"
-            class="scroll-box 3xl:before:w-8 flex items-center overflow-x-auto overflow-y-hidden before:w-6 before:flex-shrink-0 after:w-6 after:flex-shrink-0 md:before:w-48 lg:after:w-8"
+            class="scroll-box flex items-center overflow-x-auto overflow-y-hidden before:w-6 before:flex-shrink-0 after:w-6 after:flex-shrink-0 md:before:w-48 lg:after:w-8 3xl:before:w-8"
             @mousedown="changeScrollPosition"
             @scroll="detectScrollState"
         >
@@ -12,7 +12,7 @@
                 <template #default="{ item, index, viewportItems, addViewportItem }">
                     <LazyListItem
                         :key="item.id"
-                        :class="index > 0 && '3xl:ml-32 ml-10 md:ml-16 lg:ml-20 xl:ml-24 2xl:ml-28'"
+                        :class="index > 0 && 'ml-10 md:ml-16 lg:ml-20 xl:ml-24 2xl:ml-28 3xl:ml-32'"
                         :item="item"
                         :viewport-items="viewportItems"
                         :add-viewport-item="addViewportItem"
@@ -29,11 +29,11 @@
             <!-- Podcast link -->
             <div
                 v-if="showPodcastLink && podcastCount"
-                class="md:border-b-5 lg:border-b-6 border-lime 3xl:ml-32 mb-14 ml-10 flex items-end border-b-4 pl-3 pr-5 md:mb-32 md:ml-16 lg:ml-20 lg:pl-6 lg:pr-10 xl:ml-24 2xl:ml-28"
+                class="mb-14 ml-10 flex items-end border-b-4 border-lime pl-3 pr-5 md:mb-32 md:ml-16 md:border-b-5 lg:ml-20 lg:border-b-6 lg:pl-6 lg:pr-10 xl:ml-24 2xl:ml-28 3xl:ml-32"
             >
                 <div class="relative -bottom-1 h-40 md:h-48 lg:-bottom-1.5 lg:h-60" v-html="podcastFigureIcon" />
                 <NuxtLink
-                    class="podcast-link hover:text-blue flex items-end space-x-4 whitespace-nowrap pb-2 text-sm font-black uppercase leading-relaxed tracking-widest text-white transition-colors md:space-x-5 md:text-lg md:leading-relaxed lg:space-x-6 lg:text-xl lg:leading-relaxed"
+                    class="podcast-link flex items-end space-x-4 whitespace-nowrap pb-2 text-sm font-black uppercase leading-relaxed tracking-widest text-white transition-colors hover:text-blue md:space-x-5 md:text-lg md:leading-relaxed lg:space-x-6 lg:text-xl lg:leading-relaxed"
                     to="/podcast"
                     data-cursor-hover
                 >
@@ -63,7 +63,7 @@
         <button
             v-for="index of 2"
             :key="index"
-            class="3xl:w-80 hidden md:absolute md:top-0 md:block md:h-full md:w-40 md:from-black md:to-transparent md:transition-opacity md:duration-500"
+            class="hidden md:absolute md:top-0 md:block md:h-full md:w-40 md:from-black md:to-transparent md:transition-opacity md:duration-500 3xl:w-80"
             :class="[
                 index === 1 ? 'md:left-0 md:bg-gradient-to-r' : 'md:right-0 md:bg-gradient-to-l',
                 ((index === 1 && scrollStartReached) || (index === 2 && scrollEndReached)) &&

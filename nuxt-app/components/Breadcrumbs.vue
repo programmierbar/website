@@ -1,12 +1,12 @@
 <template>
     <div>
-        <ul class="text-pink -m-0.5 flex flex-wrap text-sm font-black uppercase lg:text-lg">
-            <li v-for="breadcrumb of breadcrumbs" :key="breadcrumb.label" class="max-w-1/2-screen m-0.5 truncate">
+        <ul class="-m-0.5 flex flex-wrap text-sm font-black uppercase text-pink lg:text-lg">
+            <li v-for="breadcrumb of breadcrumbs" :key="breadcrumb.label" class="m-0.5 max-w-1/2-screen truncate">
                 //
                 <NuxtLink
                     v-if="breadcrumb.href"
                     :to="breadcrumb.href"
-                    class="hover:border-b-3 border-pink"
+                    class="border-pink hover:border-b-3"
                     data-cursor-hover
                 >
                     {{ breadcrumb.label }}

@@ -16,7 +16,7 @@
         <!-- Calendar -->
         <div
             v-if="calendar.isVisible"
-            class="bg-lime absolute right-0 top-0 flex h-16 w-16 flex-col items-center justify-center text-black"
+            class="absolute right-0 top-0 flex h-16 w-16 flex-col items-center justify-center bg-lime text-black"
             :class="variant === 'default' && 'lg:h-20 lg:w-20'"
         >
             <div class="text-sm font-light" :class="variant === 'default' && 'lg:text-base'">

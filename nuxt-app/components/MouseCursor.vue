@@ -2,30 +2,30 @@
     <div class="mouse-cursor pointer-events-none">
         <div
             ref="mainCursorElement"
-            class="z-70 fixed -left-4 -top-4 flex h-8 w-8 items-center justify-center before:fixed before:block before:h-8 before:w-8 before:rounded-full before:border-2 before:transition-all"
+            class="fixed -left-4 -top-4 z-70 flex h-8 w-8 items-center justify-center before:fixed before:block before:h-8 before:w-8 before:rounded-full before:border-2 before:transition-all"
             :class="[
                 !cursorMode || cursorMode === 'none' ? 'before:opacity-0' : 'before:opacity-100',
-                cursorMode === 'default' && 'before:bg-lime before:border-lime',
+                cursorMode === 'default' && 'before:border-lime before:bg-lime',
                 cursorMode === 'black' && 'before:border-black before:bg-black',
                 cursorMode &&
                     ['hover', 'more', 'arrow-left', 'arrow-right'].includes(cursorMode) &&
-                    'before:bg-pink before:border-pink before:bg-opacity-0',
+                    'before:border-pink before:bg-pink before:bg-opacity-0',
                 cursorMode &&
                     ['hover', 'hover-blue', 'arrow-left', 'arrow-right'].includes(cursorMode) &&
                     'before:scale-200',
-                cursorMode === 'hover-blue' && 'before:bg-blue before:border-blue before:bg-opacity-0',
+                cursorMode === 'hover-blue' && 'before:border-blue before:bg-blue before:bg-opacity-0',
                 cursorMode === 'more' && 'before:scale-250',
             ]"
         >
-            <span v-if="cursorMode === 'more'" class="text-blue relative top-px text-sm font-black uppercase">
+            <span v-if="cursorMode === 'more'" class="relative top-px text-sm font-black uppercase text-blue">
                 Mehr
             </span>
-            <div v-if="cursorMode === 'arrow-left'" class="text-blue relative -left-12 h-8" v-html="angleLeftIcon" />
-            <div v-if="cursorMode === 'arrow-right'" class="text-blue relative left-12 h-8" v-html="angleRightIcon" />
+            <div v-if="cursorMode === 'arrow-left'" class="relative -left-12 h-8 text-blue" v-html="angleLeftIcon" />
+            <div v-if="cursorMode === 'arrow-right'" class="relative left-12 h-8 text-blue" v-html="angleRightIcon" />
         </div>
         <div
             ref="delayedDotElement"
-            class="z-70 fixed -left-1 -top-1 h-2 w-2 rounded-full"
+            class="fixed -left-1 -top-1 z-70 h-2 w-2 rounded-full"
             :class="[
                 cursorMode === 'black' ? 'bg-black' : 'bg-lime',
                 (!cursorMode ||

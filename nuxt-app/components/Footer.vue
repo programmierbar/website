@@ -13,7 +13,7 @@
                 <ul class="hidden space-x-8 lg:flex">
                     <li v-for="mainMenuItem in mainMenuItems" :key="mainMenuItem.href">
                         <NuxtLink
-                            class="hover:text-lime whitespace-nowrap text-xl font-black text-white xl:text-2xl"
+                            class="whitespace-nowrap text-xl font-black text-white hover:text-lime xl:text-2xl"
                             data-cursor-hover
                             :to="mainMenuItem.href"
                         >
@@ -27,7 +27,7 @@
                     <ul class="mt-6 flex space-x-5 lg:mt-0 lg:space-x-8">
                         <li v-for="subMenuItem in subMenuItems" :key="subMenuItem.href">
                             <NuxtLink
-                                class="hover:text-lime text-sm text-white hover:underline lg:text-xl"
+                                class="text-sm text-white hover:text-lime hover:underline lg:text-xl"
                                 data-cursor-hover
                                 :to="subMenuItem.href"
                                 >{{ subMenuItem.label }}</NuxtLink

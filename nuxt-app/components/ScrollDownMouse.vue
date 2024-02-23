@@ -1,7 +1,7 @@
 <template>
     <div class="relative flex justify-center">
         <button
-            class="lg:border-6 border-lime absolute -top-10 z-20 hidden h-16 w-8 justify-center rounded-full border-4 md:flex lg:-top-14 lg:h-24 lg:w-12"
+            class="absolute -top-10 z-20 hidden h-16 w-8 justify-center rounded-full border-4 border-lime md:flex lg:-top-14 lg:h-24 lg:w-12 lg:border-6"
             :class="!opacity && 'invisible'"
             :style="{ opacity }"
             type="button"
@@ -9,7 +9,7 @@
             data-cursor-hover
             @click="scrollDown"
         >
-            <div class="animate-scroll bg-lime h-4 w-1.5 origin-top lg:h-6 lg:w-2" />
+            <div class="animate-scroll h-4 w-1.5 origin-top bg-lime lg:h-6 lg:w-2" />
         </button>
     </div>
 </template>

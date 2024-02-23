@@ -1,8 +1,8 @@
 <template>
-    <div v-if="isVisible" class="bg-pink fixed bottom-0 left-0 z-50 w-full">
+    <div v-if="isVisible" class="fixed bottom-0 left-0 z-50 w-full bg-pink">
         <div class="container flex flex-col space-y-5 p-6 lg:flex-row lg:space-x-8 lg:space-y-0 lg:p-8 xl:space-x-24">
             <!-- Text -->
-            <p class="text-lime text-sm font-bold lg:text-lg">
+            <p class="text-sm font-bold text-lime lg:text-lg">
                 Zur fortlaufenden Verbesserung unserer Website und deines Nutzererlebnisses verwenden wir Cookies, in
                 denen Informationen über deinen Besuch auf unserer Website gespeichert werden. Die durch die Cookies
                 erhobenen Daten werden durch uns sowie durch dritte Dienstleister (Google Analytics) ausgewertet. Mit
@@ -16,10 +16,10 @@
                 <button
                     v-for="number of 2"
                     :key="number"
-                    class="lg:border-3 w-28 rounded-full border-2 pb-0.5 pt-1 text-sm font-black transition-colors lg:w-48 lg:pb-1.5 lg:pt-2 lg:text-xl"
+                    class="w-28 rounded-full border-2 pb-0.5 pt-1 text-sm font-black transition-colors lg:w-48 lg:border-3 lg:pb-1.5 lg:pt-2 lg:text-xl"
                     :class="
                         number === 1
-                            ? 'hover:bg-lime focus:bg-lime border-lime text-lime hover:text-black focus:text-black'
+                            ? 'border-lime text-lime hover:bg-lime hover:text-black focus:bg-lime focus:text-black'
                             : 'border-black text-black hover:bg-black hover:text-white focus:bg-black focus:text-white'
                     "
                     type="button"

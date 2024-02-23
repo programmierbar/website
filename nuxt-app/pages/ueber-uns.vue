@@ -1,13 +1,13 @@
 <template>
     <div v-if="aboutPage && podcastCrewMembers && behindTheScenesMembers">
-        <section class="md:overflow-unset relative overflow-hidden">
+        <section class="relative overflow-hidden md:overflow-unset">
             <!-- Page cover -->
             <PageCoverImage :cover-image="aboutPage.cover_image" />
-            <div class="3xl:px-8 container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8">
+            <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
                 <!-- Page intro -->
-                <SectionHeading class="md:pt-2/5-screen lg:pt-1/2-screen mt-8 md:mt-0" element="h1">
+                <SectionHeading class="mt-8 md:mt-0 md:pt-2/5-screen lg:pt-1/2-screen" element="h1">
                     {{ aboutPage.podcast_crew_heading }}
                 </SectionHeading>
                 <InnerHtml
@@ -31,7 +31,7 @@
 
         <!-- Behind the scenes members -->
         <section class="relative mb-20 md:mb-40 lg:mb-60">
-            <div class="3xl:px-8 container px-6 md:pl-48 lg:pr-8">
+            <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
                 <SectionHeading class="mt-20 md:mt-0 md:pt-32" element="h2">
                     {{ aboutPage.behind_the_scenes_heading }}
                 </SectionHeading>

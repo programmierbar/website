@@ -7,10 +7,10 @@
                     :class="[
                         variant === 'default' && 'hover:bg-lime hover:selection:bg-black hover:selection:text-white',
                         variant === 'pick_of_the_day_card' &&
-                            'xs:text-sm pt-0.75 md:pt-1.25 lg:pt-0.75 xl:pt-1.25 border-2 border-gray-700 px-3 pb-0.5 text-xs hover:bg-opacity-0 md:px-4 md:pb-1 lg:m-1.5 lg:px-3 lg:pb-0.5 xl:m-2 xl:px-4 xl:pb-1 xl:text-base',
+                            'border-2 border-gray-700 px-3 pb-0.5 pt-0.75 text-xs hover:bg-opacity-0 xs:text-sm md:px-4 md:pb-1 md:pt-1.25 lg:m-1.5 lg:px-3 lg:pb-0.5 lg:pt-0.75 xl:m-2 xl:px-4 xl:pb-1 xl:pt-1.25 xl:text-base',
                         (variant === 'default' || variant === 'pick_of_the_day_card') && 'hover:text-black',
                         (variant === 'default' || variant === 'tag_filter') &&
-                            'pt-1.25 px-4 pb-1 text-sm md:px-5 md:text-base lg:text-lg',
+                            'px-4 pb-1 pt-1.25 text-sm md:px-5 md:text-base lg:text-lg',
                         variant === 'tag_filter' && tag.is_active
                             ? 'bg-lime text-black selection:bg-black selection:text-white'
                             : 'bg-gray-700 text-white',

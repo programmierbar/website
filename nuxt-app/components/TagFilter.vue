@@ -1,7 +1,7 @@
 <template>
     <div
         ref="tagFilterElement"
-        class="3xl:top-9 sticky top-24 z-20 lg:top-32"
+        class="sticky top-24 z-20 lg:top-32 3xl:top-9"
         :class="!filterIsOpen && 'pointer-events-none'"
     >
         <div class="relative h-8 md:h-9 lg:h-11">
@@ -9,12 +9,12 @@
                 <div class="relative min-h-8 w-full overflow-hidden md:min-h-9 lg:min-h-11">
                     <!-- Background box -->
                     <div
-                        class="md:border-3 border-lime absolute right-0 top-0 rounded-2xl border-2 bg-black transition-all duration-200 md:rounded-3xl lg:border-4 xl:duration-300"
+                        class="absolute right-0 top-0 rounded-2xl border-2 border-lime bg-black transition-all duration-200 md:rounded-3xl md:border-3 lg:border-4 xl:duration-300"
                         :class="filterIsOpen ? 'h-full w-full' : 'h-8 w-20 md:h-9 md:w-24 lg:h-11 lg:w-28'"
                     >
                         <!-- Open or close button -->
                         <button
-                            class="text-lime pointer-events-auto absolute bottom-0 left-0 z-20 flex h-full max-h-8 items-center rounded-full bg-black bg-opacity-40 px-2.5 transition-all duration-200 md:max-h-9 md:px-3 lg:max-h-11 lg:px-3.5 xl:duration-300"
+                            class="pointer-events-auto absolute bottom-0 left-0 z-20 flex h-full max-h-8 items-center rounded-full bg-black bg-opacity-40 px-2.5 text-lime transition-all duration-200 md:max-h-9 md:px-3 lg:max-h-11 lg:px-3.5 xl:duration-300"
                             :class="filterIsOpen ? '-translate-y-2 translate-x-2' : 'w-full'"
                             type="button"
                             data-cursor-hover
@@ -36,7 +36,7 @@
 
                     <!-- Tag list -->
                     <TagList
-                        class="max-h-1/2-screen md:my-0.75 relative z-10 my-0.5 origin-top-right overflow-y-auto p-5 pb-12 transition duration-200 md:p-6 md:pb-14 lg:my-1 lg:p-7 lg:pb-16 xl:duration-300"
+                        class="relative z-10 my-0.5 max-h-1/2-screen origin-top-right overflow-y-auto p-5 pb-12 transition duration-200 md:my-0.75 md:p-6 md:pb-14 lg:my-1 lg:p-7 lg:pb-16 xl:duration-300"
                         :class="!filterIsOpen && 'invisible scale-0 opacity-0'"
                         :style="!filterIsOpen ? 'transition: visibility 0s .2s, opacity .2s, transform .2s' : undefined"
                         :tags="tags"

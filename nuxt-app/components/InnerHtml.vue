@@ -36,7 +36,7 @@ export default defineComponent({
     @apply font-black;
 }
 .inner-html a {
-    @apply text-lime hover:text-blue font-bold transition-colors;
+    @apply font-bold text-lime transition-colors hover:text-blue;
 }
 .inner-html.pick-of-the-day-card *::selection {
     @apply bg-black text-white;

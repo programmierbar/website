@@ -2,7 +2,7 @@
     <header :class="menuIsOpen && 'menu-is-open'">
         <!-- Logo -->
         <NuxtLink
-            class="z-60 fixed left-0 top-5 bg-opacity-75 py-3 pl-6 pr-4 backdrop-blur backdrop-filter transition-colors duration-300 lg:pb-4 lg:pl-8 lg:pr-5 lg:pt-5"
+            class="fixed left-0 top-5 z-60 bg-opacity-75 py-3 pl-6 pr-4 backdrop-blur backdrop-filter transition-colors duration-300 lg:pb-4 lg:pl-8 lg:pr-5 lg:pt-5"
             :class="menuIsOpen ? 'bg-gray-900' : 'bg-black'"
             to="/"
             data-cursor-hover
@@ -14,13 +14,13 @@
 
         <!-- Search form -->
         <form
-            class="z-60 right-18 fixed top-7 flex bg-opacity-75 backdrop-blur backdrop-filter transition-all duration-300 lg:right-24"
-            :class="[searchIsOpen ? 'xs:w-60 w-1/2 md:w-80' : 'w-10 lg:w-14', menuIsOpen ? 'bg-gray-900' : 'bg-black']"
+            class="fixed right-18 top-7 z-60 flex bg-opacity-75 backdrop-blur backdrop-filter transition-all duration-300 lg:right-24"
+            :class="[searchIsOpen ? 'w-1/2 xs:w-60 md:w-80' : 'w-10 lg:w-14', menuIsOpen ? 'bg-gray-900' : 'bg-black']"
             @submit.prevent="handleSearch"
         >
             <input
                 ref="searchInputElement"
-                class="selection:bg-blue text-blue w-full appearance-none rounded-none border-b-2 border-white bg-transparent text-center text-lg font-light placeholder-blue-600 outline-none selection:text-black lg:text-2xl"
+                class="w-full appearance-none rounded-none border-b-2 border-white bg-transparent text-center text-lg font-light text-blue placeholder-blue-600 outline-none selection:bg-blue selection:text-black lg:text-2xl"
                 :class="!searchIsOpen && 'invisible transition-all delay-300'"
                 type="text"
                 :placeholder="searchPlaceholder"
@@ -37,7 +37,7 @@
 
         <!-- Burger icon -->
         <button
-            class="z-60 group fixed right-4 top-7 box-content h-8 w-6 rounded-none bg-opacity-75 px-2 py-1 backdrop-blur backdrop-filter transition-colors duration-300 lg:right-5 lg:h-10 lg:w-8 lg:px-3 lg:py-2"
+            class="group fixed right-4 top-7 z-60 box-content h-8 w-6 rounded-none bg-opacity-75 px-2 py-1 backdrop-blur backdrop-filter transition-colors duration-300 lg:right-5 lg:h-10 lg:w-8 lg:px-3 lg:py-2"
             :class="menuIsOpen ? 'rotate-180 bg-gray-900' : 'bg-black'"
             type="button"
             data-cursor-hover
@@ -55,7 +55,7 @@
                     :class="
                         menuIsOpen || searchIsOpen
                             ? 'translate-x-0 translate-y-0 rotate-45 scale-x-100'
-                            : 'translate-x-3/20 scale-x-70 translate-y-1.5 md:group-hover:translate-x-0 md:group-hover:scale-x-100 lg:translate-y-2'
+                            : 'translate-x-3/20 translate-y-1.5 scale-x-70 md:group-hover:translate-x-0 md:group-hover:scale-x-100 lg:translate-y-2'
                     "
                 />
             </div>
@@ -85,7 +85,7 @@
                         }"
                     >
                         <NuxtLink
-                            class="hover:text-lime block origin-right font-bold transition-transform hover:scale-x-105"
+                            class="block origin-right font-bold transition-transform hover:scale-x-105 hover:text-lime"
                             :class="route.path === mainMenuItem.href ? 'text-lime' : 'text-white'"
                             data-cursor-hover
                             :to="mainMenuItem.href"
@@ -106,7 +106,7 @@
                     <ul class="flex items-end space-x-6 lg:space-x-8">
                         <li v-for="subMenuItem in subMenuItems" :key="subMenuItem.href">
                             <NuxtLink
-                                class="hover:text-lime flex text-sm text-white hover:underline lg:text-xl"
+                                class="flex text-sm text-white hover:text-lime hover:underline lg:text-xl"
                                 style="line-height: 1"
                                 data-cursor-hover
                                 :to="subMenuItem.href"

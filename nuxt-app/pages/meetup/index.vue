@@ -3,11 +3,11 @@
         <section class="relative">
             <!-- Page cover -->
             <PageCoverImage :cover-image="meetupPage.cover_image" />
-            <div class="3xl:px-8 container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8">
+            <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
                 <!-- Page intro -->
-                <SectionHeading class="md:pt-2/5-screen lg:pt-1/2-screen mt-8 md:mt-0" element="h1">
+                <SectionHeading class="mt-8 md:mt-0 md:pt-2/5-screen lg:pt-1/2-screen" element="h1">
                     {{ meetupPage.intro_heading }}
                 </SectionHeading>
                 <InnerHtml
@@ -21,7 +21,7 @@
 
                 <!-- Corona info -->
                 <InnerHtml
-                    class="text-lime lg::mt-32 mt-10 space-y-6 text-sm font-bold italic leading-relaxed md:mt-20 md:text-lg md:leading-relaxed lg:text-xl lg:leading-relaxed"
+                    class="lg::mt-32 mt-10 space-y-6 text-sm font-bold italic leading-relaxed text-lime md:mt-20 md:text-lg md:leading-relaxed lg:text-xl lg:leading-relaxed"
                     :html="meetupPage.corona_text"
                 />
             </div>
@@ -29,7 +29,7 @@
 
         <!-- Meetups -->
         <section class="relative mb-14 mt-12 md:mb-32 md:mt-28 lg:mb-52 lg:mt-40">
-            <div class="3xl:px-8 container px-6 md:pl-48 lg:pr-8">
+            <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
                 <SectionHeading element="h2">
                     {{ meetupPage.meetup_heading }}
                 </SectionHeading>

@@ -1,14 +1,14 @@
 <template>
     <div ref="bubbleElement" class="transition-transform duration-500" :class="isFocused && 'scale-110'">
         <div
-            class="xs:w-52 2xl:w-112 3xl:w-120 w-44 transition-transform ease-linear sm:w-64 lg:w-80 xl:w-96"
+            class="w-44 transition-transform ease-linear xs:w-52 sm:w-64 lg:w-80 xl:w-96 2xl:w-112 3xl:w-120"
             :class="isFocused ? 'duration-200' : 'duration-400'"
             :style="parallaxStyle"
         >
-            <div class="xs:h-52 2xl:h-112 3xl:h-120 h-44 sm:h-64 lg:h-80 xl:h-96">
+            <div class="h-44 xs:h-52 sm:h-64 lg:h-80 xl:h-96 2xl:h-112 3xl:h-120">
                 <div ref="motionElement" class="h-full scale-150 rounded-full">
                     <div
-                        class="scale-65 h-full rounded-full"
+                        class="h-full scale-65 rounded-full"
                         @mouseenter="() => setIsFocused(true)"
                         @mouseleave="() => setIsFocused(false)"
                     >
@@ -48,7 +48,7 @@
                                     :class="isFocused ? 'opacity-100' : 'opacity-0'"
                                 >
                                     <div
-                                        class="xs:text-sm line-clamp-2 text-center text-xs font-light text-white sm:text-base md:line-clamp-none lg:text-lg xl:text-xl 2xl:text-2xl"
+                                        class="line-clamp-2 text-center text-xs font-light text-white xs:text-sm sm:text-base md:line-clamp-none lg:text-lg xl:text-xl 2xl:text-2xl"
                                         style="hyphens: auto"
                                     >
                                         {{ speaker.occupation }}
@@ -62,7 +62,7 @@
 
             <!-- Name -->
             <h2
-                class="xs:text-base mt-6 text-center text-sm font-light italic text-white sm:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl"
+                class="mt-6 text-center text-sm font-light italic text-white xs:text-base sm:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl"
                 :class="isFocused && 'font-normal'"
             >
                 {{ fullName }}

@@ -1,7 +1,7 @@
 <template>
     <div class="transition-all" :class="podcastPlayer.podcast ? 'h-16 xl:h-20' : 'invisible h-0'">
         <div
-            class="bg-lime fixed bottom-0 left-0 z-40 flex w-full flex-col transition-transform duration-300 xl:h-20 xl:flex-row xl:space-x-16 xl:px-8"
+            class="fixed bottom-0 left-0 z-40 flex w-full flex-col bg-lime transition-transform duration-300 xl:h-20 xl:flex-row xl:space-x-16 xl:px-8"
             :class="
                 !podcastPlayer.podcast
                     ? 'translate-y-full'
@@ -54,7 +54,7 @@
                         <div class="flex h-full w-8 justify-center">
                             <button
                                 v-if="podcastPlayer.paused"
-                                class="p-1.25 h-full"
+                                class="h-full p-1.25"
                                 type="button"
                                 data-cursor-hover
                                 @click.stop="podcastPlayer.play"
@@ -62,7 +62,7 @@
                             />
                             <button
                                 v-else
-                                class="p-1.25 h-full"
+                                class="h-full p-1.25"
                                 type="button"
                                 data-cursor-hover
                                 @click.stop="podcastPlayer.pause"
@@ -329,7 +329,7 @@ watch(
     @apply h-1.25 rounded-none;
 }
 .current-time-input::-moz-range-progress {
-    @apply h-1.25 bg-pink rounded-none;
+    @apply h-1.25 rounded-none bg-pink;
 }
 .current-time-input::-moz-range-track {
     @apply h-1.25 rounded-none bg-black;
@@ -347,10 +347,10 @@ watch(
 }
 
 .volume-input::-webkit-slider-thumb {
-    @apply bg-blue -mt-1 h-3 w-3;
+    @apply -mt-1 h-3 w-3 bg-blue;
 }
 .volume-input::-moz-range-thumb {
-    @apply bg-blue -mt-1 h-3 w-3;
+    @apply -mt-1 h-3 w-3 bg-blue;
 }
 .volume-input::-webkit-slider-runnable-track {
     --progress-color: theme('colors.blue.500');
@@ -358,7 +358,7 @@ watch(
     @apply h-1;
 }
 .volume-input::-moz-range-progress {
-    @apply bg-blue h-1;
+    @apply h-1 bg-blue;
 }
 .volume-input::-moz-range-track {
     @apply h-1 bg-black;

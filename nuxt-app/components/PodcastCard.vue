@@ -19,7 +19,7 @@
         <div class="mt-3 flex space-x-4 transition-all duration-500">
             <!-- Podcast play or pause button -->
             <button
-                class="text-lime h-10 md:h-12"
+                class="h-10 text-lime md:h-12"
                 type="button"
                 data-cursor-hover
                 @click="playOrPausePodcast"

@@ -3,12 +3,12 @@
         <article class="relative">
             <!-- Overlay gradient top -->
             <div
-                class="-z-1 absolute left-0 top-0 h-32 w-full bg-gradient-to-b to-transparent opacity-40"
+                class="absolute left-0 top-0 -z-1 h-32 w-full bg-gradient-to-b to-transparent opacity-40"
                 :class="color === 'lime' ? 'from-lime' : color === 'pink' ? 'from-pink' : 'from-blue'"
             />
 
             <!-- Speaker content -->
-            <div class="3xl:px-8 container px-6 pt-32 md:pl-48 md:pt-40 lg:pr-8 lg:pt-56 2xl:pt-64">
+            <div class="container px-6 pt-32 md:pl-48 md:pt-40 lg:pr-8 lg:pt-56 2xl:pt-64 3xl:px-8">
                 <div class="flex items-center justify-between space-x-4">
                     <Breadcrumbs :breadcrumbs="breadcrumbs" />
                     <!-- <LikeButton /> -->
@@ -17,11 +17,11 @@
                 <SectionHeading class="hidden md:block" element="h2"> Informationen </SectionHeading>
 
                 <div
-                    class="xs:flex-row xs:items-center xs:space-x-10 xs:space-y-0 mt-14 flex flex-col space-y-10 md:mt-24 md:space-x-14 lg:space-x-16 xl:mt-36"
+                    class="mt-14 flex flex-col space-y-10 xs:flex-row xs:items-center xs:space-x-10 xs:space-y-0 md:mt-24 md:space-x-14 lg:space-x-16 xl:mt-36"
                 >
                     <!-- Profile image -->
                     <DirectusImage
-                        class="2xl:w-112 3xl:w-120 2xl:h-112 3xl:h-120 h-44 w-44 flex-shrink-0 overflow-hidden rounded-full object-cover sm:h-52 sm:w-52 lg:h-80 lg:w-80 xl:h-96 xl:w-96"
+                        class="h-44 w-44 flex-shrink-0 overflow-hidden rounded-full object-cover sm:h-52 sm:w-52 lg:h-80 lg:w-80 xl:h-96 xl:w-96 2xl:h-112 2xl:w-112 3xl:h-120 3xl:w-120"
                         :image="speaker.profile_image"
                         :alt="fullName"
                         sizes="xs:176px sm:208px lg:320px xl:384px 2xl:448 3xl:480px"
@@ -88,7 +88,7 @@
             <PodcastSlider class="mt-12 md:mt-0" :podcasts="speaker.podcasts" />
             <div
                 v-if="podcastCountString"
-                class="3xl:px-8 mt-12 flex justify-center px-6 md:mt-16 md:pl-48 lg:mt-20 lg:pr-8"
+                class="mt-12 flex justify-center px-6 md:mt-16 md:pl-48 lg:mt-20 lg:pr-8 3xl:px-8"
             >
                 <LinkButton href="/podcast"> Alle {{ podcastCountString }} Podcast-Folgen </LinkButton>
             </div>
@@ -96,7 +96,7 @@
             <!-- Picks of the Day -->
             <div
                 v-if="speaker.picks_of_the_day.length"
-                class="3xl:px-8 container mt-20 px-6 md:mt-32 md:pl-48 lg:mt-40 lg:pr-8"
+                class="container mt-20 px-6 md:mt-32 md:pl-48 lg:mt-40 lg:pr-8 3xl:px-8"
             >
                 <PickOfTheDayList :picks-of-the-day="speaker.picks_of_the_day" />
                 <div v-if="pickOfTheDayCountString" class="mt-12 flex justify-center md:mt-16 lg:mt-20">
@@ -108,7 +108,7 @@
         </section>
 
         <!-- Feedback CTA -->
-        <FeedbackSection class="3xl:px-0 mb-20 mt-16 md:mb-32 md:mt-24 md:pl-40 lg:mb-40 lg:mt-32" />
+        <FeedbackSection class="mb-20 mt-16 md:mb-32 md:mt-24 md:pl-40 lg:mb-40 lg:mt-32 3xl:px-0" />
     </div>
 </template>
 

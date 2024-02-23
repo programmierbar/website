@@ -23,7 +23,7 @@
             </div>
 
             <!-- Name and description -->
-            <div class="group-hover:text-blue text-white">
+            <div class="text-white group-hover:text-blue">
                 <div class="flex items-center space-x-4">
                     <h3 class="text-lg font-black md:text-xl lg:text-2xl">
                         {{ pickOfTheDay.name }}

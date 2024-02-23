@@ -5,7 +5,7 @@
             <div class="absolute left-0 top-0 h-full w-full bg-white">
                 <!-- Link & heading -->
                 <a
-                    class="bg-lime absolute z-10 m-4 inline-flex items-center space-x-3 px-4 pb-3 pt-4 md:m-6 lg:m-4 xl:m-6"
+                    class="absolute z-10 m-4 inline-flex items-center space-x-3 bg-lime px-4 pb-3 pt-4 md:m-6 lg:m-4 xl:m-6"
                     :href="pickOfTheDay.website_url"
                     target="_blank"
                     rel="noreferrer"
@@ -45,7 +45,7 @@
             <div class="relative w-full lg:h-full">
                 <!-- Background color -->
                 <div
-                    class="bg-lime absolute left-0 top-0 h-full w-full lg:origin-top-left lg:scale-0 lg:transition-transform lg:duration-300 lg:group-hover:scale-100"
+                    class="absolute left-0 top-0 h-full w-full bg-lime lg:origin-top-left lg:scale-0 lg:transition-transform lg:duration-300 lg:group-hover:scale-100"
                 />
 
                 <!-- Content -->
@@ -58,7 +58,7 @@
                         <!-- Podcast episode -->
                         <NuxtLink
                             v-if="pickOfTheDay.podcast"
-                            class="xs:text-sm text-xs italic text-black underline lg:translate-y-4 lg:transition-transform lg:delay-300 lg:duration-0 lg:group-hover:translate-y-0 lg:group-hover:delay-200 lg:group-hover:duration-500 xl:text-base"
+                            class="text-xs italic text-black underline xs:text-sm lg:translate-y-4 lg:transition-transform lg:delay-300 lg:duration-0 lg:group-hover:translate-y-0 lg:group-hover:delay-200 lg:group-hover:duration-500 xl:text-base"
                             :to="podcastHref ?? undefined"
                             data-cursor-hover
                         >
@@ -68,7 +68,7 @@
 
                         <!-- Description -->
                         <InnerHtml
-                            class="xs:text-base lg:group-hover:delay-400 text-sm text-black lg:translate-y-3 lg:opacity-0 lg:transition lg:delay-300 lg:duration-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100 lg:group-hover:duration-500 xl:text-lg 2xl:text-xl"
+                            class="text-sm text-black xs:text-base lg:translate-y-3 lg:opacity-0 lg:transition lg:delay-300 lg:duration-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100 lg:group-hover:delay-400 lg:group-hover:duration-500 xl:text-lg 2xl:text-xl"
                             :html="pickOfTheDay.description"
                             variant="pick_of_the_day_card"
                         />

@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-lime flex h-20 items-center justify-center overflow-hidden lg:h-36" data-cursor-black>
+    <div class="flex h-20 items-center justify-center overflow-hidden bg-lime lg:h-36" data-cursor-black>
         <p
             class="news-ticker whitespace-nowrap text-xl italic selection:bg-black selection:text-white lg:text-4xl"
             :style="style"

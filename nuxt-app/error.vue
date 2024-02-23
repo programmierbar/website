@@ -6,7 +6,7 @@
             <LoadingScreen />
             <div class="relative">
                 <div
-                    class="3xl:px-8 container px-6 pb-20 pt-32 md:pb-32 md:pl-48 md:pt-40 lg:pb-52 lg:pr-8 lg:pt-56 2xl:pt-64"
+                    class="container px-6 pb-20 pt-32 md:pb-32 md:pl-48 md:pt-40 lg:pb-52 lg:pr-8 lg:pt-56 2xl:pt-64 3xl:px-8"
                 >
                     <Breadcrumbs :breadcrumbs="[{ label: 'Seite nicht gefunden' }]" />
 
