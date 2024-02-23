@@ -267,6 +267,7 @@ export interface DirectusPodcastPage {
     deep_dive_heading: string
     cto_special_heading: string
     news_heading: string
+    other_heading: string
 }
 
 export interface DirectusMeetupPage {
