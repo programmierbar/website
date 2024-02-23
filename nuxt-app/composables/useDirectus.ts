@@ -8,6 +8,7 @@ export type LatestPodcasts = Pick<
 >[]
 export type CollectionName = 'members' | 'speakers' | 'tags' | 'podcasts' | 'meetups' | 'picks_of_the_day'
 export type Tag = { name: string; count: number }
+export type DirectusTag = { tag: { id: string; name: string } }
 
 export function useDirectus() {
     async function getHomepage() {

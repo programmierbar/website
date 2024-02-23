@@ -1,9 +1,8 @@
-import type { Tag } from '~/composables/useDirectus'
+import type { DirectusTag, Tag } from '~/composables/useDirectus'
+import { ADD_TAG_FILTER_EVENT_ID, REMOVE_TAG_FILTER_EVENT_ID } from '~/config'
+import { trackGoal } from '~/helpers'
 import type { Ref } from 'vue'
 import { computed, reactive, ref, watch } from 'vue'
-import { ADD_TAG_FILTER_EVENT_ID, REMOVE_TAG_FILTER_EVENT_ID } from '../config'
-import { trackGoal } from '../helpers'
-import type { TagItem } from '../types'
 
 interface LocalTag extends Tag {
     is_active: boolean
@@ -50,7 +49,7 @@ export function useTagFilterNew<Items>(items: Ref<Items[] | null | undefined>, t
         if (activeTags.length) {
             return (
                 items.value?.filter((entityItem) => {
-                    return entityItem.tags?.some((entityTag: TagItem) => {
+                    return entityItem.tags?.some((entityTag: DirectusTag) => {
                         return activeTags.some((tag) => tag.name === entityTag.tag?.name)
                     })
                 }) || []
