@@ -27,6 +27,22 @@ export function useDirectus() {
         )
     }
 
+    async function getMeetupPage() {
+        return await directus.request(
+            readSingleton('meetup_page', {
+                fields: ['*'],
+            })
+        )
+    }
+
+    async function getHallOfFamePage() {
+        return await directus.request(
+            readSingleton('hall_of_fame_page', {
+                fields: ['*'],
+            })
+        )
+    }
+
     async function getAboutPage() {
         return await directus.request(
             readSingleton('about_page', {
@@ -163,8 +179,10 @@ export function useDirectus() {
 
     return {
         getHomepage,
-        getPicksOfTheDayPage,
         getPodcastPage,
+        getMeetupPage,
+        getHallOfFamePage,
+        getPicksOfTheDayPage,
         getAboutPage,
         getPrivacyPage,
         getImprintPage,
