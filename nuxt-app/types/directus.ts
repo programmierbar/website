@@ -260,7 +260,7 @@ export interface DirectusHomePage {
 export interface DirectusPodcastPage {
     meta_title: string
     meta_description: string
-    cover_image: string | DirectusFileItem
+    cover_image: DirectusFileItem
     intro_heading: string
     intro_text_1: string
     intro_text_2: string

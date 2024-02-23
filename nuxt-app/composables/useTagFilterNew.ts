@@ -9,10 +9,7 @@ interface LocalTag extends Tag {
     is_active: boolean
 }
 
-export function useTagFilterNew<Items extends { tags: any }>(
-    items: Ref<Items[] | null | undefined>,
-    tags: Ref<Tag[] | undefined>
-) {
+export function useTagFilterNew<Items>(items: Ref<Items[] | null | undefined>, tags: Ref<Tag[] | undefined>) {
     const reactiveTags = ref<LocalTag[]>([])
 
     // Track analytic events

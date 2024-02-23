@@ -3,11 +3,11 @@
         <section class="relative">
             <!-- Page cover -->
             <PageCoverImage :cover-image="podcastPage.cover_image" />
-            <div class="3xl:px-8 container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8">
+            <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
                 <!-- Page intro -->
-                <SectionHeading class="md:pt-2/5-screen lg:pt-1/2-screen mt-8 md:mt-0" element="h1">
+                <SectionHeading class="mt-8 md:mt-0 md:pt-2/5-screen lg:pt-1/2-screen" element="h1">
                     {{ podcastPage.intro_heading }}
                 </SectionHeading>
                 <InnerHtml
@@ -24,7 +24,7 @@
         <div>
             <!-- Tag Filter -->
             <TagFilter
-                class="3xl:px-8 container mt-8 px-6 md:mt-20 md:pl-48 lg:mt-32 lg:pr-8"
+                class="container mt-8 px-6 md:mt-20 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8"
                 :tags="tagFilter.tags"
                 :toggle-tag="tagFilter.toggleTag"
             />
@@ -71,52 +71,29 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useLoadingScreen, usePageMeta, useTagFilter } from '../../composables'
-import { directus } from '../../services'
-import type { PodcastItem, PodcastPage, TagItem } from '../../types'
+import { useDirectus, type LatestPodcasts } from '~/composables/useDirectus'
+import { useTagFilterNew } from '~/composables/useTagFilterNew'
+import { computed, type ComputedRef } from 'vue'
+import { useLoadingScreen, usePageMeta } from '../../composables'
 
 const breadcrumbs = [{ label: 'Podcast' }]
+const directus = useDirectus()
 
 // Query about page and members
 const { data: pageData } = useAsyncData(async () => {
-    const [podcastPage, podcasts] = await Promise.all([
-        // Podcast page
-        directus.singleton('podcast_page').read({ fields: '*.*' }) as Promise<PodcastPage>,
-
-        // Podcasts
-        (
-            await directus.items('podcasts').readByQuery({
-                fields: [
-                    'id',
-                    'slug',
-                    'published_on',
-                    'type',
-                    'number',
-                    'title',
-                    'cover_image.*',
-                    'audio_url',
-                    'tags.tag.id',
-                    'tags.tag.name',
-                ],
-                sort: ['-published_on'],
-                limit: -1,
-            })
-        ).data?.map(({ tags, ...rest }) => ({
-            ...rest,
-            tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
-        })) as Pick<
-            PodcastItem,
-            'id' | 'slug' | 'published_on' | 'type' | 'number' | 'title' | 'cover_image' | 'audio_url' | 'tags'
-        >[],
+    const [podcastPage, podcasts, tags] = await Promise.all([
+        directus.getPodcastPage(),
+        directus.getLatestPodcasts(-1),
+        directus.getTopTagsForCollection('podcasts'),
     ])
-    return { podcastPage, podcasts }
+
+    return { podcastPage, podcasts, tags }
 })
 
 // Extract about page and members from page data
 const podcastPage = computed(() => pageData.value?.podcastPage)
-const podcasts = computed(() => pageData.value?.podcasts)
-
+const podcasts: ComputedRef<LatestPodcasts | undefined> = computed(() => pageData.value?.podcasts)
+const tags = computed(() => pageData.value?.tags)
 // Set loading screen
 useLoadingScreen(podcastPage, podcasts)
 
@@ -124,7 +101,7 @@ useLoadingScreen(podcastPage, podcasts)
 usePageMeta(podcastPage)
 
 // Create podcast tag filter
-const tagFilter = useTagFilter(podcasts)
+const tagFilter = useTagFilterNew(podcasts, tags)
 
 // Create deep dive podcasts list
 const deepDivePodcasts = computed(() => tagFilter.output.filter((podcast) => podcast.type === 'deep_dive'))
