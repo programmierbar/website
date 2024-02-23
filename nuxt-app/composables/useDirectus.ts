@@ -30,7 +30,7 @@ export function useDirectus() {
     async function getMeetupPage() {
         return await directus.request(
             readSingleton('meetup_page', {
-                fields: ['*'],
+                fields: ['*', 'cover_image.*'],
             })
         )
     }
@@ -100,6 +100,16 @@ export function useDirectus() {
                 ],
                 sort: ['-published_on'],
                 limit: limit,
+            })
+        )
+    }
+
+    async function getMeetups() {
+        return await directus.request(
+            readItems('meetups', {
+                fields: ['id', 'slug', 'start_on', 'end_on', 'title', 'description', 'cover_image.*'],
+                sort: ['-start_on'],
+                limit: -1,
             })
         )
     }
@@ -189,6 +199,7 @@ export function useDirectus() {
         getContactPage,
         getMembers,
         getLatestPodcasts,
+        getMeetups,
         getPodcastCount,
         getPicksOfTheDay,
         getTopTagsForCollection,

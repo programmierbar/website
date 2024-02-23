@@ -36,7 +36,7 @@
                 <LazyList class="mt-10" :items="meetups" direction="vertical">
                     <template #default="{ item, index, viewportItems, addViewportItem }">
                         <LazyListItem
-                            :key="item.id"
+                            :key="index"
                             :class="index > 0 && 'mt-14 md:mt-20 lg:mt-28'"
                             :item="item"
                             :viewport-items="viewportItems"
@@ -59,33 +59,22 @@
 import LazyList from '~/components/LazyList.vue'
 import LazyListItem from '~/components/LazyListItem.vue'
 import { useLoadingScreen, usePageMeta } from '~/composables'
-import { directus } from '~/services'
-import type { MeetupItem, MeetupPage } from '~/types'
-import { computed } from 'vue'
+import { useDirectus } from '~/composables/useDirectus'
+import type { DirectusMeetupItem, DirectusMeetupPage } from '~/types'
+import { computed, type ComputedRef } from 'vue'
 
 const breadcrumbs = [{ label: 'Meetup' }]
+const directus = useDirectus()
 
 // Query meetup page and meetups
 const { data: pageData } = useAsyncData(async () => {
-    const [meetupPage, meetups] = await Promise.all([
-        // Meetup page
-        directus.singleton('meetup_page').read({ fields: '*.*' }) as Promise<MeetupPage>,
-
-        // Meetups
-        (
-            await directus.items('meetups').readByQuery({
-                fields: ['id', 'slug', 'start_on', 'end_on', 'title', 'description', 'cover_image.*'],
-                sort: ['-start_on'],
-                limit: -1,
-            })
-        ).data as Pick<MeetupItem, 'id' | 'start_on' | 'end_on' | 'title' | 'description' | 'cover_image'>[],
-    ])
+    const [meetupPage, meetups] = await Promise.all([directus.getMeetupPage(), directus.getMeetups()])
     return { meetupPage, meetups }
 })
 
 // Extract about page and members from page data
-const meetupPage = computed(() => pageData.value?.meetupPage)
-const meetups = computed(() => pageData.value?.meetups)
+const meetupPage: ComputedRef<DirectusMeetupPage | undefined> = computed(() => pageData.value?.meetupPage)
+const meetups: ComputedRef<DirectusMeetupItem[] | undefined> = computed(() => pageData.value?.meetups)
 
 // Set loading screen
 useLoadingScreen(meetupPage, meetups)
