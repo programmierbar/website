@@ -56,9 +56,10 @@
 <script setup lang="ts">
 import LazyList from '~/components/LazyList.vue'
 import LazyListItem from '~/components/LazyListItem.vue'
-import { useLoadingScreen, usePageMeta, useTagFilter } from '~/composables'
+import { useLoadingScreen, usePageMeta } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
-import type { DirectusPickOfTheDayPage, PickOfTheDayItem, PodcastItem, TagItem } from '~/types'
+import { useTagFilterNew } from '~/composables/useTagFilterNew'
+import type { DirectusPickOfTheDayPage } from '~/types'
 import { computed, type ComputedRef } from 'vue'
 
 const directus = useDirectus()
@@ -66,20 +67,14 @@ const breadcrumbs = [{ label: 'Pick of the Day' }]
 
 // Query pick of the day page and picks of the day
 const { data: pageData } = useAsyncData(async () => {
-    const [pickOfTheDayPage, picksOfTheDay] = await Promise.all([
+    const [pickOfTheDayPage, picksOfTheDay, tags] = await Promise.all([
         // Pick of the Day page
         await directus.getPicksOfTheDayPage(),
-        // Picks of the Day
-        (await directus.getPicksOfTheDay()).map(({ tags, ...rest }) => ({
-            ...rest,
-            tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
-        })) as (Pick<PickOfTheDayItem, 'id' | 'name' | 'website_url' | 'description' | 'image'> & {
-            podcast: Pick<PodcastItem, 'slug' | 'type' | 'number' | 'title'> | null
-            tags: Pick<TagItem, 'id' | 'name'>[]
-        })[],
+        await directus.getPicksOfTheDay(),
+        await directus.getTopTagsForCollection('picks_of_the_day'),
     ])
 
-    return { pickOfTheDayPage, picksOfTheDay }
+    return { pickOfTheDayPage, picksOfTheDay, tags }
 })
 
 // Extract pick of the day page and picks of the day from page data
@@ -87,6 +82,7 @@ const pickOfTheDayPage: ComputedRef<DirectusPickOfTheDayPage | undefined> = comp
     () => pageData.value?.pickOfTheDayPage
 )
 const picksOfTheDay = computed(() => pageData.value?.picksOfTheDay)
+const tags = computed(() => pageData.value?.tags)
 
 // Set loading screen
 useLoadingScreen(pickOfTheDayPage, picksOfTheDay)
@@ -95,5 +91,5 @@ useLoadingScreen(pickOfTheDayPage, picksOfTheDay)
 usePageMeta(pickOfTheDayPage)
 
 // Create tag filter
-const tagFilter = useTagFilter(picksOfTheDay)
+const tagFilter = useTagFilterNew(picksOfTheDay, tags)
 </script>
