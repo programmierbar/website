@@ -9,6 +9,14 @@ interface LocalTag extends Tag {
     is_active: boolean
 }
 
+/**
+ * Composable that provide the functionality of the tag filter.
+ *
+ * @param items The data to be filtered. Usually the result of a directus request from the composable useDirectus.
+ * @param tags The tags to be used for filtering.
+ *
+ * @returns State and methods to use the tag filter.
+ */
 export function useTagFilterNew<Items>(items: Ref<Items[] | null | undefined>, tags: Ref<Tag[] | undefined>) {
     const reactiveTags = ref<LocalTag[]>([])
 
