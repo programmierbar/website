@@ -53,51 +53,31 @@
 <script setup lang="ts">
 import LazyList from '~/components/LazyList.vue'
 import LazyListItem from '~/components/LazyListItem.vue'
-import { useLoadingScreen, usePageMeta, useTagFilter } from '~/composables'
-import { directus } from '~/services'
-import type { HallOfFamePage, SpeakerItem, TagItem } from '~/types'
-import { computed } from 'vue'
+import { useLoadingScreen, usePageMeta } from '~/composables'
+import { useDirectus } from '~/composables/useDirectus'
+import { useTagFilterNew } from '~/composables/useTagFilterNew'
+import type { DirectusHallOfFamePage } from '~/types'
+import { computed, type ComputedRef } from 'vue'
 
 const breadcrumbs = [{ label: 'Hall of Fame' }]
 const bubbleColors = ['pink', 'blue', 'lime'] as const
+const directus = useDirectus()
 
 // Query hall of fame page and speakers
 const { data: pageData } = useAsyncData(async () => {
-    const [hallOfFamePage, speakers] = await Promise.all([
+    const [hallOfFamePage, speakers, tags] = await Promise.all([
         // Hall of fame page
-        directus.singleton('hall_of_fame_page').read() as Promise<HallOfFamePage>,
-
-        // Speakers
-        (
-            await directus.items('speakers').readByQuery({
-                fields: [
-                    'id',
-                    'slug',
-                    'academic_title',
-                    'first_name',
-                    'last_name',
-                    'occupation',
-                    'profile_image.*',
-                    'tags.tag.id',
-                    'tags.tag.name',
-                ],
-                limit: -1,
-                sort: ['sort', '-published_on'],
-            })
-        ).data?.map(({ tags, ...rest }) => ({
-            ...rest,
-            tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
-        })) as Pick<
-            SpeakerItem,
-            'id' | 'slug' | 'academic_title' | 'first_name' | 'last_name' | 'occupation' | 'profile_image' | 'tags'
-        >[],
+        directus.getHallOfFamePage(),
+        directus.getSpeakers(),
+        directus.getTopTagsForCollection('speakers'),
     ])
-    return { hallOfFamePage, speakers }
+    return { hallOfFamePage, speakers, tags }
 })
 
 // Extract hall of fame page and speakers from page data
-const hallOfFamePage = computed(() => pageData.value?.hallOfFamePage)
+const hallOfFamePage: ComputedRef<DirectusHallOfFamePage | undefined> = computed(() => pageData.value?.hallOfFamePage)
 const speakers = computed(() => pageData.value?.speakers)
+const tags = computed(() => pageData.value?.tags)
 
 // Set loading screen
 useLoadingScreen(hallOfFamePage, speakers)
@@ -106,5 +86,5 @@ useLoadingScreen(hallOfFamePage, speakers)
 usePageMeta(hallOfFamePage)
 
 // Create tag filter
-const tagFilter = useTagFilter(speakers)
+const tagFilter = useTagFilterNew(speakers, tags)
 </script>

@@ -104,6 +104,16 @@ export function useDirectus() {
         )
     }
 
+    async function getPodcastCount() {
+        const result = await directus.request(
+            aggregate('podcasts', {
+                aggregate: { count: '*' },
+            })
+        )
+
+        return Number(result.pop()?.count)
+    }
+
     async function getMeetups() {
         return await directus.request(
             readItems('meetups', {
@@ -114,14 +124,24 @@ export function useDirectus() {
         )
     }
 
-    async function getPodcastCount() {
-        const result = await directus.request(
-            aggregate('podcasts', {
-                aggregate: { count: '*' },
+    async function getSpeakers() {
+        return await directus.request(
+            readItems('speakers', {
+                fields: [
+                    'id',
+                    'slug',
+                    'academic_title',
+                    'first_name',
+                    'last_name',
+                    'occupation',
+                    'profile_image.*',
+                    'tags.tag.id',
+                    'tags.tag.name',
+                ],
+                limit: -1,
+                sort: ['sort', '-published_on'],
             })
         )
-
-        return Number(result.pop()?.count)
     }
 
     async function getTopTagsForCollection(collection: CollectionName, limit: number = 25) {
@@ -200,6 +220,7 @@ export function useDirectus() {
         getMembers,
         getLatestPodcasts,
         getMeetups,
+        getSpeakers,
         getPodcastCount,
         getPicksOfTheDay,
         getTopTagsForCollection,
