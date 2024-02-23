@@ -73,6 +73,7 @@
 <script setup lang="ts">
 import { useDirectus, type LatestPodcasts } from '~/composables/useDirectus'
 import { useTagFilterNew } from '~/composables/useTagFilterNew'
+import type { DirectusPodcastPage } from '~/types'
 import { computed, type ComputedRef } from 'vue'
 import { useLoadingScreen, usePageMeta } from '../../composables'
 
@@ -91,7 +92,7 @@ const { data: pageData } = useAsyncData(async () => {
 })
 
 // Extract about page and members from page data
-const podcastPage = computed(() => pageData.value?.podcastPage)
+const podcastPage: ComputedRef<DirectusPodcastPage | undefined> = computed(() => pageData.value?.podcastPage)
 const podcasts: ComputedRef<LatestPodcasts | undefined> = computed(() => pageData.value?.podcasts)
 const tags = computed(() => pageData.value?.tags)
 // Set loading screen
