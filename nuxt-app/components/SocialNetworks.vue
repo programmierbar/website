@@ -23,9 +23,11 @@
 </template>
 
 <script setup lang="ts">
-import twitterIcon from '~/assets/logos/twitter.svg?raw';
+import twitterIcon from '~/assets/logos/x.svg?raw';
 import githubIcon from '~/assets/logos/github.svg?raw';
 import meetupIcon from '~/assets/logos/meetup.svg?raw';
+import linkedinIcon from '~/assets/logos/linkedin.svg?raw';
+import mastodonIcon from '~/assets/logos/mastodon.svg?raw';
 import youtubeIcon from '~/assets/logos/youtube.svg?raw';
 import instagramIcon from '~/assets/logos/instagram.svg?raw';
 import {
@@ -34,21 +36,29 @@ import {
   OPEN_MEETUP_EVENT_ID,
   OPEN_TWITTER_EVENT_ID,
   OPEN_YOUTUBE_EVENT_ID,
+  OPEN_MASTODON_EVENT_ID,
+  OPEN_LINKEDIN_EVENT_ID,
 } from '../config';
 import { trackGoal } from '../helpers';
 
 const socialNetworks = [
   {
-    label: 'Twitter',
-    icon: twitterIcon,
-    href: 'https://twitter.com/programmierbar',
-    eventId: OPEN_TWITTER_EVENT_ID,
+    label: 'Mastodon',
+    icon: mastodonIcon,
+    href: 'https://social.programmier.bar/@podcast',
+    eventId: OPEN_MASTODON_EVENT_ID,
   },
   {
     label: 'GitHub',
     icon: githubIcon,
     href: 'https://github.com/programmierbar',
     eventId: OPEN_GITHUB_EVENT_ID,
+  },
+  {
+    label: 'LinkedIn',
+    icon: linkedinIcon,
+    href: 'https://www.linkedin.com/company/68164372',
+    eventId: OPEN_LINKEDIN_EVENT_ID,
   },
   {
     label: 'Meetup',
@@ -67,6 +77,12 @@ const socialNetworks = [
     icon: instagramIcon,
     href: 'https://www.instagram.com/programmier.bar',
     eventId: OPEN_INSTAGRAM_EVENT_ID,
+  },
+  {
+    label: 'Twitter',
+    icon: twitterIcon,
+    href: 'https://twitter.com/programmierbar',
+    eventId: OPEN_TWITTER_EVENT_ID,
   },
 ];
 </script>
