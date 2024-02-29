@@ -3,7 +3,7 @@
     <li
       v-for="socialNetwork in socialNetworks"
       :key="socialNetwork.href"
-      class="h-full"
+      class="h-6"
     >
       <a
         class="h-full block text-white hover:text-lime"
@@ -59,12 +59,6 @@ const socialNetworks = [
     icon: linkedinIcon,
     href: 'https://www.linkedin.com/company/68164372',
     eventId: OPEN_LINKEDIN_EVENT_ID,
-  },
-  {
-    label: 'Meetup',
-    icon: meetupIcon,
-    href: 'https://www.meetup.com/de-DE/programmierbar/',
-    eventId: OPEN_MEETUP_EVENT_ID,
   },
   {
     label: 'YouTube',
