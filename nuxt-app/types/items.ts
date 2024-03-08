@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 
-import type { DirectusPodcastItem } from '~/types/directus'
+import type { DirectusMeetupItem, DirectusPodcastItem } from '~/types/directus'
 
 export interface FileItem {
     id: string
@@ -15,21 +15,9 @@ export interface PodcastItem extends DirectusPodcastItem {
     speakersPrepared: SpeakerPreviewItem[]
 }
 
-export interface MeetupItem {
-    id: string
-    slug: string
-    published_on: string
-    start_on: string
-    end_on: string
-    cover_image: FileItem
-    title: string
-    description: string
-    meetup_url: string
-    youtube_url: string | null
-    gallery_images: FileItem[]
-    members: MemberItem[]
-    speakers: SpeakerItem[]
-    tags: TagItem[]
+export interface MeetupItem extends DirectusMeetupItem {
+    tagsPrepared: TagItem[]
+    speakersPrepared: SpeakerPreviewItem[]
 }
 
 export interface MemberItem {
@@ -48,10 +36,12 @@ export interface MemberItem {
 }
 
 export interface SpeakerPreviewItem {
+    id: string
+    slug: string
+    academic_title: string
     first_name: string
     last_name: string
     profile_image: FileItem
-    slug: string
     description: string
     event_image: FileItem
 }

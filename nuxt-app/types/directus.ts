@@ -53,47 +53,35 @@ export interface DirectusMeetupItem {
     published_on: string
     start_on: string
     end_on: string
-    cover_image: string | DirectusFileItem
+    cover_image: DirectusFileItem
     title: string
     description: string
     meetup_url: string
     youtube_url: string | null
-    gallery_images: (
-        | number
-        | {
-              id: number
-              meetup: string | DirectusMeetupItem
-              image: string | DirectusFileItem
-              sort: number
-          }
-    )[]
-    members: (
-        | number
-        | {
-              id: number
-              meetup: string | DirectusMeetupItem
-              member: string | DirectusMemberItem
-              sort: number
-          }
-    )[]
-    speakers: (
-        | number
-        | {
-              id: number
-              meetup: string | DirectusMeetupItem
-              speaker: string | DirectusSpeakerItem
-              sort: number
-          }
-    )[]
-    tags: (
-        | number
-        | {
-              id: number
-              meetup: string | DirectusMeetupItem
-              tag: string | DirectusTagItem
-              sort: number
-          }
-    )[]
+    gallery_images: {
+        id: number
+        meetup: DirectusMeetupItem
+        image: DirectusFileItem
+        sort: number
+    }[]
+    members: {
+        id: number
+        meetup: DirectusMeetupItem
+        member: DirectusMemberItem
+        sort: number
+    }[]
+    speakers: {
+        id: number
+        meetup: DirectusMeetupItem
+        speaker: DirectusSpeakerItem
+        sort: number
+    }[]
+    tags: {
+        id: number
+        meetup: DirectusMeetupItem
+        tag: DirectusTagItem
+        sort: number
+    }[]
 }
 
 export interface DirectusMemberItem {

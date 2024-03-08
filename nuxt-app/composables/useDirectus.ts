@@ -1,6 +1,13 @@
 import { aggregate, readItems, readSingleton, type QueryFilter } from '@directus/sdk'
 import { directus, type Collections } from '~/services'
-import type { DirectusMemberItem, DirectusPodcastItem, PodcastItem, SpeakerPreviewItem, TagItem } from '~/types'
+import type {
+    DirectusMemberItem,
+    DirectusPodcastItem,
+    MeetupItem,
+    PodcastItem,
+    SpeakerPreviewItem,
+    TagItem,
+} from '~/types'
 
 export type LatestPodcasts = Pick<
     DirectusPodcastItem,
@@ -104,7 +111,7 @@ export function useDirectus() {
         )
     }
 
-    async function getRelatedPodcasts(podcast: PodcastItem, limit: number = 15) {
+    async function getRelatedPodcasts(podcast: PodcastItem | MeetupItem, limit: number = 15) {
         return await directus.request(
             readItems('podcasts', {
                 fields: ['id', 'slug', 'published_on', 'type', 'number', 'title', 'cover_image.*', 'audio_url'],
@@ -189,7 +196,7 @@ export function useDirectus() {
                     result
                         .map((podcast) => ({
                             ...podcast,
-                            tagsPrepared: podcast.tags.map((tag: DirectusTag) => tag.tag) as TagItem[],
+                            tagsPrepared: podcast.tags.map((tag: any) => tag.tag) as TagItem[],
                             speakersPrepared: podcast.speakers.map((speaker: any) => {
                                 return {
                                     first_name: speaker.speaker.first_name,
@@ -198,10 +205,67 @@ export function useDirectus() {
                                     slug: speaker.speaker.slug,
                                     description: speaker.speaker.description,
                                     event_image: speaker.speaker.event_image,
+                                    academic_title: speaker.speaker.academic_title,
                                 }
                             }) as SpeakerPreviewItem[],
                         }))
                         .pop() as PodcastItem
+            )
+    }
+
+    async function getMeetupBySlug(slug: string) {
+        return await directus
+            .request(
+                readItems('meetups', {
+                    fields: [
+                        'id',
+                        'slug',
+                        'published_on',
+                        'start_on',
+                        'end_on',
+                        'title',
+                        'description',
+                        'cover_image.*',
+                        'cover_image',
+                        'gallery_images',
+                        'meetup_url',
+                        'youtube_url',
+                        'members',
+                        'speakers',
+                        'speakers.speaker.id',
+                        'speakers.speaker.slug',
+                        'speakers.speaker.academic_title',
+                        'speakers.speaker.first_name',
+                        'speakers.speaker.last_name',
+                        'speakers.speaker.description',
+                        'speakers.speaker.event_image.*',
+                        'tags',
+                        'tags.tag.id',
+                        'tags.tag.name',
+                    ],
+                    filter: { slug: { _eq: slug } },
+                    limit: 1,
+                })
+            )
+            .then(
+                (result) =>
+                    result
+                        .map((meetup) => ({
+                            ...meetup,
+                            tagsPrepared: meetup.tags.map((tag: DirectusTag) => tag.tag) as TagItem[],
+                            speakersPrepared: meetup.speakers.map((speaker: any) => {
+                                return {
+                                    first_name: speaker.speaker.first_name,
+                                    last_name: speaker.speaker.last_name,
+                                    profile_image: speaker.speaker.profile_image,
+                                    slug: speaker.speaker.slug,
+                                    description: speaker.speaker.description,
+                                    event_image: speaker.speaker.event_image,
+                                    academic_title: speaker.speaker.academic_title,
+                                }
+                            }) as SpeakerPreviewItem[],
+                        }))
+                        .pop() as MeetupItem
             )
     }
 
@@ -348,6 +412,7 @@ export function useDirectus() {
         getPicksOfTheDay,
         getTopTagsForCollection,
         getPodcastBySlug,
+        getMeetupBySlug,
         getRelatedPodcasts,
     }
 }

@@ -147,17 +147,13 @@ const { data: pageData } = useAsyncData(async () => {
         // Speaker count
         await directus.getSpeakersCount(),
     ])
-
-    console.log(podcast)
     // Throw error if podcast does not exist
     if (!podcast) {
         throw new Error('The podcast was not found.')
     }
-    console.log('HA')
-    console.log('HA')
 
     // Query related podcasts
-    const relatedPodcasts = podcast.tags.length ? await directus.getRelatedPodcasts(podcast) : []
+    const relatedPodcasts = podcast.tagsPrepared.length ? await directus.getRelatedPodcasts(podcast) : []
 
     // Return podcast, pick of the day and
     // speaker count and related podcasts

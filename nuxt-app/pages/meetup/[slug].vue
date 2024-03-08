@@ -52,9 +52,9 @@
                 <!-- Meetup tags -->
                 <!-- TODO: Replace navigateTo() with <a> element -->
                 <TagList
-                    v-if="meetup.tags.length"
+                    v-if="meetup.tagsPrepared.length"
                     class="mt-10 md:mt-14"
-                    :tags="meetup.tags"
+                    :tags="meetup.tagsPrepared"
                     :on-click="
                         (tag) =>
                             navigateTo({
@@ -70,10 +70,10 @@
         </article>
 
         <!-- Speakers -->
-        <section v-if="meetup.speakers.length" class="relative">
+        <section v-if="meetup.speakersPrepared.length" class="relative">
             <div class="container mt-20 px-6 md:mt-32 md:pl-48 lg:mt-40 lg:pr-8 3xl:px-8">
                 <SectionHeading element="h2">Speaker Info</SectionHeading>
-                <SpeakerList class="mt-12 md:mt-0" :speakers="meetup.speakers" />
+                <SpeakerList class="mt-12 md:mt-0" :speakers="meetup.speakersPrepared" />
                 <div v-if="speakerCountString" class="mt-12 flex justify-center md:mt-20 lg:mt-28">
                     <LinkButton href="/hall-of-fame"> Alle {{ speakerCountString }} Speaker:innen </LinkButton>
                 </div>
@@ -93,87 +93,24 @@
 <script setup lang="ts">
 import playCircleFilledIcon from '~/assets/icons/play-circle-filled.svg?raw'
 import { useLoadingScreen, useLocaleString } from '~/composables'
+import { useDirectus } from '~/composables/useDirectus'
 import { OPEN_YOUTUBE_EVENT_ID } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
-import { directus } from '~/services'
-import type { MeetupItem, PodcastItem, SpeakerItem, TagItem } from '~/types'
-import { computed } from 'vue'
+import type { MeetupItem } from '~/types'
+import { computed, type ComputedRef } from 'vue'
 
 // Add route and router
 const route = useRoute()
 const router = useRouter()
 
+const directus = useDirectus()
+
 // Query meetup, speaker count and related podcast
 const { data: pageData } = useAsyncData(async () => {
     // Query meetup and speaker count async
     const [meetup, speakerCount] = await Promise.all([
-        // Speaker
-        (
-            await directus.items('meetups').readByQuery({
-                fields: [
-                    'id',
-                    'slug',
-                    'published_on',
-                    'start_on',
-                    'end_on',
-                    'title',
-                    'description',
-                    'cover_image.*',
-                    'meetup_url',
-                    'youtube_url',
-                    'speakers.speaker.id',
-                    'speakers.speaker.slug',
-                    'speakers.speaker.academic_title',
-                    'speakers.speaker.first_name',
-                    'speakers.speaker.last_name',
-                    'speakers.speaker.description',
-                    'speakers.speaker.event_image.*',
-                    'tags.tag.id',
-                    'tags.tag.name',
-                ],
-                filter: { slug: route.params.slug },
-                limit: 1,
-            })
-        ).data?.map(({ speakers, tags, ...rest }) => ({
-            ...rest,
-            speakers: (
-                speakers as {
-                    speaker: Pick<
-                        SpeakerItem,
-                        'id' | 'slug' | 'academic_title' | 'first_name' | 'last_name' | 'description' | 'event_image'
-                    >
-                }[]
-            )
-                .map(({ speaker }) => speaker)
-                .filter((speaker) => speaker),
-            tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
-        }))[0] as Pick<
-            MeetupItem,
-            | 'id'
-            | 'slug'
-            | 'published_on'
-            | 'start_on'
-            | 'end_on'
-            | 'title'
-            | 'description'
-            | 'cover_image'
-            | 'meetup_url'
-            | 'youtube_url'
-            | 'tags'
-        > & {
-            speakers: Pick<
-                SpeakerItem,
-                'id' | 'slug' | 'academic_title' | 'first_name' | 'last_name' | 'description' | 'event_image'
-            >[]
-        },
-
-        // Speaker count
-        (
-            await directus.items('speakers').readByQuery({
-                limit: 0,
-                meta: 'total_count',
-            })
-        ).meta?.total_count,
+        await directus.getMeetupBySlug(route.params.slug as string),
+        await directus.getSpeakersCount(),
     ])
 
     // Throw error if meetup does not exist
@@ -182,33 +119,14 @@ const { data: pageData } = useAsyncData(async () => {
     }
 
     // Query related podcasts
-    const relatedPodcasts = (
-        meetup.tags.length
-            ? (
-                  await directus.items('podcasts').readByQuery({
-                      fields: ['id', 'slug', 'published_on', 'type', 'number', 'title', 'cover_image.*', 'audio_url'],
-                      filter: {
-                          tags: {
-                              tag: {
-                                  name: {
-                                      _in: meetup.tags.map(({ name }) => name),
-                                  },
-                              },
-                          },
-                      } as any,
-                      sort: ['-published_on'],
-                      limit: 15,
-                  })
-              ).data
-            : []
-    ) as Pick<PodcastItem, 'id' | 'slug' | 'published_on' | 'type' | 'number' | 'title' | 'cover_image' | 'audio_url'>[]
+    const relatedPodcasts = meetup.tagsPrepared.length ? await directus.getRelatedPodcasts(meetup) : []
 
     // Return meetup, speaker count and related podcast
     return { meetup, speakerCount, relatedPodcasts }
 })
 
 // Extract meetup, speaker count and related podcasts from page data
-const meetup = computed(() => pageData.value?.meetup)
+const meetup: ComputedRef<MeetupItem | undefined> = computed(() => pageData.value?.meetup)
 const speakerCount = computed(() => pageData.value?.speakerCount)
 const relatedPodcasts = computed(() => pageData.value?.relatedPodcasts)
 
