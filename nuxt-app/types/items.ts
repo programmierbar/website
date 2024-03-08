@@ -10,15 +10,13 @@ export interface FileItem {
     height: number | null
 }
 
-export interface PodcastItem extends DirectusPodcastItem {
+interface PreparedItems {
     tagsPrepared: TagItem[]
     speakersPrepared: SpeakerPreviewItem[]
 }
 
-export interface MeetupItem extends DirectusMeetupItem {
-    tagsPrepared: TagItem[]
-    speakersPrepared: SpeakerPreviewItem[]
-}
+export interface PodcastItem extends DirectusPodcastItem, PreparedItems {}
+export interface MeetupItem extends DirectusMeetupItem, PreparedItems {}
 
 export interface MemberItem {
     id: string
