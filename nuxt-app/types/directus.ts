@@ -15,14 +15,15 @@ export interface DirectusPodcastItem {
     type: 'deep_dive' | 'cto_special' | 'news' | 'other'
     number: string
     title: string
-    cover_image: string | DirectusFileItem
-    banner_image: string | DirectusFileItem | null
+    cover_image: DirectusFileItem
+    banner_image: DirectusFileItem | null
     audio_url: string
     description: string
-    transcription: string | null
+    transcript: string | null
     apple_url: string
     google_url: string
     spotify_url: string
+    picks_of_the_day: (string | DirectusPickOfTheDayItem)[]
     members: (
         | number
         | {
@@ -32,24 +33,18 @@ export interface DirectusPodcastItem {
               sort: number
           }
     )[]
-    speakers: (
-        | number
-        | {
-              id: number
-              podcast: string | DirectusPodcastItem
-              speaker: string | DirectusSpeakerItem
-              sort: number
-          }
-    )[]
-    tags: (
-        | number
-        | {
-              id: number
-              podcast: string | DirectusPodcastItem
-              tag: string | DirectusTagItem
-              sort: number
-          }
-    )[]
+    speakers: {
+        id: number
+        podcast: DirectusPodcastItem
+        speaker: DirectusSpeakerItem
+        sort: number
+    }[]
+    tags: {
+        id: number
+        podcast: DirectusPodcastItem
+        tag: DirectusTagItem
+        sort: number
+    }[]
 }
 
 export interface DirectusMeetupItem {
@@ -150,42 +145,33 @@ export interface DirectusSpeakerItem {
     first_name: string
     last_name: string
     description: string
-    profile_image: string | DirectusFileItem
-    event_image: string | DirectusFileItem
+    profile_image: DirectusFileItem
+    event_image: DirectusFileItem
     website_url: string | null
     twitter_url: string | null
     linkedin_url: string | null
     github_url: string | null
     instagram_url: string | null
     youtube_url: string | null
-    meetups: (
-        | number
-        | {
-              id: number
-              speaker: string | DirectusSpeakerItem
-              meetup: string | DirectusMeetupItem
-              sort: number
-          }
-    )[]
-    podcasts: (
-        | number
-        | {
-              id: number
-              speaker: string | DirectusSpeakerItem
-              podcast: string | DirectusPodcastItem
-              sort: number
-          }
-    )[]
+    meetups: {
+        id: number
+        speaker: DirectusSpeakerItem
+        meetup: DirectusMeetupItem
+        sort: number
+    }[]
+    podcasts: {
+        id: number
+        speaker: DirectusSpeakerItem
+        podcast: DirectusPodcastItem
+        sort: number
+    }[]
     picks_of_the_day: (string | DirectusPickOfTheDayItem)[]
-    tags: (
-        | number
-        | {
-              id: number
-              speaker: string | DirectusSpeakerItem
-              tag: string | DirectusTagItem
-              sort: number
-          }
-    )[]
+    tags: {
+        id: number
+        speaker: DirectusSpeakerItem
+        tag: DirectusTagItem
+        sort: number
+    }[]
 }
 
 export interface DirectusPickOfTheDayItem {

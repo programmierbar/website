@@ -1,6 +1,6 @@
 import { aggregate, readItems, readSingleton, type QueryFilter } from '@directus/sdk'
 import { directus, type Collections } from '~/services'
-import type { DirectusMemberItem, DirectusPodcastItem } from '~/types'
+import type { DirectusMemberItem, DirectusPodcastItem, PodcastItem, SpeakerPreviewItem, TagItem } from '~/types'
 
 export type LatestPodcasts = Pick<
     DirectusPodcastItem,
@@ -104,9 +104,130 @@ export function useDirectus() {
         )
     }
 
+    async function getRelatedPodcasts(podcast: PodcastItem, limit: number = 15) {
+        return await directus.request(
+            readItems('podcasts', {
+                fields: ['id', 'slug', 'published_on', 'type', 'number', 'title', 'cover_image.*', 'audio_url'],
+                filter: {
+                    _and: [
+                        {
+                            id: {
+                                _neq: podcast.id,
+                            },
+                        },
+                        {
+                            tags: {
+                                tag: {
+                                    name: {
+                                        _in: podcast.tagsPrepared.map((tag) => tag.name),
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                } as any,
+                sort: ['-published_on'],
+                limit: limit,
+            })
+        )
+    }
+
+    async function getPodcastBySlug(slug: string) {
+        return await directus
+            .request(
+                readItems('podcasts', {
+                    fields: [
+                        'id',
+                        'published_on',
+                        'type',
+                        'number',
+                        'title',
+                        'slug',
+                        'description',
+                        'transcript',
+                        'cover_image',
+                        'cover_image.*',
+                        'banner_image',
+                        'banner_image.*',
+                        'audio_url',
+                        'apple_url',
+                        'google_url',
+                        'spotify_url',
+                        'speakers',
+                        'speakers.speaker.id',
+                        'speakers.speaker.slug',
+                        'speakers.speaker.academic_title',
+                        'speakers.speaker.occupation',
+                        'speakers.speaker.first_name',
+                        'speakers.speaker.last_name',
+                        'speakers.speaker.description',
+                        'speakers.speaker.event_image.*',
+                        'speakers.speaker.profile_image.*',
+                        'members',
+                        'members.member.id',
+                        'members.member.first_name',
+                        'members.member.last_name',
+                        'members.member.occupation',
+                        'members.member.description',
+                        'members.member.normal_image.*',
+                        'picks_of_the_day',
+                        'picks_of_the_day.id',
+                        'picks_of_the_day.name',
+                        'picks_of_the_day.website_url',
+                        'picks_of_the_day.description',
+                        'picks_of_the_day.image.*',
+                        'tags',
+                        'tags.tag.id',
+                        'tags.tag.name',
+                    ],
+                    filter: { slug: { _eq: slug } },
+                    limit: 1,
+                })
+            )
+            .then(
+                (result) =>
+                    result
+                        .map((podcast) => ({
+                            ...podcast,
+                            tagsPrepared: podcast.tags.map((tag: DirectusTag) => tag.tag) as TagItem[],
+                            speakersPrepared: podcast.speakers.map((speaker: any) => {
+                                return {
+                                    first_name: speaker.speaker.first_name,
+                                    last_name: speaker.speaker.last_name,
+                                    profile_image: speaker.speaker.profile_image,
+                                    slug: speaker.speaker.slug,
+                                    description: speaker.speaker.description,
+                                    event_image: speaker.speaker.event_image,
+                                }
+                            }) as SpeakerPreviewItem[],
+                        }))
+                        .pop() as PodcastItem
+            )
+    }
+
     async function getPodcastCount() {
         const result = await directus.request(
             aggregate('podcasts', {
+                aggregate: { count: '*' },
+            })
+        )
+
+        return Number(result.pop()?.count)
+    }
+
+    async function getPickOfTheDayCount() {
+        const result = await directus.request(
+            aggregate('picks_of_the_day', {
+                aggregate: { count: '*' },
+            })
+        )
+
+        return Number(result.pop()?.count)
+    }
+
+    async function getSpeakersCount() {
+        const result = await directus.request(
+            aggregate('speakers', {
                 aggregate: { count: '*' },
             })
         )
@@ -222,7 +343,11 @@ export function useDirectus() {
         getMeetups,
         getSpeakers,
         getPodcastCount,
+        getPickOfTheDayCount,
+        getSpeakersCount,
         getPicksOfTheDay,
         getTopTagsForCollection,
+        getPodcastBySlug,
+        getRelatedPodcasts,
     }
 }

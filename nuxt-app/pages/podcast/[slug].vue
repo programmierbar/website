@@ -22,9 +22,9 @@
                     <!-- Podcast tags -->
                     <!-- TODO: Replace navigateTo() with <a> element -->
                     <TagList
-                        v-if="podcast.tags.length"
+                        v-if="podcast.tagsPrepared.length"
                         class="mt-10 md:mt-14"
-                        :tags="podcast.tags"
+                        :tags="podcast.tagsPrepared"
                         :on-click="
                             (tag) =>
                                 navigateTo({
@@ -83,10 +83,10 @@
         </section>
 
         <!-- Speakers -->
-        <section v-if="podcast.speakers.length" class="relative">
+        <section v-if="podcast.speakersPrepared.length" class="relative">
             <div class="container mt-20 px-6 md:mt-32 md:pl-48 lg:mt-40 lg:pr-8 3xl:px-8">
                 <SectionHeading element="h2">Speaker Info</SectionHeading>
-                <SpeakerList class="mt-12 md:mt-0" :speakers="podcast.speakers" />
+                <SpeakerList class="mt-12 md:mt-0" :speakers="podcast.speakersPrepared" />
                 <div v-if="speakerCountString" class="mt-12 flex justify-center md:mt-20 lg:mt-28">
                     <LinkButton href="/hall-of-fame"> Alle {{ speakerCountString }} Speaker:innen </LinkButton>
                 </div>
@@ -110,6 +110,7 @@ import rssIcon from '~/assets/logos/rss-feed-color.svg?raw'
 import spotifyIcon from '~/assets/logos/spotify-color.svg?raw'
 import youTubeIcon from '~/assets/logos/youtube-color.svg?raw'
 import { useLoadingScreen, useLocaleString } from '~/composables'
+import { useDirectus } from '~/composables/useDirectus'
 import {
     APPLE_PODCASTS_URL,
     BUZZSPROUT_RSS_FEED_URL,
@@ -126,171 +127,37 @@ import {
 } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
 import { generatePodcastEpisodeFromPodcast } from '~/helpers/jsonLdGenerator'
-import { directus } from '~/services'
-import type { MemberItem, PickOfTheDayItem, PodcastItem, SpeakerItem, TagItem } from '~/types'
+import type { PodcastItem } from '~/types'
 import { getFullPodcastTitle, getPodcastType } from 'shared-code'
-import { computed } from 'vue'
+import { computed, type ComputedRef } from 'vue'
 
 // Add route and router
 const route = useRoute()
 const router = useRouter()
+const directus = useDirectus()
 
 // Query podcast, pick of the day,
 // speaker count and related podcasts
 const { data: pageData } = useAsyncData(async () => {
     const [podcast, pickOfTheDayCount, speakerCount] = await Promise.all([
         // Podcast
-        (
-            await directus.items('podcasts').readByQuery({
-                fields: [
-                    'id',
-                    'published_on',
-                    'type',
-                    'number',
-                    'title',
-                    'description',
-                    'transcript',
-                    'cover_image.*',
-                    'banner_image.*',
-                    'audio_url',
-                    'apple_url',
-                    'google_url',
-                    'spotify_url',
-                    'speakers.speaker.id',
-                    'speakers.speaker.slug',
-                    'speakers.speaker.academic_title',
-                    'speakers.speaker.occupation',
-                    'speakers.speaker.first_name',
-                    'speakers.speaker.last_name',
-                    'speakers.speaker.description',
-                    'speakers.speaker.event_image.*',
-                    'speakers.speaker.profile_image.*',
-                    'members.member.id',
-                    'members.member.first_name',
-                    'members.member.last_name',
-                    'members.member.occupation',
-                    'members.member.description',
-                    'members.member.normal_image.*',
-                    'picks_of_the_day.id',
-                    'picks_of_the_day.name',
-                    'picks_of_the_day.website_url',
-                    'picks_of_the_day.description',
-                    'picks_of_the_day.image.*',
-                    'tags.tag.id',
-                    'tags.tag.name',
-                ],
-                filter: { slug: route.params.slug },
-                limit: 1,
-            })
-        ).data?.map(({ speakers, members, tags, ...rest }) => ({
-            ...rest,
-            slug: route.params.slug,
-            speakers: (
-                speakers as {
-                    speaker: Pick<
-                        SpeakerItem,
-                        | 'id'
-                        | 'slug'
-                        | 'academic_title'
-                        | 'occupation'
-                        | 'first_name'
-                        | 'last_name'
-                        | 'description'
-                        | 'profile_image'
-                        | 'event_image'
-                    >
-                }[]
-            )
-                .map(({ speaker }) => speaker)
-                .filter((speaker) => speaker),
-            members: (
-                members as {
-                    member: Pick<
-                        MemberItem,
-                        'id' | 'first_name' | 'last_name' | 'description' | 'normal_image' | 'occupation'
-                    >
-                }[]
-            )
-                .map(({ member }) => member)
-                .filter((member) => member),
-            tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
-        }))[0] as Pick<
-            PodcastItem,
-            | 'id'
-            | 'slug'
-            | 'published_on'
-            | 'type'
-            | 'number'
-            | 'title'
-            | 'description'
-            | 'transcript'
-            | 'cover_image'
-            | 'banner_image'
-            | 'audio_url'
-            | 'apple_url'
-            | 'google_url'
-            | 'spotify_url'
-            | 'tags'
-        > & {
-            speakers: Pick<
-                SpeakerItem,
-                'id' | 'slug' | 'academic_title' | 'first_name' | 'last_name' | 'description' | 'event_image'
-            >[]
-            picks_of_the_day: Pick<PickOfTheDayItem, 'id' | 'name' | 'website_url' | 'description' | 'image'>[]
-        },
-
+        await directus.getPodcastBySlug(route.params.slug as string),
         // Pick of the day count
-        (
-            await directus.items('picks_of_the_day').readByQuery({
-                limit: 0,
-                meta: 'total_count',
-            })
-        ).meta?.total_count,
-
+        await directus.getPickOfTheDayCount(),
         // Speaker count
-        (
-            await directus.items('speakers').readByQuery({
-                limit: 0,
-                meta: 'total_count',
-            })
-        ).meta?.total_count,
+        await directus.getSpeakersCount(),
     ])
 
+    console.log(podcast)
     // Throw error if podcast does not exist
     if (!podcast) {
         throw new Error('The podcast was not found.')
     }
+    console.log('HA')
+    console.log('HA')
 
     // Query related podcasts
-    const relatedPodcasts = (
-        podcast.tags.length
-            ? (
-                  await directus.items('podcasts').readByQuery({
-                      fields: ['id', 'slug', 'published_on', 'type', 'number', 'title', 'cover_image.*', 'audio_url'],
-                      filter: {
-                          _and: [
-                              {
-                                  id: {
-                                      _neq: podcast.id,
-                                  },
-                              },
-                              {
-                                  tags: {
-                                      tag: {
-                                          name: {
-                                              _in: podcast.tags.map(({ name }) => name),
-                                          },
-                                      },
-                                  },
-                              },
-                          ],
-                      } as any,
-                      sort: ['-published_on'],
-                      limit: 15,
-                  })
-              ).data
-            : []
-    ) as Pick<PodcastItem, 'id' | 'slug' | 'published_on' | 'type' | 'number' | 'title' | 'cover_image' | 'audio_url'>[]
+    const relatedPodcasts = podcast.tags.length ? await directus.getRelatedPodcasts(podcast) : []
 
     // Return podcast, pick of the day and
     // speaker count and related podcasts
@@ -299,11 +166,10 @@ const { data: pageData } = useAsyncData(async () => {
 
 // Extract podcast, pick of the day, speaker
 // and related podcasts count from page data
-const podcast = computed(() => pageData.value?.podcast)
+const podcast: ComputedRef<PodcastItem | undefined> = computed(() => pageData.value?.podcast)
 const pickOfTheDayCount = computed(() => pageData.value?.pickOfTheDayCount)
 const speakerCount = computed(() => pageData.value?.speakerCount)
 const relatedPodcasts = computed(() => pageData.value?.relatedPodcasts)
-
 // Set loading screen
 useLoadingScreen(podcast, pickOfTheDayCount, speakerCount)
 
