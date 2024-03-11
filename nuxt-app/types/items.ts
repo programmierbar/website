@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 
-import type { DirectusMeetupItem, DirectusPodcastItem } from '~/types/directus'
+import type { DirectusMeetupItem, DirectusPodcastItem, DirectusSpeakerItem } from '~/types/directus'
 
 export interface FileItem {
     id: string
@@ -10,13 +10,24 @@ export interface FileItem {
     height: number | null
 }
 
-interface PreparedItems {
+interface PreparedTagsItem {
     tagsPrepared: TagItem[]
-    speakersPrepared: SpeakerPreviewItem[]
 }
 
-export interface PodcastItem extends DirectusPodcastItem, PreparedItems {}
-export interface MeetupItem extends DirectusMeetupItem, PreparedItems {}
+interface PreparedSpeakersItem {
+    speakersPrepared: SpeakerPreviewItem[]
+}
+interface PreparedPodcastsItems {
+    podcastPrepared: any[]
+}
+
+interface PreparedMeetupsItems {
+    meetupsPrepared: any[]
+}
+
+export interface PodcastItem extends DirectusPodcastItem, PreparedTagsItem, PreparedSpeakersItem {}
+export interface MeetupItem extends DirectusMeetupItem, PreparedTagsItem, PreparedSpeakersItem {}
+export interface SpeakerItem extends DirectusSpeakerItem, PreparedTagsItem {}
 
 export interface MemberItem {
     id: string
@@ -42,30 +53,6 @@ export interface SpeakerPreviewItem {
     profile_image: FileItem
     description: string
     event_image: FileItem
-}
-
-export interface SpeakerItem {
-    id: string
-    sort: number
-    slug: string
-    published_on: string
-    academic_title: string | null
-    occupation: string
-    first_name: string
-    last_name: string
-    description: string
-    profile_image: FileItem
-    event_image: FileItem
-    website_url: string | null
-    twitter_url: string | null
-    linkedin_url: string | null
-    github_url: string | null
-    instagram_url: string | null
-    youtube_url: string | null
-    meetups: MeetupItem[]
-    podcasts: PodcastItem[]
-    picks_of_the_day: PickOfTheDayItem[]
-    tags: TagItem[]
 }
 
 export interface PickOfTheDayItem {

@@ -5,6 +5,7 @@ import type {
     DirectusPodcastItem,
     MeetupItem,
     PodcastItem,
+    SpeakerItem,
     SpeakerPreviewItem,
     TagItem,
 } from '~/types'
@@ -277,6 +278,61 @@ export function useDirectus() {
             )
     }
 
+    async function getSpeakerBySlug(slug: string) {
+        return await directus
+            .request(
+                readItems('speakers', {
+                    fields: [
+                        'id',
+                        'sort',
+                        'slug',
+                        'academic_title',
+                        'first_name',
+                        'last_name',
+                        'occupation',
+                        'description',
+                        'profile_image.*',
+                        'website_url',
+                        'twitter_url',
+                        'linkedin_url',
+                        'youtube_url',
+                        'github_url',
+                        'instagram_url',
+                        //'podcasts.podcast.*',
+                        //'podcasts.podcast.cover_image.*',
+                        'podcasts.podcast.id',
+                        'podcasts.podcast.slug',
+                        'podcasts.podcast.published_on',
+                        'podcasts.podcast.type',
+                        'podcasts.podcast.number',
+                        'podcasts.podcast.title',
+                        'podcasts.podcast.cover_image.*',
+                        'podcasts.podcast.audio_url',
+                        //'meetups.*',
+                        'picks_of_the_day.id',
+                        'picks_of_the_day.name',
+                        'picks_of_the_day.website_url',
+                        'picks_of_the_day.description',
+                        'picks_of_the_day.image.*',
+                        'tags.tag.id',
+                        'tags.tag.name',
+                    ],
+                    filter: { slug: { _eq: slug } },
+                    limit: 1,
+                })
+            )
+            .then(
+                (result) =>
+                    result
+                        .map((speaker) => ({
+                            ...speaker,
+                            tagsPrepared: speaker.tags.map((tag: DirectusTag) => tag.tag) as TagItem[],
+                            podcastsPrepared: speaker.podcasts.map((podcast: any) => podcast.podcast), // as TagItem[],
+                        }))
+                        .pop() as unknown as SpeakerItem
+            )
+    }
+
     async function getPodcastCount() {
         const result = await directus.request(
             aggregate('podcasts', {
@@ -422,6 +478,7 @@ export function useDirectus() {
         getTopTagsForCollection,
         getPodcastBySlug,
         getMeetupBySlug,
+        getSpeakerBySlug,
         getRelatedPodcasts,
     }
 }

@@ -63,9 +63,9 @@
                 <!-- Speaker tags -->
                 <!-- TODO: Replace navigateTo() with <a> element -->
                 <TagList
-                    v-if="speaker.tags.length"
+                    v-if="speaker.tagsPrepared.length"
                     class="mt-10 md:mt-14"
-                    :tags="speaker.tags"
+                    :tags="speaker.tagsPrepared"
                     :on-click="
                         (tag) =>
                             navigateTo({
@@ -85,28 +85,24 @@
             <SectionHeading class="px-6 md:px-0" element="h2"> Verwandter Inhalt </SectionHeading>
 
             <!-- Podcasts -->
-            <PodcastSlider class="mt-12 md:mt-0" :podcasts="speaker.podcasts" />
+            <PodcastSlider class="mt-12 md:mt-0" :podcasts="speaker.podcastsPrepared" />
             <div
                 v-if="podcastCountString"
                 class="mt-12 flex justify-center px-6 md:mt-16 md:pl-48 lg:mt-20 lg:pr-8 3xl:px-8"
             >
                 <LinkButton href="/podcast"> Alle {{ podcastCountString }} Podcast-Folgen </LinkButton>
             </div>
-
-            <!-- Picks of the Day -->
-            <div
-                v-if="speaker.picks_of_the_day.length"
-                class="container mt-20 px-6 md:mt-32 md:pl-48 lg:mt-40 lg:pr-8 3xl:px-8"
-            >
-                <PickOfTheDayList :picks-of-the-day="speaker.picks_of_the_day" />
-                <div v-if="pickOfTheDayCountString" class="mt-12 flex justify-center md:mt-16 lg:mt-20">
-                    <LinkButton href="/pick-of-the-day">
-                        Alle {{ pickOfTheDayCountString }} Picks of the Day
-                    </LinkButton>
-                </div>
-            </div>
         </section>
-
+        <!-- Picks of the Day -->
+        <div
+            v-if="speaker.picks_of_the_day.length"
+            class="container mt-20 px-6 md:mt-32 md:pl-48 lg:mt-40 lg:pr-8 3xl:px-8"
+        >
+            <PickOfTheDayList :picks-of-the-day="speaker.picks_of_the_day" />
+            <div v-if="pickOfTheDayCountString" class="mt-12 flex justify-center md:mt-16 lg:mt-20">
+                <LinkButton href="/pick-of-the-day"> Alle {{ pickOfTheDayCountString }} Picks of the Day </LinkButton>
+            </div>
+        </div>
         <!-- Feedback CTA -->
         <FeedbackSection class="mb-20 mt-16 md:mb-32 md:mt-24 md:pl-40 lg:mb-40 lg:mt-32 3xl:px-0" />
     </div>
@@ -120,6 +116,7 @@ import twitterIcon from '~/assets/logos/twitter-color.svg?raw'
 import websiteIcon from '~/assets/logos/website-color.svg?raw'
 import youtubeIcon from '~/assets/logos/youtube-color.svg?raw'
 import { useLoadingScreen, useLocaleString } from '~/composables'
+import { useDirectus } from '~/composables/useDirectus'
 import {
     OPEN_SPEAKER_GITHUB_EVENT_ID,
     OPEN_SPEAKER_INSTAGRAM_EVENT_ID,
@@ -130,20 +127,24 @@ import {
 } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
 import { generatePersonFromSpeaker } from '~/helpers/jsonLdGenerator'
-import { directus } from '~/services'
 import type { PickOfTheDayItem, PodcastItem, SpeakerItem, TagItem } from '~/types'
 import { getFullSpeakerName } from 'shared-code'
 import { computed } from 'vue'
 
+const directus = useDirectus()
+
 // Add route and router
 const route = useRoute()
-const router = useRouter()
 
 // Query speaker, podcast and pick of the day count
 const { data: pageData } = useAsyncData(async () => {
     // Query speaker, podcast and pick of the day count async
     const [speaker, podcastCount, pickOfTheDayCount] = await Promise.all([
         // Speaker
+        directus.getSpeakerBySlug(route.params.slug as string),
+        directus.getPodcastCount(),
+        directus.getPickOfTheDayCount(),
+        /*
         (
             await directus.items('speakers').readByQuery({
                 fields: [
@@ -230,7 +231,11 @@ const { data: pageData } = useAsyncData(async () => {
                 meta: 'total_count',
             })
         ).meta?.total_count,
+        */
     ])
+
+    console.log('SPEAKER')
+    console.log(speaker)
 
     // Throw error if speaker does not exist
     if (!speaker) {
