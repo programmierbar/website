@@ -40,8 +40,8 @@
                 </div>
             </nav>
 
-      <!-- Divider -->
-      <hr class='border-white' />
+            <!-- Divider -->
+            <hr class="border-white" />
 
             <!-- Copyright -->
             <div class="text-sm font-light italic text-white lg:text-xl">&copy; {{ fullYear }} Lotum media GmbH</div>

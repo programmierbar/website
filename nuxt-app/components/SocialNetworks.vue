@@ -21,22 +21,19 @@
 <script setup lang="ts">
 import githubIcon from '~/assets/logos/github.svg?raw'
 import instagramIcon from '~/assets/logos/instagram.svg?raw'
-import meetupIcon from '~/assets/logos/meetup.svg?raw'
-import twitterIcon from '~/assets/logos/twitter.svg?raw'
-import youtubeIcon from '~/assets/logos/youtube.svg?raw'
 import linkedinIcon from '~/assets/logos/linkedin.svg?raw'
 import mastodonIcon from '~/assets/logos/mastodon.svg?raw'
-
+import twitterIcon from '~/assets/logos/twitter.svg?raw'
+import youtubeIcon from '~/assets/logos/youtube.svg?raw'
 import {
-  OPEN_GITHUB_EVENT_ID,
-  OPEN_INSTAGRAM_EVENT_ID,
-  OPEN_MEETUP_EVENT_ID,
-  OPEN_TWITTER_EVENT_ID,
-  OPEN_YOUTUBE_EVENT_ID,
-  OPEN_MASTODON_EVENT_ID,
-  OPEN_LINKEDIN_EVENT_ID,
-} from '../config';
-import { trackGoal } from '../helpers';
+    OPEN_GITHUB_EVENT_ID,
+    OPEN_INSTAGRAM_EVENT_ID,
+    OPEN_LINKEDIN_EVENT_ID,
+    OPEN_MASTODON_EVENT_ID,
+    OPEN_TWITTER_EVENT_ID,
+    OPEN_YOUTUBE_EVENT_ID,
+} from '../config'
+import { trackGoal } from '../helpers'
 
 const socialNetworks = [
     {
@@ -70,10 +67,10 @@ const socialNetworks = [
         eventId: OPEN_INSTAGRAM_EVENT_ID,
     },
     {
-      label: 'Twitter',
-      icon: twitterIcon,
-      href: 'https://twitter.com/programmierbar',
-      eventId: OPEN_TWITTER_EVENT_ID,
-  },
+        label: 'Twitter',
+        icon: twitterIcon,
+        href: 'https://twitter.com/programmierbar',
+        eventId: OPEN_TWITTER_EVENT_ID,
+    },
 ]
 </script>
