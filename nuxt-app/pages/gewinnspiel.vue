@@ -29,9 +29,7 @@ const { data: rafflePage } = await useAsyncData(
   () => directus.singleton('raffle_page').read() as Promise<RafflePage>
 );
 
-console.log(rafflePage.value);
-
-if (rafflePage.value && rafflePage.value?.status !== 'published') {
+if (rafflePage.value && rafflePage.value.status !== 'published') {
   throw new Error('The page was not found.');
 }
 
