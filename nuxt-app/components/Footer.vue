@@ -40,8 +40,8 @@
                 </div>
             </nav>
 
-            <!-- Divider -->
-            <hr />
+      <!-- Divider -->
+      <hr class='border-white' />
 
             <!-- Copyright -->
             <div class="text-sm font-light italic text-white lg:text-xl">&copy; {{ fullYear }} Lotum media GmbH</div>
@@ -62,9 +62,9 @@ const mainMenuItems = [
     { label: 'Über uns', href: '/ueber-uns' },
 ]
 const subMenuItems = [
-    { label: 'Kontakt', href: '/kontakt' },
-    { label: 'Impressum', href: '/impressum' },
     { label: 'Datenschutz', href: '/datenschutz' },
+    { label: 'Impressum', href: '/impressum' },
+    { label: 'Kontakt', href: '/kontakt' },
 ]
 const fullYear = new Date().getFullYear()
 </script>

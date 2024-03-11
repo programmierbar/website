@@ -30,3 +30,9 @@ export interface HallOfFamePage {
     intro_heading: string
     intro_text: string
 }
+
+export interface RafflePage {
+  heading: string;
+  text: string;
+  status: string;
+}
