@@ -69,6 +69,12 @@ export interface ImprintPage {
   text: string;
 }
 
+export interface RafflePage {
+  heading: string;
+  text: string;
+  status: string;
+}
+
 export interface PrivacyPage {
   heading: string;
   text: string;
