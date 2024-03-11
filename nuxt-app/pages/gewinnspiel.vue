@@ -18,19 +18,19 @@
 </template>
 
 <script setup lang="ts">
-import { useLoadingScreen } from '../composables';
-import { getMetaInfo } from '../helpers';
-import { directus } from '../services';
-import { RafflePage } from '../types';
+import { useDirectus } from '~/composables/useDirectus'
+import { useLoadingScreen } from '../composables'
+import { getMetaInfo } from '../helpers'
+
+const directus = useDirectus()
 
 const breadcrumbs = [{ label: 'Teilnahmebedingungen und Datenschutz zum Gewinnspiel' }]
+
 // Query raffle page
-const { data: rafflePage } = await useAsyncData(
-  () => directus.singleton('raffle_page').read() as Promise<RafflePage>
-);
+const { data: rafflePage } = useAsyncData(() => directus.getRafflePage())
 
 if (rafflePage.value && rafflePage.value.status !== 'published') {
-  throw new Error('The page was not found.');
+    throw new Error('The page was not found.')
 }
 
 // Set loading screen

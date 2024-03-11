@@ -14,6 +14,7 @@ import type {
     DirectusPodcastItem,
     DirectusPodcastPage,
     DirectusPrivacyPage,
+    DirectusRafflePage,
     DirectusSpeakerItem,
     DirectusTagItem,
 } from '../types'
@@ -28,6 +29,7 @@ export type Collections = {
     contact_page: DirectusContactPage
     imprint_page: DirectusImprintPage
     privacy_page: DirectusPrivacyPage
+    raffle_page: DirectusRafflePage
     podcasts: DirectusPodcastItem[]
     meetups: DirectusMeetupItem[]
     members: DirectusMemberItem[]

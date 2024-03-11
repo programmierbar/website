@@ -291,6 +291,12 @@ export interface DirectusImprintPage {
     text: string
 }
 
+export interface DirectusRafflePage {
+    status: string
+    heading: string
+    text: string
+}
+
 export interface DirectusPrivacyPage {
     heading: string
     text: string

@@ -74,6 +74,14 @@ export function useDirectus() {
         )
     }
 
+    async function getRafflePage() {
+        return await directus.request(
+            readSingleton('raffle_page', {
+                fields: ['*'],
+            })
+        )
+    }
+
     async function getContactPage() {
         return await directus.request(
             readSingleton('contact_page', {
@@ -400,6 +408,7 @@ export function useDirectus() {
         getPicksOfTheDayPage,
         getAboutPage,
         getPrivacyPage,
+        getRafflePage,
         getImprintPage,
         getContactPage,
         getMembers,
