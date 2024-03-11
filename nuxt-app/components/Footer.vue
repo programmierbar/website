@@ -45,7 +45,7 @@
       </nav>
 
       <!-- Divider -->
-      <hr />
+      <hr class='border-white' />
 
       <!-- Copyright -->
       <div class="text-white font-light italic text-sm lg:text-xl">
@@ -68,9 +68,9 @@ const mainMenuItems = [
   { label: 'Über uns', href: '/ueber-uns' },
 ];
 const subMenuItems = [
-  { label: 'Kontakt', href: '/kontakt' },
-  { label: 'Impressum', href: '/impressum' },
   { label: 'Datenschutz', href: '/datenschutz' },
+  { label: 'Impressum', href: '/impressum' },
+  { label: 'Kontakt', href: '/kontakt' },
 ];
 const fullYear = new Date().getFullYear();
 </script>
