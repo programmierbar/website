@@ -5,6 +5,7 @@ import type {
     DirectusPodcastItem,
     MeetupItem,
     PodcastItem,
+    PodcastPreviewItem,
     SpeakerItem,
     SpeakerPreviewItem,
     TagItem,
@@ -298,8 +299,6 @@ export function useDirectus() {
                         'youtube_url',
                         'github_url',
                         'instagram_url',
-                        //'podcasts.podcast.*',
-                        //'podcasts.podcast.cover_image.*',
                         'podcasts.podcast.id',
                         'podcasts.podcast.slug',
                         'podcasts.podcast.published_on',
@@ -308,7 +307,6 @@ export function useDirectus() {
                         'podcasts.podcast.title',
                         'podcasts.podcast.cover_image.*',
                         'podcasts.podcast.audio_url',
-                        //'meetups.*',
                         'picks_of_the_day.id',
                         'picks_of_the_day.name',
                         'picks_of_the_day.website_url',
@@ -327,7 +325,9 @@ export function useDirectus() {
                         .map((speaker) => ({
                             ...speaker,
                             tagsPrepared: speaker.tags.map((tag: DirectusTag) => tag.tag) as TagItem[],
-                            podcastsPrepared: speaker.podcasts.map((podcast: any) => podcast.podcast), // as TagItem[],
+                            podcastsPrepared: speaker.podcasts.map(
+                                (podcast: any) => podcast.podcast
+                            ) as PodcastPreviewItem[],
                         }))
                         .pop() as unknown as SpeakerItem
             )

@@ -26,7 +26,7 @@
                         class="mt-10 md:mt-14"
                         :tags="podcast.tagsPrepared"
                         :on-click="
-                            (tag) =>
+                            (tag: TagItem) =>
                                 navigateTo({
                                     path: '/suche',
                                     query: { search: tag.name },
@@ -127,13 +127,12 @@ import {
 } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
 import { generatePodcastEpisodeFromPodcast } from '~/helpers/jsonLdGenerator'
-import type { PodcastItem } from '~/types'
+import type { PodcastItem, TagItem } from '~/types'
 import { getFullPodcastTitle, getPodcastType } from 'shared-code'
 import { computed, type ComputedRef } from 'vue'
 
 // Add route and router
 const route = useRoute()
-const router = useRouter()
 const directus = useDirectus()
 
 // Query podcast, pick of the day,

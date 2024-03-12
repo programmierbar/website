@@ -67,7 +67,7 @@
                     class="mt-10 md:mt-14"
                     :tags="speaker.tagsPrepared"
                     :on-click="
-                        (tag) =>
+                        (tag: TagItem) =>
                             navigateTo({
                                 path: '/suche',
                                 query: { search: tag.name },
@@ -127,7 +127,7 @@ import {
 } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
 import { generatePersonFromSpeaker } from '~/helpers/jsonLdGenerator'
-import type { PickOfTheDayItem, PodcastItem, SpeakerItem, TagItem } from '~/types'
+import type { TagItem } from '~/types'
 import { getFullSpeakerName } from 'shared-code'
 import { computed } from 'vue'
 
@@ -140,102 +140,10 @@ const route = useRoute()
 const { data: pageData } = useAsyncData(async () => {
     // Query speaker, podcast and pick of the day count async
     const [speaker, podcastCount, pickOfTheDayCount] = await Promise.all([
-        // Speaker
         directus.getSpeakerBySlug(route.params.slug as string),
         directus.getPodcastCount(),
         directus.getPickOfTheDayCount(),
-        /*
-        (
-            await directus.items('speakers').readByQuery({
-                fields: [
-                    'academic_title',
-                    'first_name',
-                    'last_name',
-                    'occupation',
-                    'description',
-                    'profile_image.*',
-                    'website_url',
-                    'twitter_url',
-                    'linkedin_url',
-                    'youtube_url',
-                    'github_url',
-                    'instagram_url',
-                    'podcasts.podcast.id',
-                    'podcasts.podcast.slug',
-                    'podcasts.podcast.published_on',
-                    'podcasts.podcast.type',
-                    'podcasts.podcast.number',
-                    'podcasts.podcast.title',
-                    'podcasts.podcast.cover_image.*',
-                    'podcasts.podcast.audio_url',
-                    'picks_of_the_day.id',
-                    'picks_of_the_day.name',
-                    'picks_of_the_day.website_url',
-                    'picks_of_the_day.description',
-                    'picks_of_the_day.image.*',
-                    'tags.tag.id',
-                    'tags.tag.name',
-                ],
-                filter: { slug: route.params.slug },
-                limit: 1,
-            })
-        ).data?.map(({ podcasts, tags, ...rest }) => ({
-            ...rest,
-            podcasts: (
-                podcasts as {
-                    podcast: Pick<
-                        PodcastItem,
-                        'id' | 'slug' | 'published_on' | 'type' | 'number' | 'title' | 'cover_image' | 'audio_url'
-                    >
-                }[]
-            )
-                .map(({ podcast }) => podcast)
-                .filter((podcast) => podcast),
-            tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
-            // TODO: Fix types and remove "as unknown"
-        }))[0] as unknown as Pick<
-            SpeakerItem,
-            | 'academic_title'
-            | 'first_name'
-            | 'last_name'
-            | 'occupation'
-            | 'description'
-            | 'profile_image'
-            | 'website_url'
-            | 'twitter_url'
-            | 'linkedin_url'
-            | 'youtube_url'
-            | 'github_url'
-            | 'instagram_url'
-            | 'tags'
-        > & {
-            podcasts: Pick<
-                PodcastItem,
-                'id' | 'slug' | 'published_on' | 'type' | 'number' | 'title' | 'cover_image' | 'audio_url'
-            >[]
-            picks_of_the_day: Pick<PickOfTheDayItem, 'id' | 'name' | 'website_url' | 'description' | 'image'>[]
-        },
-
-        // Podcast count
-        (
-            await directus.items('podcasts').readByQuery({
-                limit: 0,
-                meta: 'total_count',
-            })
-        ).meta?.total_count,
-
-        // Pick of the day count
-        (
-            await directus.items('picks_of_the_day').readByQuery({
-                limit: 0,
-                meta: 'total_count',
-            })
-        ).meta?.total_count,
-        */
     ])
-
-    console.log('SPEAKER')
-    console.log(speaker)
 
     // Throw error if speaker does not exist
     if (!speaker) {

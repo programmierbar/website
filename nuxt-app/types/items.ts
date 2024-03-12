@@ -18,16 +18,12 @@ interface PreparedSpeakersItem {
     speakersPrepared: SpeakerPreviewItem[]
 }
 interface PreparedPodcastsItems {
-    podcastPrepared: any[]
-}
-
-interface PreparedMeetupsItems {
-    meetupsPrepared: any[]
+    podcastsPrepared: PodcastPreviewItem[]
 }
 
 export interface PodcastItem extends DirectusPodcastItem, PreparedTagsItem, PreparedSpeakersItem {}
 export interface MeetupItem extends DirectusMeetupItem, PreparedTagsItem, PreparedSpeakersItem {}
-export interface SpeakerItem extends DirectusSpeakerItem, PreparedTagsItem {}
+export interface SpeakerItem extends DirectusSpeakerItem, PreparedTagsItem, PreparedPodcastsItems {}
 
 export interface MemberItem {
     id: string
@@ -73,4 +69,15 @@ export interface TagItem {
     meetups: MeetupItem[]
     picks_of_the_day: PickOfTheDayItem[]
     speakers: SpeakerItem[]
+}
+
+export interface PodcastPreviewItem {
+    id: string
+    slug: string
+    published_on: string
+    type: string
+    number: string
+    title: string
+    cover_image: FileItem
+    audio_url: string
 }
