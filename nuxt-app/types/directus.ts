@@ -170,15 +170,12 @@ export interface DirectusPickOfTheDayItem {
     description: string
     image: DirectusFileItem
     podcast: DirectusPodcastItem
-    tags: (
-        | number
-        | {
-              id: number
-              pick_of_the_day: string | DirectusPickOfTheDayItem
-              tag: string | DirectusTagItem
-              sort: number
-          }
-    )[]
+    tags: {
+        id: number
+        speaker: DirectusSpeakerItem
+        tag: DirectusTagItem
+        sort: number
+    }[]
 }
 
 export interface DirectusTagItem {
@@ -253,6 +250,7 @@ export interface DirectusMeetupPage {
     intro_text_2: string
     corona_text: string
     meetup_heading: string
+    meetup_heading_past: string
 }
 
 export interface DirectusHallOfFamePage {

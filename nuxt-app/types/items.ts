@@ -51,7 +51,7 @@ export interface SpeakerPreviewItem {
     event_image: FileItem
 }
 
-export interface PickOfTheDayItem {
+export interface PickOfTheDayItem extends PreparedTagsItem {
     id: string
     published_on: string
     name: string

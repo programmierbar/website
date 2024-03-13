@@ -86,7 +86,7 @@ onMounted(() => {
     // Check if meetup is not over yet
     if (new Date(props.meetup.end_on) > new Date()) {
         // Add Google Calendar URL
-        const { title } = props.meetup
+        const title = `programmier.bar Meetup: ${props.meetup.title}`
         const startAt = getCalendarDate(props.meetup.start_on)
         const endAt = getCalendarDate(props.meetup.end_on)
         icons.googleCalendarUrl = encodeURI(
@@ -104,7 +104,7 @@ onMounted(() => {
                 `DTSTAMP:${getCalendarDate(props.meetup.published_on)}\n`,
                 `DTSTART:${getCalendarDate(props.meetup.start_on)}\n`,
                 `DTEND:${getCalendarDate(props.meetup.end_on)}\n`,
-                `SUMMARY:${props.meetup.title}\n`,
+                `SUMMARY:${title}\n`,
                 'END:VEVENT\n',
                 'END:VCALENDAR',
             ],

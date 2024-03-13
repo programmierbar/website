@@ -79,12 +79,12 @@
                             <!-- Tags -->
                             <!-- TODO: Replace navigateTo() with <a> element -->
                             <TagList
-                                v-if="pickOfTheDay.tags.length"
+                                v-if="pickOfTheDay.tagsPrepared.length"
                                 class="flex-grow"
-                                :tags="pickOfTheDay.tags"
+                                :tags="pickOfTheDay.tagsPrepared"
                                 variant="pick_of_the_day_card"
                                 :on-click="
-                                    (tag) =>
+                                    (tag: TagItem) =>
                                         navigateTo({
                                             path: '/suche',
                                             query: { search: tag.name },
@@ -112,15 +112,12 @@ import InnerHtml from './InnerHtml.vue'
 import TagList from './TagList.vue'
 
 const props = defineProps<{
-    pickOfTheDay: Pick<PickOfTheDayItem, 'name' | 'website_url' | 'description' | 'image'> & {
+    pickOfTheDay: Pick<PickOfTheDayItem, 'name' | 'website_url' | 'description' | 'image' | 'tagsPrepared'> & {
         podcast: Pick<PodcastItem, 'slug' | 'type' | 'number' | 'title'> | null
         tags: Pick<TagItem, 'id' | 'name'>[]
     }
     variant: 'small' | 'large'
 }>()
-
-// Add router
-const router = useRouter()
 
 // Create podcast href to podcast subpage
 const podcastHref = computed(() => props.pickOfTheDay.podcast && `/podcast/${props.pickOfTheDay.podcast.slug}`)

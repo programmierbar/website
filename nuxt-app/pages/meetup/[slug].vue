@@ -56,7 +56,7 @@
                     class="mt-10 md:mt-14"
                     :tags="meetup.tagsPrepared"
                     :on-click="
-                        (tag) =>
+                        (tag: TagItem) =>
                             navigateTo({
                                 path: '/suche',
                                 query: { search: tag.name },
@@ -96,12 +96,11 @@ import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { OPEN_YOUTUBE_EVENT_ID } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
-import type { MeetupItem } from '~/types'
+import type { MeetupItem, TagItem } from '~/types'
 import { computed, type ComputedRef } from 'vue'
 
 // Add route and router
 const route = useRoute()
-const router = useRouter()
 
 const directus = useDirectus()
 

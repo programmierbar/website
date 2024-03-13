@@ -434,26 +434,33 @@ export function useDirectus() {
     }
 
     async function getPicksOfTheDay() {
-        return await directus.request(
-            readItems('picks_of_the_day', {
-                fields: [
-                    'id',
-                    'name',
-                    'website_url',
-                    'description',
-                    'podcast.*',
-                    'image.*',
-                    'podcast.slug',
-                    'podcast.type',
-                    'podcast.number',
-                    'podcast.title',
-                    'tags.tag.id',
-                    'tags.tag.name',
-                ],
-                limit: -1,
-                sort: ['-published_on'],
-            })
-        )
+        return await directus
+            .request(
+                readItems('picks_of_the_day', {
+                    fields: [
+                        'id',
+                        'name',
+                        'website_url',
+                        'description',
+                        'podcast.*',
+                        'image.*',
+                        'podcast.slug',
+                        'podcast.type',
+                        'podcast.number',
+                        'podcast.title',
+                        'tags.tag.id',
+                        'tags.tag.name',
+                    ],
+                    limit: -1,
+                    sort: ['-published_on'],
+                })
+            )
+            .then((result) =>
+                result.map((pickOfTheDay) => ({
+                    ...pickOfTheDay,
+                    tagsPrepared: pickOfTheDay.tags.map((tag: DirectusTag) => tag.tag) as TagItem[],
+                }))
+            )
     }
 
     return {
