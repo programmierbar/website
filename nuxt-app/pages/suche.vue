@@ -47,114 +47,51 @@ import searchFigureIcon from '~/assets/images/search-figure.svg?raw'
 import LazyList from '~/components/LazyList.vue'
 import LazyListItem from '~/components/LazyListItem.vue'
 import { useLoadingScreen } from '~/composables'
+import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo } from '~/helpers'
-import { directus } from '~/services'
 import type { MeetupSearchItem, PickOfTheDaySearchItem, PodcastSearchItem, SpeakerSearchItem, TagItem } from '~/types'
 import { getUrlSlug } from 'shared-code'
 import { computed } from 'vue'
+
+const directus = useDirectus()
 
 // Add route
 const route = useRoute()
 
 // Query podcasts, meetups, picks of the day and speakers
 const { data: searchItems } = useAsyncData(async () => {
-    return Promise.all([
-        // Podcasts
-        ...((
-            (
-                await directus.items('podcasts').readByQuery({
-                    fields: [
-                        'id',
-                        'slug',
-                        'published_on',
-                        'type',
-                        'number',
-                        'title',
-                        'description',
-                        'cover_image.*',
-                        'tags.tag.id',
-                        'tags.tag.name',
-                    ],
-                    limit: -1,
-                })
-            ).data || []
-        ).map(({ tags, ...rest }) => ({
-            ...rest,
-            item_type: 'podcast',
-            tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
-        })) as PodcastSearchItem[]),
-
-        // Meetups
-        ...((
-            (
-                await directus.items('meetups').readByQuery({
-                    fields: [
-                        'id',
-                        'slug',
-                        'published_on',
-                        'title',
-                        'description',
-                        'cover_image.*',
-                        'tags.tag.id',
-                        'tags.tag.name',
-                    ],
-                    limit: -1,
-                })
-            ).data || []
-        ).map(({ tags, ...rest }) => ({
-            ...rest,
-            item_type: 'meetup',
-            tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
-        })) as MeetupSearchItem[]),
-
-        // Picks of the day
-        ...((
-            (
-                await directus.items('picks_of_the_day').readByQuery({
-                    fields: [
-                        'id',
-                        'published_on',
-                        'name',
-                        'website_url',
-                        'description',
-                        'image.*',
-                        'tags.tag.id',
-                        'tags.tag.name',
-                    ],
-                    limit: -1,
-                })
-            ).data || []
-        ).map(({ tags, ...rest }) => ({
-            ...rest,
-            item_type: 'pick_of_the_day',
-            tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
-        })) as PickOfTheDaySearchItem[]),
-
-        // Speaker
-        ...(
-            (
-                await directus.items('speakers').readByQuery({
-                    fields: [
-                        'id',
-                        'slug',
-                        'published_on',
-                        'academic_title',
-                        'first_name',
-                        'last_name',
-                        'description',
-                        'profile_image.*',
-                        'tags.tag.id',
-                        'tags.tag.name',
-                    ],
-                    limit: -1,
-                })
-            ).data || []
-        ).map(({ tags, ...rest }) => ({
-            ...rest,
-            item_type: 'speaker',
-            tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
-        })),
+    const [rawPodcasts, rawMeetups, rawSpeakers, rawPicksOfTheDay] = await Promise.all([
+        directus.getPodcasts(),
+        directus.getMeetups(),
+        directus.getSpeakers(),
+        directus.getPicksOfTheDay(),
     ])
+
+    const preparedPodcast = rawPodcasts.map(({ tags, ...rest }) => ({
+        ...rest,
+        item_type: 'podcast',
+        tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
+    })) as unknown as PodcastSearchItem[]
+
+    const preparedMeetups = rawMeetups.map(({ tags, ...rest }) => ({
+        ...rest,
+        item_type: 'meetup',
+        tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
+    })) as unknown as MeetupSearchItem[]
+
+    const preparedSpeakers = rawSpeakers.map(({ tags, ...rest }) => ({
+        ...rest,
+        item_type: 'speaker',
+        tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
+    })) as unknown as SpeakerSearchItem[]
+
+    const preparedPicksOfTheDay = rawPicksOfTheDay.map(({ tags, ...rest }) => ({
+        ...rest,
+        item_type: 'pick_of_the_day',
+        tags: (tags as { tag: Pick<TagItem, 'id' | 'name'> }[]).map(({ tag }) => tag).filter((tag) => tag),
+    })) as unknown as PickOfTheDaySearchItem[]
+
+    return [...preparedPodcast, ...preparedMeetups, ...preparedSpeakers, ...preparedPicksOfTheDay]
 })
 
 // Set loading screen

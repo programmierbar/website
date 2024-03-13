@@ -121,6 +121,28 @@ export function useDirectus() {
         )
     }
 
+    async function getPodcasts() {
+        return await directus.request(
+            readItems('podcasts', {
+                fields: [
+                    'id',
+                    'slug',
+                    'published_on',
+                    'type',
+                    'number',
+                    'title',
+                    'cover_image.*',
+                    'audio_url',
+                    'description',
+                    'tags.tag.id',
+                    'tags.tag.name',
+                ],
+                sort: ['-published_on'],
+                limit: -1,
+            })
+        )
+    }
+
     async function getRelatedPodcasts(podcast: PodcastItem | MeetupItem, limit: number = 15) {
         return await directus.request(
             readItems('podcasts', {
@@ -366,7 +388,18 @@ export function useDirectus() {
     async function getMeetups() {
         return await directus.request(
             readItems('meetups', {
-                fields: ['id', 'slug', 'start_on', 'end_on', 'title', 'description', 'cover_image.*'],
+                fields: [
+                    'id',
+                    'published_on',
+                    'slug',
+                    'start_on',
+                    'end_on',
+                    'title',
+                    'description',
+                    'cover_image.*',
+                    'tags.tag.id',
+                    'tags.tag.name',
+                ],
                 sort: ['-start_on'],
                 limit: -1,
             })
@@ -379,10 +412,12 @@ export function useDirectus() {
                 fields: [
                     'id',
                     'slug',
+                    'published_on',
                     'academic_title',
                     'first_name',
                     'last_name',
                     'occupation',
+                    'description',
                     'profile_image.*',
                     'tags.tag.id',
                     'tags.tag.name',
@@ -441,6 +476,7 @@ export function useDirectus() {
                         'id',
                         'name',
                         'website_url',
+                        'published_on',
                         'description',
                         'podcast.*',
                         'image.*',
@@ -476,6 +512,7 @@ export function useDirectus() {
         getContactPage,
         getMembers,
         getLatestPodcasts,
+        getPodcasts,
         getMeetups,
         getSpeakers,
         getPodcastCount,
