@@ -1,5 +1,4 @@
 import { aggregate, readItems, readSingleton, type QueryFilter } from '@directus/sdk'
-import { directus, type Collections } from '~/services'
 import type {
     DirectusMemberItem,
     DirectusPodcastItem,
@@ -10,6 +9,9 @@ import type {
     SpeakerPreviewItem,
     TagItem,
 } from '~/types'
+// This import needs to be relative/file-based
+// so that it can be resolved during the nuxt build process
+import { directus, type Collections } from './../services'
 
 export type LatestPodcasts = Pick<
     DirectusPodcastItem,
@@ -228,7 +230,9 @@ export function useDirectus() {
                     result
                         .map((podcast) => ({
                             ...podcast,
-                            tagsPrepared: podcast.tags.map((tag: any) => tag.tag) as TagItem[],
+                            tagsPrepared: podcast.tags
+                                .map((tag: any) => tag.tag)
+                                .filter((tag: TagItem) => tag) as TagItem[],
                             speakersPrepared: podcast.speakers.map((speaker: any) => {
                                 return {
                                     first_name: speaker.speaker.first_name,
@@ -346,10 +350,12 @@ export function useDirectus() {
                     result
                         .map((speaker) => ({
                             ...speaker,
-                            tagsPrepared: speaker.tags.map((tag: DirectusTag) => tag.tag) as TagItem[],
-                            podcastsPrepared: speaker.podcasts.map(
-                                (podcast: any) => podcast.podcast
-                            ) as PodcastPreviewItem[],
+                            tagsPrepared: speaker.tags
+                                .map((tag: DirectusTag) => tag.tag)
+                                .filter((tag: TagItem) => tag) as TagItem[],
+                            podcastsPrepared: speaker.podcasts
+                                .map((podcast: any) => podcast.podcast)
+                                .filter((podcast: PodcastItem) => podcast) as PodcastPreviewItem[],
                         }))
                         .pop() as unknown as SpeakerItem
             )
@@ -494,7 +500,9 @@ export function useDirectus() {
             .then((result) =>
                 result.map((pickOfTheDay) => ({
                     ...pickOfTheDay,
-                    tagsPrepared: pickOfTheDay.tags.map((tag: DirectusTag) => tag.tag) as TagItem[],
+                    tagsPrepared: pickOfTheDay.tags
+                        .map((tag: DirectusTag) => tag.tag)
+                        .filter((tag: TagItem) => tag) as TagItem[],
                 }))
             )
     }

@@ -1,7 +1,11 @@
 import { resolve } from 'path'
 import svgLoader from 'vite-svg-loader'
+// This import needs to be relative/file-based
+// so that it can be resolved during the nuxt build process
+import { useDirectus } from './composables/useDirectus'
 import { DIRECTUS_CMS_URL } from './config'
-import { directus } from './services'
+
+const directus = useDirectus()
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -49,20 +53,18 @@ export default defineNuxtConfig({
             if (nitroConfig.dev) {
                 return
             }
-            const routes = await [
-                { name: 'podcasts', path: 'podcast' },
-                { name: 'speakers', path: 'hall-of-fame' },
-                { name: 'meetups', path: 'meetup' },
-            ].reduce(
-                async (list, { name, path }) => [
-                    ...(await list),
-                    ...(
-                        ((await directus.items(name).readByQuery({ fields: ['slug'], limit: -1 })).data ??
-                            []) as Array<{ slug: string }>
-                    ).map(({ slug }) => `/${path}/${slug}`),
-                ],
-                Promise.resolve([] as string[])
-            )
+
+            const routes: string[] = []
+
+            const podcasts = await directus.getPodcasts()
+            routes.push(...podcasts.map((podcast) => `/podcast/${podcast.slug}`))
+
+            const meetups = await directus.getMeetups()
+            routes.push(...meetups.map((meetup) => `/meetup/${meetup.slug}`))
+
+            const speakers = await directus.getSpeakers()
+            routes.push(...speakers.map((speaker) => `/hall-of-fame/${speaker.slug}`))
+
             // ..Async logic..
             nitroConfig.prerender?.routes?.push(...routes)
         },
