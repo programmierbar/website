@@ -12,7 +12,7 @@
                     alt="programmier.bar Logo"
                     v-html="brandLogoIcon"
                 />
-                :
+                <span>: </span>
                 <TypedText :text="homePage.intro_heading" />
             </h1>
         </section>
@@ -55,12 +55,12 @@
 
 <script setup lang="ts">
 import brandLogoIcon from '~/assets/images/brand-logo.svg?raw'
-import { useDirectus, type LatestPodcasts } from '~/composables/useDirectus'
+import { useDirectus } from '~/composables/useDirectus'
 import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'
 import { useLoadingScreen, usePageMeta } from '../composables'
 import { DIRECTUS_CMS_URL } from '../config'
-import type { DirectusHomePage } from '../types'
+import type { DirectusHomePage, LatestPodcastItem } from '../types'
 
 const breadcrumbs = [{ label: 'Home' }]
 const directus = useDirectus()
@@ -78,7 +78,7 @@ const { data: pageData } = useAsyncData(async () => {
 
 // Extract home page, latest podcasts and podcast count from page data
 const homePage: ComputedRef<DirectusHomePage | undefined> = computed(() => pageData.value?.homePage)
-const latestPodcasts: ComputedRef<LatestPodcasts | undefined> = computed(() => pageData.value?.latestPodcasts)
+const latestPodcasts: ComputedRef<LatestPodcastItem[] | undefined> = computed(() => pageData.value?.latestPodcasts)
 
 const podcastCount = computed(() => pageData.value?.podcastCount)
 const newsTicker = computed(() => {

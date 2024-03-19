@@ -2,6 +2,11 @@
 
 import type { DirectusMeetupItem, DirectusPodcastItem, DirectusSpeakerItem } from '~/types/directus'
 
+export type LatestPodcastItem = Pick<
+    DirectusPodcastItem,
+    'id' | 'slug' | 'published_on' | 'type' | 'number' | 'title' | 'cover_image' | 'audio_url'
+>
+
 export interface FileItem {
     id: string
     title: string | null

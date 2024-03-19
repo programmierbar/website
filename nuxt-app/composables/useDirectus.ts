@@ -1,7 +1,9 @@
 import { aggregate, readItems, readSingleton, type QueryFilter } from '@directus/sdk'
 import type {
     DirectusMemberItem,
-    DirectusPodcastItem,
+    DirectusPickOfTheDayItem,
+    DirectusSpeakerItem,
+    DirectusTagItem,
     MeetupItem,
     PodcastItem,
     PodcastPreviewItem,
@@ -13,13 +15,9 @@ import type {
 // so that it can be resolved during the nuxt build process
 import { directus, type Collections } from './../services'
 
-export type LatestPodcasts = Pick<
-    DirectusPodcastItem,
-    'id' | 'slug' | 'published_on' | 'type' | 'number' | 'title' | 'cover_image' | 'audio_url'
->[]
-export type CollectionName = 'members' | 'speakers' | 'tags' | 'podcasts' | 'meetups' | 'picks_of_the_day'
-export type Tag = { name: string; count: number }
-export type DirectusTag = { tag: { id: string; name: string } }
+type CollectionWithTagsName = 'members' | 'speakers' | 'tags' | 'podcasts' | 'meetups' | 'picks_of_the_day'
+type Tag = { name: string; count: number }
+type DirectusTag = { tag: { id: string; name: string } }
 
 export function useDirectus() {
     async function getHomepage() {
@@ -434,9 +432,11 @@ export function useDirectus() {
         )
     }
 
-    async function getTopTagsForCollection(collection: CollectionName, limit: number = 25) {
+    async function getTopTagsForCollection(collection: CollectionWithTagsName, limit: number = 25) {
         const tagCounts: { [key: string]: number } = {}
-        const tagItems = await directus.request(readItems(collection, { fields: ['tags.tag.name'], limit: -1 }))
+        const tagItems = (await directus.request(
+            readItems(collection, { fields: ['tags.tag.name'], limit: -1 })
+        )) as unknown as { tags: { tag: DirectusTagItem }[] }[]
 
         for (const item of tagItems) {
             for (const tagContainer of item.tags) {
@@ -484,7 +484,6 @@ export function useDirectus() {
                         'website_url',
                         'published_on',
                         'description',
-                        'podcast.*',
                         'image.*',
                         'podcast.slug',
                         'podcast.type',
@@ -497,12 +496,12 @@ export function useDirectus() {
                     sort: ['-published_on'],
                 })
             )
-            .then((result) =>
+            .then((result: DirectusPickOfTheDayItem[]) =>
                 result.map((pickOfTheDay) => ({
                     ...pickOfTheDay,
                     tagsPrepared: pickOfTheDay.tags
                         .map((tag: DirectusTag) => tag.tag)
-                        .filter((tag: TagItem) => tag) as TagItem[],
+                        .filter((tag) => tag) as TagItem[],
                 }))
             )
     }

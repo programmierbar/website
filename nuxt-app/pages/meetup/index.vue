@@ -18,12 +18,6 @@
                     class="mt-8 text-base font-light leading-normal text-white md:mt-6 md:text-xl md:font-normal md:leading-normal lg:text-2xl lg:leading-normal"
                     :html="meetupPage.intro_text_2"
                 />
-
-                <!-- Corona info -->
-                <InnerHtml
-                    class="lg::mt-32 mt-10 space-y-6 text-sm font-bold italic leading-relaxed text-lime md:mt-20 md:text-lg md:leading-relaxed lg:text-xl lg:leading-relaxed"
-                    :html="meetupPage.corona_text"
-                />
             </div>
         </section>
 

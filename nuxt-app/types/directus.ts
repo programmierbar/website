@@ -170,12 +170,15 @@ export interface DirectusPickOfTheDayItem {
     description: string
     image: DirectusFileItem
     podcast: DirectusPodcastItem
-    tags: {
-        id: number
-        speaker: DirectusSpeakerItem
-        tag: DirectusTagItem
-        sort: number
-    }[]
+    tags: (
+        | number
+        | {
+              id: number
+              speaker: DirectusSpeakerItem
+              tag: DirectusTagItem
+              sort: number
+          }
+    )[]
 }
 
 export interface DirectusTagItem {
