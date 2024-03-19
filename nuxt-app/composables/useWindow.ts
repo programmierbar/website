@@ -1,4 +1,4 @@
-import { onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue'
 
 /**
  * Composable for secure access of the window object.
@@ -6,11 +6,11 @@ import { onMounted, ref } from 'vue';
  * @returns A reference to the window object.
  */
 export function useWindow() {
-  const _window = ref<Window>();
+    const _window = ref<Window>()
 
-  onMounted(() => {
-    _window.value = window;
-  });
+    onMounted(() => {
+        _window.value = window
+    })
 
-  return _window;
+    return _window
 }

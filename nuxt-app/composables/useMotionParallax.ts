@@ -1,5 +1,6 @@
-import { reactive, Ref } from 'vue';
-import { useEventListener } from '.';
+import type { Ref } from 'vue'
+import { reactive } from 'vue'
+import { useEventListener } from '.'
 
 /**
  * Composable to add parallax effects when
@@ -10,26 +11,26 @@ import { useEventListener } from '.';
  * @returns The current parallax state.
  */
 export function useMotionParallax(target: Ref<HTMLElement | undefined | null>) {
-  const motionParallax = reactive({ roll: 0, tilt: 0, isActive: false });
+    const motionParallax = reactive({ roll: 0, tilt: 0, isActive: false })
 
-  const updatePosition = (event: MouseEvent) => {
-    if (target.value) {
-      const { offsetX, offsetY } = event;
-      const { clientWidth, clientHeight } = target.value;
-      motionParallax.tilt = (offsetX - clientWidth / 2) / clientWidth;
-      motionParallax.roll = (offsetY - clientHeight / 2) / clientHeight;
+    const updatePosition = (event: MouseEvent) => {
+        if (target.value) {
+            const { offsetX, offsetY } = event
+            const { clientWidth, clientHeight } = target.value
+            motionParallax.tilt = (offsetX - clientWidth / 2) / clientWidth
+            motionParallax.roll = (offsetY - clientHeight / 2) / clientHeight
+        }
     }
-  };
 
-  useEventListener(target, 'mousemove', updatePosition);
+    useEventListener(target, 'mousemove', updatePosition)
 
-  useEventListener(target, 'mouseenter', () => {
-    motionParallax.isActive = true;
-  });
+    useEventListener(target, 'mouseenter', () => {
+        motionParallax.isActive = true
+    })
 
-  useEventListener(target, 'mouseleave', () => {
-    motionParallax.isActive = false;
-  });
+    useEventListener(target, 'mouseleave', () => {
+        motionParallax.isActive = false
+    })
 
-  return motionParallax;
+    return motionParallax
 }

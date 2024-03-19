@@ -1,4 +1,3 @@
-export * from './directus';
-export * from './items';
-export * from './pages';
-export * from './search';
+export * from './directus'
+export * from './items'
+export * from './search'

@@ -1,39 +1,41 @@
-import { Directus } from '@directus/sdk';
-import { DIRECTUS_CMS_URL } from '../config';
-import {
-  DirectusHomePage,
-  DirectusPodcastPage,
-  DirectusMeetupPage,
-  DirectusHallOfFamePage,
-  DirectusPickOfTheDayPage,
-  DirectusAboutPage,
-  DirectusContactPage,
-  DirectusImprintPage,
-  DirectusPrivacyPage,
-  DirectusPodcastItem,
-  DirectusMeetupItem,
-  DirectusMemberItem,
-  DirectusSpeakerItem,
-  DirectusPickOfTheDayItem,
-  DirectusTagItem,
-} from '../types';
+import { createDirectus, rest } from '@directus/sdk'
+import { DIRECTUS_CMS_URL } from '../config'
+import type {
+    DirectusAboutPage,
+    DirectusContactPage,
+    DirectusHallOfFamePage,
+    DirectusHomePage,
+    DirectusImprintPage,
+    DirectusMeetupItem,
+    DirectusMeetupPage,
+    DirectusMemberItem,
+    DirectusPickOfTheDayItem,
+    DirectusPickOfTheDayPage,
+    DirectusPodcastItem,
+    DirectusPodcastPage,
+    DirectusPrivacyPage,
+    DirectusRafflePage,
+    DirectusSpeakerItem,
+    DirectusTagItem,
+} from '../types'
 
-type Collections = {
-  home_page: DirectusHomePage;
-  podcast_page: DirectusPodcastPage;
-  meetup_page: DirectusMeetupPage;
-  hall_of_fame_page: DirectusHallOfFamePage;
-  pick_of_the_day_page: DirectusPickOfTheDayPage;
-  about_page: DirectusAboutPage;
-  contact_page: DirectusContactPage;
-  imprint_page: DirectusImprintPage;
-  privacy_page: DirectusPrivacyPage;
-  podcasts: DirectusPodcastItem;
-  meetups: DirectusMeetupItem;
-  members: DirectusMemberItem;
-  speakers: DirectusSpeakerItem;
-  picks_of_the_day: DirectusPickOfTheDayItem;
-  tags: DirectusTagItem;
-};
+export type Collections = {
+    home_page: DirectusHomePage
+    podcast_page: DirectusPodcastPage
+    meetup_page: DirectusMeetupPage
+    hall_of_fame_page: DirectusHallOfFamePage
+    pick_of_the_day_page: DirectusPickOfTheDayPage
+    about_page: DirectusAboutPage
+    contact_page: DirectusContactPage
+    imprint_page: DirectusImprintPage
+    privacy_page: DirectusPrivacyPage
+    raffle_page: DirectusRafflePage
+    podcasts: DirectusPodcastItem[]
+    meetups: DirectusMeetupItem[]
+    members: DirectusMemberItem[]
+    speakers: DirectusSpeakerItem[]
+    picks_of_the_day: DirectusPickOfTheDayItem[]
+    tags: DirectusTagItem[]
+}
 
-export const directus = new Directus<Collections>(DIRECTUS_CMS_URL);
+export const directus = createDirectus<Collections>(DIRECTUS_CMS_URL).with(rest())

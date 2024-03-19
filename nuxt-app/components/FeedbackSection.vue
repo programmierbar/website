@@ -1,69 +1,22 @@
 <template>
-  <section
-    class="
-      w-full
-      flex flex-col
-      items-center
-      overflow-x-hidden
-      pt-20
-      md:pt-24
-      lg:pt-32
-    "
-  >
-    <div class="relative">
-      <NuxtLink
-        class="
-          min-w-56
-          md:min-w-76
-          lg:min-w-88
-          inline-block
-          hover:bg-lime
-          border-lime border-4
-          text-lime
-          hover:text-black
-          rounded-full
-          text-sm
-          md:text-lg
-          lg:text-xl
-          text-center
-          font-black
-          tracking-widest
-          uppercase
-          transition-colors
-          px-10
-          pt-4
-          md:pt-5
-          lg:pt-6
-          pb-3
-          md:pb-4
-          lg:pb-5
-        "
-        to="/kontakt"
-        data-cursor-hover
-      >
-        Feedback
-      </NuxtLink>
-      <div
-        class="
-          h-32
-          md:h-40
-          lg:h-48
-          absolute
-          -z-1
-          -top-20
-          md:-top-24
-          lg:-top-32
-          -right-32
-          md:-right-44
-          lg:-right-48
-        "
-        v-html="feedbackFigure"
-      />
-    </div>
-    <SocialNetworks class="h-8 md:h-9 lg:h-10 mt-10" />
-  </section>
+    <section class="flex w-full flex-col items-center overflow-x-hidden pt-20 md:pt-24 lg:pt-32">
+        <div class="relative">
+            <NuxtLink
+                class="inline-block min-w-56 rounded-full border-4 border-lime px-10 pb-3 pt-4 text-center text-sm font-black uppercase tracking-widest text-lime transition-colors hover:bg-lime hover:text-black md:min-w-76 md:pb-4 md:pt-5 md:text-lg lg:min-w-88 lg:pb-5 lg:pt-6 lg:text-xl"
+                to="/kontakt"
+                data-cursor-hover
+            >
+                Feedback
+            </NuxtLink>
+            <div
+                class="absolute -right-32 -top-20 -z-1 h-32 md:-right-44 md:-top-24 md:h-40 lg:-right-48 lg:-top-32 lg:h-48"
+                v-html="feedbackFigure"
+            />
+        </div>
+        <SocialNetworks class="mt-10 h-8 md:h-9 lg:h-10" />
+    </section>
 </template>
 
 <script setup>
-import feedbackFigure from '~/assets/images/feedback-figure.svg';
+import feedbackFigure from '~/assets/images/feedback-figure.svg'
 </script>

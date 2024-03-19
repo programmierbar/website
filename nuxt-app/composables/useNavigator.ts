@@ -1,4 +1,4 @@
-import { onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue'
 
 /**
  * Composable for secure access of the navigator object.
@@ -6,11 +6,11 @@ import { onMounted, ref } from 'vue';
  * @returns A reference to the navigator object.
  */
 export function useNavigator() {
-  const _navigator = ref<Navigator>();
+    const _navigator = ref<Navigator>()
 
-  onMounted(() => {
-    _navigator.value = navigator;
-  });
+    onMounted(() => {
+        _navigator.value = navigator
+    })
 
-  return _navigator;
+    return _navigator
 }
