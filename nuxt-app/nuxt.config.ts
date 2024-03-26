@@ -21,7 +21,7 @@ export default defineNuxtConfig({
         emailPassword: '',
     },
 
-    // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
+    // Plugins to run before rendering page: https://nuxt.com/docs/api/nuxt-config#plugins-1
     plugins: [],
     vite: {
         plugins: [

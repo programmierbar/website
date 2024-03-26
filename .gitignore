@@ -1,3 +1,6 @@
+# tools
+ngrok.yaml
+
 # dependencies
 node_modules
 /.pnp

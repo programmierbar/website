@@ -86,3 +86,8 @@ export interface PodcastPreviewItem {
     cover_image: FileItem
     audio_url: string
 }
+
+export interface LoginProvider {
+    name: string
+    url: string
+}

@@ -6,6 +6,7 @@ import type {
     DirectusHallOfFamePage,
     DirectusHomePage,
     DirectusImprintPage,
+    DirectusLoginPage,
     DirectusMeetupItem,
     DirectusMeetupPage,
     DirectusMemberItem,
@@ -30,6 +31,7 @@ export type Collections = {
     imprint_page: DirectusImprintPage
     privacy_page: DirectusPrivacyPage
     raffle_page: DirectusRafflePage
+    login_page: DirectusLoginPage
     podcasts: DirectusPodcastItem[]
     meetups: DirectusMeetupItem[]
     members: DirectusMemberItem[]

@@ -7,7 +7,7 @@ uploads/*
 !uploads/.gitkeep
 
 # env files
-.env.*
+.env
 
 shared-code
 

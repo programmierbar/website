@@ -298,6 +298,11 @@ export interface DirectusRafflePage {
     text: string
 }
 
+export interface DirectusLoginPage {
+    heading: string
+    text: string
+}
+
 export interface DirectusPrivacyPage {
     heading: string
     text: string
