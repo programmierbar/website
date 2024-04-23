@@ -97,12 +97,16 @@ import { useDirectus } from '~/composables/useDirectus'
 import { OPEN_YOUTUBE_EVENT_ID } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
 import type { MeetupItem, TagItem } from '~/types'
-import { computed, type ComputedRef } from 'vue'
+import { computed, type ComputedRef, onUnmounted } from 'vue';
 
 // Add route and router
 const route = useRoute()
 
 const directus = useDirectus()
+
+onUnmounted(() => {
+  pageData.value = null;
+})
 
 // Query meetup, speaker count and related podcast
 const { data: pageData } = useAsyncData(async () => {

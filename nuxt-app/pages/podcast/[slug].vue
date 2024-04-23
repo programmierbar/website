@@ -129,11 +129,15 @@ import { getMetaInfo, trackGoal } from '~/helpers'
 import { generatePodcastEpisodeFromPodcast } from '~/helpers/jsonLdGenerator'
 import type { PodcastItem, TagItem } from '~/types'
 import { getFullPodcastTitle, getPodcastType } from 'shared-code'
-import { computed, type ComputedRef } from 'vue'
+import { computed, type ComputedRef, onUnmounted } from 'vue'
 
 // Add route and router
 const route = useRoute()
 const directus = useDirectus()
+
+onUnmounted(() => {
+  pageData.value = null;
+})
 
 // Query podcast, pick of the day,
 // speaker count and related podcasts
