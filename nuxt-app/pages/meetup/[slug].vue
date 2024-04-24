@@ -105,7 +105,7 @@ const route = useRoute()
 const directus = useDirectus()
 
 // Query meetup, speaker count and related podcast
-const { data: pageData } = useAsyncData(async () => {
+const { data: pageData } = useAsyncData(route.fullPath, async () => {
     // Query meetup and speaker count async
     const [meetup, speakerCount] = await Promise.all([
         await directus.getMeetupBySlug(route.params.slug as string),
