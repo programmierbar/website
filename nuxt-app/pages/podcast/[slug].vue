@@ -129,20 +129,16 @@ import { getMetaInfo, trackGoal } from '~/helpers'
 import { generatePodcastEpisodeFromPodcast } from '~/helpers/jsonLdGenerator'
 import type { PodcastItem, TagItem } from '~/types'
 import { getFullPodcastTitle, getPodcastType } from 'shared-code'
-import { computed, type ComputedRef, onUnmounted } from 'vue'
+import { computed, type ComputedRef } from 'vue'
 
 // Add route and router
 const route = useRoute()
 const directus = useDirectus()
 
-onUnmounted(() => {
-  pageData.value = null;
-})
-
 // Query podcast, pick of the day,
 // speaker count and related podcasts
-const { data: pageData } = useAsyncData(async () => {
-    const [podcast, pickOfTheDayCount, speakerCount] = await Promise.all([
+const { data: pageData } = useAsyncData(route.fullPath, async () => {
+  const [podcast, pickOfTheDayCount, speakerCount] = await Promise.all([
         // Podcast
         await directus.getPodcastBySlug(route.params.slug as string),
         // Pick of the day count

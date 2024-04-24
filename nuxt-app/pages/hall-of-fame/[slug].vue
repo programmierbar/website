@@ -129,19 +129,15 @@ import { getMetaInfo, trackGoal } from '~/helpers'
 import { generatePersonFromSpeaker } from '~/helpers/jsonLdGenerator'
 import type { TagItem } from '~/types'
 import { getFullSpeakerName } from 'shared-code'
-import { computed, onUnmounted } from 'vue';
+import { computed } from 'vue'
 
 const directus = useDirectus()
 
 // Add route and router
 const route = useRoute()
 
-onUnmounted(() => {
-  pageData.value = null;
-})
-
 // Query speaker, podcast and pick of the day count
-const { data: pageData } = useAsyncData(async () => {
+const { data: pageData } = useAsyncData(route.fullPath, async () => {
     // Query speaker, podcast and pick of the day count async
     const [speaker, podcastCount, pickOfTheDayCount] = await Promise.all([
         directus.getSpeakerBySlug(route.params.slug as string),
