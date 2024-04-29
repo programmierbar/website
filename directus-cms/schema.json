@@ -193,8 +193,8 @@
         "item_duplication_fields": null,
         "note": null,
         "singleton": false,
-        "sort": 1,
-        "sort_field": "sort",
+        "sort": 11,
+        "sort_field": null,
         "translations": null,
         "unarchive_value": null
       },
@@ -245,8 +245,8 @@
         "item_duplication_fields": null,
         "note": null,
         "singleton": false,
-        "sort": 2,
-        "sort_field": "sort",
+        "sort": 1,
+        "sort_field": null,
         "translations": null,
         "unarchive_value": null
       },
@@ -271,8 +271,8 @@
         "item_duplication_fields": null,
         "note": null,
         "singleton": false,
-        "sort": 3,
-        "sort_field": "sort",
+        "sort": 2,
+        "sort_field": null,
         "translations": null,
         "unarchive_value": null
       },
@@ -323,8 +323,8 @@
         "item_duplication_fields": null,
         "note": null,
         "singleton": false,
-        "sort": 4,
-        "sort_field": "sort",
+        "sort": 3,
+        "sort_field": null,
         "translations": null,
         "unarchive_value": null
       },
@@ -349,8 +349,8 @@
         "item_duplication_fields": null,
         "note": null,
         "singleton": false,
-        "sort": 5,
-        "sort_field": "sort",
+        "sort": 4,
+        "sort_field": null,
         "translations": null,
         "unarchive_value": null
       },
@@ -375,7 +375,7 @@
         "item_duplication_fields": null,
         "note": "Hier findest du all unsere Meetups",
         "singleton": false,
-        "sort": 2,
+        "sort": 4,
         "sort_field": "sort",
         "translations": null,
         "unarchive_value": "draft"
@@ -401,8 +401,8 @@
         "item_duplication_fields": null,
         "note": null,
         "singleton": false,
-        "sort": 6,
-        "sort_field": "sort",
+        "sort": 5,
+        "sort_field": null,
         "translations": null,
         "unarchive_value": null
       },
@@ -427,7 +427,7 @@
         "item_duplication_fields": null,
         "note": "Hier findest du das programmier.bar Team",
         "singleton": false,
-        "sort": 3,
+        "sort": 1,
         "sort_field": "sort",
         "translations": null,
         "unarchive_value": "draft"
@@ -479,8 +479,8 @@
         "item_duplication_fields": null,
         "note": null,
         "singleton": false,
-        "sort": 7,
-        "sort_field": "sort",
+        "sort": 6,
+        "sort_field": null,
         "translations": null,
         "unarchive_value": null
       },
@@ -531,8 +531,8 @@
         "item_duplication_fields": null,
         "note": null,
         "singleton": false,
-        "sort": 8,
-        "sort_field": "sort",
+        "sort": 7,
+        "sort_field": null,
         "translations": null,
         "unarchive_value": null
       },
@@ -583,8 +583,8 @@
         "item_duplication_fields": null,
         "note": null,
         "singleton": false,
-        "sort": 9,
-        "sort_field": "sort",
+        "sort": 8,
+        "sort_field": null,
         "translations": null,
         "unarchive_value": null
       },
@@ -609,8 +609,8 @@
         "item_duplication_fields": null,
         "note": null,
         "singleton": false,
-        "sort": 10,
-        "sort_field": "sort",
+        "sort": 9,
+        "sort_field": null,
         "translations": null,
         "unarchive_value": null
       },
@@ -635,7 +635,7 @@
         "item_duplication_fields": null,
         "note": "Hier findest du die einzelnen Podcastfolgen",
         "singleton": false,
-        "sort": 1,
+        "sort": 3,
         "sort_field": "sort",
         "translations": null,
         "unarchive_value": "draft"
@@ -687,8 +687,8 @@
         "item_duplication_fields": null,
         "note": null,
         "singleton": false,
-        "sort": 11,
-        "sort_field": "sort",
+        "sort": 10,
+        "sort_field": null,
         "translations": null,
         "unarchive_value": null
       },
@@ -713,7 +713,7 @@
         "item_duplication_fields": null,
         "note": "Hier findest du die Gäste der programmier.bar",
         "singleton": false,
-        "sort": 4,
+        "sort": 2,
         "sort_field": "sort",
         "translations": null,
         "unarchive_value": "draft"
@@ -3168,7 +3168,7 @@
         },
         "readonly": false,
         "required": true,
-        "sort": 11,
+        "sort": 10,
         "special": null,
         "translations": null,
         "validation": null,
@@ -3191,6 +3191,36 @@
         "has_auto_increment": false,
         "foreign_key_table": null,
         "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "home_page",
+      "field": "podcasts",
+      "type": "alias",
+      "meta": {
+        "collection": "home_page",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "podcasts",
+        "group": null,
+        "hidden": false,
+        "interface": "list-m2m",
+        "note": null,
+        "options": {
+          "enableCreate": false,
+          "template": "{{podcast_id.title}}"
+        },
+        "readonly": false,
+        "required": true,
+        "sort": 11,
+        "special": [
+          "m2m"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
       }
     },
     {
@@ -3404,14 +3434,14 @@
     },
     {
       "collection": "home_page_podcasts",
-      "field": "home_page",
+      "field": "home_page_id",
       "type": "uuid",
       "meta": {
         "collection": "home_page_podcasts",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "home_page",
+        "field": "home_page_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -3427,7 +3457,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "home_page",
+        "name": "home_page_id",
         "table": "home_page_podcasts",
         "data_type": "uuid",
         "default_value": null,
@@ -3488,14 +3518,14 @@
     },
     {
       "collection": "home_page_podcasts",
-      "field": "podcast",
+      "field": "podcast_id",
       "type": "uuid",
       "meta": {
         "collection": "home_page_podcasts",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "podcast",
+        "field": "podcast_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -3511,7 +3541,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "podcast",
+        "name": "podcast_id",
         "table": "home_page_podcasts",
         "data_type": "uuid",
         "default_value": null,
@@ -4001,6 +4031,48 @@
     },
     {
       "collection": "meetup_gallery_images",
+      "field": "directus_file_id",
+      "type": "uuid",
+      "meta": {
+        "collection": "meetup_gallery_images",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "directus_file_id",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": null,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "directus_file_id",
+        "table": "meetup_gallery_images",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_files",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "meetup_gallery_images",
       "field": "id",
       "type": "integer",
       "meta": {
@@ -4043,14 +4115,14 @@
     },
     {
       "collection": "meetup_gallery_images",
-      "field": "image",
+      "field": "meetup_id",
       "type": "uuid",
       "meta": {
         "collection": "meetup_gallery_images",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "image",
+        "field": "meetup_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -4066,49 +4138,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "image",
-        "table": "meetup_gallery_images",
-        "data_type": "uuid",
-        "default_value": null,
-        "max_length": null,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_unique": false,
-        "is_primary_key": false,
-        "is_generated": false,
-        "generation_expression": null,
-        "has_auto_increment": false,
-        "foreign_key_table": "directus_files",
-        "foreign_key_column": "id"
-      }
-    },
-    {
-      "collection": "meetup_gallery_images",
-      "field": "meetup",
-      "type": "uuid",
-      "meta": {
-        "collection": "meetup_gallery_images",
-        "conditions": null,
-        "display": null,
-        "display_options": null,
-        "field": "meetup",
-        "group": null,
-        "hidden": true,
-        "interface": null,
-        "note": null,
-        "options": null,
-        "readonly": false,
-        "required": false,
-        "sort": null,
-        "special": null,
-        "translations": null,
-        "validation": null,
-        "validation_message": null,
-        "width": "full"
-      },
-      "schema": {
-        "name": "meetup",
+        "name": "meetup_id",
         "table": "meetup_gallery_images",
         "data_type": "uuid",
         "default_value": null,
@@ -4211,14 +4241,14 @@
     },
     {
       "collection": "meetup_members",
-      "field": "meetup",
+      "field": "meetup_id",
       "type": "uuid",
       "meta": {
         "collection": "meetup_members",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "meetup",
+        "field": "meetup_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -4234,7 +4264,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "meetup",
+        "name": "meetup_id",
         "table": "meetup_members",
         "data_type": "uuid",
         "default_value": null,
@@ -4253,14 +4283,14 @@
     },
     {
       "collection": "meetup_members",
-      "field": "member",
+      "field": "member_id",
       "type": "uuid",
       "meta": {
         "collection": "meetup_members",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "member",
+        "field": "member_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -4276,7 +4306,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "member",
+        "name": "member_id",
         "table": "meetup_members",
         "data_type": "uuid",
         "default_value": null,
@@ -4325,6 +4355,58 @@
         "max_length": null,
         "numeric_precision": 32,
         "numeric_scale": 0,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "meetup_page",
+      "field": "corona_text",
+      "type": "text",
+      "meta": {
+        "collection": "meetup_page",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "corona_text",
+        "group": null,
+        "hidden": false,
+        "interface": "input-rich-text-html",
+        "note": null,
+        "options": {
+          "toolbar": [
+            "bold",
+            "code",
+            "customLink",
+            "fullscreen",
+            "italic",
+            "removeformat",
+            "underline"
+          ]
+        },
+        "readonly": false,
+        "required": true,
+        "sort": 11,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "corona_text",
+        "table": "meetup_page",
+        "data_type": "text",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
         "is_nullable": true,
         "is_unique": false,
         "is_primary_key": false,
@@ -4770,50 +4852,6 @@
         },
         "readonly": false,
         "required": true,
-        "sort": 11,
-        "special": null,
-        "translations": null,
-        "validation": null,
-        "validation_message": null,
-        "width": "full"
-      },
-      "schema": {
-        "name": "meetup_heading",
-        "table": "meetup_page",
-        "data_type": "character varying",
-        "default_value": null,
-        "max_length": 255,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_unique": false,
-        "is_primary_key": false,
-        "is_generated": false,
-        "generation_expression": null,
-        "has_auto_increment": false,
-        "foreign_key_table": null,
-        "foreign_key_column": null
-      }
-    },
-    {
-      "collection": "meetup_page",
-      "field": "meetup_heading_past",
-      "type": "string",
-      "meta": {
-        "collection": "meetup_page",
-        "conditions": null,
-        "display": null,
-        "display_options": null,
-        "field": "meetup_heading_past",
-        "group": null,
-        "hidden": false,
-        "interface": "input",
-        "note": null,
-        "options": {
-          "trim": true
-        },
-        "readonly": false,
-        "required": true,
         "sort": 12,
         "special": null,
         "translations": null,
@@ -4822,7 +4860,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "meetup_heading_past",
+        "name": "meetup_heading",
         "table": "meetup_page",
         "data_type": "character varying",
         "default_value": null,
@@ -5168,14 +5206,14 @@
     },
     {
       "collection": "meetup_speakers",
-      "field": "meetup",
+      "field": "meetup_id",
       "type": "uuid",
       "meta": {
         "collection": "meetup_speakers",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "meetup",
+        "field": "meetup_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -5191,7 +5229,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "meetup",
+        "name": "meetup_id",
         "table": "meetup_speakers",
         "data_type": "uuid",
         "default_value": null,
@@ -5252,14 +5290,14 @@
     },
     {
       "collection": "meetup_speakers",
-      "field": "speaker",
+      "field": "speaker_id",
       "type": "uuid",
       "meta": {
         "collection": "meetup_speakers",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "speaker",
+        "field": "speaker_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -5275,7 +5313,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "speaker",
+        "name": "speaker_id",
         "table": "meetup_speakers",
         "data_type": "uuid",
         "default_value": null,
@@ -5336,14 +5374,14 @@
     },
     {
       "collection": "meetup_tags",
-      "field": "meetup",
+      "field": "meetup_id",
       "type": "uuid",
       "meta": {
         "collection": "meetup_tags",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "meetup",
+        "field": "meetup_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -5359,7 +5397,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "meetup",
+        "name": "meetup_id",
         "table": "meetup_tags",
         "data_type": "uuid",
         "default_value": null,
@@ -5420,14 +5458,14 @@
     },
     {
       "collection": "meetup_tags",
-      "field": "tag",
+      "field": "tag_id",
       "type": "uuid",
       "meta": {
         "collection": "meetup_tags",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "tag",
+        "field": "tag_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -5443,7 +5481,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "tag",
+        "name": "tag_id",
         "table": "meetup_tags",
         "data_type": "uuid",
         "default_value": null,
@@ -5996,7 +6034,7 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{member.first_name}} {{member.last_name}}"
+          "template": "{{member_id.first_name}} {{member_id.last_name}}"
         },
         "readonly": false,
         "required": false,
@@ -6196,7 +6234,7 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{speaker.first_name}} {{speaker.last_name}}"
+          "template": "{{speaker_id.first_name}} {{speaker_id.last_name}}"
         },
         "readonly": false,
         "required": false,
@@ -6350,7 +6388,7 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{tag.name}}"
+          "template": "{{tag_id.name}}"
         },
         "readonly": false,
         "required": false,
@@ -6598,14 +6636,14 @@
     },
     {
       "collection": "member_tags",
-      "field": "member",
+      "field": "member_id",
       "type": "uuid",
       "meta": {
         "collection": "member_tags",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "member",
+        "field": "member_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -6621,7 +6659,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "member",
+        "name": "member_id",
         "table": "member_tags",
         "data_type": "uuid",
         "default_value": null,
@@ -6682,14 +6720,14 @@
     },
     {
       "collection": "member_tags",
-      "field": "tag",
+      "field": "tag_id",
       "type": "uuid",
       "meta": {
         "collection": "member_tags",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "tag",
+        "field": "tag_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -6705,7 +6743,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "tag",
+        "name": "tag_id",
         "table": "member_tags",
         "data_type": "uuid",
         "default_value": null,
@@ -7218,11 +7256,11 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{meetup.title}}"
+          "template": "{{meetup_id.title}}"
         },
         "readonly": false,
         "required": false,
-        "sort": 15,
+        "sort": 17,
         "special": [
           "m2m"
         ],
@@ -7399,7 +7437,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 17,
+        "sort": 16,
         "special": [
           "o2m"
         ],
@@ -7424,11 +7462,11 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{podcast.title}}"
+          "template": "{{podcast_id.title}}"
         },
         "readonly": false,
         "required": false,
-        "sort": 16,
+        "sort": 15,
         "special": [
           "m2m"
         ],
@@ -7610,7 +7648,7 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{tag.name}}"
+          "template": "{{tag_id.name}}"
         },
         "readonly": false,
         "required": false,
@@ -8432,14 +8470,14 @@
     },
     {
       "collection": "pick_of_the_day_tags",
-      "field": "pick_of_the_day",
+      "field": "pick_of_the_day_id",
       "type": "uuid",
       "meta": {
         "collection": "pick_of_the_day_tags",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "pick_of_the_day",
+        "field": "pick_of_the_day_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -8455,7 +8493,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "pick_of_the_day",
+        "name": "pick_of_the_day_id",
         "table": "pick_of_the_day_tags",
         "data_type": "uuid",
         "default_value": null,
@@ -8516,14 +8554,14 @@
     },
     {
       "collection": "pick_of_the_day_tags",
-      "field": "tag",
+      "field": "tag_id",
       "type": "uuid",
       "meta": {
         "collection": "pick_of_the_day_tags",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "tag",
+        "field": "tag_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -8539,7 +8577,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "tag",
+        "name": "tag_id",
         "table": "pick_of_the_day_tags",
         "data_type": "uuid",
         "default_value": null,
@@ -8889,9 +8927,8 @@
                 "_eq": "draft"
               }
             },
-            "required": false,
-            "readonly": false,
-            "hidden": false
+            "required": true,
+            "readonly": false
           }
         ],
         "display": null,
@@ -9375,7 +9412,7 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{tag.name}}"
+          "template": "{{tag_id.name}}"
         },
         "readonly": false,
         "required": false,
@@ -9579,14 +9616,14 @@
     },
     {
       "collection": "podcast_members",
-      "field": "member",
+      "field": "member_id",
       "type": "uuid",
       "meta": {
         "collection": "podcast_members",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "member",
+        "field": "member_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -9602,7 +9639,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "member",
+        "name": "member_id",
         "table": "podcast_members",
         "data_type": "uuid",
         "default_value": null,
@@ -9621,14 +9658,14 @@
     },
     {
       "collection": "podcast_members",
-      "field": "podcast",
+      "field": "podcast_id",
       "type": "uuid",
       "meta": {
         "collection": "podcast_members",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "podcast",
+        "field": "podcast_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -9644,7 +9681,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "podcast",
+        "name": "podcast_id",
         "table": "podcast_members",
         "data_type": "uuid",
         "default_value": null,
@@ -10572,14 +10609,14 @@
     },
     {
       "collection": "podcast_speakers",
-      "field": "podcast",
+      "field": "podcast_id",
       "type": "uuid",
       "meta": {
         "collection": "podcast_speakers",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "podcast",
+        "field": "podcast_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -10595,7 +10632,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "podcast",
+        "name": "podcast_id",
         "table": "podcast_speakers",
         "data_type": "uuid",
         "default_value": null,
@@ -10656,14 +10693,14 @@
     },
     {
       "collection": "podcast_speakers",
-      "field": "speaker",
+      "field": "speaker_id",
       "type": "uuid",
       "meta": {
         "collection": "podcast_speakers",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "speaker",
+        "field": "speaker_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -10679,7 +10716,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "speaker",
+        "name": "speaker_id",
         "table": "podcast_speakers",
         "data_type": "uuid",
         "default_value": null,
@@ -10740,14 +10777,14 @@
     },
     {
       "collection": "podcast_tags",
-      "field": "podcast",
+      "field": "podcast_id",
       "type": "uuid",
       "meta": {
         "collection": "podcast_tags",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "podcast",
+        "field": "podcast_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -10763,7 +10800,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "podcast",
+        "name": "podcast_id",
         "table": "podcast_tags",
         "data_type": "uuid",
         "default_value": null,
@@ -10824,14 +10861,14 @@
     },
     {
       "collection": "podcast_tags",
-      "field": "tag",
+      "field": "tag_id",
       "type": "uuid",
       "meta": {
         "collection": "podcast_tags",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "tag",
+        "field": "tag_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -10847,7 +10884,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "tag",
+        "name": "tag_id",
         "table": "podcast_tags",
         "data_type": "uuid",
         "default_value": null,
@@ -10883,7 +10920,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 17,
+        "sort": 15,
         "special": null,
         "translations": null,
         "validation": null,
@@ -10935,7 +10972,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 12,
+        "sort": 11,
         "special": [
           "file"
         ],
@@ -10981,7 +11018,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 13,
+        "sort": 12,
         "special": null,
         "translations": null,
         "validation": null,
@@ -11023,7 +11060,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 11,
+        "sort": 10,
         "special": [
           "file"
         ],
@@ -11048,48 +11085,6 @@
         "has_auto_increment": false,
         "foreign_key_table": "directus_files",
         "foreign_key_column": "id"
-      }
-    },
-    {
-      "collection": "podcasts",
-      "field": "buzzsprout_id",
-      "type": "integer",
-      "meta": {
-        "collection": "podcasts",
-        "conditions": null,
-        "display": null,
-        "display_options": null,
-        "field": "buzzsprout_id",
-        "group": null,
-        "hidden": true,
-        "interface": "input",
-        "note": null,
-        "options": null,
-        "readonly": false,
-        "required": false,
-        "sort": 28,
-        "special": null,
-        "translations": null,
-        "validation": null,
-        "validation_message": null,
-        "width": "full"
-      },
-      "schema": {
-        "name": "buzzsprout_id",
-        "table": "podcasts",
-        "data_type": "integer",
-        "default_value": null,
-        "max_length": null,
-        "numeric_precision": 32,
-        "numeric_scale": 0,
-        "is_nullable": true,
-        "is_unique": false,
-        "is_primary_key": false,
-        "is_generated": false,
-        "generation_expression": null,
-        "has_auto_increment": false,
-        "foreign_key_table": null,
-        "foreign_key_column": null
       }
     },
     {
@@ -11119,7 +11114,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 10,
+        "sort": 9,
         "special": [
           "file"
         ],
@@ -11165,7 +11160,7 @@
         },
         "readonly": true,
         "required": false,
-        "sort": 29,
+        "sort": 26,
         "special": [
           "user-created"
         ],
@@ -11211,7 +11206,7 @@
         "options": null,
         "readonly": true,
         "required": false,
-        "sort": 30,
+        "sort": 27,
         "special": [
           "date-created"
         ],
@@ -11263,9 +11258,6 @@
         "interface": "input-rich-text-html",
         "note": null,
         "options": {
-          "tinymceOverrides": {
-            "browser_spellcheck": true
-          },
           "toolbar": [
             "blockquote",
             "bold",
@@ -11281,7 +11273,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 14,
+        "sort": 13,
         "special": null,
         "translations": null,
         "validation": null,
@@ -11323,7 +11315,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 25,
+        "sort": 23,
         "special": [
           "alias",
           "no-data"
@@ -11353,7 +11345,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 2,
+        "sort": 1,
         "special": [
           "alias",
           "no-data"
@@ -11383,7 +11375,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 6,
+        "sort": 5,
         "special": [
           "alias",
           "no-data"
@@ -11413,7 +11405,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 20,
+        "sort": 18,
         "special": [
           "alias",
           "no-data"
@@ -11443,7 +11435,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 18,
+        "sort": 16,
         "special": null,
         "translations": null,
         "validation": null,
@@ -11485,7 +11477,7 @@
         "options": null,
         "readonly": true,
         "required": false,
-        "sort": 26,
+        "sort": 24,
         "special": [
           "uuid"
         ],
@@ -11527,97 +11519,13 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{member.first_name}} {{member.last_name}}"
+          "template": "{{member_id.first_name}} {{member_id.last_name}}"
         },
         "readonly": false,
         "required": false,
-        "sort": 21,
+        "sort": 19,
         "special": [
           "m2m"
-        ],
-        "translations": null,
-        "validation": null,
-        "validation_message": null,
-        "width": "full"
-      }
-    },
-    {
-      "collection": "podcasts",
-      "field": "notes",
-      "type": "text",
-      "meta": {
-        "collection": "podcasts",
-        "conditions": null,
-        "display": null,
-        "display_options": null,
-        "field": "notes",
-        "group": null,
-        "hidden": false,
-        "interface": "input-multiline",
-        "note": null,
-        "options": {
-          "placeholder": "Notizen für Social Media o.ä. // Wird nicht veröffentlicht"
-        },
-        "readonly": false,
-        "required": false,
-        "sort": 15,
-        "special": null,
-        "translations": null,
-        "validation": null,
-        "validation_message": null,
-        "width": "full"
-      },
-      "schema": {
-        "name": "notes",
-        "table": "podcasts",
-        "data_type": "text",
-        "default_value": null,
-        "max_length": null,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_unique": false,
-        "is_primary_key": false,
-        "is_generated": false,
-        "generation_expression": null,
-        "has_auto_increment": false,
-        "foreign_key_table": null,
-        "foreign_key_column": null
-      }
-    },
-    {
-      "collection": "podcasts",
-      "field": "notice-buzzsprout",
-      "type": "alias",
-      "meta": {
-        "collection": "podcasts",
-        "conditions": [
-          {
-            "name": "If Buzzsprout ID is null",
-            "rule": {
-              "buzzsprout_id": {
-                "_null": true
-              }
-            },
-            "hidden": true
-          }
-        ],
-        "display": null,
-        "display_options": null,
-        "field": "notice-buzzsprout",
-        "group": null,
-        "hidden": false,
-        "interface": "presentation-notice",
-        "note": null,
-        "options": {
-          "text": "Die Podcastfolge wurde zu Buzzsprout hinzugefügt und alle weitere Änderungen, die du hier vornimmst, werden automatisch mit Buzzsprout synchronisiert."
-        },
-        "readonly": false,
-        "required": false,
-        "sort": 1,
-        "special": [
-          "alias",
-          "no-data"
         ],
         "translations": null,
         "validation": null,
@@ -11654,7 +11562,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 3,
+        "sort": 2,
         "special": [
           "alias",
           "no-data"
@@ -11672,6 +11580,15 @@
       "meta": {
         "collection": "podcasts",
         "conditions": [
+          {
+            "name": "If published",
+            "rule": {
+              "status": {
+                "_eq": "published"
+              }
+            },
+            "required": true
+          },
           {
             "name": "If Deep Dive",
             "rule": {
@@ -11704,15 +11621,6 @@
             "options": {
               "placeholder": "01/22"
             }
-          },
-          {
-            "name": "If published",
-            "rule": {
-              "status": {
-                "_eq": "published"
-              }
-            },
-            "required": true
           }
         ],
         "display": null,
@@ -11727,7 +11635,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 8,
+        "sort": 7,
         "special": null,
         "translations": null,
         "validation": null,
@@ -11771,7 +11679,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 23,
+        "sort": 21,
         "special": [
           "o2m"
         ],
@@ -11798,7 +11706,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 5,
+        "sort": 4,
         "special": null,
         "translations": null,
         "validation": null,
@@ -11834,13 +11742,13 @@
         "display_options": null,
         "field": "slug",
         "group": null,
-        "hidden": false,
+        "hidden": true,
         "interface": "input",
         "note": null,
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 27,
+        "sort": 25,
         "special": null,
         "translations": null,
         "validation": null,
@@ -11882,7 +11790,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 33,
+        "sort": 30,
         "special": null,
         "translations": null,
         "validation": null,
@@ -11922,11 +11830,11 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{speaker.first_name}} {{speaker.last_name}}"
+          "template": "{{speaker_id.first_name}} {{speaker_id.last_name}}"
         },
         "readonly": false,
         "required": false,
-        "sort": 22,
+        "sort": 20,
         "special": [
           "m2m"
         ],
@@ -11955,7 +11863,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 19,
+        "sort": 17,
         "special": null,
         "translations": null,
         "validation": null,
@@ -12028,7 +11936,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 4,
+        "sort": 3,
         "special": null,
         "translations": null,
         "validation": null,
@@ -12068,11 +11976,11 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{tag.name}}"
+          "template": "{{tag_id.name}}"
         },
         "readonly": false,
         "required": false,
-        "sort": 24,
+        "sort": 22,
         "special": [
           "m2m"
         ],
@@ -12111,7 +12019,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 9,
+        "sort": 8,
         "special": null,
         "translations": null,
         "validation": null,
@@ -12165,7 +12073,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 16,
+        "sort": 14,
         "special": null,
         "translations": null,
         "validation": null,
@@ -12178,134 +12086,6 @@
         "data_type": "text",
         "default_value": null,
         "max_length": null,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_unique": false,
-        "is_primary_key": false,
-        "is_generated": false,
-        "generation_expression": null,
-        "has_auto_increment": false,
-        "foreign_key_table": null,
-        "foreign_key_column": null
-      }
-    },
-    {
-      "collection": "podcasts",
-      "field": "transcription_done",
-      "type": "boolean",
-      "meta": {
-        "collection": "podcasts",
-        "conditions": null,
-        "display": null,
-        "display_options": null,
-        "field": "transcription_done",
-        "group": null,
-        "hidden": true,
-        "interface": "boolean",
-        "note": null,
-        "options": null,
-        "readonly": false,
-        "required": false,
-        "sort": null,
-        "special": [
-          "cast-boolean"
-        ],
-        "translations": null,
-        "validation": null,
-        "validation_message": null,
-        "width": "full"
-      },
-      "schema": {
-        "name": "transcription_done",
-        "table": "podcasts",
-        "data_type": "boolean",
-        "default_value": false,
-        "max_length": null,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_unique": false,
-        "is_primary_key": false,
-        "is_generated": false,
-        "generation_expression": null,
-        "has_auto_increment": false,
-        "foreign_key_table": null,
-        "foreign_key_column": null
-      }
-    },
-    {
-      "collection": "podcasts",
-      "field": "transcription_export_id",
-      "type": "string",
-      "meta": {
-        "collection": "podcasts",
-        "conditions": null,
-        "display": null,
-        "display_options": null,
-        "field": "transcription_export_id",
-        "group": null,
-        "hidden": true,
-        "interface": "input",
-        "note": null,
-        "options": null,
-        "readonly": false,
-        "required": false,
-        "sort": null,
-        "special": null,
-        "translations": null,
-        "validation": null,
-        "validation_message": null,
-        "width": "full"
-      },
-      "schema": {
-        "name": "transcription_export_id",
-        "table": "podcasts",
-        "data_type": "character varying",
-        "default_value": null,
-        "max_length": 255,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_unique": false,
-        "is_primary_key": false,
-        "is_generated": false,
-        "generation_expression": null,
-        "has_auto_increment": false,
-        "foreign_key_table": null,
-        "foreign_key_column": null
-      }
-    },
-    {
-      "collection": "podcasts",
-      "field": "transcription_id",
-      "type": "string",
-      "meta": {
-        "collection": "podcasts",
-        "conditions": null,
-        "display": null,
-        "display_options": null,
-        "field": "transcription_id",
-        "group": null,
-        "hidden": true,
-        "interface": "input",
-        "note": null,
-        "options": null,
-        "readonly": false,
-        "required": false,
-        "sort": null,
-        "special": null,
-        "translations": null,
-        "validation": null,
-        "validation_message": null,
-        "width": "full"
-      },
-      "schema": {
-        "name": "transcription_id",
-        "table": "podcasts",
-        "data_type": "character varying",
-        "default_value": null,
-        "max_length": 255,
         "numeric_precision": null,
         "numeric_scale": null,
         "is_nullable": true,
@@ -12364,7 +12144,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 7,
+        "sort": 6,
         "special": null,
         "translations": null,
         "validation": null,
@@ -12408,7 +12188,7 @@
         },
         "readonly": true,
         "required": false,
-        "sort": 31,
+        "sort": 28,
         "special": [
           "user-updated"
         ],
@@ -12454,7 +12234,7 @@
         "options": null,
         "readonly": true,
         "required": false,
-        "sort": 32,
+        "sort": 29,
         "special": [
           "date-updated"
         ],
@@ -12996,14 +12776,14 @@
     },
     {
       "collection": "speaker_tags",
-      "field": "speaker",
+      "field": "speaker_id",
       "type": "uuid",
       "meta": {
         "collection": "speaker_tags",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "speaker",
+        "field": "speaker_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -13019,7 +12799,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "speaker",
+        "name": "speaker_id",
         "table": "speaker_tags",
         "data_type": "uuid",
         "default_value": null,
@@ -13038,14 +12818,14 @@
     },
     {
       "collection": "speaker_tags",
-      "field": "tag",
+      "field": "tag_id",
       "type": "uuid",
       "meta": {
         "collection": "speaker_tags",
         "conditions": null,
         "display": null,
         "display_options": null,
-        "field": "tag",
+        "field": "tag_id",
         "group": null,
         "hidden": true,
         "interface": null,
@@ -13061,7 +12841,7 @@
         "width": "full"
       },
       "schema": {
-        "name": "tag",
+        "name": "tag_id",
         "table": "speaker_tags",
         "data_type": "uuid",
         "default_value": null,
@@ -13737,7 +13517,7 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{meetup.title}}"
+          "template": "{{meetup_id.title}}"
         },
         "readonly": false,
         "required": false,
@@ -13889,7 +13669,7 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{podcast.title}}"
+          "template": "{{podcast_id.title}}"
         },
         "readonly": false,
         "required": false,
@@ -14171,7 +13951,7 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{tag.name}}"
+          "template": "{{tag_id.name}}"
         },
         "readonly": false,
         "required": false,
@@ -14677,9 +14457,7 @@
         "hidden": false,
         "interface": "list-m2m",
         "note": null,
-        "options": {
-          "template": "{{meetup.title}}"
-        },
+        "options": null,
         "readonly": false,
         "required": false,
         "sort": 9,
@@ -14706,12 +14484,10 @@
         "hidden": false,
         "interface": "list-m2m",
         "note": null,
-        "options": {
-          "template": "{{member.first_name}} {{member.last_name}}"
-        },
+        "options": null,
         "readonly": false,
         "required": false,
-        "sort": 10,
+        "sort": 11,
         "special": [
           "m2m"
         ],
@@ -14829,12 +14605,10 @@
         "hidden": false,
         "interface": "list-m2m",
         "note": null,
-        "options": {
-          "template": "{{pick_of_the_day.name}}"
-        },
+        "options": null,
         "readonly": false,
         "required": false,
-        "sort": 12,
+        "sort": 10,
         "special": [
           "m2m"
         ],
@@ -14858,9 +14632,7 @@
         "hidden": false,
         "interface": "list-m2m",
         "note": null,
-        "options": {
-          "template": "{{podcast.title}}"
-        },
+        "options": null,
         "readonly": false,
         "required": false,
         "sort": 8,
@@ -14971,12 +14743,10 @@
         "hidden": false,
         "interface": "list-m2m",
         "note": null,
-        "options": {
-          "template": "{{speaker.first_name}} {{speaker.last_name}}"
-        },
+        "options": null,
         "readonly": false,
         "required": false,
-        "sort": 11,
+        "sort": 12,
         "special": [
           "m2m"
         ],
@@ -15405,37 +15175,37 @@
     },
     {
       "collection": "home_page_podcasts",
-      "field": "home_page",
+      "field": "home_page_id",
       "related_collection": "home_page",
       "meta": {
-        "junction_field": "podcast",
+        "junction_field": "podcast_id",
         "many_collection": "home_page_podcasts",
-        "many_field": "home_page",
+        "many_field": "home_page_id",
         "one_allowed_collections": null,
         "one_collection": "home_page",
         "one_collection_field": null,
         "one_deselect_action": "nullify",
-        "one_field": null,
+        "one_field": "podcasts",
         "sort_field": "sort"
       },
       "schema": {
         "table": "home_page_podcasts",
-        "column": "home_page",
+        "column": "home_page_id",
         "foreign_key_table": "home_page",
         "foreign_key_column": "id",
-        "constraint_name": "home_page_podcasts_home_page_foreign",
+        "constraint_name": "home_page_podcasts_home_page_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "home_page_podcasts",
-      "field": "podcast",
+      "field": "podcast_id",
       "related_collection": "podcasts",
       "meta": {
-        "junction_field": "home_page",
+        "junction_field": "home_page_id",
         "many_collection": "home_page_podcasts",
-        "many_field": "podcast",
+        "many_field": "podcast_id",
         "one_allowed_collections": null,
         "one_collection": "podcasts",
         "one_collection_field": null,
@@ -15445,10 +15215,10 @@
       },
       "schema": {
         "table": "home_page_podcasts",
-        "column": "podcast",
+        "column": "podcast_id",
         "foreign_key_table": "podcasts",
         "foreign_key_column": "id",
-        "constraint_name": "home_page_podcasts_podcast_foreign",
+        "constraint_name": "home_page_podcasts_podcast_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
@@ -15505,12 +15275,12 @@
     },
     {
       "collection": "meetup_gallery_images",
-      "field": "image",
+      "field": "directus_file_id",
       "related_collection": "directus_files",
       "meta": {
-        "junction_field": "meetup",
+        "junction_field": "meetup_id",
         "many_collection": "meetup_gallery_images",
-        "many_field": "image",
+        "many_field": "directus_file_id",
         "one_allowed_collections": null,
         "one_collection": "directus_files",
         "one_collection_field": null,
@@ -15520,22 +15290,22 @@
       },
       "schema": {
         "table": "meetup_gallery_images",
-        "column": "image",
+        "column": "directus_file_id",
         "foreign_key_table": "directus_files",
         "foreign_key_column": "id",
-        "constraint_name": "meetup_gallery_images_image_foreign",
+        "constraint_name": "meetup_gallery_images_directus_file_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "meetup_gallery_images",
-      "field": "meetup",
+      "field": "meetup_id",
       "related_collection": "meetups",
       "meta": {
-        "junction_field": "image",
+        "junction_field": "directus_file_id",
         "many_collection": "meetup_gallery_images",
-        "many_field": "meetup",
+        "many_field": "meetup_id",
         "one_allowed_collections": null,
         "one_collection": "meetups",
         "one_collection_field": null,
@@ -15545,22 +15315,22 @@
       },
       "schema": {
         "table": "meetup_gallery_images",
-        "column": "meetup",
+        "column": "meetup_id",
         "foreign_key_table": "meetups",
         "foreign_key_column": "id",
-        "constraint_name": "meetup_gallery_images_meetup_foreign",
+        "constraint_name": "meetup_gallery_images_meetup_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "meetup_members",
-      "field": "meetup",
+      "field": "meetup_id",
       "related_collection": "meetups",
       "meta": {
-        "junction_field": "member",
+        "junction_field": "member_id",
         "many_collection": "meetup_members",
-        "many_field": "meetup",
+        "many_field": "meetup_id",
         "one_allowed_collections": null,
         "one_collection": "meetups",
         "one_collection_field": null,
@@ -15570,35 +15340,35 @@
       },
       "schema": {
         "table": "meetup_members",
-        "column": "meetup",
+        "column": "meetup_id",
         "foreign_key_table": "meetups",
         "foreign_key_column": "id",
-        "constraint_name": "meetup_members_meetup_foreign",
+        "constraint_name": "meetup_members_meetup_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "meetup_members",
-      "field": "member",
+      "field": "member_id",
       "related_collection": "members",
       "meta": {
-        "junction_field": "meetup",
+        "junction_field": "meetup_id",
         "many_collection": "meetup_members",
-        "many_field": "member",
+        "many_field": "member_id",
         "one_allowed_collections": null,
         "one_collection": "members",
         "one_collection_field": null,
         "one_deselect_action": "nullify",
         "one_field": "meetups",
-        "sort_field": null
+        "sort_field": "sort"
       },
       "schema": {
         "table": "meetup_members",
-        "column": "member",
+        "column": "member_id",
         "foreign_key_table": "members",
         "foreign_key_column": "id",
-        "constraint_name": "meetup_members_member_foreign",
+        "constraint_name": "meetup_members_member_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
@@ -15680,12 +15450,12 @@
     },
     {
       "collection": "meetup_speakers",
-      "field": "meetup",
+      "field": "meetup_id",
       "related_collection": "meetups",
       "meta": {
-        "junction_field": "speaker",
+        "junction_field": "speaker_id",
         "many_collection": "meetup_speakers",
-        "many_field": "meetup",
+        "many_field": "meetup_id",
         "one_allowed_collections": null,
         "one_collection": "meetups",
         "one_collection_field": null,
@@ -15695,47 +15465,47 @@
       },
       "schema": {
         "table": "meetup_speakers",
-        "column": "meetup",
+        "column": "meetup_id",
         "foreign_key_table": "meetups",
         "foreign_key_column": "id",
-        "constraint_name": "meetup_speakers_meetup_foreign",
+        "constraint_name": "meetup_speakers_meetup_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "meetup_speakers",
-      "field": "speaker",
+      "field": "speaker_id",
       "related_collection": "speakers",
       "meta": {
-        "junction_field": "meetup",
+        "junction_field": "meetup_id",
         "many_collection": "meetup_speakers",
-        "many_field": "speaker",
+        "many_field": "speaker_id",
         "one_allowed_collections": null,
         "one_collection": "speakers",
         "one_collection_field": null,
         "one_deselect_action": "nullify",
         "one_field": "meetups",
-        "sort_field": null
+        "sort_field": "sort"
       },
       "schema": {
         "table": "meetup_speakers",
-        "column": "speaker",
+        "column": "speaker_id",
         "foreign_key_table": "speakers",
         "foreign_key_column": "id",
-        "constraint_name": "meetup_speakers_speaker_foreign",
+        "constraint_name": "meetup_speakers_speaker_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "meetup_tags",
-      "field": "meetup",
+      "field": "meetup_id",
       "related_collection": "meetups",
       "meta": {
-        "junction_field": "tag",
+        "junction_field": "tag_id",
         "many_collection": "meetup_tags",
-        "many_field": "meetup",
+        "many_field": "meetup_id",
         "one_allowed_collections": null,
         "one_collection": "meetups",
         "one_collection_field": null,
@@ -15745,22 +15515,22 @@
       },
       "schema": {
         "table": "meetup_tags",
-        "column": "meetup",
+        "column": "meetup_id",
         "foreign_key_table": "meetups",
         "foreign_key_column": "id",
-        "constraint_name": "meetup_tags_meetup_foreign",
+        "constraint_name": "meetup_tags_meetup_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "meetup_tags",
-      "field": "tag",
+      "field": "tag_id",
       "related_collection": "tags",
       "meta": {
-        "junction_field": "meetup",
+        "junction_field": "meetup_id",
         "many_collection": "meetup_tags",
-        "many_field": "tag",
+        "many_field": "tag_id",
         "one_allowed_collections": null,
         "one_collection": "tags",
         "one_collection_field": null,
@@ -15770,10 +15540,10 @@
       },
       "schema": {
         "table": "meetup_tags",
-        "column": "tag",
+        "column": "tag_id",
         "foreign_key_table": "tags",
         "foreign_key_column": "id",
-        "constraint_name": "meetup_tags_tag_foreign",
+        "constraint_name": "meetup_tags_tag_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
@@ -15855,12 +15625,12 @@
     },
     {
       "collection": "member_tags",
-      "field": "member",
+      "field": "member_id",
       "related_collection": "members",
       "meta": {
-        "junction_field": "tag",
+        "junction_field": "tag_id",
         "many_collection": "member_tags",
-        "many_field": "member",
+        "many_field": "member_id",
         "one_allowed_collections": null,
         "one_collection": "members",
         "one_collection_field": null,
@@ -15870,22 +15640,22 @@
       },
       "schema": {
         "table": "member_tags",
-        "column": "member",
+        "column": "member_id",
         "foreign_key_table": "members",
         "foreign_key_column": "id",
-        "constraint_name": "member_tags_member_foreign",
+        "constraint_name": "member_tags_member_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "member_tags",
-      "field": "tag",
+      "field": "tag_id",
       "related_collection": "tags",
       "meta": {
-        "junction_field": "member",
+        "junction_field": "member_id",
         "many_collection": "member_tags",
-        "many_field": "tag",
+        "many_field": "tag_id",
         "one_allowed_collections": null,
         "one_collection": "tags",
         "one_collection_field": null,
@@ -15895,10 +15665,10 @@
       },
       "schema": {
         "table": "member_tags",
-        "column": "tag",
+        "column": "tag_id",
         "foreign_key_table": "tags",
         "foreign_key_column": "id",
-        "constraint_name": "member_tags_tag_foreign",
+        "constraint_name": "member_tags_tag_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
@@ -16055,12 +15825,12 @@
     },
     {
       "collection": "pick_of_the_day_tags",
-      "field": "pick_of_the_day",
+      "field": "pick_of_the_day_id",
       "related_collection": "picks_of_the_day",
       "meta": {
-        "junction_field": "tag",
+        "junction_field": "tag_id",
         "many_collection": "pick_of_the_day_tags",
-        "many_field": "pick_of_the_day",
+        "many_field": "pick_of_the_day_id",
         "one_allowed_collections": null,
         "one_collection": "picks_of_the_day",
         "one_collection_field": null,
@@ -16070,22 +15840,22 @@
       },
       "schema": {
         "table": "pick_of_the_day_tags",
-        "column": "pick_of_the_day",
+        "column": "pick_of_the_day_id",
         "foreign_key_table": "picks_of_the_day",
         "foreign_key_column": "id",
-        "constraint_name": "pick_of_the_day_tags_pick_of_the_day_foreign",
+        "constraint_name": "pick_of_the_day_tags_pick_of_the_day_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "pick_of_the_day_tags",
-      "field": "tag",
+      "field": "tag_id",
       "related_collection": "tags",
       "meta": {
-        "junction_field": "pick_of_the_day",
+        "junction_field": "pick_of_the_day_id",
         "many_collection": "pick_of_the_day_tags",
-        "many_field": "tag",
+        "many_field": "tag_id",
         "one_allowed_collections": null,
         "one_collection": "tags",
         "one_collection_field": null,
@@ -16095,10 +15865,10 @@
       },
       "schema": {
         "table": "pick_of_the_day_tags",
-        "column": "tag",
+        "column": "tag_id",
         "foreign_key_table": "tags",
         "foreign_key_column": "id",
-        "constraint_name": "pick_of_the_day_tags_tag_foreign",
+        "constraint_name": "pick_of_the_day_tags_tag_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
@@ -16255,37 +16025,37 @@
     },
     {
       "collection": "podcast_members",
-      "field": "member",
+      "field": "member_id",
       "related_collection": "members",
       "meta": {
-        "junction_field": "podcast",
+        "junction_field": "podcast_id",
         "many_collection": "podcast_members",
-        "many_field": "member",
+        "many_field": "member_id",
         "one_allowed_collections": null,
         "one_collection": "members",
         "one_collection_field": null,
         "one_deselect_action": "nullify",
         "one_field": "podcasts",
-        "sort_field": null
+        "sort_field": "sort"
       },
       "schema": {
         "table": "podcast_members",
-        "column": "member",
+        "column": "member_id",
         "foreign_key_table": "members",
         "foreign_key_column": "id",
-        "constraint_name": "podcast_members_member_foreign",
+        "constraint_name": "podcast_members_member_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "podcast_members",
-      "field": "podcast",
+      "field": "podcast_id",
       "related_collection": "podcasts",
       "meta": {
-        "junction_field": "member",
+        "junction_field": "member_id",
         "many_collection": "podcast_members",
-        "many_field": "podcast",
+        "many_field": "podcast_id",
         "one_allowed_collections": null,
         "one_collection": "podcasts",
         "one_collection_field": null,
@@ -16295,10 +16065,10 @@
       },
       "schema": {
         "table": "podcast_members",
-        "column": "podcast",
+        "column": "podcast_id",
         "foreign_key_table": "podcasts",
         "foreign_key_column": "id",
-        "constraint_name": "podcast_members_podcast_foreign",
+        "constraint_name": "podcast_members_podcast_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
@@ -16380,12 +16150,12 @@
     },
     {
       "collection": "podcast_speakers",
-      "field": "podcast",
+      "field": "podcast_id",
       "related_collection": "podcasts",
       "meta": {
-        "junction_field": "speaker",
+        "junction_field": "speaker_id",
         "many_collection": "podcast_speakers",
-        "many_field": "podcast",
+        "many_field": "podcast_id",
         "one_allowed_collections": null,
         "one_collection": "podcasts",
         "one_collection_field": null,
@@ -16395,47 +16165,47 @@
       },
       "schema": {
         "table": "podcast_speakers",
-        "column": "podcast",
+        "column": "podcast_id",
         "foreign_key_table": "podcasts",
         "foreign_key_column": "id",
-        "constraint_name": "podcast_speakers_podcast_foreign",
+        "constraint_name": "podcast_speakers_podcast_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "podcast_speakers",
-      "field": "speaker",
+      "field": "speaker_id",
       "related_collection": "speakers",
       "meta": {
-        "junction_field": "podcast",
+        "junction_field": "podcast_id",
         "many_collection": "podcast_speakers",
-        "many_field": "speaker",
+        "many_field": "speaker_id",
         "one_allowed_collections": null,
         "one_collection": "speakers",
         "one_collection_field": null,
         "one_deselect_action": "nullify",
         "one_field": "podcasts",
-        "sort_field": null
+        "sort_field": "sort"
       },
       "schema": {
         "table": "podcast_speakers",
-        "column": "speaker",
+        "column": "speaker_id",
         "foreign_key_table": "speakers",
         "foreign_key_column": "id",
-        "constraint_name": "podcast_speakers_speaker_foreign",
+        "constraint_name": "podcast_speakers_speaker_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "podcast_tags",
-      "field": "podcast",
+      "field": "podcast_id",
       "related_collection": "podcasts",
       "meta": {
-        "junction_field": "tag",
+        "junction_field": "tag_id",
         "many_collection": "podcast_tags",
-        "many_field": "podcast",
+        "many_field": "podcast_id",
         "one_allowed_collections": null,
         "one_collection": "podcasts",
         "one_collection_field": null,
@@ -16445,22 +16215,22 @@
       },
       "schema": {
         "table": "podcast_tags",
-        "column": "podcast",
+        "column": "podcast_id",
         "foreign_key_table": "podcasts",
         "foreign_key_column": "id",
-        "constraint_name": "podcast_tags_podcast_foreign",
+        "constraint_name": "podcast_tags_podcast_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "podcast_tags",
-      "field": "tag",
+      "field": "tag_id",
       "related_collection": "tags",
       "meta": {
-        "junction_field": "podcast",
+        "junction_field": "podcast_id",
         "many_collection": "podcast_tags",
-        "many_field": "tag",
+        "many_field": "tag_id",
         "one_allowed_collections": null,
         "one_collection": "tags",
         "one_collection_field": null,
@@ -16470,10 +16240,10 @@
       },
       "schema": {
         "table": "podcast_tags",
-        "column": "tag",
+        "column": "tag_id",
         "foreign_key_table": "tags",
         "foreign_key_column": "id",
-        "constraint_name": "podcast_tags_tag_foreign",
+        "constraint_name": "podcast_tags_tag_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
@@ -16655,12 +16425,12 @@
     },
     {
       "collection": "speaker_tags",
-      "field": "speaker",
+      "field": "speaker_id",
       "related_collection": "speakers",
       "meta": {
-        "junction_field": "tag",
+        "junction_field": "tag_id",
         "many_collection": "speaker_tags",
-        "many_field": "speaker",
+        "many_field": "speaker_id",
         "one_allowed_collections": null,
         "one_collection": "speakers",
         "one_collection_field": null,
@@ -16670,22 +16440,22 @@
       },
       "schema": {
         "table": "speaker_tags",
-        "column": "speaker",
+        "column": "speaker_id",
         "foreign_key_table": "speakers",
         "foreign_key_column": "id",
-        "constraint_name": "speaker_tags_speaker_foreign",
+        "constraint_name": "speaker_tags_speaker_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
     },
     {
       "collection": "speaker_tags",
-      "field": "tag",
+      "field": "tag_id",
       "related_collection": "tags",
       "meta": {
-        "junction_field": "speaker",
+        "junction_field": "speaker_id",
         "many_collection": "speaker_tags",
-        "many_field": "tag",
+        "many_field": "tag_id",
         "one_allowed_collections": null,
         "one_collection": "tags",
         "one_collection_field": null,
@@ -16695,10 +16465,10 @@
       },
       "schema": {
         "table": "speaker_tags",
-        "column": "tag",
+        "column": "tag_id",
         "foreign_key_table": "tags",
         "foreign_key_column": "id",
-        "constraint_name": "speaker_tags_tag_foreign",
+        "constraint_name": "speaker_tags_tag_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
