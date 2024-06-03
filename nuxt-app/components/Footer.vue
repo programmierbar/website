@@ -62,6 +62,7 @@ const mainMenuItems = [
     { label: 'Über uns', href: '/ueber-uns' },
 ]
 const subMenuItems = [
+    { label: 'Verhaltensregeln', href: '/verhaltensregeln' },
     { label: 'Datenschutz', href: '/datenschutz' },
     { label: 'Impressum', href: '/impressum' },
     { label: 'Kontakt', href: '/kontakt' },

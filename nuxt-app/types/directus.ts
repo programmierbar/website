@@ -298,6 +298,12 @@ export interface DirectusRafflePage {
     text: string
 }
 
+export interface DirectusCocPage {
+    status: string
+    heading: string
+    text: string
+}
+
 export interface DirectusPrivacyPage {
     heading: string
     text: string

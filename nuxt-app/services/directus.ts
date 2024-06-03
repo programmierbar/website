@@ -2,6 +2,7 @@ import { createDirectus, rest } from '@directus/sdk'
 import { DIRECTUS_CMS_URL } from '../config'
 import type {
     DirectusAboutPage,
+    DirectusCocPage,
     DirectusContactPage,
     DirectusHallOfFamePage,
     DirectusHomePage,
@@ -30,6 +31,7 @@ export type Collections = {
     imprint_page: DirectusImprintPage
     privacy_page: DirectusPrivacyPage
     raffle_page: DirectusRafflePage
+    coc_page: DirectusCocPage
     podcasts: DirectusPodcastItem[]
     meetups: DirectusMeetupItem[]
     members: DirectusMemberItem[]
