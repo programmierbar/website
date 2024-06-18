@@ -1,18 +1,18 @@
 # Choose a base image
-FROM node:lts
+FROM node:20
 
 # Set working directory
 WORKDIR /usr/src/app/directus-cms
 
-# Add package.json and package-lock.json (if available)
+# Add package.json and package-lock.json
 COPY directus-cms/package.json .
-COPY directus-cms/yarn.lock .
+COPY directus-cms/package-lock.json .
 
 # Install dependencies
-RUN yarn install
+RUN npm install
 
 COPY shared-code ../shared-code
-RUN yarn run build
+RUN npm run build
 
 # Copy the rest of the application
 COPY directus-cms .
@@ -33,7 +33,7 @@ RUN npm run link ../../extensions
 WORKDIR /usr/src/app/directus-cms
 
 # Start the app
-CMD [ "yarn", "run", "start" ]
+CMD [ "npm", "run", "start" ]
 
 # Expose port
 EXPOSE 8055
