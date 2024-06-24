@@ -53,6 +53,10 @@ svg {
     height: 100%;
 }
 
+h2 {
+  font-weight: 900;
+}
+
 /* Input range slider */
 input[type='range'] {
     appearance: none;

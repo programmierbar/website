@@ -48,6 +48,12 @@
                     class="mt-8 space-y-8 text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl"
                     :html="meetup.description"
                 />
+                <p class="text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl">Bitte beachte auch unsere <NuxtLink
+                  class="hover:text-lime hover:underline"
+                  data-cursor-hover
+                  :to="'/verhaltensregeln'"
+                >Verhaltensregeln</NuxtLink
+                >.</p>
 
                 <!-- Meetup tags -->
                 <!-- TODO: Replace navigateTo() with <a> element -->
@@ -105,7 +111,7 @@ const route = useRoute()
 const directus = useDirectus()
 
 // Query meetup, speaker count and related podcast
-const { data: pageData } = useAsyncData(async () => {
+const { data: pageData } = useAsyncData(route.fullPath, async () => {
     // Query meetup and speaker count async
     const [meetup, speakerCount] = await Promise.all([
         await directus.getMeetupBySlug(route.params.slug as string),
