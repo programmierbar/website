@@ -7,7 +7,7 @@
   "scripts": {
     "build": "npx tsc ../shared-code/index.ts --outDir ./shared-code",
     "migrate:db": "directus database migrate:latest",
-    "prebootstrap": "npm run migrate:db",
+    "postbootstrap": "npm run migrate:db",
     "bootstrap": "directus bootstrap",
     "prestart": "npm run migrate:db",
     "start": "directus start",
