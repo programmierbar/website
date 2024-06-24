@@ -1,4 +1,4 @@
-import { createDirectus, rest } from '@directus/sdk'
+import { authentication, createDirectus, rest } from '@directus/sdk'
 import { DIRECTUS_CMS_URL } from '../config'
 import type {
     DirectusAboutPage,
@@ -40,4 +40,6 @@ export type Collections = {
     tags: DirectusTagItem[]
 }
 
-export const directus = createDirectus<Collections>(DIRECTUS_CMS_URL).with(rest())
+export const directus = createDirectus<Collections>(DIRECTUS_CMS_URL)
+    .with(authentication('session', { credentials: 'include' }))
+    .with(rest())

@@ -8,23 +8,16 @@
                 {{ loginPage.heading }}
             </SectionHeading>
 
-            <!-- Text -->
-            <InnerHtml
-                class="mt-8 space-y-8 break-words text-base font-light text-white md:mt-16 md:text-xl md:leading-normal lg:text-2xl lg:leading-normal"
-                :html="loginPage.text"
-            />
-            <ul class="text-white">
-                <li v-for="provider in providers" :key="provider.name">
-                    <a :href="provider.url">{{ provider.name }}</a>
-                </li>
-            </ul>
+            <client-only v-if="clientSideUser">
+                <p class="text-white">Hello, User# {{ clientSideUser.id }}</p>
+            </client-only>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
 import { useDirectus } from '~/composables/useDirectus'
-import type { DirectusLoginPage, LoginProvider } from '~/types'
+import type { DirectusLoginPage } from '~/types'
 import { computed, type ComputedRef } from 'vue'
 import { useLoadingScreen } from '../composables'
 import { getMetaInfo } from '../helpers'
@@ -32,19 +25,24 @@ import { getMetaInfo } from '../helpers'
 const directus = useDirectus()
 const breadcrumbs = [{ label: 'Login' }]
 
+const clientSideUser = ref(null)
+
 // Query login page
 // We tie the login to this page, so that we can easily en/disable logging in via the UI.
 const { data: pageData } = useAsyncData(async () => {
-    const [loginPage, providers] = await Promise.all([
-        await directus.getLoginPage(),
-        await directus.getSingleSignOnProviders(),
-    ])
+    const [loginPage] = await Promise.all([await directus.getLoginPage()])
 
-    return { loginPage, providers }
+    return { loginPage }
 })
 
 const loginPage: ComputedRef<DirectusLoginPage | undefined> = computed(() => pageData.value?.loginPage)
-const providers: ComputedRef<LoginProvider[] | undefined> = computed(() => pageData.value?.providers)
+//const currentUser: ComputedRef<any | undefined> = computed(() => pageData.value?.user)
+
+onMounted(async () => {
+    clientSideUser.value = await directus.getCurrentUser()
+
+    console.log('User', clientSideUser.value)
+})
 
 // Set loading screen
 useLoadingScreen()
@@ -53,8 +51,8 @@ useLoadingScreen()
 useHead(
     getMetaInfo({
         type: 'website',
-        path: '/login',
-        title: 'Login',
+        path: '/login-callback',
+        title: 'Login Callback',
         noIndex: true,
     })
 )
