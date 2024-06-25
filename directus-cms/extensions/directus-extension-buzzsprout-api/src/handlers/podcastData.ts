@@ -1,29 +1,46 @@
+import type {
+  Context,
+  Dependencies,
+  PickOfTheDay,
+  PodcastData,
+  Tag,
+} from "./types";
+
 /**
  * It adds the pick of the day and tag items to the podcast item object.
  *
+ * @param HOOK_NAME
  * @param podcastItem A podcast item.
- * @param actionData The action data.
+ * @param context
+ * @param dependencies
  *
  * @returns The podcast data.
  */
-async function getPodcastData(podcastItem, { context }) {
+export async function getPodcastData(
+  HOOK_NAME: string,
+  podcastItem: PodcastData,
+  context: Context,
+  dependencies: Dependencies,
+): Promise<PodcastData> {
+  const { logger, ItemsService } = dependencies;
+
   // Log start info
   logger.info(`${HOOK_NAME} hook: Query podcast data from Directus`);
 
   // Create member items service instance
-  const memberItemsService = new ItemsService('members', {
+  const memberItemsService = new ItemsService("members", {
     accountability: context.accountability,
     schema: context.schema,
   });
 
   // Create speaker items service instance
-  const speakerItemsService = new ItemsService('speakers', {
+  const speakerItemsService = new ItemsService("speakers", {
     accountability: context.accountability,
     schema: context.schema,
   });
 
   // Create pick of the day items service instance
-  const pickOfTheDayItemsService = new ItemsService('picks_of_the_day', {
+  const pickOfTheDayItemsService = new ItemsService("picks_of_the_day", {
     accountability: context.accountability,
     schema: context.schema,
   });
@@ -32,11 +49,9 @@ async function getPodcastData(podcastItem, { context }) {
   logger.info(`${HOOK_NAME} hook: Query pick of the day items from Directus`);
 
   // Get pick of the day items with member or speaker
-  const pickOfTheDayItems = await Promise.all(
-    podcastItem.picks_of_the_day.map(async (pickOfTheDayId) => {
-      const pickOfTheDay = await pickOfTheDayItemsService.readOne(
-        pickOfTheDayId
-      );
+  const pickOfTheDayItems: PickOfTheDay[] = await Promise.all(
+    podcastItem.picks_of_the_day!.map(async (pick) => {
+      const pickOfTheDay = await pickOfTheDayItemsService.readOne(pick.id);
       return {
         ...pickOfTheDay,
         member:
@@ -46,19 +61,19 @@ async function getPodcastData(podcastItem, { context }) {
           pickOfTheDay.speaker &&
           (await speakerItemsService.readOne(pickOfTheDay.speaker)),
       };
-    })
+    }),
   );
 
-  let tagItems = [];
+  let tagItems: Tag[] = [];
   try {
     // Create podcast tag items service instance
-    const podcastTagItemsService = new ItemsService('podcast_tags', {
+    const podcastTagItemsService = new ItemsService("podcast_tags", {
       accountability: context.accountability,
       schema: context.schema,
     });
 
     // Create tag items service instance
-    const tagItemsService = new ItemsService('tags', {
+    const tagItemsService = new ItemsService("tags", {
       accountability: context.accountability,
       schema: context.schema,
     });
@@ -68,18 +83,14 @@ async function getPodcastData(podcastItem, { context }) {
 
     // Get tag items from tag item service by keys
     tagItems = await Promise.all(
-      podcastItem.tags.map(async (podcastTagId) =>
+      podcastItem.tags!.map(async (podcastTag) =>
         tagItemsService.readOne(
-          (
-            await podcastTagItemsService.readOne(podcastTagId)
-          ).tag
-        )
-      )
+          (await podcastTagItemsService.readOne(podcastTag.id)).tag,
+        ),
+      ),
     );
-  } catch (error) {
-    logger.error(
-      `${HOOK_NAME} hook: Could not query tags "${error.message}"`
-    );
+  } catch (error: any) {
+    logger.error(`${HOOK_NAME} hook: Could not query tags "${error.message}"`);
   }
 
   // Return podcast data
