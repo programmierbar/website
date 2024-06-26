@@ -29,6 +29,7 @@ If you need a development instance of directus however, please follow the below 
 
 _All commands should be run from within `./directus-cms/`_
 
+- In order to have everything configured, make a copy of `.env.example` named `.env`
 - To install the dependencies run `yarn install`.
 - Then bootstrap directus using `yarn run bootstrap`. 
 - To build the code required for the extensions run `yarn run build`.

@@ -1,9 +1,10 @@
-import { aggregate, readItems, readSingleton, type QueryFilter } from '@directus/sdk'
+import { aggregate, readItems, readMe, readProviders, readSingleton, rest, type QueryFilter } from '@directus/sdk'
 import type {
     DirectusMemberItem,
     DirectusPickOfTheDayItem,
     DirectusSpeakerItem,
     DirectusTagItem,
+    LoginProvider,
     MeetupItem,
     PodcastItem,
     PodcastPreviewItem,
@@ -11,6 +12,7 @@ import type {
     SpeakerPreviewItem,
     TagItem,
 } from '~/types'
+import { DIRECTUS_CMS_URL, WEBSITE_URL } from './../config'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { directus, type Collections } from './../services'
@@ -79,6 +81,14 @@ export function useDirectus() {
     async function getRafflePage() {
         return await directus.request(
             readSingleton('raffle_page', {
+                fields: ['*'],
+            })
+        )
+    }
+
+    async function getLoginPage() {
+        return await directus.request(
+            readSingleton('login_page', {
                 fields: ['*'],
             })
         )
@@ -514,6 +524,39 @@ export function useDirectus() {
             )
     }
 
+    async function getSingleSignOnProviders() {
+        const directusProviders = await directus.request(readProviders())
+
+        const providers = directusProviders.map((directusProvider): LoginProvider => {
+            // The `redirect` parameter of the login URL cannot be set randomly
+            // Only values configured in the env var `AUTH_<PROVIDER>_REDIRECT_ALLOW_LIST` are allowed
+            const providerUrl = new URL(DIRECTUS_CMS_URL)
+            providerUrl.pathname = `/auth/login/${directusProvider.name}`
+            providerUrl.searchParams.set('redirect', WEBSITE_URL + '/login-callback')
+
+            return {
+                name: directusProvider.name,
+                url: providerUrl.toString(),
+            }
+        })
+
+        return providers
+    }
+
+    async function getCurrentUser() {
+        try {
+            console.log('Refreshing auth', await directus.refresh())
+
+            const user = await directus.with(rest({ credentials: 'include' })).request(readMe())
+            console.log('Current user', user)
+
+            // Maybe add some persistence etc. here?
+            return user
+        } catch (e: unknown) {
+            console.log('Error while reading current user', e)
+        }
+    }
+
     return {
         getHomepage,
         getPodcastPage,
@@ -523,6 +566,7 @@ export function useDirectus() {
         getAboutPage,
         getPrivacyPage,
         getRafflePage,
+        getLoginPage,
         getCocPage,
         getImprintPage,
         getContactPage,
@@ -540,5 +584,7 @@ export function useDirectus() {
         getMeetupBySlug,
         getSpeakerBySlug,
         getRelatedPodcasts,
+        getSingleSignOnProviders,
+        getCurrentUser,
     }
 }

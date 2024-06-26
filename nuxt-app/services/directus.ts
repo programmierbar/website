@@ -1,4 +1,4 @@
-import { createDirectus, rest } from '@directus/sdk'
+import { authentication, createDirectus, rest } from '@directus/sdk'
 import { DIRECTUS_CMS_URL } from '../config'
 import type {
     DirectusAboutPage,
@@ -7,6 +7,7 @@ import type {
     DirectusHallOfFamePage,
     DirectusHomePage,
     DirectusImprintPage,
+    DirectusLoginPage,
     DirectusMeetupItem,
     DirectusMeetupPage,
     DirectusMemberItem,
@@ -31,6 +32,7 @@ export type Collections = {
     imprint_page: DirectusImprintPage
     privacy_page: DirectusPrivacyPage
     raffle_page: DirectusRafflePage
+    login_page: DirectusLoginPage
     coc_page: DirectusCocPage
     podcasts: DirectusPodcastItem[]
     meetups: DirectusMeetupItem[]
@@ -40,4 +42,6 @@ export type Collections = {
     tags: DirectusTagItem[]
 }
 
-export const directus = createDirectus<Collections>(DIRECTUS_CMS_URL).with(rest())
+export const directus = createDirectus<Collections>(DIRECTUS_CMS_URL)
+    .with(authentication('session', { credentials: 'include' }))
+    .with(rest())
