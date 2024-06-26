@@ -6,7 +6,7 @@ import type {
   Dependencies,
   PodcastData,
 } from "./types";
-import { getFullPodcastTitle, getUrlSlug } from "shared-code";
+import { getFullPodcastTitle, getUrlSlug } from "../../../../../../shared-code";
 import { postSlackMessage } from "../../shared/postSlackMessage";
 
 /**
