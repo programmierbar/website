@@ -1,40 +1,92 @@
 <script setup lang="ts">
 import { useApi } from '@directus/extensions-sdk'
-import { onMounted, ref } from 'vue'
-import { isPublishable } from './../shared/isPublishable.js'
+import { onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{ collection: string; primaryKey: string }>()
 
-const publishable = ref(false)
+const itemData = ref(null)
+const fieldData = ref(null)
+const publishable = ref(null)
+const messages = ref([])
 
-function loadItem(collection: string, primaryKey: string) {
-    const api = useApi()
-    const response = api.get(`/items/${collection}/${primaryKey}`)
+const api = useApi()
 
-    return response
+function logToUi(message: string): void {
+    messages.value.push(message);
 }
-function loadFields(collection: string) {
-    const api = useApi()
-    const response = api.get(`/fields/${collection}`)
 
-    return response
+function isPublishable(item, fields) {
+    const requiredFieldsAreSet = fields.every((field) => {
+
+        logToUi('Controlling field ' + field.field)
+
+        const hasValue = Boolean(item[field.field])
+        const isRequiredInSchema = field.schema && field.schema.required
+        const hasConditions = Boolean(field.meta.conditions)
+
+        let isRequiredOnPublished = false
+        if (hasConditions) {
+            logToUi('Has conditions')
+            logToUi(JSON.stringify(field.meta.conditions))
+
+            isRequiredOnPublished = field.meta.conditions.some(
+                (condition) => {
+                    logToUi('condition ' + JSON.stringify(condition))
+
+                    return condition.required && condition.rule && condition.rule._and && condition.rule._and.some((rule) => (rule.status && rule.status._eq && rule.status._eq === 'published'))
+                }
+            )
+            logToUi('is required on published ' + isRequiredOnPublished)
+
+        }
+
+        const isOptional = !isRequiredInSchema && !isRequiredOnPublished
+
+        logToUi('Is set: ' + (hasValue || isOptional))
+
+        return hasValue || isOptional
+    })
+
+    return requiredFieldsAreSet
 }
+
+watch(() => props.primaryKey, async function(newValue, oldValue) {
+    logToUi('Prop changed from ' +  oldValue + ' to ' + newValue);
+
+    if (newValue === '+') {
+        return
+    }
+
+    const itemResponse = await api.get(`/items/${props.collection}/${props.primaryKey}`)
+    itemData.value = itemResponse.data.data
+
+    logToUi('Loaded item data')
+    logToUi(JSON.stringify(itemData.value))
+});
+
+watch([() => itemData.value, () => fieldData.value], async function(newValue, oldValue) {
+    logToUi('item and field data changed');
+
+    if (itemData.value && fieldData.value) {
+        logToUi('item and field data filled, refreshing state');
+        publishable.value = isPublishable(itemData.value, fieldData.value)
+    }
+});
 
 onMounted(async () => {
-    if (props.primaryKey !== '+') {
-        const [itemResponse, fieldResponse] = await Promise.all([
-            loadItem(props.collection, props.primaryKey),
-            loadFields(props.collection),
-        ])
-        const itemData = itemResponse.data.data
-        const fieldData = fieldResponse.data.data
+    const fieldResponse = await api.get(`/fields/${props.collection}`)
+    fieldData.value = fieldResponse.data.data
 
-        publishable.value = isPublishable(itemData, fieldData)
-    }
+    logToUi('Loaded field data')
+    logToUi(JSON.stringify(fieldData.value))
 })
 </script>
 
 <template>
+    <!--p>Messages:</p>
+    <p v-for="message in messages">
+        {{ JSON.stringify(message) }}
+    </p-->
     <div v-if="publishable === true">
         <v-icon name="check_circle" left />
         Can be published.

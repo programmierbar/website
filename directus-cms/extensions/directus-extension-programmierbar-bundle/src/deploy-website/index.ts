@@ -1,12 +1,14 @@
+import { defineHook } from '@directus/extensions-sdk'
 import axios from 'axios'
 import { buzzsproutError } from '../buzzsprout/handlers/errors.js'
 import { postSlackMessage } from './../shared/postSlackMessage'
 
-const HOOK_NAME = 'deployWebsite'
+const HOOK_NAME = 'deploy-website'
 
-export default ({ action }, { env, services }) => {
-    const { logger, ItemsService } = services
-
+export default defineHook(({ action }, hookContext) => {
+    const logger = hookContext.logger
+    const env = hookContext.env
+    const ItemsService = hookContext.services.ItemsService
     /**
      * It deploys our website on created items, if necessary.
      */
@@ -21,7 +23,18 @@ export default ({ action }, { env, services }) => {
         handleAction('update', { payload, metadata, context })
     )
 
-    async function handleAction(type, { payload, metadata, context }) {
+    async function handleAction(
+        type: string,
+        {
+            payload,
+            metadata,
+            context,
+        }: {
+            payload: any
+            metadata: Record<string, any>
+            context: any
+        }
+    ) {
         try {
             // Log start info
             logger.info(`${HOOK_NAME} hook: Start "${metadata.collection}" action function`)
@@ -56,12 +69,17 @@ export default ({ action }, { env, services }) => {
                 url: env.VERCEL_DEPLOY_WEBHOOK_URL,
             })
         } catch (error: any) {
-            await postSlackMessage(
-                `:warning: *${HOOK_NAME} hook*: Die Website konnte nicht automatisch deployed werden. Error: ${error.message}`
-            )
+            try {
+                await postSlackMessage(
+                    `:warning: *${HOOK_NAME} hook*: Die Website konnte nicht automatisch deployed werden. Error: ${error.message}`
+                )
+            } catch (slackError: any) {
+                logger.error(`${HOOK_NAME} hook: Error: Could not post message to Slack: ${slackError.message}`)
+            }
+
             logger.error(`${HOOK_NAME} hook: Error: ${error.message}`)
             const customError = buzzsproutError(error.message)
             throw new customError()
         }
     }
-}
+})

@@ -31,8 +31,13 @@
             },
             {
                 "type": "hook",
-                "name": "buzzsprout",
-                "source": "src/buzzsprout/index.ts"
+                "name": "set-slug",
+                "source": "src/set-slug/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "set-published-on",
+                "source": "src/set-published-on/index.ts"
             }
         ],
         "host": "^10.10.0"
@@ -50,7 +55,7 @@
         "@directus/extensions-sdk": "11.0.8",
         "@ianvs/prettier-plugin-sort-imports": "^4.2.1",
         "@slack/web-api": "^7.2.0",
-        "@types/node": "^20.14.8",
+        "@types/node": "^20.14.9",
         "axios": "^1.7.2",
         "eslint": "^9.5.0",
         "eslint-config-prettier": "^9.1.0",
