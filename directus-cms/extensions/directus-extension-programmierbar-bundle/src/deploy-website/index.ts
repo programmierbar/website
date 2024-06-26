@@ -1,73 +1,67 @@
-import { postSlackMessage } from "./../shared/postSlackMessage";
+import axios from 'axios'
+import { buzzsproutError } from '../buzzsprout/handlers/errors.js'
+import { postSlackMessage } from './../shared/postSlackMessage'
 
-import axios from "axios";
-import { buzzsproutError } from '../buzzsprout/handlers/errors.js';
+const HOOK_NAME = 'deployWebsite'
 
-const HOOK_NAME = "deployWebsite";
+export default ({ action }, { env, services }) => {
+    const { logger, ItemsService } = services
 
-export default (
-  { action },
-  { env, services },
-) => {
-  const { logger, ItemsService } = services;
+    /**
+     * It deploys our website on created items, if necessary.
+     */
+    action('items.create', ({ payload, ...metadata }, context) =>
+        handleAction('create', { payload, metadata, context })
+    )
 
-  /**
-   * It deploys our website on created items, if necessary.
-   */
-  action("items.create", ({ payload, ...metadata }, context) =>
-    handleAction("create", { payload, metadata, context }),
-  );
+    /**
+     * It deploys our website on updated items, if necessary.
+     */
+    action('items.update', ({ payload, ...metadata }, context) =>
+        handleAction('update', { payload, metadata, context })
+    )
 
-  /**
-   * It deploys our website on updated items, if necessary.
-   */
-  action("items.update", ({ payload, ...metadata }, context) =>
-    handleAction("update", { payload, metadata, context }),
-  );
+    async function handleAction(type, { payload, metadata, context }) {
+        try {
+            // Log start info
+            logger.info(`${HOOK_NAME} hook: Start "${metadata.collection}" action function`)
 
-  async function handleAction(type, { payload, metadata, context }) {
-    try {
-      // Log start info
-      logger.info(
-        `${HOOK_NAME} hook: Start "${metadata.collection}" action function`,
-      );
+            // Get fields of collection
+            const { fields } = context.schema.collections[metadata.collection]
 
-      // Get fields of collection
-      const { fields } = context.schema.collections[metadata.collection];
+            // Deploy website only if status field exists
+            if (!fields.status) {
+                return
+            }
 
-      // Deploy website only if status field exists
-      if (!fields.status) {
-        return;
-      }
+            // Create items service instance
+            const itemsService = new ItemsService(metadata.collection, {
+                accountability: context.accountability,
+                schema: context.schema,
+            })
 
-      // Create items service instance
-      const itemsService = new ItemsService(metadata.collection, {
-        accountability: context.accountability,
-        schema: context.schema,
-      });
+            // Get item from item service by key
+            const item = await itemsService.readOne(metadata.key || metadata.keys[0])
 
-      // Get item from item service by key
-      const item = await itemsService.readOne(metadata.key || metadata.keys[0]);
+            // Deploy website only if it is a published item or
+            // action type is "update" and status has changed
+            const contentUpdateRelevant = item.status === 'published' || (type === 'update' && payload.status)
 
-      // Deploy website only if it is a published item or
-      // action type is "update" and status has changed
-      const contentUpdateRelevant =
-        item.status === "published" || (type === "update" && payload.status);
+            if (!contentUpdateRelevant) {
+                return
+            }
 
-      if (!contentUpdateRelevant) {
-        return;
-      }
-
-      await axios({
-        method: "POST",
-        url: env.VERCEL_DEPLOY_WEBHOOK_URL,
-      });
-    } catch (error: any) {
-      await postSlackMessage(
-        `:warning: *${HOOK_NAME} hook*: Die Website konnte nicht automatisch deployed werden. Error: ${error.message}`,
-      );
-      logger.error(`${HOOK_NAME} hook: Error: ${error.message}`);
-      const customError = buzzsproutError(error.message);
-      throw new customError;    }
-  }
-};
+            await axios({
+                method: 'POST',
+                url: env.VERCEL_DEPLOY_WEBHOOK_URL,
+            })
+        } catch (error: any) {
+            await postSlackMessage(
+                `:warning: *${HOOK_NAME} hook*: Die Website konnte nicht automatisch deployed werden. Error: ${error.message}`
+            )
+            logger.error(`${HOOK_NAME} hook: Error: ${error.message}`)
+            const customError = buzzsproutError(error.message)
+            throw new customError()
+        }
+    }
+}
