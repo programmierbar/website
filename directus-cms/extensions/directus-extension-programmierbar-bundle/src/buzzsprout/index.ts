@@ -7,10 +7,20 @@ import { handleTagAction } from './handlers/handleTagAction'
 const HOOK_NAME = 'buzzsproutApi'
 
 export default defineHook(({ action }, { logger, services: { ItemsService }, env } ) => {
-  action('podcasts.items.update', function(metadata, eventContext){
-
+  action('podcasts.items.create', function(metadata, eventContext){
     const { payload } = metadata;
-
+    handlePodcastAction(
+      HOOK_NAME,
+      {
+        payload,
+        metadata: { ...metadata, collection: 'podcasts' },
+        context: eventContext,
+      },
+      { logger, ItemsService, env }
+    )
+  });
+  action('podcasts.items.update', function(metadata, eventContext){
+    const { payload } = metadata;
     handlePodcastAction(
       HOOK_NAME,
       {
