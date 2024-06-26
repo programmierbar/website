@@ -1,11 +1,13 @@
-import postSlackMessage from "../../helpers/postSlackMessage";
+import { postSlackMessage } from "./../shared/postSlackMessage";
+
 import axios from "axios";
+import { buzzsproutError } from '../buzzsprout/handlers/errors.js';
 
 const HOOK_NAME = "deployWebsite";
 
 export default (
   { action },
-  { env, exceptions: { BaseException }, services },
+  { env, services },
 ) => {
   const { logger, ItemsService } = services;
 
@@ -60,12 +62,12 @@ export default (
         method: "POST",
         url: env.VERCEL_DEPLOY_WEBHOOK_URL,
       });
-    } catch (error) {
+    } catch (error: any) {
       await postSlackMessage(
         `:warning: *${HOOK_NAME} hook*: Die Website konnte nicht automatisch deployed werden. Error: ${error.message}`,
       );
       logger.error(`${HOOK_NAME} hook: Error: ${error.message}`);
-      throw new BaseException(error.message, 500, "UNKNOWN");
-    }
+      const customError = buzzsproutError(error.message);
+      throw new customError;    }
   }
 };

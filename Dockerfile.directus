@@ -11,23 +11,20 @@ COPY directus-cms/package-lock.json .
 # Install dependencies
 RUN npm install
 
+# Copy the shared code that lives outside of directus dir
 COPY shared-code ../shared-code
-RUN npm run build
 
 # Copy the rest of the application
 COPY directus-cms .
 
 # Set working directory to interface extension
-WORKDIR /usr/src/app/directus-cms/extensions-src/publishable
+WORKDIR /usr/src/app/directus-cms/extensions/directus-extension-programmierbar-bundle
 
 # Install publishable interface extension dependencies
 RUN npm install
 
 # Build the extension
 RUN npm run build
-
-# Symlink built extension into directus extension dir to make it available at runtime
-RUN npm run link ../../extensions
 
 # Set working directory back to directus project root
 WORKDIR /usr/src/app/directus-cms

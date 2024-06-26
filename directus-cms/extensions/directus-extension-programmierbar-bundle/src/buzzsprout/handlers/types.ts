@@ -70,7 +70,6 @@ export interface Dependencies {
   logger: Logger;
   ItemsService: new (collection: string, options: any) => ItemsService;
   env: Env;
-  BaseException: new (message: string, code: number, type: string) => any;
 }
 
 // Buzzsprout Data Interface

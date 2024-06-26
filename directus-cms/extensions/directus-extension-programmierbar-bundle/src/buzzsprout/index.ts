@@ -23,13 +23,9 @@ export default (
   },
   {
     env,
-    exceptions: { BaseException },
     services,
   }: {
     env: Env;
-    exceptions: {
-      BaseException: new (message: string, code: number, type: string) => any;
-    };
     services: {
       logger: Logger;
       ItemsService: new (collection: string, options: any) => ItemsService;
@@ -52,7 +48,7 @@ export default (
           metadata: { ...metadata, collection: "podcasts" },
           context,
         },
-        { logger, ItemsService, BaseException, env },
+        { logger, ItemsService, env },
       ),
   );
 
@@ -70,7 +66,7 @@ export default (
           metadata: { ...metadata, collection: "podcasts" },
           context,
         },
-        { logger, ItemsService, BaseException, env },
+        { logger, ItemsService, env },
       ),
   );
 
@@ -88,7 +84,7 @@ export default (
           metadata: { ...metadata, collection: "picks_of_the_day" },
           context,
         },
-        { ItemsService, logger, BaseException, env },
+        { ItemsService, logger, env },
       ),
   );
 
@@ -106,7 +102,7 @@ export default (
           metadata: { ...metadata, collection: "picks_of_the_day" },
           context,
         },
-        { ItemsService, logger, BaseException, env },
+        { ItemsService, logger, env },
       ),
   );
 
@@ -124,7 +120,7 @@ export default (
           metadata: { ...metadata, collection: "tags" },
           context,
         },
-        { ItemsService, logger, BaseException, env },
+        { ItemsService, logger, env },
       ),
   );
 
@@ -142,7 +138,7 @@ export default (
           metadata: { ...metadata, collection: "tags" },
           context,
         },
-        { ItemsService, logger, BaseException, env },
+        { ItemsService, logger, env },
       ),
   );
 };

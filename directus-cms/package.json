@@ -5,7 +5,6 @@
   "license": "MIT",
   "type": "commonjs",
   "scripts": {
-    "build": "npx tsc ../shared-code/index.ts --outDir ./shared-code",
     "migrate:db": "directus database migrate:latest",
     "postbootstrap": "npm run migrate:db",
     "bootstrap": "directus bootstrap",

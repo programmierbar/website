@@ -6,6 +6,7 @@ import type {
   PickOfTheDayPayload,
 } from "./types";
 import { getPodcastData } from "./podcastData";
+import { buzzsproutError } from "./errors.js";
 
 /**
  * It handles the pick of the day action and updates the associated
@@ -21,7 +22,7 @@ export async function handlePickOfTheDayAction(
   dependencies: Dependencies,
 ): Promise<void> {
   const { payload, metadata, context } = actionData;
-  const { ItemsService, logger, BaseException } = dependencies;
+  const { ItemsService, logger } = dependencies;
   try {
     // Log start info
     logger.info(
@@ -101,6 +102,7 @@ export async function handlePickOfTheDayAction(
     // Handle unknown errors
   } catch (error: any) {
     logger.error(`${HOOK_NAME} hook: Error: ${error.message}`);
-    throw new BaseException(error.message, 500, "UNKNOWN");
+    const customError = buzzsproutError(error.message);
+    throw new customError;
   }
 }

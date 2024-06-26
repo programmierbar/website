@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useApi } from '@directus/extensions-sdk';
-import { isPublishable } from './../../../extensions/shared/isPublishable.js';
+import { isPublishable } from './../shared/isPublishable.js';
 import { onMounted, ref } from 'vue';
 
 const props = defineProps<{ collection: string; primaryKey: string }>();

@@ -6,8 +6,8 @@ import type {
   Dependencies,
   PodcastData,
 } from "./types";
-import { getFullPodcastTitle, getUrlSlug } from "../../../../../shared-code";
-import { postSlackMessage } from "../../../helpers/postSlackMessage";
+import { getFullPodcastTitle, getUrlSlug } from "shared-code";
+import { postSlackMessage } from "../../shared/postSlackMessage";
 
 /**
  * It creates or updates a podcast episode at Buzzsprout and returns its data.
