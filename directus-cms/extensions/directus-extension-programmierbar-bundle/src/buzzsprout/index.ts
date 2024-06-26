@@ -13,16 +13,17 @@ export default (
     },
     {
         env,
+        logger,
         services,
     }: {
-        env: Env
+        env: Env,
+        logger: Logger,
         services: {
-            logger: Logger
             ItemsService: new (collection: string, options: any) => ItemsService
         }
     }
 ) => {
-    const { logger, ItemsService } = services
+    const { ItemsService } = services
 
     /**
      * It creates the podcast episode at Buzzsprout on
