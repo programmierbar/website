@@ -1,10 +1,29 @@
+import { defineHook} from '@directus/extensions-sdk';
 import { handlePickOfTheDayAction } from './handlers/handlePickOfTheDayAction'
 import { handlePodcastAction } from './handlers/handlePodcastAction'
 import { handleTagAction } from './handlers/handleTagAction'
-import type { ActionData, Context, Env, ItemsService, Logger, Payload } from './handlers/types'
+//import type { ActionData, Context, Env, ItemsService, Payload } from './handlers/types'
 
 const HOOK_NAME = 'buzzsproutApi'
 
+export default defineHook(({ action }, { logger, services: { ItemsService }, env } ) => {
+  action('podcasts.items.update', function(metadata, eventContext){
+
+    const { payload } = metadata;
+
+    handlePodcastAction(
+      HOOK_NAME,
+      {
+        payload,
+        metadata: { ...metadata, collection: 'podcasts' },
+        context: eventContext,
+      },
+      { logger, ItemsService, env }
+    )
+  });
+});
+
+/**
 export default (
     {
         action,
@@ -28,7 +47,7 @@ export default (
     /**
      * It creates the podcast episode at Buzzsprout on
      * newly created podcast items, if necessary.
-     */
+     *
     action('podcasts.items.create', async ({ payload, metadata, context }: ActionData<Payload>) =>
         handlePodcastAction(
             HOOK_NAME,
@@ -44,7 +63,7 @@ export default (
     /**
      * It creates or updates the podcast episode at Buzzsprout
      * on updated podcast items, if necessary.
-     */
+     *
     action('podcasts.items.update', async ({ payload, metadata, context }: ActionData<Payload>) =>
         handlePodcastAction(
             HOOK_NAME,
@@ -60,7 +79,7 @@ export default (
     /**
      * It updates the podcast episode at Buzzsprout on newly
      * created pick of the day items, if necessary.
-     */
+     *
     action('picks_of_the_day.items.create', async ({ payload, metadata, context }: ActionData<Payload>) =>
         handlePickOfTheDayAction(
             HOOK_NAME,
@@ -76,7 +95,7 @@ export default (
     /**
      * It updates the podcast episode at Buzzsprout on
      * updated pick of the day items, if necessary.
-     */
+     *
     action('picks_of_the_day.items.update', async ({ payload, metadata, context }: ActionData<Payload>) =>
         handlePickOfTheDayAction(
             HOOK_NAME,
@@ -92,7 +111,7 @@ export default (
     /**
      * It updates the podcast episode at Buzzsprout
      * on created tag items, if necessary.
-     */
+     *
     action('tags.items.create', async ({ payload, metadata, context }: ActionData<Payload>) =>
         handleTagAction(
             HOOK_NAME,
@@ -108,7 +127,7 @@ export default (
     /**
      * It updates the podcast episode at Buzzsprout
      * on updated tag items, if necessary.
-     */
+     *
     action('tags.items.update', async ({ payload, metadata, context }: ActionData<Payload>) =>
         handleTagAction(
             HOOK_NAME,
@@ -121,3 +140,5 @@ export default (
         )
     )
 }
+
+ */
