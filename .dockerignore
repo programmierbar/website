@@ -28,8 +28,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# ignore all extension symlinks
-directus-cms/extensions/directus-extension-*
-
 # ignore all locally built extension artifacts
 extensions-src/**/dist
