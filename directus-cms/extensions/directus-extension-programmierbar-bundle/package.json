@@ -1,0 +1,62 @@
+{
+    "name": "directus-extension-programmierbar-bundle",
+    "description": "A collection of extension custom made for programmier.bar",
+    "icon": "extension",
+    "version": "1.0.0",
+    "keywords": [
+        "directus",
+        "directus-extension",
+        "directus-extension-bundle"
+    ],
+    "type": "module",
+    "files": [
+        "dist"
+    ],
+    "directus:extension": {
+        "type": "bundle",
+        "path": {
+            "app": "dist/app.js",
+            "api": "dist/api.js"
+        },
+        "entries": [
+            {
+                "type": "interface",
+                "name": "publishable",
+                "source": "src/publishable/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "deploy-website",
+                "source": "src/deploy-website/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "buzzsprout",
+                "source": "src/buzzsprout/index.ts"
+            }
+        ],
+        "host": "^10.10.0"
+    },
+    "scripts": {
+        "build": "directus-extension build",
+        "dev": "directus-extension build -w --no-minify",
+        "link": "directus-extension link",
+        "add": "directus-extension add",
+        "eslint": "eslint --fix .",
+        "prettier": "prettier . --write"
+    },
+    "devDependencies": {
+        "@directus/errors": "^0.3.2",
+        "@directus/extensions-sdk": "11.0.8",
+        "@ianvs/prettier-plugin-sort-imports": "^4.2.1",
+        "@slack/web-api": "^7.2.0",
+        "@types/node": "^20.14.8",
+        "axios": "^1.7.2",
+        "eslint": "^9.5.0",
+        "eslint-config-prettier": "^9.1.0",
+        "prettier": "^3.3.2",
+        "typescript": "^5.5.2",
+        "typescript-eslint": "^8.0.0-alpha.20",
+        "vue": "^3.4.30"
+    }
+}

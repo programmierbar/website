@@ -1,4 +1,4 @@
-const postSlackMessage = require('../../../helpers/postSlackMessage');
+const postSlackMessage = require('../../helpers/postSlackMessage');
 const { isPublishable } = require('./../../shared/isPublishable');
 
 const HOOK_NAME = 'schedulePublication';

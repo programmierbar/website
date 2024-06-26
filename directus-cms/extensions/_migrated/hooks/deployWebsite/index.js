@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const axios = require('axios').default;
-const postSlackMessage = require('../../../helpers/postSlackMessage');
+const postSlackMessage = require('../../helpers/postSlackMessage');
 
 const HOOK_NAME = 'deployWebsite';
 

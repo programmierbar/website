@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios').default;
 const { getUrlSlug } = require('../../../shared-code');
-const postSlackMessage = require('../../../helpers/postSlackMessage');
+const postSlackMessage = require('../../helpers/postSlackMessage');
 
 const HOOK_NAME = 'setPickOfTheDayImage';
 

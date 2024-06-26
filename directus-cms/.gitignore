@@ -11,4 +11,6 @@ uploads/*
 
 shared-code
 
-extensions/directus-extension-interface-publishable
+# build artefacts for extensions
+node_modules
+dist

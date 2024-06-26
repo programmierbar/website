@@ -1,5 +1,4 @@
 import InterfaceComponent from './presentation-publishable.vue';
-//import PreviewSVG from './preview.svg?raw';
 
 // Inspired by: https://github.com/directus/directus/tree/main/app/src/interfaces/presentation-notice
 
