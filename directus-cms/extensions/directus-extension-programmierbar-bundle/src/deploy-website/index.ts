@@ -1,6 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
 import axios from 'axios'
-import { buzzsproutError } from '../buzzsprout/handlers/errors.js'
+import { createHookErrorConstructor } from '../shared/errors';
 import { postSlackMessage } from './../shared/postSlackMessage'
 
 const HOOK_NAME = 'deploy-website'
@@ -78,8 +78,8 @@ export default defineHook(({ action }, hookContext) => {
             }
 
             logger.error(`${HOOK_NAME} hook: Error: ${error.message}`)
-            const customError = buzzsproutError(error.message)
-            throw new customError()
+            const hookError = createHookErrorConstructor(HOOK_NAME, error.message)
+            throw new hookError()
         }
     }
 })

@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
-        "target": "ES2019",
-        "lib": ["ES2019", "DOM"],
-        "moduleResolution": "node",
+        "target": "ES2020",
+        "lib": ["ES2020", "DOM"],
+        "moduleResolution": "nodenext",
         "strict": true,
         "noFallthroughCasesInSwitch": true,
         "esModuleInterop": true,
