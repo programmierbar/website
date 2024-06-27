@@ -38,6 +38,11 @@
                 "type": "hook",
                 "name": "set-published-on",
                 "source": "src/set-published-on/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "schedule-publication",
+                "source": "src/schedule-publication/index.ts"
             }
         ],
         "host": "^10.10.0"

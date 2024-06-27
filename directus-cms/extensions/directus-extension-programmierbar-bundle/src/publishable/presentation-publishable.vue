@@ -1,53 +1,19 @@
 <script setup lang="ts">
 import { useApi } from '@directus/extensions-sdk'
 import { onMounted, ref, watch } from 'vue'
+import {isPublishable} from '../shared/isPublishable';
 
 const props = defineProps<{ collection: string; primaryKey: string }>()
 
 const itemData = ref(null)
 const fieldData = ref(null)
-const publishable = ref(null)
+const publishable = ref<Boolean|null>(null)
 const messages = ref([])
 
 const api = useApi()
 
 function logToUi(message: string): void {
     messages.value.push(message);
-}
-
-function isPublishable(item, fields) {
-    const requiredFieldsAreSet = fields.every((field) => {
-
-        logToUi('Controlling field ' + field.field)
-
-        const hasValue = Boolean(item[field.field])
-        const isRequiredInSchema = field.schema && field.schema.required
-        const hasConditions = Boolean(field.meta.conditions)
-
-        let isRequiredOnPublished = false
-        if (hasConditions) {
-            logToUi('Has conditions')
-            logToUi(JSON.stringify(field.meta.conditions))
-
-            isRequiredOnPublished = field.meta.conditions.some(
-                (condition) => {
-                    logToUi('condition ' + JSON.stringify(condition))
-
-                    return condition.required && condition.rule && condition.rule._and && condition.rule._and.some((rule) => (rule.status && rule.status._eq && rule.status._eq === 'published'))
-                }
-            )
-            logToUi('is required on published ' + isRequiredOnPublished)
-
-        }
-
-        const isOptional = !isRequiredInSchema && !isRequiredOnPublished
-
-        logToUi('Is set: ' + (hasValue || isOptional))
-
-        return hasValue || isOptional
-    })
-
-    return requiredFieldsAreSet
 }
 
 watch(() => props.primaryKey, async function(newValue, oldValue) {
@@ -69,7 +35,7 @@ watch([() => itemData.value, () => fieldData.value], async function(newValue, ol
 
     if (itemData.value && fieldData.value) {
         logToUi('item and field data filled, refreshing state');
-        publishable.value = isPublishable(itemData.value, fieldData.value)
+        publishable.value = isPublishable(itemData.value, fieldData.value, logToUi);
     }
 });
 

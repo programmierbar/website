@@ -1,3 +1,9 @@
+/*
+ * THIS IS AN OLDER VERSION OF THE isPublishable helper
+ * It does not respect the (new?) rule data model where all rules are combined by an '_and' rule
+ * We will keep this around in case our live data has not been migrated to the new model yet.
+ */
+
 function isPublishable(item, fields) {
     const requiredFieldsAreSet = fields.every((field) => {
         const hasValue = Boolean(item[field.field])
