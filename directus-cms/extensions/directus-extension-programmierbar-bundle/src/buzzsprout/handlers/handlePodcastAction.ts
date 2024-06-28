@@ -1,7 +1,7 @@
-import { handleBuzzsprout } from './buzzsprout'
-import { buzzsproutError } from './errors.js'
-import { getPodcastData } from './podcastData'
-import type { ActionData, BuzzsproutData, Dependencies, PodcastData } from './types'
+import { handleBuzzsprout } from './buzzsprout.ts'
+import { getPodcastData } from './podcastData.ts'
+import type { ActionData, BuzzsproutData, Dependencies, PodcastData } from './types.ts'
+import { createHookErrorConstructor } from '../../shared/errors.js';
 
 /**
  * It handles the podcast action and creates or updates
@@ -83,7 +83,8 @@ export async function handlePodcastAction(
         const buzzsproutData: BuzzsproutData = await handleBuzzsprout(HOOK_NAME, podcastData, actionData, dependencies)
 
         // Create update data object
-        const updateData: Partial<PodcastData> = {}
+        //const updateData: Partial<PodcastData> = {}
+        const updateData: any = {}
 
         // If "buzzsprout_id" it not set, add it to update data
         if (!podcastItem.buzzsprout_id) {
@@ -109,7 +110,7 @@ export async function handlePodcastAction(
         // Handle unknown errors
     } catch (error: any) {
         logger.error(`${HOOK_NAME} hook: Error: ${error.message}`)
-        const customError = buzzsproutError(error.message)
-        throw new customError()
+        const hookError = createHookErrorConstructor(HOOK_NAME, error.message)
+        throw new hookError()
     }
 }

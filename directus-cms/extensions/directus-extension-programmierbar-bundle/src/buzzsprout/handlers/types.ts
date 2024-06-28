@@ -69,7 +69,7 @@ export interface ActionData<T = Payload> {
 export interface Dependencies {
     logger: Logger
     ItemsService: new (collection: string, options: any) => ItemsService
-    env: Env
+    env: Record<string, any>
 }
 
 // Buzzsprout Data Interface

@@ -48,6 +48,11 @@
                 "type": "hook",
                 "name": "screenshot",
                 "source": "src/screenshot/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "buzzsprout",
+                "source": "src/buzzsprout/index.ts"
             }
         ],
         "host": "^10.10.0"

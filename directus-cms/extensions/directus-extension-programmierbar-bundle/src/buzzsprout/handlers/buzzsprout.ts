@@ -1,7 +1,8 @@
 import { default as axios } from 'axios'
-import { getFullPodcastTitle, getUrlSlug } from '../../../../../../shared-code'
-import { postSlackMessage } from '../../shared/postSlackMessage'
-import type { ActionData, BuzzsproutData, Dependencies, PodcastData } from './types'
+// @ts-ignore
+import { getFullPodcastTitle, getUrlSlug } from '../../../../../../shared-code/index.ts'
+import { postSlackMessage } from '../../shared/postSlackMessage.ts'
+import type { ActionData, BuzzsproutData, Dependencies, PodcastData } from './types.ts'
 
 /**
  * It creates or updates a podcast episode at Buzzsprout and returns its data.
