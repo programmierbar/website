@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
     {
-        ignores: ['**/dist/**', 'eslint.config.js'],
+        ignores: ['**/dist/**', '**/podcast-transcription/**', '**/assets/**', 'eslint.config.js'],
     },
     eslint.configs.recommended,
     {
@@ -15,9 +15,13 @@ export default tseslint.config(
             parserOptions: {
                 project: true,
             },
+            globals: {
+                process: 'readable',
+            },
         },
         rules: {
             '@typescript-eslint/consistent-type-imports': 'error',
         },
+        files: ['**/*.ts'],
     }
 )

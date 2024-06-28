@@ -1,5 +1,5 @@
 import { defineHook } from '@directus/extensions-sdk'
-import { createHookErrorConstructor } from '../shared/errors'
+import { createHookErrorConstructor } from '../shared/errors.ts'
 
 const HOOK_NAME = 'set-published-on'
 

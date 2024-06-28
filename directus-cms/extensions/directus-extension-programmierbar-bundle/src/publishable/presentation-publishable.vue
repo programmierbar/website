@@ -1,43 +1,46 @@
 <script setup lang="ts">
 import { useApi } from '@directus/extensions-sdk'
 import { onMounted, ref, watch } from 'vue'
-import {isPublishable} from '../shared/isPublishable';
+import { isPublishable } from '../shared/isPublishable'
 
 const props = defineProps<{ collection: string; primaryKey: string }>()
 
 const itemData = ref(null)
 const fieldData = ref(null)
-const publishable = ref<Boolean|null>(null)
+const publishable = ref<Boolean | null>(null)
 const messages = ref([])
 
 const api = useApi()
 
 function logToUi(message: string): void {
-    messages.value.push(message);
+    messages.value.push(message)
 }
 
-watch(() => props.primaryKey, async function(newValue, oldValue) {
-    logToUi('Prop changed from ' +  oldValue + ' to ' + newValue);
+watch(
+    () => props.primaryKey,
+    async function (newValue, oldValue) {
+        logToUi('Prop changed from ' + oldValue + ' to ' + newValue)
 
-    if (newValue === '+') {
-        return
+        if (newValue === '+') {
+            return
+        }
+
+        const itemResponse = await api.get(`/items/${props.collection}/${props.primaryKey}`)
+        itemData.value = itemResponse.data.data
+
+        logToUi('Loaded item data')
+        logToUi(JSON.stringify(itemData.value))
     }
+)
 
-    const itemResponse = await api.get(`/items/${props.collection}/${props.primaryKey}`)
-    itemData.value = itemResponse.data.data
-
-    logToUi('Loaded item data')
-    logToUi(JSON.stringify(itemData.value))
-});
-
-watch([() => itemData.value, () => fieldData.value], async function(newValue, oldValue) {
-    logToUi('item and field data changed');
+watch([() => itemData.value, () => fieldData.value], async function (newValue, oldValue) {
+    logToUi('item and field data changed')
 
     if (itemData.value && fieldData.value) {
-        logToUi('item and field data filled, refreshing state');
-        publishable.value = isPublishable(itemData.value, fieldData.value, logToUi);
+        logToUi('item and field data filled, refreshing state')
+        publishable.value = isPublishable(itemData.value, fieldData.value, logToUi)
     }
-});
+})
 
 onMounted(async () => {
     const fieldResponse = await api.get(`/fields/${props.collection}`)

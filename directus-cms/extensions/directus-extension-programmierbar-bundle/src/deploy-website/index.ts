@@ -1,7 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk'
 import axios from 'axios'
-import { createHookErrorConstructor } from '../shared/errors';
-import { postSlackMessage } from './../shared/postSlackMessage'
+import { createHookErrorConstructor } from '../shared/errors.ts'
+import { postSlackMessage } from './../shared/postSlackMessage.ts'
 
 const HOOK_NAME = 'deploy-website'
 

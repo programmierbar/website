@@ -22,7 +22,8 @@
         "forceConsistentCasingInFileNames": true,
         "allowSyntheticDefaultImports": true,
         "isolatedModules": true,
-        "rootDir": "./src"
+        "rootDir": "./src",
+        "allowImportingTsExtensions": true
     },
     "include": ["./src/**/*.ts"]
 }

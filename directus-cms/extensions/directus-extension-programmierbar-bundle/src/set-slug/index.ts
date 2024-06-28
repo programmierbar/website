@@ -1,6 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
-import { getFullPodcastTitle, getFullSpeakerName, getUrlSlug } from '../../../../../shared-code'
-import { createHookErrorConstructor } from '../shared/errors'
+import { getFullPodcastTitle, getFullSpeakerName, getUrlSlug } from '../../../../../shared-code/index.ts'
+import { createHookErrorConstructor } from '../shared/errors.ts'
 
 const HOOK_NAME = 'set-slug'
 
