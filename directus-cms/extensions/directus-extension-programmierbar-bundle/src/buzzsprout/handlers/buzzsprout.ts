@@ -198,7 +198,7 @@ export async function handleBuzzsprout(
 
         // If an error occurs, log it and inform team via Slack
     } catch (error: any) {
-        logger.error(`${HOOK_NAME} hook: Error: ${error.message}`)
+        logger.error(`${HOOK_NAME} hook: Error: ${JSON.stringify(error)}`)
         await postSlackMessage(
             `Achtung: Eine Podcastfolge konnte nicht automatisch zu Buzzsprout hinzugefügt werden. Beim nächsten Speichervorgang über den folgenden Link, wird der Vorgang wiederholt: ${process.env.PUBLIC_URL}admin/content/podcasts/${podcastData.buzzsprout_id}`
         )
