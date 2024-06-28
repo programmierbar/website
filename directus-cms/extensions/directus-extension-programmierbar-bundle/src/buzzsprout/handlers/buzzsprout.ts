@@ -33,7 +33,7 @@ export async function handleBuzzsprout(
     const publishedOn = podcastData.published_on || new Date().toISOString()
 
     // Create Buzzsprout data object
-    const buzzsproutData: BuzzsproutData = {}
+    const buzzsproutData: any = {}
 
     // Add "published_at", if necessary
     if (isCreation || payload.published_on) {
@@ -170,6 +170,8 @@ export async function handleBuzzsprout(
 
     try {
         // Create or update podcast episode at Buzzsprout
+        logger.info(`${HOOK_NAME} hook: Sending payload to buzzsprout: ${JSON.stringify(buzzsproutData)}`)
+
         const buzzsproutResponse = await axios({
             method: isCreation ? 'POST' : 'PUT',
             url: `${env.BUZZSPROUT_API_URL}episodes${
@@ -180,6 +182,9 @@ export async function handleBuzzsprout(
             },
             data: JSON.stringify(buzzsproutData),
         })
+
+        logger.info(`${HOOK_NAME} hook: Sent request to buzzsprout: ${JSON.stringify(buzzsproutResponse.request)}`)
+        logger.info(`${HOOK_NAME} hook: Received response (${buzzsproutResponse.status} / ${buzzsproutResponse.statusText}) from buzzsprout: ${JSON.stringify(buzzsproutResponse.data)}`)
 
         // Throw error if the request was not successful
         if (buzzsproutResponse.status !== 200 && buzzsproutResponse.status !== 201) {
