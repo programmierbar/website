@@ -1,11 +1,10 @@
 <template>
     <!-- we can safely disable this eslint rule since we sanitize is with DOMPurify before -->
-    <!-- eslint-disable-next-line vue/no-v-html -->
     <div class="inner-html" :class="variantClass" v-html="sanitizedHtml" />
 </template>
 
 <script lang="ts">
-import DOMPurify from 'dompurify'
+import DOMPurify from 'isomorphic-dompurify'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
 
