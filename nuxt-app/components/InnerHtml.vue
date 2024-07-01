@@ -1,8 +1,11 @@
 <template>
-    <div class="inner-html" :class="variantClass" v-html="html" />
+    <!-- we can safely disable this eslint rule since we sanitize is with DOMPurify before -->
+    <!-- eslint-disable-next-line vue/no-v-html -->
+    <div class="inner-html" :class="variantClass" v-html="sanitizedHtml" />
 </template>
 
 <script lang="ts">
+import DOMPurify from 'dompurify'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
 
@@ -20,9 +23,11 @@ export default defineComponent({
     setup(props) {
         // Convert variant to class string
         const variantClass = computed(() => props.variant.replace(/_/g, '-'))
+        const sanitizedHtml = computed(() => DOMPurify.sanitize(props.html))
 
         return {
             variantClass,
+            sanitizedHtml,
         }
     },
 })
