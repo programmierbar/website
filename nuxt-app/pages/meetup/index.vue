@@ -107,8 +107,6 @@ const meetupPage: ComputedRef<DirectusMeetupPage | undefined> = computed(() => p
 const meetups: ComputedRef<DirectusMeetupItem[] | undefined> = computed(() => pageData.value?.upcomingMeetups)
 const pastMeetups: ComputedRef<DirectusMeetupItem[] | undefined> = computed(() => pageData.value?.pastMeetups)
 
-console.log(meetupPage.value)
-
 // Set loading screen
 useLoadingScreen(meetupPage, meetups)
 

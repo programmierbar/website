@@ -35,7 +35,7 @@
                 v-if="!route.query.search && !searchResults.length"
                 class="mt-20 flex h-full flex-col items-center justify-center space-y-6 md:mt-32 md:space-y-8 lg:mt-52 lg:space-y-10"
             >
-                <div class="h-32 md:h-44 lg:h-60" v-html="searchFigureIcon" />
+                <SearchFigureIcon class="h-32 md:h-44 lg:h-60" />
                 <p class="text-center text-base font-semibold text-lime md:text-lg lg:text-2xl">Wonach suchst du?</p>
             </div>
         </div>
@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import searchFigureIcon from '~/assets/images/search-figure.svg?raw'
+import SearchFigureIcon from '~/assets/images/search-figure.svg'
 import LazyList from '~/components/LazyList.vue'
 import LazyListItem from '~/components/LazyListItem.vue'
 import { useLoadingScreen } from '~/composables'

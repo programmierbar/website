@@ -55,8 +55,9 @@
                                 rel="noreferrer"
                                 data-cursor-hover
                                 @click="() => trackGoal(platform.eventId)"
-                                v-html="platform.icon"
-                            />
+                            >
+                                <component :is="platform.icon" />
+                            </a>
                         </li>
                     </ul>
                     <PodcastTranscript
@@ -104,11 +105,11 @@
 </template>
 
 <script setup lang="ts">
-import appleIcon from '~/assets/logos/apple-podcasts-color.svg?raw'
-import googleIcon from '~/assets/logos/google-podcasts-color.svg?raw'
-import rssIcon from '~/assets/logos/rss-feed-color.svg?raw'
-import spotifyIcon from '~/assets/logos/spotify-color.svg?raw'
-import youTubeIcon from '~/assets/logos/youtube-color.svg?raw'
+import AppleIcon from '~/assets/logos/apple-podcasts-color.svg'
+import GoogleIcon from '~/assets/logos/google-podcasts-color.svg'
+import RssIcon from '~/assets/logos/rss-feed-color.svg'
+import SpotifyIcon from '~/assets/logos/spotify-color.svg'
+import YouTubeIcon from '~/assets/logos/youtube-color.svg'
 import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import {
@@ -138,7 +139,7 @@ const directus = useDirectus()
 // Query podcast, pick of the day,
 // speaker count and related podcasts
 const { data: pageData } = useAsyncData(route.fullPath, async () => {
-  const [podcast, pickOfTheDayCount, speakerCount] = await Promise.all([
+    const [podcast, pickOfTheDayCount, speakerCount] = await Promise.all([
         // Podcast
         await directus.getPodcastBySlug(route.params.slug as string),
         // Pick of the day count
@@ -207,31 +208,31 @@ const breadcrumbs = computed(() => [
 const platforms = computed(() => [
     {
         name: 'Apple Podcast',
-        icon: appleIcon,
+        icon: AppleIcon,
         url: podcast.value?.apple_url || APPLE_PODCASTS_URL,
         eventId: OPEN_APPLE_PODCASTS_EVENT_ID,
     },
     {
         name: 'Google Podcast',
-        icon: googleIcon,
+        icon: GoogleIcon,
         url: podcast.value?.google_url || GOOGLE_PODCASTS_URL,
         eventId: OPEN_GOOGLE_PODCASTS_EVENT_ID,
     },
     {
         name: 'Spotify',
-        icon: spotifyIcon,
+        icon: SpotifyIcon,
         url: podcast.value?.spotify_url || SPOTIFY_URL,
         eventId: OPEN_SPOTIFY_EVENT_ID,
     },
     {
         name: 'YouTube',
-        icon: youTubeIcon,
+        icon: YouTubeIcon,
         url: YOUTUBE_PODCAST_URL,
         eventId: OPEN_YOUTUBE_PODCAST_URL_EVENT_ID,
     },
     {
         name: 'RSS',
-        icon: rssIcon,
+        icon: RssIcon,
         url: BUZZSPROUT_RSS_FEED_URL,
         eventId: OPEN_RSS_FEED_EVENT_ID,
     },

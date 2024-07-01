@@ -9,7 +9,7 @@
 
         <!-- Arrows -->
         <div class="relative">
-            <div
+            <AngleRightIcon
                 v-for="count of 3"
                 :key="count"
                 class="angle-right h-4 md:h-5 lg:h-6"
@@ -19,14 +19,13 @@
                     count === 3 && 'left-6 md:left-8',
                 ]"
                 :style="`animation-delay: ${count * 150 - 300}ms`"
-                v-html="angleRightIcon"
             />
         </div>
     </NuxtLink>
 </template>
 
 <script setup lang="ts">
-import angleRightIcon from '~/assets/icons/angle-right.svg?raw'
+import AngleRightIcon from '~/assets/icons/angle-right.svg'
 
 const props = defineProps<{
     href: string

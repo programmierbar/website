@@ -7,11 +7,7 @@
             <h1
                 class="mt-3 text-2xl font-black leading-normal text-white md:mt-6 md:text-3xl md:leading-normal lg:text-6xl lg:leading-normal"
             >
-                <div
-                    class="inline-child inline-block h-6 md:h-8 lg:h-16"
-                    alt="programmier.bar Logo"
-                    v-html="brandLogoIcon"
-                />
+                <BrandLogoIcon class="inline-child inline-block h-6 md:h-8 lg:h-16" />
                 <span>: </span>
                 <TypedText :text="homePage.intro_heading" />
             </h1>
@@ -54,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import brandLogoIcon from '~/assets/images/brand-logo.svg?raw'
+import BrandLogoIcon from '~/assets/images/brand-logo.svg'
 import { useDirectus } from '~/composables/useDirectus'
 import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'

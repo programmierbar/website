@@ -18,13 +18,9 @@
 
         <div class="mt-3 flex space-x-4 transition-all duration-500">
             <!-- Podcast play or pause button -->
-            <button
-                class="h-10 text-lime md:h-12"
-                type="button"
-                data-cursor-hover
-                @click="playOrPausePodcast"
-                v-html="playOrPauseIcon"
-            />
+            <button class="h-10 text-lime md:h-12" type="button" data-cursor-hover @click="playOrPausePodcast">
+                <component :is="playOrPauseIcon" />
+            </button>
 
             <div class="w-4/5">
                 <!-- Podcast title -->
@@ -40,8 +36,8 @@
 </template>
 
 <script setup lang="ts">
-import pauseCircleFilledIcon from '~/assets/icons/pause-circle-filled.svg?raw'
-import playCircleIcon from '~/assets/icons/play-circle.svg?raw'
+import PauseCircleFilledIcon from '~/assets/icons/pause-circle-filled.svg'
+import PlayCircleIcon from '~/assets/icons/play-circle.svg'
 import { usePodcastPlayer } from '~/composables'
 import type { PodcastItem } from '~/types'
 import { getFullPodcastTitle, getPodcastTitleDivider, getPodcastType } from 'shared-code'
@@ -61,7 +57,7 @@ const podcastPlayer = usePodcastPlayer()
 const playOrPauseIcon = computed(() => {
     const isPause = podcastPlayer.podcast && podcastPlayer.podcast.id === props.podcast.id && !podcastPlayer.paused
 
-    return isPause ? pauseCircleFilledIcon : playCircleIcon
+    return isPause ? PauseCircleFilledIcon : PlayCircleIcon
 })
 
 /**
