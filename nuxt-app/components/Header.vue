@@ -6,10 +6,10 @@
             :class="menuIsOpen ? 'bg-gray-900' : 'bg-black'"
             to="/"
             data-cursor-hover
-            @click.native="closeMenu"
+            @click="closeMenu"
         >
-            <div class="h-7 lg:hidden" alt="programmier.bar Icon" v-html="brandIcon"></div>
-            <div class="hidden h-8 lg:block" alt="programmier.bar Logo" v-html="brandLogo"></div>
+            <BrandIcon class="h-7 lg:hidden" alt="programmier.bar Icon" />
+            <BrandLogo class="hidden h-8 lg:block" alt="programmier.bar Logo" />
         </NuxtLink>
 
         <!-- Search form -->
@@ -31,8 +31,9 @@
                 :type="searchIsOpen ? 'submit' : 'button'"
                 data-cursor-hover
                 @click.stop.prevent="handleSearch"
-                v-html="searchSVG"
-            />
+            >
+                <SearchSVG class="h-full" />
+            </button>
         </form>
 
         <!-- Burger icon -->
@@ -89,7 +90,7 @@
                             :class="route.path === mainMenuItem.href ? 'text-lime' : 'text-white'"
                             data-cursor-hover
                             :to="mainMenuItem.href"
-                            @click.native="closeMenu"
+                            @click="closeMenu"
                         >
                             {{ mainMenuItem.label }}
                         </NuxtLink>
@@ -110,7 +111,7 @@
                                 style="line-height: 1"
                                 data-cursor-hover
                                 :to="subMenuItem.href"
-                                @click.native="closeMenu"
+                                @click="closeMenu"
                             >
                                 {{ subMenuItem.label }}
                             </NuxtLink>
@@ -123,9 +124,9 @@
 </template>
 
 <script setup lang="ts">
-import searchSVG from '~/assets/icons/search.svg?raw'
-import brandIcon from '~/assets/images/brand-icon.svg?raw'
-import brandLogo from '~/assets/images/brand-logo.svg?raw'
+import SearchSVG from '~/assets/icons/search.svg'
+import BrandIcon from '~/assets/images/brand-icon.svg'
+import BrandLogo from '~/assets/images/brand-logo.svg'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useDocument, useEventListener } from '../composables'
 import { CLOSE_MENU_EVENT_ID, CLOSE_SEARCH_EVENT_ID, OPEN_MENU_EVENT_ID, OPEN_SEARCH_EVENT_ID } from '../config'

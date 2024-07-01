@@ -21,8 +21,9 @@
                 rel="noreferrer"
                 data-cursor-hover
                 @click="() => trackGoal(OPEN_GOOGLE_CALENDAR_EVENT_EVENT_ID)"
-                v-html="googleCalendarIcon"
-            />
+            >
+                <GoogleCalendarIcon />
+            </a>
             <a
                 class="h-full"
                 :href="icons.appleCalendarUrl"
@@ -31,8 +32,9 @@
                 :download="icons.titleSlug"
                 data-cursor-hover
                 @click="() => trackGoal(DOWNLOAD_CALEDNAR_EVENT_EVENT_ID)"
-                v-html="appleCalendarIcon"
-            />
+            >
+                <AppleCalendarIcon />
+            </a>
             <a
                 class="h-full"
                 :href="icons.googleMapsUrl"
@@ -40,16 +42,17 @@
                 rel="noreferrer"
                 data-cursor-hover
                 @click="() => trackGoal(OPEN_GOOGLE_MAPS_EVENT_ID)"
-                v-html="googleMapsIcon"
-            />
+            >
+                <GoogleMapsIcon />
+            </a>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import appleCalendarIcon from '~/assets/logos/apple-calendar.svg?raw'
-import googleCalendarIcon from '~/assets/logos/google-calendar.svg?raw'
-import googleMapsIcon from '~/assets/logos/google-maps.svg?raw'
+import AppleCalendarIcon from '~/assets/logos/apple-calendar.svg'
+import GoogleCalendarIcon from '~/assets/logos/google-calendar.svg'
+import GoogleMapsIcon from '~/assets/logos/google-maps.svg'
 import { computed, onMounted, reactive } from 'vue'
 import {
     DOWNLOAD_CALEDNAR_EVENT_EVENT_ID,

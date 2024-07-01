@@ -47,8 +47,9 @@
                                     rel="noreferrer"
                                     data-cursor-hover
                                     @click="() => trackGoal(platform.eventId)"
-                                    v-html="platform.icon"
-                                />
+                                >
+                                    <component :is="platform.icon" />
+                                </a>
                             </li>
                         </ul>
                     </div>
@@ -109,12 +110,12 @@
 </template>
 
 <script setup lang="ts">
-import githubIcon from '~/assets/logos/github.svg?raw'
-import instagramIcon from '~/assets/logos/instagram-color.svg?raw'
-import linkedinIcon from '~/assets/logos/linkedin-color.svg?raw'
-import twitterIcon from '~/assets/logos/twitter-color.svg?raw'
-import websiteIcon from '~/assets/logos/website-color.svg?raw'
-import youtubeIcon from '~/assets/logos/youtube-color.svg?raw'
+import GithubIcon from '~/assets/logos/github.svg'
+import InstagramIcon from '~/assets/logos/instagram-color.svg'
+import LinkedinIcon from '~/assets/logos/linkedin-color.svg'
+import TwitterIcon from '~/assets/logos/twitter-color.svg'
+import WebsiteIcon from '~/assets/logos/website-color.svg'
+import YoutubeIcon from '~/assets/logos/youtube-color.svg'
 import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import {
@@ -200,37 +201,37 @@ const platforms = computed(
         [
             {
                 name: 'Twitter',
-                icon: twitterIcon,
+                icon: TwitterIcon,
                 url: speaker.value?.twitter_url,
                 eventId: OPEN_SPEAKER_TWITTER_EVENT_ID,
             },
             {
                 name: 'LinkedIn',
-                icon: linkedinIcon,
+                icon: LinkedinIcon,
                 url: speaker.value?.linkedin_url,
                 eventId: OPEN_SPEAKER_LINKEDIN_EVENT_ID,
             },
             {
                 name: 'Instagram',
-                icon: instagramIcon,
+                icon: InstagramIcon,
                 url: speaker.value?.instagram_url,
                 eventId: OPEN_SPEAKER_INSTAGRAM_EVENT_ID,
             },
             {
                 name: 'GitHub',
-                icon: githubIcon,
+                icon: GithubIcon,
                 url: speaker.value?.github_url,
                 eventId: OPEN_SPEAKER_GITHUB_EVENT_ID,
             },
             {
                 name: 'YouTube',
-                icon: youtubeIcon,
+                icon: YoutubeIcon,
                 url: speaker.value?.youtube_url,
                 eventId: OPEN_SPEAKER_YOUTUBE_EVENT_ID,
             },
             {
                 name: 'Website',
-                icon: websiteIcon,
+                icon: WebsiteIcon,
                 url: speaker.value?.website_url,
                 eventId: OPEN_SPEAKER_WEBSITE_EVENT_ID,
             },

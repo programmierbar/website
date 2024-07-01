@@ -20,8 +20,8 @@
             <span v-if="cursorMode === 'more'" class="relative top-px text-sm font-black uppercase text-blue">
                 Mehr
             </span>
-            <div v-if="cursorMode === 'arrow-left'" class="relative -left-12 h-8 text-blue" v-html="angleLeftIcon" />
-            <div v-if="cursorMode === 'arrow-right'" class="relative left-12 h-8 text-blue" v-html="angleRightIcon" />
+            <AngleLeftIcon v-if="cursorMode === 'arrow-left'" class="relative -left-12 h-8 text-blue" />
+            <AngleRightIcon v-if="cursorMode === 'arrow-right'" class="relative left-12 h-8 text-blue" />
         </div>
         <div
             ref="delayedDotElement"
@@ -38,8 +38,8 @@
 </template>
 
 <script setup lang="ts">
-import angleLeftIcon from '~/assets/icons/angle-left.svg?raw'
-import angleRightIcon from '~/assets/icons/angle-right.svg?raw'
+import AngleLeftIcon from '~/assets/icons/angle-left.svg'
+import AngleRightIcon from '~/assets/icons/angle-right.svg'
 import { ref } from 'vue'
 import { useEventListener, useWindow } from '../composables'
 

@@ -31,7 +31,7 @@
                 v-if="showPodcastLink && podcastCount"
                 class="mb-14 ml-10 flex items-end border-b-4 border-lime pl-3 pr-5 md:mb-32 md:ml-16 md:border-b-5 lg:ml-20 lg:border-b-6 lg:pl-6 lg:pr-10 xl:ml-24 2xl:ml-28 3xl:ml-32"
             >
-                <div class="relative -bottom-1 h-40 md:h-48 lg:-bottom-1.5 lg:h-60" v-html="podcastFigureIcon" />
+                <PodcastFigureIcon class="relative -bottom-1 h-40 md:h-48 lg:-bottom-1.5 lg:h-60" />
                 <NuxtLink
                     class="podcast-link flex items-end space-x-4 whitespace-nowrap pb-2 text-sm font-black uppercase leading-relaxed tracking-widest text-white transition-colors hover:text-blue md:space-x-5 md:text-lg md:leading-relaxed lg:space-x-6 lg:text-xl lg:leading-relaxed"
                     to="/podcast"
@@ -42,7 +42,7 @@
                         Folgen
                     </div>
                     <div class="relative mb-1 lg:mb-2">
-                        <div
+                        <AngleRightIcon
                             v-for="count of 3"
                             :key="count"
                             class="angle-right h-4 md:h-5 lg:h-6"
@@ -52,7 +52,6 @@
                                 count === 3 && 'left-6 md:left-8',
                             ]"
                             :style="`animation-delay: ${count * 150 - 300}ms`"
-                            v-html="angleRightIcon"
                         />
                     </div>
                 </NuxtLink>
@@ -83,8 +82,8 @@
 </template>
 
 <script setup lang="ts">
-import angleRightIcon from '~/assets/icons/angle-right.svg?raw'
-import podcastFigureIcon from '~/assets/images/podcast-figure.svg?raw'
+import AngleRightIcon from '~/assets/icons/angle-right.svg'
+import PodcastFigureIcon from '~/assets/images/podcast-figure.svg'
 import { CLICK_SCROLL_LEFT_ARROW_EVENT_ID, CLICK_SCROLL_RIGHT_ARROW_EVENT_ID } from '~/config'
 import { trackGoal } from '~/helpers'
 import type { PodcastItem } from '~/types'

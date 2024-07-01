@@ -20,17 +20,16 @@
                             data-cursor-hover
                             @click="toggleFilter"
                         >
-                            <div
+                            <AngleLeftIcon
                                 class="h-4 transition-transform duration-200 md:h-5 lg:h-6 xl:duration-300"
                                 :class="filterIsOpen && 'rotate-90'"
-                                v-html="angleLeftIcon"
                             />
-                            <div
+                            <span
                                 class="translate-x-2 pt-px text-sm font-bold transition-opacity duration-200 md:pt-0.5 md:text-base lg:pt-1 lg:text-xl xl:duration-300"
                                 :class="filterIsOpen && 'w-0 opacity-0'"
                             >
                                 Filter
-                            </div>
+                            </span>
                         </button>
                     </div>
 
@@ -50,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import angleLeftIcon from '~/assets/icons/angle-left.svg?raw'
+import AngleLeftIcon from '~/assets/icons/angle-left.svg'
 import { useDocument, useEventListener } from '~/composables'
 import { CLOSE_TAG_FILTER_EVENT_ID, OPEN_TAG_FILTER_EVENT_ID } from '~/config'
 import { trackGoal } from '~/helpers'

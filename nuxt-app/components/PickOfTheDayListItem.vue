@@ -28,19 +28,18 @@
                     <h3 class="text-lg font-black md:text-xl lg:text-2xl">
                         {{ pickOfTheDay.name }}
                     </h3>
-                    <div class="-mt-1 h-4 lg:h-5 xl:h-6" v-html="leaveSiteIcon" />
+                    <LeaveSiteIcon class="-mt-1 h-4 lg:h-5 xl:h-6" />
                 </div>
-                <p
-                    class="mt-2 space-y-8 text-base font-light leading-normal md:text-xl lg:text-2xl"
-                    v-html="description"
-                />
+                <p class="mt-2 space-y-8 text-base font-light leading-normal md:text-xl lg:text-2xl">
+                    {{ description }}
+                </p>
             </div>
         </a>
     </li>
 </template>
 
 <script setup lang="ts">
-import leaveSiteIcon from '~/assets/icons/leave-site.svg?raw'
+import LeaveSiteIcon from '~/assets/icons/leave-site.svg'
 import type { PickOfTheDayItem } from '~/types'
 import { computed } from 'vue'
 import DirectusImage from './DirectusImage.vue'

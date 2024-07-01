@@ -16,7 +16,7 @@
                     >
                         {{ pickOfTheDay.name }}
                     </h2>
-                    <div class="-mt-1 h-4 text-black lg:h-5 xl:h-6" v-html="leaveSiteIcon" />
+                    <LeaveSiteIcon class="-mt-1 h-4 text-black lg:h-5 xl:h-6" />
                 </a>
 
                 <!-- Background image overlay -->
@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import leaveSiteIcon from '~/assets/icons/leave-site.svg?raw'
+import LeaveSiteIcon from '~/assets/icons/leave-site.svg'
 import type { PickOfTheDayItem, PodcastItem, TagItem } from '~/types'
 import { getPodcastTitleDivider, getPodcastTypeAndNumber } from 'shared-code'
 import { computed } from 'vue'
