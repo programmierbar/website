@@ -13,28 +13,36 @@
         </NuxtLink>
 
         <!-- Search form -->
-        <form
-            class="fixed right-18 top-7 z-60 flex bg-opacity-75 backdrop-blur backdrop-filter transition-all duration-300 lg:right-24"
-            :class="[searchIsOpen ? 'w-1/2 xs:w-60 md:w-80' : 'w-10 lg:w-14', menuIsOpen ? 'bg-gray-900' : 'bg-black']"
-            @submit.prevent="handleSearch"
-        >
-            <input
-                ref="searchInputElement"
-                class="w-full appearance-none rounded-none border-b-2 border-white bg-transparent text-center text-lg font-light text-blue placeholder-blue-600 outline-none selection:bg-blue selection:text-black lg:text-2xl"
-                :class="!searchIsOpen && 'invisible transition-all delay-300'"
-                type="text"
-                :placeholder="searchPlaceholder"
-                spellcheck="false"
-            />
-            <button
-                class="box-content h-7 w-6 flex-shrink-0 rounded-none px-2 py-1.5 text-white lg:h-9 lg:w-8 lg:px-3 lg:py-2.5"
-                :type="searchIsOpen ? 'submit' : 'button'"
-                data-cursor-hover
-                @click.stop.prevent="handleSearch"
+        <div class="fixed right-1 z-60 flex translate-y-7 flex-row items-center justify-end gap-x-4 pr-24">
+            <form
+                class="flex bg-opacity-75 backdrop-blur backdrop-filter transition-all duration-300"
+                :class="[
+                    searchIsOpen ? 'w-1/2 xs:w-60 md:w-80' : 'w-10 lg:w-14',
+                    menuIsOpen ? 'bg-gray-900' : 'bg-black',
+                ]"
+                @submit.prevent="handleSearch"
             >
-                <SearchSVG class="h-full" />
-            </button>
-        </form>
+                <input
+                    ref="searchInputElement"
+                    class="w-full appearance-none rounded-none border-b-2 border-white bg-transparent text-center text-lg font-light text-blue placeholder-blue-600 outline-none selection:bg-blue selection:text-black lg:text-2xl"
+                    :class="!searchIsOpen && 'invisible transition-all delay-300'"
+                    type="text"
+                    :placeholder="searchPlaceholder"
+                    spellcheck="false"
+                />
+                <button
+                    class="box-content h-7 w-6 flex-shrink-0 rounded-none px-2 py-1.5 text-white lg:h-9 lg:w-8 lg:px-3 lg:py-2.5"
+                    :type="searchIsOpen ? 'submit' : 'button'"
+                    data-cursor-hover
+                    @click.stop.prevent="handleSearch"
+                >
+                    <SearchSVG class="h-full" />
+                </button>
+            </form>
+
+            <RegisterButton data-cursor-hover class="hidden h-14 w-56 md:block" />
+            <LoginButton data-cursor-hover class="hidden h-14 w-48 md:block" />
+        </div>
 
         <!-- Burger icon -->
         <button
@@ -127,6 +135,8 @@
 import SearchSVG from '~/assets/icons/search.svg'
 import BrandIcon from '~/assets/images/brand-icon.svg'
 import BrandLogo from '~/assets/images/brand-logo.svg'
+import LoginButton from '~/components/LoginButton.vue'
+import RegisterButton from '~/components/RegisterButton.vue'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useDocument, useEventListener } from '../composables'
 import { CLOSE_MENU_EVENT_ID, CLOSE_SEARCH_EVENT_ID, OPEN_MENU_EVENT_ID, OPEN_SEARCH_EVENT_ID } from '../config'

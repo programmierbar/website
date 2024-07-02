@@ -54,7 +54,7 @@ svg {
 }
 
 h2 {
-  font-weight: 900;
+    font-weight: 900;
 }
 
 /* Input range slider */
@@ -186,6 +186,15 @@ input[type='range']::-moz-range-track {
         url('~/assets/fonts/DMMono-Light.woff2') format('woff2'),
         url('~/assets/fonts/DMMono-Light.woff') format('woff');
     font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Azeret Mono';
+    src:
+        url('~/assets/fonts/AzeretMono-Medium.woff2') format('woff2'),
+        url('~/assets/fonts/AzeretMono-Medium.woff') format('woff');
+    font-weight: 500;
     font-style: normal;
     font-display: swap;
 }
