@@ -173,7 +173,7 @@ export async function handleBuzzsprout(
         logger.info(`${HOOK_NAME} hook: Sending payload to buzzsprout: ${JSON.stringify(buzzsproutData)}`)
 
         const buzzsproutResponse = await axios({
-            method: isCreation ? 'POST' : 'PUT',
+            method: isCreation ? 'POST' : 'PATCH',
             url: `${env.BUZZSPROUT_API_URL}episodes${
                 isCreation ? '' : `/${podcastData.buzzsprout_id}`
             }.json?api_token=${env.BUZZSPROUT_API_TOKEN}`,

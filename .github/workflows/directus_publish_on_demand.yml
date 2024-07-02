@@ -15,7 +15,14 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       - name: Log in to DO Container Registry
         run: doctl registry login --expiry-seconds 600
-      - name: Tag image
-        run: docker tag programmierbar/cms registry.digitalocean.com/programmierbar/cms:latest
-      - name: Push image to DO Container Registry
-        run: docker push registry.digitalocean.com/programmierbar/cms:latest
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d-%H-%M')"
+      - name: Tag images
+        run: |
+          docker tag programmierbar/cms registry.digitalocean.com/programmierbar/cms:latest
+          docker tag programmierbar/cms registry.digitalocean.com/programmierbar/cms:${{ steps.date.outputs.date }}
+      - name: Push images to DO Container Registry
+        run: |
+          docker push registry.digitalocean.com/programmierbar/cms:latest
+          docker push registry.digitalocean.com/programmierbar/cms:${{ steps.date.outputs.date }}
