@@ -20,25 +20,22 @@
                     class="mt-2 line-clamp-2 text-xl font-black leading-snug text-white md:text-3xl lg:mt-5 lg:text-4xl lg:leading-snug"
                 >
                     {{ heading }}
-                    <span
-                        v-if="isExternalUrl"
-                        class="ml-1 mt-px inline-block h-4 text-white xl:h-6"
-                        v-html="leaveSiteIcon"
-                    />
+                    <LeaveSiteIcon v-if="isExternalUrl" class="ml-1 mt-px inline-block h-4 text-white xl:h-6" />
                 </h2>
 
                 <!-- Description -->
                 <p
                     class="mt-4 line-clamp-4 text-sm font-light leading-normal text-white md:text-lg lg:mt-8 lg:text-xl lg:leading-relaxed"
-                    v-html="description"
-                />
+                >
+                    {{ description }}
+                </p>
             </div>
         </nuxt-link>
     </div>
 </template>
 
 <script setup lang="ts">
-import leaveSiteIcon from '~/assets/icons/leave-site.svg?raw'
+import LeaveSiteIcon from '~/assets/icons/leave-site.svg'
 import type { SearchItem } from '~/types'
 import { getFullPodcastTitle, getFullSpeakerName } from 'shared-code'
 import { computed } from 'vue'

@@ -58,16 +58,18 @@
                                 type="button"
                                 data-cursor-hover
                                 @click.stop="podcastPlayer.play"
-                                v-html="playIcon"
-                            />
+                            >
+                                <PlayIcon />
+                            </button>
                             <button
                                 v-else
                                 class="h-full p-1.25"
                                 type="button"
                                 data-cursor-hover
                                 @click.stop="podcastPlayer.pause"
-                                v-html="pauseIcon"
-                            />
+                            >
+                                <PauseIcon />
+                            </button>
                         </div>
                     </div>
 
@@ -79,8 +81,9 @@
                         type="button"
                         data-cursor-hover
                         @click.stop="collapsePlayer"
-                        v-html="angleDownIcon"
-                    />
+                    >
+                        <AngleDownIcon />
+                    </button>
                 </div>
             </div>
 
@@ -91,13 +94,9 @@
                     :class="!isExpanded && 'invisible xl:visible'"
                     :style="!isExpanded ? 'transition: visibility 0s 0.3s' : undefined"
                 >
-                    <button
-                        class="h-9 xl:h-7"
-                        type="button"
-                        data-cursor-hover
-                        @click="podcastPlayer.backward"
-                        v-html="fifteenSecBackwardsIcon"
-                    />
+                    <button class="h-9 xl:h-7" type="button" data-cursor-hover @click="podcastPlayer.backward">
+                        <FifteenSecBackwardsIcon />
+                    </button>
                     <div class="flex w-6 justify-center xl:w-5">
                         <button
                             v-if="podcastPlayer.paused"
@@ -105,24 +104,16 @@
                             type="button"
                             data-cursor-hover
                             @click="podcastPlayer.play"
-                            v-html="playIcon"
-                        />
-                        <button
-                            v-else
-                            class="h-9 xl:h-7"
-                            type="button"
-                            data-cursor-hover
-                            @click="podcastPlayer.pause"
-                            v-html="pauseIcon"
-                        />
+                        >
+                            <PlayIcon />
+                        </button>
+                        <button v-else class="h-9 xl:h-7" type="button" data-cursor-hover @click="podcastPlayer.pause">
+                            <PauseIcon />
+                        </button>
                     </div>
-                    <button
-                        class="h-9 xl:h-7"
-                        type="button"
-                        data-cursor-hover
-                        @click="podcastPlayer.forward"
-                        v-html="fifteenSecForwardsIcon"
-                    />
+                    <button class="h-9 xl:h-7" type="button" data-cursor-hover @click="podcastPlayer.forward">
+                        <FifteenSecForwardsIcon />
+                    </button>
                 </div>
 
                 <!-- Timeline and timestamps -->
@@ -150,7 +141,7 @@
 
                 <!-- Volumeslider -->
                 <div class="hidden w-32 items-center space-x-4 xl:flex">
-                    <div class="h-6" v-html="soundIcon" />
+                    <SoundIcon class="h-6" />
                     <input
                         v-model="podcastPlayer.volume"
                         class="volume-input h-8"
@@ -182,16 +173,18 @@
                             type="button"
                             data-cursor-hover
                             @click="sharePodcast"
-                            v-html="shareIcon"
-                        />
+                        >
+                            <ShareIcon />
+                        </button>
                         <a
                             class="flex h-6 w-6 justify-center"
                             :href="downloadUrl"
                             download
                             data-cursor-hover
                             @click="() => trackGoal(DOWNLOAD_PODCAST_EVENT_ID)"
-                            v-html="downloadIcon"
-                        />
+                        >
+                            <DownloadIcon />
+                        </a>
                     </div>
                 </div>
             </div>
@@ -200,14 +193,14 @@
 </template>
 
 <script setup lang="ts">
-import fifteenSecBackwardsIcon from '~/assets/icons/15-sec-backwards.svg?raw'
-import fifteenSecForwardsIcon from '~/assets/icons/15-sec-forwards.svg?raw'
-import angleDownIcon from '~/assets/icons/angle-down.svg?raw'
-import downloadIcon from '~/assets/icons/download.svg?raw'
-import pauseIcon from '~/assets/icons/pause.svg?raw'
-import playIcon from '~/assets/icons/play.svg?raw'
-import shareIcon from '~/assets/icons/share.svg?raw'
-import soundIcon from '~/assets/icons/sound.svg?raw'
+import FifteenSecBackwardsIcon from '~/assets/icons/15-sec-backwards.svg'
+import FifteenSecForwardsIcon from '~/assets/icons/15-sec-forwards.svg'
+import AngleDownIcon from '~/assets/icons/angle-down.svg'
+import DownloadIcon from '~/assets/icons/download.svg'
+import PauseIcon from '~/assets/icons/pause.svg'
+import PlayIcon from '~/assets/icons/play.svg'
+import ShareIcon from '~/assets/icons/share.svg'
+import SoundIcon from '~/assets/icons/sound.svg'
 import { getFullPodcastTitle, getPodcastTypeAndNumber } from 'shared-code'
 import { computed, ref, watch } from 'vue'
 import { useClipboard, usePodcastPlayer, useShare } from '../composables'

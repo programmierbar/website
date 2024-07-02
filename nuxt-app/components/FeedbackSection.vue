@@ -8,9 +8,8 @@
             >
                 Feedback
             </NuxtLink>
-            <div
+            <FeedbackFigure
                 class="absolute -right-32 -top-20 -z-1 h-32 md:-right-44 md:-top-24 md:h-40 lg:-right-48 lg:-top-32 lg:h-48"
-                v-html="feedbackFigure"
             />
         </div>
         <SocialNetworks class="mt-10 h-8 md:h-9 lg:h-10" />
@@ -18,5 +17,5 @@
 </template>
 
 <script setup>
-import feedbackFigure from '~/assets/images/feedback-figure.svg'
+import FeedbackFigure from '~/assets/images/feedback-figure.svg'
 </script>

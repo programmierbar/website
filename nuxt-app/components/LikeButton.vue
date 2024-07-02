@@ -6,8 +6,9 @@
             :class="variant === 'pick_of_the_day_card' ? 'h-5 xs:h-6 md:h-7 xl:h-8' : 'h-6 md:h-8 lg:h-10'"
             type="button"
             data-cursor-hover
-            v-html="heartIcon"
-        />
+        >
+            <HeartIcon />
+        </button>
         <div
             class="mt-1 font-black text-pink md:text-lg"
             :class="variant === 'pick_of_the_day_card' ? 'text-sm xs:text-base xl:text-xl' : 'text-base lg:text-2xl'"
@@ -19,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import heartIcon from '~/assets/icons/heart.svg?raw'
+import HeartIcon from '~/assets/icons/heart.svg'
 
 const { variant } =
     toRefs(

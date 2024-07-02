@@ -24,9 +24,8 @@
                         data-cursor-hover
                         @click="() => trackGoal(OPEN_YOUTUBE_EVENT_ID)"
                     >
-                        <div
+                        <PlayCircleFilledIcon
                             class="pointer-events-none absolute z-10 h-20 text-blue text-opacity-90 xs:h-24 md:h-28 lg:h-40"
-                            v-html="playCircleFilledIcon"
                         />
                         <MeetupCover class="w-full" :meetup="meetup" />
                     </a>
@@ -48,12 +47,12 @@
                     class="mt-8 space-y-8 text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl"
                     :html="meetup.description"
                 />
-                <p class="text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl">Bitte beachte auch unsere <NuxtLink
-                  class="hover:text-lime hover:underline"
-                  data-cursor-hover
-                  :to="'/verhaltensregeln'"
-                >Verhaltensregeln</NuxtLink
-                >.</p>
+                <p class="text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl">
+                    Bitte beachte auch unsere
+                    <NuxtLink class="hover:text-lime hover:underline" data-cursor-hover :to="'/verhaltensregeln'"
+                        >Verhaltensregeln</NuxtLink
+                    >.
+                </p>
 
                 <!-- Meetup tags -->
                 <!-- TODO: Replace navigateTo() with <a> element -->
@@ -97,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import playCircleFilledIcon from '~/assets/icons/play-circle-filled.svg?raw'
+import PlayCircleFilledIcon from '~/assets/icons/play-circle-filled.svg'
 import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { OPEN_YOUTUBE_EVENT_ID } from '~/config'

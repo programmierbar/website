@@ -2,14 +2,15 @@
     <ul class="flex space-x-5">
         <li v-for="socialNetwork in socialNetworks" :key="socialNetwork.href" class="h-6">
             <a
-                class="block h-full text-white hover:text-lime"
+                class="mr-2 block h-full text-white hover:text-lime"
                 :href="socialNetwork.href"
                 target="_blank"
                 rel="noreferrer"
                 data-cursor-hover
                 @click="() => trackGoal(socialNetwork.eventId)"
-                v-html="socialNetwork.icon"
-            ></a>
+            >
+                <component :is="socialNetwork.icon" />
+            </a>
         </li>
         <li style="display: none">
             <!-- Only required for mastodon verification -->
@@ -19,12 +20,12 @@
 </template>
 
 <script setup lang="ts">
-import githubIcon from '~/assets/logos/github.svg?raw'
-import instagramIcon from '~/assets/logos/instagram.svg?raw'
-import linkedinIcon from '~/assets/logos/linkedin.svg?raw'
-import mastodonIcon from '~/assets/logos/mastodon.svg?raw'
-import twitterIcon from '~/assets/logos/twitter.svg?raw'
-import youtubeIcon from '~/assets/logos/youtube.svg?raw'
+import GithubIcon from '~/assets/logos/github.svg'
+import InstagramIcon from '~/assets/logos/instagram.svg'
+import LinkedinIcon from '~/assets/logos/linkedin.svg'
+import MastodonIcon from '~/assets/logos/mastodon.svg'
+import TwitterIcon from '~/assets/logos/twitter.svg'
+import YoutubeIcon from '~/assets/logos/youtube.svg'
 import {
     OPEN_GITHUB_EVENT_ID,
     OPEN_INSTAGRAM_EVENT_ID,
@@ -38,37 +39,37 @@ import { trackGoal } from '../helpers'
 const socialNetworks = [
     {
         label: 'Mastodon',
-        icon: mastodonIcon,
+        icon: MastodonIcon,
         href: 'https://social.programmier.bar/@podcast',
         eventId: OPEN_MASTODON_EVENT_ID,
     },
     {
         label: 'GitHub',
-        icon: githubIcon,
+        icon: GithubIcon,
         href: 'https://github.com/programmierbar',
         eventId: OPEN_GITHUB_EVENT_ID,
     },
     {
         label: 'LinkedIn',
-        icon: linkedinIcon,
+        icon: LinkedinIcon,
         href: 'https://www.linkedin.com/company/68164372',
         eventId: OPEN_LINKEDIN_EVENT_ID,
     },
     {
         label: 'YouTube',
-        icon: youtubeIcon,
+        icon: YoutubeIcon,
         href: 'https://www.youtube.com/channel/UCi9Odm-45QGUBRs5KiF1-HQ',
         eventId: OPEN_YOUTUBE_EVENT_ID,
     },
     {
         label: 'Instagram',
-        icon: instagramIcon,
+        icon: InstagramIcon,
         href: 'https://www.instagram.com/programmier.bar',
         eventId: OPEN_INSTAGRAM_EVENT_ID,
     },
     {
         label: 'Twitter',
-        icon: twitterIcon,
+        icon: TwitterIcon,
         href: 'https://twitter.com/programmierbar',
         eventId: OPEN_TWITTER_EVENT_ID,
     },

@@ -3,7 +3,7 @@
         <!-- Logo -->
         <div class="lg:w-1/4">
             <NuxtLink class="inline-block" to="/" data-cursor-hover>
-                <div class="h-6 lg:h-8" alt="programmier.bar Logo" v-html="brandLogo" />
+                <BrandLogo class="h-6 lg:h-8" alt="programmier.bar Logo" />
             </NuxtLink>
         </div>
 
@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import brandLogo from '~/assets/images/brand-logo.svg?raw'
+import BrandLogo from '~/assets/images/brand-logo.svg'
 import SocialNetworks from './SocialNetworks.vue'
 
 const mainMenuItems = [
