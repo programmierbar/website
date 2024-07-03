@@ -2,7 +2,7 @@ import { default as axios } from 'axios'
 // @ts-ignore
 import { getFullPodcastTitle, getUrlSlug } from '../../../../../../shared-code/index.ts'
 import { postSlackMessage } from '../../shared/postSlackMessage.ts'
-import type { ActionData, BuzzsproutData, Dependencies, PodcastData } from './types.ts'
+import type { ActionData, Dependencies, PodcastData } from './types.ts'
 
 /**
  * It creates or updates a podcast episode at Buzzsprout and returns its data.
@@ -198,9 +198,12 @@ export async function handleBuzzsprout(
 
         // If an error occurs, log it and inform team via Slack
     } catch (error: any) {
-        logger.error(`${HOOK_NAME} hook: Error: ${JSON.stringify(error)}`)
+        logger.error(`${HOOK_NAME} hook: "${typeof  error}" Error object: ${JSON.stringify(error)}`)
+        if ( typeof error['toString'] === 'function') {
+            logger.error(`${HOOK_NAME} hook: "${typeof  error}" Error toStrong: "${error.toString()}"`)
+        }
         await postSlackMessage(
-            `Achtung: Eine Podcastfolge konnte nicht automatisch zu Buzzsprout hinzugefügt werden. Beim nächsten Speichervorgang über den folgenden Link, wird der Vorgang wiederholt: ${process.env.PUBLIC_URL}admin/content/podcasts/${podcastData.buzzsprout_id}`
+            `Achtung: Eine Podcastfolge konnte nicht automatisch zu Buzzsprout hinzugefügt werden. Beim nächsten Speichervorgang über den folgenden Link, wird der Vorgang wiederholt: ${env.PUBLIC_URL}admin/content/podcasts/${podcastData.id}`
         )
     }
 }

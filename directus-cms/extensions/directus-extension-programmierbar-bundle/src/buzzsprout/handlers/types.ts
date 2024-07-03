@@ -18,6 +18,7 @@ export interface PickOfTheDay {
 }
 
 export interface PodcastData {
+    id: number | string | undefined
     buzzsprout_id: number | string | undefined
     published_on?: string
     status?: string
