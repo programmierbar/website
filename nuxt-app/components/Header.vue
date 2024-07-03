@@ -13,7 +13,7 @@
         </NuxtLink>
 
         <!-- Search form -->
-        <div class="fixed right-1 z-60 flex translate-y-7 flex-row items-center justify-end gap-x-4 pr-24">
+        <div class="fixed right-18 z-60 flex translate-y-7 flex-row items-center justify-end gap-x-4 lg:right-24">
             <form
                 class="flex bg-opacity-75 backdrop-blur backdrop-filter transition-all duration-300"
                 :class="[
@@ -40,8 +40,12 @@
                 </button>
             </form>
 
-            <RegisterButton data-cursor-hover class="hidden h-14 w-56 md:block" />
-            <LoginButton data-cursor-hover class="hidden h-14 w-48 md:block" />
+            <RegisterButton data-cursor-hover class="hidden h-14 w-56 md:block">
+                <NuxtLink to="/login"> Anmelden </NuxtLink>
+            </RegisterButton>
+            <LoginButton data-cursor-hover class="hidden h-14 w-48 md:block">
+                <NuxtLink to="/login"> Einloggen </NuxtLink>
+            </LoginButton>
         </div>
 
         <!-- Burger icon -->

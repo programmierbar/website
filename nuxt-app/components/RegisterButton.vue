@@ -17,7 +17,7 @@ const handleClick = () => {
         ]"
         @click="handleClick"
     >
-        <NuxtLink to="/login"> Anmelden </NuxtLink>
+        <slot />
     </button>
 </template>
 

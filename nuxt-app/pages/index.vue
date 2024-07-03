@@ -15,8 +15,12 @@
             />
 
             <div class="mt-10 flex flex-col items-center space-y-4 md:mt-16 lg:mt-24">
-                <RegisterButton class="h-14 w-48 md:hidden" />
-                <LoginButton class="h-12 w-40 md:hidden" />
+                <RegisterButton class="h-14 w-48 md:hidden">
+                    <NuxtLink to="/login"> Anmelden </NuxtLink>
+                </RegisterButton>
+                <LoginButton class="h-12 w-40 md:hidden">
+                    <NuxtLink to="/login"> Einloggen </NuxtLink>
+                </LoginButton>
             </div>
         </section>
 
