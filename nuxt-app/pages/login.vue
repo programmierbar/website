@@ -1,30 +1,44 @@
-<template>
+<template xmlns="http://www.w3.org/1999/html">
     <div v-if="loginPage" class="relative">
         <div class="container px-6 pb-20 pt-32 md:pb-32 md:pl-48 md:pt-40 lg:pb-52 lg:pr-8 lg:pt-56 2xl:pt-64 3xl:px-8">
             <Breadcrumbs :breadcrumbs="breadcrumbs" />
 
             <!-- Heading -->
-            <SectionHeading class="mt-8 md:mt-0" element="h1">
-                {{ loginPage.heading }}
-            </SectionHeading>
+            <div class="flex-col items-center justify-center md:flex">
+                <div class="mb-2 mt-5 text-2xl font-semibold italic text-white md:text-4xl">
+                    {{ loginPage.heading }}
+                </div>
+                <BrandLogoIcon class="h-8 md:h-8 lg:h-16" />
+            </div>
 
-            <!-- Text -->
-            <InnerHtml
-                class="mt-8 space-y-8 break-words text-base font-light text-white md:mt-16 md:text-xl md:leading-normal lg:text-2xl lg:leading-normal"
-                :html="loginPage.text"
-            />
-            <ul class="text-white">
-                <li v-for="provider in providers" :key="provider.name">
-                    <a :href="provider.url">{{ provider.name }}</a>
-                </li>
-            </ul>
+            <div class="mt-10 flex flex-col items-center justify-center gap-y-2">
+                <SsoLoginOption
+                    v-for="provider in providers"
+                    :key="provider.name"
+                    class="w-full max-w-md"
+                    :provider="provider.name"
+                >
+                    <a :href="provider.url"
+                        >Mit <span class="capitalize">{{ provider.name }}</span> anmelden</a
+                    >
+                </SsoLoginOption>
+                <EmailLoginOption class="w-full max-w-md" />
+                <!-- Text -->
+                <InnerHtml
+                    class="mt-6 space-y-8 break-words text-base font-semibold italic text-white md:mt-16 md:text-xl md:leading-normal lg:text-2xl lg:leading-normal"
+                    :html="loginPage.text"
+                />
+            </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import EmailLoginOption from '~/components/EmailLoginOption.vue'
+import SsoLoginOption from '~/components/SsoLoginOption.vue'
 import { useDirectus } from '~/composables/useDirectus'
 import type { DirectusLoginPage, LoginProvider } from '~/types'
+import BrandLogoIcon from 'assets/images/brand-logo.svg'
 import { computed, type ComputedRef } from 'vue'
 import { useLoadingScreen } from '../composables'
 import { getMetaInfo } from '../helpers'
@@ -47,7 +61,7 @@ const loginPage: ComputedRef<DirectusLoginPage | undefined> = computed(() => pag
 const providers: ComputedRef<LoginProvider[] | undefined> = computed(() => pageData.value?.providers)
 
 // Set loading screen
-useLoadingScreen()
+useLoadingScreen(loginPage, providers)
 
 // Set page meta data
 useHead(
