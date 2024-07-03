@@ -173,7 +173,7 @@ export async function handleBuzzsprout(
         logger.info(`${HOOK_NAME} hook: Sending payload to buzzsprout: ${JSON.stringify(buzzsproutData)}`)
 
         const buzzsproutResponse = await axios({
-            method: isCreation ? 'POST' : 'PATCH',
+            method: isCreation ? 'PUT' : 'PATCH',
             url: `${env.BUZZSPROUT_API_URL}episodes${
                 isCreation ? '' : `/${podcastData.buzzsprout_id}`
             }.json?api_token=${env.BUZZSPROUT_API_TOKEN}`,
@@ -183,7 +183,6 @@ export async function handleBuzzsprout(
             data: JSON.stringify(buzzsproutData),
         })
 
-        logger.info(`${HOOK_NAME} hook: Sent request to buzzsprout: ${JSON.stringify(buzzsproutResponse.request)}`)
         logger.info(`${HOOK_NAME} hook: Received response (${buzzsproutResponse.status} / ${buzzsproutResponse.statusText}) from buzzsprout: ${JSON.stringify(buzzsproutResponse.data)}`)
 
         // Throw error if the request was not successful
@@ -198,9 +197,11 @@ export async function handleBuzzsprout(
 
         // If an error occurs, log it and inform team via Slack
     } catch (error: any) {
-        logger.error(`${HOOK_NAME} hook: "${typeof  error}" Error object: ${JSON.stringify(error)}`)
+        if ( error['message']) {
+            logger.error(`${HOOK_NAME} hook: "${typeof  error}" Error message: "${error.message}"`)
+        }
         if ( typeof error['toString'] === 'function') {
-            logger.error(`${HOOK_NAME} hook: "${typeof  error}" Error toStrong: "${error.toString()}"`)
+            logger.error(`${HOOK_NAME} hook: "${typeof  error}" Error toString: "${error.toString()}"`)
         }
         await postSlackMessage(
             `Achtung: Eine Podcastfolge konnte nicht automatisch zu Buzzsprout hinzugefügt werden. Beim nächsten Speichervorgang über den folgenden Link, wird der Vorgang wiederholt: ${env.PUBLIC_URL}admin/content/podcasts/${podcastData.id}`
