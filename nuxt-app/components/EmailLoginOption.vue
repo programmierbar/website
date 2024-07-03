@@ -3,6 +3,17 @@ import MailIcon from '~/assets/logos/mail.svg'
 import { ref } from 'vue'
 
 const clicked = ref(false)
+const email = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const showEmailWarning = computed(() => email.value.length > 5 && !emailRegex.test(email.value))
+
+const showPasswordWarning = computed(
+    () => password.value !== '' && confirmPassword.value !== '' && password.value !== confirmPassword.value
+)
 
 function getTranslateStyle(factor: number = 1) {
     return `--translateY: -${20 * factor}px`
@@ -33,6 +44,7 @@ function getTranslateStyle(factor: number = 1) {
             <input
                 v-if="clicked"
                 key="email"
+                v-model="email"
                 class="input-field"
                 type="email"
                 placeholder="E-Mail"
@@ -41,6 +53,7 @@ function getTranslateStyle(factor: number = 1) {
             <input
                 v-if="clicked"
                 key="password"
+                v-model="password"
                 class="input-field"
                 type="password"
                 placeholder="Passwort"
@@ -49,11 +62,14 @@ function getTranslateStyle(factor: number = 1) {
             <input
                 v-if="clicked"
                 key="confirm-password"
+                v-model="confirmPassword"
                 class="input-field"
                 type="password"
                 placeholder="Passwort bestätigen"
                 :style="getTranslateStyle(8)"
             />
+            <span v-if="showEmailWarning" class="text-pink-600">Bitte geben Sie eine gültige E-Mail-Adresse ein!</span>
+            <span v-if="showPasswordWarning" class="text-pink-600">Die Passwörter stimmen nicht überein!</span>
         </TransitionGroup>
         <Transition name="fade">
             <RegisterButton v-if="clicked" class="h-14 w-48">
