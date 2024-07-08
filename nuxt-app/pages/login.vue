@@ -1,4 +1,4 @@
-<template xmlns="http://www.w3.org/1999/html">
+<template>
     <div v-if="loginPage" class="relative">
         <div class="container px-6 pb-20 pt-32 md:pb-32 md:pl-48 md:pt-40 lg:pb-52 lg:pr-8 lg:pt-56 2xl:pt-64 3xl:px-8">
             <Breadcrumbs :breadcrumbs="breadcrumbs" />
@@ -22,7 +22,7 @@
                         >Mit <span class="capitalize">{{ provider.name }}</span> anmelden</a
                     >
                 </SsoLoginOption>
-                <EmailLoginOption class="w-full max-w-md" />
+                <EmailLoginOption class="w-full max-w-md" @register-user="createUser" />
                 <!-- Text -->
                 <InnerHtml
                     class="mt-6 space-y-8 break-words text-base font-semibold italic text-white md:mt-16 md:text-xl md:leading-normal lg:text-2xl lg:leading-normal"
@@ -72,4 +72,8 @@ useHead(
         noIndex: true,
     })
 )
+
+function createUser(user: { email: string; password: string }) {
+    directus.registerNewUser(user.email, user.password)
+}
 </script>

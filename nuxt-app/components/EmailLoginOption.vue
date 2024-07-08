@@ -1,6 +1,8 @@
-<script setup lang="ts" xmlns="http://www.w3.org/1999/html">
+<script setup lang="ts">
 import MailIcon from '~/assets/logos/mail.svg'
 import { ref } from 'vue'
+
+const emit = defineEmits<{ (event: 'registerUser', user: { email: string; password: string }): void }>()
 
 const clicked = ref(false)
 const email = ref('')
@@ -17,6 +19,14 @@ const showPasswordWarning = computed(
 
 function getTranslateStyle(factor: number = 1) {
     return `--translateY: -${20 * factor}px`
+}
+
+function handleRegisterClick() {
+    if (showEmailWarning.value || showPasswordWarning.value) {
+        return
+    }
+
+    emit('registerUser', { email: email.value, password: password.value })
 }
 </script>
 
@@ -72,7 +82,7 @@ function getTranslateStyle(factor: number = 1) {
             <span v-if="showPasswordWarning" class="text-pink-600">Die Passwörter stimmen nicht überein!</span>
         </TransitionGroup>
         <Transition name="fade">
-            <RegisterButton v-if="clicked" class="h-14 w-48">
+            <RegisterButton v-if="clicked" class="h-14 w-48" @click="handleRegisterClick">
                 <span> Anmelden </span>
             </RegisterButton>
         </Transition>

@@ -1,8 +1,16 @@
-import { aggregate, readItems, readMe, readProviders, readSingleton, rest, type QueryFilter } from '@directus/sdk'
+import {
+    aggregate,
+    createUser,
+    readItems,
+    readMe,
+    readProviders,
+    readSingleton,
+    rest,
+    type QueryFilter,
+} from '@directus/sdk'
 import type {
     DirectusMemberItem,
     DirectusPickOfTheDayItem,
-    DirectusSpeakerItem,
     DirectusTagItem,
     LoginProvider,
     MeetupItem,
@@ -94,15 +102,15 @@ export function useDirectus() {
         )
     }
 
-  async function getCocPage() {
-    return await directus.request(
-      readSingleton('coc_page', {
-        fields: ['*'],
-      })
-    )
-  }
+    async function getCocPage() {
+        return await directus.request(
+            readSingleton('coc_page', {
+                fields: ['*'],
+            })
+        )
+    }
 
-  async function getContactPage() {
+    async function getContactPage() {
         return await directus.request(
             readSingleton('contact_page', {
                 fields: ['*'],
@@ -557,6 +565,15 @@ export function useDirectus() {
         }
     }
 
+    async function registerNewUser(email: string, password: string) {
+        try {
+            const result = await directus.request(createUser({ email, password }))
+            console.log(result)
+        } catch (e: unknown) {
+            console.log('Error while registering new user', e)
+        }
+    }
+
     return {
         getHomepage,
         getPodcastPage,
@@ -586,5 +603,6 @@ export function useDirectus() {
         getRelatedPodcasts,
         getSingleSignOnProviders,
         getCurrentUser,
+        registerNewUser,
     }
 }
