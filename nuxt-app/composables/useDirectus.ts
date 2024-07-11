@@ -570,7 +570,8 @@ export function useDirectus() {
             const result = await directus.request(createUser({ email, password }))
             console.log(result)
         } catch (e: unknown) {
-            console.log('Error while registering new user', e)
+            console.error('Error while registering new user', e)
+            return e
         }
     }
 
