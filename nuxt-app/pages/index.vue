@@ -14,6 +14,7 @@
                 :text="homePage.intro_heading"
             />
 
+            <!--
             <div class="mt-10 flex flex-col items-center space-y-4 md:mt-16 lg:mt-24">
                 <RegisterButton class="h-14 w-48 md:hidden">
                     <NuxtLink to="/login"> Anmelden </NuxtLink>
@@ -22,6 +23,7 @@
                     <NuxtLink to="/login"> Einloggen </NuxtLink>
                 </LoginButton>
             </div>
+            -->
         </section>
 
         <section>

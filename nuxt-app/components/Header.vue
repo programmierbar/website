@@ -40,12 +40,14 @@
                 </button>
             </form>
 
+            <!--
             <RegisterButton data-cursor-hover class="hidden h-14 w-56 md:block">
                 <NuxtLink to="/login"> Anmelden </NuxtLink>
             </RegisterButton>
             <LoginButton data-cursor-hover class="hidden h-14 w-48 md:block">
                 <NuxtLink to="/login"> Einloggen </NuxtLink>
             </LoginButton>
+          -->
         </div>
 
         <!-- Burger icon -->
@@ -139,8 +141,6 @@
 import SearchSVG from '~/assets/icons/search.svg'
 import BrandIcon from '~/assets/images/brand-icon.svg'
 import BrandLogo from '~/assets/images/brand-logo.svg'
-import LoginButton from '~/components/LoginButton.vue'
-import RegisterButton from '~/components/RegisterButton.vue'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useDocument, useEventListener } from '../composables'
 import { CLOSE_MENU_EVENT_ID, CLOSE_SEARCH_EVENT_ID, OPEN_MENU_EVENT_ID, OPEN_SEARCH_EVENT_ID } from '../config'
