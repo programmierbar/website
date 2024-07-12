@@ -143,13 +143,13 @@ module.exports = {
         },
         fontFamily: {
             mono: '"DM Mono", monospace',
+            azeret: '"Azeret Mono", monospace',
         },
     },
     variants: {
         extend: {},
     },
     plugins: [
-        require('@tailwindcss/line-clamp'),
         plugin(function ({ addUtilities }) {
             const newUtilities = {
                 '.overflow-unset': {
