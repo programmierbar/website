@@ -13,9 +13,7 @@
                 class="font-azeret font-medium leading-8 text-white xs:text-base md:text-2xl"
                 :text="homePage.intro_heading"
             />
-
-            <!--
-            <div class="mt-10 flex flex-col items-center space-y-4 md:mt-16 lg:mt-24">
+            <div v-if="FLAG_SHOW_LOGIN" class="mt-10 flex flex-col items-center space-y-4 md:mt-16 lg:mt-24">
                 <RegisterButton class="h-14 w-48 md:hidden">
                     <NuxtLink to="/login"> Anmelden </NuxtLink>
                 </RegisterButton>
@@ -23,7 +21,6 @@
                     <NuxtLink to="/login"> Einloggen </NuxtLink>
                 </LoginButton>
             </div>
-            -->
         </section>
 
         <section>
@@ -70,6 +67,8 @@ import { computed, type ComputedRef } from 'vue'
 import { useLoadingScreen, usePageMeta } from '../composables'
 import { DIRECTUS_CMS_URL } from '../config'
 import type { DirectusHomePage, LatestPodcastItem } from '../types'
+
+const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
 
 const breadcrumbs = [{ label: 'Home' }]
 const directus = useDirectus()

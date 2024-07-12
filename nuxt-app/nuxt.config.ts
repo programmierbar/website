@@ -3,7 +3,7 @@ import svgLoader from 'vite-svg-loader'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { useDirectus } from './composables/useDirectus'
-import { DIRECTUS_CMS_URL } from './config'
+import { DIRECTUS_CMS_URL, FLAG_SHOW_LOGIN } from './config'
 
 const directus = useDirectus()
 
@@ -19,6 +19,9 @@ export default defineNuxtConfig({
     css: [],
     runtimeConfig: {
         emailPassword: '',
+        public: {
+            FLAG_SHOW_LOGIN: FLAG_SHOW_LOGIN,
+        },
     },
 
     // Plugins to run before rendering page: https://nuxt.com/docs/api/nuxt-config#plugins-1

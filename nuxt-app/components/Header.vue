@@ -39,15 +39,12 @@
                     <SearchSVG class="h-full" />
                 </button>
             </form>
-
-            <!--
-            <RegisterButton data-cursor-hover class="hidden h-14 w-56 md:block">
+            <RegisterButton v-if="FLAG_SHOW_LOGIN" data-cursor-hover class="hidden h-14 w-56 md:block">
                 <NuxtLink to="/login"> Anmelden </NuxtLink>
             </RegisterButton>
-            <LoginButton data-cursor-hover class="hidden h-14 w-48 md:block">
+            <LoginButton v-if="FLAG_SHOW_LOGIN" data-cursor-hover class="hidden h-14 w-48 md:block">
                 <NuxtLink to="/login"> Einloggen </NuxtLink>
             </LoginButton>
-          -->
         </div>
 
         <!-- Burger icon -->
@@ -146,6 +143,8 @@ import { useDocument, useEventListener } from '../composables'
 import { CLOSE_MENU_EVENT_ID, CLOSE_SEARCH_EVENT_ID, OPEN_MENU_EVENT_ID, OPEN_SEARCH_EVENT_ID } from '../config'
 import { trackGoal } from '../helpers'
 import SocialNetworks from './SocialNetworks.vue'
+
+const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
 
 const mainMenuItems = [
     { label: 'Home', href: '/' },
