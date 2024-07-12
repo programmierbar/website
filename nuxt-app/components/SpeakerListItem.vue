@@ -25,9 +25,8 @@
             <!-- Description -->
             <p
                 class="mt-5 line-clamp-4 space-y-8 text-base font-light leading-normal text-white md:mt-10 md:text-xl lg:text-2xl"
-            >
-                {{ description }}
-            </p>
+                v-html="description"
+            />
 
             <!-- Link -->
             <LinkButton class="mt-6" :href="href">Mehr Infos</LinkButton>

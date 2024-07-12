@@ -26,9 +26,8 @@
                 <!-- Description -->
                 <p
                     class="mt-4 line-clamp-4 text-sm font-light leading-normal text-white md:text-lg lg:mt-8 lg:text-xl lg:leading-relaxed"
-                >
-                    {{ description }}
-                </p>
+                    v-html="description"
+                />
             </div>
         </nuxt-link>
     </div>
