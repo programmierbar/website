@@ -30,9 +30,10 @@
                     </h3>
                     <LeaveSiteIcon class="-mt-1 h-4 lg:h-5 xl:h-6" />
                 </div>
-                <p class="mt-2 space-y-8 text-base font-light leading-normal md:text-xl lg:text-2xl">
-                    {{ description }}
-                </p>
+                <p
+                    class="mt-2 space-y-8 text-base font-light leading-normal md:text-xl lg:text-2xl"
+                    v-html="description"
+                />
             </div>
         </a>
     </li>
