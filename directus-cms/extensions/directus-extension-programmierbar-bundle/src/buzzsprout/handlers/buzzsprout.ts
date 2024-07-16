@@ -1,4 +1,4 @@
-import { default as axios } from 'axios'
+import { AxiosRequestConfig, default as axios } from 'axios';
 // @ts-ignore
 import { getFullPodcastTitle, getUrlSlug } from '../../../../../../shared-code/index.ts'
 import { postSlackMessage } from '../../shared/postSlackMessage.ts'
@@ -170,10 +170,8 @@ export async function handleBuzzsprout(
 
     try {
         // Create or update podcast episode at Buzzsprout
-        logger.info(`${HOOK_NAME} hook: Sending payload to buzzsprout: ${JSON.stringify(buzzsproutData)}`)
-
-        const buzzsproutResponse = await axios({
-            method: isCreation ? 'PUT' : 'PATCH',
+        const requestConfig: AxiosRequestConfig = {
+            method: isCreation ? 'POST' : 'PUT',
             url: `${env.BUZZSPROUT_API_URL}episodes${
                 isCreation ? '' : `/${podcastData.buzzsprout_id}`
             }.json?api_token=${env.BUZZSPROUT_API_TOKEN}`,
@@ -181,7 +179,11 @@ export async function handleBuzzsprout(
                 'Content-Type': 'application/json',
             },
             data: JSON.stringify(buzzsproutData),
-        })
+        }
+
+        logger.info(`${HOOK_NAME} hook: Preparing Buzzsprout API call: ${JSON.stringify(requestConfig)}`)
+
+        const buzzsproutResponse = await axios(requestConfig)
 
         logger.info(`${HOOK_NAME} hook: Received response (${buzzsproutResponse.status} / ${buzzsproutResponse.statusText}) from buzzsprout: ${JSON.stringify(buzzsproutResponse.data)}`)
 
@@ -198,13 +200,19 @@ export async function handleBuzzsprout(
         // If an error occurs, log it and inform team via Slack
     } catch (error: any) {
         if ( error['message']) {
-            logger.error(`${HOOK_NAME} hook: "${typeof  error}" Error message: "${error.message}"`)
-        }
-        if ( typeof error['toString'] === 'function') {
+            logger.error(`${HOOK_NAME} hook: Error message: "${error.message}"`)
+        } else if ( typeof error['toString'] === 'function') {
             logger.error(`${HOOK_NAME} hook: "${typeof  error}" Error toString: "${error.toString()}"`)
         }
-        await postSlackMessage(
-            `Achtung: Eine Podcastfolge konnte nicht automatisch zu Buzzsprout hinzugefügt werden. Beim nächsten Speichervorgang über den folgenden Link, wird der Vorgang wiederholt: ${env.PUBLIC_URL}admin/content/podcasts/${podcastData.id}`
-        )
+        if ( error['response']) {
+            logger.error(`${HOOK_NAME} hook: Error response payload: "${JSON.stringify(error.response.data)}"`)
+        }
+        try {
+            await postSlackMessage(
+                `Achtung: Eine Podcastfolge konnte nicht automatisch zu Buzzsprout hinzugefügt werden. Beim nächsten Speichervorgang über den folgenden Link, wird der Vorgang wiederholt: ${env.PUBLIC_URL}admin/content/podcasts/${podcastData.id}`
+            )
+        } catch (error: any) {
+            logger.error(`${HOOK_NAME} hook: Could not post to slack.`)
+        }
     }
 }

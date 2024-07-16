@@ -82,6 +82,11 @@ export async function handlePodcastAction(
         // Create or update Buzzsprout episode and get its data
         const buzzsproutData: BuzzsproutData = await handleBuzzsprout(HOOK_NAME, podcastData, actionData, dependencies)
 
+        if (!buzzsproutData) {
+            logger.error(`${HOOK_NAME} hook: No data returned from handleBuzzsprout`)
+            throw new Error("Did not receive Buzzsprout data.")
+        }
+
         // Create update data object
         //const updateData: Partial<PodcastData> = {}
         const updateData: any = {}
