@@ -109,6 +109,8 @@ export async function handlePodcastAction(
             return
         }
 
+        logger.info(`${HOOK_NAME} hook: Updating podcast item with id "${itemKey}" and data: ${JSON.stringify(updateData)}`)
+
         // If update data contains something, update podcast item
         await podcastItemsService.updateOne(itemKey, updateData)
 
