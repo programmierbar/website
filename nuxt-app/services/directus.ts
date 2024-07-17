@@ -16,6 +16,7 @@ import type {
     DirectusPodcastItem,
     DirectusPodcastPage,
     DirectusPrivacyPage,
+    DirectusProfileCreationPage,
     DirectusRafflePage,
     DirectusSpeakerItem,
     DirectusTagItem,
@@ -33,6 +34,7 @@ export type Collections = {
     privacy_page: DirectusPrivacyPage
     raffle_page: DirectusRafflePage
     login_page: DirectusLoginPage
+    profile_creation_page: DirectusProfileCreationPage
     coc_page: DirectusCocPage
     podcasts: DirectusPodcastItem[]
     meetups: DirectusMeetupItem[]
