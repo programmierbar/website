@@ -14,9 +14,9 @@
                 :text="homePage.intro_heading"
             />
             <div v-if="FLAG_SHOW_LOGIN" class="mt-10 flex flex-col items-center space-y-4 md:mt-16 lg:mt-24">
-                <RegisterButton class="h-14 w-48 md:hidden">
+                <PrimaryPbButton class="h-14 w-48 uppercase md:hidden">
                     <NuxtLink to="/login"> Anmelden </NuxtLink>
-                </RegisterButton>
+                </PrimaryPbButton>
                 <LoginButton class="h-12 w-40 md:hidden">
                     <NuxtLink to="/login"> Einloggen </NuxtLink>
                 </LoginButton>
@@ -61,6 +61,7 @@
 
 <script setup lang="ts">
 import BrandLogoIcon from '~/assets/images/brand-logo.svg'
+import PrimaryPbButton from '~/components/PrimaryPbButton.vue'
 import { useDirectus } from '~/composables/useDirectus'
 import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'
