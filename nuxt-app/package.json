@@ -14,6 +14,7 @@
     "dependencies": {
         "@directus/sdk": "^15.0.1",
         "@nuxtjs/tailwindcss": "^6.11.4",
+        "@pinia/nuxt": "^0.5.1",
         "@types/google.maps": "^3.55.3",
         "@types/smoothscroll-polyfill": "^0.3.4",
         "@ubclaunchpad/vue-fathom": "^2.0.0",
@@ -23,6 +24,7 @@
         "isomorphic-dompurify": "^2.12.0",
         "nodemailer": "^6.9.9",
         "nuxt-jsonld": "^2.0.8",
+        "pinia": "^2.1.7",
         "smoothscroll-polyfill": "^0.4.4",
         "vite-svg-loader": "^5.1.0",
         "zod": "^3.22.4"
@@ -40,5 +42,8 @@
         "postcss": "^8.4.35",
         "prettier": "^3.2.5",
         "prettier-plugin-tailwindcss": "^0.5.11"
+    },
+    "overrides": {
+        "vue": "latest"
     }
 }

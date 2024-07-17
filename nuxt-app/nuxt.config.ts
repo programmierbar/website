@@ -48,6 +48,7 @@ export default defineNuxtConfig({
         // // Sitemap Module for Nuxt
         // '@nuxtjs/sitemap',
         'nuxt-jsonld',
+        '@pinia/nuxt',
     ],
 
     // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
