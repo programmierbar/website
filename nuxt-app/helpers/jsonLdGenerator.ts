@@ -1,5 +1,5 @@
 import { BUZZSPROUT_RSS_FEED_URL, DIRECTUS_CMS_URL } from '~/config'
-import type { FileItem, MemberItem, PodcastItem, SpeakerItem } from '~/types'
+import type { DirectusProfileItem, FileItem, MemberItem, PodcastItem, SpeakerItem } from '~/types';
 import type { JsonLD } from 'nuxt-jsonld/dist/types/index.d'
 import type { Person, PodcastEpisode, PodcastSeries, WithContext } from 'schema-dts'
 import { getPodcastType } from 'shared-code'
@@ -88,4 +88,28 @@ function generatePodcastEpisodeFromPodcast(podcast?: PodcastItem): JsonLD | null
     return podcastEpisode
 }
 
-export { generatePersonFromSpeaker, generatePodcastEpisodeFromPodcast, generatePodcastSeries }
+function generateProfile(profile?: DirectusProfileItem): JsonLD {
+
+  if (!profile) return null
+
+  const profileSchema: WithContext<Person> = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    givenName: profile.first_name,
+    familyName: profile.last_name,
+    jobTitle: profile.job_role,
+    alternateName: profile.display_name,
+    image: generateImageUrl(profile.profile_image),
+  }
+
+  if (profile.job_employer) {
+    profileSchema.worksFor = {
+      '@type': 'Organization',
+      'name': profile.job_employer
+    }
+  }
+
+  return profileSchema;
+}
+
+export { generatePersonFromSpeaker, generatePodcastEpisodeFromPodcast, generatePodcastSeries, generateProfile }

@@ -19,6 +19,7 @@ import type {
     DirectusRafflePage,
     DirectusSpeakerItem,
     DirectusTagItem,
+    DirectusProfileItem
 } from '../types'
 
 export type Collections = {
@@ -39,6 +40,7 @@ export type Collections = {
     members: DirectusMemberItem[]
     speakers: DirectusSpeakerItem[]
     picks_of_the_day: DirectusPickOfTheDayItem[]
+    profiles: DirectusProfileItem[],
     tags: DirectusTagItem[]
 }
 
