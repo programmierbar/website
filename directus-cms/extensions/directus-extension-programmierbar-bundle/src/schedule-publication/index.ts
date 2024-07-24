@@ -1,7 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { createHookErrorConstructor } from '../shared/errors.ts'
 import { isPublishable } from '../shared/isPublishable.ts'
-import { postSlackMessage } from '../shared/postSlackMessage.js'
+import { postSlackMessage } from '../shared/postSlackMessage.ts'
 
 const HOOK_NAME = 'schedule-publication'
 

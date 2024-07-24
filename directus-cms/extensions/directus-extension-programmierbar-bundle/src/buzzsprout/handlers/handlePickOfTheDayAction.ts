@@ -1,7 +1,7 @@
-import { handleBuzzsprout } from './buzzsprout'
-import { buzzsproutError } from './errors.js'
-import { getPodcastData } from './podcastData'
-import type { ActionData, Dependencies, Payload, PickOfTheDayPayload } from './types'
+import { handleBuzzsprout } from './buzzsprout.ts'
+import { createHookErrorConstructor } from '../../shared/errors.ts';
+import { getPodcastData } from './podcastData.ts'
+import type { ActionData, Dependencies, Payload, PickOfTheDayPayload } from './types.ts'
 
 /**
  * It handles the pick of the day action and updates the associated
@@ -67,6 +67,7 @@ export async function handlePickOfTheDayAction(
                     // Update Buzzsprout episode
                     const updatedActionData: ActionData<Payload> = {
                         payload: {
+                            id: podcastItem.id,
                             buzzsprout_id: podcastItem.buzzsprout_id,
                             picks_of_the_day: podcastItem.picks_of_the_day,
                         },
@@ -83,7 +84,7 @@ export async function handlePickOfTheDayAction(
         // Handle unknown errors
     } catch (error: any) {
         logger.error(`${HOOK_NAME} hook: Error: ${error.message}`)
-        const customError = buzzsproutError(error.message)
-        throw new customError()
+        const hookError = createHookErrorConstructor(HOOK_NAME, error.message)
+        throw new hookError()
     }
 }

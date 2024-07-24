@@ -1,7 +1,7 @@
-import { handleBuzzsprout } from './buzzsprout'
-import { buzzsproutError } from './errors.js'
-import { getPodcastData } from './podcastData'
-import type { ActionData, Dependencies, Payload, PodcastData } from './types'
+import { handleBuzzsprout } from './buzzsprout.ts'
+import { getPodcastData } from './podcastData.ts'
+import type { ActionData, Dependencies, Payload, PodcastData } from './types.ts'
+import { createHookErrorConstructor } from '../../shared/errors.ts';
 
 /**
  * It handles the tag action and updates podcast
@@ -75,6 +75,7 @@ export async function handleTagAction(
                         // Update Buzzsprout episode
                         const updatedActionData: ActionData<Payload> = {
                             payload: {
+                                id: podcastItem.id,
                                 buzzsprout_id: podcastItem.buzzsprout_id,
                                 tags: podcastItem.tags,
                             },
@@ -91,7 +92,7 @@ export async function handleTagAction(
         // Handle unknown errors
     } catch (error: any) {
         logger.error(`${HOOK_NAME} hook: Error: ${error.message}`)
-        const customError = buzzsproutError(error.message)
-        throw new customError()
+        const hookError = createHookErrorConstructor(HOOK_NAME, error.message)
+        throw new hookError()
     }
 }

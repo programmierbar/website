@@ -1,7 +1,7 @@
 import { handleBuzzsprout } from './buzzsprout.ts'
 import { getPodcastData } from './podcastData.ts'
 import type { ActionData, BuzzsproutData, Dependencies, PodcastData } from './types.ts'
-import { createHookErrorConstructor } from '../../shared/errors.js';
+import { createHookErrorConstructor } from '../../shared/errors.ts';
 
 /**
  * It handles the podcast action and creates or updates
