@@ -91,3 +91,14 @@ export interface LoginProvider {
     name: string
     url: string
 }
+
+export interface DirectusProfileItem {
+    id: string
+    first_name: string
+    last_name: string
+    display_name: string
+    description: string
+    job_role: string
+    job_employer: string
+    profile_image: FileItem
+}

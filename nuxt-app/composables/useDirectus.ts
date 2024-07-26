@@ -9,17 +9,18 @@ import {
     type QueryFilter,
 } from '@directus/sdk'
 import type {
-    DirectusMemberItem,
-    DirectusPickOfTheDayItem,
-    DirectusTagItem,
-    LoginProvider,
-    MeetupItem,
-    PodcastItem,
-    PodcastPreviewItem,
-    SpeakerItem,
-    SpeakerPreviewItem,
-    TagItem,
-} from '~/types'
+  DirectusMemberItem,
+  DirectusPickOfTheDayItem,
+  DirectusProfileItem,
+  DirectusTagItem,
+  LoginProvider,
+  MeetupItem,
+  PodcastItem,
+  PodcastPreviewItem,
+  SpeakerItem,
+  SpeakerPreviewItem,
+  TagItem,
+} from '~/types';
 import { DIRECTUS_CMS_URL, WEBSITE_URL } from './../config'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
@@ -532,7 +533,27 @@ export function useDirectus() {
             )
     }
 
-    async function getSingleSignOnProviders() {
+  async function getProfileById(id: string) {
+    return (await directus
+      .request(
+        readItems('profiles', {
+          fields: [
+            'id',
+            'first_name',
+            'last_name',
+            'display_name',
+            'description',
+            'job_role',
+            'job_employer',
+            'profile_image.*'
+          ],
+          limit: 1,
+          filter: { id: { _eq: id } },
+        })
+      ))?.pop() as unknown as DirectusProfileItem
+  }
+
+  async function getSingleSignOnProviders() {
         const directusProviders = await directus.request(readProviders())
 
         const providers = directusProviders.map((directusProvider): LoginProvider => {
@@ -605,5 +626,6 @@ export function useDirectus() {
         getSingleSignOnProviders,
         getCurrentUser,
         registerNewUser,
+        getProfileById,
     }
 }
