@@ -26,6 +26,10 @@
           /></dd>
       </dl>
     </div>
+  <div v-if="!profile" class='text-white'>
+    <h2>Profile Doesn't Exist</h2>
+  </div>
+    <p class='text-white'>{{profile}}</p>
 </template>
 
 <script setup lang="ts">
@@ -41,16 +45,13 @@ import DirectusImage from '~/components/DirectusImage.vue';
 const route = useRoute()
 const directus = useDirectus()
 
-// Query podcast, pick of the day,
-// speaker count and related podcasts
 const { data: pageData } = useAsyncData(route.fullPath, async () => {
     const [profile] = await Promise.all([
         await directus.getProfileById(route.params.slug as string),
     ])
 
-    // Throw error if the profile does not exist or cannot be loaded
-    if (!profile) {
-        throw new Error('The podcast was not found.')
+  if (!profile) {
+      console.info('No profile found with slug.', route.params.slug as string)
     }
 
     return { profile }
@@ -59,7 +60,7 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
 const profile: ComputedRef<DirectusProfileItem | undefined> = computed(() => pageData.value?.profile)
 
 // Set loading screen
-useLoadingScreen(profile)
+//useLoadingScreen(profile)
 
 // Set page meta data
 useHead(() =>
