@@ -1,5 +1,4 @@
 <template>
-   <ClientOnly>
     <div v-if="profile" class='text-white'>
       <h2>Profile</h2>
       <dl>
@@ -27,11 +26,6 @@
           /></dd>
       </dl>
     </div>
-  <div v-if="!profile" class='text-white'>
-    <h2>Profile Doesn't Exist</h2>
-  </div>
-    <p class='text-white'>{{profile}}</p>
-  </ClientOnly>
 </template>
 
 <script setup lang="ts">
@@ -62,7 +56,7 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
 const profile: ComputedRef<DirectusProfileItem | undefined> = computed(() => pageData.value?.profile)
 
 // Set loading screen
-//useLoadingScreen(profile)
+useLoadingScreen(profile)
 
 // Set page meta data
 useHead(() =>
