@@ -1,4 +1,5 @@
 <template>
+   <ClientOnly>
     <div v-if="profile" class='text-white'>
       <h2>Profile</h2>
       <dl>
@@ -30,6 +31,7 @@
     <h2>Profile Doesn't Exist</h2>
   </div>
     <p class='text-white'>{{profile}}</p>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
