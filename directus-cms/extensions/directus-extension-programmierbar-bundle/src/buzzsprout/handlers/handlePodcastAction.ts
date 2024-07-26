@@ -101,7 +101,7 @@ export async function handlePodcastAction(
         // or "title" changed, add "audio_url" to update data
         if (!podcastItem.audio_url || payload.audio_file || payload.type || payload.number || payload.title) {
             logger.info(`${HOOK_NAME} hook: Set "audio_url" at "${metadata.collection}" item with ID "${itemKey}"`)
-            updateData.audio_file = buzzsproutData.audio_url
+            updateData.audio_url = buzzsproutData.audio_url
         }
 
         // If No update data is set, return
