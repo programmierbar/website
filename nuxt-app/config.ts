@@ -2,6 +2,8 @@
 export const FLAG_SHOW_LOGIN = Boolean(process.env.FLAG_SHOW_LOGIN?.toLowerCase() == 'true')
 
 // Website config
+export const DEVTOOLS = Boolean(process.env.DEVTOOLS?.toLowerCase() == 'true')
+
 export const DIRECTUS_CMS_URL =
     (process.env.DIRECTUS_CMS_URL?.endsWith('/')
         ? process.env.DIRECTUS_CMS_URL.slice(0, -1)
