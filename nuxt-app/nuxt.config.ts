@@ -3,7 +3,7 @@ import svgLoader from 'vite-svg-loader'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { useDirectus } from './composables/useDirectus'
-import { DIRECTUS_CMS_URL, FLAG_SHOW_LOGIN, DEVTOOLS } from './config'
+import { DIRECTUS_CMS_URL, FLAG_SHOW_LOGIN, DEVTOOLS, DEV } from './config';
 
 const directus = useDirectus()
 
@@ -11,7 +11,7 @@ const directus = useDirectus()
 export default defineNuxtConfig({
     // Target: https://go.nuxtjs.dev/config-target
     ssr: true,
-
+    dev: DEV,
     devtools: {
       enabled: DEVTOOLS,
     },

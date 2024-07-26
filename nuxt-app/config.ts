@@ -3,6 +3,7 @@ export const FLAG_SHOW_LOGIN = Boolean(process.env.FLAG_SHOW_LOGIN?.toLowerCase(
 
 // Website config
 export const DEVTOOLS = Boolean(process.env.DEVTOOLS?.toLowerCase() == 'true')
+export const DEV = Boolean(process.env.NUXT_ENV === 'development')
 
 export const DIRECTUS_CMS_URL =
     (process.env.DIRECTUS_CMS_URL?.endsWith('/')
