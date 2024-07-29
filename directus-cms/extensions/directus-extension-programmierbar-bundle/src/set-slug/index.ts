@@ -49,10 +49,12 @@ export default defineHook(({ filter }, hookContext) => {
                 // create future item and return payload with "slug"
                 if (
                     type === 'update' &&
-                    ((metadata.collection === 'speakers' &&
-                        (payload.academic_title || payload.first_name || payload.last_name)) ||
+                    (
+                        (metadata.collection === 'speakers' && (payload.academic_title || payload.first_name || payload.last_name)) ||
                         (metadata.collection === 'podcasts' && (payload.type || payload.number || payload.title)) ||
-                        (metadata.collection === 'meetups' && payload.title))
+                        (metadata.collection === 'meetups' && payload.title) ||
+                        (metadata.collection === 'profiles' && (payload.first_name || payload.last_name))
+                    )
                 ) {
                     // Create items service instance
                     const itemsService = new ItemsService(metadata.collection, {
@@ -67,7 +69,7 @@ export default defineHook(({ filter }, hookContext) => {
                     const futureItem = { ...item, ...payload }
 
                     // Return payload with "slug"
-                    return getPayloadWithSlug(futureItem, { metadata, payload })
+                    return await getPayloadWithSlug(futureItem, { metadata, payload })
                 }
             }
 
@@ -91,7 +93,7 @@ export default defineHook(({ filter }, hookContext) => {
      *
      * @returns The payload including the slug.
      */
-    function getPayloadWithSlug(
+    async function getPayloadWithSlug(
         futureItem: any,
         { payload, metadata }: { payload: any; metadata: Record<string, any> }
     ) {
@@ -136,7 +138,57 @@ export default defineHook(({ filter }, hookContext) => {
             }
         }
 
+        // If collection name is "profiles" and "first_name" and "last_name" are set,
+        // log info and return payload with profile slug
+        if (metadata.collection === 'profiles' && futureItem.first_name && futureItem.last_name) {
+            if (futureItem.update_slug === false) {
+                return payload;
+            }
+            logInfo()
+
+            const result = {
+                ...payload
+            }
+
+            // Set suffix if empty or null
+            if (!futureItem.slug_suffix || futureItem.slug_suffix.trim() == '') {
+                result.slug_suffix = await getUniqueIdentifier()
+            }
+
+            let suffix = '';
+            if (futureItem.slug_suffix) {
+                suffix = futureItem.slug_suffix;
+            } else {
+                suffix = result.slug_suffix;
+            }
+            result.slug = getUrlSlug(`${futureItem.first_name}-${futureItem.last_name}-${suffix}`);
+
+            return result;
+        }
+
         // Otherwise just return payload
         return payload
+    }
+
+    // We use this approach to generate a unique part for the slug that remains stable over the lifetime of an item
+    async function getUniqueIdentifier(input?: string): Promise<string> {
+
+        if (!input) {
+            input = crypto.randomUUID();
+        }
+
+        // Convert the string to an ArrayBuffer
+        const encoder = new TextEncoder();
+        const data = encoder.encode(input);
+
+        // Generate the SHA-256 hash
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+
+        // Convert the hash to a hex string
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        // Get the first 4 characters of the hex string
+        return hashHex.slice(0, 4);
     }
 })
