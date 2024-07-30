@@ -26,8 +26,9 @@ import { DIRECTUS_CMS_URL, WEBSITE_URL } from './../config'
 // so that it can be resolved during the nuxt build process
 import { directus, type Collections } from './../services'
 
-type CollectionWithTagsName = 'members' | 'speakers' | 'tags' | 'podcasts' | 'meetups' | 'picks_of_the_day'
-type Tag = { name: string; count: number }
+const collectionWithTagsName = ['members', 'speakers', 'podcasts', 'meetups', 'picks_of_the_day'] as const
+type CollectionWithTagsName = (typeof collectionWithTagsName)[number]
+export type Tag = { name: string; count: number }
 type DirectusTag = { tag: { id: string; name: string } }
 
 export function useDirectus() {
@@ -98,6 +99,14 @@ export function useDirectus() {
     async function getLoginPage() {
         return await directus.request(
             readSingleton('login_page', {
+                fields: ['*'],
+            })
+        )
+    }
+
+    async function getProfileCreationPage() {
+        return await directus.request(
+            readSingleton('profile_creation_page', {
                 fields: ['*'],
             })
         )
@@ -459,6 +468,26 @@ export function useDirectus() {
         )
     }
 
+    async function getAllTopTags() {
+        const allTags: Tag[] = []
+        for (const collection of collectionWithTagsName) {
+            const tags = await getTopTagsForCollection(collection)
+            allTags.push(...tags)
+        }
+
+        const tagCounts: { [key: string]: number } = {}
+        for (const tag of allTags) {
+            tagCounts[tag.name] = (tagCounts[tag.name] || 0) + tag.count
+        }
+
+        const tagsWithCounts: Tag[] = Object.keys(tagCounts).map((key) => ({
+            name: key,
+            count: tagCounts[key],
+        }))
+
+        return tagsWithCounts.sort((a, b) => b.count - a.count)
+    }
+
     async function getTopTagsForCollection(collection: CollectionWithTagsName, limit: number = 25) {
         const tagCounts: { [key: string]: number } = {}
         const tagItems = (await directus.request(
@@ -606,6 +635,7 @@ export function useDirectus() {
         getPrivacyPage,
         getRafflePage,
         getLoginPage,
+        getProfileCreationPage,
         getCocPage,
         getImprintPage,
         getContactPage,
@@ -618,6 +648,7 @@ export function useDirectus() {
         getPickOfTheDayCount,
         getSpeakersCount,
         getPicksOfTheDay,
+        getAllTopTags,
         getTopTagsForCollection,
         getPodcastBySlug,
         getMeetupBySlug,

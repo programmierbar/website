@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import MailIcon from '~/assets/logos/mail.svg'
+import PrimaryPbButton from '~/components/PrimaryPbButton.vue'
 import { ref } from 'vue'
 
 const emit = defineEmits<{ (event: 'registerUser', user: { email: string; password: string }): void }>()
@@ -51,29 +52,26 @@ function handleRegisterClick() {
             tag="div"
             class="flex w-10/12 flex-col items-center justify-center gap-y-4 rounded-lg"
         >
-            <input
+            <InputField
                 v-if="clicked"
                 key="email"
                 v-model="email"
-                class="input-field"
                 type="email"
                 placeholder="E-Mail"
-                :style="getTranslateStyle"
+                :style="getTranslateStyle()"
             />
-            <input
+            <InputField
                 v-if="clicked"
                 key="password"
                 v-model="password"
-                class="input-field"
                 type="password"
                 placeholder="Passwort"
                 :style="getTranslateStyle(4)"
             />
-            <input
+            <InputField
                 v-if="clicked"
                 key="confirm-password"
                 v-model="confirmPassword"
-                class="input-field"
                 type="password"
                 placeholder="Passwort bestätigen"
                 :style="getTranslateStyle(8)"
@@ -82,9 +80,9 @@ function handleRegisterClick() {
             <span v-if="showPasswordWarning" class="text-pink-600">Die Passwörter stimmen nicht überein!</span>
         </TransitionGroup>
         <Transition name="fade">
-            <RegisterButton v-if="clicked" class="h-14 w-48" @click="handleRegisterClick">
+            <PrimaryPbButton v-if="clicked" class="h-14 w-48 uppercase" @click="handleRegisterClick">
                 <span> Anmelden </span>
-            </RegisterButton>
+            </PrimaryPbButton>
         </Transition>
     </div>
 </template>
@@ -96,16 +94,6 @@ function handleRegisterClick() {
 }
 .animated-border {
     animation: border-opacity-fade var(--animation-duration) ease-out forwards;
-}
-
-.input-field {
-    @apply h-12 w-full rounded-lg pl-5 text-white;
-    background-color: #3a3d3f;
-}
-
-.input-field::placeholder {
-    color: white;
-    font-style: italic;
 }
 
 @keyframes border-opacity-fade {

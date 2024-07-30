@@ -303,6 +303,17 @@ export interface DirectusLoginPage {
     text: string
 }
 
+export interface DirectusProfileCreationPage {
+    heading: string
+    intro_text: string
+    emoji_heading: string
+    emoji_text: string
+    interests_heading: string
+    interests_text: string
+    profile_change_text: string
+    creation_done_text: string
+}
+
 export interface DirectusCocPage {
     status: string
     heading: string

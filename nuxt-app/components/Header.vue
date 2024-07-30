@@ -39,10 +39,10 @@
                     <SearchSVG class="h-full" />
                 </button>
             </form>
-            <RegisterButton v-if="FLAG_SHOW_LOGIN" data-cursor-hover class="hidden h-14 w-56 md:block">
+            <PrimaryPbButton data-cursor-hover class="hidden h-14 w-56 uppercase md:block">
                 <NuxtLink to="/login"> Anmelden </NuxtLink>
-            </RegisterButton>
-            <LoginButton v-if="FLAG_SHOW_LOGIN" data-cursor-hover class="hidden h-14 w-48 md:block">
+            </PrimaryPbButton>
+            <LoginButton data-cursor-hover class="hidden h-14 w-48 md:block">
                 <NuxtLink to="/login"> Einloggen </NuxtLink>
             </LoginButton>
         </div>
@@ -138,6 +138,7 @@
 import SearchSVG from '~/assets/icons/search.svg'
 import BrandIcon from '~/assets/images/brand-icon.svg'
 import BrandLogo from '~/assets/images/brand-logo.svg'
+import PrimaryPbButton from '~/components/PrimaryPbButton.vue'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useDocument, useEventListener } from '../composables'
 import { CLOSE_MENU_EVENT_ID, CLOSE_SEARCH_EVENT_ID, OPEN_MENU_EVENT_ID, OPEN_SEARCH_EVENT_ID } from '../config'

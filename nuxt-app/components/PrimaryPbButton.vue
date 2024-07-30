@@ -12,7 +12,7 @@ const handleClick = () => {
 <template>
     <button
         :class="[
-            'btn btn-primary rounded-full border-4 text-base font-bold uppercase leading-8 tracking-[2px] text-lime hover:bg-lime hover:text-black active:translate-y-1 md:tracking-[4px] lg:text-2xl',
+            'btn btn-primary rounded-full border-4 text-base font-bold leading-8 tracking-[2px] text-lime hover:bg-lime hover:text-black active:translate-y-1 ',
             isClicked ? 'animate-grow-fade' : '',
         ]"
         @click="handleClick"

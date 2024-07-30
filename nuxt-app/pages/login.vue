@@ -113,7 +113,7 @@ async function createUser(user: { email: string; password: string }) {
 }
 </script>
 
-<style>
+<style lang="postcss" scoped>
 .fade-enter-active {
     transition: opacity 1s ease-out;
 }
