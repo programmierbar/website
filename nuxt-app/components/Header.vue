@@ -39,10 +39,10 @@
                     <SearchSVG class="h-full" />
                 </button>
             </form>
-            <PrimaryPbButton data-cursor-hover class="hidden h-14 w-56 uppercase md:block">
+            <PrimaryPbButton v-if="FLAG_SHOW_LOGIN" data-cursor-hover class="hidden h-14 w-56 uppercase md:block">
                 <NuxtLink to="/login"> Anmelden </NuxtLink>
             </PrimaryPbButton>
-            <LoginButton data-cursor-hover class="hidden h-14 w-48 md:block">
+            <LoginButton v-if="FLAG_SHOW_LOGIN" data-cursor-hover class="hidden h-14 w-48 md:block">
                 <NuxtLink to="/login"> Einloggen </NuxtLink>
             </LoginButton>
         </div>
