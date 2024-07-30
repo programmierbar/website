@@ -26,6 +26,14 @@ const isNextButtonDisabled = computed(() => {
     return !componentValidStates.value[currentPage.value]
 })
 
+onMounted(() => {
+    window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeydown)
+})
+
 async function setPage(page: number) {
     if (page < currentPage.value) {
         currentPage.value = page
@@ -55,6 +63,12 @@ function isDotClickable(index: number) {
 
 function onTransitionComplete() {
     window.scrollTo(0, 0)
+}
+
+function handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter' && !isNextButtonDisabled.value) {
+        nextPage()
+    }
 }
 </script>
 
