@@ -11,6 +11,7 @@ import { useLoadingScreen } from '../composables'
 import { getMetaInfo } from '../helpers'
 
 const directus = useDirectus()
+const route = useRoute()
 
 const { data: pageData } = useAsyncData(async () => {
     const [profileCreationPage, tags] = await Promise.all([directus.getProfileCreationPage(), directus.getAllTopTags()])
@@ -27,8 +28,8 @@ useLoadingScreen(profileCreationPage)
 useHead(
     getMetaInfo({
         type: 'website',
-        path: '/profile-creation',
-        title: 'Profile Creation',
+        path: route.path,
+        title: 'Profil erstellen',
         noIndex: true,
     })
 )
