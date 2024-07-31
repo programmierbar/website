@@ -1,4 +1,4 @@
-import type { Context, Dependencies, PickOfTheDay, PodcastData, Tag } from './types'
+import type { Context, Dependencies, PickOfTheDay, PodcastData, Tag } from './types.ts'
 
 /**
  * It adds the pick of the day and tag items to the podcast item object.
