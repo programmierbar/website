@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ProfilePicture from '~/components/ProfilePicture.vue'
+import { useProfileCreationStore } from '~/composables/useProfileCreationStore'
 import { computed, ref, watch } from 'vue'
 
 defineProps<{

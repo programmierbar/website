@@ -18,11 +18,25 @@ const showPasswordWarning = computed(
     () => password.value !== '' && confirmPassword.value !== '' && password.value !== confirmPassword.value
 )
 
+onMounted(() => {
+    window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeydown)
+})
+
 function getTranslateStyle(factor: number = 1) {
     return `--translateY: -${20 * factor}px`
 }
 
-function handleRegisterClick() {
+function handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter' && clicked.value) {
+        handleRegisterAction()
+    }
+}
+
+function handleRegisterAction() {
     if (showEmailWarning.value || showPasswordWarning.value) {
         return
     }
@@ -80,7 +94,7 @@ function handleRegisterClick() {
             <span v-if="showPasswordWarning" class="text-pink-600">Die Passwörter stimmen nicht überein!</span>
         </TransitionGroup>
         <Transition name="fade">
-            <PrimaryPbButton v-if="clicked" class="h-14 w-48 uppercase" @click="handleRegisterClick">
+            <PrimaryPbButton v-if="clicked" class="h-14 w-48 uppercase" @click="handleRegisterAction">
                 <span> Anmelden </span>
             </PrimaryPbButton>
         </Transition>

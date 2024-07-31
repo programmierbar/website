@@ -19,11 +19,19 @@ export const useProfileCreationStore = defineStore('profileCreation', {
         selectedEmojis: string[]
         selectedInterests: Tag[]
         details: Details
+        profilePicture: {
+            file: File | null
+            previewUrl: string | null
+        }
     } => ({
         mainInfos: {} as MainInfos,
         selectedEmojis: [],
         selectedInterests: [],
         details: {} as Details,
+        profilePicture: {
+            file: null,
+            previewUrl: null,
+        },
     }),
     actions: {
         updateMainInfos(data: MainInfos) {
@@ -37,6 +45,10 @@ export const useProfileCreationStore = defineStore('profileCreation', {
         },
         updateDetails(data: any) {
             this.details = data
+        },
+        updateProfilePicture(file: File, previewUrl: string) {
+            this.profilePicture.file = file
+            this.profilePicture.previewUrl = previewUrl
         },
     },
 })
