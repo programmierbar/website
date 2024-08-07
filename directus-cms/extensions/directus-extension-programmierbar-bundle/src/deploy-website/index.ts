@@ -39,6 +39,14 @@ export default defineHook(({ action }, hookContext) => {
             // Log start info
             logger.info(`${HOOK_NAME} hook: Start "${metadata.collection}" action function`)
 
+            if (['profiles'].includes(metadata.collection)) {
+                logger.info(
+                    `${HOOK_NAME} hook: Updated item was in "${metadata.collection}" collection. ` +
+                    `Exiting hook early.`
+                );
+                return;
+            }
+
             // Get fields of collection
             const { fields } = context.schema.collections[metadata.collection]
 
