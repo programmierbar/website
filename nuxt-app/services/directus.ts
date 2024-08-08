@@ -20,7 +20,8 @@ import type {
     DirectusRafflePage,
     DirectusSpeakerItem,
     DirectusTagItem,
-    DirectusProfileItem
+    DirectusProfileItem,
+    DirectusTranscriptItem
 } from '../types'
 
 export type Collections = {
@@ -44,6 +45,7 @@ export type Collections = {
     picks_of_the_day: DirectusPickOfTheDayItem[]
     profiles: DirectusProfileItem[],
     tags: DirectusTagItem[]
+    transcripts: DirectusTranscriptItem[]
 }
 
 export const directus = createDirectus<Collections>(DIRECTUS_CMS_URL)

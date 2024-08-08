@@ -102,3 +102,29 @@ export interface DirectusProfileItem {
     job_employer: string
     profile_image: FileItem
 }
+
+export interface DirectusTranscriptItem {
+  id: string
+  date_updated: string
+  status: string
+  podcast: DirectusPodcastItem
+  podcast_audio_file: FileItem
+  speakers: [{name: string, identifier: string}]
+  service: string
+  supported_features: string[]
+  raw_response: null | {
+    results: {
+      utterances: [{
+        transcript: string,
+        speaker: string,
+        words: [
+          {
+            punctuated_word: string,
+            start: number,
+            speaker: string,
+          }
+        ]
+      }]
+    }
+  }
+}
