@@ -2,14 +2,14 @@
     <div class="flex flex-col items-center space-y-6">
         <!-- Meetup.com Button -->
         <a
-            class="inline-block min-w-56 rounded-full border-4 border-lime px-10 pb-3 pt-4 text-center text-sm font-black uppercase tracking-widest text-lime md:min-w-76 md:pb-4 md:pt-5 md:text-lg lg:min-w-88 lg:pb-5 lg:pt-6 lg:text-xl xl:w-full xl:min-w-min"
+            class="inline-block min-w-56 rounded-full border-4 border-lime px-10 pb-3 pt-4 text-center text-sm font-black uppercase tracking-widest text-lime md:min-w-76 md:pb-4 md:pt-5 md:text-sm lg:min-w-88 lg:pb-5 lg:pt-6 lg:text-sm xl:w-full xl:min-w-min"
             :href="meetupUrl"
             target="_blank"
             rel="noreferrer"
             data-cursor-hover
             @click="() => trackGoal(OPEN_MEETUP_EVENT_ID)"
         >
-            Meetup.com
+            {{ meetupDomain }}
         </a>
 
         <!-- Calendar and maps icons -->
@@ -130,4 +130,13 @@ onMounted(() => {
 
 // Create Meetup URL
 const meetupUrl = computed(() => props.meetup.meetup_url || MEETUP_URL)
+const meetupDomain = computed(() => {
+
+  if (props.meetup.meetup_url) {
+    const url = new URL(props.meetup.meetup_url);
+    return url.host.replace('www.', '');
+  }
+
+  return MEETUP_URL;
+})
 </script>
