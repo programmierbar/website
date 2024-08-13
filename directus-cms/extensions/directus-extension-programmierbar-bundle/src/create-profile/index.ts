@@ -1,5 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { createHookErrorConstructor } from '../shared/errors.ts'
+import { FilterHandler} from '@directus/types'
 
 const HOOK_NAME = 'create-profile'
 
@@ -7,22 +8,17 @@ export default defineHook(({ filter }, hookContext) => {
     const logger = hookContext.logger
     const ItemsService = hookContext.services.ItemsService
 
-    filter('users.create', (payload, metadata, context) => handleFilter( { payload, metadata, context }))
+    type UserPayloadType = {
+        profiles: {
+            profiles_id: string,
+        }[] | undefined,
+    }
 
-    async function handleFilter(
-    {
-        payload,
-        metadata,
-        context,
-    }: {
-        payload: any
-        metadata: Record<string, any>
-        context: any
-    }) {
+    const handler: FilterHandler<UserPayloadType> = async function(payload, _metadata, context): Promise<UserPayloadType> {
         try {
             logger.info(`${HOOK_NAME} hook: Start filter function`)
 
-            if (payload.profile) {
+            if (payload.profiles && payload.profiles.length > 0) {
                 logger.info(`${HOOK_NAME} hook: User already has profile. Exiting early.`)
                 return payload
             }
@@ -45,18 +41,18 @@ export default defineHook(({ filter }, hookContext) => {
                 // the following structure is necessary for directus to make the m2m connection
                 profiles: [
                     {
-                        profiles_id: newProfileId,
+                        profiles_id: newProfileId as string,
                     },
                 ]
             }
 
-            // Handle unknown errors
+        // Handle unknown errors
         } catch (error: any) {
             logger.error(`${HOOK_NAME} hook: Error: ${error.message}`)
             const hookError = createHookErrorConstructor(HOOK_NAME, error.message)
             throw new hookError()
         }
-
-        return payload
     }
+
+    filter('users.create', handler)
 })
