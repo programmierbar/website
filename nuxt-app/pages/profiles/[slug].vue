@@ -1,30 +1,54 @@
 <template>
-    <div v-if="profile" class='text-white'>
-      <h2>Profile</h2>
-      <dl>
-        <dt>ID:</dt>
-        <dd>{{ profile.id }}</dd>
-        <dt>First Name:</dt>
-        <dd>{{ profile.first_name }}</dd>
-        <dt>Last Name:</dt>
-        <dd>{{ profile.last_name }}</dd>
-        <dt>Display Name:</dt>
-        <dd>{{ profile.display_name }}</dd>
-        <dt>Description:</dt>
-        <dd><InnerHtml
-            :html="profile.description"
-          /></dd>
-        <dt>Job Role:</dt>
-        <dd>{{ profile.job_role }}</dd>
-        <dt>Job Employer:</dt>
-        <dd>{{ profile.job_employer }}</dd>
-        <dt>Photo:</dt>
-        <dd>
-          <DirectusImage
-            v-if="profile.profile_image"
-            :image="profile.profile_image"
-          /></dd>
-      </dl>
+    <div v-if="profile">
+      <article class='text-white mb-10'>
+        <div class="container px-6 pt-32 md:pl-48 md:pt-40 lg:pr-8 lg:pt-56 2xl:pt-64 3xl:px-8">
+          <div class='flex mb-6 items-center'>
+            <div>
+              <div
+                class="h-24 w-24 rounded-full border-4 border-white md:h-64 md:w-64"
+              >
+                <DirectusImage
+                  v-if="profile.profile_image"
+                  :image="profile.profile_image"
+                  class='h-full w-full rounded-full object-cover'
+                />
+                <EmptyProfilePicture v-else />
+              </div>
+            </div>
+            <div class='h-full flex flex-col pl-6'>
+              <h1>
+                {{ profile.first_name }} {{ profile.last_name }}
+              </h1>
+              <p>
+                🎂 dabei seit  <NuxtTime :datetime="profile.date_created_prepared" month="long" day="numeric" year='numeric' />
+              </p>
+            </div>
+          </div>
+          <hr class='my-6'/>
+          <h2 class='mb-4 mt-8'>Über mich</h2>
+          <p>
+            <InnerHtml
+              :html="profile.description"
+            />
+          </p>
+          <h2 class='mb-4 mt-8'>Rolle</h2>
+          <p>{{ profile.job_role || '-' }}</p>
+          <h2 class='mb-4 mt-8'>Arbeitgeber / Institution</h2>
+          <p>{{ profile.job_employer || '-' }}</p>
+          <h2 class='mb-4 mt-8'>Ich in drei Emojis</h2>
+          <div class='my-4'>
+            <span v-for='emoji in profile.emojis_prepared' class='p-3 mr-2'>
+              {{ emoji.display_emoji }}
+            </span>
+          </div>
+          <h2 class='mb-4 mt-8'>Meine Interessen</h2>
+          <div class='my-4'>
+            <span v-for='interestedTag in profile.interested_tags_prepared' class='border-2 border-white rounded-xl p-3 mr-2'>
+              {{ interestedTag.name }}
+            </span>
+          </div>
+        </div>
+      </article>
     </div>
 </template>
 
@@ -36,6 +60,7 @@ import type { DirectusProfileItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import { generateProfile } from '~/helpers/jsonLdGenerator';
 import DirectusImage from '~/components/DirectusImage.vue';
+import EmptyProfilePicture from 'assets/images/profile-picture-empty.svg';
 
 // Add route and router
 const route = useRoute()
@@ -43,10 +68,10 @@ const directus = useDirectus()
 
 const { data: pageData } = useAsyncData(route.fullPath, async () => {
     const [profile] = await Promise.all([
-        await directus.getProfileById(route.params.slug as string),
+        await directus.getProfileBySlug(route.params.slug as string),
     ])
 
-  if (!profile) {
+    if (!profile) {
       console.info('No profile found with slug.', route.params.slug as string)
     }
 
