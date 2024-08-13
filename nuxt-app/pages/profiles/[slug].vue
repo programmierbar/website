@@ -10,6 +10,7 @@
                 <DirectusImage
                   v-if="profile.profile_image"
                   :image="profile.profile_image"
+                  :sizes="'md:200px'"
                   class='h-full w-full rounded-full object-cover'
                 />
                 <EmptyProfilePicture v-else />
@@ -26,11 +27,9 @@
           </div>
           <hr class='my-6'/>
           <h2 class='mb-4 mt-8'>Über mich</h2>
-          <p>
-            <InnerHtml
-              :html="profile.description"
-            />
-          </p>
+          <InnerHtml
+            :html="profile.description"
+          />
           <h2 class='mb-4 mt-8'>Rolle</h2>
           <p>{{ profile.job_role || '-' }}</p>
           <h2 class='mb-4 mt-8'>Arbeitgeber / Institution</h2>
