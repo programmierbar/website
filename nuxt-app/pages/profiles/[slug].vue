@@ -37,13 +37,13 @@
           <p>{{ profile.job_employer || '-' }}</p>
           <h2 class='mb-4 mt-8'>Ich in drei Emojis</h2>
           <div class='my-4'>
-            <span v-for='emoji in profile.emojis_prepared' class='p-3 mr-2'>
+            <span v-for='emoji in profile.emojis_prepared' :key="emoji.id" class='p-3 mr-2'>
               {{ emoji.display_emoji }}
             </span>
           </div>
           <h2 class='mb-4 mt-8'>Meine Interessen</h2>
           <div class='my-4'>
-            <span v-for='interestedTag in profile.interested_tags_prepared' class='border-2 border-white rounded-xl p-3 mr-2'>
+            <span v-for='interestedTag in profile.interested_tags_prepared' :key="interestedTag.id" class='border-2 border-white rounded-xl p-3 mr-2'>
               {{ interestedTag.name }}
             </span>
           </div>
