@@ -12,7 +12,7 @@ interface SequentialParagraph {
 }
 
 function getNameForSpeaker(speakerIdentifier: string, transcript: DirectusTranscriptItem) {
-    const speaker = transcript.speakers?.find((speaker) => speaker.identifier === speakerIdentifier)
+    const speaker = transcript.speakers?.find((speaker) => String(speaker.identifier) === String(speakerIdentifier))
     return speaker ? speaker.name : '???'
 }
 
