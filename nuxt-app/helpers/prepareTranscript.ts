@@ -33,7 +33,6 @@ function transformProgrammierbar(word: string): string {
 function prepareTranscriptFromDeepgram(transcript: DirectusTranscriptItem): SequentialParagraph[] {
     let sequentialParagraphs: SequentialParagraph[] = []
     let currentSpeaker = ''
-    let consolidatedText = ''
     let currentWordList: WordTimestamp[] = []
 
     transcript.raw_response?.results.utterances.forEach((utterance) => {
@@ -41,7 +40,6 @@ function prepareTranscriptFromDeepgram(transcript: DirectusTranscriptItem): Sequ
             const transformedWord = transformProgrammierbar(word.punctuated_word)
 
             if (currentSpeaker === '' || currentSpeaker === word.speaker) {
-                consolidatedText += ' ' + transformedWord
                 currentWordList.push({ word: transformedWord, time: word.start })
                 currentSpeaker = word.speaker
             } else {
