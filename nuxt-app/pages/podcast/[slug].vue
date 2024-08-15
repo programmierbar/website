@@ -60,11 +60,18 @@
                             </a>
                         </li>
                     </ul>
-                    <PodcastTranscript
+                    <SimplePodcastTranscript
                         v-if="podcast.transcript"
                         :name="podcast.slug"
                         :body="podcast.transcript"
                         class="mt-12"
+                    />
+                    <PodcastTranscript
+                      v-if="transcript"
+                      :name="podcast.slug"
+                      :podcast='podcast'
+                      :transcript="transcript"
+                      class="mt-12"
                     />
                 </div>
             </div>
@@ -152,12 +159,15 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
         throw new Error('The podcast was not found.')
     }
 
+    // Transcript
+    const transcript = await directus.getTranscriptForPodcast(podcast);
+
     // Query related podcasts
     const relatedPodcasts = podcast.tagsPrepared.length ? await directus.getRelatedPodcasts(podcast) : []
 
     // Return podcast, pick of the day and
     // speaker count and related podcasts
-    return { podcast, pickOfTheDayCount, speakerCount, relatedPodcasts }
+    return { podcast, pickOfTheDayCount, speakerCount, relatedPodcasts, transcript }
 })
 
 // Extract podcast, pick of the day, speaker
@@ -166,6 +176,8 @@ const podcast: ComputedRef<PodcastItem | undefined> = computed(() => pageData.va
 const pickOfTheDayCount = computed(() => pageData.value?.pickOfTheDayCount)
 const speakerCount = computed(() => pageData.value?.speakerCount)
 const relatedPodcasts = computed(() => pageData.value?.relatedPodcasts)
+const transcript = computed(() => pageData.value?.transcript)
+
 // Set loading screen
 useLoadingScreen(podcast, pickOfTheDayCount, speakerCount)
 

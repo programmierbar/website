@@ -13,6 +13,7 @@ import type {
   DirectusPickOfTheDayItem,
   DirectusProfileItem,
   DirectusTagItem,
+  DirectusTranscriptItem,
   LoginProvider,
   MeetupItem,
   PodcastItem,
@@ -582,6 +583,25 @@ export function useDirectus() {
       ))?.pop() as unknown as DirectusProfileItem
   }
 
+  async function getTranscriptForPodcast(podcast: PodcastItem) {
+    return (await directus
+      .request(
+        readItems('transcripts', {
+          fields: [
+            'id',
+            'service',
+            'supported_features',
+            'speakers',
+            'raw_response',
+          ],
+          filter: {
+            podcast : { id: { _eq: podcast.id} }
+          },
+          sort: ['-date_updated']
+        })
+      ))?.pop() as unknown as DirectusTranscriptItem
+  }
+
   async function getSingleSignOnProviders() {
         const directusProviders = await directus.request(readProviders())
 
@@ -654,6 +674,7 @@ export function useDirectus() {
         getMeetupBySlug,
         getSpeakerBySlug,
         getRelatedPodcasts,
+        getTranscriptForPodcast,
         getSingleSignOnProviders,
         getCurrentUser,
         registerNewUser,
