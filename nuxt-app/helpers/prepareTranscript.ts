@@ -12,14 +12,8 @@ interface SequentialParagraph {
 }
 
 function getNameForSpeaker(speakerIdentifier: string, transcript: DirectusTranscriptItem) {
-    let speakerName = '???'
-    transcript.speakers?.forEach((speaker) => {
-        if (String(speaker.identifier) === String(speakerIdentifier)) {
-            speakerName = speaker.name
-            return
-        }
-    })
-    return speakerName
+    const speaker = transcript.speakers?.find((speaker) => speaker.identifier === speakerIdentifier)
+    return speaker ? speaker.name : '???'
 }
 
 function transformProgrammierbar(word: string): string {
