@@ -19,6 +19,8 @@
             <dt class='font-bold'>{{ paragraph.speaker }}</dt>
             <dd class='mb-2.5'>
               <span v-for='wordListEntry in paragraph.wordlist'
+                    class='transition-colors'
+                    style='transition-duration: 350ms;'
                     :class="[(wordListEntry.time < podcastPlayer.currentTime) ? 'text-lime' : '']"
                     v-on:click='playPodcastAtTimestamp(wordListEntry.time)'>
                 {{ wordListEntry.word + ' ' }}
@@ -36,17 +38,7 @@
 import { defineComponent, computed } from 'vue';
 import type { DirectusTranscriptItem, PodcastItem } from '~/types';
 import { usePodcastPlayer } from '~/composables';
-
-function getNameForSpeaker(speakerIdentifier: string, transcript: DirectusTranscriptItem) {
-  let speakerName = '???';
-  transcript.speakers?.forEach(speaker => {
-    if (String(speaker.identifier) === String(speakerIdentifier)) {
-      speakerName = speaker.name;
-      return;
-    }
-  });
-  return speakerName;
-}
+import { prepareTranscript } from '~/helpers/prepareTranscript';
 
 export default defineComponent({
   props: {
@@ -75,36 +67,7 @@ export default defineComponent({
     }
 
     const paragraphs = computed(() => {
-
-      let sequentialParagraphs: { speaker: string, wordlist: { word: string, time: number }[] }[] = [];
-      let currentSpeaker = '';
-      let consolidatedText = '';
-      let currentWordList: { word: string, time: number }[] = [];
-
-      props.transcript?.raw_response?.results.utterances.forEach(utterance => {
-        utterance.words.forEach(word => {
-          if (currentSpeaker === '' || currentSpeaker === word.speaker) {
-            consolidatedText += ' ' + word.punctuated_word;
-            currentWordList.push({ word: word.punctuated_word, time: word.start });
-            currentSpeaker = word.speaker;
-          } else {
-            sequentialParagraphs.push({ speaker: currentSpeaker, wordlist: currentWordList });
-            currentWordList = [];
-            currentWordList.push({ word: word.punctuated_word, time: word.start });
-            currentSpeaker = word.speaker;
-          }
-        });
-      });
-
-      sequentialParagraphs.push({ speaker: currentSpeaker, wordlist: currentWordList });
-
-      sequentialParagraphs = sequentialParagraphs.map(paragraph => {
-        paragraph.speaker = getNameForSpeaker(paragraph.speaker, props.transcript);
-
-        return paragraph;
-      });
-
-      return sequentialParagraphs;
+      return prepareTranscript(props.transcript);
     });
 
     return {

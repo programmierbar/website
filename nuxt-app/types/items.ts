@@ -103,6 +103,26 @@ export interface DirectusProfileItem {
     profile_image: FileItem
 }
 
+export enum DirectusTranscriptItemServices {
+  Deepgram = 'deepgram',
+}
+
+interface DeepgramTranscriptResponse {
+  results: {
+    utterances: [{
+      transcript: string,
+      speaker: string,
+      words: [
+        {
+          punctuated_word: string,
+          start: number,
+          speaker: string,
+        }
+      ]
+    }]
+  }
+}
+
 export interface DirectusTranscriptItem {
   id: string
   date_updated: string
@@ -110,21 +130,7 @@ export interface DirectusTranscriptItem {
   podcast: DirectusPodcastItem
   podcast_audio_file: FileItem
   speakers: [{name: string, identifier: string}]
-  service: string
+  service: DirectusTranscriptItemServices,
   supported_features: string[]
-  raw_response: null | {
-    results: {
-      utterances: [{
-        transcript: string,
-        speaker: string,
-        words: [
-          {
-            punctuated_word: string,
-            start: number,
-            speaker: string,
-          }
-        ]
-      }]
-    }
-  }
+  raw_response: null | DeepgramTranscriptResponse
 }
