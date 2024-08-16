@@ -3,18 +3,8 @@
       <article class='text-white mb-10'>
         <div class="container px-6 pt-32 md:pl-48 md:pt-40 lg:pr-8 lg:pt-56 2xl:pt-64 3xl:px-8">
           <div class='flex mb-6 items-center'>
-            <div>
-              <div
-                class="h-24 w-24 rounded-full border-4 border-white md:h-64 md:w-64"
-              >
-                <DirectusImage
-                  v-if="profile.profile_image"
-                  :image="profile.profile_image"
-                  :sizes="'md:200px'"
-                  class='h-full w-full rounded-full object-cover'
-                />
-                <EmptyProfilePicture v-else />
-              </div>
+            <div class='h-24 w-24 md:h-64 md:w-64'>
+              <ProfilePicture :image='profile.profile_image' />
             </div>
             <div class='h-full flex flex-col pl-6'>
               <h1>
@@ -58,8 +48,6 @@ import { getMetaInfo } from '~/helpers'
 import type { DirectusProfileItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import { generateProfile } from '~/helpers/jsonLdGenerator';
-import DirectusImage from '~/components/DirectusImage.vue';
-import EmptyProfilePicture from 'assets/images/profile-picture-empty.svg';
 
 // Add route and router
 const route = useRoute()
