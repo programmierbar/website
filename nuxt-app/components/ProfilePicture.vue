@@ -19,7 +19,7 @@ const urlImage: ComputedRef<string | null> = computed(() => {
 <template>
     <div class="flex flex-col items-center justify-center">
         <div
-            class="profile-picture flex flex-col items-center justify-center overflow-clip rounded-full border-4 border-white bg-gradient-to-t from-white/20 to-white/80"
+            class="profile-picture flex flex-col items-center justify-center overflow-clip rounded-full border-6 border-white bg-gradient-to-t from-white/20 to-white/80"
         >
             <DirectusImage v-if="directusImage" :image="directusImage" :sizes="''" class="h-full w-full object-cover" />
             <img v-else-if="urlImage" :src="urlImage" alt="Profile Picture" class="h-full w-full object-cover" />
