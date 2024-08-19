@@ -30,7 +30,7 @@
                         </div>
                     </div>
                 </ProfileSection>
-                <div class="py-52"><!-- Space for future edit buttons --></div>
+                <!--Space for future edit buttons <div class="py-52"></div>-->
             </div>
         </article>
     </div>
