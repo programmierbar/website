@@ -24,7 +24,7 @@
 
                 <div class="flex flex-col-reverse lg:flex-row lg:items-baseline lg:justify-between">
                     <!-- Sub menu -->
-                    <ul class="mt-6 flex space-x-5 lg:mt-0 lg:space-x-8">
+                    <ul class="mt-6 flex flex-wrap space-x-5 lg:mt-0 lg:space-x-8">
                         <li v-for="subMenuItem in subMenuItems" :key="subMenuItem.href">
                             <NuxtLink
                                 class="text-sm text-white hover:text-lime hover:underline lg:text-xl"
