@@ -5,6 +5,7 @@
             class="block md:ml-16 md:h-60 md:w-1/2 lg:ml-20 lg:h-80 xl:h-96 2xl:h-112"
             :to="href"
             data-cursor-hover
+            v-if='hasImage'
         >
             <DirectusImage
                 v-if="speaker.event_image"
@@ -16,7 +17,9 @@
             />
         </NuxtLink>
 
-        <div class="mt-10 md:mt-0 md:w-1/2">
+        <div class="mt-10 md:mt-0"
+             :class="hasImage ? 'md:w-1/2' : ''"
+        >
             <!-- Name -->
             <h3 class="text-xl font-black text-white md:text-2xl lg:text-3xl">
                 {{ fullName }}
@@ -68,10 +71,13 @@ export default defineComponent({
         // Create href to speaker's subpage
         const href = computed(() => `/hall-of-fame/${props.speaker.slug}`)
 
+        const hasImage = computed(() => Boolean(props.speaker.event_image))
+
         return {
             fullName,
             description,
             href,
+            hasImage,
         }
     },
 })

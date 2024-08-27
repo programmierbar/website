@@ -134,7 +134,7 @@ export interface DirectusSpeakerItem {
     last_name: string
     description: string
     profile_image: DirectusFileItem
-    event_image: DirectusFileItem
+    event_image: DirectusFileItem | null
     website_url: string | null
     twitter_url: string | null
     linkedin_url: string | null
