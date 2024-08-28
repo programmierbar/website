@@ -21,21 +21,25 @@ export async function getPodcastData(
     // Log start info
     logger.info(`${HOOK_NAME} hook: Query podcast data from Directus`)
 
+    // !!!!
+    // We are manually adding admin permissions here to force the proper accountability
+    // du to this bug: https://github.com/directus/directus/issues/21689
+
     // Create member items service instance
     const memberItemsService = new ItemsService('members', {
-        accountability: context.accountability,
+        accountability: { ...context.accountability, admin: true},
         schema: context.schema,
     })
 
     // Create speaker items service instance
     const speakerItemsService = new ItemsService('speakers', {
-        accountability: context.accountability,
+        accountability: { ...context.accountability, admin: true},
         schema: context.schema,
     })
 
     // Create pick of the day items service instance
     const pickOfTheDayItemsService = new ItemsService('picks_of_the_day', {
-        accountability: context.accountability,
+        accountability: { ...context.accountability, admin: true},
         schema: context.schema,
     })
 
