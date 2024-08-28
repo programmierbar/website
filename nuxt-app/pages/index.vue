@@ -44,6 +44,17 @@
             <NewsTicker :news="newsTicker" />
         </section>
 
+        <section v-if='highlightItem' class="relative py-16 md:my-14 md:py-28 lg:my-24 lg:py-36">
+          <SectionHeading class="px-6 md:px-0" element="h2">
+            {{ homePage.highlights_heading }}
+          </SectionHeading>
+          <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
+            <FadeAnimation fade-in="from_right">
+              <MeetupCard v-if='highlightItemType == "meetups"' :meetup="highlightItem" />
+            </FadeAnimation>
+          </div>
+        </section>
+
         <!-- Podcasts -->
         <section v-if="latestPodcasts.length" class="relative py-16 md:my-14 md:py-28 lg:my-24 lg:py-36">
             <SectionHeading class="px-6 md:px-0" element="h2">
@@ -97,7 +108,37 @@ const { data: pageData } = useAsyncData(async () => {
 // Extract home page, latest podcasts and podcast count from page data
 const homePage: ComputedRef<DirectusHomePage | undefined> = computed(() => pageData.value?.homePage)
 const latestPodcasts: ComputedRef<LatestPodcastItem[] | undefined> = computed(() => pageData.value?.latestPodcasts)
-const upcomingMeetups: ComputedRef<MeetupItem[]> = computed(() => pageData.value ? pageData.value.upcomingMeetups : [])
+
+// Currently, we only support _one_ highlight item of the type _podcast_.
+const highlightItem: ComputedRef<MeetupItem|undefined> = computed(() => {
+  if (!pageData.value) {
+    return;
+  }
+
+  if (pageData.value.homePage.highlights.length === 0) {
+    return
+  }
+
+  const highlightItem = pageData.value.homePage.highlights[0];
+  if (highlightItem.collection === 'meetups') {
+    return highlightItem.item;
+  }
+
+  return
+})
+const highlightItemType: ComputedRef<string|undefined> = computed(() => {
+  if (!pageData.value || pageData.value.homePage.highlights.length === 0) return
+
+  return pageData.value.homePage.highlights[0].collection;
+})
+
+const upcomingMeetups: ComputedRef<MeetupItem[]> = computed(() => {
+  if (!pageData.value) return [];
+  // Prevent showing the highlighted item twice on the homepage
+  return pageData.value.upcomingMeetups.filter((meetup) => {
+    return meetup.id !== highlightItem.value?.id;
+  });
+})
 
 const podcastCount = computed(() => pageData.value?.podcastCount)
 const newsTicker = computed(() => {

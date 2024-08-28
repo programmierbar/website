@@ -228,6 +228,7 @@ export interface DirectusHomePage {
     intro_heading: string
     highlights_heading: string
     meetup_heading: string
+    highlights: any[],
     video: DirectusFileItem
     news: { text: string }[]
     podcast_heading: string
