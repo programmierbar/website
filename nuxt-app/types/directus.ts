@@ -320,6 +320,12 @@ export interface DirectusCocPage {
     text: string
 }
 
+export interface DirectusRecordingsPage {
+  status: string
+  heading: string
+  text: string
+}
+
 export interface DirectusPrivacyPage {
     heading: string
     text: string

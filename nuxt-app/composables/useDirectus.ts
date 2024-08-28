@@ -121,6 +121,14 @@ export function useDirectus() {
         )
     }
 
+    async function getRecordingsPage() {
+      return await directus.request(
+        readSingleton('recordings_page', {
+          fields: ['*'],
+        })
+      )
+    }
+
     async function getContactPage() {
         return await directus.request(
             readSingleton('contact_page', {
@@ -657,6 +665,7 @@ export function useDirectus() {
         getLoginPage,
         getProfileCreationPage,
         getCocPage,
+        getRecordingsPage,
         getImprintPage,
         getContactPage,
         getMembers,
