@@ -56,6 +56,9 @@
                 show-podcast-link
             />
         </section>
+
+        <!-- Meetups -->
+        <MeetupSection v-if='upcomingMeetups.length > 0' :heading='homePage.meetup_heading' :meetups='upcomingMeetups' />
     </div>
 </template>
 
@@ -67,7 +70,7 @@ import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'
 import { useLoadingScreen, usePageMeta } from '../composables'
 import { DIRECTUS_CMS_URL } from '../config'
-import type { DirectusHomePage, LatestPodcastItem } from '../types'
+import type { DirectusHomePage, LatestPodcastItem, MeetupItem } from '../types';
 
 const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
 
@@ -76,18 +79,25 @@ const directus = useDirectus()
 
 // Query home page, latest podcasts and podcast count
 const { data: pageData } = useAsyncData(async () => {
-    const [homePage, latestPodcasts, podcastCount] = await Promise.all([
+    const [homePage, latestPodcasts, podcastCount, meetups] = await Promise.all([
         await directus.getHomepage(),
         await directus.getLatestPodcasts(),
         await directus.getPodcastCount(),
+        await directus.getMeetups(),
     ])
 
-    return { homePage, latestPodcasts, podcastCount }
+    const upcomingMeetups = meetups.filter((meetup) => {
+      const now = new Date()
+      return new Date(meetup.start_on) > now
+    })
+
+    return { homePage, latestPodcasts, podcastCount, upcomingMeetups }
 })
 
 // Extract home page, latest podcasts and podcast count from page data
 const homePage: ComputedRef<DirectusHomePage | undefined> = computed(() => pageData.value?.homePage)
 const latestPodcasts: ComputedRef<LatestPodcastItem[] | undefined> = computed(() => pageData.value?.latestPodcasts)
+const upcomingMeetups: ComputedRef<MeetupItem[]> = computed(() => pageData.value ? pageData.value.upcomingMeetups : [])
 
 const podcastCount = computed(() => pageData.value?.podcastCount)
 const newsTicker = computed(() => {
