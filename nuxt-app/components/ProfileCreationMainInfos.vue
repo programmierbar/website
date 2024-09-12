@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import ProfilePicture from '~/components/ProfilePicture.vue'
 import { useProfileCreationStore } from '~/composables/useProfileCreationStore'
 import { computed, ref, watch } from 'vue'
 
@@ -30,6 +29,10 @@ function updateFirstName(value: string) {
 function updateLastName(value: string) {
     store.updateMainInfos({ ...mainInfos.value, lastName: value })
 }
+
+function updatePicture(file: File, previewUrl: string) {
+  store.updateProfilePicture(file, previewUrl)
+}
 </script>
 
 <template>
@@ -41,7 +44,9 @@ function updateLastName(value: string) {
         </div>
 
         <div class="intro-text mb-2 mt-5 text-base font-light text-white md:text-4xl" v-html="introText"></div>
-        <ProfilePicture class="mb-10" />
+        <div class="flex w-full flex-col items-center justify-center my-10">
+          <ProfilePictureEditable @updated-profile-picture="updatePicture" class="h-24 w-24 md:h-64 md:w-64" />
+        </div>
         <div class="flex w-full flex-col items-center justify-center">
             <InputFieldWithHeadline
                 v-model="firstName"
