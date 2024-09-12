@@ -226,6 +226,9 @@ export interface DirectusHomePage {
     meta_title: string
     meta_description: string
     intro_heading: string
+    highlights_heading: string
+    meetup_heading: string
+    highlights: any[],
     video: DirectusFileItem
     news: { text: string }[]
     podcast_heading: string
