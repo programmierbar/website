@@ -9,7 +9,8 @@
         <Footer />
         <PodcastPlayer />
         <!-- <CookieBanner /> -->
-        <FlyInContent>
+        <!-- Conditionally render FlyInContent only if the current date is before November 7, 2024 (the flutter day) -->
+        <FlyInContent v-if="shouldShowFlutterDayTicketHint">
             <a href="https://flutterday.programmier.bar">
                 <DashTicketLogo class="h-44 w-44 lg:h-112 lg:w-112" />
             </a>
@@ -37,6 +38,13 @@ useHead({
     bodyAttrs: {
         class: 'bg-black',
     },
+})
+
+const shouldShowFlutterDayTicketHint = computed(() => {
+    const currentDate = new Date()
+    const cutoffDate = new Date('2024-11-06T23:59:59')
+
+    return currentDate <= cutoffDate
 })
 </script>
 
