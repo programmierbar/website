@@ -9,10 +9,17 @@
         <Footer />
         <PodcastPlayer />
         <!-- <CookieBanner /> -->
+        <FlyInContent>
+            <a href="https://flutterday.programmier.bar">
+                <DashTicketLogo class="h-44 w-44 lg:h-112 lg:w-112" />
+            </a>
+        </FlyInContent>
     </div>
 </template>
 
 <script setup lang="ts">
+import DashTicketLogo from 'assets/images/flutter-day.svg'
+
 useHead({
     meta: [
         { charset: 'utf-8' },
