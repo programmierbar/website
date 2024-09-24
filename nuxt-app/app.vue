@@ -12,7 +12,7 @@
         <!-- Conditionally render FlyInContent only if the current date is before November 7, 2024 (the flutter day) -->
         <FlyInContent v-if="shouldShowFlutterDayTicketHint">
             <a href="https://flutterday.programmier.bar">
-                <DashTicketLogo class="h-44 w-44 lg:h-112 lg:w-112" />
+                <DashTicketLogo class="h-60 w-60 lg:h-96 lg:w-96" />
             </a>
         </FlyInContent>
     </div>
