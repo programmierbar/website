@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 
 const visible = ref(false)
 const positionStyle = ref({
-    top: '0px',
+    bottom: '0px',
     left: '0px',
 })
 
@@ -11,17 +11,10 @@ const showDurationMillis = 10000
 const hideDurationMillis = 30_000
 
 function positionRandomlyInView() {
-    // Ensure that the vertical position is between 20% and 60% of the screen height (so that it won't be out of sight)
-    const minTop = window.innerHeight * 0.2
-    const maxTop = window.innerHeight * 0.6
-    const top = Math.floor(Math.random() * (maxTop - minTop) + minTop) + 'px'
+    const bottom = `${Math.floor(Math.random() * (window.innerHeight * 0.1) + window.innerHeight * 0.1)}px`
+    const left = `${Math.floor(Math.random() * (window.innerWidth * 0.2) + window.innerWidth * 0.2)}px`
 
-    // Ensure that the horizontal position is between 50% and 60% of the screen width (right side of screen)
-    const minLeft = window.innerWidth * 0.5
-    const maxLeft = window.innerWidth * 0.6
-    const left = Math.floor(Math.random() * (maxLeft - minLeft) + minLeft) + 'px'
-
-    positionStyle.value = { top, left }
+    positionStyle.value = { bottom, left }
 }
 
 function showComponent() {
@@ -59,63 +52,63 @@ onMounted(() => {
 }
 
 .fly-leave-active {
-    animation: flutter-out 2s ease-in-out forwards;
+    animation: flutter-out 4s ease-in-out forwards;
 }
 
 @keyframes flutter-in {
     0% {
-        transform: translateX(120vw) translateY(-10px) rotate(10deg);
+        transform: translateY(120vh) rotate(10deg);
     }
     20% {
-        transform: translateX(80vw) translateY(10px) rotate(-10deg);
+        transform: translateY(80vh) rotate(-10deg);
     }
     40% {
-        transform: translateX(60vw) translateY(-10px) rotate(10deg);
+        transform: translateY(60vh) rotate(10deg);
     }
     60% {
-        transform: translateX(40vw) translateY(10px) rotate(-10deg);
+        transform: translateY(40vh) rotate(-10deg);
     }
     80% {
-        transform: translateX(20vw) translateY(-10px) rotate(5deg);
+        transform: translateY(20vh) rotate(5deg);
     }
     100% {
-        transform: translateX(0) translateY(0) rotate(0deg);
+        transform: translateY(0) rotate(0deg);
     }
 }
 
 @keyframes flutter-out {
     0% {
-        transform: translateX(0) translateY(0) rotate(0deg);
+        transform: translateY(0) rotate(0deg);
     }
     10% {
-        transform: translateX(-10vw) translateY(-10px) rotate(10deg);
+        transform: translateY(-10vh) translateX(-5vw) rotate(-10deg);
     }
     20% {
-        transform: translateX(-20vw) translateY(10px) rotate(-10deg);
+        transform: translateY(0) translateX(-2vw) rotate(10deg);
     }
     30% {
-        transform: translateX(-30vw) translateY(-10px) rotate(15deg);
+        transform: translateY(-15vh) translateX(5vw) rotate(15deg);
     }
     40% {
-        transform: translateX(-40vw) translateY(10px) rotate(-15deg);
+        transform: translateY(-5vh) translateX(2vw) rotate(-5deg);
     }
     50% {
-        transform: translateX(-50vw) translateY(-10px) rotate(10deg);
+        transform: translateY(-25vh) translateX(0vw) rotate(5deg);
     }
     60% {
-        transform: translateX(-60vw) translateY(10px) rotate(-10deg);
+        transform: translateY(-40vh) rotate(-5deg);
     }
     70% {
-        transform: translateX(-70vw) translateY(-10px) rotate(5deg);
+        transform: translateY(-60vh) rotate(0deg);
     }
     80% {
-        transform: translateX(-80vw) translateY(10px) rotate(-5deg);
+        transform: translateY(-80vh) rotate(0deg);
     }
     90% {
-        transform: translateX(-100vw) translateY(-10px) rotate(0deg);
+        transform: translateY(-100vh) rotate(0deg);
     }
     100% {
-        transform: translateX(-120vw) translateY(0) rotate(-5deg);
+        transform: translateY(-120vh) rotate(-5deg);
     }
 }
 </style>
