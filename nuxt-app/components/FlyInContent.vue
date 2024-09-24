@@ -4,7 +4,7 @@ import { onMounted, ref } from 'vue'
 const visible = ref(false)
 const positionStyle = ref({
     bottom: '0px',
-    left: '0px',
+    right: '0px',
 })
 
 const showDurationMillis = 10000
@@ -12,9 +12,9 @@ const hideDurationMillis = 30_000
 
 function positionRandomlyInView() {
     const bottom = `${Math.floor(Math.random() * (window.innerHeight * 0.1) + window.innerHeight * 0.1)}px`
-    const left = `${Math.floor(Math.random() * (window.innerWidth * 0.2) + window.innerWidth * 0.2)}px`
+    const right = `${Math.floor(Math.random() * (window.innerWidth * 0.1) + window.innerWidth * 0.1)}px`
 
-    positionStyle.value = { bottom, left }
+    positionStyle.value = { bottom, right }
 }
 
 function showComponent() {
