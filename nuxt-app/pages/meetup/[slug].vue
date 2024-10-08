@@ -49,9 +49,14 @@
                 />
                 <p class="text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl">
                     Bitte beachte auch unsere
-                    <NuxtLink class="hover:text-lime hover:underline" data-cursor-hover :to="'/verhaltensregeln'"
-                        >Verhaltensregeln</NuxtLink
-                    >.
+                    <NuxtLink class="text-lime font-bold hover:underline" data-cursor-hover :to="'/verhaltensregeln'">
+                      Verhaltensregeln
+                    </NuxtLink>
+                    und den
+                    <NuxtLink class="text-lime font-bold hover:underline" data-cursor-hover :to="'/aufnahmen'">
+                      Hinweis zu Foto- und Videoaufnahmen
+                    </NuxtLink>
+                    .
                 </p>
 
                 <!-- Meetup tags -->
