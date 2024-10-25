@@ -16,7 +16,7 @@
   "dependencies": {
     "@slack/web-api": "^6.5.1",
     "axios": "^0.24.0",
-    "directus": "^10.1",
+    "directus": "^11.0",
     "jsonwebtoken": "^8.5.1",
     "typescript": "^5.2.2"
   },
