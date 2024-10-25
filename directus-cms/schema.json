@@ -235,7 +235,7 @@
         "hidden": false,
         "icon": "face_2",
         "item_duplication_fields": null,
-        "note": null,
+        "note": "Hier findest du die Emojis die im Profil zur Auswahl stehen",
         "preview_url": null,
         "singleton": false,
         "sort": 7,
@@ -305,6 +305,34 @@
       }
     },
     {
+      "collection": "home_page_highlights",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": null,
+        "archive_value": null,
+        "collapse": "open",
+        "collection": "home_page_highlights",
+        "color": null,
+        "display_template": null,
+        "group": null,
+        "hidden": true,
+        "icon": "import_export",
+        "item_duplication_fields": null,
+        "note": null,
+        "preview_url": null,
+        "singleton": false,
+        "sort": 5,
+        "sort_field": null,
+        "translations": null,
+        "unarchive_value": null,
+        "versioning": false
+      },
+      "schema": {
+        "name": "home_page_highlights"
+      }
+    },
+    {
       "collection": "home_page_podcasts",
       "meta": {
         "accountability": "all",
@@ -371,14 +399,14 @@
         "collection": "junction_directus_users_profiles",
         "color": null,
         "display_template": null,
-        "group": null,
+        "group": "Relations",
         "hidden": true,
         "icon": "import_export",
         "item_duplication_fields": null,
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": null,
+        "sort": 13,
         "sort_field": null,
         "translations": null,
         "unarchive_value": null,
@@ -406,7 +434,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 11,
+        "sort": 12,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -910,7 +938,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 12,
+        "sort": 13,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -935,7 +963,7 @@
         "hidden": false,
         "icon": "problem",
         "item_duplication_fields": null,
-        "note": null,
+        "note": "Hier findest du die Profile unserer Community Mitglieder",
         "preview_url": null,
         "singleton": false,
         "sort": 6,
@@ -1022,7 +1050,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 13,
+        "sort": 14,
         "sort_field": null,
         "translations": null,
         "unarchive_value": null,
@@ -1030,6 +1058,34 @@
       },
       "schema": {
         "name": "raffle_page"
+      }
+    },
+    {
+      "collection": "recordings_page",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": "status",
+        "archive_value": "archived",
+        "collapse": "open",
+        "collection": "recordings_page",
+        "color": null,
+        "display_template": null,
+        "group": "Pages",
+        "hidden": false,
+        "icon": "video_camera_front",
+        "item_duplication_fields": null,
+        "note": null,
+        "preview_url": null,
+        "singleton": true,
+        "sort": 11,
+        "sort_field": null,
+        "translations": null,
+        "unarchive_value": "draft",
+        "versioning": false
+      },
+      "schema": {
+        "name": "recordings_page"
       }
     },
     {
@@ -1050,7 +1106,7 @@
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": 13,
+        "sort": 14,
         "sort_field": "sort",
         "translations": null,
         "unarchive_value": null,
@@ -1114,6 +1170,34 @@
       },
       "schema": {
         "name": "tags"
+      }
+    },
+    {
+      "collection": "transcripts",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": "status",
+        "archive_value": "archived",
+        "collapse": "open",
+        "collection": "transcripts",
+        "color": null,
+        "display_template": null,
+        "group": "WIP",
+        "hidden": false,
+        "icon": "edit_square",
+        "item_duplication_fields": null,
+        "note": null,
+        "preview_url": null,
+        "singleton": false,
+        "sort": 2,
+        "sort_field": null,
+        "translations": null,
+        "unarchive_value": "draft",
+        "versioning": false
+      },
+      "schema": {
+        "name": "transcripts"
       }
     }
   ],
@@ -3815,6 +3899,37 @@
       }
     },
     {
+      "collection": "emojis",
+      "field": "notice-up8em3",
+      "type": "alias",
+      "meta": {
+        "collection": "emojis",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "notice-up8em3",
+        "group": null,
+        "hidden": false,
+        "interface": "presentation-notice",
+        "note": null,
+        "options": {
+          "icon": "search",
+          "text": "Official emoji titles: https://emojipedia.org/"
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 10,
+        "special": [
+          "alias",
+          "no-data"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
       "collection": "hall_of_fame_page",
       "field": "id",
       "type": "uuid",
@@ -4436,7 +4551,7 @@
         "options": null,
         "readonly": true,
         "required": false,
-        "sort": 13,
+        "sort": 15,
         "special": [
           "uuid"
         ],
@@ -4555,7 +4670,7 @@
         },
         "readonly": true,
         "required": false,
-        "sort": 14,
+        "sort": 16,
         "special": [
           "user-created"
         ],
@@ -4601,7 +4716,7 @@
         "options": null,
         "readonly": true,
         "required": false,
-        "sort": 15,
+        "sort": 17,
         "special": [
           "date-created"
         ],
@@ -4647,7 +4762,7 @@
         },
         "readonly": true,
         "required": false,
-        "sort": 16,
+        "sort": 18,
         "special": [
           "user-updated"
         ],
@@ -4693,7 +4808,7 @@
         "options": null,
         "readonly": true,
         "required": false,
-        "sort": 17,
+        "sort": 19,
         "special": [
           "date-updated"
         ],
@@ -4737,7 +4852,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 12,
+        "sort": 14,
         "special": [
           "alias",
           "no-data"
@@ -4917,7 +5032,7 @@
         },
         "readonly": false,
         "required": true,
-        "sort": 11,
+        "sort": 12,
         "special": null,
         "translations": null,
         "validation": null,
@@ -5036,14 +5151,22 @@
             {
               "field": "text",
               "name": "text",
-              "type": "string",
+              "type": "text",
               "meta": {
                 "field": "text",
                 "width": "full",
-                "type": "string",
-                "interface": "input",
+                "type": "text",
+                "interface": "input-rich-text-html",
                 "options": {
-                  "trim": true
+                  "trim": true,
+                  "toolbar": [
+                    "bold",
+                    "italic",
+                    "underline",
+                    "removeformat",
+                    "customLink",
+                    "code"
+                  ]
                 }
               }
             }
@@ -5051,7 +5174,7 @@
         },
         "readonly": false,
         "required": true,
-        "sort": 9,
+        "sort": 10,
         "special": [
           "cast-json"
         ],
@@ -5105,6 +5228,287 @@
       "schema": {
         "name": "intro_heading",
         "table": "home_page",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "home_page",
+      "field": "meetup_heading",
+      "type": "string",
+      "meta": {
+        "collection": "home_page",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "meetup_heading",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 13,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "meetup_heading",
+        "table": "home_page",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "home_page",
+      "field": "highlights_heading",
+      "type": "string",
+      "meta": {
+        "collection": "home_page",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "highlights_heading",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 11,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "highlights_heading",
+        "table": "home_page",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "home_page",
+      "field": "highlights",
+      "type": "alias",
+      "meta": {
+        "collection": "home_page",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "highlights",
+        "group": null,
+        "hidden": false,
+        "interface": "list-m2a",
+        "note": null,
+        "options": {
+          "enableCreate": false
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 9,
+        "special": [
+          "m2a"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
+      "collection": "home_page_highlights",
+      "field": "id",
+      "type": "integer",
+      "meta": {
+        "collection": "home_page_highlights",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 1,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "home_page_highlights",
+        "data_type": "integer",
+        "default_value": "nextval('home_page_highlights_id_seq'::regclass)",
+        "max_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": true,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "home_page_highlights",
+      "field": "home_page_id",
+      "type": "uuid",
+      "meta": {
+        "collection": "home_page_highlights",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "home_page_id",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 2,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "home_page_id",
+        "table": "home_page_highlights",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "home_page",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "home_page_highlights",
+      "field": "item",
+      "type": "string",
+      "meta": {
+        "collection": "home_page_highlights",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "item",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 3,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "item",
+        "table": "home_page_highlights",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "home_page_highlights",
+      "field": "collection",
+      "type": "string",
+      "meta": {
+        "collection": "home_page_highlights",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "collection",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 4,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "collection",
+        "table": "home_page_highlights",
         "data_type": "character varying",
         "default_value": null,
         "max_length": 255,
@@ -14016,7 +14420,9 @@
         "hidden": false,
         "interface": "file",
         "note": null,
-        "options": null,
+        "options": {
+          "folder": "94b9b20c-30e7-4de0-81ee-2a1201f6c673"
+        },
         "readonly": false,
         "required": false,
         "sort": 13,
@@ -16541,7 +16947,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 14,
+        "sort": 15,
         "special": [
           "file"
         ],
@@ -16583,11 +16989,12 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "enableCreate": false
+          "enableCreate": false,
+          "template": "{{emojis_id.display_emoji}} - {{emojis_id.title}}"
         },
         "readonly": false,
         "required": false,
-        "sort": 15,
+        "sort": 16,
         "special": [
           "m2m"
         ],
@@ -16612,11 +17019,12 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "enableCreate": false
+          "enableCreate": false,
+          "template": "{{tags_id.name}}"
         },
         "readonly": false,
         "required": false,
-        "sort": 16,
+        "sort": 17,
         "special": [
           "m2m"
         ],
@@ -16643,7 +17051,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 18,
+        "sort": 19,
         "special": [
           "cast-boolean"
         ],
@@ -16687,7 +17095,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 17,
+        "sort": 18,
         "special": null,
         "translations": null,
         "validation": null,
@@ -16729,7 +17137,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 19,
+        "sort": 20,
         "special": null,
         "translations": null,
         "validation": null,
@@ -16771,7 +17179,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 20,
+        "sort": 21,
         "special": [
           "cast-boolean"
         ],
@@ -16815,7 +17223,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 21,
+        "sort": 22,
         "special": [
           "m2m"
         ],
@@ -16823,6 +17231,48 @@
         "validation": null,
         "validation_message": null,
         "width": "full"
+      }
+    },
+    {
+      "collection": "profiles",
+      "field": "location",
+      "type": "string",
+      "meta": {
+        "collection": "profiles",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "location",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 14,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "location",
+        "table": "profiles",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
       }
     },
     {
@@ -17432,6 +17882,419 @@
         "data_type": "character varying",
         "default_value": "draft",
         "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "recordings_page",
+      "field": "id",
+      "type": "uuid",
+      "meta": {
+        "collection": "recordings_page",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 1,
+        "special": [
+          "uuid"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "recordings_page",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "recordings_page",
+      "field": "status",
+      "type": "string",
+      "meta": {
+        "collection": "recordings_page",
+        "conditions": null,
+        "display": "labels",
+        "display_options": {
+          "choices": [
+            {
+              "text": "$t:published",
+              "value": "published",
+              "color": "var(--theme--primary)",
+              "foreground": "var(--theme--primary)",
+              "background": "var(--theme--primary-background)"
+            },
+            {
+              "text": "$t:draft",
+              "value": "draft",
+              "color": "var(--theme--foreground)",
+              "foreground": "var(--theme--foreground)",
+              "background": "var(--theme--background-normal)"
+            },
+            {
+              "text": "$t:archived",
+              "value": "archived",
+              "color": "var(--theme--warning)",
+              "foreground": "var(--theme--warning)",
+              "background": "var(--theme--warning-background)"
+            }
+          ],
+          "showAsDot": true
+        },
+        "field": "status",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": null,
+        "options": {
+          "choices": [
+            {
+              "text": "$t:published",
+              "value": "published",
+              "color": "var(--theme--primary)"
+            },
+            {
+              "text": "$t:draft",
+              "value": "draft",
+              "color": "var(--theme--foreground)"
+            },
+            {
+              "text": "$t:archived",
+              "value": "archived",
+              "color": "var(--theme--warning)"
+            }
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 2,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "status",
+        "table": "recordings_page",
+        "data_type": "character varying",
+        "default_value": "draft",
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "recordings_page",
+      "field": "user_created",
+      "type": "uuid",
+      "meta": {
+        "collection": "recordings_page",
+        "conditions": null,
+        "display": "user",
+        "display_options": null,
+        "field": "user_created",
+        "group": null,
+        "hidden": true,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "template": "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
+        },
+        "readonly": true,
+        "required": false,
+        "sort": 3,
+        "special": [
+          "user-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "user_created",
+        "table": "recordings_page",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "recordings_page",
+      "field": "date_created",
+      "type": "timestamp",
+      "meta": {
+        "collection": "recordings_page",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_created",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 4,
+        "special": [
+          "date-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_created",
+        "table": "recordings_page",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "recordings_page",
+      "field": "user_updated",
+      "type": "uuid",
+      "meta": {
+        "collection": "recordings_page",
+        "conditions": null,
+        "display": "user",
+        "display_options": null,
+        "field": "user_updated",
+        "group": null,
+        "hidden": true,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "template": "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
+        },
+        "readonly": true,
+        "required": false,
+        "sort": 5,
+        "special": [
+          "user-updated"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "user_updated",
+        "table": "recordings_page",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "recordings_page",
+      "field": "date_updated",
+      "type": "timestamp",
+      "meta": {
+        "collection": "recordings_page",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_updated",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 6,
+        "special": [
+          "date-updated"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_updated",
+        "table": "recordings_page",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "recordings_page",
+      "field": "heading",
+      "type": "string",
+      "meta": {
+        "collection": "recordings_page",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "heading",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 7,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "heading",
+        "table": "recordings_page",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "recordings_page",
+      "field": "text",
+      "type": "text",
+      "meta": {
+        "collection": "recordings_page",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "text",
+        "group": null,
+        "hidden": false,
+        "interface": "input-rich-text-html",
+        "note": null,
+        "options": {
+          "toolbar": [
+            "blockquote",
+            "bold",
+            "bullist",
+            "code",
+            "customLink",
+            "fullscreen",
+            "h1",
+            "h2",
+            "h3",
+            "italic",
+            "numlist",
+            "removeformat",
+            "underline"
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 8,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "text",
+        "table": "recordings_page",
+        "data_type": "text",
+        "default_value": null,
+        "max_length": null,
         "numeric_precision": null,
         "numeric_scale": null,
         "is_nullable": true,
@@ -18357,17 +19220,7 @@
       "type": "uuid",
       "meta": {
         "collection": "speakers",
-        "conditions": [
-          {
-            "name": "If published",
-            "rule": {
-              "status": {
-                "_eq": "published"
-              }
-            },
-            "required": true
-          }
-        ],
+        "conditions": null,
         "display": null,
         "display_options": null,
         "field": "event_image",
@@ -19684,6 +20537,629 @@
         "validation_message": null,
         "width": "full"
       }
+    },
+    {
+      "collection": "transcripts",
+      "field": "id",
+      "type": "uuid",
+      "meta": {
+        "collection": "transcripts",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 1,
+        "special": [
+          "uuid"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "transcripts",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "status",
+      "type": "string",
+      "meta": {
+        "collection": "transcripts",
+        "conditions": null,
+        "display": "labels",
+        "display_options": {
+          "choices": [
+            {
+              "text": "$t:published",
+              "value": "published",
+              "color": "var(--theme--primary)",
+              "foreground": "var(--theme--primary)",
+              "background": "var(--theme--primary-background)"
+            },
+            {
+              "text": "$t:draft",
+              "value": "draft",
+              "color": "var(--theme--foreground)",
+              "foreground": "var(--theme--foreground)",
+              "background": "var(--theme--background-normal)"
+            },
+            {
+              "text": "$t:archived",
+              "value": "archived",
+              "color": "var(--theme--warning)",
+              "foreground": "var(--theme--warning)",
+              "background": "var(--theme--warning-background)"
+            }
+          ],
+          "showAsDot": true
+        },
+        "field": "status",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": null,
+        "options": {
+          "choices": [
+            {
+              "text": "$t:published",
+              "value": "published",
+              "color": "var(--theme--primary)"
+            },
+            {
+              "text": "$t:draft",
+              "value": "draft",
+              "color": "var(--theme--foreground)"
+            },
+            {
+              "text": "$t:archived",
+              "value": "archived",
+              "color": "var(--theme--warning)"
+            }
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 2,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "status",
+        "table": "transcripts",
+        "data_type": "character varying",
+        "default_value": "draft",
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "user_created",
+      "type": "uuid",
+      "meta": {
+        "collection": "transcripts",
+        "conditions": null,
+        "display": "user",
+        "display_options": null,
+        "field": "user_created",
+        "group": null,
+        "hidden": true,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "template": "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
+        },
+        "readonly": true,
+        "required": false,
+        "sort": 3,
+        "special": [
+          "user-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "user_created",
+        "table": "transcripts",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "date_created",
+      "type": "timestamp",
+      "meta": {
+        "collection": "transcripts",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_created",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 4,
+        "special": [
+          "date-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_created",
+        "table": "transcripts",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "user_updated",
+      "type": "uuid",
+      "meta": {
+        "collection": "transcripts",
+        "conditions": null,
+        "display": "user",
+        "display_options": null,
+        "field": "user_updated",
+        "group": null,
+        "hidden": true,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "template": "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
+        },
+        "readonly": true,
+        "required": false,
+        "sort": 5,
+        "special": [
+          "user-updated"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "user_updated",
+        "table": "transcripts",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "date_updated",
+      "type": "timestamp",
+      "meta": {
+        "collection": "transcripts",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_updated",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 6,
+        "special": [
+          "date-updated"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_updated",
+        "table": "transcripts",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "podcast_audio_file",
+      "type": "uuid",
+      "meta": {
+        "collection": "transcripts",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "podcast_audio_file",
+        "group": null,
+        "hidden": false,
+        "interface": "file",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": true,
+        "sort": 8,
+        "special": [
+          "file"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "podcast_audio_file",
+        "table": "transcripts",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_files",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "service",
+      "type": "string",
+      "meta": {
+        "collection": "transcripts",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "service",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": null,
+        "options": {
+          "choices": [
+            {
+              "text": "deepgram",
+              "value": "deepgram"
+            }
+          ]
+        },
+        "readonly": false,
+        "required": true,
+        "sort": 10,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "service",
+        "table": "transcripts",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "supported_features",
+      "type": "json",
+      "meta": {
+        "collection": "transcripts",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "supported_features",
+        "group": null,
+        "hidden": false,
+        "interface": "select-multiple-checkbox",
+        "note": null,
+        "options": {
+          "choices": [
+            {
+              "text": "Timestamps",
+              "value": "timestamps"
+            },
+            {
+              "text": "Diarization",
+              "value": "diarization"
+            }
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 11,
+        "special": [
+          "cast-json"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "supported_features",
+        "table": "transcripts",
+        "data_type": "json",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "podcast",
+      "type": "uuid",
+      "meta": {
+        "collection": "transcripts",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "podcast",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "enableCreate": false,
+          "template": "{{type}} - {{number}} - {{title}}"
+        },
+        "readonly": false,
+        "required": true,
+        "sort": 7,
+        "special": [
+          "m2o"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "podcast",
+        "table": "transcripts",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "podcasts",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "raw_response",
+      "type": "json",
+      "meta": {
+        "collection": "transcripts",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "raw_response",
+        "group": null,
+        "hidden": false,
+        "interface": "input-code",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 12,
+        "special": [
+          "cast-json"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "raw_response",
+        "table": "transcripts",
+        "data_type": "json",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "speakers",
+      "type": "json",
+      "meta": {
+        "collection": "transcripts",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "speakers",
+        "group": null,
+        "hidden": false,
+        "interface": "list",
+        "note": null,
+        "options": {
+          "fields": [
+            {
+              "field": "identifier",
+              "name": "identifier",
+              "type": "string",
+              "meta": {
+                "field": "identifier",
+                "width": "half",
+                "type": "string",
+                "required": true,
+                "interface": "input"
+              }
+            },
+            {
+              "field": "name",
+              "name": "name",
+              "type": "string",
+              "meta": {
+                "field": "name",
+                "width": "half",
+                "type": "string",
+                "interface": "input"
+              }
+            }
+          ],
+          "template": "{{identifier}}: {{name}}"
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 9,
+        "special": [
+          "cast-json"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "speakers",
+        "table": "transcripts",
+        "data_type": "json",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
     }
   ],
   "relations": [
@@ -19913,6 +21389,36 @@
       }
     },
     {
+      "collection": "directus_settings",
+      "field": "public_registration_role",
+      "related_collection": "directus_roles",
+      "meta": null,
+      "schema": {
+        "table": "directus_settings",
+        "column": "public_registration_role",
+        "foreign_key_table": "directus_roles",
+        "foreign_key_column": "id",
+        "constraint_name": "directus_settings_public_registration_role_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
+      }
+    },
+    {
+      "collection": "directus_webhooks",
+      "field": "migrated_flow",
+      "related_collection": "directus_flows",
+      "meta": null,
+      "schema": {
+        "table": "directus_webhooks",
+        "column": "migrated_flow",
+        "foreign_key_table": "directus_flows",
+        "foreign_key_column": "id",
+        "constraint_name": "directus_webhooks_migrated_flow_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
+      }
+    },
+    {
       "collection": "emojis",
       "field": "user_created",
       "related_collection": "directus_users",
@@ -20083,6 +21589,50 @@
         "foreign_key_table": "directus_files",
         "foreign_key_column": "id",
         "constraint_name": "home_page_video_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
+      }
+    },
+    {
+      "collection": "home_page_highlights",
+      "field": "item",
+      "related_collection": null,
+      "meta": {
+        "junction_field": "home_page_id",
+        "many_collection": "home_page_highlights",
+        "many_field": "item",
+        "one_allowed_collections": [
+          "meetups",
+          "podcasts"
+        ],
+        "one_collection": null,
+        "one_collection_field": "collection",
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      }
+    },
+    {
+      "collection": "home_page_highlights",
+      "field": "home_page_id",
+      "related_collection": "home_page",
+      "meta": {
+        "junction_field": "item",
+        "many_collection": "home_page_highlights",
+        "many_field": "home_page_id",
+        "one_allowed_collections": null,
+        "one_collection": "home_page",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": "highlights",
+        "sort_field": null
+      },
+      "schema": {
+        "table": "home_page_highlights",
+        "column": "home_page_id",
+        "foreign_key_table": "home_page",
+        "foreign_key_column": "id",
+        "constraint_name": "home_page_highlights_home_page_id_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
@@ -21713,6 +23263,56 @@
       }
     },
     {
+      "collection": "recordings_page",
+      "field": "user_created",
+      "related_collection": "directus_users",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "recordings_page",
+        "many_field": "user_created",
+        "one_allowed_collections": null,
+        "one_collection": "directus_users",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "recordings_page",
+        "column": "user_created",
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id",
+        "constraint_name": "recordings_page_user_created_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "recordings_page",
+      "field": "user_updated",
+      "related_collection": "directus_users",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "recordings_page",
+        "many_field": "user_updated",
+        "one_allowed_collections": null,
+        "one_collection": "directus_users",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "recordings_page",
+        "column": "user_updated",
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id",
+        "constraint_name": "recordings_page_user_updated_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
+      }
+    },
+    {
       "collection": "speaker_tags",
       "field": "tag",
       "related_collection": "tags",
@@ -21910,6 +23510,106 @@
         "constraint_name": "tags_updated_by_foreign",
         "on_update": "NO ACTION",
         "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "user_created",
+      "related_collection": "directus_users",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "transcripts",
+        "many_field": "user_created",
+        "one_allowed_collections": null,
+        "one_collection": "directus_users",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "transcripts",
+        "column": "user_created",
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id",
+        "constraint_name": "transcripts_user_created_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "user_updated",
+      "related_collection": "directus_users",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "transcripts",
+        "many_field": "user_updated",
+        "one_allowed_collections": null,
+        "one_collection": "directus_users",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "transcripts",
+        "column": "user_updated",
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id",
+        "constraint_name": "transcripts_user_updated_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "podcast_audio_file",
+      "related_collection": "directus_files",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "transcripts",
+        "many_field": "podcast_audio_file",
+        "one_allowed_collections": null,
+        "one_collection": "directus_files",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "transcripts",
+        "column": "podcast_audio_file",
+        "foreign_key_table": "directus_files",
+        "foreign_key_column": "id",
+        "constraint_name": "transcripts_podcast_audio_file_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
+      }
+    },
+    {
+      "collection": "transcripts",
+      "field": "podcast",
+      "related_collection": "podcasts",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "transcripts",
+        "many_field": "podcast",
+        "one_allowed_collections": null,
+        "one_collection": "podcasts",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "transcripts",
+        "column": "podcast",
+        "foreign_key_table": "podcasts",
+        "foreign_key_column": "id",
+        "constraint_name": "transcripts_podcast_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
       }
     }
   ]
