@@ -12,7 +12,7 @@
         "prettier": "prettier . --write"
     },
     "dependencies": {
-        "@directus/sdk": "^15.0.1",
+        "@directus/sdk": "^17.0.0",
         "@nuxtjs/tailwindcss": "^6.11.4",
         "@pinia/nuxt": "^0.5.1",
         "@types/google.maps": "^3.55.3",
