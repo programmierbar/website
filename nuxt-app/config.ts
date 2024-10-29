@@ -10,7 +10,7 @@ export const DIRECTUS_CMS_URL =
         ? process.env.DIRECTUS_CMS_URL.slice(0, -1)
         : process.env.DIRECTUS_CMS_URL) || 'https://admin.programmier.bar'
 export const SEND_CONTACT_EMAIL_URL = '/api/email'
-export const BUZZSPROUT_TRACKING_URL = 'https://chtbl.com/track/E24551/https://www.podtrac.com/pts/redirect.mp3'
+export const BUZZSPROUT_TRACKING_URL = 'https://op3.dev/e/https://www.podtrac.com/pts/redirect.mp3'
 
 // programmier.bar
 export const WEBSITE_URL = process.env.WEBSITE_URL || 'https://www.programmier.bar'
