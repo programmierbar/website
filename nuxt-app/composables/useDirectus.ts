@@ -531,10 +531,12 @@ export function useDirectus() {
                     'task_area',
                     'occupation',
                     'description',
+                    'sort',
                     'normal_image.*',
                     'action_image.*',
                 ],
                 filter,
+                sort: ['sort']
             })
         )
     }

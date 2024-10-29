@@ -112,6 +112,7 @@ export interface DirectusMemberItem {
           }
     )[]
     picks_of_the_day: (string | DirectusPickOfTheDayItem)[]
+    sort: number
     tags: (
         | number
         | {
