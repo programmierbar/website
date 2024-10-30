@@ -53,6 +53,7 @@ export interface ItemsService {
     readByQuery: (query: any) => Promise<PodcastData[]>
     readOne: (id: string | number) => Promise<any>
     updateOne: (id: string | number, data: any) => Promise<any>
+    createOne: (data: any) => Promise<any>
 }
 
 export interface Env {
@@ -71,6 +72,7 @@ export interface Dependencies {
     logger: Logger
     ItemsService: new (collection: string, options: any) => ItemsService
     env: Record<string, any>
+    getSchema?: () => Promise<any>
 }
 
 // Buzzsprout Data Interface
