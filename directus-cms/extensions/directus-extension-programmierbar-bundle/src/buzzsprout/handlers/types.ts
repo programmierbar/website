@@ -50,7 +50,7 @@ export interface Logger {
 }
 
 export interface ItemsService {
-    readByQuery: (query: any) => Promise<PodcastData[]>
+    readByQuery: (query: any) => Promise<any[]>
     readOne: (id: string | number) => Promise<any>
     updateOne: (id: string | number, data: any) => Promise<any>
     createOne: (data: any) => Promise<any>

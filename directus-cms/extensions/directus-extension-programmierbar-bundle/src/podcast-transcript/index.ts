@@ -19,7 +19,7 @@ export default defineHook(({ action, schedule }, hookContext) => {
         generateTranscriptItem(HOOK_NAME, { payload, metadata, context }, {logger, ItemsService})
     )
 
-    schedule('*/1 * * * *',
+    schedule('*/5 * * * *',
         processTranscriptItem(HOOK_NAME, {logger, ItemsService, getSchema, env})
     )
 })

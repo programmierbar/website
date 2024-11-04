@@ -14,19 +14,19 @@ function processTranscriptItem(
     return async () => {
         logger.info(`${HOOK_NAME} hook: Start schedule function`)
 
-        const globalSchema = await getSchema()
+        const globalSchema = await getSchema!()
 
         const transcriptItemsService = new ItemsService('transcripts', {
             schema: globalSchema,
         })
 
-        const existingTranscripts = await transcriptItemsService.readByQuery({filter: {raw_response: {'_null': true}}, sort: ['-date_created']});
-        if (existingTranscripts.length == 0) {
+        const existingTranscripts = await transcriptItemsService.readByQuery({filter: {raw_response: {'_null': true}}, sort: ['-date_created'], limit: 1});
+        if (existingTranscripts.length === 0) {
             logger.info(`${HOOK_NAME} hook: Found no waiting transcripts. ` +
                 `Exiting hook early.`);
             return;
         }
-        const existingTranscript = existingTranscripts[0];
+        const existingTranscript = existingTranscripts.pop();
 
         logger.info(`${HOOK_NAME} hook: Processing transcript "${existingTranscript.id}".`);
 
