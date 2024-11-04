@@ -73,7 +73,7 @@ function processTranscriptItem(
             logger.info(`${HOOK_NAME} hook: Transcription persisted.`);
             try {
                 await postSlackMessage(
-                    `:info: *${HOOK_NAME} hook*: Transcript wurde erzeugt und kann veröffentlicht werden.`
+                    `:info: *${HOOK_NAME} hook*: Transcript wurde erzeugt und kann veröffentlicht werden: https://admin.programmier.bar/admin/content/transcripts/${existingTranscript.id}`
                 )
             } catch (slackError: any) {
                 logger.error(`${HOOK_NAME} hook: Error: Could not post message to Slack: ${slackError.message}`)
@@ -82,7 +82,7 @@ function processTranscriptItem(
         } catch (error: any) {
             try {
                 await postSlackMessage(
-                    `:warning: *${HOOK_NAME} hook*: Transcript konnte nicht erzeugt werden. Error: ${error.message}`
+                    `:warning: *${HOOK_NAME} hook*: Transcript "${existingTranscript.id}" konnte nicht erzeugt werden. Error: ${error.message}`
                 )
             } catch (slackError: any) {
                 logger.error(`${HOOK_NAME} hook: Error: Could not post message to Slack: ${slackError.message}`)
