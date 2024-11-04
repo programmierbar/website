@@ -58,6 +58,11 @@
                 "type": "hook",
                 "name": "create-profile",
                 "source": "src/create-profile/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "podcast-transcript",
+                "source": "src/podcast-transcript/index.ts"
             }
         ],
         "host": "^10.10.0"
