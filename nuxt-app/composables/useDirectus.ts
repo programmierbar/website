@@ -470,9 +470,10 @@ export function useDirectus() {
                     'profile_image.*',
                     'tags.tag.id',
                     'tags.tag.name',
+                    'podcasts.podcast.type',
                 ],
                 limit: -1,
-                sort: ['sort', '-published_on'],
+                sort: ['podcasts.podcast.type', 'sort', '-published_on'],
             })
         )
     }
