@@ -9,6 +9,7 @@ import {
     type QueryFilter,
 } from '@directus/sdk'
 import type {
+  DirectusEmojiItem,
   DirectusMemberItem,
   DirectusPickOfTheDayItem,
   DirectusProfileItem,
@@ -574,24 +575,50 @@ export function useDirectus() {
             )
     }
 
-  async function getProfileById(id: string) {
-    return (await directus
+  async function getProfileBySlug(slug: string) {
+    const profile = (await directus
       .request(
         readItems('profiles', {
           fields: [
             'id',
+            'date_created',
             'first_name',
             'last_name',
             'display_name',
             'description',
             'job_role',
             'job_employer',
-            'profile_image.*'
+            'profile_image.*',
+            'slug',
+            'interested_tags.tags_id.id',
+            'interested_tags.tags_id.name',
+            'emojis.emojis_id.id',
+            'emojis.emojis_id.title',
+            'emojis.emojis_id.display_emoji',
+            //'interested_tags.tag.id',
+            //'interested_tags.tag.name',
           ],
           limit: 1,
-          filter: { id: { _eq: id } },
+          filter: { slug: { _eq: slug } },
         })
-      ))?.pop() as unknown as DirectusProfileItem
+      ).then((results: any) => {
+        const items = results as DirectusProfileItem[];
+        return items.map((profile) => ({
+          ...profile,
+          interested_tags_prepared: profile.interested_tags?.map((tag: any) => tag.tags_id).filter((tag) => tag) as TagItem[],
+        }))
+    }).then((results: any) => {
+          const items = results as DirectusProfileItem[];
+          return items.map((profile) => ({
+            ...profile,
+            emojis_prepared: profile.emojis?.map((emoji: any) => emoji.emojis_id).filter((emoji) => emoji) as DirectusEmojiItem[],
+          }))
+        })
+    )?.pop() as unknown as DirectusProfileItem
+
+    profile.date_created_prepared = new Date(profile.date_created);
+
+    return profile;
   }
 
   async function getTranscriptForPodcast(podcast: PodcastItem) {
@@ -690,6 +717,6 @@ export function useDirectus() {
         getSingleSignOnProviders,
         getCurrentUser,
         registerNewUser,
-        getProfileById,
+        getProfileBySlug,
     }
 }

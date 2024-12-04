@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 
-import type { DirectusMeetupItem, DirectusPodcastItem, DirectusSpeakerItem } from '~/types/directus'
+import type { DirectusMeetupItem, DirectusPodcastItem, DirectusSpeakerItem, DirectusTagItem } from '~/types/directus';
 
 export type LatestPodcastItem = Pick<
     DirectusPodcastItem,
@@ -92,8 +92,16 @@ export interface LoginProvider {
     url: string
 }
 
+export interface DirectusEmojiItem {
+  id: string
+  title: string
+  display_emoji: string
+}
+
 export interface DirectusProfileItem {
     id: string
+    date_created: string
+    date_created_prepared: Date;
     first_name: string
     last_name: string
     display_name: string
@@ -101,6 +109,17 @@ export interface DirectusProfileItem {
     job_role: string
     job_employer: string
     profile_image: FileItem
+    slug: string
+    interested_tags: {
+      id: number
+      tags_id: DirectusTagItem
+    }[]
+    emojis: {
+      id: number
+      emojis_id: DirectusEmojiItem
+    }[]
+    interested_tags_prepared: TagItem[]
+    emojis_prepared: DirectusEmojiItem[]
 }
 
 export enum DirectusTranscriptItemServices {
