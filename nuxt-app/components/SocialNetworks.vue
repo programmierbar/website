@@ -9,7 +9,7 @@
                 data-cursor-hover
                 @click="() => trackGoal(socialNetwork.eventId)"
             >
-                <component :is="socialNetwork.icon" />
+                <component :is="socialNetwork.icon" class="lg:mt-1.5" />
             </a>
         </li>
         <li style="display: none">

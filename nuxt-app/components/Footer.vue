@@ -24,16 +24,17 @@
 
                 <div class="flex flex-col-reverse lg:flex-row lg:items-baseline lg:justify-between">
                     <!-- Sub menu -->
-                    <ul class="mt-6 flex flex-wrap space-x-5 lg:mt-0 lg:space-x-8">
-                        <li v-for="subMenuItem in subMenuItems" :key="subMenuItem.href">
-                            <NuxtLink
-                                class="text-sm text-white hover:text-lime hover:underline lg:text-xl"
-                                data-cursor-hover
-                                :to="subMenuItem.href"
-                                >{{ subMenuItem.label }}</NuxtLink
-                            >
-                        </li>
-                    </ul>
+                    <div class="mt-6 grid grid-cols-2 place-items-center md:grid-cols-4 lg:mt-0">
+                        <NuxtLink
+                            v-for="subMenuItem in subMenuItems"
+                            :key="subMenuItem.href"
+                            class="text-sm text-white hover:text-lime hover:underline lg:text-xl"
+                            data-cursor-hover
+                            :to="subMenuItem.href"
+                        >
+                            {{ subMenuItem.label }}
+                        </NuxtLink>
+                    </div>
 
                     <!-- Social networks -->
                     <SocialNetworks class="h-8" />
@@ -63,9 +64,9 @@ const mainMenuItems = [
 ]
 const subMenuItems = [
     { label: 'Verhaltensregeln', href: '/verhaltensregeln' },
+    { label: 'Kontakt', href: '/kontakt' },
     { label: 'Datenschutz', href: '/datenschutz' },
     { label: 'Impressum', href: '/impressum' },
-    { label: 'Kontakt', href: '/kontakt' },
 ]
 const fullYear = new Date().getFullYear()
 </script>
