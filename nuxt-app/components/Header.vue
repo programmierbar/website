@@ -220,7 +220,7 @@ const closeMenu = () => {
  * input element and opens the search form.
  */
 const setInitialSearch = () => {
-    if (route.path === '/suche' && searchInputElement.value) {
+    if (route.path === '/suche-neu' && searchInputElement.value) {
         searchInputElement.value.value = (route.query.search as string) || ''
         searchIsOpen.value = true
         nextTick(() => searchInputElement.value?.focus())
@@ -233,7 +233,7 @@ router.afterEach(setInitialSearch)
 
 // Close and reset search if path does not change to /suche
 router.afterEach((to) => {
-    if (to.path !== '/suche' && searchIsOpen.value) {
+    if (to.path !== '/suche-neu' && searchIsOpen.value) {
         searchIsOpen.value = false
         if (searchInputElement.value?.value) {
             searchInputElement.value.value = ''
@@ -262,7 +262,7 @@ const handleBurgerClick = () => {
 const handleSearch = (event: Event) => {
     if (searchIsOpen.value) {
         const location = {
-            path: '/suche',
+            path: '/suche-neu',
             query: { search: searchInputElement.value?.value || '' },
         }
         navigateTo(location)

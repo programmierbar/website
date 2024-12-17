@@ -53,6 +53,7 @@ export default defineNuxtConfig({
         // '@nuxtjs/sitemap',
         'nuxt-jsonld',
         '@pinia/nuxt',
+        '@nuxtjs/algolia',
     ],
 
     // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
