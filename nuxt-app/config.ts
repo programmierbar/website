@@ -20,8 +20,6 @@ export const TWITTER_HANDLE = '@programmierbar'
 // External URLs
 export const APPLE_PODCASTS_URL =
     'https://podcasts.apple.com/us/podcast/programmier-bar-der-podcast-f%C3%BCr-app-und-webentwicklung/id1371409964'
-export const GOOGLE_PODCASTS_URL =
-    'https://podcasts.google.com/?feed=aHR0cHM6Ly9mZWVkcy5idXp6c3Byb3V0LmNvbS8xNzYyMzkucnNz'
 export const SPOTIFY_URL = 'https://open.spotify.com/show/0ik0sXv9paTQCeThcOLCCJ'
 export const BUZZSPROUT_RSS_FEED_URL = 'https://feeds.buzzsprout.com/176239.rss'
 export const YOUTUBE_PODCAST_URL = 'https://www.youtube.com/playlist?list=PLdL7w42vTISATGJPlvPa91GEMOSHqbWZY'
@@ -32,7 +30,6 @@ export const GOOGLE_MAPS_URL = 'https://goo.gl/maps/7h8a14WPPQkQL4LB8'
 export const PLAY_PODCAST_EVENT_ID = 'KNHXDHVI'
 export const PAUSE_PODCAST_EVENT_ID = 'DMZA93KU'
 export const OPEN_SPOTIFY_EVENT_ID = 'DI0ZKGUH'
-export const OPEN_GOOGLE_PODCASTS_EVENT_ID = 'UIBOTSAI'
 export const OPEN_APPLE_PODCASTS_EVENT_ID = 'PKU17OFR'
 export const OPEN_RSS_FEED_EVENT_ID = 'JCUNNGSR'
 export const OPEN_YOUTUBE_PODCAST_URL_EVENT_ID = 'Open YouTube Podcast Url'
