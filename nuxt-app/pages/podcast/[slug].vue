@@ -67,11 +67,11 @@
                         class="mt-12"
                     />
                     <PodcastTranscript
-                      v-if="transcript"
-                      :name="podcast.slug"
-                      :podcast='podcast'
-                      :transcript="transcript"
-                      class="mt-12"
+                        v-if="transcript"
+                        :name="podcast.slug"
+                        :podcast="podcast"
+                        :transcript="transcript"
+                        class="mt-12"
                     />
                 </div>
             </div>
@@ -113,7 +113,6 @@
 
 <script setup lang="ts">
 import AppleIcon from '~/assets/logos/apple-podcasts-color.svg'
-import GoogleIcon from '~/assets/logos/google-podcasts-color.svg'
 import RssIcon from '~/assets/logos/rss-feed-color.svg'
 import SpotifyIcon from '~/assets/logos/spotify-color.svg'
 import YouTubeIcon from '~/assets/logos/youtube-color.svg'
@@ -124,9 +123,7 @@ import {
     BUZZSPROUT_RSS_FEED_URL,
     BUZZSPROUT_TRACKING_URL,
     DOWNLOAD_PODCAST_EVENT_ID,
-    GOOGLE_PODCASTS_URL,
     OPEN_APPLE_PODCASTS_EVENT_ID,
-    OPEN_GOOGLE_PODCASTS_EVENT_ID,
     OPEN_RSS_FEED_EVENT_ID,
     OPEN_SPOTIFY_EVENT_ID,
     OPEN_YOUTUBE_PODCAST_URL_EVENT_ID,
@@ -160,7 +157,7 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
     }
 
     // Transcript
-    const transcript = await directus.getTranscriptForPodcast(podcast);
+    const transcript = await directus.getTranscriptForPodcast(podcast)
 
     // Query related podcasts
     const relatedPodcasts = podcast.tagsPrepared.length ? await directus.getRelatedPodcasts(podcast) : []
@@ -223,12 +220,6 @@ const platforms = computed(() => [
         icon: AppleIcon,
         url: podcast.value?.apple_url || APPLE_PODCASTS_URL,
         eventId: OPEN_APPLE_PODCASTS_EVENT_ID,
-    },
-    {
-        name: 'Google Podcast',
-        icon: GoogleIcon,
-        url: podcast.value?.google_url || GOOGLE_PODCASTS_URL,
-        eventId: OPEN_GOOGLE_PODCASTS_EVENT_ID,
     },
     {
         name: 'Spotify',
