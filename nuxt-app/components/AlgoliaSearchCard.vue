@@ -2,6 +2,7 @@
     <div>
         <nuxt-link class="block space-y-6 lg:flex lg:space-x-12 lg:space-y-0" :to="item.url" data-cursor-more>
           <nuxt-img
+            v-if="item.image"
             class="h-32 w-32 object-cover md:h-48 md:w-48 lg:h-72 lg:w-72"
             :src="item.image"
             sizes="xs:128px md:192px lg:288px"
