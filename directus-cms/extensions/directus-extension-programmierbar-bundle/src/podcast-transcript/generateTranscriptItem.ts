@@ -49,8 +49,6 @@ async function generateTranscriptItem(
 
         const existingTranscripts = await transcriptItemsService.readByQuery(query);
 
-        console.log(JSON.stringify(existingTranscripts));
-
         if (existingTranscripts.length > 0) {
             logger.info(`${HOOK_NAME} hook: Found ${existingTranscripts.length} existing transcripts for podcast: "${item.id}". ` +
                 `Exiting hook early.`);
