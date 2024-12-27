@@ -63,6 +63,11 @@
                 "type": "hook",
                 "name": "podcast-transcript",
                 "source": "src/podcast-transcript/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "algolia-index",
+                "source": "src/algolia-index/index.ts"
             }
         ],
         "host": "^10.10.0"
@@ -73,20 +78,24 @@
         "link": "directus-extension link",
         "add": "directus-extension add",
         "eslint": "eslint --fix .",
-        "prettier": "prettier . --write"
+        "prettier": "prettier . --write",
+        "algolia-index-rebuild": "node ./src/algolia-index/cli-rebuild-index.js"
     },
     "devDependencies": {
         "@directus/errors": "^0.3.2",
-        "@directus/extensions-sdk": "11.0.8",
+        "@directus/extensions-sdk": "12.1.0",
+        "@directus/sdk": "^18.0.3",
         "@ianvs/prettier-plugin-sort-imports": "^4.2.1",
         "@slack/web-api": "^7.2.0",
-        "@types/node": "^20.14.9",
+        "@types/node": "^22.10.2",
+        "algoliasearch": "^5.18.0",
         "axios": "^1.7.2",
+        "dotenv": "^16.4.7",
         "eslint": "^9.5.0",
         "eslint-config-prettier": "^9.1.0",
         "prettier": "^3.3.2",
-        "typescript": "^5.5.2",
+        "typescript": "^5.7.2",
         "typescript-eslint": "^8.0.0-alpha.20",
-        "vue": "^3.4.30"
+        "vue": "^3.5.13"
     }
 }
