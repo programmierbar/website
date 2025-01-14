@@ -110,6 +110,7 @@
 </template>
 
 <script setup lang="ts">
+import BlueskyIcon from '~/assets/logos/bluesky-color.svg'
 import GithubIcon from '~/assets/logos/github.svg'
 import InstagramIcon from '~/assets/logos/instagram-color.svg'
 import LinkedinIcon from '~/assets/logos/linkedin-color.svg'
@@ -119,6 +120,7 @@ import YoutubeIcon from '~/assets/logos/youtube-color.svg'
 import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import {
+    OPEN_SPEAKER_BLUESKY_EVENT_ID,
     OPEN_SPEAKER_GITHUB_EVENT_ID,
     OPEN_SPEAKER_INSTAGRAM_EVENT_ID,
     OPEN_SPEAKER_LINKEDIN_EVENT_ID,
@@ -204,6 +206,12 @@ const platforms = computed(
                 icon: TwitterIcon,
                 url: speaker.value?.twitter_url,
                 eventId: OPEN_SPEAKER_TWITTER_EVENT_ID,
+            },
+            {
+                name: 'Bluesky',
+                icon: BlueskyIcon,
+                url: speaker.value?.twitter_url,
+                eventId: OPEN_SPEAKER_BLUESKY_EVENT_ID,
             },
             {
                 name: 'LinkedIn',

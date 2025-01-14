@@ -363,6 +363,7 @@ export function useDirectus() {
                         'description',
                         'profile_image.*',
                         'website_url',
+                        'bluesky_url',
                         'twitter_url',
                         'linkedin_url',
                         'youtube_url',
