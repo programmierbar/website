@@ -210,7 +210,7 @@ const platforms = computed(
             {
                 name: 'Bluesky',
                 icon: BlueskyIcon,
-                url: speaker.value?.twitter_url,
+                url: speaker.value?.bluesky_url,
                 eventId: OPEN_SPEAKER_BLUESKY_EVENT_ID,
             },
             {
