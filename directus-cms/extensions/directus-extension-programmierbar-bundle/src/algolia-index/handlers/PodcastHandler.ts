@@ -1,4 +1,4 @@
-import ItemHandler from './ItemHandler.ts'
+import { ItemHandler } from './ItemHandler.ts'
 
 export class PodcastHandler implements ItemHandler {
 
@@ -25,14 +25,15 @@ export class PodcastHandler implements ItemHandler {
         )
     }
 
-    buildAttributes(item: any): object {
+    buildAttributes(item: any): Record<string, any> {
         return {
+            _type : 'podcast',
             title: item.title,
             description: item.description,
             type: item.type,
             published_on: item.published_on,
             image: item.cover_image ? `${this._env.PUBLIC_URL}assets/${item.cover_image}` : undefined,
-            url: item.slug ? `${this._env.PUBLIC_URL}podcast/${item.slug}` : undefined,
+            slug: item.slug,
         }
     }
 }

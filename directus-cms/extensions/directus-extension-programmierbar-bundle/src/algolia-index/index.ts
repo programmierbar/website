@@ -2,7 +2,7 @@ import { defineHook } from '@directus/extensions-sdk';
 import { createFetchRequester } from '@algolia/requester-fetch';
 import { searchClient } from '@algolia/client-search';
 import { ItemHandler } from 'handlers/itemHandler.ts';
-import { getHandlers } from './handlers/index.js'
+import { getHandlers } from './handlers/index.ts'
 import { SearchClient } from 'algoliasearch';
 const HOOK_NAME = 'algolia-index'
 

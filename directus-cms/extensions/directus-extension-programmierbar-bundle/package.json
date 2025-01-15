@@ -79,7 +79,7 @@
         "add": "directus-extension add",
         "eslint": "eslint --fix .",
         "prettier": "prettier . --write",
-        "algolia-index-rebuild": "node ./src/algolia-index/cli-rebuild-index.js"
+        "algolia-index-rebuild": "tsx src/algolia-index/cli-rebuild-index.ts"
     },
     "devDependencies": {
         "@directus/errors": "^0.3.2",
@@ -94,6 +94,7 @@
         "eslint": "^9.5.0",
         "eslint-config-prettier": "^9.1.0",
         "prettier": "^3.3.2",
+        "tsx": "^4.19.2",
         "typescript": "^5.7.2",
         "typescript-eslint": "^8.0.0-alpha.20",
         "vue": "^3.5.13"
