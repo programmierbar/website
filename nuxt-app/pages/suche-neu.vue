@@ -50,15 +50,12 @@ import SearchFigureIcon from '~/assets/images/search-figure.svg'
 import LazyList from '~/components/LazyList.vue'
 import LazyListItem from '~/components/LazyListItem.vue'
 import { useLoadingScreen } from '~/composables'
-import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo } from '~/helpers'
 import { computed, type ComputedRef } from 'vue';
-import type { DirectusProfileItem } from '~/types';
 
 import { useRoute as useNativeRoute } from 'vue-router'
 import AlgoliaSearchCard from '~/components/AlgoliaSearchCard.vue';
-
-const directus = useDirectus()
+import { ALGOLIA_INDEX, WEBSITE_URL } from '~/config';
 
 // Add route
 const route = useRoute()
@@ -75,7 +72,13 @@ const { data: pageData } = useAsyncData(searchText.value, async () => {
     return {searchResults: []}
   }
 
-  const response = await useAsyncAlgoliaSearch({ indexName: 'programmier_bar_website_pages', query: searchText.value })
+  const response = await useAsyncAlgoliaSearch({ indexName: ALGOLIA_INDEX, query: searchText.value })
+
+  response.data.value.hits.map(hit => {
+    if (hit.slug) {
+      hit.url = WEBSITE_URL + '/podcast/' + hit.slug
+    }
+  })
 
   return {searchResults: response.data.value.hits};
 }, {

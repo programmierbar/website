@@ -28,6 +28,8 @@ export const YOUTUBE_PODCAST_URL = 'https://www.youtube.com/playlist?list=PLdL7w
 export const MEETUP_URL = 'https://www.meetup.com/programmierbar'
 export const GOOGLE_MAPS_URL = 'https://goo.gl/maps/7h8a14WPPQkQL4LB8'
 
+export const ALGOLIA_INDEX = process.env.ALGOLIA_INDEX || 'programmierbar_website_dev'
+
 // Event IDs
 export const PLAY_PODCAST_EVENT_ID = 'KNHXDHVI'
 export const PAUSE_PODCAST_EVENT_ID = 'DMZA93KU'
