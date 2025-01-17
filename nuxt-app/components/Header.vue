@@ -266,8 +266,6 @@ const handleSearch = (event: Event) => {
             query: { search: searchInputElement.value?.value || '' },
         }
 
-        console.log(location);
-
         navigateTo(location)
         if (menuIsOpen.value) {
             menuIsOpen.value = false

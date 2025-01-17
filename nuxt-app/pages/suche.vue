@@ -6,14 +6,14 @@
             <SectionHeading class="mt-8 md:mt-0" element="h1"> Suchergebnisse </SectionHeading>
 
             <!-- Search results -->
-            <LazyList
+            <GenericLazyList
                 v-if="searchResults.length"
                 class="mt-12 md:mt-16 lg:mt-28"
                 :items="searchResults"
                 direction="vertical"
             >
                 <template #default="{ item, index, viewportItems, addViewportItem }">
-                    <LazyListItem
+                    <GenericListItem
                         :key="item.itemType + item.id"
                         class="border-b-1 border-white/70 pb-9 last:border-b-0 last:pb-0 lg:pb-24"
                         :class="index > 0 && 'mt-10 lg:mt-24'"
@@ -26,9 +26,9 @@
                                 <SearchCard :item="item" />
                             </FadeAnimation>
                         </template>
-                    </LazyListItem>
+                    </GenericListItem>
                 </template>
-            </LazyList>
+            </GenericLazyList>
 
             <!-- Search figure -->
             <div
@@ -44,8 +44,8 @@
 
 <script setup lang="ts">
 import SearchFigureIcon from '~/assets/images/search-figure.svg'
-import LazyList from '~/components/LazyList.vue'
-import LazyListItem from '~/components/LazyListItem.vue'
+import GenericLazyList from '~/components/GenericLazyList.vue'
+import GenericListItem from '~/components/GenericListItem.vue'
 import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo } from '~/helpers'

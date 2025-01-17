@@ -25,9 +25,9 @@
             <div
                 class="container overflow-hidden px-6 pb-24 pt-10 xs:pt-14 sm:pt-16 md:pb-32 md:pl-48 md:overflow-unset lg:pb-52 lg:pr-8 lg:pt-20 xl:pt-32 3xl:px-8"
             >
-                <LazyList class="flex flex-col items-baseline" :items="tagFilter.output" direction="vertical">
+                <GenericLazyList class="flex flex-col items-baseline" :items="tagFilter.output" direction="vertical">
                     <template #default="{ item, index, viewportItems, addViewportItem }">
-                        <LazyListItem
+                        <GenericListItem
                             :key="item.id"
                             :class="[
                                 index > 0 && 'mt-10',
@@ -42,17 +42,17 @@
                                     <SpeakerBubble :speaker="item" :color="bubbleColors[index % 3]" />
                                 </FadeAnimation>
                             </template>
-                        </LazyListItem>
+                        </GenericListItem>
                     </template>
-                </LazyList>
+                </GenericLazyList>
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import LazyList from '~/components/LazyList.vue'
-import LazyListItem from '~/components/LazyListItem.vue'
+import GenericLazyList from '~/components/GenericLazyList.vue'
+import GenericListItem from '~/components/GenericListItem.vue'
 import { useLoadingScreen, usePageMeta } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { useTagFilterNew } from '~/composables/useTagFilterNew'

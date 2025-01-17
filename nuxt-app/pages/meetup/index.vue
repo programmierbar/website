@@ -29,8 +29,8 @@
 </template>
 
 <script setup lang="ts">
-import LazyList from '~/components/LazyList.vue'
-import LazyListItem from '~/components/LazyListItem.vue'
+import GenericLazyList from '~/components/GenericLazyList.vue'
+import GenericListItem from '~/components/GenericListItem.vue'
 import { useLoadingScreen, usePageMeta } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import type { DirectusMeetupItem, DirectusMeetupPage } from '~/types'
