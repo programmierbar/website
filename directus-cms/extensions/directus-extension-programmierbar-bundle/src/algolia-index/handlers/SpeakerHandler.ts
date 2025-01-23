@@ -1,11 +1,12 @@
-import { ItemHandler } from './ItemHandler.ts'
+import { AbstractItemHandler } from './ItemHandler.ts';
 
-export class SpeakerHandler implements ItemHandler {
+export class SpeakerHandler extends AbstractItemHandler {
 
     private _env: any;
     private _logger: any;
 
     constructor(env, logger) {
+        super();
         this._env = env;
         this._logger = logger;
     }
@@ -26,8 +27,12 @@ export class SpeakerHandler implements ItemHandler {
         )
     }
 
-    buildAttributes(item: any): Record<string, any> {
-        return {
+    buildDeletionFilter(item: any): string {
+        return `_type:speaker AND distinct:${this.buildDistinctKey(item)}`;
+    }
+
+    buildAttributes(item: any): Record<string, any>[] {
+        return [{
             _type : 'speaker',
             first_name: item.first_name,
             last_name: item.last_name,
@@ -36,6 +41,6 @@ export class SpeakerHandler implements ItemHandler {
             published_on: item.published_on,
             slug: item.slug,
             image: item.profile_image ? `${this._env.PUBLIC_URL}assets/${item.profile_image}` : undefined,
-        }
+        }]
     }
 }

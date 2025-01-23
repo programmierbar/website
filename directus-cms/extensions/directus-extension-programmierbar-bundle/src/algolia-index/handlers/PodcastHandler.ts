@@ -1,18 +1,27 @@
-import { ItemHandler } from './ItemHandler.ts'
+import { AbstractItemHandler } from './ItemHandler.ts';
 import { sanitize, sanitizeFull } from '../util/sanitizer.ts';
 
-export class PodcastHandler implements ItemHandler {
+export class PodcastHandler extends AbstractItemHandler {
 
     private _env: any;
     private _logger: any;
 
     constructor(env, logger) {
+        super();
         this._env = env;
         this._logger = logger;
     }
 
     get collectionName(): string {
         return 'podcasts';
+    }
+
+    buildDistinctKey(item: any): string {
+        return `podcast-${item.id}`;
+    }
+
+    buildDeletionFilter(item: any): string {
+        return `_type:podcast AND distinct:${this.buildDistinctKey(item)}`;
     }
 
     updateRequired(item: any): boolean {
@@ -27,7 +36,7 @@ export class PodcastHandler implements ItemHandler {
         )
     }
 
-    buildAttributes(item: any): Record<string, any> {
+    buildAttributes(item: any): Record<string, any>[] {
 
         // This is a simple workaround for the algolia size-limit per index-entry
         // Ideally, we would split this out into multiple index entries later
@@ -36,7 +45,7 @@ export class PodcastHandler implements ItemHandler {
             description = sanitizeFull(item.description);
         }
 
-        return {
+        return [{
             _type : 'podcast',
             title: item.title,
             number: item.number,
@@ -45,6 +54,6 @@ export class PodcastHandler implements ItemHandler {
             published_on: item.published_on,
             image: item.cover_image ? `${this._env.PUBLIC_URL}assets/${item.cover_image}` : undefined,
             slug: item.slug,
-        }
+        }]
     }
 }

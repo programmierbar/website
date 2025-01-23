@@ -61,6 +61,11 @@ const configuration = [
         fields: ['id', 'name', 'website_url', 'description', 'published_on', 'image'],
         handler: itemHandlers.pickOfTheDayHandler,
     },
+    {
+        collection: 'transcripts',
+        fields: ['id', 'podcast.*', 'speakers.*', 'service', 'supported_features', 'raw_response'],
+        handler: itemHandlers.translationHandler,
+    },
 ]
 
 for (const configurationItem of configuration) {
@@ -77,17 +82,44 @@ for (const configurationItem of configuration) {
         let counter = 0;
         for (const item of items) {
             counter++;
-            const payload = configurationItem.handler.buildAttributes(item);
+            const payloads = configurationItem.handler.buildAttributes(item).map((payload) => {
+                return {
+                    ...payload,
+                    distinct: configurationItem.handler.buildDistinctKey(item)
+                }
+            });
 
-            await algoliaClient.partialUpdateObject({
-                indexName: ALGOLIA_INDEX,
-                objectID: item.id,
-                attributesToUpdate: payload,
-                createIfNotExists: true,
+            if (configurationItem.handler.requiresDistinctDeletionBeforeUpdate()) {
+                const results = await algoliaClient.browseObjects({
+                    indexName: ALGOLIA_INDEX,
+                    query: '',
+                    attributesToRetrieve: [
+                        'objectID',
+                    ],
+                    browseParams: {
+                        filters: `_type:transcript AND distinct:${configurationItem.handler.buildDistinctKey(item)}`,
+
+                    }
+                });
+
+                const IdsForDeletion = results.hits.map((hit: any) => hit.objectID);
+                await algoliaClient.deleteObjects({
+                    indexName: ALGOLIA_INDEX,
+                    objectIDs: IdsForDeletion,
+                });
+            }
+
+            payloads.forEach(async (payload, index) => {
+                await algoliaClient.partialUpdateObject({
+                    indexName: ALGOLIA_INDEX,
+                    objectID: `${item.id}_${index}`,
+                    attributesToUpdate: payload,
+                    createIfNotExists: true,
+                });
             });
 
             console.log(`Processed ${configurationItem.collection.slice(0, -1)} (${counter}): ${item.id}`);
-            console.log(payload);
+            console.log(payloads);
             console.log('-----');
         }
 

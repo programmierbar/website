@@ -1,7 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk';
 import { createFetchRequester } from '@algolia/requester-fetch';
 import { searchClient } from '@algolia/client-search';
- import { ItemHandler } from 'handlers/ItemHandler.ts';
+ import { ItemHandler } from './handlers/ItemHandler.ts';
 import { getHandlers } from './handlers/index.ts'
 import { SearchClient } from 'algoliasearch';
 import { ItemsService } from '../buzzsprout/handlers/types.js';
@@ -37,9 +37,11 @@ export default defineHook(({ action }, hookContext) => {
         });
     })
 
-    action('podcasts.items.delete', async function(metadata) {
-        handleDeleteAction(metadata, {
+    action('podcasts.items.delete', async function(metadata, eventContext) {
+        handleDeleteAction(metadata, eventContext, {
+            handler: handlers.podcastHandler,
             client,
+            ItemsService,
             logger,
             env
         })
@@ -65,9 +67,11 @@ export default defineHook(({ action }, hookContext) => {
         });
     })
 
-    action('meetups.items.delete', async function(metadata) {
-        handleDeleteAction(metadata, {
+    action('meetups.items.delete', async function(metadata, eventContext) {
+        handleDeleteAction(metadata, eventContext, {
+            handler: handlers.meetupHandler,
             client,
+            ItemsService,
             logger,
             env
         })
@@ -93,9 +97,11 @@ export default defineHook(({ action }, hookContext) => {
         });
     })
 
-    action('speakers.items.delete', async function(metadata) {
-        handleDeleteAction(metadata, {
+    action('speakers.items.delete', async function(metadata, eventContext) {
+        handleDeleteAction(metadata, eventContext, {
+            handler: handlers.speakerHandler,
             client,
+            ItemsService,
             logger,
             env
         })
@@ -121,9 +127,11 @@ export default defineHook(({ action }, hookContext) => {
         });
     })
 
-    action('picks_pf_the_day.items.delete', async function(metadata) {
-        handleDeleteAction(metadata, {
+    action('picks_pf_the_day.items.delete', async function(metadata, eventContext) {
+        handleDeleteAction(metadata, eventContext, {
+            handler: handlers.pickOfTheDayHandler,
             client,
+            ItemsService,
             logger,
             env
         })
@@ -179,22 +187,36 @@ async function handleUpdateAction(metadata, eventContext, dependencies: {
         return
     }
 
-    await client.partialUpdateObject({
-        indexName: env.ALGOLIA_INDEX,
-        objectID: itemKey,
-        attributesToUpdate: handler.buildAttributes(metadata.payload),
-        createIfNotExists: true,
+    const payloads = handler.buildAttributes(metadata.payload).map((payload) => {
+        return {
+            ...payload,
+            distinct: handler.buildDistinctKey({
+                ...metadata.payload,
+                id: itemKey
+            })
+        }
+    });
+
+    payloads.forEach(async (payload, index) => {
+        await client.partialUpdateObject({
+            indexName: env.ALGOLIA_INDEX,
+            objectID: `${itemKey}_${index}`,
+            attributesToUpdate: payload,
+            createIfNotExists: true,
+        });
     });
 
     logger.info(`${HOOK_NAME} hook: Updated search index "${env.ALGOLIA_INDEX}" for "${handler.collectionName}" item "${itemKey}"`)
 }
 
-function handleDeleteAction(metadata, dependencies: {
+function handleDeleteAction(metadata, eventContext, dependencies: {
+    handler: ItemHandler,
     client: SearchClient,
+    ItemsService: ItemsService,
     logger,
     env
 }) {
-    const {client, logger, env} = dependencies;
+    const {handler, client, ItemsService, logger, env} = dependencies;
 
     const itemKey = metadata.key || (metadata.keys && metadata.keys[0])
     if (!itemKey) {
@@ -202,10 +224,32 @@ function handleDeleteAction(metadata, dependencies: {
         return
     }
 
-    client.deleteObject({
+    // Create items service instance
+    const itemsService = new ItemsService(metadata.collection, {
+        accountability: eventContext.accountability,
+        schema: eventContext.schema,
+    })
+
+    // Get item from item service by key
+    const item = await itemsService.readOne(itemKey)
+
+    const results = await client.browseObjects({
         indexName: env.ALGOLIA_INDEX,
-        objectID: itemKey,
+        query: '',
+        attributesToRetrieve: [
+            'objectID',
+        ],
+        browseParams: {
+            filters: handler.buildDeletionFilter(item),
+
+        }
     });
 
-    logger.info(`${HOOK_NAME} hook: Removed item "${itemKey}" from search index`)
+    const IdsForDeletion = results.hits.map((hit: any) => hit.objectID);
+    await client.deleteObjects({
+        indexName: env.ALGOLIA_INDEX,
+        objectIDs: IdsForDeletion,
+    });
+
+    logger.info(`${HOOK_NAME} hook: Removed item(s) "${JSON.stringify(IdsForDeletion)}" from search index via filter ${handler.buildDeletionFilter(item)}`)
 }
