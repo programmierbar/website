@@ -30,11 +30,16 @@ function processTranscriptItem(
 
         logger.info(`${HOOK_NAME} hook: Processing transcript "${existingTranscript.id}".`);
 
+        if (!env.DEEPGRAM_API_URL) {
+            logger.info(`${HOOK_NAME} hook: DEEPGRAM_API_URL env variable not set. ` +
+                `Exiting hook early.`);
+            return;
+        }
+
         /*
          * Currently, we only support deepgram
          * In the future this will need to depend on `existingTranscript.service` (currently hard-coded to "deepgram")
          */
-
         const url = new URL(env.DEEPGRAM_API_URL);
         url.searchParams.append('model', 'nova-2');
         url.searchParams.append('smart_format', 'true');
