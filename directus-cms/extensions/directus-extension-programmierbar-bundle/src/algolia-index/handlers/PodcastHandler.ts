@@ -20,10 +20,6 @@ export class PodcastHandler extends AbstractItemHandler {
         return `podcast-${item.id}`;
     }
 
-    buildDeletionFilter(item: any): string {
-        return `_type:podcast AND distinct:${this.buildDistinctKey(item)}`;
-    }
-
     updateRequired(item: any): boolean {
         return (
             item.title ||

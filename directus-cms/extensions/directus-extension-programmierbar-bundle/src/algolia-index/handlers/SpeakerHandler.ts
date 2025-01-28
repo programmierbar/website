@@ -27,10 +27,6 @@ export class SpeakerHandler extends AbstractItemHandler {
         )
     }
 
-    buildDeletionFilter(item: any): string {
-        return `_type:speaker AND distinct:${this.buildDistinctKey(item)}`;
-    }
-
     buildAttributes(item: any): Record<string, any>[] {
         return [{
             _type : 'speaker',

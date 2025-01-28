@@ -15,10 +15,6 @@ export class PickOfTheDayHandler extends AbstractItemHandler {
         return 'picks_of_the_day';
     }
 
-    buildDeletionFilter(item: any): string {
-        return `_type:pick_of_the_day AND distinct:${this.buildDistinctKey(item)}`;
-    }
-
     updateRequired(item: any): boolean {
         return (
             item.name ||

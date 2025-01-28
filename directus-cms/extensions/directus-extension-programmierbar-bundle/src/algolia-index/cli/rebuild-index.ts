@@ -85,7 +85,8 @@ for (const configurationItem of configuration) {
             const payloads = configurationItem.handler.buildAttributes(item).map((payload) => {
                 return {
                     ...payload,
-                    distinct: configurationItem.handler.buildDistinctKey(item)
+                    distinct: configurationItem.handler.buildDistinctKey(item),
+                    _directus_reference: configurationItem.handler.buildDirectusReference(item),
                 }
             });
 
@@ -97,8 +98,7 @@ for (const configurationItem of configuration) {
                         'objectID',
                     ],
                     browseParams: {
-                        filters: `_type:transcript AND distinct:${configurationItem.handler.buildDistinctKey(item)}`,
-
+                        filters:  configurationItem.handler.buildDeletionFilter(item),
                     }
                 });
 

@@ -36,10 +36,6 @@ export class TranscriptHandler extends AbstractItemHandler {
         return `podcast-${item.podcast.id}`;
     }
 
-    buildDeletionFilter(item: any): string {
-        return `_type:transcript AND distinct:${this.buildDistinctKey(item)}`;
-    }
-
     buildAttributes(item: any): Record<string, any>[] {
         const podcast = item.podcast;
         let podcastAttributes = {};

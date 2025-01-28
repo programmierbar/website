@@ -15,10 +15,6 @@ export class MeetupHandler extends AbstractItemHandler{
         return 'meetups';
     }
 
-    buildDeletionFilter(item: any): string {
-        return `_type:meetup AND distinct:${this.buildDistinctKey(item)}`;
-    }
-
     updateRequired(item: any): boolean {
         return (
             item.title ||

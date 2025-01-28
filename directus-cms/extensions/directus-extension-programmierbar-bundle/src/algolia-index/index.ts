@@ -41,7 +41,6 @@ export default defineHook(({ action }, hookContext) => {
         handleDeleteAction(metadata, eventContext, {
             handler: handlers.podcastHandler,
             client,
-            ItemsService,
             logger,
             env
         })
@@ -71,7 +70,6 @@ export default defineHook(({ action }, hookContext) => {
         handleDeleteAction(metadata, eventContext, {
             handler: handlers.meetupHandler,
             client,
-            ItemsService,
             logger,
             env
         })
@@ -101,7 +99,6 @@ export default defineHook(({ action }, hookContext) => {
         handleDeleteAction(metadata, eventContext, {
             handler: handlers.speakerHandler,
             client,
-            ItemsService,
             logger,
             env
         })
@@ -131,7 +128,6 @@ export default defineHook(({ action }, hookContext) => {
         handleDeleteAction(metadata, eventContext, {
             handler: handlers.pickOfTheDayHandler,
             client,
-            ItemsService,
             logger,
             env
         })
@@ -193,7 +189,11 @@ async function handleUpdateAction(metadata, eventContext, dependencies: {
             distinct: handler.buildDistinctKey({
                 ...metadata.payload,
                 id: itemKey
-            })
+            }),
+            _directus_reference: handler.buildDirectusReference({
+                ...metadata.payload,
+                id: itemKey
+            }),
         }
     });
 
@@ -209,14 +209,13 @@ async function handleUpdateAction(metadata, eventContext, dependencies: {
     logger.info(`${HOOK_NAME} hook: Updated search index "${env.ALGOLIA_INDEX}" for "${handler.collectionName}" item "${itemKey}"`)
 }
 
-function handleDeleteAction(metadata, eventContext, dependencies: {
+async function handleDeleteAction(metadata, eventContext, dependencies: {
     handler: ItemHandler,
     client: SearchClient,
-    ItemsService: ItemsService,
     logger,
     env
 }) {
-    const {handler, client, ItemsService, logger, env} = dependencies;
+    const {handler, client, logger, env} = dependencies;
 
     const itemKey = metadata.key || (metadata.keys && metadata.keys[0])
     if (!itemKey) {
@@ -224,14 +223,7 @@ function handleDeleteAction(metadata, eventContext, dependencies: {
         return
     }
 
-    // Create items service instance
-    const itemsService = new ItemsService(metadata.collection, {
-        accountability: eventContext.accountability,
-        schema: eventContext.schema,
-    })
-
-    // Get item from item service by key
-    const item = await itemsService.readOne(itemKey)
+    const item = {id: itemKey};
 
     const results = await client.browseObjects({
         indexName: env.ALGOLIA_INDEX,
@@ -241,7 +233,6 @@ function handleDeleteAction(metadata, eventContext, dependencies: {
         ],
         browseParams: {
             filters: handler.buildDeletionFilter(item),
-
         }
     });
 
