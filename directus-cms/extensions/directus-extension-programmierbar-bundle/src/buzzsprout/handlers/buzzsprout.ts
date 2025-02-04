@@ -97,9 +97,9 @@ export async function handleBuzzsprout(
           Bleibt auf dem Laufenden über zukünftige Folgen und virtuelle Meetups und beteiligt euch an Community-Diskussionen.
         </p>
         <p>
-          <a href="https://twitter.com/programmierbar">Twitter</a><br>
+          <a href="https://bsky.app/profile/programmier.bar">Bluesky</a><br>
           <a href="https://www.instagram.com/programmier.bar/">Instagram</a><br>
-          <a href="https://www.facebook.com/programmier.bar/">Facebook</a><br>
+          <a href="https://www.linkedin.com/company/programmier-bar">LinkedIn</a><br>
           <a href="https://www.meetup.com/de-DE/programmierbar/events/">Meetup</a><br>
           <a href="https://www.youtube.com/c/programmierbar">YouTube</a>
         </p>

@@ -48,9 +48,7 @@ export default defineNuxtConfig({
       // https://go.nuxtjs.dev/pwa
       // '@nuxtjs/pwa',
 
-      // Fathom Analytics
-      // '@lostdesign/nuxt-fathom',
-      // https://go.nuxtjs.dev/tailwindcss
+      //  https://go.nuxtjs.dev/tailwindcss
       '@nuxtjs/tailwindcss',
       // https://v1.image.nuxtjs.org/get-started/
       '@nuxt/image-edge',
@@ -84,13 +82,9 @@ export default defineNuxtConfig({
       },
   },
 
-  // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
-  // router: {
-  //   // Fathom Analytics
-  //   middleware: ['fathom'],
-  // },
+  //
 
-  // // PWA module configuration: https://go.nuxtjs.dev/pwa
+  //  PWA module configuration: https://go.nuxtjs.dev/pwa
   // pwa: {
   //   manifest: {
   //     lang: 'de',
@@ -110,15 +104,7 @@ export default defineNuxtConfig({
   //   exclude: ['/impressum', '/datenschutz'],
   // },
 
-  // // Fathom Analytics
-  // fathom: {
-  //   namespace: 'fathom', // optional
-  //   spa: 'history', // recommended
-  //   siteId: 'XSJTTACD',
-  //   url: 'https://ziggy-stardust-six.programmier.bar/script.js',
-  //   honorDNT: false,
-  //   canonical: true,
-  // },
+
 
   // https://image.nuxtjs.org/
   image: {

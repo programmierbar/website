@@ -54,9 +54,8 @@
                     </NuxtLink>
                     und den
                     <NuxtLink class="text-lime font-bold hover:underline" data-cursor-hover :to="'/aufnahmen'">
-                      Hinweis zu Foto- und Videoaufnahmen
+                      Hinweis zu Foto- und Videoaufnahmen.
                     </NuxtLink>
-                    .
                 </p>
 
                 <!-- Meetup tags -->

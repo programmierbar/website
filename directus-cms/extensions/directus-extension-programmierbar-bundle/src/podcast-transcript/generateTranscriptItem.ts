@@ -1,6 +1,7 @@
 import { Dependencies } from '../buzzsprout/handlers/types.js';
 import { createHookErrorConstructor } from './../shared/errors.ts';
 import { postSlackMessage } from './../shared/postSlackMessage.ts';
+import { Query } from '@directus/types/dist/query.js'
 
 async function generateTranscriptItem(
     HOOK_NAME: string,
@@ -39,7 +40,15 @@ async function generateTranscriptItem(
             return;
         }
 
-        const existingTranscripts = await transcriptItemsService.readByQuery({podcast_id: item.id, podcast_audio_file: item.audio_file});
+        const query: Query = {
+            filter: {
+                podcast: {_eq: item.id},
+                podcast_audio_file: {_eq: item.audio_file},
+            }
+        };
+
+        const existingTranscripts = await transcriptItemsService.readByQuery(query);
+
         if (existingTranscripts.length > 0) {
             logger.info(`${HOOK_NAME} hook: Found ${existingTranscripts.length} existing transcripts for podcast: "${item.id}". ` +
                 `Exiting hook early.`);

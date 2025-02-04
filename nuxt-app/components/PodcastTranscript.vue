@@ -30,7 +30,7 @@
         </dl>
       </div>
     </div>
-    <div class='absolute bottom-0 h-24 w-full bg-gradient-to-t from-black'></div>
+    <div class='absolute bottom-0 h-24 w-full bg-gradient-to-t from-black pointer-events-none'></div>
   </div>
 </template>
 
