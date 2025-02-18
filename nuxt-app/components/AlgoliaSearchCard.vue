@@ -56,69 +56,61 @@ const props = defineProps<{
     }
 }>()
 
+class ViewModel {
+  constructor(
+    public url = "",
+    public heading = "",
+    public typeAndDate = "",
+    public description = "",
+    public isExternalUrl = false,
+  ) {}
+}
+
 const viewModel = computed(() => {
-  const viewModel = {
-    url: '',
-    heading: '',
-    typeAndDate: '',
-    description: '',
-    isExternalUrl: false,
-  };
-
+  const publishDate = new Date(props.item.published_on).toLocaleDateString("de-DE", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
   switch (props.item._type) {
-    case 'podcast':
-      viewModel.url = `/podcast/${props.item.slug}`;
-      viewModel.heading = getFullPodcastTitle(props.item) || '';
-      viewModel.typeAndDate = 'Podcast // ' + new Date(props.item.published_on).toLocaleDateString('de-DE', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-      })
-      viewModel.description = props.item.description?.replace(/<[^<>]+>/g, '') || '';
-      break;
-    case 'transcript':
-      viewModel.url = `/podcast/${props.item.slug}`;
-      viewModel.heading = getFullPodcastTitle(props.item) || '';
-      viewModel.typeAndDate = 'Podcast // ' + new Date(props.item.published_on).toLocaleDateString('de-DE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      })
-      viewModel.description = props.item.transcript?.replace(/<[^<>]+>/g, '') || '';
-      break;
-    case 'meetup':
-      viewModel.url = `/meetup/${props.item.slug}`;
-      viewModel.heading = props.item.title || '';
-      viewModel.typeAndDate = 'Meetup // ' + new Date(props.item.published_on).toLocaleDateString('de-DE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      })
-      viewModel.description = props.item.description?.replace(/<[^<>]+>/g, '') || '';
-      break;
-    case 'speaker':
-      viewModel.url = `/hall-of-fame/${props.item.slug}`;
-      viewModel.heading = getFullSpeakerName(props.item) || '';
-      viewModel.typeAndDate = 'Speaker // ' + new Date(props.item.published_on).toLocaleDateString('de-DE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      })
-      viewModel.description = props.item.description?.replace(/<[^<>]+>/g, '') || '';
-      break;
-    case 'pick_of_the_day':
-      viewModel.url = `/pick_of_the_day/${props.item.slug}`;
-      viewModel.heading = props.item.name || '';
-      viewModel.typeAndDate = 'Pick of the Day // ' + new Date(props.item.published_on).toLocaleDateString('de-DE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      })
-      viewModel.description = props.item.description?.replace(/<[^<>]+>/g, '') || '';
-      viewModel.isExternalUrl = true;
-      break;
+    case "podcast":
+      return new ViewModel(
+        `/podcast/${props.item.slug}`,
+        getFullPodcastTitle(props.item) || "",
+        "Podcast // " + publishDate,
+        props.item.description?.replace(/<[^<>]+>/g, "") || "",
+      )
+    case "transcript":
+      return new ViewModel(
+        `/podcast/${props.item.slug}`,
+        getFullPodcastTitle(props.item) || "",
+        "Podcast // " + publishDate,
+        props.item.transcript?.replace(/<[^<>]+>/g, "") || "",
+      )
+    case "meetup":
+      return new ViewModel(
+        `/meetup/${props.item.slug}`,
+        props.item.title || "",
+        "Meetup // " + publishDate,
+        props.item.description?.replace(/<[^<>]+>/g, "") || "",
+      )
+    case "speaker":
+      return new ViewModel(
+        `/hall-of-fame/${props.item.slug}`,
+        getFullSpeakerName(props.item) || "",
+        "Speaker // " + publishDate,
+        props.item.description?.replace(/<[^<>]+>/g, "") || "",
+      )
+    case "pick_of_the_day":
+      return new ViewModel(
+        `/pick_of_the_day/${props.item.slug}`,
+        props.item.name || "",
+        "Pick of the Day // " + publishDate,
+        props.item.description?.replace(/<[^<>]+>/g, "") || "",
+        true,
+      )
+    default:
+      return new ViewModel()
   }
-
-  return viewModel;
 })
 </script>

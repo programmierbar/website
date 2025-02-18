@@ -5,7 +5,7 @@ import { SpeakerHandler } from './SpeakerHandler.ts';
 import { PickOfTheDayHandler } from './PickOfTheDayHandler.ts';
 import { TranscriptHandler } from './TranscriptHandler.js';
 
-type knownHandlers = "podcastHandler" | "meetupHandler" | "speakerHandler" | "pickOfTheDayHandler" | "translationHandler";
+type knownHandlers = "podcastHandler" | "meetupHandler" | "speakerHandler" | "pickOfTheDayHandler" | "transcriptHandler";
 
 export function getHandlers(env, logger): Record<knownHandlers, ItemHandler> {
     return {
@@ -13,6 +13,6 @@ export function getHandlers(env, logger): Record<knownHandlers, ItemHandler> {
         meetupHandler: new MeetupHandler(env, logger),
         speakerHandler: new SpeakerHandler(env, logger),
         pickOfTheDayHandler: new PickOfTheDayHandler(env, logger),
-        translationHandler: new TranscriptHandler(env, logger),
+        transcriptHandler: new TranscriptHandler(env, logger),
     }
 }

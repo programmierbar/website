@@ -132,6 +132,35 @@ export default defineHook(({ action }, hookContext) => {
             env
         })
     })
+
+    action('transcripts.items.create', async function (metadata, eventContext) {
+        handleUpdateAction(metadata, eventContext, {
+            handler: handlers.transcriptHandler,
+            client,
+            ItemsService,
+            logger,
+            env
+        });
+    })
+
+    action('transcripts.items.update', async function (metadata, eventContext) {
+        handleUpdateAction(metadata, eventContext, {
+            handler: handlers.transcriptHandler,
+            client,
+            ItemsService,
+            logger,
+            env
+        });
+    })
+
+    action('transcripts.items.delete', async function(metadata, eventContext) {
+        handleDeleteAction(metadata, eventContext, {
+            handler: handlers.transcriptHandler,
+            client,
+            logger,
+            env
+        })
+    })
 });
 
 async function handleUpdateAction(metadata, eventContext, dependencies: {
@@ -196,6 +225,25 @@ async function handleUpdateAction(metadata, eventContext, dependencies: {
             }),
         }
     });
+
+    if (handler.requiresDistinctDeletionBeforeUpdate()) {
+        const results = await client.browseObjects({
+            indexName: env.ALGOLIA_INDEX,
+            query: '',
+            attributesToRetrieve: [
+                'objectID',
+            ],
+            browseParams: {
+                filters:  handler.buildDeletionFilter({id: itemKey}),
+            }
+        });
+
+        const IdsForDeletion = results.hits.map((hit: any) => hit.objectID);
+        await client.deleteObjects({
+            indexName: env.ALGOLIA_INDEX,
+            objectIDs: IdsForDeletion,
+        });
+    }
 
     payloads.forEach(async (payload, index) => {
         await client.partialUpdateObject({

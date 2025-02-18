@@ -15,8 +15,7 @@
         <template #default="{ item, index, viewportItems, addViewportItem }">
           <GenericListItem
             :key="item.objectID"
-            class="border-b-1 border-white/70 pb-9 last:border-b-0 last:pb-0 lg:pb-24"
-            :class="index > 0 && 'mt-10 lg:mt-24'"
+            class="border-b-1 border-white/70 pb-9 last:border-b-0 last:pb-0 lg:pb-24 [&>:not(first-child)]:mt-10 [&>:not(first-child)]:lg:mt-24"
             :item="item"
             :viewport-items="viewportItems"
             :add-viewport-item="addViewportItem"

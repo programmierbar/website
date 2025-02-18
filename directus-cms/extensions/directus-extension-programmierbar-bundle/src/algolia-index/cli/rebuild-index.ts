@@ -64,7 +64,7 @@ const configuration = [
     {
         collection: 'transcripts',
         fields: ['id', 'podcast.*', 'speakers.*', 'service', 'supported_features', 'raw_response'],
-        handler: itemHandlers.translationHandler,
+        handler: itemHandlers.transcriptHandler,
     },
 ]
 
