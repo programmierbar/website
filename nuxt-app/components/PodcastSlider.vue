@@ -8,9 +8,9 @@
             @scroll="detectScrollState"
         >
             <!-- Podcast list -->
-            <LazyList class="flex" :items="podcasts" direction="horizontal" :scroll-element="scrollBoxElement">
+            <GenericLazyList class="flex" :items="podcasts" direction="horizontal" :scroll-element="scrollBoxElement">
                 <template #default="{ item, index, viewportItems, addViewportItem }">
-                    <LazyListItem
+                    <GenericListItem
                         :key="item.id"
                         :class="index > 0 && 'ml-10 md:ml-16 lg:ml-20 xl:ml-24 2xl:ml-28 3xl:ml-32'"
                         :item="item"
@@ -22,9 +22,9 @@
                                 <PodcastCard :podcast="item" />
                             </FadeAnimation>
                         </template>
-                    </LazyListItem>
+                    </GenericListItem>
                 </template>
-            </LazyList>
+            </GenericLazyList>
 
             <!-- Podcast link -->
             <div
@@ -90,8 +90,8 @@ import type { PodcastItem } from '~/types'
 import smoothscroll from 'smoothscroll-polyfill'
 import { onMounted, ref } from 'vue'
 import FadeAnimation from './FadeAnimation.vue'
-import LazyList from './LazyList.vue'
-import LazyListItem from './LazyListItem.vue'
+import GenericLazyList from './GenericLazyList.vue'
+import GenericListItem from './GenericListItem.vue'
 import PodcastCard from './PodcastCard.vue'
 
 withDefaults(

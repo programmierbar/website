@@ -28,8 +28,8 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import { defineComponent } from 'vue'
-import LazyListItem from '~/components/LazyListItem.vue';
-import LazyList from '~/components/LazyList.vue';
+import GenericListItem from '~/components/GenericListItem.vue';
+import GenericLazyList from '~/components/GenericLazyList.vue';
 import MeetupCard from '~/components/MeetupCard.vue';
 import SectionHeading from './SectionHeading.vue';
 import type { MeetupItem } from '~/types';
@@ -37,8 +37,8 @@ import type { MeetupItem } from '~/types';
 export default defineComponent({
     components: {
       SectionHeading,
-      LazyList,
-      LazyListItem,
+      LazyList: GenericLazyList,
+      LazyListItem: GenericListItem,
       MeetupCard,
     },
     props: {

@@ -16,13 +16,13 @@
             <TagFilter class="mt-12 md:mt-20 lg:mt-32" :tags="tagFilter.tags" :toggle-tag="tagFilter.toggleTag" />
 
             <!-- Picks of the day -->
-            <LazyList
+            <GenericLazyList
                 class="mt-12 md:mt-16 lg:mt-28 lg:flex lg:flex-col lg:items-baseline"
                 :items="tagFilter.output"
                 direction="vertical"
             >
                 <template #default="{ item, index, viewportItems, addViewportItem }">
-                    <LazyListItem
+                    <GenericListItem
                         :key="item.id"
                         class="lg:w-1/2"
                         :class="[
@@ -46,16 +46,16 @@
                                 />
                             </FadeAnimation>
                         </template>
-                    </LazyListItem>
+                    </GenericListItem>
                 </template>
-            </LazyList>
+            </GenericLazyList>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import LazyList from '~/components/LazyList.vue'
-import LazyListItem from '~/components/LazyListItem.vue'
+import GenericLazyList from '~/components/GenericLazyList.vue'
+import GenericListItem from '~/components/GenericListItem.vue'
 import { useLoadingScreen, usePageMeta } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { useTagFilterNew } from '~/composables/useTagFilterNew'
