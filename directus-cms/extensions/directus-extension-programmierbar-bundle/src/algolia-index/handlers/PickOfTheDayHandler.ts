@@ -2,15 +2,6 @@ import { AbstractItemHandler, ItemHandler } from './ItemHandler.ts';
 
 export class PickOfTheDayHandler extends AbstractItemHandler {
 
-    private _env: any;
-    private _logger: any;
-
-    constructor(env, logger) {
-        super();
-        this._env = env;
-        this._logger = logger;
-    }
-
     get collectionName(): string {
         return 'picks_of_the_day';
     }

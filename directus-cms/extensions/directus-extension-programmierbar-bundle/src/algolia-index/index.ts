@@ -4,14 +4,14 @@ import { searchClient } from '@algolia/client-search';
  import { ItemHandler } from './handlers/ItemHandler.ts';
 import { getHandlers } from './handlers/index.ts'
 import { SearchClient } from 'algoliasearch';
-import { ItemsService } from '../buzzsprout/handlers/types.js';
+import { ItemsService as ItemsServiceType } from '../buzzsprout/handlers/types.js';
 const HOOK_NAME = 'algolia-index'
 
 export default defineHook(({ action }, hookContext) => {
 
     const logger = hookContext.logger;
     const env = hookContext.env;
-    const ItemsService = hookContext.services.ItemsService;
+    const ItemsService = hookContext.services.ItemsService satisfies ItemsServiceType;
 
     const handlers = getHandlers(env, logger);
 
@@ -166,7 +166,7 @@ export default defineHook(({ action }, hookContext) => {
 async function handleUpdateAction(metadata, eventContext, dependencies: {
     handler: ItemHandler,
     client: SearchClient,
-    ItemsService: ItemsService,
+    ItemsService,
     logger,
     env
 }){
@@ -188,7 +188,7 @@ async function handleUpdateAction(metadata, eventContext, dependencies: {
         const itemsService = new ItemsService(metadata.collection, {
             accountability: eventContext.accountability,
             schema: eventContext.schema,
-        })
+        }) as ItemsServiceType;
 
         // Get item from item service by key
         const item = await itemsService.readOne(itemKey)
@@ -202,7 +202,11 @@ async function handleUpdateAction(metadata, eventContext, dependencies: {
                     indexName: env.ALGOLIA_INDEX,
                     objectID: itemKey,
                 });
+            } else {
+                // logger.warm(`${HOOK_NAME} hook: Encountered unknown item status`)
+                //throw new Error('Encountered unknown item status.')
             }
+
             return
         }
     }

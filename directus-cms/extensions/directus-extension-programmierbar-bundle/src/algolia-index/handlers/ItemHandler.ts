@@ -9,6 +9,10 @@ export interface ItemHandler {
 }
 
 export abstract class AbstractItemHandler {
+
+    constructor(protected env, private logger) {
+    }
+
     requiresDistinctDeletionBeforeUpdate(): boolean {
         return false;
     }

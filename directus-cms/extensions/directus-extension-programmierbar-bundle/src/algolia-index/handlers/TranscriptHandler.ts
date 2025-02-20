@@ -4,16 +4,6 @@ export class TranscriptHandler extends AbstractItemHandler {
 
     private MAX_TEXT_LENGTH = 2500;
 
-    private _env: any;
-    private _logger: any;
-
-
-    constructor(env, logger) {
-        super();
-        this._env = env;
-        this._logger = logger;
-    }
-
     get collectionName(): string {
         return 'transcripts';
     }

@@ -2,15 +2,6 @@ import { AbstractItemHandler } from './ItemHandler.ts';
 
 export class SpeakerHandler extends AbstractItemHandler {
 
-    private _env: any;
-    private _logger: any;
-
-    constructor(env, logger) {
-        super();
-        this._env = env;
-        this._logger = logger;
-    }
-
     get collectionName(): string {
         return 'speakers';
     }

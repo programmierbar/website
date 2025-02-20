@@ -3,15 +3,6 @@ import { sanitize, sanitizeFull } from '../util/sanitizer.ts';
 
 export class PodcastHandler extends AbstractItemHandler {
 
-    private _env: any;
-    private _logger: any;
-
-    constructor(env, logger) {
-        super();
-        this._env = env;
-        this._logger = logger;
-    }
-
     get collectionName(): string {
         return 'podcasts';
     }
@@ -48,7 +39,7 @@ export class PodcastHandler extends AbstractItemHandler {
             description: description,
             type: item.type,
             published_on: item.published_on,
-            image: item.cover_image ? `${this._env.PUBLIC_URL}assets/${item.cover_image}` : undefined,
+            image: item.cover_image ? `${this.env.PUBLIC_URL}assets/${item.cover_image}` : undefined,
             slug: item.slug,
         }]
     }
