@@ -27,7 +27,7 @@ export class SpeakerHandler extends AbstractItemHandler {
             description: item.description,
             published_on: item.published_on,
             slug: item.slug,
-            image: item.profile_image ? `${this._env.PUBLIC_URL}assets/${item.profile_image}` : undefined,
+            image: item.profile_image ? `${this.env.PUBLIC_URL}assets/${item.profile_image}` : undefined,
         }]
     }
 }

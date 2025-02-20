@@ -22,7 +22,7 @@ export class MeetupHandler extends AbstractItemHandler{
             title: item.title,
             description: item.description,
             published_on: item.published_on,
-            image: item.cover_image ? `${this._env.PUBLIC_URL}assets/${item.cover_image}` : undefined,
+            image: item.cover_image ? `${this.env.PUBLIC_URL}assets/${item.cover_image}` : undefined,
             slug: item.slug,
         }]
     }
