@@ -23,7 +23,7 @@ export class PickOfTheDayHandler extends AbstractItemHandler {
             description: item.description,
             website_url: item.website_url,
             published_on: item.published_on,
-            image: item.image ? `${this._env.PUBLIC_URL}assets/${item.image}` : undefined,
+            image: item.image ? `${this.env.PUBLIC_URL}assets/${item.image}` : undefined,
         }]
     }
 }

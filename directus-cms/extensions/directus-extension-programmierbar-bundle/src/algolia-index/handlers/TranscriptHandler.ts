@@ -29,13 +29,13 @@ export class TranscriptHandler extends AbstractItemHandler {
     buildAttributes(item: any): Record<string, any>[] {
         const podcast = item.podcast;
         let podcastAttributes = {};
-        if (!podcast) {
+        if (podcast) {
             podcastAttributes = {
                 title: podcast.title,
                 number: podcast.number,
                 type: podcast.type,
                 published_on: podcast.published_on,
-                image: podcast.cover_image ? `${this._env.PUBLIC_URL}assets/${podcast.cover_image}` : undefined,
+                image: podcast.cover_image ? `${this.env.PUBLIC_URL}assets/${podcast.cover_image}` : undefined,
                 slug: podcast.slug,
             }
         }
