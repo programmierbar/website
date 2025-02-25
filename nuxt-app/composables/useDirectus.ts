@@ -57,6 +57,14 @@ export function useDirectus() {
         )
     }
 
+  async function getConferencePage() {
+    return await directus.request(
+      readSingleton('conference_page', {
+        fields: ['*', 'cover_image.*'],
+      })
+    )
+  }
+
     async function getHallOfFamePage() {
         return await directus.request(
             readSingleton('hall_of_fame_page', {
@@ -661,6 +669,7 @@ export function useDirectus() {
         getHomepage,
         getPodcastPage,
         getMeetupPage,
+        getConferencePage,
         getHallOfFamePage,
         getPicksOfTheDayPage,
         getAboutPage,
