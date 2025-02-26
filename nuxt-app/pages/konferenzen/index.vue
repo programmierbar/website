@@ -12,15 +12,53 @@
                 </SectionHeading>
 
                 <InnerHtml
-                    class="mt-8 text-lg font-bold leading-normal text-white md:mt-16 md:text-2xl md:leading-normal lg:text-3xl lg:leading-normal"
+                  class="mt-8 text-5xl font-black leading-normal text-white"
+                  :html="conferencePage.intro_heading"
+                />
+
+                <InnerHtml
+                    class="mt-2 text-2xl font-light leading-normal text-white"
                     :html="conferencePage.intro_text_1"
                 />
+
+                <InnerHtml
+                  class="mt-8 text-5xl font-black leading-normal text-white"
+                  :html="conferencePage.faqs_heading"
+                />
+
+                <InnerHtml
+                  class="mt-2 text-2xl font-light leading-normal text-white"
+                  :html="conferencePage.faqs_text_1"
+                />
+
+              <FaqList :faqs='conferencePage.faqs' />
+
+              <!--<div class='mt-16'>
+                <div v-for='faq in conferencePage.faqs'>
+                  <hr class='border-white' />
+                  <div class='flex justify-between py-3'>
+                    <p class='text-white'>
+                      {{ faq.question}}
+                    </p>
+                    <div class='text-white w-6'>
+                      <AngleDownIcon class='stroke-white fill-white'/>
+                    </div>
+                  </div>
+                  <InnerHtml
+                    class=" text-white"
+                    :html="faq.answer"
+                  />
+                </div>
+              </div>-->
+
             </div>
         </section>
     </div>
 </template>
 
 <script setup lang="ts">
+import AngleDownIcon from '~/assets/icons/angle-down.svg'
+
 import { useLoadingScreen, usePageMeta } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import type { DirectusConferencePage } from '~/types';
