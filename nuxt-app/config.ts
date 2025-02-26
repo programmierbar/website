@@ -1,5 +1,6 @@
 // Feature Flags
 export const FLAG_SHOW_LOGIN = Boolean(process.env.FLAG_SHOW_LOGIN?.toLowerCase() == 'true')
+export const FLAG_SHOW_CONFERENCE_PAGE = Boolean(process.env.FLAG_SHOW_CONFERENCE_PAGE?.toLowerCase() == 'true')
 
 // Website config
 export const DEVTOOLS = Boolean(process.env.DEVTOOLS?.toLowerCase() == 'true')
