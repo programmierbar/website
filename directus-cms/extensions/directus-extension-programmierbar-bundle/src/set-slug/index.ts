@@ -53,6 +53,7 @@ export default defineHook(({ filter }, hookContext) => {
                         (metadata.collection === 'speakers' && (payload.academic_title || payload.first_name || payload.last_name)) ||
                         (metadata.collection === 'podcasts' && (payload.type || payload.number || payload.title)) ||
                         (metadata.collection === 'meetups' && payload.title) ||
+                        (metadata.collection === 'conferences' && payload.title) ||
                         (metadata.collection === 'profiles' && (payload.first_name || payload.last_name))
                     )
                 ) {
@@ -131,6 +132,16 @@ export default defineHook(({ filter }, hookContext) => {
         // If collection name is "podcasts" and "title" is set,
         // log info and return payload with meetup slug
         if (metadata.collection === 'meetups' && futureItem.title) {
+            logInfo()
+            return {
+                ...payload,
+                slug: getUrlSlug(futureItem.title),
+            }
+        }
+
+        // If collection name is "conferences" and "title" is set,
+        // log info and return payload with meetup slug
+        if (metadata.collection === 'conferences' && futureItem.title) {
             logInfo()
             return {
                 ...payload,
