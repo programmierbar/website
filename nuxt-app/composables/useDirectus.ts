@@ -9,6 +9,7 @@ import {
     type QueryFilter,
 } from '@directus/sdk'
 import type {
+  ConferenceItem,
   DirectusMemberItem,
   DirectusPickOfTheDayItem,
   DirectusProfileItem,
@@ -356,6 +357,56 @@ export function useDirectus() {
             )
     }
 
+  async function getConferenceBySlug(slug: string) {
+    return await directus
+      .request(
+        readItems('conferences', {
+          fields: [
+            'id',
+            'slug',
+            'published_on',
+            'start_on',
+            'end_on',
+            'title',
+            'headline_1',
+            'text_1',
+            'cover_image.*',
+            'cover_image',
+            'gallery_images',
+            'speakers',
+            'speakers.speaker.id',
+            'speakers.speaker.slug',
+            'speakers.speaker.academic_title',
+            'speakers.speaker.first_name',
+            'speakers.speaker.last_name',
+            'speakers.speaker.description',
+            'speakers.speaker.event_image.*',
+          ],
+          filter: { slug: { _eq: slug } },
+          limit: 1,
+        })
+      )
+      .then(
+        (result) =>
+          result
+            .map((meetup) => ({
+              ...meetup,
+              speakersPrepared: meetup.speakers.map((speaker: any) => {
+                return {
+                  first_name: speaker.speaker.first_name,
+                  last_name: speaker.speaker.last_name,
+                  profile_image: speaker.speaker.profile_image,
+                  slug: speaker.speaker.slug,
+                  description: speaker.speaker.description,
+                  event_image: speaker.speaker.event_image,
+                  academic_title: speaker.speaker.academic_title,
+                }
+              }) as SpeakerPreviewItem[],
+            }))
+            .pop() as ConferenceItem
+      )
+  }
+
     async function getSpeakerBySlug(slug: string) {
         return await directus
             .request(
@@ -462,6 +513,25 @@ export function useDirectus() {
                 limit: -1,
             })
         )
+    }
+
+    async function getConferences() {
+      return await directus.request(
+        readItems('conferences', {
+          fields: [
+            'id',
+            'published_on',
+            'slug',
+            'start_on',
+            'end_on',
+            'title',
+            'text_1',
+            'poster.*',
+          ],
+          sort: ['-start_on'],
+          limit: -1,
+        })
+      )
     }
 
     async function getSpeakers() {
@@ -685,6 +755,7 @@ export function useDirectus() {
         getLatestPodcasts,
         getPodcasts,
         getMeetups,
+        getConferences,
         getSpeakers,
         getPodcastCount,
         getPickOfTheDayCount,
@@ -694,6 +765,7 @@ export function useDirectus() {
         getTopTagsForCollection,
         getPodcastBySlug,
         getMeetupBySlug,
+        getConferenceBySlug,
         getSpeakerBySlug,
         getRelatedPodcasts,
         getTranscriptForPodcast,

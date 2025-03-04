@@ -1,81 +1,59 @@
 <template>
     <div v-if="conferencePage">
         <section class="relative">
-            <!-- Page cover -->
             <PageCoverImage :cover-image="conferencePage.cover_image" v-if="conferencePage.cover_image" />
             <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />
-
-                <!-- Page intro -->
-                <SectionHeading class="mt-8 md:mt-0 md:pt-2/5-screen lg:pt-1/2-screen" element="h1">
+               <SectionHeading class="mt-8 md:mt-0 md:pt-2/5-screen lg:pt-1/2-screen" element="h1">
                     {{ conferencePage.conference_heading }}
                 </SectionHeading>
-
                 <InnerHtml
                   class="mt-8 text-5xl font-black leading-normal text-white"
                   :html="conferencePage.intro_heading"
                 />
-
                 <InnerHtml
                     class="mt-2 text-2xl font-light leading-normal text-white"
                     :html="conferencePage.intro_text_1"
                 />
-
-                <InnerHtml
-                  class="mt-8 text-5xl font-black leading-normal text-white"
-                  :html="conferencePage.faqs_heading"
-                />
-
-                <InnerHtml
-                  class="mt-2 text-2xl font-light leading-normal text-white"
-                  :html="conferencePage.faqs_text_1"
-                />
-
-              <FaqList :faqs='conferencePage.faqs' />
-
-              <!--<div class='mt-16'>
-                <div v-for='faq in conferencePage.faqs'>
-                  <hr class='border-white' />
-                  <div class='flex justify-between py-3'>
-                    <p class='text-white'>
-                      {{ faq.question}}
-                    </p>
-                    <div class='text-white w-6'>
-                      <AngleDownIcon class='stroke-white fill-white'/>
-                    </div>
-                  </div>
-                  <InnerHtml
-                    class=" text-white"
-                    :html="faq.answer"
-                  />
-                </div>
-              </div>-->
-
             </div>
+        </section>
+        <section class="relative">
+          <ConferenceSection :heading='"Termine"' :conferences="conferences" />
+          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
+            <InnerHtml
+              class="mt-8 text-5xl font-black leading-normal text-white"
+              :html="conferencePage.faqs_heading"
+            />
+            <InnerHtml
+              class="mt-2 text-2xl font-light leading-normal text-white"
+              :html="conferencePage.faqs_text_1"
+            />
+            <FaqList :faqs='conferencePage.faqs' />
+          </div>
         </section>
     </div>
 </template>
 
 <script setup lang="ts">
-import AngleDownIcon from '~/assets/icons/angle-down.svg'
-
 import { useLoadingScreen, usePageMeta } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
-import type { DirectusConferencePage } from '~/types';
+import type { DirectusConferenceItem, DirectusConferencePage } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 
 const breadcrumbs = [{ label: 'Konferenzen' }]
 const directus = useDirectus()
 
-// Query meetup page and meetups
 const { data: pageData } = useAsyncData(async () => {
-    const [conferencePage] = await Promise.all([directus.getConferencePage()])
+    const [conferencePage, conferences] = await Promise.all([
+      directus.getConferencePage(),
+      directus.getConferences(),
+    ])
 
-    return { conferencePage }
+    return { conferencePage, conferences }
 })
 
-// Extract about page and members from page data
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
+const conferences: ComputedRef<DirectusConferenceItem[]> = computed(() => pageData.value?.conferences || [])
 
 // Set loading screen
 useLoadingScreen(conferencePage)

@@ -4,7 +4,10 @@
       {{ faq.question }}
     </p>
     <div class='text-white w-6'>
-      <AngleDownIcon class='stroke-white fill-white'/>
+      <AngleDownIcon
+        class='stroke-white fill-white transition-all duration-500'
+        :class="{ 'rotate-180': isOpened }"
+      />
     </div>
   </div>
   <div

@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 
-import type { DirectusMeetupItem, DirectusPodcastItem, DirectusSpeakerItem } from '~/types/directus'
+import type { DirectusMeetupItem, DirectusPodcastItem, DirectusConferenceItem, DirectusSpeakerItem } from '~/types/directus'
 
 export type LatestPodcastItem = Pick<
     DirectusPodcastItem,
@@ -28,6 +28,7 @@ interface PreparedPodcastsItems {
 
 export interface PodcastItem extends DirectusPodcastItem, PreparedTagsItem, PreparedSpeakersItem {}
 export interface MeetupItem extends DirectusMeetupItem, PreparedTagsItem, PreparedSpeakersItem {}
+export interface ConferenceItem extends DirectusConferenceItem, PreparedSpeakersItem {}
 export interface SpeakerItem extends DirectusSpeakerItem, PreparedTagsItem, PreparedPodcastsItems {}
 
 export interface MemberItem {
