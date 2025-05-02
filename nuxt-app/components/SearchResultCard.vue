@@ -1,6 +1,6 @@
 <template>
     <div>
-        <nuxt-link class="block space-y-6 lg:flex lg:space-x-12 lg:space-y-0" :to="viewModel.url" data-cursor-more>
+        <nuxt-link class="block space-y-6 lg:flex lg:space-x-12 lg:space-y-0" :to="viewModel.url" data-cursor-more :target='viewModel.target'>
           <nuxt-img
             v-if="item.image"
             class="h-32 w-32 object-cover md:h-48 md:w-48 lg:h-72 lg:w-72"
@@ -64,6 +64,14 @@ class ViewModel {
     public description = "",
     public isExternalUrl = false,
   ) {}
+  get target(): string {
+
+    if (this.isExternalUrl) {
+      return '_blank';
+    }
+
+    return '_self';
+  }
 }
 
 const viewModel = computed(() => {
@@ -103,7 +111,7 @@ const viewModel = computed(() => {
       )
     case "pick_of_the_day":
       return new ViewModel(
-        `/pick_of_the_day/${props.item.slug}`,
+        props.item.website_url,
         props.item.name || "",
         "Pick of the Day // " + publishDate,
         props.item.description?.replace(/<[^<>]+>/g, "") || "",
