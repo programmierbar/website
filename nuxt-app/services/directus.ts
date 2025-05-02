@@ -3,6 +3,7 @@ import { DIRECTUS_CMS_URL } from '../config'
 import type {
     DirectusAboutPage,
     DirectusCocPage,
+    DirectusConferencePage,
     DirectusContactPage,
     DirectusHallOfFamePage,
     DirectusHomePage,
@@ -29,6 +30,7 @@ export type Collections = {
     home_page: DirectusHomePage
     podcast_page: DirectusPodcastPage
     meetup_page: DirectusMeetupPage
+    conference_page: DirectusConferencePage
     hall_of_fame_page: DirectusHallOfFamePage
     pick_of_the_day_page: DirectusPickOfTheDayPage
     about_page: DirectusAboutPage

@@ -146,6 +146,7 @@ import { trackGoal } from '../helpers'
 import SocialNetworks from './SocialNetworks.vue'
 
 const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
+const FLAG_SHOW_CONFERENCE_PAGE = useRuntimeConfig().public.FLAG_SHOW_CONFERENCE_PAGE
 
 const mainMenuItems = [
     { label: 'Home', href: '/' },
@@ -155,6 +156,11 @@ const mainMenuItems = [
     { label: 'Pick of the Day', href: '/pick-of-the-day' },
     { label: 'Über uns', href: '/ueber-uns' },
 ]
+
+if (FLAG_SHOW_CONFERENCE_PAGE) {
+  mainMenuItems.splice(3, 0, { label: 'Konferenzen', href: '/konferenzen' });
+}
+
 const subMenuItems = [
     { label: 'Kontakt', href: '/kontakt' },
     { label: 'Impressum', href: '/impressum' },

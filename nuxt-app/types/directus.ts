@@ -261,6 +261,21 @@ export interface DirectusMeetupPage {
     meetup_heading_past: string
 }
 
+export interface DirectusConferencePage {
+  meta_title: string
+  meta_description: string
+  cover_image: DirectusFileItem
+  conference_heading: string
+  intro_heading: string
+  intro_text_1: string
+  faqs_heading: string
+  faqs_text_1: string
+  faqs: {
+    question: string
+    answer: string
+  }[]
+}
+
 export interface DirectusHallOfFamePage {
     meta_title: string
     meta_description: string
