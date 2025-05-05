@@ -52,9 +52,17 @@ export interface SpeakerPreviewItem {
     academic_title: string
     first_name: string
     last_name: string
+    occupation: string
     profile_image: FileItem
     description: string
     event_image: FileItem
+    website_url: string | null
+    twitter_url: string | null
+    bluesky_url: string | null
+    linkedin_url: string | null
+    github_url: string | null
+    instagram_url: string | null
+    youtube_url: string | null
 }
 
 export interface PickOfTheDayItem extends PreparedTagsItem {

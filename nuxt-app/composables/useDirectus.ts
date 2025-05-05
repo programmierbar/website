@@ -372,39 +372,46 @@ export function useDirectus() {
             'text_1',
             'cover_image.*',
             'cover_image',
+            'poster',
+            'poster.*',
             'gallery_images',
+            'faqs',
             'speakers',
-            'speakers.speaker.id',
-            'speakers.speaker.slug',
-            'speakers.speaker.academic_title',
-            'speakers.speaker.first_name',
-            'speakers.speaker.last_name',
-            'speakers.speaker.description',
-            'speakers.speaker.event_image.*',
+            'speakers.*',
+            'speakers.speakers_id.*',
+            'speakers.speakers_id.profile_image.*',
           ],
           filter: { slug: { _eq: slug } },
           limit: 1,
         })
       )
-      .then(
-        (result) =>
-          result
-            .map((meetup) => ({
-              ...meetup,
-              speakersPrepared: meetup.speakers.map((speaker: any) => {
-                return {
-                  first_name: speaker.speaker.first_name,
-                  last_name: speaker.speaker.last_name,
-                  profile_image: speaker.speaker.profile_image,
-                  slug: speaker.speaker.slug,
-                  description: speaker.speaker.description,
-                  event_image: speaker.speaker.event_image,
-                  academic_title: speaker.speaker.academic_title,
-                }
-              }) as SpeakerPreviewItem[],
-            }))
-            .pop() as ConferenceItem
-      )
+      .then((result) => {
+        const singleResult = result.pop() as unknown as ConferenceItem
+        const speakersPrepared = singleResult.speakers.map((speaker: any) => {
+              return {
+                first_name: speaker.speakers_id.first_name,
+                last_name: speaker.speakers_id.last_name,
+                profile_image: speaker.speakers_id.profile_image,
+                occupation: speaker.speakers_id.occupation,
+                slug: speaker.speakers_id.slug,
+                description: speaker.speakers_id.description,
+                event_image: speaker.speakers_id.event_image,
+                academic_title: speaker.speakers_id.academic_title,
+                website_url: speaker.speakers_id.website_url,
+                twitter_url: speaker.speakers_id.twitter_url,
+                bluesky_url: speaker.speakers_id.bluesky_url,
+                linkedin_url: speaker.speakers_id.linkedin_url,
+                github_url: speaker.speakers_id.github_url,
+                instagram_url: speaker.speakers_id.instagram_url,
+                youtube_url: speaker.speakers_id.youtube_url,
+              } as SpeakerPreviewItem
+          });
+
+        return {
+          ...singleResult,
+          speakersPrepared
+        };
+      })
   }
 
     async function getSpeakerBySlug(slug: string) {
