@@ -112,6 +112,12 @@ export interface DirectusConferenceItem {
         speaker: DirectusSpeakerItem
         sort: number
     }[]
+    agenda: {
+      start: string
+      end: string
+      title: string
+      subtitle: string
+    }[]
     faqs: {
       question: string
       answer: string

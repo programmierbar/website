@@ -375,6 +375,7 @@ export function useDirectus() {
             'poster',
             'poster.*',
             'gallery_images',
+            'agenda',
             'faqs',
             'speakers',
             'speakers.*',
