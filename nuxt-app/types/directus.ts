@@ -83,6 +83,7 @@ export interface DirectusMeetupItem {
         sort: number
     }[]
 }
+
 export interface DirectusConferenceItem {
     id: string
     slug: string
@@ -95,9 +96,7 @@ export interface DirectusConferenceItem {
     headline_1: string
     text_1: string
     gallery_images: {
-        id: number
-        meetup: DirectusMeetupItem
-        image: DirectusFileItem
+        directus_files_id: DirectusFileItem
         sort: number
     }[]
     members: {

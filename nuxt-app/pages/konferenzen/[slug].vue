@@ -34,6 +34,20 @@
 
         <section class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
+            <p>Gallery - {{ galleryImages.length }}</p>
+            <div v-for='galleryImage in galleryImages'>
+                <DirectusImage
+                  class="object-cover aspect-square"
+                  :image="galleryImage"
+                  sizes="lg:300px"
+                  loading="lazy"
+                />
+            </div>
+          </div>
+        </section>
+
+        <section class="relative">
+          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <InnerHtml
               class="mt-8 text-5xl font-black leading-normal text-white"
               :html="conferencePage.faqs_heading"
@@ -90,12 +104,10 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
         throw new Error('The conference was not found.')
     }
 
-  // Throw error if meetup does not exist
-  if (!conferencePage) {
-    throw new Error('Could not access conference page.')
-  }
-
-  console.log(conference);
+    // Throw error if meetup does not exist
+    if (!conferencePage) {
+      throw new Error('Could not access conference page.')
+    }
 
     // Return conference and page
     return { conference, conferencePage }
@@ -114,6 +126,18 @@ const combinedFaqs: ComputedRef<any | undefined> = computed(() => {
     faqs = [...faqs, ...pageData.value.conferencePage.faqs];
   }
   return faqs;
+})
+
+const galleryImages: ComputedRef<any | undefined> = computed(() => {
+  let images = [];
+
+  if (pageData.value?.conference?.gallery_images) {
+    images = pageData.value.conference.gallery_images.map((gallery_image) => {
+      return gallery_image.directus_files_id;
+    })
+  }
+
+  return images;
 })
 
 // Set loading screen
