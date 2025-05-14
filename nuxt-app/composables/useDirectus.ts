@@ -9,6 +9,7 @@ import {
     type QueryFilter,
 } from '@directus/sdk'
 import type {
+  ConferenceItem,
   DirectusMemberItem,
   DirectusPickOfTheDayItem,
   DirectusProfileItem,
@@ -356,6 +357,63 @@ export function useDirectus() {
             )
     }
 
+  async function getConferenceBySlug(slug: string) {
+    return await directus
+      .request(
+        readItems('conferences', {
+          fields: [
+            'id',
+            'slug',
+            'published_on',
+            'start_on',
+            'end_on',
+            'title',
+            'headline_1',
+            'text_1',
+            'cover_image.*',
+            'cover_image',
+            'poster',
+            'poster.*',
+            'gallery_images',
+            'faqs',
+            'speakers',
+            'speakers.*',
+            'speakers.speakers_id.*',
+            'speakers.speakers_id.profile_image.*',
+          ],
+          filter: { slug: { _eq: slug } },
+          limit: 1,
+        })
+      )
+      .then((result) => {
+        const singleResult = result.pop() as unknown as ConferenceItem
+        const speakersPrepared = singleResult.speakers.map((speaker: any) => {
+              return {
+                first_name: speaker.speakers_id.first_name,
+                last_name: speaker.speakers_id.last_name,
+                profile_image: speaker.speakers_id.profile_image,
+                occupation: speaker.speakers_id.occupation,
+                slug: speaker.speakers_id.slug,
+                description: speaker.speakers_id.description,
+                event_image: speaker.speakers_id.event_image,
+                academic_title: speaker.speakers_id.academic_title,
+                website_url: speaker.speakers_id.website_url,
+                twitter_url: speaker.speakers_id.twitter_url,
+                bluesky_url: speaker.speakers_id.bluesky_url,
+                linkedin_url: speaker.speakers_id.linkedin_url,
+                github_url: speaker.speakers_id.github_url,
+                instagram_url: speaker.speakers_id.instagram_url,
+                youtube_url: speaker.speakers_id.youtube_url,
+              } as SpeakerPreviewItem
+          });
+
+        return {
+          ...singleResult,
+          speakersPrepared
+        };
+      })
+  }
+
     async function getSpeakerBySlug(slug: string) {
         return await directus
             .request(
@@ -462,6 +520,25 @@ export function useDirectus() {
                 limit: -1,
             })
         )
+    }
+
+    async function getConferences() {
+      return await directus.request(
+        readItems('conferences', {
+          fields: [
+            'id',
+            'published_on',
+            'slug',
+            'start_on',
+            'end_on',
+            'title',
+            'text_1',
+            'poster.*',
+          ],
+          sort: ['-start_on'],
+          limit: -1,
+        })
+      )
     }
 
     async function getSpeakers() {
@@ -685,6 +762,7 @@ export function useDirectus() {
         getLatestPodcasts,
         getPodcasts,
         getMeetups,
+        getConferences,
         getSpeakers,
         getPodcastCount,
         getPickOfTheDayCount,
@@ -694,6 +772,7 @@ export function useDirectus() {
         getTopTagsForCollection,
         getPodcastBySlug,
         getMeetupBySlug,
+        getConferenceBySlug,
         getSpeakerBySlug,
         getRelatedPodcasts,
         getTranscriptForPodcast,

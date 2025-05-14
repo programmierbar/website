@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 
-import type { DirectusMeetupItem, DirectusPodcastItem, DirectusSpeakerItem } from '~/types/directus'
+import type { DirectusMeetupItem, DirectusPodcastItem, DirectusConferenceItem, DirectusSpeakerItem } from '~/types/directus'
 
 export type LatestPodcastItem = Pick<
     DirectusPodcastItem,
@@ -28,6 +28,7 @@ interface PreparedPodcastsItems {
 
 export interface PodcastItem extends DirectusPodcastItem, PreparedTagsItem, PreparedSpeakersItem {}
 export interface MeetupItem extends DirectusMeetupItem, PreparedTagsItem, PreparedSpeakersItem {}
+export interface ConferenceItem extends DirectusConferenceItem, PreparedSpeakersItem {}
 export interface SpeakerItem extends DirectusSpeakerItem, PreparedTagsItem, PreparedPodcastsItems {}
 
 export interface MemberItem {
@@ -51,9 +52,17 @@ export interface SpeakerPreviewItem {
     academic_title: string
     first_name: string
     last_name: string
+    occupation: string
     profile_image: FileItem
     description: string
     event_image: FileItem
+    website_url: string | null
+    twitter_url: string | null
+    bluesky_url: string | null
+    linkedin_url: string | null
+    github_url: string | null
+    instagram_url: string | null
+    youtube_url: string | null
 }
 
 export interface PickOfTheDayItem extends PreparedTagsItem {

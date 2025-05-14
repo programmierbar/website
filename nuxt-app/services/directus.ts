@@ -10,6 +10,7 @@ import type {
     DirectusImprintPage,
     DirectusLoginPage,
     DirectusMeetupItem,
+    DirectusConferenceItem,
     DirectusMeetupPage,
     DirectusMemberItem,
     DirectusPickOfTheDayItem,
@@ -44,6 +45,7 @@ export type Collections = {
     recordings_page: DirectusRecordingsPage
     podcasts: DirectusPodcastItem[]
     meetups: DirectusMeetupItem[]
+    conferences: DirectusConferenceItem[]
     members: DirectusMemberItem[]
     speakers: DirectusSpeakerItem[]
     picks_of_the_day: DirectusPickOfTheDayItem[]

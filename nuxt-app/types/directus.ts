@@ -83,6 +83,40 @@ export interface DirectusMeetupItem {
         sort: number
     }[]
 }
+export interface DirectusConferenceItem {
+    id: string
+    slug: string
+    published_on: string
+    start_on: string
+    end_on: string
+    cover_image: DirectusFileItem
+    poster: DirectusFileItem
+    title: string
+    headline_1: string
+    text_1: string
+    gallery_images: {
+        id: number
+        meetup: DirectusMeetupItem
+        image: DirectusFileItem
+        sort: number
+    }[]
+    members: {
+        id: number
+        meetup: DirectusMeetupItem
+        member: DirectusMemberItem
+        sort: number
+    }[]
+    speakers: {
+        id: number
+        meetup: DirectusMeetupItem
+        speaker: DirectusSpeakerItem
+        sort: number
+    }[]
+    faqs: {
+      question: string
+      answer: string
+    }[]
+}
 
 export interface DirectusMemberItem {
     id: string
