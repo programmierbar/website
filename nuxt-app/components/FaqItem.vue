@@ -3,9 +3,9 @@
     <p class='text-white font-bold'>
       {{ faq.question }}
     </p>
-    <div class='text-white w-6'>
+    <div class='text-white max-w-6 min-w-6'>
       <AngleDownIcon
-        class='stroke-white fill-white transition-all duration-500'
+        class='stroke-white fill-white transition-all duration-500 max-w-full'
         :class="{ 'rotate-180': isOpened }"
       />
     </div>

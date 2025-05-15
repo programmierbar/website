@@ -32,18 +32,8 @@
           </div>
         </section>
 
-        <section class="relative">
-          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
-            <p>Gallery - {{ galleryImages.length }}</p>
-            <div v-for='galleryImage in galleryImages'>
-                <DirectusImage
-                  class="object-cover aspect-square"
-                  :image="galleryImage"
-                  sizes="lg:300px"
-                  loading="lazy"
-                />
-            </div>
-          </div>
+        <section class="relative my-16">
+          <ConferenceGallery :images='galleryImages' />
         </section>
 
         <section class="relative">
@@ -85,6 +75,8 @@ import { getMetaInfo, trackGoal } from '~/helpers';
 import type { ConferenceItem, DirectusConferencePage, TagItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
+import ConferenceGallery from '~/components/ConferenceGallery.vue';
+import type { DirectusFile } from '@directus/sdk';
 
 // Add route and router
 const route = useRoute()
@@ -117,7 +109,7 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
 const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageData.value?.conference)
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
 
-const combinedFaqs: ComputedRef<any | undefined> = computed(() => {
+const combinedFaqs: ComputedRef<[]> = computed(() => {
   let faqs = [];
   if (pageData.value?.conference?.faqs) {
     faqs = [...pageData.value.conference.faqs];
@@ -128,7 +120,7 @@ const combinedFaqs: ComputedRef<any | undefined> = computed(() => {
   return faqs;
 })
 
-const galleryImages: ComputedRef<any | undefined> = computed(() => {
+const galleryImages: ComputedRef<DirectusFile[]> = computed(() => {
   let images = [];
 
   if (pageData.value?.conference?.gallery_images) {
