@@ -32,6 +32,17 @@
           </div>
         </section>
 
+        <section class="relative">
+          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
+            <SectionHeading element="h2">
+              Talks
+            </SectionHeading>
+            <div v-for="talk of conference.talksPrepared" :key="talk.id" class='mb-36'>
+                <TalkItem :talk='talk' />
+            </div>
+          </div>
+        </section>
+
         <section class="relative my-16">
           <ConferenceGallery :images='galleryImages' />
         </section>
@@ -77,6 +88,7 @@ import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
 import type { DirectusFile } from '@directus/sdk';
+import TalkItem from '~/components/TalkItem.vue';
 
 // Add route and router
 const route = useRoute()
@@ -100,6 +112,8 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
     if (!conferencePage) {
       throw new Error('Could not access conference page.')
     }
+
+    console.log(conference);
 
     // Return conference and page
     return { conference, conferencePage }

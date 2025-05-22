@@ -1,5 +1,7 @@
 /* eslint-disable no-use-before-define */
 
+import type { TalkItem } from '~/types/items';
+
 export interface DirectusFileItem {
     id: string
     title: string | null
@@ -95,6 +97,10 @@ export interface DirectusConferenceItem {
     title: string
     headline_1: string
     text_1: string
+    talks: {
+      talk: TalkItem
+      sort: number
+    }[]
     gallery_images: {
         directus_files_id: DirectusFileItem
         sort: number
