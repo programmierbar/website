@@ -382,6 +382,7 @@ export function useDirectus() {
             'talks.*',
             'talks.talk.*',
             'talks.talk.thumbnail.*',
+            'talks.talk.video_url',
             'talks.talk.speakers.*',
             'talks.talk.speakers.speaker',
             'talks.talk.speakers.speaker.*',

@@ -62,6 +62,7 @@ export interface TalkItem {
   title: string
   abstract: string
   thumbnail: FileItem | null
+  video_url: string
   members: {
     id: number
     podcast: DirectusPodcastItem

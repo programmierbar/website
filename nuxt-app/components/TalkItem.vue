@@ -8,8 +8,9 @@
       />
     </div>
     <div class='basis-full md:basis-1/2 order-1 md:order-2'>
+      <EmbeddedVideoPlayer v-if='talk.video_url' :url='talk.video_url'/>
       <DirectusImage
-        v-if='talk.thumbnail'
+        v-if='!talk.video_url && talk.thumbnail'
         class='object-cover aspect-video w-full'
         :image='talk.thumbnail'
         sizes='lg:600px'
