@@ -25,15 +25,18 @@ import GithubIcon from '~/assets/logos/github.svg'
 import InstagramIcon from '~/assets/logos/instagram.svg'
 import LinkedinIcon from '~/assets/logos/linkedin.svg'
 import MastodonIcon from '~/assets/logos/mastodon.svg'
+import DiscordIcon from '~/assets/logos/discord.svg'
 //import TwitterIcon from '~/assets/logos/twitter.svg'
 import YoutubeIcon from '~/assets/logos/youtube.svg'
 import {
+  DISCORD_INVITE_LINK,
   OPEN_BLUESKY_EVENT_ID,
   OPEN_GITHUB_EVENT_ID,
   OPEN_INSTAGRAM_EVENT_ID,
   OPEN_LINKEDIN_EVENT_ID,
   OPEN_MASTODON_EVENT_ID,
   //OPEN_TWITTER_EVENT_ID,
+  OPEN_DISCORD_EVENT_ID,
   OPEN_YOUTUBE_EVENT_ID,
 } from '../config';
 import { trackGoal } from '../helpers'
@@ -68,6 +71,12 @@ const socialNetworks = [
       icon: InstagramIcon,
       href: 'https://www.instagram.com/programmier.bar',
       eventId: OPEN_INSTAGRAM_EVENT_ID,
+    },
+    {
+      label: 'Discord',
+      icon: DiscordIcon,
+      href: DISCORD_INVITE_LINK,
+      eventId: OPEN_DISCORD_EVENT_ID,
     },
     {
         label: 'YouTube',
