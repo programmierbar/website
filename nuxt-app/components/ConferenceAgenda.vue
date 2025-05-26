@@ -1,8 +1,9 @@
 <template>
   <div v-for="agendaItem of preparedAgenda" :key="agendaItem.title + agendaItem.subtitle">
-    <p class='mt-3 text-sm font-light'>
+    <p class='text-sm font-light italic mt-8'>
       <span v-if='agendaItem.start'>{{ agendaItem.start }}&nbsp;</span>
       <span v-if='agendaItem.end'>- {{ agendaItem.end }}&nbsp;</span>
+      <span v-if='(agendaItem.start || agendaItem.end) && agendaItem.subtitle'>// </span>
       <span v-if='agendaItem.subtitle'>{{ agendaItem.subtitle }}</span>
     </p>
     <p class='mt-1 text-xl'>{{ agendaItem.title }}</p>

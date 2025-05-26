@@ -12,7 +12,7 @@
                 <template #default="{ item, index, viewportItems, addViewportItem }">
                     <GenericListItem
                         :key="item.id"
-                        :class="index > 0 && 'ml-10 md:ml-16 lg:ml-20 xl:ml-24 2xl:ml-28 3xl:ml-32'"
+                        :class="index > 0 && 'ml-5 md:ml-8 lg:ml-10'"
                         :item="item"
                         :viewport-items="viewportItems"
                         :add-viewport-item="addViewportItem"

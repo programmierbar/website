@@ -1,18 +1,18 @@
 <template>
-  <div class='w-72 speaker-box'>
+  <div class='w-96 speaker-box'>
     <DirectusImage
       v-if="speaker.profile_image"
       class="object-cover aspect-square"
       :image="speaker.profile_image"
       :alt="fullName"
-      sizes="lg:300px"
+      sizes="md:300px"
       loading="lazy"
     />
-    <div class='mt-12 text-3xl p-9'>
-      <p>{{ fullName }}</p>
-      <p class='text-xl italic'>{{ speaker.occupation }}</p>
+    <div class='mt-6 text-3xl p-9'>
+      <p class='font-black mb-2'>{{ fullName }}</p>
+      <p class='font-light text-xl italic'>{{ speaker.occupation }}</p>
       <InnerHtml
-        class="mt-7 text-xl"
+        class="mt-7 font-light text-xl"
         :html="speaker.description"
       />
       <ul v-if="platforms.length" class="mt-6 flex space-x-6">

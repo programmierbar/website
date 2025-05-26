@@ -1,10 +1,11 @@
 <template>
-  <p class='text-4xl'>{{ talk.title }}</p>
+  <p class='text-4xl font-black'>{{ talk.title }}</p>
   <p class='text-2xl italic font-light mb-6'>{{ buildSpeakerNamesForTalk(talk) }}</p>
   <div class='flex flex-col md:flex-row gap-10'>
     <div class='basis-full md:basis-1/2 order-2 md:order-1'>
       <InnerHtml
         :html='talk.abstract'
+        class='font-light text-2xl'
       />
     </div>
     <div class='basis-full md:basis-1/2 order-1 md:order-2'>
