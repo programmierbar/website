@@ -1,7 +1,7 @@
 <template>
     <div class="h-1/2-screen w-full lg:h-4/6-screen">
         <div class="relative h-full overflow-hidden">
-            <div v-if='shadow' class="absolute left-0 bottom-0 z-20 h-1/3 w-full shadow"/>
+            <div v-if='shadow' class="absolute left-0 bottom-0 z-10 h-1/3 w-full shadow"/>
             <div class="absolute left-0 top-0 z-10 h-full w-full bg-gray-900 bg-opacity-30" />
 
             <DirectusImage
