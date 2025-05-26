@@ -26,6 +26,7 @@ export const BUZZSPROUT_RSS_FEED_URL = 'https://feeds.buzzsprout.com/176239.rss'
 export const YOUTUBE_PODCAST_URL = 'https://www.youtube.com/playlist?list=PLdL7w42vTISATGJPlvPa91GEMOSHqbWZY'
 export const MEETUP_URL = 'https://www.meetup.com/programmierbar'
 export const GOOGLE_MAPS_URL = 'https://goo.gl/maps/7h8a14WPPQkQL4LB8'
+export const DISCORD_INVITE_LINK = process.env.DISCORD_INVITE_LINK || 'https://discord.gg'
 
 export const ALGOLIA_INDEX = process.env.ALGOLIA_INDEX || 'programmierbar_website_prod'
 
