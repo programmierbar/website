@@ -1,14 +1,34 @@
 <template>
-  <p class='text-4xl font-black'>{{ talk.title }}</p>
-  <p class='text-2xl italic font-light mb-6'>{{ buildSpeakerNamesForTalk(talk) }}</p>
-  <div class='flex flex-col md:flex-row gap-10'>
-    <div class='basis-full md:basis-1/2 order-2 md:order-1'>
+  <div class="
+        flex flex-col
+        lg:grid lg:grid-cols-2 lg:grid-rows-[auto_1fr]
+        gap-1 lg:gap-4
+    ">
+    <div class="
+            order-1 <!-- Mobile order -->
+            lg:order-none <!-- Reset order for grid -->
+            lg:col-start-1 lg:row-start-1 <!-- Desktop grid placement -->
+        ">
+      <p class='text-4xl font-black'>{{ talk.title }}</p>
+      <p class='text-2xl italic font-light lg:mb-6'>{{ buildSpeakerNamesForTalk(talk) }}</p>
+    </div>
+
+    <div class="
+            order-3 <!-- Mobile order -->
+            lg:order-none <!-- Reset order for grid -->
+            lg:col-start-1 lg:row-start-2 <!-- Desktop grid placement -->
+        ">
       <InnerHtml
         :html='talk.abstract'
         class='font-light text-2xl'
       />
     </div>
-    <div class='basis-full md:basis-1/2 order-1 md:order-2'>
+
+    <div class="
+            order-2 <!-- Mobile order -->
+            lg:order-none <!-- Reset order for grid -->
+            lg:col-start-2 lg:row-start-1 lg:row-span-2 <!-- Desktop grid placement & span -->
+        ">
       <EmbeddedVideoPlayer v-if='talk.video_url' :url='talk.video_url'/>
       <DirectusImage
         v-if='!talk.video_url && talk.thumbnail'
