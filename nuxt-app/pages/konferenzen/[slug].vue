@@ -2,7 +2,7 @@
     <div v-if="conference && conferencePage" class='text-white'>
       <article class="relative">
         <section class="relative">
-          <PageCoverImage :cover-image="conference.cover_image" v-if="conference.cover_image" />
+          <PageCoverImage :shadow='true' :cover-image="conference.cover_image" v-if="conference.cover_image" />
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <SectionHeading element="h1">
               {{ conference.title }}
