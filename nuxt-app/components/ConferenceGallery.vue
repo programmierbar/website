@@ -19,7 +19,7 @@
                     >
                         <template #default="{ isNewToViewport }">
                             <FadeAnimation :fade-in="isNewToViewport ? 'from_bottom' : 'none'" :threshold="0">
-                              <div class='w-72'>
+                              <div class='w-72 mr-3'>
                                 <DirectusImage
                                   class="object-cover aspect-square"
                                   :image="item"
