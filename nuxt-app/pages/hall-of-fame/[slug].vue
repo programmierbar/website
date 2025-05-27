@@ -38,20 +38,7 @@
                         <div class="mt-6 text-base font-bold text-white md:mt-8 md:text-xl lg:text-2xl">
                             {{ speaker.occupation }}
                         </div>
-                        <ul v-if="platforms.length" class="mt-6 flex space-x-6">
-                            <li v-for="platform of platforms" :key="platform.name">
-                                <a
-                                    class="block h-7 text-white md:h-8 lg:h-10"
-                                    :href="platform.url"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    data-cursor-hover
-                                    @click="() => trackGoal(platform.eventId)"
-                                >
-                                    <component :is="platform.icon" />
-                                </a>
-                            </li>
-                        </ul>
+                        <IndividualPlatforms :platforms='platforms' :scope='"speaker"' :style='"color"' :sizes='"h-7 md:h-8 lg:h-10"' />
                     </div>
                 </div>
 
@@ -110,24 +97,8 @@
 </template>
 
 <script setup lang="ts">
-import BlueskyIcon from '~/assets/logos/bluesky-color.svg'
-import GithubIcon from '~/assets/logos/github.svg'
-import InstagramIcon from '~/assets/logos/instagram-color.svg'
-import LinkedinIcon from '~/assets/logos/linkedin-color.svg'
-import TwitterIcon from '~/assets/logos/twitter-color.svg'
-import WebsiteIcon from '~/assets/logos/website-color.svg'
-import YoutubeIcon from '~/assets/logos/youtube-color.svg'
 import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
-import {
-    OPEN_SPEAKER_BLUESKY_EVENT_ID,
-    OPEN_SPEAKER_GITHUB_EVENT_ID,
-    OPEN_SPEAKER_INSTAGRAM_EVENT_ID,
-    OPEN_SPEAKER_LINKEDIN_EVENT_ID,
-    OPEN_SPEAKER_TWITTER_EVENT_ID,
-    OPEN_SPEAKER_WEBSITE_EVENT_ID,
-    OPEN_SPEAKER_YOUTUBE_EVENT_ID,
-} from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
 import { generatePersonFromSpeaker } from '~/helpers/jsonLdGenerator'
 import type { TagItem } from '~/types'
@@ -197,57 +168,15 @@ useHead(() =>
 // Create breadcrumb list
 const breadcrumbs = computed(() => [{ label: 'Hall of Fame', href: '/hall-of-fame' }, { label: fullName.value || '' }])
 
-// Create platform list
-const platforms = computed(
-    () =>
-        [
-            {
-                name: 'Twitter',
-                icon: TwitterIcon,
-                url: speaker.value?.twitter_url,
-                eventId: OPEN_SPEAKER_TWITTER_EVENT_ID,
-            },
-            {
-                name: 'Bluesky',
-                icon: BlueskyIcon,
-                url: speaker.value?.bluesky_url,
-                eventId: OPEN_SPEAKER_BLUESKY_EVENT_ID,
-            },
-            {
-                name: 'LinkedIn',
-                icon: LinkedinIcon,
-                url: speaker.value?.linkedin_url,
-                eventId: OPEN_SPEAKER_LINKEDIN_EVENT_ID,
-            },
-            {
-                name: 'Instagram',
-                icon: InstagramIcon,
-                url: speaker.value?.instagram_url,
-                eventId: OPEN_SPEAKER_INSTAGRAM_EVENT_ID,
-            },
-            {
-                name: 'GitHub',
-                icon: GithubIcon,
-                url: speaker.value?.github_url,
-                eventId: OPEN_SPEAKER_GITHUB_EVENT_ID,
-            },
-            {
-                name: 'YouTube',
-                icon: YoutubeIcon,
-                url: speaker.value?.youtube_url,
-                eventId: OPEN_SPEAKER_YOUTUBE_EVENT_ID,
-            },
-            {
-                name: 'Website',
-                icon: WebsiteIcon,
-                url: speaker.value?.website_url,
-                eventId: OPEN_SPEAKER_WEBSITE_EVENT_ID,
-            },
-        ].filter((platform) => platform.url) as {
-            name: string
-            icon: string
-            url: string
-            eventId: string
-        }[]
-)
+const platforms = computed(() => {
+  return {
+    github_url: speaker.value?.github_url,
+    twitter_url: speaker.value?.twitter_url,
+    bluesky_url: speaker.value?.bluesky_url,
+    linkedin_url: speaker.value?.linkedin_url,
+    instagram_url: speaker.value?.instagram_url,
+    youtube_url: speaker.value?.youtube_url,
+    website_url: speaker.value?.website_url,
+  }
+});
 </script>

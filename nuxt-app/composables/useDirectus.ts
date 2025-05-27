@@ -640,6 +640,13 @@ export function useDirectus() {
                     'sort',
                     'normal_image.*',
                     'action_image.*',
+                    'twitter_url',
+                    'bluesky_url',
+                    'linkedin_url',
+                    'instagram_url',
+                    'github_url',
+                    'youtube_url',
+                    'website_url',
                 ],
                 filter,
                 sort: ['sort']

@@ -57,6 +57,8 @@
         <div class="mt-6 text-base font-bold uppercase text-white md:mt-7 md:text-lg lg:mt-10 lg:text-xl">
             {{ member.occupation }}
         </div>
+
+        <IndividualPlatforms :platforms='platforms' :scope='"member"'/>
     </div>
 </template>
 
@@ -72,6 +74,7 @@ import InnerHtml from './InnerHtml.vue'
 const initClipPath = 'circle(16.666% at 0 25%)'
 
 export default defineComponent({
+  methods: { trackGoal },
     components: {
         DirectusImage,
         InnerHtml,
@@ -88,6 +91,13 @@ export default defineComponent({
                     | 'description'
                     | 'normal_image'
                     | 'action_image'
+                    | 'twitter_url'
+                    | 'bluesky_url'
+                    | 'linkedin_url'
+                    | 'instagram_url'
+                    | 'github_url'
+                    | 'youtube_url'
+                    | 'website_url'
                 >
             >,
             required: true,
@@ -100,6 +110,21 @@ export default defineComponent({
     setup(props) {
         // Create full name
         const fullName = computed(() => `${props.member.first_name} ${props.member.last_name}`)
+        const platforms = computed(() => {
+          if (!props.member) {
+            return {}
+          }
+
+          return {
+            github_url: props.member.github_url,
+            twitter_url: props.member.twitter_url,
+            bluesky_url: props.member.bluesky_url,
+            linkedin_url: props.member.linkedin_url,
+            instagram_url: props.member.instagram_url,
+            youtube_url: props.member.youtube_url,
+            website_url: props.member.website_url,
+          }
+        })
 
         // Create element references
         const cursorElements = ref<HTMLDivElement[]>()
@@ -196,6 +221,7 @@ export default defineComponent({
         return {
             DIRECTUS_CMS_URL,
             fullName,
+            platforms,
             cursorElements,
             initClipPath,
             clipPathComponent,

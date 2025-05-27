@@ -28,20 +28,7 @@
           class='absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#131415] to-transparent'
         ></div>
       </div>
-      <ul v-if='platforms.length' class='mt-6 flex space-x-6 flex-shrink-0'>
-        <li v-for='platform of platforms' :key='platform.name'>
-          <a
-            class='block h-7 text-white'
-            :href='platform.url'
-            target='_blank'
-            rel='noreferrer'
-            data-cursor-hover
-            @click='() => trackGoal(platform.eventId)'
-          >
-            <component :is='platform.icon' />
-          </a>
-        </li>
-      </ul>
+      <IndividualPlatforms :platforms='platforms' :scope='"speaker"'/>
     </div>
   </div>
 </template>
@@ -50,20 +37,6 @@
 import type { SpeakerPreviewItem } from '~/types';
 import { computed, ref } from 'vue';
 import { getFullSpeakerName } from 'shared-code';
-import { trackGoal } from '~/helpers';
-import BlueskyIcon from '~/assets/logos/bluesky.svg';
-import GithubIcon from '~/assets/logos/github.svg';
-import InstagramIcon from '~/assets/logos/instagram.svg';
-import LinkedinIcon from '~/assets/logos/linkedin.svg';
-import TwitterIcon from '~/assets/logos/twitter.svg';
-import WebsiteIcon from '~/assets/logos/website-color.svg';
-import YoutubeIcon from '~/assets/logos/youtube.svg';
-import {
-  OPEN_SPEAKER_BLUESKY_EVENT_ID, OPEN_SPEAKER_GITHUB_EVENT_ID,
-  OPEN_SPEAKER_INSTAGRAM_EVENT_ID,
-  OPEN_SPEAKER_LINKEDIN_EVENT_ID,
-  OPEN_SPEAKER_TWITTER_EVENT_ID, OPEN_SPEAKER_WEBSITE_EVENT_ID, OPEN_SPEAKER_YOUTUBE_EVENT_ID,
-} from '~/config';
 
 const props = defineProps<{
   speaker: SpeakerPreviewItem;
@@ -74,58 +47,17 @@ const isExpanded = ref(false);
 const fullName = computed(() => getFullSpeakerName(props.speaker));
 
 // Create platform list
-const platforms = computed(
-  () =>
-    [
-      {
-        name: 'Twitter',
-        icon: TwitterIcon,
-        url: props.speaker.twitter_url,
-        eventId: OPEN_SPEAKER_TWITTER_EVENT_ID,
-      },
-      {
-        name: 'Bluesky',
-        icon: BlueskyIcon,
-        url: props.speaker.bluesky_url,
-        eventId: OPEN_SPEAKER_BLUESKY_EVENT_ID,
-      },
-      {
-        name: 'LinkedIn',
-        icon: LinkedinIcon,
-        url: props.speaker.linkedin_url,
-        eventId: OPEN_SPEAKER_LINKEDIN_EVENT_ID,
-      },
-      {
-        name: 'Instagram',
-        icon: InstagramIcon,
-        url: props.speaker.instagram_url,
-        eventId: OPEN_SPEAKER_INSTAGRAM_EVENT_ID,
-      },
-      {
-        name: 'GitHub',
-        icon: GithubIcon,
-        url: props.speaker.github_url,
-        eventId: OPEN_SPEAKER_GITHUB_EVENT_ID,
-      },
-      {
-        name: 'YouTube',
-        icon: YoutubeIcon,
-        url: props.speaker.youtube_url,
-        eventId: OPEN_SPEAKER_YOUTUBE_EVENT_ID,
-      },
-      {
-        name: 'Website',
-        icon: WebsiteIcon,
-        url: props.speaker.website_url,
-        eventId: OPEN_SPEAKER_WEBSITE_EVENT_ID,
-      },
-    ].filter((platform) => platform.url) as {
-      name: string
-      icon: string
-      url: string
-      eventId: string
-    }[],
-);
+const platforms = computed(() => {
+    return {
+      github_url: props.speaker.github_url,
+      twitter_url: props.speaker.twitter_url,
+      bluesky_url: props.speaker.bluesky_url,
+      linkedin_url: props.speaker.linkedin_url,
+      instagram_url: props.speaker.instagram_url,
+      youtube_url: props.speaker.youtube_url,
+      website_url: props.speaker.website_url,
+    }
+  });
 </script>
 
 <style scoped>

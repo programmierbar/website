@@ -51,6 +51,14 @@ export interface MemberItem {
     description: string
     normal_image: FileItem
     action_image: FileItem
+    website_url: string | null
+    twitter_url: string | null
+    bluesky_url: string | null
+    linkedin_url: string | null
+    github_url: string | null
+    instagram_url: string | null
+    youtube_url: string | null
+    mastodon_url: string | null
     meetups: MeetupItem[]
     podcasts: PodcastItem[]
     picks_of_the_day: PickOfTheDayItem[]

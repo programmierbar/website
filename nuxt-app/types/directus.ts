@@ -138,6 +138,14 @@ export interface DirectusMemberItem {
     description: string
     normal_image: string | DirectusFileItem
     action_image: string | DirectusFileItem
+    website_url: string | null
+    twitter_url: string | null
+    bluesky_url: string | null
+    linkedin_url: string | null
+    github_url: string | null
+    instagram_url: string | null
+    youtube_url: string | null
+    mastodon_url: string | null
     meetups: (
         | number
         | {
