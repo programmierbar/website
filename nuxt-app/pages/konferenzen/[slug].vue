@@ -4,7 +4,7 @@
         <section class="relative">
           <PageCoverImage :cover-image="conference.cover_image" v-if="conference.cover_image" />
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
-            <SectionHeading class="mt-8 md:mt-0 md:pt-2/5-screen lg:pt-1/2-screen" element="h1">
+            <SectionHeading element="h1">
               {{ conference.title }}
             </SectionHeading>
             <InnerHtml
@@ -16,7 +16,7 @@
 
         <section class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
-            <SectionHeading class="mt-8 md:mt-0 md:pt-2/5-screen lg:pt-1/2-screen" element="h2">
+            <SectionHeading element="h2">
               Speaker
             </SectionHeading>
             <ConferenceSpeakersSlider :speakers='conference.speakersPrepared' />
@@ -25,8 +25,32 @@
 
         <section class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
+            <SectionHeading element="h2">
+              Agenda
+            </SectionHeading>
+            <ConferenceAgenda :agenda='conference.agenda' />
+          </div>
+        </section>
+
+        <section class="relative">
+          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
+            <SectionHeading element="h2">
+              Talks
+            </SectionHeading>
+            <div v-for="talk of conference.talksPrepared" :key="talk.id" class='mb-36'>
+                <TalkItem :talk='talk' />
+            </div>
+          </div>
+        </section>
+
+        <section class="relative my-16">
+          <ConferenceGallery :images='galleryImages' />
+        </section>
+
+        <section class="relative">
+          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <InnerHtml
-              class="mt-8 text-5xl font-black leading-normal text-white"
+              class="mt-8 text-3xl font-black leading-normal text-white"
               :html="conferencePage.faqs_heading"
             />
             <InnerHtml
@@ -38,7 +62,7 @@
         </section>
 
         <section class="relative">
-          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
+          <div class="container my-16 px-6 md:my-28 md:pl-48 lg:my-32 lg:pr-8 3xl:px-8">
             <p class="text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl">
               Bitte beachte auch unsere
               <NuxtLink class="text-lime font-bold hover:underline" data-cursor-hover :to="'/verhaltensregeln'">
@@ -62,6 +86,9 @@ import { getMetaInfo, trackGoal } from '~/helpers';
 import type { ConferenceItem, DirectusConferencePage, TagItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
+import ConferenceGallery from '~/components/ConferenceGallery.vue';
+import type { DirectusFile } from '@directus/sdk';
+import TalkItem from '~/components/TalkItem.vue';
 
 // Add route and router
 const route = useRoute()
@@ -81,10 +108,12 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
         throw new Error('The conference was not found.')
     }
 
-  // Throw error if meetup does not exist
-  if (!conferencePage) {
-    throw new Error('Could not access conference page.')
-  }
+    // Throw error if meetup does not exist
+    if (!conferencePage) {
+      throw new Error('Could not access conference page.')
+    }
+
+    console.log(conference);
 
     // Return conference and page
     return { conference, conferencePage }
@@ -94,7 +123,7 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
 const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageData.value?.conference)
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
 
-const combinedFaqs: ComputedRef<any | undefined> = computed(() => {
+const combinedFaqs: ComputedRef<[]> = computed(() => {
   let faqs = [];
   if (pageData.value?.conference?.faqs) {
     faqs = [...pageData.value.conference.faqs];
@@ -103,6 +132,18 @@ const combinedFaqs: ComputedRef<any | undefined> = computed(() => {
     faqs = [...faqs, ...pageData.value.conferencePage.faqs];
   }
   return faqs;
+})
+
+const galleryImages: ComputedRef<DirectusFile[]> = computed(() => {
+  let images = [];
+
+  if (pageData.value?.conference?.gallery_images) {
+    images = pageData.value.conference.gallery_images.map((gallery_image) => {
+      return gallery_image.directus_files_id;
+    })
+  }
+
+  return images;
 })
 
 // Set loading screen

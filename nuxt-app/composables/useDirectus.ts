@@ -375,6 +375,20 @@ export function useDirectus() {
             'poster',
             'poster.*',
             'gallery_images',
+            'gallery_images.sort',
+            'gallery_images.directus_files_id.*',
+            'agenda',
+            'talks',
+            'talks.*',
+            'talks.talk.*',
+            'talks.talk.thumbnail.*',
+            'talks.talk.video_url',
+            'talks.talk.speakers.*',
+            'talks.talk.speakers.speaker',
+            'talks.talk.speakers.speaker.*',
+            'talks.talk.members.*',
+            'talks.talk.members.member',
+            'talks.talk.members.member.*',
             'faqs',
             'speakers',
             'speakers.*',
@@ -405,11 +419,16 @@ export function useDirectus() {
                 instagram_url: speaker.speakers_id.instagram_url,
                 youtube_url: speaker.speakers_id.youtube_url,
               } as SpeakerPreviewItem
-          });
+          })
+
+        const talksPrepared = singleResult.talks.map((talk: any) => {
+          return talk.talk;
+        });
 
         return {
           ...singleResult,
-          speakersPrepared
+          speakersPrepared,
+          talksPrepared,
         };
       })
   }

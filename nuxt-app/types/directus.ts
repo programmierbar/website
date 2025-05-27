@@ -1,5 +1,7 @@
 /* eslint-disable no-use-before-define */
 
+import type { TalkItem } from '~/types/items';
+
 export interface DirectusFileItem {
     id: string
     title: string | null
@@ -83,6 +85,7 @@ export interface DirectusMeetupItem {
         sort: number
     }[]
 }
+
 export interface DirectusConferenceItem {
     id: string
     slug: string
@@ -94,10 +97,12 @@ export interface DirectusConferenceItem {
     title: string
     headline_1: string
     text_1: string
+    talks: {
+      talk: TalkItem
+      sort: number
+    }[]
     gallery_images: {
-        id: number
-        meetup: DirectusMeetupItem
-        image: DirectusFileItem
+        directus_files_id: DirectusFileItem
         sort: number
     }[]
     members: {
@@ -111,6 +116,12 @@ export interface DirectusConferenceItem {
         meetup: DirectusMeetupItem
         speaker: DirectusSpeakerItem
         sort: number
+    }[]
+    agenda: {
+      start: string
+      end: string
+      title: string
+      subtitle: string
     }[]
     faqs: {
       question: string

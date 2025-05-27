@@ -22,7 +22,7 @@
         </section>
 
         <!-- Meetups -->
-        <MeetupSection :heading='meetupPage.meetup_heading' :meetups="meetups" />
+        <MeetupSection v-if='meetups.length > 0' :heading='meetupPage.meetup_heading' :meetups="meetups" />
 
         <MeetupSection :heading='meetupPage.meetup_heading_past' :meetups="pastMeetups" />
     </div>

@@ -7,18 +7,25 @@
             @mousedown="changeScrollPosition"
             @scroll="detectScrollState"
         >
-            <GenericLazyList class="flex" :items="speakers" direction="horizontal" :scroll-element="scrollBoxElement">
+            <GenericLazyList class="flex" :items="images" direction="horizontal" :scroll-element="scrollBoxElement">
                 <template #default="{ item, index, viewportItems, addViewportItem }">
                     <GenericListItem
                         :key="item.id"
-                        :class="index > 0 && 'ml-5 md:ml-8 lg:ml-10'"
+
                         :item="item"
                         :viewport-items="viewportItems"
                         :add-viewport-item="addViewportItem"
                     >
                         <template #default="{ isNewToViewport }">
                             <FadeAnimation :fade-in="isNewToViewport ? 'from_bottom' : 'none'" :threshold="0">
-                                <ConferenceSpeaker :speaker="item" />
+                              <div class='w-72 mr-3'>
+                                <DirectusImage
+                                  class="object-cover aspect-square"
+                                  :image="item"
+                                  sizes="lg:300px"
+                                  loading="lazy"
+                                />
+                              </div>
                             </FadeAnimation>
                         </template>
                     </GenericListItem>
@@ -52,15 +59,15 @@
 <script setup lang="ts">
 import { CLICK_SCROLL_LEFT_ARROW_EVENT_ID, CLICK_SCROLL_RIGHT_ARROW_EVENT_ID } from '~/config'
 import { trackGoal } from '~/helpers'
-import type { SpeakerPreviewItem } from '~/types';
 import smoothscroll from 'smoothscroll-polyfill'
 import { onMounted, ref } from 'vue'
 import FadeAnimation from './FadeAnimation.vue'
 import GenericLazyList from './GenericLazyList.vue'
 import GenericListItem from './GenericListItem.vue'
+import type { DirectusFile } from '@directus/sdk';
 
 defineProps<{
-  speakers: SpeakerPreviewItem[]
+  images: DirectusFile[]
 }>()
 
 // Create scroll box element reference
@@ -179,8 +186,5 @@ const changeScrollPosition = () => {
     100% {
         opacity: 0;
     }
-}
-.podcast-link:hover .angle-right {
-    animation: fade-in 0.8s ease infinite forwards;
 }
 </style>

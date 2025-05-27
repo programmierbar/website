@@ -21,7 +21,7 @@
           <ConferenceSection :heading='"Termine"' :conferences="conferences" />
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <InnerHtml
-              class="mt-8 text-5xl font-black leading-normal text-white"
+              class="mt-8 text-3xl font-black leading-normal text-white"
               :html="conferencePage.faqs_heading"
             />
             <InnerHtml

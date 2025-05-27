@@ -1,24 +1,20 @@
 <template>
-  <div class='flex justify-between py-3' v-on:click='toggle' data-cursor-hover>
+  <div class='flex justify-between py-3 text-2xl' v-on:click='toggle' data-cursor-hover>
     <p class='text-white font-bold'>
       {{ faq.question }}
     </p>
-    <div class='text-white w-6'>
+    <div class='text-white max-w-6 min-w-6'>
       <AngleDownIcon
-        class='stroke-white fill-white transition-all duration-500'
+        class='stroke-white fill-white transition-all duration-500 max-w-full'
         :class="{ 'rotate-180': isOpened }"
       />
     </div>
   </div>
-  <div
-    class="text-white transition-all duration-500 ease-in-out opacity-0 max-h-0 overflow-hidden"
-    :class="{ 'opacity-100 max-h-full mb-3': isOpened }"
-  >
-    <InnerHtml
-      class=' text-white mb-3'
-      :html='faq.answer'
-    />
-  </div>
+  <InnerHtml
+    class=' text-white text-xl font-light opacity-0 transition-all duration-500 ease-in-out h-0 overflow-hidden mb-3'
+    :class="{ 'opacity-100 h-auto': isOpened }"
+    :html='faq.answer'
+  />
 </template>
 
 <script setup lang='ts'>

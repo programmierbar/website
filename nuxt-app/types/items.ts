@@ -1,6 +1,12 @@
 /* eslint-disable no-use-before-define */
 
-import type { DirectusMeetupItem, DirectusPodcastItem, DirectusConferenceItem, DirectusSpeakerItem } from '~/types/directus'
+import type {
+  DirectusMeetupItem,
+  DirectusPodcastItem,
+  DirectusConferenceItem,
+  DirectusSpeakerItem,
+  DirectusMemberItem,
+} from '~/types/directus';
 
 export type LatestPodcastItem = Pick<
     DirectusPodcastItem,
@@ -22,13 +28,18 @@ interface PreparedTagsItem {
 interface PreparedSpeakersItem {
     speakersPrepared: SpeakerPreviewItem[]
 }
+
+interface PreparedTalksItem {
+  talksPrepared: TalkItem[]
+}
+
 interface PreparedPodcastsItems {
     podcastsPrepared: PodcastPreviewItem[]
 }
 
 export interface PodcastItem extends DirectusPodcastItem, PreparedTagsItem, PreparedSpeakersItem {}
 export interface MeetupItem extends DirectusMeetupItem, PreparedTagsItem, PreparedSpeakersItem {}
-export interface ConferenceItem extends DirectusConferenceItem, PreparedSpeakersItem {}
+export interface ConferenceItem extends DirectusConferenceItem, PreparedSpeakersItem, PreparedTalksItem {}
 export interface SpeakerItem extends DirectusSpeakerItem, PreparedTagsItem, PreparedPodcastsItems {}
 
 export interface MemberItem {
@@ -44,6 +55,26 @@ export interface MemberItem {
     podcasts: PodcastItem[]
     picks_of_the_day: PickOfTheDayItem[]
     tags: TagItem[]
+}
+
+export interface TalkItem {
+  id: string
+  title: string
+  abstract: string
+  thumbnail: FileItem | null
+  video_url: string
+  members: {
+    id: number
+    podcast: DirectusPodcastItem
+    member: DirectusMemberItem
+    sort: number
+  }[]
+  speakers: {
+    id: number
+    podcast: DirectusPodcastItem
+    speaker: DirectusSpeakerItem
+    sort: number
+  }[]
 }
 
 export interface SpeakerPreviewItem {
