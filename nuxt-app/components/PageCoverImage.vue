@@ -36,7 +36,7 @@ export default defineComponent({
       shadow: {
         type: Boolean,
         required: false,
-        default: false,
+        default: true,
       },
     },
     setup() {

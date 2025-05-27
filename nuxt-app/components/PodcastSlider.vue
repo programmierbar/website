@@ -74,8 +74,8 @@
             "
             type="button"
             :title="index === 1 ? 'Scroll left' : 'Scroll right'"
-            :data-cursor-arrow-left="index === 1 && !scrollStartReached"
-            :data-cursor-arrow-right="index === 2 && !scrollEndReached"
+            :data-cursor-arrow-left="(index === 1 && !scrollStartReached) ? true : null"
+            :data-cursor-arrow-right="(index === 2 && !scrollEndReached) ? true : null"
             @click="() => scrollTo(index === 1 ? 'left' : 'right')"
         />
     </div>

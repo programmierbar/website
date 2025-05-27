@@ -7,7 +7,6 @@
             @mousedown="changeScrollPosition"
             @scroll="detectScrollState"
         >
-            <!-- Podcast list -->
             <GenericLazyList class="flex" :items="images" direction="horizontal" :scroll-element="scrollBoxElement">
                 <template #default="{ item, index, viewportItems, addViewportItem }">
                     <GenericListItem
@@ -50,25 +49,21 @@
             "
             type="button"
             :title="index === 1 ? 'Scroll left' : 'Scroll right'"
-            :data-cursor-arrow-left="index === 1 && !scrollStartReached"
-            :data-cursor-arrow-right="index === 2 && !scrollEndReached"
+            :data-cursor-arrow-left="(index === 1 && !scrollStartReached) ? true : null"
+            :data-cursor-arrow-right="(index === 2 && !scrollEndReached) ? true : null"
             @click="() => scrollTo(index === 1 ? 'left' : 'right')"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-import AngleRightIcon from '~/assets/icons/angle-right.svg'
-import PodcastFigureIcon from '~/assets/images/podcast-figure.svg'
 import { CLICK_SCROLL_LEFT_ARROW_EVENT_ID, CLICK_SCROLL_RIGHT_ARROW_EVENT_ID } from '~/config'
 import { trackGoal } from '~/helpers'
-import type { PodcastItem, SpeakerPreviewItem } from '~/types';
 import smoothscroll from 'smoothscroll-polyfill'
 import { onMounted, ref } from 'vue'
 import FadeAnimation from './FadeAnimation.vue'
 import GenericLazyList from './GenericLazyList.vue'
 import GenericListItem from './GenericListItem.vue'
-import PodcastCard from './PodcastCard.vue'
 import type { DirectusFile } from '@directus/sdk';
 
 defineProps<{
@@ -191,8 +186,5 @@ const changeScrollPosition = () => {
     100% {
         opacity: 0;
     }
-}
-.podcast-link:hover .angle-right {
-    animation: fade-in 0.8s ease infinite forwards;
 }
 </style>

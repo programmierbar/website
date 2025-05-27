@@ -8,12 +8,17 @@
       sizes='md:300px'
       loading='lazy'
     />
-    <div class='mt-6 text-3xl p-9 flex flex-col min-h-120 max-h-120 flex-shrink-0' :class="[isExpanded ? 'max-h-full' : '']" data-cursor-hover @click='isExpanded = !isExpanded'>
-      <div class=''>
-        <p class='font-black mb-2'>{{ fullName }}</p>
+    <div class='mt-6 p-9 flex flex-col min-h-120 max-h-120 flex-shrink-0' :class="[isExpanded ? 'max-h-full' : '']" @click='isExpanded = !isExpanded'>
+      <div>
+        <p class='font-black text-3xl mb-2'>{{ fullName }}</p>
         <p class='font-light text-xl italic'>{{ speaker.occupation }}</p>
       </div>
-      <div class='relative' :class="['transition-all duration-300', !isExpanded ? 'overflow-hidden' : '']">
+      <div
+        class='relative'
+        :class="['transition-all duration-300', !isExpanded ? 'overflow-hidden' : '']"
+        :data-cursor-more="isExpanded ? null : true"
+        :data-cursor-hover="!isExpanded ? null : true"
+      >
           <InnerHtml
             class='mt-7 font-light text-xl'
             :html='speaker.description'
