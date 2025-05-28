@@ -113,8 +113,6 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
       throw new Error('Could not access conference page.')
     }
 
-    console.log(conference);
-
     // Return conference and page
     return { conference, conferencePage }
 })
