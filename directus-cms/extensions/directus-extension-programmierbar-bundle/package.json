@@ -68,6 +68,11 @@
                 "type": "hook",
                 "name": "algolia-index",
                 "source": "src/algolia-index/index.ts"
+            },
+            {
+                "type": "endpoint",
+                "name": "votings",
+                "source": "src/votings/index.ts"
             }
         ],
         "host": "^10.10.0"
