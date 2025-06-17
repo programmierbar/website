@@ -1,5 +1,5 @@
 <template>
-  <div class='relative flex max-h-96 w-full flex-col overflow-hidden rounded-xl'>
+  <div class='relative flex max-h-96 md:max-h-160 w-full flex-col overflow-hidden rounded-xl'>
     <div class='relative left-0 top-0 flex w-full items-center justify-center bg-gray-800 py-2'>
       <div class='absolute left-3 flex flex-row gap-1.5'>
         <div v-for='index in 3' :key='index' class='h-2.5 w-2.5 rounded-full bg-gray-600'></div>
