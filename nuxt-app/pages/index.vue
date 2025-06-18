@@ -83,7 +83,7 @@ import PrimaryPbButton from '~/components/PrimaryPbButton.vue'
 import { useDirectus } from '~/composables/useDirectus'
 import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'
-import { useLoadingScreen, usePageMeta } from '../composables'
+import { useLoadingScreen, usePageMeta, usePodcastPlayer } from '../composables';
 import { DIRECTUS_CMS_URL } from '../config'
 import type { DirectusHomePage, LatestPodcastItem, MeetupItem } from '../types'
 
@@ -91,6 +91,7 @@ const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
 
 const breadcrumbs = [{ label: 'Home' }]
 const directus = useDirectus()
+const podcastPlayer = usePodcastPlayer()
 
 // Query home page, latest podcasts and podcast count
 const { data: pageData } = useAsyncData(async () => {
@@ -111,7 +112,14 @@ const { data: pageData } = useAsyncData(async () => {
 
 // Extract home page, latest podcasts and podcast count from page data
 const homePage: ComputedRef<DirectusHomePage | undefined> = computed(() => pageData.value?.homePage)
-const latestPodcasts: ComputedRef<LatestPodcastItem[] | undefined> = computed(() => pageData.value?.latestPodcasts)
+const latestPodcasts: ComputedRef<LatestPodcastItem[] | undefined> = computed(() => {
+
+  if (!podcastPlayer.podcast?.id && pageData.value?.latestPodcasts && pageData.value?.latestPodcasts.length > 0) {
+    podcastPlayer.setPodcast(pageData.value?.latestPodcasts[0])
+  }
+
+  return pageData.value?.latestPodcasts
+})
 
 // Currently, we only support _one_ highlight item of the type _podcast_.
 const highlightItem: ComputedRef<MeetupItem | undefined> = computed(() => {
