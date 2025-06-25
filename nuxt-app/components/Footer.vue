@@ -10,7 +10,7 @@
         <div class="space-y-6 lg:w-3/4 lg:space-y-10">
             <nav class="lg:space-y-10">
                 <!-- Main menu -->
-                <ul class="hidden space-x-8 lg:flex">
+                <ul class="hidden gap-x-8 gap-y-2 lg:flex lg:flex-wrap xl:gap-x-8">
                     <li v-for="mainMenuItem in mainMenuItems" :key="mainMenuItem.href">
                         <NuxtLink
                             class="whitespace-nowrap text-xl font-black text-white hover:text-lime xl:text-2xl"
