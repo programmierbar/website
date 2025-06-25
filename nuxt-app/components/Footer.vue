@@ -10,7 +10,7 @@
         <div class="space-y-6 lg:w-3/4 lg:space-y-10">
             <nav class="lg:space-y-10">
                 <!-- Main menu -->
-                <ul class="hidden space-x-8 lg:flex">
+                <ul class="hidden gap-x-8 gap-y-2 lg:flex lg:flex-wrap xl:gap-x-8">
                     <li v-for="mainMenuItem in mainMenuItems" :key="mainMenuItem.href">
                         <NuxtLink
                             class="whitespace-nowrap text-xl font-black text-white hover:text-lime xl:text-2xl"
@@ -58,6 +58,7 @@ const mainMenuItems = [
     { label: 'Home', href: '/' },
     { label: 'Podcast', href: '/podcast' },
     { label: 'Meetup', href: '/meetup' },
+    { label: 'Konferenzen', href: '/konferenzen' },
     { label: 'Hall of Fame', href: '/hall-of-fame' },
     { label: 'Pick of the Day', href: '/pick-of-the-day' },
     { label: 'Über uns', href: '/ueber-uns' },
