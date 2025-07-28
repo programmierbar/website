@@ -8,7 +8,7 @@
               {{ conference.title }}
             </SectionHeading>
             <InnerHtml
-              class="mt-2 text-2xl font-light leading-normal text-white"
+              class="mt-2 text-2xl font-light leading-normal z-30 relative"
               :html="conference.text_1"
             />
           </div>
@@ -19,6 +19,7 @@
             <SectionHeading element="h2">
               Speaker
             </SectionHeading>
+            <BackgroundSpotlights :position='"-top-96 -left-96"' :index='"0"' />
             <ConferenceSpeakersSlider :speakers='conference.speakersPrepared' />
           </div>
         </section>
@@ -33,12 +34,15 @@
         </section>
 
         <section class="relative">
+          <BackgroundSpotlights :position='"-top-96 -right-40"' :index='"-10"' />
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <SectionHeading element="h2">
               Talks
             </SectionHeading>
-            <div v-for="talk of conference.talksPrepared" :key="talk.id" class='mb-36'>
-                <TalkItem :talk='talk' />
+            <div v-for="(talk, index) of conference.talksPrepared" :key="talk.id" class='mb-36 relative'>
+              <BackgroundSpotlights v-if='index % 2 == 0' :position='"-top-96 -right-96"' :index='"-10"' />
+              <BackgroundSpotlights v-if='index % 2 != 0' :position='"-top-96 -left-96"' :index='"-10"' />
+              <TalkItem :talk='talk' />
             </div>
           </div>
         </section>
