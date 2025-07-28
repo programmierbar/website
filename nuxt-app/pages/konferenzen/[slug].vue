@@ -2,7 +2,6 @@
     <div v-if="conference && conferencePage" class='text-white'>
       <article class="relative">
         <section class="relative">
-          <BackgroundSpotlights :position='"top-24 -left-40"' :index='"20"' />
           <PageCoverImage :cover-image="conference.cover_image" v-if="conference.cover_image" />
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <SectionHeading element="h1">
@@ -20,6 +19,7 @@
             <SectionHeading element="h2">
               Speaker
             </SectionHeading>
+            <BackgroundSpotlights :position='"-top-96 -left-96"' :index='"0"' />
             <ConferenceSpeakersSlider :speakers='conference.speakersPrepared' />
           </div>
         </section>
@@ -40,7 +40,8 @@
               Talks
             </SectionHeading>
             <div v-for="(talk, index) of conference.talksPrepared" :key="talk.id" class='mb-36 relative'>
-              <BackgroundSpotlights v-if='index == (conference.talksPrepared.length - 1)' :position='"-top-96 -left-96"' :index='"-10"' />
+              <BackgroundSpotlights v-if='index % 2 == 0' :position='"-top-96 -right-96"' :index='"-10"' />
+              <BackgroundSpotlights v-if='index % 2 != 0' :position='"-top-96 -left-96"' :index='"-10"' />
               <TalkItem :talk='talk' />
             </div>
           </div>
