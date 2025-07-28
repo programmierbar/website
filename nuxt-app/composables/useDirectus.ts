@@ -394,6 +394,10 @@ export function useDirectus() {
             'speakers.*',
             'speakers.speakers_id.*',
             'speakers.speakers_id.profile_image.*',
+            'tickets',
+            'tickets_url',
+            'tickets_on_sale',
+            'tickets_text'
           ],
           filter: { slug: { _eq: slug } },
           limit: 1,
