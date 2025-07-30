@@ -53,6 +53,7 @@ const shouldShowFlutterDayTicketHint = computed(() => {
 body {
     font-family: 'Museo Sans', sans-serif;
     font-weight: 500;
+    overflow-x: hidden;
 }
 
 /* Other */

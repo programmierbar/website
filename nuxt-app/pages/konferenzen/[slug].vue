@@ -19,11 +19,11 @@
             <SectionHeading element="h2">
               Tickets
             </SectionHeading>
-            <BackgroundSpotlights :position='"-top-96 -right-96"' :index='"0"' />
-            <InnerHtml
-              class="mt-2 text-2xl font-light leading-normal z-30 relative"
-              :html="conference.tickets_text"
-            />
+              <BackgroundSpotlights :position='"-top-32 fixed right-[-40vw] -translate-x-1/2 transform"' :index='"0"' />
+              <InnerHtml
+                class="mt-2 text-2xl font-light leading-normal z-30 relative"
+                :html="conference.tickets_text"
+              />
             <ConferenceTickets :tickets='conference.tickets' :ticketsOnSale='conference.tickets_on_sale' :ticketsUrl='conference.tickets_url' />
 
             <div class='flex flex-row flex-wrap space justify-around mt-8' v-if='conference.tickets_url'>
@@ -76,8 +76,8 @@
               Talks
             </SectionHeading>
             <div v-for="(talk, index) of conference.talksPrepared" :key="talk.id" class='mb-36 relative'>
-              <BackgroundSpotlights v-if='index % 2 == 0' :position='"-top-96 -right-96 "' :index='"-10"' />
-              <BackgroundSpotlights v-if='index % 2 != 0' :position='"-top-96 -left-96"' :index='"-10"' />
+              <BackgroundSpotlights v-if='index % 2 == 0' :position='"-top-96 fixed right-[-40vw] -translate-x-1/2 transform"' :index='"-10"' />
+              <BackgroundSpotlights v-if='index % 2 != 0' :position='"-top-96 fixed left-[-12vw] -translate-x-1/2 transform"' :index='"-10"' />
               <TalkItem :talk='talk' />
             </div>
           </div>
