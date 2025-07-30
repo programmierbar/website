@@ -425,7 +425,9 @@ export function useDirectus() {
               } as SpeakerPreviewItem
           })
 
-        const talksPrepared = singleResult.talks.map((talk: any) => {
+        const talksPrepared = singleResult.talks
+          .sort((a, b) => a.sort - b.sort)
+          .map((talk: any) => {
           return talk.talk;
         });
 
