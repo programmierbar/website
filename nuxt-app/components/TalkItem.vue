@@ -12,12 +12,12 @@
       <p class='text-xl italic font-light lg:mb-7'>{{ buildSpeakerNamesForTalk(talk) }}</p>
     </div>
 
-    <div class="
-            order-3 <!-- Mobile order -->
-            lg:order-none <!-- Reset order for grid -->
-            lg:col-start-1 lg:row-start-2 <!-- Desktop grid placement -->
-            md:mt-0 sm:mt-5
-        ">
+    <div
+      :class="[
+        'order-3 lg:order-none md:mt-0 sm:mt-5',
+        (!talk.video_url && !talk.thumbnail) ? 'lg:col-span-2' : 'lg:col-start-1 lg:row-start-2'
+      ]"
+    >
       <InnerHtml
         :html='talk.abstract'
         class='font-light text-xl'
