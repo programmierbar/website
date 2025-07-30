@@ -126,7 +126,16 @@ export interface DirectusConferenceItem {
     faqs: {
       question: string
       answer: string
-    }[]
+    }[],
+    tickets : {
+      price: string,
+      title: string,
+      subtitle: string,
+      style: string,
+    }[],
+    tickets_text: string,
+    tickets_url: string,
+    tickets_on_sale: Boolean
 }
 
 export interface DirectusMemberItem {

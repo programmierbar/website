@@ -14,6 +14,43 @@
           </div>
         </section>
 
+        <section class="relative" v-if='conference.tickets_on_sale'>
+          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
+            <SectionHeading element="h2">
+              Tickets
+            </SectionHeading>
+            <BackgroundSpotlights :position='"-top-96 -right-96"' :index='"0"' />
+            <InnerHtml
+              class="mt-2 text-2xl font-light leading-normal z-30 relative"
+              :html="conference.tickets_text"
+            />
+            <ConferenceTickets :tickets='conference.tickets' :ticketsOnSale='conference.tickets_on_sale' :ticketsUrl='conference.tickets_url' />
+
+            <div class='flex flex-row flex-wrap space justify-around mt-8' v-if='conference.tickets_url'>
+              <a :href='conference.tickets_url'
+                 target='_blank'
+                 data-cursor-hover
+                class="m-auto rounded-full border-4 border-lime text-sm text-lime px-8 py-4 text-left"
+                type="submit"
+              >
+                <div class='flex flex-row'>
+                  <div>
+                    <span class='uppercase font-bold text-xl md:text-4xl'>Zu den Tickets</span>
+                    <br /><span class='text-xl md:text-3xl'>via Wix.com</span>
+                  </div>
+                  <div class='pl-4 md:pl-12'>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="65" height="66" viewBox="0 0 65 66" fill="none">
+                      <path d="M14.5378 17.334L47.7277 17.334L47.7291 50.9206" stroke="#CFFF00" stroke-width="5.34" stroke-linecap="round"/>
+                      <path d="M14.8991 46.5993C13.8564 47.642 13.8564 49.3326 14.8991 50.3753C15.9418 51.418 17.6324 51.418 18.6751 50.3753L14.8991 46.5993ZM47.6378 17.6366L45.7498 15.7486L14.8991 46.5993L16.7871 48.4873L18.6751 50.3753L49.5258 19.5246L47.6378 17.6366Z" fill="#CFFF00"/>
+                    </svg>
+                  </div>
+                </div>
+
+              </a>
+            </div>
+          </div>
+        </section>
+
         <section class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <SectionHeading element="h2">
@@ -92,6 +129,7 @@ import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
 import type { DirectusFile } from '@directus/sdk';
+import ConferenceTickets from '~/components/ConferenceTickets.vue';
 import TalkItem from '~/components/TalkItem.vue';
 
 // Add route and router
