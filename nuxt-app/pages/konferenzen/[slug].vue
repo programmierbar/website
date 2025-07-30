@@ -71,13 +71,12 @@
         </section>
 
         <section class="relative">
-          <BackgroundSpotlights :position='"-top-96 -right-40"' :index='"-10"' />
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <SectionHeading element="h2">
               Talks
             </SectionHeading>
             <div v-for="(talk, index) of conference.talksPrepared" :key="talk.id" class='mb-36 relative'>
-              <BackgroundSpotlights v-if='index % 2 == 0' :position='"-top-96 -right-96"' :index='"-10"' />
+              <BackgroundSpotlights v-if='index % 2 == 0' :position='"-top-96 -right-96 "' :index='"-10"' />
               <BackgroundSpotlights v-if='index % 2 != 0' :position='"-top-96 -left-96"' :index='"-10"' />
               <TalkItem :talk='talk' />
             </div>
