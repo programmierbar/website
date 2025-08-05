@@ -104,7 +104,7 @@ export default defineHook(({ action }, hookContext) => {
         })
     })
 
-    action('picks_pf_the_day.items.create', async function (metadata, eventContext) {
+    action('picks_of_the_day.items.create', async function (metadata, eventContext) {
         handleUpdateAction(metadata, eventContext, {
             handler: handlers.pickOfTheDayHandler,
             client,
@@ -114,7 +114,7 @@ export default defineHook(({ action }, hookContext) => {
         });
     })
 
-    action('picks_pf_the_day.items.update', async function (metadata, eventContext) {
+    action('picks_of_the_day.items.update', async function (metadata, eventContext) {
         handleUpdateAction(metadata, eventContext, {
             handler: handlers.pickOfTheDayHandler,
             client,
@@ -124,7 +124,7 @@ export default defineHook(({ action }, hookContext) => {
         });
     })
 
-    action('picks_pf_the_day.items.delete', async function(metadata, eventContext) {
+    action('picks_of_the_day.items.delete', async function(metadata, eventContext) {
         handleDeleteAction(metadata, eventContext, {
             handler: handlers.pickOfTheDayHandler,
             client,
