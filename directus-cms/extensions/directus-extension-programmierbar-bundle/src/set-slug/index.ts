@@ -78,7 +78,7 @@ export default defineHook(({ filter }, hookContext) => {
                     )
 
                     // Return payload with "slug"
-                    return  await getPayloadWithSlug(futureItem, { metadata, payload })
+                    return await getPayloadWithSlug(futureItem, { metadata, payload })
                 }
             }
 
