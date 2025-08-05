@@ -14,5 +14,9 @@ interface Podcast {
  * @returns The podcast type and number.
  */
 export function getPodcastTypeAndNumber(podcast: Podcast) {
-  return getPodcastType(podcast) + ' ' + podcast.number;
+  if (podcast.number) {
+    return getPodcastType(podcast) + ' ' + podcast.number;
+  }
+
+  return getPodcastType(podcast);
 }

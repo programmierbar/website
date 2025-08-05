@@ -25,7 +25,12 @@ export async function getPayloadWithSlug(
 
     // If collection name is "podcasts" and "type", "number" and "title"
     // is set, log info and return payload with podcast slug
-    if (metadata.collection === 'podcasts' && futureItem.type && futureItem.number && futureItem.title) {
+    if (metadata.collection === 'podcasts' && (
+        (futureItem.type === 'deep_dive' && futureItem.number && futureItem.title) ||
+        (futureItem.type === 'cto_special' && futureItem.number && futureItem.title) ||
+        (futureItem.type === 'news' && futureItem.number && futureItem.title) ||
+        (futureItem.type === 'other' && futureItem.title)
+    )) {
         return {
             ...payload,
             slug: getUrlSlug(getFullPodcastTitle(futureItem)),
