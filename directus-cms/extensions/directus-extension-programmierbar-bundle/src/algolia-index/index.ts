@@ -104,7 +104,7 @@ export default defineHook(({ action }, hookContext) => {
         })
     })
 
-    action('picks_pf_the_day.items.create', async function (metadata, eventContext) {
+    action('picks_of_the_day.items.create', async function (metadata, eventContext) {
         handleUpdateAction(metadata, eventContext, {
             handler: handlers.pickOfTheDayHandler,
             client,
@@ -114,7 +114,7 @@ export default defineHook(({ action }, hookContext) => {
         });
     })
 
-    action('picks_pf_the_day.items.update', async function (metadata, eventContext) {
+    action('picks_of_the_day.items.update', async function (metadata, eventContext) {
         handleUpdateAction(metadata, eventContext, {
             handler: handlers.pickOfTheDayHandler,
             client,
@@ -124,7 +124,7 @@ export default defineHook(({ action }, hookContext) => {
         });
     })
 
-    action('picks_pf_the_day.items.delete', async function(metadata, eventContext) {
+    action('picks_of_the_day.items.delete', async function(metadata, eventContext) {
         handleDeleteAction(metadata, eventContext, {
             handler: handlers.pickOfTheDayHandler,
             client,
@@ -249,14 +249,20 @@ async function handleUpdateAction(metadata, eventContext, dependencies: {
         });
     }
 
-    payloads.forEach(async (payload, index) => {
-        await client.partialUpdateObject({
-            indexName: env.ALGOLIA_INDEX,
-            objectID: `${itemKey}_${index}`,
-            attributesToUpdate: payload,
-            createIfNotExists: true,
-        });
-    });
+    try {
+        await Promise.all(payloads.map(async (payload, index) => {
+            await client.partialUpdateObject({
+                indexName: env.ALGOLIA_INDEX,
+                objectID: `${itemKey}_${index}`,
+                attributesToUpdate: payload,
+                createIfNotExists: true,
+            });
+        }));
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.error(`${HOOK_NAME} hook: Failed to update search index for "${handler.collectionName}" item "${itemKey}": ${errorMessage}`);
+        throw error;
+    }
 
     logger.info(`${HOOK_NAME} hook: Updated search index "${env.ALGOLIA_INDEX}" for "${handler.collectionName}" item "${itemKey}"`)
 }
