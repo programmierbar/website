@@ -109,14 +109,14 @@ for (const configurationItem of configuration) {
                 });
             }
 
-            payloads.forEach(async (payload, index) => {
+            await Promise.all(payloads.map(async (payload, index) => {
                 await algoliaClient.partialUpdateObject({
                     indexName: ALGOLIA_INDEX,
                     objectID: `${item.id}_${index}`,
                     attributesToUpdate: payload,
                     createIfNotExists: true,
                 });
-            });
+            }));
 
             console.log(`Processed ${configurationItem.collection.slice(0, -1)} (${counter}): ${item.id}`);
             console.log(payloads);
