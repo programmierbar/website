@@ -10,14 +10,14 @@ import { getHandlers } from './../handlers/index.ts';
 
 const cli = meow(`
     Usage
-        $ npm run algolia:repair-index <collection>
+        $ npm run algolia-index-repair <collection>
 
     Arguments
         collection    Collection name to repair (podcasts, meetups, speakers, picks_of_the_day, transcripts, or 'all')
 
     Examples
-      $ npm run algolia:repair-index podcasts
-      $ npm run algolia:repair-index all
+      $ npm run algolia-index-repair podcasts
+      $ npm run algolia-index-repair all
 `,
     {
         importMeta: import.meta,
