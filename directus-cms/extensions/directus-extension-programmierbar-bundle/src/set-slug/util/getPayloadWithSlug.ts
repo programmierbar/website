@@ -67,7 +67,7 @@ export async function getPayloadWithSlug(
         }
 
         // Set suffix if empty or null
-        if (!futureItem.slug_suffix || futureItem.slug_suffix.trim() == '') {
+        if (!futureItem.slug_suffix || futureItem.slug_suffix.trim() === '') {
             result.slug_suffix = await getUniqueIdentifier()
         }
 
