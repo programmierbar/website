@@ -47,22 +47,22 @@ const itemHandlers = getHandlers({
 const configuration = [
     {
         collection: 'podcasts',
-        fields: ['id', 'title', 'slug', 'description', 'number', 'type', 'published_on', 'cover_image', 'status'],
+        fields: ['id', 'title', 'slug', 'description', 'number', 'type', 'published_on', 'cover_image'],
         handler: itemHandlers.podcastHandler,
     },
     {
         collection: 'meetups',
-        fields: ['id', 'title', 'slug', 'description', 'published_on', 'cover_image', 'status'],
+        fields: ['id', 'title', 'slug', 'description', 'published_on', 'cover_image'],
         handler: itemHandlers.meetupHandler,
     },
     {
         collection: 'speakers',
-        fields: ['id', 'first_name', 'last_name', 'academic_title', 'description', 'published_on', 'slug', 'profile_image', 'status'],
+        fields: ['id', 'first_name', 'last_name', 'academic_title', 'description', 'published_on', 'slug', 'profile_image'],
         handler: itemHandlers.speakerHandler,
     },
     {
         collection: 'picks_of_the_day',
-        fields: ['id', 'name', 'website_url', 'description', 'published_on', 'image', 'status'],
+        fields: ['id', 'name', 'website_url', 'description', 'published_on', 'image'],
         handler: itemHandlers.pickOfTheDayHandler,
     },
     {
@@ -135,12 +135,6 @@ async function repairCollection(configItem: typeof configuration[0]): Promise<Re
     // Find missing items (in DB but not in index)
     const missingItems = [];
     for (const [itemId, dbItem] of dbItemsMap) {
-        // Only check published items for collections with status
-        const hasStatus = configItem.fields.includes('status');
-        if (hasStatus && dbItem.status !== 'published') {
-            continue;
-        }
-
         if (!indexItemsMap.has(String(itemId))) {
             missingItems.push(dbItem);
             stats.missing++;
@@ -159,11 +153,6 @@ async function repairCollection(configItem: typeof configuration[0]): Promise<Re
     // Find stale items (different data)
     const staleItems = [];
     for (const [itemId, dbItem] of dbItemsMap) {
-        const hasStatus = configItem.fields.includes('status');
-        if (hasStatus && dbItem.status !== 'published') {
-            continue;
-        }
-
         const indexHits = indexItemsMap.get(String(itemId));
         if (indexHits) {
             // Check if we need to update (simplified check)
