@@ -80,6 +80,7 @@
         "eslint": "eslint --fix .",
         "prettier": "prettier . --write",
         "algolia-index-rebuild": "tsx src/algolia-index/cli/rebuild-index.ts",
+        "algolia-index-repair": "tsx src/algolia-index/cli/repair-index.ts",
         "test": "jest",
         "test:watch": "jest --watch"
     },
