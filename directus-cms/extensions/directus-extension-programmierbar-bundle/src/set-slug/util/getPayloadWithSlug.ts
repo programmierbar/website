@@ -15,7 +15,7 @@ export async function getPayloadWithSlug(
 ) {
 
     // If collection name is "speakers" and "academic_title", "first_name" and
-    // "last_name" is set, log info and return payload with speaker slug
+    // "last_name" ist set, return payload with speaker slug
     if (metadata.collection === 'speakers' && futureItem.first_name && futureItem.last_name) {
         return {
             ...payload,
@@ -23,8 +23,8 @@ export async function getPayloadWithSlug(
         }
     }
 
-    // If collection name is "podcasts" and "type", "number" and "title"
-    // is set, log info and return payload with podcast slug
+    // If collection name is "podcasts" and "type", "number" and "title" is set,
+    // return payload with podcast slug
     if (metadata.collection === 'podcasts' && (
         (futureItem.type === 'deep_dive' && futureItem.number && futureItem.title) ||
         (futureItem.type === 'cto_special' && futureItem.number && futureItem.title) ||
@@ -37,8 +37,8 @@ export async function getPayloadWithSlug(
         }
     }
 
-    // If collection name is "podcasts" and "title" is set,
-    // log info and return payload with meetup slug
+    // If collection name is "meetups" and "title" is set,
+    // return payload with meetup slug
     if (metadata.collection === 'meetups' && futureItem.title) {
         return {
             ...payload,
@@ -47,7 +47,7 @@ export async function getPayloadWithSlug(
     }
 
     // If collection name is "conferences" and "title" is set,
-    // log info and return payload with meetup slug
+    // return payload with conference slug
     if (metadata.collection === 'conferences' && futureItem.title) {
         return {
             ...payload,
@@ -56,7 +56,7 @@ export async function getPayloadWithSlug(
     }
 
     // If collection name is "profiles" and "first_name" and "last_name" are set,
-    // log info and return payload with profile slug
+    //  return payload with profile slug
     if (metadata.collection === 'profiles' && futureItem.first_name && futureItem.last_name) {
         if (futureItem.update_slug === false) {
             return payload;
