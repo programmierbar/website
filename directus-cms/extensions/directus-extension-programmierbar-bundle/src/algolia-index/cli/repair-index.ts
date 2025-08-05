@@ -117,17 +117,19 @@ async function repairCollection(configItem: typeof configuration[0]): Promise<Re
     stats.totalIndexItems = indexItems.hits.length;
     console.log(`📊 Found ${stats.totalIndexItems} items in search index`);
 
-    // Create maps for efficient lookups
-    const dbItemsMap = new Map(dbItems.map(item => [item.id, item]));
+    // Create maps for efficient lookups (using string keys for consistency)
+    const dbItemsMap = new Map(dbItems.map(item => [String(item.id), item]));
     const indexItemsMap = new Map();
 
     // Group index items by their directus reference
     for (const hit of indexItems.hits) {
-        const ref = hit._directus_reference;
-        if (!indexItemsMap.has(ref)) {
+        const ref = String(hit._directus_reference || '');
+        if (ref && !indexItemsMap.has(ref)) {
             indexItemsMap.set(ref, []);
         }
-        indexItemsMap.get(ref).push(hit);
+        if (ref) {
+            indexItemsMap.get(ref).push(hit);
+        }
     }
 
     console.log('\n🔍 Identifying issues...');
@@ -135,7 +137,7 @@ async function repairCollection(configItem: typeof configuration[0]): Promise<Re
     // Find missing items (in DB but not in index)
     const missingItems = [];
     for (const [itemId, dbItem] of dbItemsMap) {
-        if (!indexItemsMap.has(String(itemId))) {
+        if (!indexItemsMap.has(itemId)) {
             missingItems.push(dbItem);
             stats.missing++;
         }
@@ -144,7 +146,7 @@ async function repairCollection(configItem: typeof configuration[0]): Promise<Re
     // Find orphaned items (in index but not in DB)
     const orphanedItems = [];
     for (const [ref, hits] of indexItemsMap) {
-        if (!dbItemsMap.has(Number(ref))) {
+        if (!dbItemsMap.has(ref)) {
             orphanedItems.push(...hits);
             stats.orphaned += hits.length;
         }
@@ -153,7 +155,7 @@ async function repairCollection(configItem: typeof configuration[0]): Promise<Re
     // Find stale items (different data)
     const staleItems = [];
     for (const [itemId, dbItem] of dbItemsMap) {
-        const indexHits = indexItemsMap.get(String(itemId));
+        const indexHits = indexItemsMap.get(itemId);
         if (indexHits) {
             // Check if we need to update (simplified check)
             if (configItem.handler.updateRequired(dbItem)) {
@@ -169,9 +171,6 @@ async function repairCollection(configItem: typeof configuration[0]): Promise<Re
     console.log(`❌ Missing in index: ${stats.missing}`);
     console.log(`🗑️  Orphaned in index: ${stats.orphaned}`);
     console.log(`⚠️  Potentially stale: ${stats.stale}`);
-
-    return stats;
-
 
     // Repair missing items
     if (missingItems.length > 0) {
