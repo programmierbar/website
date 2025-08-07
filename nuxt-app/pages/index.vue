@@ -86,7 +86,7 @@ import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'
 import { useLoadingScreen, usePageMeta, usePodcastPlayer } from '../composables';
 import { DIRECTUS_CMS_URL } from '../config'
-import type { ConferenceItem, DirectusHomePage, LatestPodcastItem, MeetupItem } from '../types';
+import type { ConferenceItem, DirectusHomePage, LatestPodcastItem, MeetupItem } from '../types'
 
 const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
 
