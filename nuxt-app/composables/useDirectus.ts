@@ -37,7 +37,14 @@ export function useDirectus() {
     async function getHomepage() {
         return await directus.request(
             readSingleton('home_page', {
-                fields: ['*', 'video.*', 'highlights.*', 'highlights.item.*', 'highlights.item.cover_image.*'],
+                fields: [
+                  '*',
+                  'video.*',
+                  'highlights.*',
+                  'highlights.item.*',
+                  'highlights.item.cover_image.*',
+                  'highlights.item.poster.*',
+                ],
             })
         )
     }
