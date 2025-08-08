@@ -12,6 +12,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
         const conferenceIdentifier = req.params.identifier;
         let conference = null;
         let conferenceItemsService = null;
+        let talkItemService = null;
 
         try {
             conferenceItemsService = new ItemsService('conferences', {
@@ -19,8 +20,13 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                 schema: await context.getSchema(),
                 knex: context.database,
             })
+            talkItemService = new ItemsService('talks', {
+                accountability: req.accountability,
+                schema: await context.getSchema(),
+                knex: context.database,
+            })
         } catch (error: any) {
-            logger.error('Could not initialize conference items service: ' + error.message + '.');
+            logger.error('Could not initialize item services: ' + error.message + '.');
             res.status(500).send({})
             return;
         }
@@ -31,6 +37,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                 conference = conferences[0];
             } else {
                 res.status(404).send({})
+                return;
             }
         } catch (error: any) {
             logger.error('Could not fetch conference item: ' + error.message + '.');
@@ -40,10 +47,41 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
 
         if (!conference) {
             logger.warn('Requested unknown conference: ' + conferenceIdentifier + '.');
-            res.status(404).send({})
+            res.status(404).send({});
+            return;
         }
 
-        console.log(conference);
+        conference.agenda = await Promise.all(
+            conference.agenda.map(async (agenda_item: {talk_identifier: null|string}) => {
+                let talk_object = null;
+                if (agenda_item.talk_identifier) {
+                    talk_object = await talkItemService.readOne(agenda_item.talk_identifier, {
+                        fields: [
+                            '*',
+                            'speakers.*',
+                            'speakers.speaker',
+                            'speakers.speaker.*',
+                            'members.*',
+                            'members.member',
+                            'members.member.*',
+                        ]
+                    });
+
+                    if (talk_object.speakers) {
+                        talk_object.speakers = talk_object.speakers.map(speaker => speaker.speaker)
+                    }
+                    if (talk_object.members) {
+                        talk_object.members = talk_object.members.map(member => member.member)
+                    }
+
+                }
+
+                return {
+                    ...agenda_item,
+                    talk_object
+                }
+            })
+        )
 
         res.send({conference: conference});
     });

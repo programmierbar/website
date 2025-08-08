@@ -9,6 +9,12 @@ export default defineHook(({ action }, hookContext) => {
     const logger = hookContext.logger
     const env = hookContext.env
     const ItemsService = hookContext.services.ItemsService
+
+    if (!env.VERCEL_DEPLOY_WEBHOOK_URL) {
+        logger.warn(`${HOOK_NAME} hook: Did not set VERCEL_DEPLOY_WEBHOOK_URL. Vercel deployment extension will not be active.`)
+        return
+    }
+
     /**
      * It deploys our website on created items, if necessary.
      */
