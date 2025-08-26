@@ -540,7 +540,10 @@ export function useDirectus() {
         const result = await directus.request(
             aggregate('speakers', {
                 aggregate: { count: '*' },
-            })
+                query: {
+                  filter: {'listed_hof': {'_eq': true}},
+                }
+            }),
         )
 
         return Number(result.pop()?.count)
@@ -605,6 +608,7 @@ export function useDirectus() {
                 ],
                 limit: -1,
                 sort: ['podcasts.podcast.type', 'sort', '-published_on'],
+                filter: {'listed_hof': {'_eq': true}},
             })
         )
     }

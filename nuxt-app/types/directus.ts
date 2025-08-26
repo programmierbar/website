@@ -227,7 +227,8 @@ export interface DirectusSpeakerItem {
         speaker: DirectusSpeakerItem
         tag: DirectusTagItem
         sort: number
-    }[]
+    }[],
+    listed_hof: boolean
 }
 
 export interface DirectusPickOfTheDayItem {
