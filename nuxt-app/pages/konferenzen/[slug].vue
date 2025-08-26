@@ -109,14 +109,14 @@
             <p class="text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl">
               Dieses Event wird durch folgende Partner unterstützt:
             </p>
-            <div class="mt-8 flex flex-wrap gap-8">
+            <div class="mt-8 flex flex-wrap gap-16 justify-center items-center sm:justify-start sm:items-start">
               <a
                 v-for="partner in conference.partnersPrepared"
                 :key="partner.id"
                 :href="partner.url"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="block w-full max-w-48 max-h-64 hover:scale-105 transition-all duration-200"
+                class="flex items-center justify-center w-40 h-18 hover:scale-105 transition-all duration-200"
                 data-cursor-hover
               >
                 <DirectusImage
