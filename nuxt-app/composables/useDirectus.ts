@@ -404,7 +404,13 @@ export function useDirectus() {
             'tickets',
             'tickets_url',
             'tickets_on_sale',
-            'tickets_text'
+            'tickets_text',
+            'partners',
+            'partners.*',
+            'partners.partner.*',
+            'partners.partner.name',
+            'partners.partner.url',
+            'partners.partner.image.*'
           ],
           filter: { slug: { _eq: slug } },
           limit: 1,
@@ -438,10 +444,17 @@ export function useDirectus() {
           return talk.talk;
         });
 
+        const partnersPrepared = singleResult.partners
+          .sort((a, b) => a.sort - b.sort)
+          .map((partner: any) => {
+            return partner.partner;
+          });
+
         return {
           ...singleResult,
           speakersPrepared,
           talksPrepared,
+          partnersPrepared,
         };
       })
   }

@@ -2,7 +2,7 @@
     <div v-if="conference && conferencePage" class='text-white'>
       <article class="relative">
         <section class="relative">
-          <PageCoverImage :cover-image="conference.cover_image" v-if="conference.cover_image" />
+          <PageCoverImage :cover-image="conference.cover_image" v-if="conference.cover_image" :overlay="false" />
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <SectionHeading element="h1">
               {{ conference.title }}
@@ -98,6 +98,36 @@
               :html="conferencePage.faqs_text_1"
             />
             <FaqList :faqs='combinedFaqs' />
+          </div>
+        </section>
+
+        <section class="relative" v-if='conference.partnersPrepared.length > 0'>
+          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
+            <SectionHeading element="h2">
+              Partner
+            </SectionHeading>
+            <p class="text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl">
+              Dieses Event wird durch folgende Partner unterstützt:
+            </p>
+            <div class="mt-8 flex flex-wrap gap-8">
+              <a
+                v-for="partner in conference.partnersPrepared"
+                :key="partner.id"
+                :href="partner.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="block w-full max-w-48 max-h-64 hover:scale-105 transition-all duration-200"
+                data-cursor-hover
+              >
+                <DirectusImage
+                  v-if="partner.image"
+                  :image="partner.image"
+                  :alt="partner.name"
+                  sizes="(max-width: 768px) 256px, (max-width: 1024px) 320px, 384px"
+                  class="w-full h-auto object-contain"
+                />
+              </a>
+            </div>
           </div>
         </section>
 

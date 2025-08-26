@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 
-import type { TalkItem } from '~/types/items';
+import type { TalkItem, PartnerItem } from '~/types/items';
 
 export interface DirectusFileItem {
     id: string
@@ -135,7 +135,11 @@ export interface DirectusConferenceItem {
     }[],
     tickets_text: string,
     tickets_url: string,
-    tickets_on_sale: Boolean
+    tickets_on_sale: Boolean,
+    partners: {
+      partner: PartnerItem
+      sort: number
+    }[],
 }
 
 export interface DirectusMemberItem {

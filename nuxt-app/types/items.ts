@@ -33,13 +33,17 @@ interface PreparedTalksItem {
   talksPrepared: TalkItem[]
 }
 
+interface PreparedPartnersItem {
+  partnersPrepared: PartnerItem[]
+}
+
 interface PreparedPodcastsItems {
     podcastsPrepared: PodcastPreviewItem[]
 }
 
 export interface PodcastItem extends DirectusPodcastItem, PreparedTagsItem, PreparedSpeakersItem {}
 export interface MeetupItem extends DirectusMeetupItem, PreparedTagsItem, PreparedSpeakersItem {}
-export interface ConferenceItem extends DirectusConferenceItem, PreparedSpeakersItem, PreparedTalksItem {}
+export interface ConferenceItem extends DirectusConferenceItem, PreparedSpeakersItem, PreparedTalksItem, PreparedPartnersItem {}
 export interface SpeakerItem extends DirectusSpeakerItem, PreparedTagsItem, PreparedPodcastsItems {}
 
 export interface MemberItem {
@@ -83,6 +87,13 @@ export interface TalkItem {
     speaker: DirectusSpeakerItem
     sort: number
   }[]
+}
+
+export interface PartnerItem {
+  id: string
+  name: string
+  image: FileItem | null
+  url: string
 }
 
 export interface SpeakerPreviewItem {
