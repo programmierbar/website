@@ -457,7 +457,21 @@ export function useDirectus() {
           partnersPrepared,
         };
       })
-  }
+    }
+
+  async function getTestimonials() {
+    return await directus
+      .request(
+        readItems('testimonials', {
+          fields: [
+            'id',
+            'text',
+            'subtitle',
+          ],
+          limit: -1,
+        })
+      )
+    }
 
     async function getSpeakerBySlug(slug: string) {
         return await directus
@@ -836,5 +850,6 @@ export function useDirectus() {
         getCurrentUser,
         registerNewUser,
         getProfileById,
+        getTestimonials,
     }
 }

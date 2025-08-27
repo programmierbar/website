@@ -1,31 +1,31 @@
 import { authentication, createDirectus, rest } from '@directus/sdk'
 import { DIRECTUS_CMS_URL } from '../config'
 import type {
-    DirectusAboutPage,
-    DirectusCocPage,
-    DirectusConferencePage,
-    DirectusContactPage,
-    DirectusHallOfFamePage,
-    DirectusHomePage,
-    DirectusImprintPage,
-    DirectusLoginPage,
-    DirectusMeetupItem,
-    DirectusConferenceItem,
-    DirectusMeetupPage,
-    DirectusMemberItem,
-    DirectusPickOfTheDayItem,
-    DirectusPickOfTheDayPage,
-    DirectusPodcastItem,
-    DirectusPodcastPage,
-    DirectusPrivacyPage,
-    DirectusProfileCreationPage,
-    DirectusRafflePage,
-    DirectusRecordingsPage,
-    DirectusSpeakerItem,
-    DirectusTagItem,
-    DirectusProfileItem,
-    DirectusTranscriptItem
-} from '../types'
+  DirectusAboutPage,
+  DirectusCocPage,
+  DirectusConferencePage,
+  DirectusContactPage,
+  DirectusHallOfFamePage,
+  DirectusHomePage,
+  DirectusImprintPage,
+  DirectusLoginPage,
+  DirectusMeetupItem,
+  DirectusConferenceItem,
+  DirectusMeetupPage,
+  DirectusMemberItem,
+  DirectusPickOfTheDayItem,
+  DirectusPickOfTheDayPage,
+  DirectusPodcastItem,
+  DirectusPodcastPage,
+  DirectusPrivacyPage,
+  DirectusProfileCreationPage,
+  DirectusRafflePage,
+  DirectusRecordingsPage,
+  DirectusSpeakerItem,
+  DirectusTagItem,
+  DirectusProfileItem,
+  DirectusTranscriptItem, DirectusTestimonialItem,
+} from '../types';
 
 export type Collections = {
     home_page: DirectusHomePage
@@ -51,6 +51,7 @@ export type Collections = {
     picks_of_the_day: DirectusPickOfTheDayItem[]
     profiles: DirectusProfileItem[],
     tags: DirectusTagItem[]
+    testimonials: DirectusTestimonialItem[]
     transcripts: DirectusTranscriptItem[]
 }
 

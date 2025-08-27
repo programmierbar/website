@@ -142,6 +142,12 @@ export interface DirectusConferenceItem {
     }[],
 }
 
+export interface DirectusTestimonialItem {
+  id: string
+  text: string
+  subtitle: string
+}
+
 export interface DirectusMemberItem {
     id: string
     first_name: string
