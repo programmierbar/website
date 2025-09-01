@@ -352,6 +352,34 @@
       }
     },
     {
+      "collection": "conferences_partners",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": null,
+        "archive_value": null,
+        "collapse": "open",
+        "collection": "conferences_partners",
+        "color": null,
+        "display_template": null,
+        "group": null,
+        "hidden": true,
+        "icon": "import_export",
+        "item_duplication_fields": null,
+        "note": null,
+        "preview_url": null,
+        "singleton": false,
+        "sort": 11,
+        "sort_field": null,
+        "translations": null,
+        "unarchive_value": null,
+        "versioning": false
+      },
+      "schema": {
+        "name": "conferences_partners"
+      }
+    },
+    {
       "collection": "conferences_speakers",
       "meta": {
         "accountability": "all",
@@ -881,6 +909,34 @@
       },
       "schema": {
         "name": "members"
+      }
+    },
+    {
+      "collection": "partners",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": "status",
+        "archive_value": "archived",
+        "collapse": "open",
+        "collection": "partners",
+        "color": null,
+        "display_template": null,
+        "group": "Events",
+        "hidden": false,
+        "icon": "cheer",
+        "item_duplication_fields": null,
+        "note": null,
+        "preview_url": null,
+        "singleton": false,
+        "sort": 4,
+        "sort_field": "sort",
+        "translations": null,
+        "unarchive_value": "draft",
+        "versioning": false
+      },
+      "schema": {
+        "name": "partners"
       }
     },
     {
@@ -1469,6 +1525,34 @@
       },
       "schema": {
         "name": "talks_speakers"
+      }
+    },
+    {
+      "collection": "testimonials",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": "status",
+        "archive_value": "archived",
+        "collapse": "open",
+        "collection": "testimonials",
+        "color": null,
+        "display_template": null,
+        "group": "Events",
+        "hidden": false,
+        "icon": "chat_bubble",
+        "item_duplication_fields": null,
+        "note": null,
+        "preview_url": null,
+        "singleton": false,
+        "sort": 5,
+        "sort_field": "sort",
+        "translations": null,
+        "unarchive_value": "draft",
+        "versioning": false
+      },
+      "schema": {
+        "name": "testimonials"
       }
     },
     {
@@ -4837,6 +4921,27 @@
               },
               "name": "subtitle",
               "type": "text"
+            },
+            {
+              "field": "track",
+              "meta": {
+                "field": "track",
+                "interface": "input",
+                "type": "string"
+              },
+              "name": "track",
+              "type": "string"
+            },
+            {
+              "field": "talk_identifier",
+              "meta": {
+                "field": "talk_identifier",
+                "interface": "input",
+                "note": "(UU)ID of the talk",
+                "type": "string"
+              },
+              "name": "talk_identifier",
+              "type": "string"
             }
           ],
           "sort": "start",
@@ -5199,6 +5304,36 @@
       }
     },
     {
+      "collection": "conferences",
+      "field": "partners",
+      "type": "alias",
+      "meta": {
+        "collection": "conferences",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "partners",
+        "group": null,
+        "hidden": false,
+        "interface": "list-m2m",
+        "note": null,
+        "options": {
+          "sort": null,
+          "template": "{{partner.name}}"
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 27,
+        "special": [
+          "m2m"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
       "collection": "conferences_directus_files",
       "field": "id",
       "type": "integer",
@@ -5354,6 +5489,178 @@
       "schema": {
         "name": "sort",
         "table": "conferences_directus_files",
+        "data_type": "integer",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "conferences_partners",
+      "field": "id",
+      "type": "integer",
+      "meta": {
+        "collection": "conferences_partners",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 1,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "conferences_partners",
+        "data_type": "integer",
+        "default_value": "nextval('conferences_partners_id_seq'::regclass)",
+        "max_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_indexed": false,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": true,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "conferences_partners",
+      "field": "conference",
+      "type": "uuid",
+      "meta": {
+        "collection": "conferences_partners",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "conference",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 2,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "conference",
+        "table": "conferences_partners",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "conferences",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "conferences_partners",
+      "field": "partner",
+      "type": "uuid",
+      "meta": {
+        "collection": "conferences_partners",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "partner",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 3,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "partner",
+        "table": "conferences_partners",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "partners",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "conferences_partners",
+      "field": "order",
+      "type": "integer",
+      "meta": {
+        "collection": "conferences_partners",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "order",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 4,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "order",
+        "table": "conferences_partners",
         "data_type": "integer",
         "default_value": null,
         "max_length": null,
@@ -13948,6 +14255,483 @@
       }
     },
     {
+      "collection": "partners",
+      "field": "id",
+      "type": "uuid",
+      "meta": {
+        "collection": "partners",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 1,
+        "special": [
+          "uuid"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "partners",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_indexed": false,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "partners",
+      "field": "status",
+      "type": "string",
+      "meta": {
+        "collection": "partners",
+        "conditions": null,
+        "display": "labels",
+        "display_options": {
+          "choices": [
+            {
+              "background": "var(--theme--primary-background)",
+              "color": "var(--theme--primary)",
+              "foreground": "var(--theme--primary)",
+              "text": "$t:published",
+              "value": "published"
+            },
+            {
+              "background": "var(--theme--background-normal)",
+              "color": "var(--theme--foreground)",
+              "foreground": "var(--theme--foreground)",
+              "text": "$t:draft",
+              "value": "draft"
+            },
+            {
+              "background": "var(--theme--warning-background)",
+              "color": "var(--theme--warning)",
+              "foreground": "var(--theme--warning)",
+              "text": "$t:archived",
+              "value": "archived"
+            }
+          ],
+          "showAsDot": true
+        },
+        "field": "status",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": null,
+        "options": {
+          "choices": [
+            {
+              "color": "var(--theme--primary)",
+              "text": "$t:published",
+              "value": "published"
+            },
+            {
+              "color": "var(--theme--foreground)",
+              "text": "$t:draft",
+              "value": "draft"
+            },
+            {
+              "color": "var(--theme--warning)",
+              "text": "$t:archived",
+              "value": "archived"
+            }
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 2,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "status",
+        "table": "partners",
+        "data_type": "character varying",
+        "default_value": "draft",
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "partners",
+      "field": "sort",
+      "type": "integer",
+      "meta": {
+        "collection": "partners",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "sort",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 3,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "sort",
+        "table": "partners",
+        "data_type": "integer",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "partners",
+      "field": "date_created",
+      "type": "timestamp",
+      "meta": {
+        "collection": "partners",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_created",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 4,
+        "special": [
+          "date-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_created",
+        "table": "partners",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "partners",
+      "field": "user_updated",
+      "type": "uuid",
+      "meta": {
+        "collection": "partners",
+        "conditions": null,
+        "display": "user",
+        "display_options": null,
+        "field": "user_updated",
+        "group": null,
+        "hidden": true,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "template": "{{avatar}} {{first_name}} {{last_name}}"
+        },
+        "readonly": true,
+        "required": false,
+        "sort": 5,
+        "special": [
+          "user-updated"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "user_updated",
+        "table": "partners",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "partners",
+      "field": "date_updated",
+      "type": "timestamp",
+      "meta": {
+        "collection": "partners",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_updated",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 6,
+        "special": [
+          "date-updated"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_updated",
+        "table": "partners",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "partners",
+      "field": "name",
+      "type": "string",
+      "meta": {
+        "collection": "partners",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "name",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 7,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "name",
+        "table": "partners",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "partners",
+      "field": "image",
+      "type": "uuid",
+      "meta": {
+        "collection": "partners",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "image",
+        "group": null,
+        "hidden": false,
+        "interface": "file-image",
+        "note": null,
+        "options": {
+          "folder": "e132fe08-d7c6-478c-9b75-68676be8783d"
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 8,
+        "special": [
+          "file"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "image",
+        "table": "partners",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_files",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "partners",
+      "field": "url",
+      "type": "string",
+      "meta": {
+        "collection": "partners",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "url",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 9,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "url",
+        "table": "partners",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "partners",
+      "field": "conferences",
+      "type": "alias",
+      "meta": {
+        "collection": "partners",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "conferences",
+        "group": null,
+        "hidden": false,
+        "interface": "list-m2m",
+        "note": null,
+        "options": {
+          "template": "{{conference.title}} - {{conference.start_on}}"
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 10,
+        "special": [
+          "m2m"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
       "collection": "pick_of_the_day_page",
       "field": "id",
       "type": "uuid",
@@ -17553,7 +18337,7 @@
         "numeric_precision": null,
         "numeric_scale": null,
         "is_nullable": true,
-        "is_unique": false,
+        "is_unique": true,
         "is_indexed": false,
         "is_primary_key": false,
         "is_generated": false,
@@ -17679,9 +18463,26 @@
             "name": "If published",
             "required": true,
             "rule": {
-              "status": {
-                "_eq": "published"
-              }
+              "_and": [
+                {
+                  "_and": [
+                    {
+                      "status": {
+                        "_eq": "published"
+                      }
+                    },
+                    {
+                      "type": {
+                        "_in": [
+                          "deep_dive",
+                          "cto_special",
+                          "news"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
             }
           }
         ],
@@ -22533,7 +23334,7 @@
         "numeric_precision": null,
         "numeric_scale": null,
         "is_nullable": true,
-        "is_unique": false,
+        "is_unique": true,
         "is_indexed": false,
         "is_primary_key": false,
         "is_generated": false,
@@ -23518,6 +24319,53 @@
         "validation": null,
         "validation_message": null,
         "width": "full"
+      }
+    },
+    {
+      "collection": "speakers",
+      "field": "listed_hof",
+      "type": "boolean",
+      "meta": {
+        "collection": "speakers",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "listed_hof",
+        "group": null,
+        "hidden": false,
+        "interface": "boolean",
+        "note": null,
+        "options": {
+          "label": "List in Hall of Fame"
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 35,
+        "special": [
+          "cast-boolean"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "listed_hof",
+        "table": "speakers",
+        "data_type": "boolean",
+        "default_value": true,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
       }
     },
     {
@@ -25298,6 +26146,466 @@
       }
     },
     {
+      "collection": "testimonials",
+      "field": "id",
+      "type": "uuid",
+      "meta": {
+        "collection": "testimonials",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 1,
+        "special": [
+          "uuid"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "testimonials",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_indexed": false,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "testimonials",
+      "field": "status",
+      "type": "string",
+      "meta": {
+        "collection": "testimonials",
+        "conditions": null,
+        "display": "labels",
+        "display_options": {
+          "choices": [
+            {
+              "background": "var(--theme--primary-background)",
+              "color": "var(--theme--primary)",
+              "foreground": "var(--theme--primary)",
+              "text": "$t:published",
+              "value": "published"
+            },
+            {
+              "background": "var(--theme--background-normal)",
+              "color": "var(--theme--foreground)",
+              "foreground": "var(--theme--foreground)",
+              "text": "$t:draft",
+              "value": "draft"
+            },
+            {
+              "background": "var(--theme--warning-background)",
+              "color": "var(--theme--warning)",
+              "foreground": "var(--theme--warning)",
+              "text": "$t:archived",
+              "value": "archived"
+            }
+          ],
+          "showAsDot": true
+        },
+        "field": "status",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": null,
+        "options": {
+          "choices": [
+            {
+              "color": "var(--theme--primary)",
+              "text": "$t:published",
+              "value": "published"
+            },
+            {
+              "color": "var(--theme--foreground)",
+              "text": "$t:draft",
+              "value": "draft"
+            },
+            {
+              "color": "var(--theme--warning)",
+              "text": "$t:archived",
+              "value": "archived"
+            }
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 2,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "status",
+        "table": "testimonials",
+        "data_type": "character varying",
+        "default_value": "draft",
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "testimonials",
+      "field": "sort",
+      "type": "integer",
+      "meta": {
+        "collection": "testimonials",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "sort",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 3,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "sort",
+        "table": "testimonials",
+        "data_type": "integer",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "testimonials",
+      "field": "user_created",
+      "type": "uuid",
+      "meta": {
+        "collection": "testimonials",
+        "conditions": null,
+        "display": "user",
+        "display_options": null,
+        "field": "user_created",
+        "group": null,
+        "hidden": true,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "template": "{{avatar}} {{first_name}} {{last_name}}"
+        },
+        "readonly": true,
+        "required": false,
+        "sort": 4,
+        "special": [
+          "user-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "user_created",
+        "table": "testimonials",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "testimonials",
+      "field": "date_created",
+      "type": "timestamp",
+      "meta": {
+        "collection": "testimonials",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_created",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 5,
+        "special": [
+          "date-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_created",
+        "table": "testimonials",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "testimonials",
+      "field": "user_updated",
+      "type": "uuid",
+      "meta": {
+        "collection": "testimonials",
+        "conditions": null,
+        "display": "user",
+        "display_options": null,
+        "field": "user_updated",
+        "group": null,
+        "hidden": true,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "template": "{{avatar}} {{first_name}} {{last_name}}"
+        },
+        "readonly": true,
+        "required": false,
+        "sort": 6,
+        "special": [
+          "user-updated"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "user_updated",
+        "table": "testimonials",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "testimonials",
+      "field": "date_updated",
+      "type": "timestamp",
+      "meta": {
+        "collection": "testimonials",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_updated",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 7,
+        "special": [
+          "date-updated"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_updated",
+        "table": "testimonials",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "testimonials",
+      "field": "text",
+      "type": "text",
+      "meta": {
+        "collection": "testimonials",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "text",
+        "group": null,
+        "hidden": false,
+        "interface": "input-rich-text-html",
+        "note": null,
+        "options": {
+          "toolbar": [
+            "bold",
+            "italic",
+            "underline",
+            "removeformat",
+            "customLink",
+            "code",
+            "fullscreen"
+          ]
+        },
+        "readonly": false,
+        "required": true,
+        "sort": 8,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "text",
+        "table": "testimonials",
+        "data_type": "text",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "testimonials",
+      "field": "subtitle",
+      "type": "string",
+      "meta": {
+        "collection": "testimonials",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "subtitle",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": {
+          "iconLeft": "person"
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 9,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "subtitle",
+        "table": "testimonials",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
       "collection": "transcripts",
       "field": "id",
       "type": "uuid",
@@ -26335,6 +27643,56 @@
       }
     },
     {
+      "collection": "conferences_partners",
+      "field": "partner",
+      "related_collection": "partners",
+      "meta": {
+        "junction_field": "conference",
+        "many_collection": "conferences_partners",
+        "many_field": "partner",
+        "one_allowed_collections": null,
+        "one_collection": "partners",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": "conferences",
+        "sort_field": null
+      },
+      "schema": {
+        "table": "conferences_partners",
+        "column": "partner",
+        "foreign_key_table": "partners",
+        "foreign_key_column": "id",
+        "constraint_name": "conferences_partners_partner_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
+      }
+    },
+    {
+      "collection": "conferences_partners",
+      "field": "conference",
+      "related_collection": "conferences",
+      "meta": {
+        "junction_field": "partner",
+        "many_collection": "conferences_partners",
+        "many_field": "conference",
+        "one_allowed_collections": null,
+        "one_collection": "conferences",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": "partners",
+        "sort_field": "order"
+      },
+      "schema": {
+        "table": "conferences_partners",
+        "column": "conference",
+        "foreign_key_table": "conferences",
+        "foreign_key_column": "id",
+        "constraint_name": "conferences_partners_conference_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
+      }
+    },
+    {
       "collection": "conferences_speakers",
       "field": "speakers_id",
       "related_collection": "speakers",
@@ -26669,7 +28027,8 @@
         "many_field": "item",
         "one_allowed_collections": [
           "meetups",
-          "podcasts"
+          "podcasts",
+          "conferences"
         ],
         "one_collection": null,
         "one_collection_field": "collection",
@@ -27399,6 +28758,56 @@
         "foreign_key_table": "directus_files",
         "foreign_key_column": "id",
         "constraint_name": "members_action_image_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
+      }
+    },
+    {
+      "collection": "partners",
+      "field": "user_updated",
+      "related_collection": "directus_users",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "partners",
+        "many_field": "user_updated",
+        "one_allowed_collections": null,
+        "one_collection": "directus_users",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "partners",
+        "column": "user_updated",
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id",
+        "constraint_name": "partners_user_updated_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "partners",
+      "field": "image",
+      "related_collection": "directus_files",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "partners",
+        "many_field": "image",
+        "one_allowed_collections": null,
+        "one_collection": "directus_files",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "partners",
+        "column": "image",
+        "foreign_key_table": "directus_files",
+        "foreign_key_column": "id",
+        "constraint_name": "partners_image_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }
@@ -28751,6 +30160,56 @@
         "constraint_name": "talks_speakers_talk_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
+      }
+    },
+    {
+      "collection": "testimonials",
+      "field": "user_created",
+      "related_collection": "directus_users",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "testimonials",
+        "many_field": "user_created",
+        "one_allowed_collections": null,
+        "one_collection": "directus_users",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "testimonials",
+        "column": "user_created",
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id",
+        "constraint_name": "testimonials_user_created_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "testimonials",
+      "field": "user_updated",
+      "related_collection": "directus_users",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "testimonials",
+        "many_field": "user_updated",
+        "one_allowed_collections": null,
+        "one_collection": "directus_users",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "testimonials",
+        "column": "user_updated",
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id",
+        "constraint_name": "testimonials_user_updated_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
       }
     },
     {
