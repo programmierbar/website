@@ -37,7 +37,14 @@ export function useDirectus() {
     async function getHomepage() {
         return await directus.request(
             readSingleton('home_page', {
-                fields: ['*', 'video.*', 'highlights.*', 'highlights.item.*', 'highlights.item.cover_image.*'],
+                fields: [
+                  '*',
+                  'video.*',
+                  'highlights.*',
+                  'highlights.item.*',
+                  'highlights.item.cover_image.*',
+                  'highlights.item.poster.*',
+                ],
             })
         )
     }
@@ -397,7 +404,13 @@ export function useDirectus() {
             'tickets',
             'tickets_url',
             'tickets_on_sale',
-            'tickets_text'
+            'tickets_text',
+            'partners',
+            'partners.*',
+            'partners.partner.*',
+            'partners.partner.name',
+            'partners.partner.url',
+            'partners.partner.image.*'
           ],
           filter: { slug: { _eq: slug } },
           limit: 1,
@@ -431,10 +444,17 @@ export function useDirectus() {
           return talk.talk;
         });
 
+        const partnersPrepared = singleResult.partners
+          .sort((a, b) => a.sort - b.sort)
+          .map((partner: any) => {
+            return partner.partner;
+          });
+
         return {
           ...singleResult,
           speakersPrepared,
           talksPrepared,
+          partnersPrepared,
         };
       })
   }
@@ -520,7 +540,10 @@ export function useDirectus() {
         const result = await directus.request(
             aggregate('speakers', {
                 aggregate: { count: '*' },
-            })
+                query: {
+                  filter: {'listed_hof': {'_eq': true}},
+                }
+            }),
         )
 
         return Number(result.pop()?.count)
@@ -585,6 +608,7 @@ export function useDirectus() {
                 ],
                 limit: -1,
                 sort: ['podcasts.podcast.type', 'sort', '-published_on'],
+                filter: {'listed_hof': {'_eq': true}},
             })
         )
     }

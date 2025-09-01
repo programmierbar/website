@@ -44,19 +44,20 @@
             <NewsTicker :news="newsTicker" />
         </section>
 
-        <section v-if="highlightItem" class="relative py-16 md:my-14 md:py-28 lg:my-24 lg:py-36">
+        <section v-if="highlightItem" class="relative py-16 md:my-10 md:py-14 lg:my-24 lg:py-24">
             <SectionHeading class="px-6 md:px-0" element="h2">
                 {{ homePage.highlights_heading }}
             </SectionHeading>
             <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
                 <FadeAnimation fade-in="from_right">
                     <MeetupCard v-if="highlightItemType == 'meetups'" :meetup="highlightItem" />
+                    <ConferenceCard v-if="highlightItemType == 'conferences'" :conference="highlightItem" />
                 </FadeAnimation>
             </div>
         </section>
 
         <!-- Podcasts -->
-        <section v-if="latestPodcasts.length" class="relative py-16 md:my-14 md:py-28 lg:my-24 lg:py-36">
+        <section v-if="latestPodcasts.length" class="relative py-16 md:my-10 md:py-14 lg:my-24 lg:py-24">
             <SectionHeading class="px-6 md:px-0" element="h2">
                 {{ homePage.podcast_heading }}
             </SectionHeading>
@@ -85,7 +86,7 @@ import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'
 import { useLoadingScreen, usePageMeta, usePodcastPlayer } from '../composables';
 import { DIRECTUS_CMS_URL } from '../config'
-import type { DirectusHomePage, LatestPodcastItem, MeetupItem } from '../types'
+import type { ConferenceItem, DirectusHomePage, LatestPodcastItem, MeetupItem } from '../types'
 
 const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
 
@@ -121,8 +122,7 @@ const latestPodcasts: ComputedRef<LatestPodcastItem[] | undefined> = computed(()
   return pageData.value?.latestPodcasts
 })
 
-// Currently, we only support _one_ highlight item of the type _podcast_.
-const highlightItem: ComputedRef<MeetupItem | undefined> = computed(() => {
+const highlightItem: ComputedRef<MeetupItem | ConferenceItem | undefined> = computed(() => {
     if (!pageData.value) {
         return
     }
@@ -132,7 +132,7 @@ const highlightItem: ComputedRef<MeetupItem | undefined> = computed(() => {
     }
 
     const highlightItem = pageData.value.homePage.highlights[0]
-    if (highlightItem.collection === 'meetups') {
+    if (highlightItem.collection === 'meetups' || highlightItem.collection === 'conferences') {
         return highlightItem.item
     }
 

@@ -49,7 +49,7 @@ export async function handlePodcastAction(
             podcastItem.status &&
             (podcastItem.status !== 'published' || podcastItem.published_on) &&
             podcastItem.type &&
-            podcastItem.number &&
+            (podcastItem.number || podcastItem.type === 'other') &&
             podcastItem.title &&
             podcastItem.description &&
             podcastItem.cover_image &&
@@ -62,7 +62,7 @@ export async function handlePodcastAction(
             (payload.status ||
                 payload.published_on ||
                 payload.type ||
-                payload.number ||
+                (podcastItem.number || podcastItem.type === 'other') &&
                 payload.title ||
                 payload.description ||
                 payload.cover_image ||

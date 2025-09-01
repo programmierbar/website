@@ -50,7 +50,7 @@ export async function handleBuzzsprout(
         const fullPodcastTitle = getFullPodcastTitle({
             title: podcastData.title!,
             type: podcastData.type!,
-            number: podcastData.number!.toString(),
+            number: podcastData.number ? podcastData.number.toString() : '',
         })
         buzzsproutData.title = fullPodcastTitle
         buzzsproutData.custom_url = `https://www.programmier.bar/podcast/${getUrlSlug(fullPodcastTitle)}`
