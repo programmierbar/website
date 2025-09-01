@@ -68,6 +68,11 @@
                 "type": "hook",
                 "name": "algolia-index",
                 "source": "src/algolia-index/index.ts"
+            },
+            {
+                "type": "endpoint",
+                "name": "conference",
+                "source": "src/conference/index.ts"
             }
         ],
         "host": "^10.10.0"
@@ -86,13 +91,13 @@
     },
     "devDependencies": {
         "@directus/errors": "^0.3.2",
-        "@directus/extensions-sdk": "^12.1.0",
+        "@directus/extensions-sdk": "12.1.4",
         "@directus/sdk": "^18.0.3",
         "@ianvs/prettier-plugin-sort-imports": "^4.2.1",
         "@jest/globals": "^29.7.0",
         "@slack/web-api": "^7.2.0",
         "@types/jest": "^29.5.12",
-        "@types/node": "^22.10.2",
+        "@types/node": "^24.1.0",
         "algoliasearch": "^5.18.0",
         "axios": "^1.7.2",
         "dotenv": "^16.4.7",
@@ -106,8 +111,8 @@
         "ts-jest": "^29.1.2",
         "ts-node": "^10.9.2",
         "tsx": "^4.19.2",
-        "typescript": "^5.7.2",
+        "typescript": "^5.9.2",
         "typescript-eslint": "^8.0.0-alpha.20",
-        "vue": "^3.5.13"
+        "vue": "^3.5.18"
     }
 }
