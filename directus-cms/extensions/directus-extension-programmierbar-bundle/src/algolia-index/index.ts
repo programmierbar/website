@@ -15,6 +15,11 @@ export default defineHook(({ action }, hookContext) => {
 
     const handlers = getHandlers(env, logger);
 
+    if (!(env.ALGOLIA_APP_ID && env.ALGOLIA_API_KEY && env.ALGOLIA_INDEX)) {
+        logger.warn(`${HOOK_NAME} hook: Did not set ALGOLIA_APP_ID && ALGOLIA_API_KEY && ALGOLIA_INDEX. Algolia extension will not be active.`)
+        return
+    }
+
     const client = searchClient(env.ALGOLIA_APP_ID, env.ALGOLIA_API_KEY, { requester: createFetchRequester() });
 
     action('podcasts.items.create', async function (metadata, eventContext) {
