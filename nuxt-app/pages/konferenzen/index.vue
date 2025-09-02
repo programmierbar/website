@@ -8,7 +8,7 @@
                     {{ conferencePage.conference_heading }}
                 </SectionHeading>
                 <InnerHtml
-                  class="mt-8 text-5xl font-black leading-normal text-white"
+                  class="mt-8 text-3xl md:text-5xl font-black leading-normal text-white"
                   :html="conferencePage.intro_heading"
                 />
                 <InnerHtml

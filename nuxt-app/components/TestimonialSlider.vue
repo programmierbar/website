@@ -11,23 +11,26 @@
                 <template #default="{ item, index, viewportItems, addViewportItem }">
                     <GenericListItem
                         :key="item.id"
-                        :class="index > 0 && 'ml-12 md:ml-16 lg:ml-20 xl:ml-24 2xl:ml-32'"
+                        :class="index > 0 && 'ml-12 ml-16 lg:ml-20 xl:ml-24 2xl:ml-32'"
                         :item="item"
                         :viewport-items="viewportItems"
                         :add-viewport-item="addViewportItem"
                     >
                         <template #default="{ isNewToViewport }">
                             <FadeAnimation :fade-in="isNewToViewport ? 'from_bottom' : 'none'" :threshold="0">
-                              <div class='w-120 min-h-120 text-white'>
+                              <div class='w-60 md:w-120'>
                                   <div>
-                                    <blockquote class='font-light text-4xl italic text-lime w-full'>
-                                      <span class='text-8xl font-extrabold block max-h-12'>“</span>
+                                    <blockquote class='w-full'>
+                                      <QuoteStart class='mb-2 mb-5  scale-50 scale-100 origin-bottom-left' />
                                       <InnerHtml
                                         :html="item.text"
+                                        class='text-white font-light text-xl text-3xl italic'
                                       />
-                                      <span class='text-8xl font-extrabold block w-full text-right'>”</span>
+                                      <div class='flex justify-end'>
+                                        <QuoteEnd class='-mt-1 block scale-50 scale-100' />
+                                      </div>
                                     </blockquote>
-                                    <p class='font-light text-xl italic -mt-4 w-full text-right'>{{ item.subtitle }}</p>
+                                    <p class='text-white font-light opacity-40 text-base italic mt-4 mt-10'>{{ item.subtitle }}</p>
                                   </div>
                               </div>
                             </FadeAnimation>
@@ -41,9 +44,9 @@
         <button
             v-for="index of 2"
             :key="index"
-            class="hidden md:absolute md:top-0 md:block md:h-full md:w-40 md:from-black md:to-transparent md:transition-opacity md:duration-500 3xl:w-80"
+            class="absolute top-0 block h-full w-5 md:w-40 from-black to-transparent transition-opacity duration-500 3xl:w-80"
             :class="[
-                index === 1 ? 'md:left-0 md:bg-gradient-to-r' : 'md:right-0 md:bg-gradient-to-l',
+                index === 1 ? 'left-0 bg-gradient-to-r' : 'right-0 bg-gradient-to-l',
                 ((index === 1 && scrollStartReached) || (index === 2 && scrollEndReached)) &&
                     'pointer-events-none invisible opacity-0',
             ]"
@@ -69,6 +72,9 @@ import { onMounted, ref } from 'vue'
 import FadeAnimation from './FadeAnimation.vue'
 import GenericLazyList from './GenericLazyList.vue'
 import GenericListItem from './GenericListItem.vue'
+
+import QuoteEnd from '~/assets/icons/quote-end.svg'
+import QuoteStart from '~/assets/icons/quote-start.svg'
 
 defineProps<{
   testimonials: DirectusTestimonialItem[]

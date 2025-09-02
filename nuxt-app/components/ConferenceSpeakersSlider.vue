@@ -30,9 +30,9 @@
         <button
             v-for="index of 2"
             :key="index"
-            class="hidden md:absolute md:top-0 md:block md:h-full md:w-40 md:from-black md:to-transparent md:transition-opacity md:duration-500 3xl:w-80"
+            class="absolute top-0 block h-full w-5 md:w-40 from-black to-transparent transition-opacity duration-500 3xl:w-80"
             :class="[
-                index === 1 ? 'md:left-0 md:bg-gradient-to-r' : 'md:right-0 md:bg-gradient-to-l',
+                index === 1 ? 'left-0 bg-gradient-to-r' : 'right-0 bg-gradient-to-l',
                 ((index === 1 && scrollStartReached) || (index === 2 && scrollEndReached)) &&
                     'pointer-events-none invisible opacity-0',
             ]"
