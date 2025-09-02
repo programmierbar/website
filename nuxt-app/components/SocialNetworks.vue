@@ -29,7 +29,6 @@ import DiscordIcon from '~/assets/logos/discord.svg'
 //import TwitterIcon from '~/assets/logos/twitter.svg'
 import YoutubeIcon from '~/assets/logos/youtube.svg'
 import {
-  DISCORD_INVITE_LINK,
   OPEN_BLUESKY_EVENT_ID,
   OPEN_GITHUB_EVENT_ID,
   OPEN_INSTAGRAM_EVENT_ID,
@@ -38,8 +37,10 @@ import {
   //OPEN_TWITTER_EVENT_ID,
   OPEN_DISCORD_EVENT_ID,
   OPEN_YOUTUBE_EVENT_ID,
-} from '../config';
+} from '../config'
 import { trackGoal } from '../helpers'
+
+const { $config } = useNuxtApp()
 
 const socialNetworks = [
     {
@@ -75,7 +76,7 @@ const socialNetworks = [
     {
       label: 'Discord',
       icon: DiscordIcon,
-      href: DISCORD_INVITE_LINK,
+      href: $config.public.DISCORD_INVITE_LINK,
       eventId: OPEN_DISCORD_EVENT_ID,
     },
     {
