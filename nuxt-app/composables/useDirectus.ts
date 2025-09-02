@@ -465,6 +465,7 @@ export function useDirectus() {
         readItems('testimonials', {
           fields: [
             'id',
+            'weight',
             'text',
             'subtitle',
           ],

@@ -7,7 +7,8 @@
             @mousedown="changeScrollPosition"
             @scroll="detectScrollState"
         >
-            <GenericLazyList class="flex" :items="testimonials" direction="horizontal" :scroll-element="scrollBoxElement">
+            <ClientOnly>
+                <GenericLazyList class="flex" :items="randomizedTestimonials" direction="horizontal" :scroll-element="scrollBoxElement">
                 <template #default="{ item, index, viewportItems, addViewportItem }">
                     <GenericListItem
                         :key="item.id"
@@ -38,6 +39,7 @@
                     </GenericListItem>
                 </template>
             </GenericLazyList>
+            </ClientOnly>
         </div>
 
         <!-- Scroll buttons -->
@@ -75,10 +77,14 @@ import GenericListItem from './GenericListItem.vue'
 
 import QuoteEnd from '~/assets/icons/quote-end.svg'
 import QuoteStart from '~/assets/icons/quote-start.svg'
+import { useWeightedRandomSelection } from '~/composables/useWeightedRandomSelection'
 
-defineProps<{
+const props = defineProps<{
   testimonials: DirectusTestimonialItem[]
 }>()
+
+const { selectTestimonials } = useWeightedRandomSelection()
+const randomizedTestimonials = computed(() => selectTestimonials(props.testimonials, 5))
 
 // Create scroll box element reference
 const scrollBoxElement = ref<HTMLDivElement>()
@@ -182,22 +188,5 @@ const changeScrollPosition = () => {
     .scroll-box::before {
         width: calc((100vw - 1536px) / 2 + 2rem);
     }
-}
-@keyframes fade-in {
-    0% {
-        opacity: 0;
-    }
-    25% {
-        opacity: 1;
-    }
-    80% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 0;
-    }
-}
-.podcast-link:hover .angle-right {
-    animation: fade-in 0.8s ease infinite forwards;
 }
 </style>

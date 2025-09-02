@@ -146,6 +146,7 @@ export interface DirectusTestimonialItem {
   id: string
   text: string
   subtitle: string
+  weight: number
 }
 
 export interface DirectusMemberItem {
