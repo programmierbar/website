@@ -51,6 +51,15 @@
           </div>
         </section>
 
+        <section class="relative" v-if='conference.tickets_on_sale'>
+          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
+            <SectionHeading element="h2">
+              Community
+            </SectionHeading>
+            <TestimonialSlider :testimonials='testimonials' />
+          </div>
+        </section>
+
         <section class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <SectionHeading element="h2">
@@ -85,6 +94,15 @@
 
         <section class="relative my-16">
           <ConferenceGallery :images='galleryImages' />
+        </section>
+
+        <section class="relative" v-if='!conference.tickets_on_sale'>
+          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
+            <SectionHeading element="h2">
+              Community
+            </SectionHeading>
+            <TestimonialSlider :testimonials='testimonials' />
+          </div>
         </section>
 
         <section class="relative">
@@ -153,13 +171,14 @@
 import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo, trackGoal } from '~/helpers';
-import type { ConferenceItem, DirectusConferencePage, TagItem } from '~/types';
+import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, TagItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
 import type { DirectusFile } from '@directus/sdk';
 import ConferenceTickets from '~/components/ConferenceTickets.vue';
 import TalkItem from '~/components/TalkItem.vue';
+import TestimonialSlider from '~/components/TestimonialSlider.vue';
 
 // Add route and router
 const route = useRoute()
@@ -169,9 +188,10 @@ const directus = useDirectus()
 // Query conference and page
 const { data: pageData } = useAsyncData(route.fullPath, async () => {
     // Query conference and page async
-    const [conference, conferencePage] = await Promise.all([
-        await directus.getConferenceBySlug(route.params.slug as string),
-        await directus.getConferencePage(),
+    const [conference, conferencePage, testimonials] = await Promise.all([
+        directus.getConferenceBySlug(route.params.slug as string),
+        directus.getConferencePage(),
+        directus.getTestimonials(),
     ])
 
     // Throw error if meetup does not exist
@@ -185,12 +205,13 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
     }
 
     // Return conference and page
-    return { conference, conferencePage }
+    return { conference, conferencePage, testimonials }
 })
 
 // Extract conference and page from page data
 const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageData.value?.conference)
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
+const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
 const combinedFaqs: ComputedRef<[]> = computed(() => {
   let faqs = [];
