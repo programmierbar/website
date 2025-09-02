@@ -7,23 +7,39 @@
             @mousedown="changeScrollPosition"
             @scroll="detectScrollState"
         >
-            <GenericLazyList class="flex" :items="speakers" direction="horizontal" :scroll-element="scrollBoxElement">
+            <ClientOnly>
+                <GenericLazyList class="flex" :items="randomizedTestimonials" direction="horizontal" :scroll-element="scrollBoxElement">
                 <template #default="{ item, index, viewportItems, addViewportItem }">
                     <GenericListItem
                         :key="item.id"
-                        :class="index > 0 && 'ml-5 md:ml-8 lg:ml-10'"
+                        :class="index > 0 && 'ml-12 ml-16 lg:ml-20 xl:ml-24 2xl:ml-32'"
                         :item="item"
                         :viewport-items="viewportItems"
                         :add-viewport-item="addViewportItem"
                     >
                         <template #default="{ isNewToViewport }">
                             <FadeAnimation :fade-in="isNewToViewport ? 'from_bottom' : 'none'" :threshold="0">
-                                <ConferenceSpeaker :speaker="item" />
+                              <div class='w-60 md:w-120'>
+                                  <div>
+                                    <blockquote class='w-full'>
+                                      <QuoteStart class='mb-2 mb-5  scale-50 scale-100 origin-bottom-left' />
+                                      <InnerHtml
+                                        :html="item.text"
+                                        class='text-white font-light text-xl text-3xl italic'
+                                      />
+                                      <div class='flex justify-end'>
+                                        <QuoteEnd class='-mt-1 block scale-50 scale-100' />
+                                      </div>
+                                    </blockquote>
+                                    <p class='text-white font-light opacity-40 text-base italic mt-4 mt-10'>{{ item.subtitle }}</p>
+                                  </div>
+                              </div>
                             </FadeAnimation>
                         </template>
                     </GenericListItem>
                 </template>
             </GenericLazyList>
+            </ClientOnly>
         </div>
 
         <!-- Scroll buttons -->
@@ -52,16 +68,23 @@
 <script setup lang="ts">
 import { CLICK_SCROLL_LEFT_ARROW_EVENT_ID, CLICK_SCROLL_RIGHT_ARROW_EVENT_ID } from '~/config'
 import { trackGoal } from '~/helpers'
-import type { SpeakerPreviewItem } from '~/types';
+import type { DirectusTestimonialItem, SpeakerPreviewItem } from '~/types';
 import smoothscroll from 'smoothscroll-polyfill'
 import { onMounted, ref } from 'vue'
 import FadeAnimation from './FadeAnimation.vue'
 import GenericLazyList from './GenericLazyList.vue'
 import GenericListItem from './GenericListItem.vue'
 
-defineProps<{
-  speakers: SpeakerPreviewItem[]
+import QuoteEnd from '~/assets/icons/quote-end.svg'
+import QuoteStart from '~/assets/icons/quote-start.svg'
+import { useWeightedRandomSelection } from '~/composables/useWeightedRandomSelection'
+
+const props = defineProps<{
+  testimonials: DirectusTestimonialItem[]
 }>()
+
+const { selectTestimonials } = useWeightedRandomSelection()
+const randomizedTestimonials = computed(() => selectTestimonials(props.testimonials, 5))
 
 // Create scroll box element reference
 const scrollBoxElement = ref<HTMLDivElement>()
@@ -165,22 +188,5 @@ const changeScrollPosition = () => {
     .scroll-box::before {
         width: calc((100vw - 1536px) / 2 + 2rem);
     }
-}
-@keyframes fade-in {
-    0% {
-        opacity: 0;
-    }
-    25% {
-        opacity: 1;
-    }
-    80% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 0;
-    }
-}
-.podcast-link:hover .angle-right {
-    animation: fade-in 0.8s ease infinite forwards;
 }
 </style>

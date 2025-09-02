@@ -89,6 +89,15 @@
             </div>
         </section>
 
+        <section class="relative">
+          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
+            <SectionHeading element="h2">
+              Community
+            </SectionHeading>
+            <TestimonialSlider :testimonials='testimonials' />
+          </div>
+        </section>
+
         <!-- Related podcasts -->
         <section v-if="relatedPodcasts && relatedPodcasts.length" class="relative mt-20 md:mt-32 lg:mt-40">
             <SectionHeading class="px-6 md:px-0" element="h2"> Verwandte Podcasts </SectionHeading>
@@ -105,8 +114,9 @@ import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { OPEN_YOUTUBE_EVENT_ID } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
-import type { MeetupItem, TagItem } from '~/types'
+import type { DirectusTestimonialItem, MeetupItem, TagItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
+import TestimonialSlider from '~/components/TestimonialSlider.vue';
 
 // Add route and router
 const route = useRoute()
@@ -116,9 +126,10 @@ const directus = useDirectus()
 // Query meetup, speaker count and related podcast
 const { data: pageData } = useAsyncData(route.fullPath, async () => {
     // Query meetup and speaker count async
-    const [meetup, speakerCount] = await Promise.all([
-        await directus.getMeetupBySlug(route.params.slug as string),
-        await directus.getSpeakersCount(),
+    const [meetup, speakerCount, testimonials] = await Promise.all([
+        directus.getMeetupBySlug(route.params.slug as string),
+        directus.getSpeakersCount(),
+        directus.getTestimonials(),
     ])
 
     // Throw error if meetup does not exist
@@ -130,13 +141,14 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
     const relatedPodcasts = meetup.tagsPrepared.length ? await directus.getRelatedPodcasts(meetup) : []
 
     // Return meetup, speaker count and related podcast
-    return { meetup, speakerCount, relatedPodcasts }
+    return { meetup, speakerCount, relatedPodcasts, testimonials }
 })
 
 // Extract meetup, speaker count and related podcasts from page data
 const meetup: ComputedRef<MeetupItem | undefined> = computed(() => pageData.value?.meetup)
 const speakerCount = computed(() => pageData.value?.speakerCount)
 const relatedPodcasts = computed(() => pageData.value?.relatedPodcasts)
+const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
 // Convert speaker count to local string
 const speakerCountString = useLocaleString(speakerCount)

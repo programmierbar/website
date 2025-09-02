@@ -3,7 +3,7 @@ import svgLoader from 'vite-svg-loader'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { useDirectus } from './composables/useDirectus'
-import { DEV, DEVTOOLS, DIRECTUS_CMS_URL, FLAG_SHOW_LOGIN } from './config'
+import { DEV, DEVTOOLS, DIRECTUS_CMS_URL, FLAG_SHOW_LOGIN, DISCORD_INVITE_LINK } from './config'
 
 const directus = useDirectus()
 
@@ -29,6 +29,7 @@ export default defineNuxtConfig({
         emailPassword: '',
         public: {
             FLAG_SHOW_LOGIN: FLAG_SHOW_LOGIN,
+            DISCORD_INVITE_LINK: DISCORD_INVITE_LINK,
         },
     },
 

@@ -8,7 +8,7 @@
                     {{ conferencePage.conference_heading }}
                 </SectionHeading>
                 <InnerHtml
-                  class="mt-8 text-5xl font-black leading-normal text-white"
+                  class="mt-8 text-3xl md:text-5xl font-black leading-normal text-white"
                   :html="conferencePage.intro_heading"
                 />
                 <InnerHtml
@@ -19,6 +19,18 @@
         </section>
         <section class="relative">
           <ConferenceSection :heading='"Termine"' :conferences="conferences" />
+        </section>
+
+      <section class="relative">
+        <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
+          <SectionHeading element="h2">
+            Community
+          </SectionHeading>
+          <TestimonialSlider :testimonials='testimonials' />
+        </div>
+      </section>
+
+      <section class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <InnerHtml
               class="mt-8 text-3xl font-black leading-normal text-white"
@@ -37,23 +49,26 @@
 <script setup lang="ts">
 import { useLoadingScreen, usePageMeta } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
-import type { DirectusConferenceItem, DirectusConferencePage } from '~/types';
+import type { DirectusConferenceItem, DirectusConferencePage, DirectusTestimonialItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
+import TestimonialSlider from '~/components/TestimonialSlider.vue';
 
 const breadcrumbs = [{ label: 'Konferenzen' }]
 const directus = useDirectus()
 
 const { data: pageData } = useAsyncData(async () => {
-    const [conferencePage, conferences] = await Promise.all([
+    const [conferencePage, conferences, testimonials] = await Promise.all([
       directus.getConferencePage(),
       directus.getConferences(),
+      directus.getTestimonials(),
     ])
 
-    return { conferencePage, conferences }
+    return { conferencePage, conferences, testimonials }
 })
 
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
 const conferences: ComputedRef<DirectusConferenceItem[]> = computed(() => pageData.value?.conferences || [])
+const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
 // Set loading screen
 useLoadingScreen(conferencePage)

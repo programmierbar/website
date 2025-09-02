@@ -75,6 +75,15 @@
             :heading="homePage.meetup_heading"
             :meetups="upcomingMeetups"
         />
+
+        <section class="relative">
+          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
+            <SectionHeading element="h2">
+              Community
+            </SectionHeading>
+            <TestimonialSlider :testimonials='testimonials' />
+          </div>
+        </section>
     </div>
 </template>
 
@@ -86,7 +95,8 @@ import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'
 import { useLoadingScreen, usePageMeta, usePodcastPlayer } from '../composables';
 import { DIRECTUS_CMS_URL } from '../config'
-import type { ConferenceItem, DirectusHomePage, LatestPodcastItem, MeetupItem } from '../types'
+import type { ConferenceItem, DirectusHomePage, DirectusTestimonialItem, LatestPodcastItem, MeetupItem } from '../types';
+import TestimonialSlider from '~/components/TestimonialSlider.vue';
 
 const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
 
@@ -96,11 +106,12 @@ const podcastPlayer = usePodcastPlayer()
 
 // Query home page, latest podcasts and podcast count
 const { data: pageData } = useAsyncData(async () => {
-    const [homePage, latestPodcasts, podcastCount, meetups] = await Promise.all([
-        await directus.getHomepage(),
-        await directus.getLatestPodcasts(),
-        await directus.getPodcastCount(),
-        await directus.getMeetups(),
+    const [homePage, latestPodcasts, podcastCount, meetups, testimonials] = await Promise.all([
+        directus.getHomepage(),
+        directus.getLatestPodcasts(),
+        directus.getPodcastCount(),
+        directus.getMeetups(),
+        directus.getTestimonials()
     ])
 
     const upcomingMeetups = meetups.filter((meetup) => {
@@ -108,7 +119,7 @@ const { data: pageData } = useAsyncData(async () => {
         return new Date(meetup.start_on) > now
     })
 
-    return { homePage, latestPodcasts, podcastCount, upcomingMeetups }
+    return { homePage, latestPodcasts, podcastCount, upcomingMeetups, testimonials }
 })
 
 // Extract home page, latest podcasts and podcast count from page data
@@ -121,6 +132,8 @@ const latestPodcasts: ComputedRef<LatestPodcastItem[] | undefined> = computed(()
 
   return pageData.value?.latestPodcasts
 })
+
+const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
 const highlightItem: ComputedRef<MeetupItem | ConferenceItem | undefined> = computed(() => {
     if (!pageData.value) {

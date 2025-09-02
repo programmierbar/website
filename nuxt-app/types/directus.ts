@@ -142,6 +142,13 @@ export interface DirectusConferenceItem {
     }[],
 }
 
+export interface DirectusTestimonialItem {
+  id: string
+  text: string
+  subtitle: string
+  weight: number
+}
+
 export interface DirectusMemberItem {
     id: string
     first_name: string
