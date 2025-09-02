@@ -22,7 +22,10 @@
         </section>
 
       <section class="relative">
-        <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
+        <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
+          <SectionHeading element="h2">
+            Community
+          </SectionHeading>
           <TestimonialSlider :testimonials='testimonials' />
         </div>
       </section>
