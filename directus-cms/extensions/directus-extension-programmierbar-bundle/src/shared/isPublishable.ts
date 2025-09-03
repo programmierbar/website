@@ -13,7 +13,6 @@ interface Field {
                         _eq: string
                     },
                     type: {
-                        _eq: string
                         _in: Array<string>
                     }
                 }[]
@@ -26,7 +25,7 @@ interface Field {
 type LoggerFunction = (message: string) => void
 
 const isRuleForPublished = function(rule: any): boolean {
-    return (rule.status && rule.status._eq && rule.status._eq === 'published') || false;
+    return rule.status && rule.status._eq && rule.status._eq === 'published';
 }
 const isRuleApplicable = function(rule: any, item: Record<string, any>): boolean {
 
@@ -40,7 +39,7 @@ const isRuleApplicable = function(rule: any, item: Record<string, any>): boolean
 
 export function isPublishable(item: Record<string, any>, fields: Field[], logger?: LoggerFunction) {
     const requiredFieldsAreSet = fields.every((field) => {
-        ;(() => logger?.('Controlling field ' + field.field))()
+        (() => logger?.('Controlling field ' + field.field))()
 
         const hasValue = Boolean(item[field.field])
         const isRequiredInSchema = field.schema && field.schema.required
@@ -72,9 +71,9 @@ export function isPublishable(item: Record<string, any>, fields: Field[], logger
             });
             (() => logger?.('is required on published ' + isRequiredOnPublished))()
         }
-        const isOptional = !isRequiredInSchema && !isRequiredOnPublished
+        const isOptional = !isRequiredInSchema && !isRequiredOnPublished;
 
-        ;(() => logger?.('Is set: ' + (hasValue || isOptional)))()
+        (() => logger?.('Is set: ' + (hasValue || isOptional)))()
 
         return hasValue || isOptional
     })
