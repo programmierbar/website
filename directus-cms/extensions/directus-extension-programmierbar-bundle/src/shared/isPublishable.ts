@@ -56,14 +56,26 @@ export function isPublishable(item: Record<string, any>, fields: Field[], logger
                     condition.required &&
                     condition.rule &&
                     (
+                        // Either the rule(s) are a single rule only
                         isRuleForPublished(condition.rule) ||
                         (
+                            // or they are combined with an AND
                             condition.rule._and &&
-                            condition.rule._and.some(
-                                (rule) => isRuleForPublished(rule)
-                            ) &&
-                            condition.rule._and.some(
-                                (rule) => isRuleApplicable(rule, item)
+                            (
+                                // but that AND might only contain a single rule
+                                // then only the one needs to apply
+                                (condition.rule._and.length === 1 && condition.rule._and.some(
+                                    (rule) => isRuleForPublished(rule)
+                                )) ||
+                                (
+                                    // or it might contain multiple rules, then each needs to apply
+                                    condition.rule._and.some(
+                                        (rule) => isRuleForPublished(rule)
+                                    ) &&
+                                    condition.rule._and.some(
+                                        (rule) => isRuleApplicable(rule, item)
+                                    )
+                                )
                             )
                         )
                     )
