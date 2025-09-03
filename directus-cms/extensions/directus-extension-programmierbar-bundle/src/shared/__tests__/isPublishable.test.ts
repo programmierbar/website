@@ -170,6 +170,4 @@ describe('isPublishable', () => {
         expect(result).toBe(expected);
     });
 
-    afterAll(() => {
-    });
 });
