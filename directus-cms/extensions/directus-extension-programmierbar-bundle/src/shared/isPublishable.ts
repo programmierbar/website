@@ -11,6 +11,9 @@ interface Field {
                 {
                     status: {
                         _eq: string
+                    },
+                    type: {
+                        _in: Array<string>
                     }
                 }[]
             >
@@ -21,9 +24,22 @@ interface Field {
 // eslint-disable-next-line no-unused-vars
 type LoggerFunction = (message: string) => void
 
+const isRuleForPublished = function(rule: any): boolean {
+    return rule.status && rule.status._eq && rule.status._eq === 'published';
+}
+const isRuleApplicable = function(rule: any, item: Record<string, any>): boolean {
+
+    if (rule.type && rule.type._in && item.type && rule.type._in.includes(item.type)) {
+        return true;
+    }
+
+    return false;
+}
+
+
 export function isPublishable(item: Record<string, any>, fields: Field[], logger?: LoggerFunction) {
     const requiredFieldsAreSet = fields.every((field) => {
-        ;(() => logger?.('Controlling field ' + field.field))()
+        (() => logger?.('Controlling field ' + field.field))()
 
         const hasValue = Boolean(item[field.field])
         const isRequiredInSchema = field.schema && field.schema.required
@@ -39,18 +55,37 @@ export function isPublishable(item: Record<string, any>, fields: Field[], logger
                 return (
                     condition.required &&
                     condition.rule &&
-                    condition.rule._and &&
-                    condition.rule._and.some(
-                        (rule) => rule.status && rule.status._eq && rule.status._eq === 'published'
+                    (
+                        // Either the rule(s) are a single rule only
+                        isRuleForPublished(condition.rule) ||
+                        (
+                            // or they are combined with an AND
+                            condition.rule._and &&
+                            (
+                                // but that AND might only contain a single rule
+                                // then only the one needs to apply
+                                (condition.rule._and.length === 1 && condition.rule._and.some(
+                                    (rule) => isRuleForPublished(rule)
+                                )) ||
+                                (
+                                    // or it might contain multiple rules, then each needs to apply
+                                    condition.rule._and.some(
+                                        (rule) => isRuleForPublished(rule)
+                                    ) &&
+                                    condition.rule._and.some(
+                                        (rule) => isRuleApplicable(rule, item)
+                                    )
+                                )
+                            )
+                        )
                     )
                 )
-            })
-
-            ;(() => logger?.('is required on published ' + isRequiredOnPublished))()
+            });
+            (() => logger?.('is required on published ' + isRequiredOnPublished))()
         }
-        const isOptional = !isRequiredInSchema && !isRequiredOnPublished
+        const isOptional = !isRequiredInSchema && !isRequiredOnPublished;
 
-        ;(() => logger?.('Is set: ' + (hasValue || isOptional)))()
+        (() => logger?.('Is set: ' + (hasValue || isOptional)))()
 
         return hasValue || isOptional
     })

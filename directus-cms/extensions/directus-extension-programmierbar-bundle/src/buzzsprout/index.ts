@@ -10,6 +10,11 @@ export default defineHook(({ action }, hookContext) => {
     const env = hookContext.env;
     const ItemsService = hookContext.services.ItemsService;
 
+    if (!(env.BUZZSPROUT_API_URL && env.BUZZSPROUT_API_TOKEN)) {
+        logger.warn(`${HOOK_NAME} hook: Did not set BUZZSPROUT_API_URL && BUZZSPROUT_API_TOKEN. Buzzsprout extension will not be active.`)
+        return
+    }
+
     action('podcasts.items.create', function (metadata, eventContext) {
         const { payload } = metadata
         handlePodcastAction(
