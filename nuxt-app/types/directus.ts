@@ -122,6 +122,8 @@ export interface DirectusConferenceItem {
       end: string
       title: string
       subtitle: string
+      track: string
+      talk_identifier: string
     }[]
     faqs: {
       question: string

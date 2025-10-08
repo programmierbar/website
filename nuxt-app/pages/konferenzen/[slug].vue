@@ -75,7 +75,7 @@
             <SectionHeading element="h2">
               Agenda
             </SectionHeading>
-            <ConferenceAgenda :agenda='conference.agenda' />
+            <ConferenceAgenda :agenda='preparedAgenda' />
           </div>
         </section>
 
@@ -212,6 +212,39 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
 const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageData.value?.conference)
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
+
+type preparedAgendaItem = {
+  start: string
+  end: string
+  title: string
+  subtitle: string
+  track: string
+  talk_identifier: string
+  _object: undefined | typeof TalkItem
+};
+
+const preparedAgenda: ComputedRef<preparedAgendaItem[]> = computed(() => {
+  let agenda = conference.value?.agenda.map((talk) => {
+
+    let currentTalk: {
+      _object: undefined | typeof TalkItem,
+    } = {
+      _object: undefined,
+      ...talk,
+    }
+
+    if (talk.talk_identifier) {
+      const preparedTalk = conference.value?.talksPrepared.find(t => t.id === talk.talk_identifier);
+      if (preparedTalk) {
+        currentTalk._object = preparedTalk;
+      }
+    }
+
+    return currentTalk;
+  });
+
+  return agenda;
+})
 
 const combinedFaqs: ComputedRef<[]> = computed(() => {
   let faqs = [];
