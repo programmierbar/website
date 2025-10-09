@@ -35,12 +35,14 @@
           :class="{ 'talk--full': isNoTrack(a) }"
           :style="itemStyle(a, day)"
           :title="`${fmtTime(a.start)}–${fmtTime(a.end)}`"
+          @click='handleTalkClick(a._object)'
+          :data-cursor-hover="a._object ? true : null"
         >
           <header class="talk-title">
             {{ a._object?.title ?? a.title }}
           </header>
-          <div class="talk-subtitle">{{ a._object?.speakers.length ?? a.subtitle }}</div>
-          <div class="talk-time">{{ fmtTime(a.start) }} – {{ fmtTime(a.end) }}</div>
+          <div class="talk-subtitle">{{ buildSubtitle(a) }}</div>
+          <div class="talk-time">{{ fmtTime(a.start) }}<span v-if='a.end'> – {{ fmtTime(a.end) }}</span></div>
         </article>
       </div>
     </section>
@@ -50,6 +52,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { TalkItem } from '~/types';
+import { buildSpeakerNamesForTalk } from '~/helpers/buildSpeakerNamesForTalk';
 
 type Agenda = {
   start: string;   // ISO string, e.g. "2025-10-29T09:15:00"
@@ -62,20 +65,40 @@ type Agenda = {
 
 const props = defineProps<{ agenda: Agenda[] }>();
 
+const buildSubtitle = function(agenda: Agenda): string | undefined {
+  if (!agenda._object?.speakers.length) {
+    return agenda.subtitle;
+  }
+  return buildSpeakerNamesForTalk(agenda._object);
+}
+
+const handleTalkClick = function(talk: TalkItem) {
+    const el = document.getElementById(`talk-${talk.id}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center'});
+}
+
 /** ===== Config ===== */
 // You already set this to false. We keep it so you can flip later if you want durations.
 const USE_DURATION_HEIGHTS = false;  // equal-height rows
 // New: when true, the grid compacts to one row per distinct start time (no gaps possible)
 const COMPACT_BY_STARTS = true;
-const TIME_COL_WIDTH = '8rem';
+const TIME_COL_WIDTH = 'var(--time-col-width, 8rem)';
 
 /** ===== Utils ===== */
 const toDate = (s: string) => new Date(s);
 const dayKey = (d: Date) => d.toISOString().slice(0, 10);
-const fmtTime = (s: string) =>
-  toDate(s).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const fmtTime = (s: string) => {
+  const d = toDate(s);
+
+  if (d.toString() === 'Invalid Date') {
+    return '';
+  }
+
+  return d.toLocaleTimeString(['DE'], { hour: '2-digit', minute: '2-digit' });
+}
+
 const fmtDay = (isoDay: string) =>
-  new Date(isoDay).toLocaleDateString([], {
+  new Date(isoDay).toLocaleDateString(['DE'], {
     weekday: 'long',
     year: 'numeric',
     month: 'short',
@@ -224,16 +247,36 @@ function itemStyle(a: Agenda, day: DayBlock) {
 </script>
 
 <style scoped>
-.agenda-root { display: grid; gap: 2rem; }
-.day-title { margin: 0 0 .5rem 0; font-size: 1.1rem; font-weight: 700; }
-
-.grid {
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: .5rem;
+.agenda-root {
+  display: grid;
+  gap: 2rem;
 }
 
-.corner { grid-column: 1; grid-row: 1; }
+/* Set the default width for desktop */
+:root, .agenda-root {
+  --time-col-width: 8rem;
+}
+
+@media (max-width: 600px) {
+  /* Shrink the time column on small screens */
+  .agenda-root {
+    --time-col-width: 3.5rem;
+  }
+}
+
+.day-title {
+  margin: 0 0 .5rem 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.grid {
+}
+
+.corner {
+  grid-column: 1;
+  grid-row: 1;
+}
 
 .track-header {
   position: sticky; top: 0; z-index: 2;
@@ -242,24 +285,57 @@ function itemStyle(a: Agenda, day: DayBlock) {
 }
 
 .time-label {
-  position: sticky; left: 0; z-index: 1;
+  position: sticky;
+  left: 0;
+  z-index: 1;
   font-variant-numeric: tabular-nums;
-  padding: .25rem .5rem; border-right: 1px dashed #e5e7eb;
+  padding: .25rem .5rem;
   align-self: start;
 }
 
 .talk {
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  background: rgba(255,255,255,.1);
+  border-radius: .25rem;
   padding: .5rem .6rem;
   display: flex; flex-direction: column; gap: .25rem;
   box-shadow: 0 1px 0 rgba(0,0,0,.04);
+  position: relative;
 }
-.talk--full { border-style: dashed; text-align: center; }
 
-.talk-title { font-weight: 700; line-height: 1.2; }
-.talk-subtitle { color: #6b7280; font-size: .9rem; }
-.talk-time { color: #9ca3af; font-size: .8rem; }
+.talk--full {
+  text-align: center;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 
-.grid > * { min-width: 0; }
+.talk-time {
+  position: absolute;
+  padding: 0 .5rem .6rem;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: right;
+  width: auto;
+}
+
+.talk-title {
+  font-weight: 700;
+  line-height: 1.2;
+}
+.talk-subtitle {
+  color: #6b7280;
+  font-size: .9rem;
+}
+.talk-time {
+  color: #9ca3af;
+  font-size: .8rem;
+  width: 100%;
+  text-align: right;
+}
+
+.grid > * {
+  min-width: 0;
+}
 </style>
