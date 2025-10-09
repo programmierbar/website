@@ -72,9 +72,10 @@ const buildSubtitle = function(agenda: Agenda): string | undefined {
   return buildSpeakerNamesForTalk(agenda._object);
 }
 
-const handleTalkClick = function(talk: TalkItem) {
-    const el = document.getElementById(`talk-${talk.id}`);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center'});
+const handleTalkClick = function(talk: TalkItem | undefined) {
+  if (!talk) return;
+  const el = document.getElementById(`talk-${talk.id}`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center'});
 }
 
 /** ===== Config ===== */
@@ -131,7 +132,7 @@ function isNoTrack(a: Agenda) {
 }
 function colForTrack(track: string) {
   const idx = tracks.value.findIndex(t => t === track.trim());
-  return String(idx + 2); // +1 for time column, +1 because grid is 1-based
+  return String(idx + 2); // +1 for the time-column, +1 because the grid is 1-based
 }
 
 /** ===== Day model ===== */
@@ -252,13 +253,11 @@ function itemStyle(a: Agenda, day: DayBlock) {
   gap: 2rem;
 }
 
-/* Set the default width for desktop */
 :root, .agenda-root {
   --time-col-width: 8rem;
 }
 
 @media (max-width: 600px) {
-  /* Shrink the time column on small screens */
   .agenda-root {
     --time-col-width: 3.5rem;
   }
@@ -268,9 +267,6 @@ function itemStyle(a: Agenda, day: DayBlock) {
   margin: 0 0 .5rem 0;
   font-size: 1.1rem;
   font-weight: 700;
-}
-
-.grid {
 }
 
 .corner {
