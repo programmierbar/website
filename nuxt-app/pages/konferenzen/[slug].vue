@@ -177,8 +177,8 @@ import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue'
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
 import type { DirectusFile } from '@directus/sdk';
 import ConferenceTickets from '~/components/ConferenceTickets.vue';
-import TalkItem from '~/components/TalkItem.vue';
 import TestimonialSlider from '~/components/TestimonialSlider.vue';
+import type { TalkItem } from '~/types';
 
 // Add route and router
 const route = useRoute()
@@ -220,15 +220,13 @@ type preparedAgendaItem = {
   subtitle: string
   track: string
   talk_identifier: string
-  _object: undefined | typeof TalkItem
+  _object: undefined | TalkItem
 };
 
 const preparedAgenda: ComputedRef<preparedAgendaItem[]> = computed(() => {
   let agenda = conference.value?.agenda.map((talk) => {
 
-    let currentTalk: {
-      _object: undefined | typeof TalkItem,
-    } = {
+    let currentTalk: preparedAgendaItem = {
       _object: undefined,
       ...talk,
     }
@@ -242,6 +240,10 @@ const preparedAgenda: ComputedRef<preparedAgendaItem[]> = computed(() => {
 
     return currentTalk;
   });
+
+  if (!agenda) {
+    return [];
+  }
 
   return agenda;
 })

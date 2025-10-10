@@ -72,7 +72,7 @@ const buildSubtitle = function(agenda: Agenda): string | undefined {
   return buildSpeakerNamesForTalk(agenda._object);
 }
 
-const handleTalkClick = function(talk: TalkItem | undefined) {
+const handleTalkClick = function(talk: TalkItem | undefined | null) {
   if (!talk) return;
   const el = document.getElementById(`talk-${talk.id}`);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center'});
@@ -305,17 +305,6 @@ function itemStyle(a: Agenda, day: DayBlock) {
   justify-content: center;
 }
 
-.talk-time {
-  position: absolute;
-  padding: 0 .5rem .6rem;
-
-  left: 0;
-  right: 0;
-  bottom: 0;
-  text-align: right;
-  width: auto;
-}
-
 .talk-title {
   font-weight: 700;
   line-height: 1.2;
@@ -327,8 +316,15 @@ function itemStyle(a: Agenda, day: DayBlock) {
 .talk-time {
   color: #9ca3af;
   font-size: .8rem;
-  width: 100%;
   text-align: right;
+
+  position: absolute;
+  padding: 0 .5rem .6rem;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
 }
 
 .grid > * {
