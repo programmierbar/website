@@ -1,17 +1,17 @@
 <template>
-  <div class="agenda-root">
+  <div class="agenda-root grid gap-8">
     <section v-for="day in days" :key="day.isoDay" class="day">
-      <h2 class="day-title">{{ fmtDay(day.isoDay) }}</h2>
+      <h2 class="font-bold text-lg ml-2">{{ fmtDay(day.isoDay) }}</h2>
 
       <div class="grid" :style="gridStyle(day)">
         <!-- Corner -->
-        <div class="corner"></div>
+        <div class="col-1 row-1"></div>
 
         <!-- Track headers -->
         <div
           v-for="(t, i) in tracks"
           :key="t"
-          class="track-header"
+          class="sticky top-0 z-10 px-2 py-1 font-bold text-center border-b-1 border-b-white"
           :style="{ gridColumn: String(i + 2), gridRow: '1' }"
         >
           {{ t }}
@@ -21,7 +21,7 @@
         <div
           v-for="t in day.startLines"
           :key="t"
-          class="time-label"
+          class="sticky left-0 -z--1 py-1 px-2 self-start tabular-nums"
           :style="{ gridColumn: '1', gridRow: String(2 + (day.indexMap.get(t) ?? 0)) }"
         >
           {{ fmtTime(t) }}
@@ -31,18 +31,18 @@
         <article
           v-for="(a, idx) in day.items"
           :key="idx"
-          class="talk"
-          :class="{ 'talk--full': isNoTrack(a) }"
+          class="talk flex flex-col gap-1 relative rounded-s py-2 px-3 flex flex-col gap-1"
+          :class="{ 'text-center items-center justify-center': isNoTrack(a) }"
           :style="itemStyle(a, day)"
           :title="`${fmtTime(a.start)}–${fmtTime(a.end)}`"
           @click='handleTalkClick(a._object)'
           :data-cursor-hover="a._object ? true : null"
         >
-          <header class="talk-title">
+          <header class="font-bold text-lg">
             {{ a._object?.title ?? a.title }}
           </header>
-          <div class="talk-subtitle">{{ buildSubtitle(a) }}</div>
-          <div class="talk-time">{{ fmtTime(a.start) }}<span v-if='a.end'> – {{ fmtTime(a.end) }}</span></div>
+          <div class="text-sm">{{ buildSubtitle(a) }}</div>
+          <div class="text-sm text-right absolute px-2 pb-2 left-0 right-0 bottom-0 w-auto">{{ fmtTime(a.start) }}<span v-if='a.end'> – {{ fmtTime(a.end) }}</span></div>
         </article>
       </div>
     </section>
@@ -248,11 +248,6 @@ function itemStyle(a: Agenda, day: DayBlock) {
 </script>
 
 <style scoped>
-.agenda-root {
-  display: grid;
-  gap: 2rem;
-}
-
 :root, .agenda-root {
   --time-col-width: 8rem;
 }
@@ -263,71 +258,12 @@ function itemStyle(a: Agenda, day: DayBlock) {
   }
 }
 
-.day-title {
-  margin: 0 0 .5rem 0;
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
-.corner {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.track-header {
-  position: sticky; top: 0; z-index: 2;
-  font-weight: 700; padding: .25rem .5rem;
-  border-bottom: 1px solid #eee; text-align: center;
-}
-
-.time-label {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  font-variant-numeric: tabular-nums;
-  padding: .25rem .5rem;
-  align-self: start;
-}
-
-.talk {
-  background: rgba(255,255,255,.1);
-  border-radius: .25rem;
-  padding: .5rem .6rem;
-  display: flex; flex-direction: column; gap: .25rem;
-  box-shadow: 0 1px 0 rgba(0,0,0,.04);
-  position: relative;
-}
-
-.talk--full {
-  text-align: center;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.talk-title {
-  font-weight: 700;
-  line-height: 1.2;
-}
-.talk-subtitle {
-  color: #6b7280;
-  font-size: .9rem;
-}
-.talk-time {
-  color: #9ca3af;
-  font-size: .8rem;
-  text-align: right;
-
-  position: absolute;
-  padding: 0 .5rem .6rem;
-
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: auto;
-}
-
 .grid > * {
   min-width: 0;
 }
+
+.talk {
+  background: var(--Grey, #131415);
+}
+
 </style>
