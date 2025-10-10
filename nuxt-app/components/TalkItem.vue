@@ -1,5 +1,7 @@
 <template>
-  <div class="
+  <div
+    :id="'talk-' + talk.id"
+    class="
         flex flex-col
         lg:grid lg:grid-cols-2 lg:grid-rows-[auto_1fr]
     ">
@@ -45,31 +47,12 @@
 
 <script setup lang="ts">
 import type { TalkItem } from '~/types';
-import { getFullSpeakerName } from 'shared-code';
+import { buildSpeakerNamesForTalk } from '~/helpers/buildSpeakerNamesForTalk';
 
 const props = defineProps<{
   talk: TalkItem
 }>();
 
-const buildSpeakerNamesForTalk = function(talk: TalkItem): string {
-  let result = 'mit ';
-
-  const speakers: string[] = [];
-
-  talk.speakers.forEach((speaker) => {
-    speakers.push(getFullSpeakerName(speaker.speaker));
-  });
-
-  talk.members.forEach((member) => {
-    speakers.push(`${member.member.first_name} ${member.member.last_name}`);
-  });
-
-  if (speakers.length === 0) {
-    return '';
-  }
-
-  return result + speakers.join(' & ');
-};
 </script>
 
 <style lang="postcss" scoped>
