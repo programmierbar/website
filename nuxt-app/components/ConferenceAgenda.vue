@@ -91,7 +91,7 @@ const dayKey = (d: Date) => d.toISOString().slice(0, 10);
 const fmtTime = (s: string) => {
   const d = toDate(s);
 
-  if (d.toString() === 'Invalid Date') {
+  if (isNaN(d.getTime())) {
     return '';
   }
 
