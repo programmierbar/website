@@ -23,7 +23,9 @@ export default defineNuxtConfig({
     },
 
     // Global CSS: https://go.nuxtjs.dev/config-css
-    css: [],
+    css: [
+      'vue-json-pretty/lib/styles.css',
+    ],
 
     runtimeConfig: {
         emailPassword: '',
@@ -39,6 +41,7 @@ export default defineNuxtConfig({
     vite: {
         plugins: [
             svgLoader(), // https://github.com/jpkleemans/vite-svg-loader#readme
+            '@/plugins/vue-json-pretty',
         ],
     },
 

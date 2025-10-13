@@ -27,6 +27,7 @@
         "pinia": "^2.1.7",
         "smoothscroll-polyfill": "^0.4.4",
         "vite-svg-loader": "^5.1.0",
+        "vue-json-pretty": "^2.5.0",
         "zod": "^3.22.4"
     },
     "devDependencies": {
