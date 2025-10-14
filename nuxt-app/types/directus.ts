@@ -394,6 +394,11 @@ export interface DirectusRafflePage {
     text: string
 }
 
+export interface DirectusCocktailMenu {
+  status: string
+  menu: string
+}
+
 export interface DirectusLoginPage {
     heading: string
     text: string

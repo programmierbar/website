@@ -24,7 +24,7 @@ import type {
   DirectusSpeakerItem,
   DirectusTagItem,
   DirectusProfileItem,
-  DirectusTranscriptItem, DirectusTestimonialItem,
+  DirectusTranscriptItem, DirectusTestimonialItem, DirectusCocktailMenu,
 } from '../types';
 
 export type Collections = {
@@ -43,6 +43,7 @@ export type Collections = {
     profile_creation_page: DirectusProfileCreationPage
     coc_page: DirectusCocPage
     recordings_page: DirectusRecordingsPage
+    cocktail_menu: DirectusCocktailMenu
     podcasts: DirectusPodcastItem[]
     meetups: DirectusMeetupItem[]
     conferences: DirectusConferenceItem[]

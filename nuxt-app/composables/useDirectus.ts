@@ -161,6 +161,14 @@ export function useDirectus() {
         )
     }
 
+    async function getCocktailMenu() {
+      return await directus.request(
+        readSingleton('cocktail_menu', {
+          fields: ['*'],
+        })
+      )
+    }
+
     async function getLatestPodcasts(limit: number = 10) {
         return await directus.request(
             readItems('podcasts', {
@@ -829,6 +837,7 @@ export function useDirectus() {
         getRecordingsPage,
         getImprintPage,
         getContactPage,
+        getCocktailMenu,
         getMembers,
         getLatestPodcasts,
         getPodcasts,
