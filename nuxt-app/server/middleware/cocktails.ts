@@ -19,8 +19,8 @@ export default defineEventHandler(async (event) => {
   // Be a good citizen: content negotiation varies on Accept
   event.node.res.setHeader('Vary', 'Accept')
 
-  const cocktails  = await directus.getCocktailMenu();
-  if (cocktails && cocktails.status !== 'published') {
+  const cocktails = await directus.getCocktailMenu();
+  if (cocktails !== null && typeof cocktails === 'object' && cocktails.status !== 'published') {
     cocktails.menu = JSON.parse('{"error": "No cocktails available"}')
   }
 
