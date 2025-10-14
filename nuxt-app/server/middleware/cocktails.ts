@@ -1,8 +1,11 @@
 import type { H3Event } from 'h3'
 
 import { defineEventHandler, getHeader } from 'h3'
+import { useDirectus } from '~/composables/useDirectus'
 
-export default defineEventHandler((event) => {
+const directus = useDirectus()
+
+export default defineEventHandler(async (event) => {
   if (event.path !== '/api/cocktails') return
 
   const accept = (getHeader(event, 'accept') || '').toLowerCase()
@@ -16,27 +19,11 @@ export default defineEventHandler((event) => {
   // Be a good citizen: content negotiation varies on Accept
   event.node.res.setHeader('Vary', 'Accept')
 
-  const data = {
-    cocktails: [
-      {
-        name: 'Gin Tonic',
-        ingredients: ['gin', 'tonic water', 'ice'],
-        contains_alcohol: true,
-        alcohol_free_variant_available: true,
-      },
-      {
-        name: 'Ipanema',
-        ingredients: ['ginger ale', 'juice', 'lime', 'brown sugar', 'ice'],
-        contains_alcohol: false,
-      },
-      {
-        name: 'Crodino Spritz',
-        ingredients: ['crodino', 'orange', 'mint', 'ice'],
-        contains_alcohol: false,
-      },
-    ],
+  const cocktails  = await directus.getCocktailMenu();
+  if (cocktails && cocktails.status !== 'published') {
+    cocktails.menu = JSON.parse('{"error": "No cocktails available"}')
   }
 
   // Return your JSON payload
-  return data;
+  return cocktails.menu;
 })
