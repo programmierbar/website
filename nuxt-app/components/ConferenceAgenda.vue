@@ -31,14 +31,14 @@
         <article
           v-for="(a, idx) in day.items"
           :key="idx"
-          class="talk flex flex-col gap-1 relative rounded-s py-2 px-3 flex flex-col gap-1"
+          class="talk flex flex-col gap-1 relative rounded-s py-2 px-3 flex flex-col gap-1 pb-8 lg:pb-2"
           :class="{ 'text-center items-center justify-center': isNoTrack(a) }"
           :style="itemStyle(a, day)"
           :title="`${fmtTime(a.start)}–${fmtTime(a.end)}`"
           @click='handleTalkClick(a._object)'
           :data-cursor-hover="a._object ? true : null"
         >
-          <header class="font-bold text-lg">
+          <header class="font-bold text-sm md:text-lg">
             {{ a._object?.title ?? a.title }}
           </header>
           <div class="text-sm">{{ buildSubtitle(a) }}</div>

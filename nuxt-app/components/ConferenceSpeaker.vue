@@ -1,17 +1,17 @@
 <template>
-  <div class='w-96 speaker-box'>
+  <div class='w-48 lg:w-96 speaker-box'>
     <DirectusImage
       v-if='speaker.profile_image'
       class='object-cover aspect-square'
       :image='speaker.profile_image'
       :alt='fullName'
-      sizes='md:300px'
+      sizes='sm:150px md:300px'
       loading='lazy'
     />
-    <div class='mt-6 p-9 flex flex-col min-h-120 max-h-120 flex-shrink-0' :class="[isExpanded ? 'max-h-full' : '']" @click='isExpanded = !isExpanded'>
+    <div class='mt-3 p-4 lg:mt-6 lg:p-9 flex flex-col min-h-60 max-h-60 lg:min-h-120 lg:max-h-120 flex-shrink-0' :class="[isExpanded ? 'max-h-full' : '']" @click='isExpanded = !isExpanded'>
       <div>
-        <p class='font-black text-3xl mb-2'>{{ fullName }}</p>
-        <p class='font-light text-xl italic'>{{ speaker.occupation }}</p>
+        <p class='font-black lg:text-3xl mb-2'>{{ fullName }}</p>
+        <p class='font-light lg:text-xl italic'>{{ speaker.occupation }}</p>
       </div>
       <div
         class='relative'
@@ -20,7 +20,7 @@
         :data-cursor-hover="!isExpanded ? null : true"
       >
           <InnerHtml
-            class='mt-7 font-light text-xl'
+            class='mt-2 lg:mt-7 font-light text-sm lg:text-xl'
             :html='speaker.description'
           />
         <div
@@ -28,7 +28,7 @@
           class='absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#131415] to-transparent'
         ></div>
       </div>
-      <IndividualPlatforms :platforms='platforms' :scope='"speaker"'/>
+      <IndividualPlatforms :platforms='platforms' :sizes='"h-3 lg:h-7 mt-1 lg:mt-7"' :scope='"speaker"'/>
     </div>
   </div>
 </template>
