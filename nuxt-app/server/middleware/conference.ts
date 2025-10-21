@@ -12,13 +12,17 @@ export default eventHandler(function(event) {
 
   const requestHost = event.headers.get('host') || '';
   const requestPath = event.path;
+  const userAgent = event.headers.get('user-agent') || '';
+
+  const os = getOS(userAgent);
+
+  console.log(os);
 
   if (!hostsToMatch.some(match => requestHost.startsWith(match))) {
     return;
   }
 
-  if ((requestPath === pathToMatch)) {
-    const os = getOS();
+  if (requestPath === pathToMatch) {
 
     let redirectUrl = '';
 
