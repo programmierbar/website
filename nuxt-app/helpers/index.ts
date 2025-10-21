@@ -1,3 +1,4 @@
+export * from './detectOS'
 export * from './getCookie'
 export * from './getHashCode'
 export * from './getMetaInfo'
