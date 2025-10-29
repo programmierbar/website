@@ -6,7 +6,7 @@ export default eventHandler(function(event) {
     return;
   }
 
-  const redirectUrl = `https://l.programmier.bar/pcon-26-cfp`;
+  const redirectUrl = `https://docs.google.com/forms/d/e/1FAIpQLSdswI25P39NaWoH1BP5XCBzvSfcH1ATPbW6YtBMBa6cfGuhdQ/viewform?usp=header`;
 
   // Set the response status and location header for redirection
   // And end the response to complete the redirection
