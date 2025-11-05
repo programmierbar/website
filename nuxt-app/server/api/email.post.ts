@@ -1,7 +1,15 @@
+import { readBody } from 'h3'
 import { zh } from 'h3-zod'
 import { EmailSchema, sendEmail } from '../utils'
 
 export default defineEventHandler(async (event) => {
+    // Check honeypot before validation to avoid leaking form structure to bots
+    const rawBody = await readBody(event)
+    if (rawBody?.honeypot) {
+        // Silently fail without revealing form structure
+        return 'Deine Nachricht wurde an uns versendet.'
+    }
+
     // Get parsed client data
     const clientData = await zh.useValidatedBody(event, EmailSchema).catch((e) => {
         const data = JSON.parse(e.data)
@@ -12,10 +20,6 @@ export default defineEventHandler(async (event) => {
 
         throw createError({ statusCode: 400, message: `${key}: ${message}` })
     })
-
-    if (clientData.honeypot) {
-        throw createError({ statusCode: 400, message: 'Spam erkannt.' })
-    }
 
     // Send email with user's message to us
     console.debug("Send email with user's message to us")
