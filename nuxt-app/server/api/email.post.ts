@@ -13,6 +13,10 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, message: `${key}: ${message}` })
     })
 
+    if (clientData.honeypot) {
+        throw createError({ statusCode: 400, message: 'Spam erkannt.' })
+    }
+
     // Send email with user's message to us
     console.debug("Send email with user's message to us")
     await sendEmail({
