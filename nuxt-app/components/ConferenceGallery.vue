@@ -18,7 +18,15 @@
                     >
                         <template #default="{ isNewToViewport }">
                             <FadeAnimation :fade-in="isNewToViewport ? 'from_bottom' : 'none'" :threshold="0">
-                              <div class='w-72 mr-3'>
+                              <div
+                                class='w-72 mr-3 cursor-zoom-in'
+                                role="button"
+                                tabindex="0"
+                                :aria-label="`Bild ${index + 1} von ${images.length}`"
+                                @click.stop="openLightbox(index)"
+                                @keydown.enter.prevent="openLightbox(index)"
+                                @keydown.space.prevent="openLightbox(index)"
+                              >
                                 <DirectusImage
                                   class="object-cover aspect-square"
                                   :image="item"
@@ -53,6 +61,44 @@
             :data-cursor-arrow-right="(index === 2 && !scrollEndReached) ? true : null"
             @click="() => scrollTo(index === 1 ? 'left' : 'right')"
         />
+
+        <transition name="fade">
+          <div
+            v-if="isLightboxOpen"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+            @click="closeLightbox"
+          >
+            <button
+              type="button"
+              class="z-10 absolute left-0 top-0 h-full w-20 md:w-32 flex items-center justify-center text-white/80 hover:text-white focus:outline-none text-3xl"
+              :title="'Vorheriges Bild'"
+              @click.stop="prevImage"
+              :data-cursor-arrow-left="true"
+            >
+              ‹
+            </button>
+
+            <div class="relative max-h-[90vh] max-w-[95vw]" @click.stop>
+              <DirectusImage
+                class="max-h-[90vh] max-w-[95vw] w-auto h-auto object-contain"
+                :image="currentImage!"
+                sizes="lg:1000px"
+                loading="auto"
+                fit="contain"
+              />
+            </div>
+
+            <button
+              type="button"
+              class="z-10 absolute right-0 top-0 h-full w-20 md:w-32 flex items-center justify-center text-white/80 hover:text-white focus:outline-none text-3xl"
+              :title="'Nächstes Bild'"
+              @click.stop="nextImage"
+              :data-cursor-arrow-right="true"
+            >
+              ›
+            </button>
+          </div>
+        </transition>
     </div>
 </template>
 
@@ -60,13 +106,13 @@
 import { CLICK_SCROLL_LEFT_ARROW_EVENT_ID, CLICK_SCROLL_RIGHT_ARROW_EVENT_ID } from '~/config'
 import { trackGoal } from '~/helpers'
 import smoothscroll from 'smoothscroll-polyfill'
-import { onMounted, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import FadeAnimation from './FadeAnimation.vue'
 import GenericLazyList from './GenericLazyList.vue'
 import GenericListItem from './GenericListItem.vue'
 import type { DirectusFile } from '@directus/sdk';
 
-defineProps<{
+let props = defineProps<{
   images: DirectusFile[]
 }>()
 
@@ -150,6 +196,48 @@ const changeScrollPosition = () => {
     window.addEventListener('mousemove', handleScrollMove)
     window.addEventListener('mouseup', handleScrollStop, true)
 }
+
+// Lightbox state
+const isLightboxOpen = ref(false)
+const currentIndex = ref<number>(0)
+const currentImage = computed(() => props.images[currentIndex.value])
+
+const openLightbox = (index: number) => {
+  currentIndex.value = index
+  isLightboxOpen.value = true
+}
+
+const closeLightbox = () => {
+  isLightboxOpen.value = false
+}
+
+const nextImage = () => {
+  if (!props.images.length) return
+  currentIndex.value = (currentIndex.value + 1) % props.images.length
+}
+
+const prevImage = () => {
+  if (!props.images.length) return
+  currentIndex.value = (currentIndex.value - 1 + props.images.length) % props.images.length
+}
+
+// Keyboard navigation for lightbox
+const handleKeydown = (e: KeyboardEvent) => {
+  if (!isLightboxOpen.value) return
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    closeLightbox()
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault()
+    nextImage()
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault()
+    prevImage()
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', handleKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown))
 </script>
 
 <style lang="postcss" scoped>
@@ -187,4 +275,9 @@ const changeScrollPosition = () => {
         opacity: 0;
     }
 }
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .2s ease;
+}
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>
