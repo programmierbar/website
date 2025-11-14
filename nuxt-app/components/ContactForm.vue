@@ -85,6 +85,7 @@
 import { defineComponent, ref, watch } from 'vue'
 import { SEND_CONTACT_EMAIL_URL, SEND_CONTACT_FORM_EVENT_ID } from '../config'
 import { trackGoal } from '../helpers'
+const { executeRecaptcha, recaptchaLoaded } = useRecaptcha()
 
 type FormState = 'pending' | 'submitting' | 'submitted' | 'error'
 
@@ -99,6 +100,8 @@ export default defineComponent({
         // Create form state an error references
         const formState = ref<FormState>('pending')
         const formError = ref('')
+
+        const recaptchaToken = ref('')
 
         // Reset form state, error and fields after submitted
         let timeout: NodeJS.Timeout
@@ -121,11 +124,6 @@ export default defineComponent({
          */
         const submitForm = async (event: Event) => {
             try {
-                if (honeypot.value) {
-                    // Silently fail if honeypot is filled (possible spam)
-                    return
-                }
-
                 // Report validity and throw error if necessary
                 const formElement = event.target as HTMLFormElement
                 if (formElement.reportValidity && !formElement.reportValidity()) {
@@ -135,6 +133,10 @@ export default defineComponent({
                 // Set form state to submitting
                 formState.value = 'submitting'
 
+                // Execute reCAPTCHA and get token
+                await recaptchaLoaded()
+                const token = await executeRecaptcha('submit_contact_form')
+
                 // Send form data to Cloud Functions
                 const response = await fetch(SEND_CONTACT_EMAIL_URL, {
                     method: 'POST',
@@ -143,7 +145,7 @@ export default defineComponent({
                         name: name.value,
                         email: email.value,
                         message: message.value,
-                        honeypot: honeypot.value,
+                        recaptchaToken: token,
                     }),
                 })
 

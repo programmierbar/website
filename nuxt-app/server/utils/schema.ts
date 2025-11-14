@@ -13,8 +13,7 @@ export const EmailSchema = z.object({
         .string()
         .min(1, 'Bitte trage deine Nachricht ein.')
         .max(5000, 'Dein Nachricht darf nicht länger als 5.000 Zeichen lang sein.'),
-    honeypot: z
+    recaptchaToken: z
         .string()
-        .max(0, 'Spam erkannt.')
-        .describe('Hidden field used for spam protection.'),
+        .describe('Google reCAPTCHA v3 token.'),
 })

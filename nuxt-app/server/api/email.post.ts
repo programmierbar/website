@@ -1,45 +1,81 @@
-import { readBody } from 'h3'
 import { zh } from 'h3-zod'
 import { EmailSchema, sendEmail } from '../utils'
+import { verifyRecaptcha, validateRecaptchaScore } from '../utils/recaptcha'
+import { RECAPTCHA_SCORE_THRESHOLD } from '~/config'
 
 export default defineEventHandler(async (event) => {
-    // Check honeypot before validation to avoid leaking form structure to bots
-    const rawBody = await readBody(event)
-    if (rawBody?.honeypot) {
-        // Silently fail without revealing form structure
-        return 'Deine Nachricht wurde an uns versendet.'
+  // Get parsed client data
+  const clientData = await zh.useValidatedBody(event, EmailSchema).catch((e) => {
+    const data = JSON.parse(e.data)
+    const {
+      path: [key],
+      message,
+    } = data.issues[0]
+
+    throw createError({ statusCode: 400, message: `${key}: ${message}` })
+  })
+
+  // Verify reCAPTCHA token if enabled
+  const recaptchaEnabled = process.env.RECAPTCHA_ENABLED?.toLowerCase() === 'true'
+  if (recaptchaEnabled) {
+    if (!clientData.recaptchaToken) {
+      throw createError({
+        statusCode: 400,
+        message: 'reCAPTCHA-Verifizierung fehlgeschlagen. Bitte versuche es erneut.',
+      })
     }
 
-    // Get parsed client data
-    const clientData = await zh.useValidatedBody(event, EmailSchema).catch((e) => {
-        const data = JSON.parse(e.data)
-        const {
-            path: [key],
-            message,
-        } = data.issues[0]
+    try {
+      const recaptchaResponse = await verifyRecaptcha(clientData.recaptchaToken)
+      if (!validateRecaptchaScore(recaptchaResponse, RECAPTCHA_SCORE_THRESHOLD)) {
+        // Log for monitoring but return generic error to user
+        console.warn('Form submission blocked by reCAPTCHA', {
+          score: recaptchaResponse.score,
+          RECAPTCHA_SCORE_THRESHOLD,
+          email: clientData.email,
+        })
 
-        throw createError({ statusCode: 400, message: `${key}: ${message}` })
-    })
+        // Return a user-friendly error message
+        throw createError({
+          statusCode: 400,
+          message: 'Deine Anfrage konnte nicht verarbeitet werden. Bitte versuche es später erneut oder kontaktiere uns direkt unter podcast@programmier.bar.',
+        })
+      }
+    } catch (error: any) {
+      // Log error but don't expose internal details to client
+      console.error('reCAPTCHA verification error:', error)
 
-    // Send email with user's message to us
-    console.debug("Send email with user's message to us")
-    await sendEmail({
-        to: 'programmier.bar <podcast@programmier.bar>',
-        subject: 'Kontaktformular Nachricht',
-        html: `
+      // If it's already a createError, rethrow it
+      if (error.statusCode) {
+        throw error
+      }
+
+      throw createError({
+        statusCode: 400,
+        message: 'Ein Fehler bei der Verifizierung ist aufgetreten. Bitte versuche es erneut.',
+      })
+    }
+  }
+
+  // Send email with user's message to us
+  console.debug("Send email with user's message to us")
+  await sendEmail({
+    to: 'programmier.bar <podcast@programmier.bar>',
+    subject: 'Kontaktformular Nachricht',
+    html: `
             <p>Name: ${clientData.name}</p>
             <p>E-Mail: ${clientData.email}</p>
             <p>Nachricht:</p>
             <p>${clientData.message.replace(/\n/g, '<br />')}</p>
           `,
-    }).catch(genericError)
+  }).catch(genericError)
 
-    // Send confirmation email to user
-    console.debug('Send confirmation email to user')
-    await sendEmail({
-        to: `${clientData.name} <${clientData.email}>`,
-        subject: 'Wir haben deine Nachricht erhalten',
-        html: `
+  // Send confirmation email to user
+  console.debug('Send confirmation email to user')
+  await sendEmail({
+    to: `${clientData.name} <${clientData.email}>`,
+    subject: 'Wir haben deine Nachricht erhalten',
+    html: `
             <p>Hallo ${clientData.name},</p>
             <p>danke für deine Nachricht! Du erhältst in wenigen Tagen eine Antwort von uns.</p>
             <p>Deine Nachricht:</p>
@@ -47,7 +83,7 @@ export default defineEventHandler(async (event) => {
               ${clientData.message.replace(/\n/g, '<br />')}
             </blockquote>
             <p>
-              Falls es sich bei deinem Anliegen um einen Bug auf unserer Webseite handelt, kannst du gern einen 
+              Falls es sich bei deinem Anliegen um einen Bug auf unserer Webseite handelt, kannst du gern einen
               <a href="https://github.com/programmierbar/website/pulls">Pull Request</a>
               erstellen. 🤓
             </p>
@@ -70,16 +106,16 @@ export default defineEventHandler(async (event) => {
               Geschäftsführung: Dominik Anders, Jens Abke, Sebastian Schmitt
             </p>
           `,
-    }).catch(genericError)
+  }).catch(genericError)
 
-    return 'Deine Nachricht wurde an uns versendet.'
+  return 'Deine Nachricht wurde an uns versendet.'
 })
 
 const genericError = (e: any) => {
-    console.error(e)
-    throw createError({
-        statusCode: 400,
-        message:
-            'Oh nein! Ein unerwarteter Fehler ist aufgetreten. Bei Bedarf kannst du uns unter "podcast@programmier.bar" kontaktieren.',
-    })
+  console.error(e)
+  throw createError({
+    statusCode: 400,
+    message:
+      'Oh nein! Ein unerwarteter Fehler ist aufgetreten. Bei Bedarf kannst du uns unter "podcast@programmier.bar" kontaktieren.',
+  })
 }

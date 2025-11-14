@@ -61,6 +61,7 @@ export default defineNuxtConfig({
         'nuxt-jsonld',
         '@pinia/nuxt',
         '@nuxtjs/algolia',
+        '@nuxtjs/recaptcha',
     ],
 
     // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
@@ -123,6 +124,13 @@ export default defineNuxtConfig({
             '2xl': 1536,
             '3xl': 2000,
         },
+    },
+
+    recaptcha: {
+      siteKey: process.env.RECAPTCHA_SITE_KEY,
+      version: 3,
+      size: 'invisible',
+      loadOn: ['/kontakt'], // Adjust based on your routing
     },
 
     compatibilityDate: '2025-01-17',

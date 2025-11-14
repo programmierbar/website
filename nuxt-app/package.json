@@ -13,6 +13,7 @@
     },
     "dependencies": {
         "@directus/sdk": "^17.0.0",
+        "@nuxtjs/recaptcha": "^1.1.2",
         "@nuxtjs/tailwindcss": "^6.11.4",
         "@pinia/nuxt": "^0.5.1",
         "@types/google.maps": "^3.55.3",

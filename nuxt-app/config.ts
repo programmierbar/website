@@ -33,6 +33,12 @@ export const PROGRAMMIER_CON_APP_ANDROID = process.env.PROGRAMMIER_CON_APP_ANDRO
 
 export const ALGOLIA_INDEX = process.env.ALGOLIA_INDEX || 'programmierbar_website_prod'
 
+export const RECAPTCHA_ENABLED = Boolean(
+  process.env.RECAPTCHA_ENABLED?.toLowerCase() === 'true'
+)
+export const RECAPTCHA_SITE_KEY = process.env.RECAPTCHA_SITE_KEY || ''
+export const RECAPTCHA_SCORE_THRESHOLD = parseFloat(process.env.RECAPTCHA_SCORE_THRESHOLD || '0.5')
+
 // Event IDs
 export const PLAY_PODCAST_EVENT_ID = 'PLAY_PODCAST'
 export const PAUSE_PODCAST_EVENT_ID = 'PAUSE_PODCAST'
