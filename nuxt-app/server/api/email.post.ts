@@ -1,9 +1,16 @@
 import { zh } from 'h3-zod'
 import { EmailSchema, sendEmail } from '../utils'
-import { filterSpam } from '~/helpers';
+import { filterSpam } from '../../helpers';
 
 export default defineEventHandler(async (event) => {
-    // Get parsed client data
+  // Check honeypot before validation to avoid leaking form structure to bots
+  const rawBody = await readBody(event)
+  if (rawBody?.honeypot) {
+    // Silently fail without revealing form structure
+    return 'Deine Nachricht wurde an uns versendet.'
+  }
+
+  // Get parsed client data
     const clientData = await zh.useValidatedBody(event, EmailSchema).catch((e) => {
         const data = JSON.parse(e.data)
         const {

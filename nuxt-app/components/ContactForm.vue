@@ -44,7 +44,7 @@
             />
 
             <!-- Spam protection -->
-            <input v-model="spam" class="hidden" type="phone" name="phone" required />
+            <input v-model="spam" class="hidden" type="text" name="text" required />
 
             <!-- Error -->
             <p v-if="formError" class="mt-10 text-base text-pink md:mt-12 md:text-xl lg:mt-16 lg:text-2xl">

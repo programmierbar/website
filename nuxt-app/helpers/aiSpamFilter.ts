@@ -30,14 +30,7 @@ function getValidationPrompt(name: string, email: string, message: string): stri
 export async function filterSpam(input: { name: string, email: string, message: string }) {
   const { name, email, message } = input;
 
-  if (!name || !email || !message) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Missing required fields.',
-    });
-  }
-
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY ?? ''
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY ?? '';
   if (!apiKey) {
     console.error('Google API Key is not configured.');
     throw createError({
@@ -56,7 +49,7 @@ export async function filterSpam(input: { name: string, email: string, message: 
     const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     const validation = JSON.parse(jsonString);
 
-    console.log('Gemini Validation Result:', validation);
+    console.log('Gemini Validation: isSpam=%s, confidenceScore=%s', validation.isSpam, validation.confidenceScore);
 
     return validation;
 
