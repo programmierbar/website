@@ -1,5 +1,6 @@
 import { zh } from 'h3-zod'
 import { EmailSchema, sendEmail } from '../utils'
+import { filterSpam } from '~/helpers';
 
 export default defineEventHandler(async (event) => {
     // Get parsed client data
@@ -12,6 +13,16 @@ export default defineEventHandler(async (event) => {
 
         throw createError({ statusCode: 400, message: `${key}: ${message}` })
     })
+
+    const spamValidation = await filterSpam(clientData);
+
+    if (spamValidation.isSpam === true && spamValidation.confidenceScore > 0.8) {
+      console.log(`Spam blocked. Reason: ${spamValidation.reason}`);
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Your message could not be sent.',
+      });
+    }
 
     // Send email with user's message to us
     console.debug("Send email with user's message to us")
@@ -39,7 +50,7 @@ export default defineEventHandler(async (event) => {
               ${clientData.message.replace(/\n/g, '<br />')}
             </blockquote>
             <p>
-              Falls es sich bei deinem Anliegen um einen Bug auf unserer Webseite handelt, kannst du gern einen 
+              Falls es sich bei deinem Anliegen um einen Bug auf unserer Webseite handelt, kannst du gern einen
               <a href="https://github.com/programmierbar/website/pulls">Pull Request</a>
               erstellen. 🤓
             </p>
