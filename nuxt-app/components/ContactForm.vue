@@ -122,7 +122,7 @@ export default defineComponent({
         const submitForm = async (event: Event) => {
             try {
                 if (honeypot.value) {
-                    // Silently fail if honeypot is filled (possible spam)
+                    formState.value = 'submitted'
                     return
                 }
 
