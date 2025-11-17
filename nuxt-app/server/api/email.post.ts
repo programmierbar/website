@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
       console.log(`Spam blocked. Reason: ${spamValidation.reason}`);
       throw createError({
         statusCode: 400,
-        statusMessage: 'Your message could not be sent.',
+        statusMessage: 'Nachricht konnte nicht versendet werden.',
       });
     }
 
