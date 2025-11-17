@@ -1,4 +1,16 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from 'zod'
+
+export const ResponseSchema = z.object({
+  confidenceScore: z
+    .number()
+    .min(0, )
+    .max(1, ),
+  isSpam: z
+    .boolean(),
+  reason: z
+    .string(),
+})
 
 function getValidationPrompt(name: string, email: string, message: string): string {
   return `
@@ -27,7 +39,11 @@ function getValidationPrompt(name: string, email: string, message: string): stri
   `;
 }
 
-export async function filterSpam(input: { name: string, email: string, message: string }) {
+export async function filterSpam(input: { name: string, email: string, message: string }): Promise<{
+  isSpam: boolean,
+  reason: string,
+  confidenceScore: number
+}> {
   const { name, email, message } = input;
 
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY ?? '';
@@ -47,7 +63,17 @@ export async function filterSpam(input: { name: string, email: string, message: 
     const responseText = result.response.text();
 
     const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const validation = JSON.parse(jsonString);
+    let validation = JSON.parse(jsonString);
+
+    try {
+      validation = ResponseSchema.parse(validation);
+    } catch(error){
+      console.error('Encountered malformed JSON response from LLM:', error);
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'An error occurred while parsing the message validation.',
+      });
+    }
 
     console.log('Gemini Validation: isSpam=%s, confidenceScore=%s', validation.isSpam, validation.confidenceScore);
 
