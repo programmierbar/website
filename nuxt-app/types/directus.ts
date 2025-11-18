@@ -57,9 +57,14 @@ export interface DirectusMeetupItem {
     end_on: string
     cover_image: DirectusFileItem
     title: string
+    intro: string
     description: string
     meetup_url: string
     youtube_url: string | null
+    talks: {
+      talk: TalkItem
+      sort: number
+    }[]
     gallery_images: {
         id: number
         meetup: DirectusMeetupItem
