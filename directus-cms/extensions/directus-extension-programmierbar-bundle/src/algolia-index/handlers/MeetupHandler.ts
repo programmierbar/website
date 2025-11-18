@@ -21,7 +21,7 @@ export class MeetupHandler extends AbstractItemHandler{
         return [{
             _type : 'meetup',
             title: item.title,
-            description: item.intro + ' ' + item.description,
+            description: [item.intro, item.description].filter(Boolean).join(' '),
             published_on: item.published_on,
             image: item.cover_image ? `${this.env.PUBLIC_URL}assets/${item.cover_image}` : undefined,
             slug: item.slug,

@@ -1,8 +1,8 @@
 /* eslint-disable no-use-before-define */
 
-import type { TalkItem, PartnerItem } from '~/types/items';
+import type { TalkItem, PartnerItem, FileItem } from '~/types/items';
 
-export interface DirectusFileItem {
+export interface DirectusFileItem extends FileItem {
     id: string
     title: string | null
     type: string

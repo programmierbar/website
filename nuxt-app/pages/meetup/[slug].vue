@@ -47,7 +47,7 @@
                   class="mt-8 space-y-8 font-light leading-normal text-white md:mt-14 text-xl"
                   :html="meetup.intro"
                 />
-                <div v-for="(talk, index) of meetup.talksPrepared" :key="talk.id" class="mt-8 space-y-8 font-light leading-normal text-white md:mt-14">
+                <div v-for="talk of meetup.talksPrepared" :key="talk.id" class="mt-8 space-y-8 font-light leading-normal text-white md:mt-14">
                   <TalkItem :talk='talk' />
                 </div>
                 <InnerHtml
@@ -125,10 +125,9 @@ import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { OPEN_YOUTUBE_EVENT_ID } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
-import type { DirectusFileItem, DirectusTestimonialItem, MeetupItem, TagItem, TalkItem } from '~/types';
+import type { DirectusFileItem, DirectusTestimonialItem, MeetupItem, TagItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import TestimonialSlider from '~/components/TestimonialSlider.vue';
-import type { DirectusFile } from '@directus/sdk';
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
 
 // Add route and router
@@ -163,8 +162,8 @@ const speakerCount = computed(() => pageData.value?.speakerCount)
 const relatedPodcasts = computed(() => pageData.value?.relatedPodcasts)
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
-const galleryImages: ComputedRef<[]> = computed(() => {
-  let images = [];
+const galleryImages: ComputedRef<DirectusFileItem[]> = computed(() => {
+  let images: DirectusFileItem[] = [];
 
   if (pageData.value?.meetup?.gallery_images) {
     images = pageData.value.meetup.gallery_images.map((gallery_image) => {
