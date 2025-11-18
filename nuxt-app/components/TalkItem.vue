@@ -22,7 +22,7 @@
     >
       <InnerHtml
         :html='talk.abstract'
-        class='font-light text-xl'
+        class='font-light text-xl space-y-8'
       />
     </div>
 

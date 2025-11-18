@@ -65,9 +65,10 @@ import FadeAnimation from './FadeAnimation.vue'
 import GenericLazyList from './GenericLazyList.vue'
 import GenericListItem from './GenericListItem.vue'
 import type { DirectusFile } from '@directus/sdk';
+import type { DirectusFileItem } from '~/types';
 
 defineProps<{
-  images: DirectusFile[]
+  images: DirectusFile[] | DirectusFileItem[]
 }>()
 
 // Create scroll box element reference

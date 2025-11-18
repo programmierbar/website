@@ -171,14 +171,13 @@
 import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo, trackGoal } from '~/helpers';
-import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, TagItem } from '~/types';
+import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
-import type { DirectusFile } from '@directus/sdk';
 import ConferenceTickets from '~/components/ConferenceTickets.vue';
 import TestimonialSlider from '~/components/TestimonialSlider.vue';
-import type { TalkItem } from '~/types';
+import type { TalkItem, DirectusFileItem } from '~/types';
 
 // Add route and router
 const route = useRoute()
@@ -259,8 +258,8 @@ const combinedFaqs: ComputedRef<[]> = computed(() => {
   return faqs;
 })
 
-const galleryImages: ComputedRef<DirectusFile[]> = computed(() => {
-  let images = [];
+const galleryImages: ComputedRef<DirectusFileItem []> = computed(() => {
+  let images: DirectusFileItem[] = [];
 
   if (pageData.value?.conference?.gallery_images) {
     images = pageData.value.conference.gallery_images.map((gallery_image) => {

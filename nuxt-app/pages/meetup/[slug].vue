@@ -44,10 +44,17 @@
                 <!-- Heading and description -->
                 <SectionHeading class="hidden md:block" element="h2"> Meetup Infos </SectionHeading>
                 <InnerHtml
-                    class="mt-8 space-y-8 text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl"
+                  class="mt-8 space-y-8 font-light leading-normal text-white md:mt-14 text-xl"
+                  :html="meetup.intro"
+                />
+                <div v-for="talk of meetup.talksPrepared" :key="talk.id" class="mt-8 space-y-8 font-light leading-normal text-white md:mt-14">
+                  <TalkItem :talk='talk' />
+                </div>
+                <InnerHtml
+                    class="mt-8 space-y-8 font-light leading-normal text-white md:mt-14 text-xl"
                     :html="meetup.description"
                 />
-                <p class="text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl">
+                <p class="font-light leading-normal text-white md:mt-14 text-xl">
                     Bitte beachte auch unsere
                     <NuxtLink class="text-lime font-bold hover:underline" data-cursor-hover :to="'/verhaltensregeln'">
                       Verhaltensregeln
@@ -89,6 +96,10 @@
             </div>
         </section>
 
+        <section class="relative my-16" v-if='galleryImages.length > 0'>
+          <ConferenceGallery :images='galleryImages' />
+        </section>
+
         <section class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
             <SectionHeading element="h2">
@@ -114,9 +125,10 @@ import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { OPEN_YOUTUBE_EVENT_ID } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
-import type { DirectusTestimonialItem, MeetupItem, TagItem } from '~/types';
+import type { DirectusFileItem, DirectusTestimonialItem, MeetupItem, TagItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import TestimonialSlider from '~/components/TestimonialSlider.vue';
+import ConferenceGallery from '~/components/ConferenceGallery.vue';
 
 // Add route and router
 const route = useRoute()
@@ -149,6 +161,18 @@ const meetup: ComputedRef<MeetupItem | undefined> = computed(() => pageData.valu
 const speakerCount = computed(() => pageData.value?.speakerCount)
 const relatedPodcasts = computed(() => pageData.value?.relatedPodcasts)
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
+
+const galleryImages: ComputedRef<DirectusFileItem[]> = computed(() => {
+  let images: DirectusFileItem[] = [];
+
+  if (pageData.value?.meetup?.gallery_images) {
+    images = pageData.value.meetup.gallery_images.map((gallery_image) => {
+      return gallery_image.image;
+    })
+  }
+
+  return images;
+})
 
 // Convert speaker count to local string
 const speakerCountString = useLocaleString(speakerCount)
