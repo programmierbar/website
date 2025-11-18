@@ -8,7 +8,7 @@
         :loading="loading"
         :format="format"
         quality="80"
-        fit="cover"
+        :fit="fit"
     />
 </template>
 
@@ -35,6 +35,10 @@ export default defineComponent({
         loading: {
             type: String as PropType<'lazy' | 'auto'>,
             default: undefined,
+        },
+        fit: {
+            type: String as PropType<'cover' | 'contain' | 'inside' | 'outside' | 'fill'>,
+            default: 'cover',
         },
     },
     setup(props) {
