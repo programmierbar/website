@@ -42,7 +42,7 @@ interface PreparedPodcastsItems {
 }
 
 export interface PodcastItem extends DirectusPodcastItem, PreparedTagsItem, PreparedSpeakersItem {}
-export interface MeetupItem extends DirectusMeetupItem, PreparedTagsItem, PreparedSpeakersItem {}
+ export interface MeetupItem extends DirectusMeetupItem, PreparedTagsItem, PreparedSpeakersItem, PreparedTalksItem {}
 export interface ConferenceItem extends DirectusConferenceItem, PreparedSpeakersItem, PreparedTalksItem, PreparedPartnersItem {}
 export interface SpeakerItem extends DirectusSpeakerItem, PreparedTagsItem, PreparedPodcastsItems {}
 

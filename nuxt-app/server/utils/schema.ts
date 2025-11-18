@@ -11,6 +11,6 @@ export const EmailSchema = z.object({
         .max(50, 'Deine E-Mail-Adresse darf nicht länger als 50 Zeichen lang sein.'),
     message: z
         .string()
-        .min(1, 'Bitte trage deine Nachricht ein.')
-        .max(5000, 'Dein Nachricht darf nicht länger als 5.000 Zeichen lang sein.'),
+        .min(50, 'Bitte trage deine Nachricht ein.')
+        .max(1000, 'Dein Nachricht darf nicht länger als 1.000 Zeichen lang sein.'),
 })

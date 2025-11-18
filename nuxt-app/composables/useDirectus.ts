@@ -327,12 +327,26 @@ export function useDirectus() {
                         'start_on',
                         'end_on',
                         'title',
+                        'intro',
                         'description',
                         'cover_image.*',
                         'cover_image',
                         'gallery_images',
+                        'gallery_images.sort',
+                        'gallery_images.image.*',
                         'meetup_url',
                         'youtube_url',
+                        'talks',
+                        'talks.*',
+                        'talks.talk.*',
+                        'talks.talk.thumbnail.*',
+                        'talks.talk.video_url',
+                        'talks.talk.speakers.*',
+                        'talks.talk.speakers.speaker',
+                        'talks.talk.speakers.speaker.*',
+                        'talks.talk.members.*',
+                        'talks.talk.members.member',
+                        'talks.talk.members.member.*',
                         'members',
                         'speakers',
                         'speakers.speaker.id',
@@ -356,6 +370,11 @@ export function useDirectus() {
                         .map((meetup) => ({
                             ...meetup,
                             tagsPrepared: meetup.tags.map((tag: DirectusTag) => tag.tag) as TagItem[],
+                            talksPrepared: meetup.talks
+                              .sort((a, b) => a.sort - b.sort)
+                              .map((talk: any) => {
+                              return talk.talk;
+                            }),
                             speakersPrepared: meetup.speakers.map((speaker: any) => {
                                 return {
                                     first_name: speaker.speaker.first_name,

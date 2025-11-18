@@ -1,8 +1,8 @@
 /* eslint-disable no-use-before-define */
 
-import type { TalkItem, PartnerItem } from '~/types/items';
+import type { TalkItem, PartnerItem, FileItem } from '~/types/items';
 
-export interface DirectusFileItem {
+export interface DirectusFileItem extends FileItem {
     id: string
     title: string | null
     type: string
@@ -57,9 +57,14 @@ export interface DirectusMeetupItem {
     end_on: string
     cover_image: DirectusFileItem
     title: string
+    intro: string
     description: string
     meetup_url: string
     youtube_url: string | null
+    talks: {
+      talk: TalkItem
+      sort: number
+    }[]
     gallery_images: {
         id: number
         meetup: DirectusMeetupItem
