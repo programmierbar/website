@@ -3,7 +3,7 @@
         <!-- Note that not all items used here might have an id (or even be objects), so we use the index as a fallback. -->
         <slot
             v-for="(renderItem, index) in renderItems"
-            :key="renderItem?.id || index"
+            :key="renderItem?.id ?? (index + firstIndex)"
             :item="renderItem"
             :index="index + firstIndex"
             :viewport-items="viewportItems"
