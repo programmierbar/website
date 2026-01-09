@@ -28,7 +28,7 @@ export default defineComponent({
         // Create style with animation duration
         const style = computed(() => `animation-duration: ${props.news.join().length * 0.2}s`)
         const preparedNewsItems = computed(() => {
-          return props.news.map(news => `${DOMPurify.sanitize(news, {FORBID_TAGS: ['p']})} +++`)
+          return props.news.map(news => `${DOMPurify.sanitize(news, {FORBID_TAGS: ['p']})} +++ `)
         })
 
         return {

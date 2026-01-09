@@ -1,7 +1,7 @@
 <template>
   <div class="agenda-root grid gap-8">
     <section v-for="day in days" :key="day.isoDay" class="day">
-      <h2 class="font-bold text-lg ml-2">{{ fmtDay(day.isoDay) }}</h2>
+      <h2 class="font-bold text-lg">{{ fmtDay(day.isoDay) }}</h2>
 
       <div class="grid" :style="gridStyle(day)">
         <!-- Corner -->
@@ -21,7 +21,7 @@
         <div
           v-for="t in day.startLines"
           :key="t"
-          class="sticky left-0 -z--1 py-1 px-2 self-start tabular-nums"
+          class="sticky left-0 -z--1 py-1 pr-2 self-start tabular-nums"
           :style="{ gridColumn: '1', gridRow: String(2 + (day.indexMap.get(t) ?? 0)) }"
         >
           {{ fmtTime(t) }}
