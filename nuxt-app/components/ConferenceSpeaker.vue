@@ -28,7 +28,7 @@
           class='absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#131415] to-transparent'
         ></div>
       </div>
-      <IndividualPlatforms :platforms='platforms' :sizes='"h-3 lg:h-7 mt-1 lg:mt-7"' :scope='"speaker"'/>
+      <IndividualPlatforms :platforms='platforms' :sizes='"h-5 lg:h-7 mt-1 lg:mt-7"' :scope='"speaker"'/>
     </div>
   </div>
 </template>

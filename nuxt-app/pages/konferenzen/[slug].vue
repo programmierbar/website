@@ -8,7 +8,7 @@
               {{ conference.title }}
             </SectionHeading>
             <InnerHtml
-              class="mt-2 text-2xl font-light leading-normal z-30 relative"
+              class="mt-2 text-md lg:text-2xl font-light leading-normal z-30 relative"
               :html="conference.text_1"
             />
           </div>
@@ -62,12 +62,16 @@
 
         <section class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
-            <SectionHeading element="h2">
+            <SectionHeading element="h2" class="mb-4">
               Speaker
             </SectionHeading>
             <BackgroundSpotlights :position='"-top-96 -left-96"' :index='"0"' />
             <ConferenceSpeakersSlider :speakers='conference.speakersPrepared' />
           </div>
+        </section>
+
+        <section class="relative my-16">
+          <ConferenceGallery :images='galleryImages' />
         </section>
 
         <section class="relative">
@@ -90,10 +94,6 @@
               <TalkItem :talk='talk' />
             </div>
           </div>
-        </section>
-
-        <section class="relative my-16">
-          <ConferenceGallery :images='galleryImages' />
         </section>
 
         <section class="relative" v-if='!conference.tickets_on_sale'>
