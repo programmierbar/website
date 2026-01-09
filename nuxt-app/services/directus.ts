@@ -24,7 +24,7 @@ import type {
   DirectusSpeakerItem,
   DirectusTagItem,
   DirectusProfileItem,
-  DirectusTranscriptItem, DirectusTestimonialItem, DirectusCocktailMenu,
+  DirectusTranscriptItem, DirectusTestimonialItem, DirectusCocktailMenu, DirectusRatingItem,
 } from '../types';
 
 export type Collections = {
@@ -51,6 +51,7 @@ export type Collections = {
     speakers: DirectusSpeakerItem[]
     picks_of_the_day: DirectusPickOfTheDayItem[]
     profiles: DirectusProfileItem[],
+    ratings: DirectusRatingItem[],
     tags: DirectusTagItem[]
     testimonials: DirectusTestimonialItem[]
     transcripts: DirectusTranscriptItem[]

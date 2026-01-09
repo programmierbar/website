@@ -1,17 +1,17 @@
 import {
-    aggregate,
-    createUser,
-    readItems,
-    readMe,
-    readProviders,
-    readSingleton,
-    rest,
-    type QueryFilter,
-} from '@directus/sdk'
+  aggregate,
+  createUser,
+  readItems,
+  readMe,
+  readProviders,
+  readSingleton,
+  rest,
+  type QueryFilter, createItem,
+} from '@directus/sdk';
 import type {
   ConferenceItem,
   DirectusMemberItem,
-  DirectusPickOfTheDayItem,
+  DirectusPickOfTheDayItem, DirectusPodcastItem,
   DirectusProfileItem,
   DirectusTagItem,
   DirectusTranscriptItem,
@@ -840,6 +840,21 @@ export function useDirectus() {
         }
     }
 
+  async function createRating(vote: "up" | "down", podcast: DirectusPodcastItem) {
+    try {
+      const result = await directus.request(createItem('ratings', {
+        up_or_down: vote,
+        target: {
+          target_collection: 'podcasts',
+          target: podcast.id
+        },
+      }))
+    } catch (e: unknown) {
+      console.error('Error while persisting new feedback', e)
+      return e
+    }
+  }
+
     return {
         getHomepage,
         getPodcastPage,
@@ -880,5 +895,6 @@ export function useDirectus() {
         registerNewUser,
         getProfileById,
         getTestimonials,
+        createRating,
     }
 }
