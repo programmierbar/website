@@ -31,7 +31,7 @@
         <article
           v-for="(a, idx) in day.items"
           :key="idx"
-          class="talk flex flex-col gap-1 relative rounded-s py-2 px-3 flex flex-col gap-1 pb-8 lg:pb-2"
+          class="talk flex flex-col gap-1 relative rounded-s py-2 px-3 flex flex-col gap-1 md:pb-8 lg:pb-2"
           :class="{ 'text-center items-center justify-center': isNoTrack(a) }"
           :style="itemStyle(a, day)"
           :title="`${fmtTime(a.start)}–${fmtTime(a.end)}`"
@@ -42,7 +42,8 @@
             {{ a._object?.title ?? a.title }}
           </header>
           <div class="text-sm">{{ buildSubtitle(a) }}</div>
-          <div class="text-sm text-right absolute px-2 pb-2 left-0 right-0 bottom-0 w-auto">{{ fmtTime(a.start) }}<span v-if='a.end'> – {{ fmtTime(a.end) }}</span></div>
+          <div class='hidden md:block text-sm text-right absolute px-2 pb-2 left-0 right-0 bottom-0 w-auto'>
+            {{ fmtTime(a.start) }}<span v-if='a.end'> – {{ fmtTime(a.end) }}</span></div>
         </article>
       </div>
     </section>
@@ -190,10 +191,17 @@ function gridStyle(day: DayBlock) {
 
   if (COMPACT_BY_STARTS) {
     // Rows: 1 header + one row per distinct start time
+    // We check for each start time if all items starting then have no _object
+    const rowSpecs = day.startLines.map(startTime => {
+      const itemsAtTime = day.items.filter(i => i.start === startTime);
+      const allEmpty = itemsAtTime.every(i => !i._object);
+      return allEmpty ? 'auto' : '1fr';
+    });
+
     return {
       display: 'grid',
       gridTemplateColumns: cols,
-      gridTemplateRows: `auto repeat(${day.startLines.length}, 1fr)`,
+      gridTemplateRows: `auto ${rowSpecs.join(' ')}`,
       gap: '6px'
     } as const;
   }
