@@ -196,7 +196,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 7,
+        "sort": 8,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -224,7 +224,7 @@
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": 1,
+        "sort": 3,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -252,7 +252,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 11,
+        "sort": 12,
         "sort_field": null,
         "translations": [
           {
@@ -265,6 +265,34 @@
       },
       "schema": {
         "name": "coc_page"
+      }
+    },
+    {
+      "collection": "cocktail_menu",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": "status",
+        "archive_value": "archived",
+        "collapse": "open",
+        "collection": "cocktail_menu",
+        "color": null,
+        "display_template": null,
+        "group": "Pages",
+        "hidden": false,
+        "icon": "wine_bar",
+        "item_duplication_fields": null,
+        "note": null,
+        "preview_url": null,
+        "singleton": true,
+        "sort": 5,
+        "sort_field": null,
+        "translations": null,
+        "unarchive_value": "draft",
+        "versioning": false
+      },
+      "schema": {
+        "name": "cocktail_menu"
       }
     },
     {
@@ -334,14 +362,14 @@
         "collection": "conferences_directus_files",
         "color": null,
         "display_template": null,
-        "group": null,
+        "group": "Relations",
         "hidden": true,
         "icon": "import_export",
         "item_duplication_fields": null,
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": 6,
+        "sort": 18,
         "sort_field": null,
         "translations": null,
         "unarchive_value": null,
@@ -362,14 +390,14 @@
         "collection": "conferences_partners",
         "color": null,
         "display_template": null,
-        "group": null,
+        "group": "Relations",
         "hidden": true,
         "icon": "import_export",
         "item_duplication_fields": null,
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": 11,
+        "sort": 15,
         "sort_field": null,
         "translations": null,
         "unarchive_value": null,
@@ -390,14 +418,14 @@
         "collection": "conferences_speakers",
         "color": null,
         "display_template": "{{speakers_id.first_name}} {{speakers_id.last_name}} at {{conferences_id.title}}",
-        "group": null,
+        "group": "Relations",
         "hidden": true,
         "icon": "import_export",
         "item_duplication_fields": null,
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": 7,
+        "sort": 17,
         "sort_field": null,
         "translations": null,
         "unarchive_value": null,
@@ -418,14 +446,14 @@
         "collection": "conferences_talks",
         "color": null,
         "display_template": null,
-        "group": null,
+        "group": "Relations",
         "hidden": true,
         "icon": "import_export",
         "item_duplication_fields": null,
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": 10,
+        "sort": 14,
         "sort_field": null,
         "translations": null,
         "unarchive_value": null,
@@ -453,7 +481,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 8,
+        "sort": 9,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -509,7 +537,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 5,
+        "sort": 6,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -558,14 +586,14 @@
         "collection": "home_page_highlights",
         "color": null,
         "display_template": null,
-        "group": null,
+        "group": "Relations",
         "hidden": true,
         "icon": "import_export",
         "item_duplication_fields": null,
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": 5,
+        "sort": 21,
         "sort_field": null,
         "translations": null,
         "unarchive_value": null,
@@ -621,7 +649,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 9,
+        "sort": 10,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -677,7 +705,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 13,
+        "sort": 14,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -856,6 +884,34 @@
       }
     },
     {
+      "collection": "meetups_talks",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": null,
+        "archive_value": null,
+        "collapse": "open",
+        "collection": "meetups_talks",
+        "color": null,
+        "display_template": null,
+        "group": "Relations",
+        "hidden": true,
+        "icon": "import_export",
+        "item_duplication_fields": null,
+        "note": null,
+        "preview_url": null,
+        "singleton": false,
+        "sort": 20,
+        "sort_field": null,
+        "translations": null,
+        "unarchive_value": null,
+        "versioning": false
+      },
+      "schema": {
+        "name": "meetups_talks"
+      }
+    },
+    {
       "collection": "member_tags",
       "meta": {
         "accountability": "all",
@@ -957,7 +1013,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 6,
+        "sort": 7,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -1181,7 +1237,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 10,
+        "sort": 11,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -1209,7 +1265,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 14,
+        "sort": 15,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -1321,7 +1377,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 15,
+        "sort": 16,
         "sort_field": null,
         "translations": null,
         "unarchive_value": null,
@@ -1329,6 +1385,62 @@
       },
       "schema": {
         "name": "raffle_page"
+      }
+    },
+    {
+      "collection": "ratings",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": "status",
+        "archive_value": "archived",
+        "collapse": "open",
+        "collection": "ratings",
+        "color": null,
+        "display_template": null,
+        "group": "WIP",
+        "hidden": false,
+        "icon": "thumbs_up_down",
+        "item_duplication_fields": null,
+        "note": null,
+        "preview_url": null,
+        "singleton": false,
+        "sort": 1,
+        "sort_field": "sort",
+        "translations": null,
+        "unarchive_value": "draft",
+        "versioning": false
+      },
+      "schema": {
+        "name": "ratings"
+      }
+    },
+    {
+      "collection": "ratings_target",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": null,
+        "archive_value": null,
+        "collapse": "open",
+        "collection": "ratings_target",
+        "color": null,
+        "display_template": null,
+        "group": "Relations",
+        "hidden": true,
+        "icon": "import_export",
+        "item_duplication_fields": null,
+        "note": null,
+        "preview_url": null,
+        "singleton": false,
+        "sort": 23,
+        "sort_field": null,
+        "translations": null,
+        "unarchive_value": null,
+        "versioning": false
+      },
+      "schema": {
+        "name": "ratings_target"
       }
     },
     {
@@ -1349,7 +1461,7 @@
         "note": null,
         "preview_url": null,
         "singleton": true,
-        "sort": 12,
+        "sort": 13,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -1377,7 +1489,7 @@
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": 14,
+        "sort": 19,
         "sort_field": "sort",
         "translations": null,
         "unarchive_value": null,
@@ -1482,14 +1594,14 @@
         "collection": "talks_members",
         "color": null,
         "display_template": null,
-        "group": null,
+        "group": "Relations",
         "hidden": true,
         "icon": "import_export",
         "item_duplication_fields": null,
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": 8,
+        "sort": 22,
         "sort_field": null,
         "translations": null,
         "unarchive_value": null,
@@ -1510,14 +1622,14 @@
         "collection": "talks_speakers",
         "color": null,
         "display_template": null,
-        "group": null,
+        "group": "Relations",
         "hidden": true,
         "icon": "import_export",
         "item_duplication_fields": null,
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": 9,
+        "sort": 16,
         "sort_field": null,
         "translations": null,
         "unarchive_value": null,
@@ -3188,6 +3300,370 @@
       }
     },
     {
+      "collection": "cocktail_menu",
+      "field": "id",
+      "type": "uuid",
+      "meta": {
+        "collection": "cocktail_menu",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 1,
+        "special": [
+          "uuid"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "cocktail_menu",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_indexed": false,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "cocktail_menu",
+      "field": "status",
+      "type": "string",
+      "meta": {
+        "collection": "cocktail_menu",
+        "conditions": null,
+        "display": "labels",
+        "display_options": {
+          "choices": [
+            {
+              "background": "var(--theme--primary-background)",
+              "color": "var(--theme--primary)",
+              "foreground": "var(--theme--primary)",
+              "text": "$t:published",
+              "value": "published"
+            },
+            {
+              "background": "var(--theme--background-normal)",
+              "color": "var(--theme--foreground)",
+              "foreground": "var(--theme--foreground)",
+              "text": "$t:draft",
+              "value": "draft"
+            },
+            {
+              "background": "var(--theme--warning-background)",
+              "color": "var(--theme--warning)",
+              "foreground": "var(--theme--warning)",
+              "text": "$t:archived",
+              "value": "archived"
+            }
+          ],
+          "showAsDot": true
+        },
+        "field": "status",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": null,
+        "options": {
+          "choices": [
+            {
+              "color": "var(--theme--primary)",
+              "text": "$t:published",
+              "value": "published"
+            },
+            {
+              "color": "var(--theme--foreground)",
+              "text": "$t:draft",
+              "value": "draft"
+            },
+            {
+              "color": "var(--theme--warning)",
+              "text": "$t:archived",
+              "value": "archived"
+            }
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 2,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "status",
+        "table": "cocktail_menu",
+        "data_type": "character varying",
+        "default_value": "draft",
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "cocktail_menu",
+      "field": "user_created",
+      "type": "uuid",
+      "meta": {
+        "collection": "cocktail_menu",
+        "conditions": null,
+        "display": "user",
+        "display_options": null,
+        "field": "user_created",
+        "group": null,
+        "hidden": true,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "template": "{{avatar}} {{first_name}} {{last_name}}"
+        },
+        "readonly": true,
+        "required": false,
+        "sort": 3,
+        "special": [
+          "user-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "user_created",
+        "table": "cocktail_menu",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "cocktail_menu",
+      "field": "date_created",
+      "type": "timestamp",
+      "meta": {
+        "collection": "cocktail_menu",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_created",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 4,
+        "special": [
+          "date-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_created",
+        "table": "cocktail_menu",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "cocktail_menu",
+      "field": "user_updated",
+      "type": "uuid",
+      "meta": {
+        "collection": "cocktail_menu",
+        "conditions": null,
+        "display": "user",
+        "display_options": null,
+        "field": "user_updated",
+        "group": null,
+        "hidden": true,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "template": "{{avatar}} {{first_name}} {{last_name}}"
+        },
+        "readonly": true,
+        "required": false,
+        "sort": 5,
+        "special": [
+          "user-updated"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "user_updated",
+        "table": "cocktail_menu",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "cocktail_menu",
+      "field": "date_updated",
+      "type": "timestamp",
+      "meta": {
+        "collection": "cocktail_menu",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_updated",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 6,
+        "special": [
+          "date-updated"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_updated",
+        "table": "cocktail_menu",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "cocktail_menu",
+      "field": "menu",
+      "type": "json",
+      "meta": {
+        "collection": "cocktail_menu",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "menu",
+        "group": null,
+        "hidden": false,
+        "interface": "input-code",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": true,
+        "sort": 7,
+        "special": [
+          "cast-json"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "menu",
+        "table": "cocktail_menu",
+        "data_type": "json",
+        "default_value": {},
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
       "collection": "conference_page",
       "field": "id",
       "type": "uuid",
@@ -4633,6 +5109,7 @@
         "note": null,
         "options": {
           "enableCreate": false,
+          "limit": 30,
           "template": "{{speakers_id.first_name}} {{speakers_id.last_name}}"
         },
         "readonly": false,
@@ -4989,11 +5466,13 @@
         "field": "gallery_images",
         "group": null,
         "hidden": false,
-        "interface": "list-m2m",
+        "interface": "files",
         "note": null,
         "options": {
           "enableCreate": false,
-          "filter": null
+          "filter": null,
+          "folder": "e132fe08-d7c6-478c-9b75-68676be8783d",
+          "template": "{{directus_files_id.$thumbnail}}"
         },
         "readonly": false,
         "required": false,
@@ -5023,6 +5502,7 @@
         "note": null,
         "options": {
           "enableCreate": false,
+          "limit": 30,
           "template": "{{talk.title}}"
         },
         "readonly": false,
@@ -11463,7 +11943,7 @@
         "options": null,
         "readonly": true,
         "required": false,
-        "sort": 19,
+        "sort": 21,
         "special": [
           "uuid"
         ],
@@ -11582,7 +12062,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 20,
+        "sort": 22,
         "special": null,
         "translations": null,
         "validation": null,
@@ -11627,7 +12107,7 @@
         },
         "readonly": true,
         "required": false,
-        "sort": 21,
+        "sort": 23,
         "special": [
           "user-created"
         ],
@@ -11674,7 +12154,7 @@
         "options": null,
         "readonly": true,
         "required": false,
-        "sort": 22,
+        "sort": 24,
         "special": [
           "date-created"
         ],
@@ -11721,7 +12201,7 @@
         },
         "readonly": true,
         "required": false,
-        "sort": 23,
+        "sort": 25,
         "special": [
           "user-updated"
         ],
@@ -11768,7 +12248,7 @@
         "options": null,
         "readonly": true,
         "required": false,
-        "sort": 24,
+        "sort": 26,
         "special": [
           "date-updated"
         ],
@@ -11858,7 +12338,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 25,
+        "sort": 27,
         "special": null,
         "translations": null,
         "validation": null,
@@ -12156,7 +12636,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 10,
+        "sort": 12,
         "special": null,
         "translations": null,
         "validation": null,
@@ -12201,7 +12681,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 12,
+        "sort": 14,
         "special": null,
         "translations": null,
         "validation": null,
@@ -12256,7 +12736,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 11,
+        "sort": 13,
         "special": null,
         "translations": null,
         "validation": null,
@@ -12302,7 +12782,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 14,
+        "sort": 16,
         "special": [
           "alias",
           "no-data"
@@ -12360,7 +12840,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 18,
+        "sort": 20,
         "special": [
           "alias",
           "no-data"
@@ -12461,7 +12941,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 13,
+        "sort": 15,
         "special": [
           "files"
         ],
@@ -12486,11 +12966,11 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{member.first_name}} {{member.last_name}}"
+          "template": "{{member.first_name}} {{member.last_name}}"
         },
         "readonly": false,
         "required": false,
-        "sort": 15,
+        "sort": 17,
         "special": [
           "m2m"
         ],
@@ -12515,11 +12995,11 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{speaker.first_name}} {{speaker.last_name}}"
+          "template": "{{speaker.first_name}} {{speaker.last_name}}"
         },
         "readonly": false,
         "required": false,
-        "sort": 16,
+        "sort": 18,
         "special": [
           "m2m"
         ],
@@ -12548,7 +13028,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 17,
+        "sort": 19,
         "special": [
           "m2m"
         ],
@@ -12556,6 +13036,265 @@
         "validation": null,
         "validation_message": null,
         "width": "full"
+      }
+    },
+    {
+      "collection": "meetups",
+      "field": "intro",
+      "type": "text",
+      "meta": {
+        "collection": "meetups",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "intro",
+        "group": null,
+        "hidden": false,
+        "interface": "input-rich-text-html",
+        "note": null,
+        "options": {
+          "toolbar": [
+            "bold",
+            "italic",
+            "underline",
+            "numlist",
+            "bullist",
+            "removeformat",
+            "blockquote",
+            "customLink",
+            "code",
+            "fullscreen"
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 10,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "intro",
+        "table": "meetups",
+        "data_type": "text",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "meetups",
+      "field": "talks",
+      "type": "alias",
+      "meta": {
+        "collection": "meetups",
+        "conditions": null,
+        "display": null,
+        "display_options": {
+          "template": "{{talk.title}}"
+        },
+        "field": "talks",
+        "group": null,
+        "hidden": false,
+        "interface": "list-m2m",
+        "note": null,
+        "options": {
+          "template": "{{talk.title}}"
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 11,
+        "special": [
+          "m2m"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
+      "collection": "meetups_talks",
+      "field": "id",
+      "type": "integer",
+      "meta": {
+        "collection": "meetups_talks",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 1,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "meetups_talks",
+        "data_type": "integer",
+        "default_value": "nextval('meetups_talks_id_seq'::regclass)",
+        "max_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_indexed": false,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": true,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "meetups_talks",
+      "field": "meetup",
+      "type": "uuid",
+      "meta": {
+        "collection": "meetups_talks",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "meetup",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 2,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "meetup",
+        "table": "meetups_talks",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "meetups",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "meetups_talks",
+      "field": "talk",
+      "type": "uuid",
+      "meta": {
+        "collection": "meetups_talks",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "talk",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 3,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "talk",
+        "table": "meetups_talks",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "talks",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "meetups_talks",
+      "field": "sort",
+      "type": "integer",
+      "meta": {
+        "collection": "meetups_talks",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "sort",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 4,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "sort",
+        "table": "meetups_talks",
+        "data_type": "integer",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
       }
     },
     {
@@ -16216,7 +16955,7 @@
         "interface": "select-dropdown-m2o",
         "note": null,
         "options": {
-          "template": "{{first_name}} {{last_name}}"
+          "template": "{{first_name}} {{last_name}}"
         },
         "readonly": false,
         "required": false,
@@ -16263,7 +17002,7 @@
         "interface": "select-dropdown-m2o",
         "note": null,
         "options": {
-          "template": "{{first_name}} {{last_name}}"
+          "template": "{{first_name}} {{last_name}}"
         },
         "readonly": false,
         "required": false,
@@ -18310,7 +19049,21 @@
       "type": "string",
       "meta": {
         "collection": "podcasts",
-        "conditions": null,
+        "conditions": [
+          {
+            "name": "If published",
+            "required": true,
+            "rule": {
+              "_and": [
+                {
+                  "status": {
+                    "_eq": "published"
+                  }
+                }
+              ]
+            }
+          }
+        ],
         "display": null,
         "display_options": null,
         "field": "slug",
@@ -18465,22 +19218,18 @@
             "rule": {
               "_and": [
                 {
-                  "_and": [
-                    {
-                      "status": {
-                        "_eq": "published"
-                      }
-                    },
-                    {
-                      "type": {
-                        "_in": [
-                          "deep_dive",
-                          "cto_special",
-                          "news"
-                        ]
-                      }
-                    }
-                  ]
+                  "status": {
+                    "_eq": "published"
+                  }
+                },
+                {
+                  "type": {
+                    "_in": [
+                      "deep_dive",
+                      "cto_special",
+                      "news"
+                    ]
+                  }
                 }
               ]
             }
@@ -18787,7 +19536,7 @@
         "translations": null,
         "validation": null,
         "validation_message": null,
-        "width": "half"
+        "width": "full"
       },
       "schema": {
         "name": "audio_file",
@@ -18819,7 +19568,7 @@
         "display_options": null,
         "field": "audio_url",
         "group": null,
-        "hidden": false,
+        "hidden": true,
         "interface": "input",
         "note": null,
         "options": {
@@ -18879,7 +19628,7 @@
         "display_options": null,
         "field": "transcript",
         "group": null,
-        "hidden": false,
+        "hidden": true,
         "interface": "input-multiline",
         "note": null,
         "options": {
@@ -18924,7 +19673,7 @@
         "display_options": null,
         "field": "apple_url",
         "group": null,
-        "hidden": false,
+        "hidden": true,
         "interface": "input",
         "note": null,
         "options": {
@@ -18969,7 +19718,7 @@
         "display_options": null,
         "field": "google_url",
         "group": null,
-        "hidden": false,
+        "hidden": true,
         "interface": "input",
         "note": null,
         "options": {
@@ -19014,7 +19763,7 @@
         "display_options": null,
         "field": "spotify_url",
         "group": null,
-        "hidden": false,
+        "hidden": true,
         "interface": "input",
         "note": null,
         "options": {
@@ -19333,7 +20082,7 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{member.first_name}} {{member.last_name}}"
+          "template": "{{member.first_name}} {{member.last_name}}"
         },
         "readonly": false,
         "required": false,
@@ -19362,7 +20111,7 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{speaker.first_name}} {{speaker.last_name}}"
+          "template": "{{speaker.first_name}} {{speaker.last_name}}"
         },
         "readonly": false,
         "required": false,
@@ -22316,6 +23065,627 @@
       }
     },
     {
+      "collection": "ratings",
+      "field": "id",
+      "type": "uuid",
+      "meta": {
+        "collection": "ratings",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 1,
+        "special": [
+          "uuid"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "ratings",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_indexed": false,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ratings",
+      "field": "status",
+      "type": "string",
+      "meta": {
+        "collection": "ratings",
+        "conditions": null,
+        "display": "labels",
+        "display_options": {
+          "choices": [
+            {
+              "background": "var(--theme--primary-background)",
+              "color": "var(--theme--primary)",
+              "foreground": "var(--theme--primary)",
+              "text": "$t:published",
+              "value": "published"
+            },
+            {
+              "background": "var(--theme--background-normal)",
+              "color": "var(--theme--foreground)",
+              "foreground": "var(--theme--foreground)",
+              "text": "$t:draft",
+              "value": "draft"
+            },
+            {
+              "background": "var(--theme--warning-background)",
+              "color": "var(--theme--warning)",
+              "foreground": "var(--theme--warning)",
+              "text": "$t:archived",
+              "value": "archived"
+            }
+          ],
+          "showAsDot": true
+        },
+        "field": "status",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": null,
+        "options": {
+          "choices": [
+            {
+              "color": "var(--theme--primary)",
+              "text": "$t:published",
+              "value": "published"
+            },
+            {
+              "color": "var(--theme--foreground)",
+              "text": "$t:draft",
+              "value": "draft"
+            },
+            {
+              "color": "var(--theme--warning)",
+              "text": "$t:archived",
+              "value": "archived"
+            }
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 2,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "status",
+        "table": "ratings",
+        "data_type": "character varying",
+        "default_value": "draft",
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ratings",
+      "field": "sort",
+      "type": "integer",
+      "meta": {
+        "collection": "ratings",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "sort",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 3,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "sort",
+        "table": "ratings",
+        "data_type": "integer",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ratings",
+      "field": "user_created",
+      "type": "uuid",
+      "meta": {
+        "collection": "ratings",
+        "conditions": null,
+        "display": "user",
+        "display_options": null,
+        "field": "user_created",
+        "group": null,
+        "hidden": true,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "template": "{{avatar}} {{first_name}} {{last_name}}"
+        },
+        "readonly": true,
+        "required": false,
+        "sort": 4,
+        "special": [
+          "user-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "user_created",
+        "table": "ratings",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "ratings",
+      "field": "date_created",
+      "type": "timestamp",
+      "meta": {
+        "collection": "ratings",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_created",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 5,
+        "special": [
+          "date-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_created",
+        "table": "ratings",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ratings",
+      "field": "user_updated",
+      "type": "uuid",
+      "meta": {
+        "collection": "ratings",
+        "conditions": null,
+        "display": "user",
+        "display_options": null,
+        "field": "user_updated",
+        "group": null,
+        "hidden": true,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "template": "{{avatar}} {{first_name}} {{last_name}}"
+        },
+        "readonly": true,
+        "required": false,
+        "sort": 6,
+        "special": [
+          "user-updated"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "user_updated",
+        "table": "ratings",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "ratings",
+      "field": "date_updated",
+      "type": "timestamp",
+      "meta": {
+        "collection": "ratings",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_updated",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 7,
+        "special": [
+          "date-updated"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_updated",
+        "table": "ratings",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ratings",
+      "field": "up_or_down",
+      "type": "string",
+      "meta": {
+        "collection": "ratings",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "up_or_down",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": null,
+        "options": {
+          "allowOther": true,
+          "choices": [
+            {
+              "icon": "thumb_up",
+              "text": "Up",
+              "value": "up"
+            },
+            {
+              "icon": "thumb_down",
+              "text": "Down",
+              "value": "down"
+            }
+          ],
+          "icon": "thumbs_up_down"
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 8,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "up_or_down",
+        "table": "ratings",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ratings",
+      "field": "target",
+      "type": "alias",
+      "meta": {
+        "collection": "ratings",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "target",
+        "group": null,
+        "hidden": false,
+        "interface": "list-m2a",
+        "note": null,
+        "options": {
+          "enableCreate": false
+        },
+        "readonly": false,
+        "required": true,
+        "sort": 9,
+        "special": [
+          "m2a"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
+      "collection": "ratings_target",
+      "field": "id",
+      "type": "integer",
+      "meta": {
+        "collection": "ratings_target",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 1,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "ratings_target",
+        "data_type": "integer",
+        "default_value": "nextval('ratings_target_id_seq'::regclass)",
+        "max_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_indexed": false,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": true,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ratings_target",
+      "field": "rating",
+      "type": "uuid",
+      "meta": {
+        "collection": "ratings_target",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "rating",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 2,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "rating",
+        "table": "ratings_target",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "ratings",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "ratings_target",
+      "field": "target",
+      "type": "string",
+      "meta": {
+        "collection": "ratings_target",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "target",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 3,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "target",
+        "table": "ratings_target",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ratings_target",
+      "field": "target_collection",
+      "type": "string",
+      "meta": {
+        "collection": "ratings_target",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "target_collection",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 4,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "target_collection",
+        "table": "ratings_target",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
       "collection": "recordings_page",
       "field": "id",
       "type": "uuid",
@@ -24308,7 +25678,9 @@
         "hidden": false,
         "interface": "list-m2m",
         "note": null,
-        "options": null,
+        "options": {
+          "template": "{{talk.title}}"
+        },
         "readonly": false,
         "required": false,
         "sort": 34,
@@ -24989,7 +26361,7 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{member.first_name}} {{member.last_name}}"
+          "template": "{{member.first_name}} {{member.last_name}}"
         },
         "readonly": false,
         "required": false,
@@ -25105,7 +26477,7 @@
         "interface": "list-m2m",
         "note": null,
         "options": {
-          "template": "{{speaker.first_name}} {{speaker.last_name}}"
+          "template": "{{speaker.first_name}} {{speaker.last_name}}"
         },
         "readonly": false,
         "required": false,
@@ -25780,7 +27152,9 @@
         "collection": "talks",
         "conditions": null,
         "display": null,
-        "display_options": null,
+        "display_options": {
+          "template": "{{conference.title}} - {{conference.start_on}}"
+        },
         "field": "conferences",
         "group": null,
         "hidden": false,
@@ -25792,6 +27166,37 @@
         "readonly": false,
         "required": false,
         "sort": 16,
+        "special": [
+          "m2m"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
+      "collection": "talks",
+      "field": "meetups",
+      "type": "alias",
+      "meta": {
+        "collection": "talks",
+        "conditions": null,
+        "display": null,
+        "display_options": {
+          "template": "{{meetup.title}}"
+        },
+        "field": "meetups",
+        "group": null,
+        "hidden": false,
+        "interface": "list-m2m",
+        "note": null,
+        "options": {
+          "template": "{{meetup.title}}"
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 17,
         "special": [
           "m2m"
         ],
@@ -26255,7 +27660,7 @@
         "translations": null,
         "validation": null,
         "validation_message": null,
-        "width": "full"
+        "width": "half"
       },
       "schema": {
         "name": "status",
@@ -26293,7 +27698,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 3,
+        "sort": 4,
         "special": null,
         "translations": null,
         "validation": null,
@@ -26338,7 +27743,7 @@
         },
         "readonly": true,
         "required": false,
-        "sort": 4,
+        "sort": 5,
         "special": [
           "user-created"
         ],
@@ -26385,7 +27790,7 @@
         "options": null,
         "readonly": true,
         "required": false,
-        "sort": 5,
+        "sort": 6,
         "special": [
           "date-created"
         ],
@@ -26432,7 +27837,7 @@
         },
         "readonly": true,
         "required": false,
-        "sort": 6,
+        "sort": 7,
         "special": [
           "user-updated"
         ],
@@ -26479,7 +27884,7 @@
         "options": null,
         "readonly": true,
         "required": false,
-        "sort": 7,
+        "sort": 8,
         "special": [
           "date-updated"
         ],
@@ -26534,7 +27939,7 @@
         },
         "readonly": false,
         "required": true,
-        "sort": 8,
+        "sort": 9,
         "special": null,
         "translations": null,
         "validation": null,
@@ -26579,7 +27984,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 9,
+        "sort": 10,
         "special": null,
         "translations": null,
         "validation": null,
@@ -26594,6 +27999,54 @@
         "max_length": 255,
         "numeric_precision": null,
         "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "testimonials",
+      "field": "weight",
+      "type": "integer",
+      "meta": {
+        "collection": "testimonials",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "weight",
+        "group": null,
+        "hidden": false,
+        "interface": "slider",
+        "note": " Higher number = appears more frequently",
+        "options": {
+          "alwaysShowValue": true,
+          "maxValue": 10,
+          "minValue": 1,
+          "stepInterval": 1
+        },
+        "readonly": false,
+        "required": true,
+        "sort": 3,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "weight",
+        "table": "testimonials",
+        "data_type": "integer",
+        "default_value": 5,
+        "max_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
         "is_nullable": true,
         "is_unique": false,
         "is_indexed": false,
@@ -27413,6 +28866,56 @@
         "foreign_key_table": "directus_users",
         "foreign_key_column": "id",
         "constraint_name": "coc_page_user_created_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "cocktail_menu",
+      "field": "user_updated",
+      "related_collection": "directus_users",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "cocktail_menu",
+        "many_field": "user_updated",
+        "one_allowed_collections": null,
+        "one_collection": "directus_users",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "cocktail_menu",
+        "column": "user_updated",
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id",
+        "constraint_name": "cocktail_menu_user_updated_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "cocktail_menu",
+      "field": "user_created",
+      "related_collection": "directus_users",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "cocktail_menu",
+        "many_field": "user_created",
+        "one_allowed_collections": null,
+        "one_collection": "directus_users",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "cocktail_menu",
+        "column": "user_created",
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id",
+        "constraint_name": "cocktail_menu_user_created_foreign",
         "on_update": "NO ACTION",
         "on_delete": "NO ACTION"
       }
@@ -28613,6 +30116,56 @@
       }
     },
     {
+      "collection": "meetups_talks",
+      "field": "talk",
+      "related_collection": "talks",
+      "meta": {
+        "junction_field": "meetup",
+        "many_collection": "meetups_talks",
+        "many_field": "talk",
+        "one_allowed_collections": null,
+        "one_collection": "talks",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": "meetups",
+        "sort_field": null
+      },
+      "schema": {
+        "table": "meetups_talks",
+        "column": "talk",
+        "foreign_key_table": "talks",
+        "foreign_key_column": "id",
+        "constraint_name": "meetups_talks_talk_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
+      }
+    },
+    {
+      "collection": "meetups_talks",
+      "field": "meetup",
+      "related_collection": "meetups",
+      "meta": {
+        "junction_field": "talk",
+        "many_collection": "meetups_talks",
+        "many_field": "meetup",
+        "one_allowed_collections": null,
+        "one_collection": "meetups",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": "talks",
+        "sort_field": "sort"
+      },
+      "schema": {
+        "table": "meetups_talks",
+        "column": "meetup",
+        "foreign_key_table": "meetups",
+        "foreign_key_column": "id",
+        "constraint_name": "meetups_talks_meetup_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
+      }
+    },
+    {
       "collection": "member_tags",
       "field": "tag",
       "related_collection": "tags",
@@ -29735,6 +31288,102 @@
         "constraint_name": "raffle_page_user_created_foreign",
         "on_update": "NO ACTION",
         "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "ratings",
+      "field": "user_created",
+      "related_collection": "directus_users",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "ratings",
+        "many_field": "user_created",
+        "one_allowed_collections": null,
+        "one_collection": "directus_users",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "ratings",
+        "column": "user_created",
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id",
+        "constraint_name": "ratings_user_created_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "ratings",
+      "field": "user_updated",
+      "related_collection": "directus_users",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "ratings",
+        "many_field": "user_updated",
+        "one_allowed_collections": null,
+        "one_collection": "directus_users",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "ratings",
+        "column": "user_updated",
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id",
+        "constraint_name": "ratings_user_updated_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "ratings_target",
+      "field": "target",
+      "related_collection": null,
+      "meta": {
+        "junction_field": "rating",
+        "many_collection": "ratings_target",
+        "many_field": "target",
+        "one_allowed_collections": [
+          "podcasts",
+          "meetups",
+          "talks",
+          "conferences"
+        ],
+        "one_collection": null,
+        "one_collection_field": "target_collection",
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      }
+    },
+    {
+      "collection": "ratings_target",
+      "field": "rating",
+      "related_collection": "ratings",
+      "meta": {
+        "junction_field": "target",
+        "many_collection": "ratings_target",
+        "many_field": "rating",
+        "one_allowed_collections": null,
+        "one_collection": "ratings",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": "target",
+        "sort_field": null
+      },
+      "schema": {
+        "table": "ratings_target",
+        "column": "rating",
+        "foreign_key_table": "ratings",
+        "foreign_key_column": "id",
+        "constraint_name": "ratings_target_rating_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
       }
     },
     {

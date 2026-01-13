@@ -269,8 +269,7 @@ export interface DirectusRatingItem {
   target: {
     target_collection: string,
     target: string
-  },
-  //target: DirectusPodcastItem
+  }[],
   up_or_down: 'up' | 'down'
 }
 

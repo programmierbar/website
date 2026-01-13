@@ -844,10 +844,12 @@ export function useDirectus() {
     try {
       const result = await directus.request(createItem('ratings', {
         up_or_down: vote,
-        target: {
-          target_collection: 'podcasts',
-          target: podcast.id
-        },
+        target: [
+          {
+            target_collection: 'podcasts',
+            target: podcast.id
+          }
+        ],
       }))
     } catch (e: unknown) {
       console.error('Error while persisting new feedback', e)
