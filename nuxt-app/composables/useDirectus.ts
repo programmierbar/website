@@ -851,6 +851,9 @@ export function useDirectus() {
           }
         ],
       }))
+
+      return result;
+
     } catch (e: unknown) {
       console.error('Error while persisting new feedback', e)
       return e

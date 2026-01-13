@@ -13,6 +13,8 @@
 
                     <SectionHeading class="mt-8 md:mt-0" element="h2"> Shownotes </SectionHeading>
 
+                    <PodcastRating />
+
                     <!-- Description -->
                     <InnerHtml
                         class="mt-8 space-y-8 text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl"

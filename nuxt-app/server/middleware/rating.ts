@@ -13,7 +13,7 @@ export default eventHandler(async function(event) {
     return;
   }
 
-  console.log(`Received feedback for "${match[1]}" with vote "${match[2]}".`);
+  console.log(`Received rating for "${match[1]}" with vote "${match[2]}".`);
 
   let slug = match[1];
   let vote = match[2];
@@ -27,7 +27,17 @@ export default eventHandler(async function(event) {
   }
 
   // @ts-ignore (Type-safety is enforced by regex)
-  directus.createRating(vote, podcast);
+  await directus.createRating(vote, podcast);
+
+  // Set flash message cookie
+  setCookie(event, 'flash-message', JSON.stringify({
+    text: 'Vielen Dank für dein Feedback!',
+    type: 'rating',
+    payload: {}
+  }), {
+    maxAge: 60, // 60 seconds
+    path: '/'
+  });
 
   // Set the response status and location header for redirection
   // And end the response to complete the redirection

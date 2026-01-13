@@ -266,6 +266,7 @@ export interface DirectusPickOfTheDayItem {
 
 export interface DirectusRatingItem {
   id: string
+  update_token: string
   target: {
     target_collection: string,
     target: string
