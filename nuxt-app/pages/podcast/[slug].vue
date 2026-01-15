@@ -13,7 +13,7 @@
 
                     <SectionHeading class="mt-8 md:mt-0" element="h2"> Shownotes </SectionHeading>
 
-                    <PodcastRating />
+                    <PodcastRating :podcast='podcast' />
 
                     <!-- Description -->
                     <InnerHtml

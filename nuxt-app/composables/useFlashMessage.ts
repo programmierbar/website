@@ -1,4 +1,4 @@
-interface FlashMessage {
+export interface FlashMessage {
   type: "rating"
   text: string
   payload: { }
