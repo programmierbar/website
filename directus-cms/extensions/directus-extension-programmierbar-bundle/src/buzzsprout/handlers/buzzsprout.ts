@@ -62,6 +62,13 @@ export async function handleBuzzsprout(
         podcastData.picks_of_the_day
     ) {
         buzzsproutData.description = `
+        <p>
+          <b>Wie hat dir die Folge gefallen?:</b><br>
+          <a href="${buzzsproutData.custom_url}/up" target='_blank'>Gut 👍</a><br>
+          <a href="${buzzsproutData.custom_url}/down" target='_blank'>Schlecht 👍</a><br>
+          (Keine Anmeldung erforderlich)
+        </p>
+        <br>
         ${podcastData.description}
         ${
             podcastData.picks_of_the_day.length
