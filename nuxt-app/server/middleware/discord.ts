@@ -6,8 +6,6 @@ export default eventHandler(function(event) {
   const requestHost = event.headers.get('host') || '';
   const requestPath = event.path;
 
-  console.log(requestPath);
-
   if (!requestHost.startsWith(hostToMatch) && !(requestPath === pathToMatch)) {
     return;
   }

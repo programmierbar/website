@@ -13,8 +13,6 @@ export default eventHandler(async function(event) {
     return;
   }
 
-  console.log(`Received rating for "${match[1]}" with vote "${match[2]}".`);
-
   let slug = match[1];
   let vote = match[2];
 
