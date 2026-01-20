@@ -16,7 +16,7 @@ export default eventHandler(async function(event) {
   let slug = match[1];
   let vote = match[2];
 
-  const directus = useDirectus()
+  const directus = useDirectus();
 
   let podcast = await directus.getPodcastBySlug(slug);
 
