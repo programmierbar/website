@@ -45,15 +45,18 @@ export async function handleBuzzsprout(
         buzzsproutData.private = podcastData.status === 'archived'
     }
 
-    // Add "title" and "custom_url", if necessary
+    // Build url in any case because we need it for ratings links
+    const fullPodcastTitle = getFullPodcastTitle({
+        title: podcastData.title!,
+        type: podcastData.type!,
+        number: podcastData.number ? podcastData.number.toString() : '',
+    })
+    const podcast_url = `https://www.programmier.bar/podcast/${getUrlSlug(fullPodcastTitle)}`
+
+    // But only add "title" and "custom_url", if necessary
     if (isCreation || payload.type || payload.number || payload.title) {
-        const fullPodcastTitle = getFullPodcastTitle({
-            title: podcastData.title!,
-            type: podcastData.type!,
-            number: podcastData.number ? podcastData.number.toString() : '',
-        })
         buzzsproutData.title = fullPodcastTitle
-        buzzsproutData.custom_url = `https://www.programmier.bar/podcast/${getUrlSlug(fullPodcastTitle)}`
+        buzzsproutData.custom_url = podcast_url
     }
 
     // Add "description", if necessary
@@ -63,9 +66,9 @@ export async function handleBuzzsprout(
     ) {
         buzzsproutData.description = `
         <p>
-          <b>Wie hat dir die Folge gefallen?:</b><br>
-          <a href="${buzzsproutData.custom_url}/up" target='_blank'>Gut 👍</a><br>
-          <a href="${buzzsproutData.custom_url}/down" target='_blank'>Schlecht 👎</a><br>
+          <b>Wie hat dir die Folge gefallen?</b><br>
+          <a href="${podcast_url}/up" target='_blank'>Gut 👍</a><br>
+          <a href="${podcast_url}/down" target='_blank'>Schlecht 👎</a><br>
           (Keine Anmeldung erforderlich)
         </p>
         <br>
