@@ -1,18 +1,16 @@
 <template>
-  <div v-if="!message" class='mt-8 space-y-8 text-base leading-normal text-white md:mt-14 md:text-xl lg:text-2xl'>
-    <p>Wie hat dir diese Folge gefallen? Stimme jetzt mit
-      <button type="button" class="contents" @click='rate("up")' data-cursor-hover>
-        <thumbs_up class='inline -mt-2 mx-1 h-6'/>
+  <div class='flex flex-col w-full items-end mt-8 space-y-8'>
+    <div v-if="!message" class='bg-gray-500 rounded-full w-fit box-border p-2'>
+      <button type="button" class="inline-block p-1 md:p-3 border-white border-r-1" @click='rate("up")' data-cursor-hover>
+        <thumbs_up class='inline -mt-1 md:-mt-2 h-4 md:h-6 pr-1'/>
       </button>
-      oder
-      <button type="button" class="contents" @click='rate("down")' data-cursor-hover>
-        <thumbs_down class='inline mx-1 h-6'/>
+      <button type="button" class="inline-block p-1 md:p-3" @click='rate("down")' data-cursor-hover>
+        <thumbs_down class='inline h-4 md:h-6 pl-2'/>
       </button>
-      ab!
-    </p>
-  </div>
-  <div v-if="message" class='mt-8 space-y-8 text-base font-bold leading-normal text-lime md:mt-14 md:text-xl lg:text-2xl'>
-    <p>{{ message.text }}</p>
+    </div>
+    <div v-if="message" class='text-base font-bold leading-normal text-lime md:text-xl lg:text-2xl p-4 '>
+      <p>{{ message.text }}</p>
+    </div>
   </div>
 </template>
 
