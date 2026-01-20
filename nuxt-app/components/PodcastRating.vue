@@ -20,7 +20,7 @@ import thumbs_down from '~/assets/icons/thumb-down.svg'
 import { useDirectus } from '~/composables/useDirectus'
 import type { DirectusPodcastItem } from '~/types';
 
-const { message, setMessage } = useFlashMessage();
+const { message, setMessage, clearMessage } = useFlashMessage();
 const directus = useDirectus();
 
 const props = defineProps<{ podcast: DirectusPodcastItem }>()
@@ -33,6 +33,10 @@ const rate = async function(upOrDown: "up" | "down") {
     {}
     );
 }
+
+onUnmounted(() => {
+  clearMessage();
+})
 
 </script>
 
