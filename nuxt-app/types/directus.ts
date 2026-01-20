@@ -264,6 +264,16 @@ export interface DirectusPickOfTheDayItem {
     )[]
 }
 
+export interface DirectusRatingItem {
+  id: string
+  update_token: string
+  target: {
+    target_collection: string,
+    target: string
+  }[],
+  up_or_down: 'up' | 'down'
+}
+
 export interface DirectusTagItem {
     id: string
     name: string

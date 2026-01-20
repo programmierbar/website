@@ -11,11 +11,13 @@
                         <!-- <LikeButton /> -->
                     </div>
 
-                    <SectionHeading class="mt-8 md:mt-0" element="h2"> Shownotes </SectionHeading>
+                  <PodcastRating :podcast='podcast' />
+
+                  <SectionHeading class="mt-8 md:mt-0" element="h2"> Shownotes </SectionHeading>
 
                     <!-- Description -->
                     <InnerHtml
-                        class="mt-8 space-y-8 text-base font-light leading-normal text-white md:mt-14 md:text-xl lg:text-2xl"
+                        class="mt-6 space-y-6 text-base font-light leading-normal text-white md:mt-12 md:text-xl lg:text-2xl"
                         :html="podcast.description"
                     />
 

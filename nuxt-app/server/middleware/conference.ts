@@ -16,8 +16,6 @@ export default eventHandler(function(event) {
 
   const os = getOS(userAgent);
 
-  console.log(os);
-
   if (!hostsToMatch.some(match => requestHost.startsWith(match))) {
     return;
   }
