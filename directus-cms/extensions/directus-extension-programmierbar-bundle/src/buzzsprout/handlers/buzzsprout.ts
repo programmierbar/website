@@ -65,7 +65,7 @@ export async function handleBuzzsprout(
         <p>
           <b>Wie hat dir die Folge gefallen?:</b><br>
           <a href="${buzzsproutData.custom_url}/up" target='_blank'>Gut 👍</a><br>
-          <a href="${buzzsproutData.custom_url}/down" target='_blank'>Schlecht 👍</a><br>
+          <a href="${buzzsproutData.custom_url}/down" target='_blank'>Schlecht 👎</a><br>
           (Keine Anmeldung erforderlich)
         </p>
         <br>
