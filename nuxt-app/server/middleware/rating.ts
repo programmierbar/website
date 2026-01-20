@@ -14,7 +14,15 @@ export default eventHandler(async function(event) {
   }
 
   let slug = match[1];
-  let vote = match[2];
+  let voteString = match[2];
+
+  // Type narrowing: the regex already validated this is "up" or "down"
+  // We use a type guard to make TypeScript aware of this
+  if (voteString !== 'up' && voteString !== 'down') {
+    // This should never happen due to regex validation, but satisfies TypeScript
+    throw createError({ statusCode: 400, message: 'Invalid vote value' });
+  }
+  const vote: "up" | "down" = voteString;
 
   const directus = useDirectus();
 
@@ -24,7 +32,6 @@ export default eventHandler(async function(event) {
     throw createError({ statusCode: 404, message: 'Podcast not found' });
   }
 
-  // @ts-ignore (Type-safety is enforced by regex)
   try {
     await directus.createRating(vote, podcast);
 
