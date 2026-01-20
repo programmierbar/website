@@ -22,7 +22,7 @@ export default eventHandler(async function(event) {
     // This should never happen due to regex validation, but satisfies TypeScript
     throw createError({ statusCode: 400, message: 'Invalid vote value' });
   }
-  const vote: "up" | "down" = voteString;
+  const vote = voteString;
 
   const directus = useDirectus();
 
