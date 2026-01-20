@@ -25,17 +25,30 @@ export default eventHandler(async function(event) {
   }
 
   // @ts-ignore (Type-safety is enforced by regex)
-  await directus.createRating(vote, podcast);
+  try {
+    await directus.createRating(vote, podcast);
 
-  // Set flash message cookie
-  setCookie(event, 'flash-message', JSON.stringify({
-    text: 'Vielen Dank für dein Feedback!',
-    type: 'rating',
-    payload: {}
-  }), {
-    maxAge: 60, // 60 seconds
-    path: '/'
-  });
+    // Set flash message cookie on success
+    setCookie(event, 'flash-message', JSON.stringify({
+      text: 'Vielen Dank für dein Feedback!',
+      type: 'rating',
+      payload: {}
+    }), {
+      maxAge: 60, // 60 seconds
+      path: '/'
+    });
+  } catch (error) {
+    // Log the error and set an error flash message
+    console.error('Failed to create rating for podcast', podcast.slug, error);
+    setCookie(event, 'flash-message', JSON.stringify({
+      text: 'Dein Feedback konnte leider nicht gespeichert werden. Bitte versuche es später erneut.',
+      type: 'rating-error',
+      payload: {}
+    }), {
+      maxAge: 60, // 60 seconds
+      path: '/'
+    });
+  }
 
   // Set the response status and location header for redirection
   // And end the response to complete the redirection
