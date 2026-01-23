@@ -31,5 +31,5 @@ export function getAssetUrl(file: { id: string } | string, options?: {queryParam
     url = `${url}?${(new URLSearchParams(stringifiedParams)).toString()}`;
   }
 
-  return url
+  return url;
 }
