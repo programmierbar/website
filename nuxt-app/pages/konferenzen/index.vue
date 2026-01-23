@@ -20,7 +20,7 @@
           <video
             class="min-h-80 w-full object-cover"
             :src="videoUrl || ''"
-            :alt="conferencePage.video.title || ''"
+            :aria-label="conferencePage.video.title || ''"
             autoplay
             loop
             muted
@@ -92,7 +92,7 @@ const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed
 const conferences: ComputedRef<DirectusConferenceItem[]> = computed(() => pageData.value?.conferences || [])
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
-const videoUrl = computed(() => pageData.value?.conferencePage.video && `${getAssetUrl(pageData.value?.conferencePage.video)}`)
+const videoUrl = computed(() => pageData.value?.conferencePage?.video && `${getAssetUrl(pageData.value?.conferencePage?.video)}`)
 
 // Set loading screen
 useLoadingScreen(conferencePage)

@@ -99,7 +99,7 @@ export interface DirectusConferenceItem {
     end_on: string
     cover_image: DirectusFileItem
     poster: DirectusFileItem
-    video: DirectusFileItem
+    video: DirectusFileItem | null
     title: string
     headline_1: string
     text_1: string
@@ -357,7 +357,7 @@ export interface DirectusConferencePage {
   meta_title: string
   meta_description: string
   cover_image: DirectusFileItem
-  video: DirectusFileItem
+  video: DirectusFileItem | null
   conference_heading: string
   intro_heading: string
   intro_text_1: string

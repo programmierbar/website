@@ -22,7 +22,7 @@
             <video
               class="min-h-80 w-full object-cover"
               :src="videoUrl || ''"
-              :alt="conference.video.title || ''"
+              :aria-label="conference.video.title || ''"
               autoplay
               loop
               muted

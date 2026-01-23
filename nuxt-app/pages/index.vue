@@ -32,7 +32,7 @@
                 <video
                     class="min-h-80 w-full object-cover"
                     :src="videoUrl"
-                    :alt="homePage.video.title || ''"
+                    :aria-label="homePage.video.title || ''"
                     autoplay
                     loop
                     muted
