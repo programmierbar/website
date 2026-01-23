@@ -8,7 +8,7 @@ import { DIRECTUS_CMS_URL } from '~/config';
  *
  * @returns The full URL to the asset.
  */
-export function getAssetUrl(file: { id: string } | string, options?: {queryParams: {}}): string {
+export function getAssetUrl(file: { id: string } | string, options?: {queryParams: Record<string, string | number | boolean>}): string {
 
   if (!file) return '';
 
@@ -23,8 +23,13 @@ export function getAssetUrl(file: { id: string } | string, options?: {queryParam
   let url = `${DIRECTUS_CMS_URL}/assets/${id}`;
 
   if (options?.queryParams) {
-    url = `${url}?${(new URLSearchParams(options.queryParams)).toString()}`;
+    // Convert all values to strings for URLSearchParams
+    const stringifiedParams: Record<string, string> = {};
+    for (const [key, value] of Object.entries(options.queryParams)) {
+      stringifiedParams[key] = String(value);
+    }
+    url = `${url}?${(new URLSearchParams(stringifiedParams)).toString()}`;
   }
 
-  return url
+  return url;
 }
