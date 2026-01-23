@@ -356,6 +356,7 @@ export interface DirectusConferencePage {
   meta_title: string
   meta_description: string
   cover_image: DirectusFileItem
+  video: DirectusFileItem
   conference_heading: string
   intro_heading: string
   intro_text_1: string
