@@ -406,6 +406,8 @@ export function useDirectus() {
             'text_1',
             'cover_image.*',
             'cover_image',
+            'video.*',
+            'video',
             'poster',
             'poster.*',
             'gallery_images',

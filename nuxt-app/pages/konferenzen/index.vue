@@ -73,7 +73,7 @@ import { useDirectus } from '~/composables/useDirectus'
 import type { DirectusConferenceItem, DirectusConferencePage, DirectusTestimonialItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import TestimonialSlider from '~/components/TestimonialSlider.vue';
-import { DIRECTUS_CMS_URL } from '../../config'
+import { getAssetUrl } from '~/helpers/getAssetUrl';
 
 const breadcrumbs = [{ label: 'Konferenzen' }]
 const directus = useDirectus()
@@ -92,8 +92,7 @@ const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed
 const conferences: ComputedRef<DirectusConferenceItem[]> = computed(() => pageData.value?.conferences || [])
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
-// Create Video URL
-const videoUrl = computed(() => pageData.value && `${DIRECTUS_CMS_URL}/assets/${pageData.value?.conferencePage.video?.id}`)
+const videoUrl = computed(() => pageData.value?.conferencePage.video && `${getAssetUrl(pageData.value?.conferencePage.video)}`)
 
 // Set loading screen
 useLoadingScreen(conferencePage)

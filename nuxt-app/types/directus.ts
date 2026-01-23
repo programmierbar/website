@@ -99,6 +99,7 @@ export interface DirectusConferenceItem {
     end_on: string
     cover_image: DirectusFileItem
     poster: DirectusFileItem
+    video: DirectusFileItem
     title: string
     headline_1: string
     text_1: string
