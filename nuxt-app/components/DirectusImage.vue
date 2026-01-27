@@ -1,6 +1,6 @@
 <template>
     <nuxt-img
-        :src="`${DIRECTUS_CMS_URL}/assets/${image.id}`"
+        :src="url"
         :alt="image.title || alt"
         :width="image.width ?? 0"
         :height="image.height ?? 0"
@@ -15,8 +15,8 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
-import { DIRECTUS_CMS_URL } from '../config'
 import type { FileItem } from '../types'
+import { getAssetUrl } from '~/helpers/getAssetUrl';
 
 export default defineComponent({
     props: {
@@ -44,10 +44,11 @@ export default defineComponent({
     setup(props) {
         // Create image format
         const format = computed(() => props.image.type.split('/')[1])
+        const url = computed(() => getAssetUrl(props.image))
 
         return {
             format,
-            DIRECTUS_CMS_URL,
+            url,
         }
     },
 })

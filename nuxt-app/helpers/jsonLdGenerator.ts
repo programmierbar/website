@@ -1,13 +1,9 @@
 import { BUZZSPROUT_RSS_FEED_URL, DIRECTUS_CMS_URL } from '~/config'
-import type { DirectusProfileItem, FileItem, MemberItem, PodcastItem, SpeakerItem } from '~/types';
+import type { DirectusProfileItem, MemberItem, PodcastItem, SpeakerItem } from '~/types';
 import type { JsonLD } from 'nuxt-jsonld/dist/types/index.d'
 import type { Person, PodcastEpisode, PodcastSeries, WithContext } from 'schema-dts'
 import { getPodcastType } from 'shared-code'
-
-function generateImageUrl(image?: FileItem): string {
-    if (!image) return ''
-    return `${DIRECTUS_CMS_URL}/assets/${image.id}`
-}
+import { getAssetUrl } from '~/helpers/getAssetUrl';
 
 function generatePodcastUrl(podcast: PodcastItem): string {
     return `${DIRECTUS_CMS_URL}/podcast/${podcast.slug}`
@@ -20,7 +16,7 @@ function generatePersonFromSpeaker(speaker: SpeakerItem): WithContext<Person> {
         givenName: speaker.first_name,
         familyName: speaker.last_name,
         jobTitle: speaker.occupation,
-        image: generateImageUrl(speaker.profile_image),
+        image: getAssetUrl(speaker.profile_image),
         sameAs: [
             speaker.twitter_url,
             speaker.linkedin_url,
@@ -39,7 +35,7 @@ function generatePersonFromMember(member: MemberItem): WithContext<Person> {
         givenName: member.first_name,
         familyName: member.last_name,
         jobTitle: member.occupation,
-        image: generateImageUrl(member.normal_image),
+        image: getAssetUrl(member.normal_image),
     }
 }
 
@@ -77,7 +73,7 @@ function generatePodcastEpisodeFromPodcast(podcast?: PodcastItem): JsonLD | null
         '@type': 'PodcastEpisode',
         name: podcast.title,
         partOfSeries,
-        image: generateImageUrl(podcast.cover_image),
+        image: getAssetUrl(podcast.cover_image),
         description: podcast.description,
         datePublished: podcast.published_on,
         episodeNumber: `${type} ${podcast.number}`,
@@ -99,7 +95,7 @@ function generateProfile(profile?: DirectusProfileItem): JsonLD {
     familyName: profile.last_name,
     jobTitle: profile.job_role,
     alternateName: profile.display_name,
-    image: generateImageUrl(profile.profile_image),
+    image: getAssetUrl(profile.profile_image),
   }
 
   if (profile.job_employer) {

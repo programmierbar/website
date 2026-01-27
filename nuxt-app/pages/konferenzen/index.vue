@@ -1,7 +1,7 @@
 <template>
     <div v-if="conferencePage">
         <section class="relative">
-            <PageCoverImage :cover-image="conferencePage.cover_image" v-if="conferencePage.cover_image" />
+            <PageCoverImage v-if='!conferencePage.video && conferencePage.cover_image' :cover-image="conferencePage.cover_image"/>
             <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />
                <SectionHeading class="mt-8 md:mt-0 md:pt-2/5-screen lg:pt-1/2-screen" element="h1">
@@ -11,13 +11,34 @@
                   class="mt-8 text-3xl md:text-5xl font-black leading-normal text-white"
                   :html="conferencePage.intro_heading"
                 />
-                <InnerHtml
-                    class="mt-2 text-2xl font-light leading-normal text-white"
-                    :html="conferencePage.intro_text_1"
-                />
             </div>
         </section>
-        <section class="relative">
+
+      <section v-if='conferencePage.video' class='mt-16 md:mt-28 lg:mt-32'>
+        <ScrollDownMouse />
+        <div class="bg-gray-900">
+          <video
+            class="min-h-80 w-full object-cover"
+            :src="videoUrl || ''"
+            :aria-label="conferencePage.video.title || ''"
+            autoplay
+            loop
+            muted
+            playsinline
+          />
+        </div>
+      </section>
+
+      <section class="relative">
+        <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
+          <InnerHtml
+            class="mt-2 text-2xl font-light leading-normal text-white"
+            :html="conferencePage.intro_text_1"
+          />
+        </div>
+      </section>
+
+      <section class="relative">
           <ConferenceSection :heading='"Termine"' :conferences="conferences" />
         </section>
 
@@ -52,6 +73,7 @@ import { useDirectus } from '~/composables/useDirectus'
 import type { DirectusConferenceItem, DirectusConferencePage, DirectusTestimonialItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import TestimonialSlider from '~/components/TestimonialSlider.vue';
+import { getAssetUrl } from '~/helpers/getAssetUrl';
 
 const breadcrumbs = [{ label: 'Konferenzen' }]
 const directus = useDirectus()
@@ -69,6 +91,8 @@ const { data: pageData } = useAsyncData(async () => {
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
 const conferences: ComputedRef<DirectusConferenceItem[]> = computed(() => pageData.value?.conferences || [])
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
+
+const videoUrl = computed(() => getAssetUrl(pageData.value?.conferencePage?.video))
 
 // Set loading screen
 useLoadingScreen(conferencePage)

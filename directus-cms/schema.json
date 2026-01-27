@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "directus": "11.8.0",
+  "directus": "11.14.1",
   "vendor": "postgres",
   "collections": [
     {
@@ -224,7 +224,7 @@
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": 3,
+        "sort": 1,
         "sort_field": null,
         "translations": null,
         "unarchive_value": "draft",
@@ -957,7 +957,7 @@
         "note": "Hier findest du das programmier.bar Team",
         "preview_url": null,
         "singleton": false,
-        "sort": 4,
+        "sort": 5,
         "sort_field": "sort",
         "translations": null,
         "unarchive_value": "draft",
@@ -1398,14 +1398,14 @@
         "collection": "ratings",
         "color": null,
         "display_template": null,
-        "group": "WIP",
+        "group": "Collections",
         "hidden": false,
         "icon": "thumbs_up_down",
         "item_duplication_fields": null,
         "note": null,
         "preview_url": null,
         "singleton": false,
-        "sort": 1,
+        "sort": 4,
         "sort_field": "sort",
         "translations": null,
         "unarchive_value": "draft",
@@ -1517,7 +1517,7 @@
         "note": "Hier findest du die Gäste der programmier.bar",
         "preview_url": null,
         "singleton": false,
-        "sort": 5,
+        "sort": 6,
         "sort_field": "sort",
         "translations": null,
         "unarchive_value": "draft",
@@ -1545,7 +1545,7 @@
         "note": "Hier findest du die Tags, mit denen die anderen Inhalte kategorisiert werden",
         "preview_url": null,
         "singleton": false,
-        "sort": 6,
+        "sort": 7,
         "sort_field": "sort",
         "translations": null,
         "unarchive_value": "draft",
@@ -1714,6 +1714,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": [
           "uuid"
@@ -1790,6 +1791,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -1835,6 +1837,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": [
           "user-created"
@@ -1882,6 +1885,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": [
           "date-created"
@@ -1929,6 +1933,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": [
           "user-updated"
@@ -1976,6 +1981,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 16,
         "special": [
           "date-updated"
@@ -2021,6 +2027,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": [
           "alias",
@@ -2053,6 +2060,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -2098,6 +2106,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 5,
         "special": null,
         "translations": null,
@@ -2143,6 +2152,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -2173,6 +2183,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "alias",
@@ -2211,6 +2222,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -2254,6 +2266,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -2297,6 +2310,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 10,
         "special": null,
         "translations": null,
@@ -2340,6 +2354,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 7,
         "special": [
           "file"
@@ -2387,6 +2402,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "alias",
@@ -2415,6 +2431,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -2495,6 +2512,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -2540,6 +2558,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": [
           "user-created"
@@ -2587,6 +2606,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": [
           "date-created"
@@ -2634,6 +2654,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": [
           "user-updated"
@@ -2681,6 +2702,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": [
           "date-updated"
@@ -2726,6 +2748,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -2769,6 +2792,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -2812,6 +2836,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -2855,6 +2880,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -2898,6 +2924,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -2941,6 +2968,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -2986,6 +3014,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "user-created"
@@ -3033,6 +3062,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "date-created"
@@ -3080,6 +3110,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "user-updated"
@@ -3127,6 +3158,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": [
           "date-updated"
@@ -3187,6 +3219,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -3230,6 +3263,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -3273,6 +3307,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -3316,6 +3351,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "uuid"
@@ -3404,6 +3440,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -3449,6 +3486,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "user-created"
@@ -3496,6 +3534,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": [
           "date-created"
@@ -3543,6 +3582,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "user-updated"
@@ -3590,6 +3630,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "date-updated"
@@ -3635,6 +3676,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 7,
         "special": [
           "cast-json"
@@ -3680,6 +3722,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "uuid"
@@ -3768,6 +3811,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -3813,6 +3857,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "user-created"
@@ -3860,6 +3905,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "date-created"
@@ -3907,6 +3953,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "user-updated"
@@ -3954,6 +4001,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": [
           "date-updated"
@@ -3999,6 +4047,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -4042,6 +4091,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -4087,6 +4137,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": [
           "alias",
@@ -4117,6 +4168,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "alias",
@@ -4145,6 +4197,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": [
           "file"
@@ -4190,7 +4243,8 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 12,
+        "searchable": true,
+        "sort": 13,
         "special": null,
         "translations": null,
         "validation": null,
@@ -4233,7 +4287,8 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 13,
+        "searchable": true,
+        "sort": 14,
         "special": null,
         "translations": null,
         "validation": null,
@@ -4276,7 +4331,8 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 14,
+        "searchable": true,
+        "sort": 15,
         "special": null,
         "translations": null,
         "validation": null,
@@ -4321,7 +4377,8 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 15,
+        "searchable": true,
+        "sort": 16,
         "special": [
           "alias",
           "no-data"
@@ -4349,7 +4406,8 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 16,
+        "searchable": true,
+        "sort": 17,
         "special": null,
         "translations": null,
         "validation": null,
@@ -4392,7 +4450,8 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 17,
+        "searchable": true,
+        "sort": 18,
         "special": null,
         "translations": null,
         "validation": null,
@@ -4458,7 +4517,8 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 18,
+        "searchable": true,
+        "sort": 19,
         "special": [
           "cast-json"
         ],
@@ -4487,6 +4547,56 @@
       }
     },
     {
+      "collection": "conference_page",
+      "field": "video",
+      "type": "uuid",
+      "meta": {
+        "collection": "conference_page",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "video",
+        "group": null,
+        "hidden": false,
+        "interface": "file",
+        "note": null,
+        "options": {
+          "enableCreate": false,
+          "filter": null,
+          "folder": "e132fe08-d7c6-478c-9b75-68676be8783d"
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 12,
+        "special": [
+          "file"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "video",
+        "table": "conference_page",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_files",
+        "foreign_key_column": "id"
+      }
+    },
+    {
       "collection": "conferences",
       "field": "id",
       "type": "uuid",
@@ -4503,6 +4613,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "uuid"
@@ -4591,6 +4702,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -4634,6 +4746,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -4679,6 +4792,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "user-created"
@@ -4726,6 +4840,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "date-created"
@@ -4773,6 +4888,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "user-updated"
@@ -4820,6 +4936,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": [
           "date-updated"
@@ -4865,6 +4982,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -4908,7 +5026,8 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 15,
+        "searchable": true,
+        "sort": 16,
         "special": null,
         "translations": null,
         "validation": null,
@@ -4951,7 +5070,8 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 16,
+        "searchable": true,
+        "sort": 17,
         "special": null,
         "translations": null,
         "validation": null,
@@ -5018,7 +5138,8 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 21,
+        "searchable": true,
+        "sort": 22,
         "special": [
           "cast-json"
         ],
@@ -5065,6 +5186,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": [
           "file"
@@ -5072,7 +5194,7 @@
         "translations": null,
         "validation": null,
         "validation_message": null,
-        "width": "full"
+        "width": "half"
       },
       "schema": {
         "name": "cover_image",
@@ -5114,7 +5236,8 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 17,
+        "searchable": true,
+        "sort": 18,
         "special": [
           "m2m"
         ],
@@ -5141,6 +5264,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": null,
         "translations": null,
@@ -5184,6 +5308,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": null,
         "translations": null,
@@ -5227,6 +5352,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": null,
         "translations": null,
@@ -5270,6 +5396,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -5315,6 +5442,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": [
           "file"
@@ -5322,7 +5450,7 @@
         "translations": null,
         "validation": null,
         "validation_message": null,
-        "width": "full"
+        "width": "half"
       },
       "schema": {
         "name": "poster",
@@ -5426,7 +5554,8 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 18,
+        "searchable": true,
+        "sort": 19,
         "special": [
           "cast-json"
         ],
@@ -5476,7 +5605,8 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 20,
+        "searchable": true,
+        "sort": 21,
         "special": [
           "m2m"
         ],
@@ -5507,7 +5637,8 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 19,
+        "searchable": true,
+        "sort": 20,
         "special": [
           "m2m"
         ],
@@ -5534,7 +5665,8 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 23,
+        "searchable": true,
+        "sort": 24,
         "special": [
           "cast-boolean"
         ],
@@ -5581,7 +5713,8 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 22,
+        "searchable": true,
+        "sort": 23,
         "special": [
           "alias",
           "no-data"
@@ -5669,7 +5802,8 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 26,
+        "searchable": true,
+        "sort": 27,
         "special": [
           "cast-json"
         ],
@@ -5714,7 +5848,8 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 24,
+        "searchable": true,
+        "sort": 25,
         "special": null,
         "translations": null,
         "validation": null,
@@ -5757,7 +5892,8 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 25,
+        "searchable": true,
+        "sort": 26,
         "special": null,
         "translations": null,
         "validation": null,
@@ -5803,7 +5939,8 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 27,
+        "searchable": true,
+        "sort": 28,
         "special": [
           "m2m"
         ],
@@ -5811,6 +5948,55 @@
         "validation": null,
         "validation_message": null,
         "width": "full"
+      }
+    },
+    {
+      "collection": "conferences",
+      "field": "video",
+      "type": "uuid",
+      "meta": {
+        "collection": "conferences",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "video",
+        "group": null,
+        "hidden": false,
+        "interface": "file",
+        "note": null,
+        "options": {
+          "enableCreate": false,
+          "folder": "e132fe08-d7c6-478c-9b75-68676be8783d"
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 15,
+        "special": [
+          "file"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "video",
+        "table": "conferences",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_files",
+        "foreign_key_column": "id"
       }
     },
     {
@@ -5830,6 +6016,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -5873,6 +6060,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -5916,6 +6104,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -5959,6 +6148,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -6002,6 +6192,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -6045,6 +6236,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -6088,6 +6280,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -6131,6 +6324,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -6174,6 +6368,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -6217,6 +6412,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -6260,6 +6456,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -6303,6 +6500,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -6346,6 +6544,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -6389,6 +6588,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -6432,6 +6632,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -6475,6 +6676,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -6518,6 +6720,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": [
           "uuid"
@@ -6594,6 +6797,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -6639,6 +6843,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": [
           "user-created"
@@ -6686,6 +6891,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": [
           "date-created"
@@ -6733,6 +6939,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": [
           "user-updated"
@@ -6780,6 +6987,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": [
           "date-updated"
@@ -6825,6 +7033,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": [
           "alias",
@@ -6855,6 +7064,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -6887,6 +7097,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -6932,6 +7143,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 5,
         "special": null,
         "translations": null,
@@ -6977,6 +7189,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "alias",
@@ -7007,6 +7220,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "alias",
@@ -7045,6 +7259,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -7098,6 +7313,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -7143,6 +7359,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 7,
         "special": null,
         "translations": null,
@@ -7188,6 +7405,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "m2m"
@@ -7215,6 +7433,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "uuid"
@@ -7303,6 +7522,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -7346,6 +7566,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -7391,6 +7612,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": [
           "user-created"
@@ -7438,6 +7660,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "date-created"
@@ -7485,6 +7708,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "user-updated"
@@ -7532,6 +7756,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "date-updated"
@@ -7577,6 +7802,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -7620,6 +7846,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -7666,6 +7893,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": [
           "alias",
@@ -7694,6 +7922,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": [
           "uuid"
@@ -7770,6 +7999,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -7815,6 +8045,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": [
           "user-created"
@@ -7862,6 +8093,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": [
           "date-created"
@@ -7909,6 +8141,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": [
           "user-updated"
@@ -7956,6 +8189,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": [
           "date-updated"
@@ -8001,6 +8235,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": [
           "alias",
@@ -8031,6 +8266,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -8063,6 +8299,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -8108,6 +8345,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 5,
         "special": null,
         "translations": null,
@@ -8153,6 +8391,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 7,
         "special": null,
         "translations": null,
@@ -8206,6 +8445,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -8251,6 +8491,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "alias",
@@ -8281,6 +8522,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "alias",
@@ -8309,6 +8551,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": [
           "uuid"
@@ -8385,6 +8628,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -8430,6 +8674,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 16,
         "special": [
           "user-created"
@@ -8477,6 +8722,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 17,
         "special": [
           "date-created"
@@ -8524,6 +8770,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 18,
         "special": [
           "user-updated"
@@ -8571,6 +8818,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 19,
         "special": [
           "date-updated"
@@ -8616,6 +8864,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": [
           "alias",
@@ -8646,6 +8895,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -8676,6 +8926,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "alias",
@@ -8708,6 +8959,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -8753,6 +9005,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 5,
         "special": null,
         "translations": null,
@@ -8798,6 +9051,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 12,
         "special": null,
         "translations": null,
@@ -8843,6 +9097,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "alias",
@@ -8871,6 +9126,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 8,
         "special": [
           "file"
@@ -8942,6 +9198,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 10,
         "special": [
           "cast-json"
@@ -8987,6 +9244,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 7,
         "special": null,
         "translations": null,
@@ -9030,6 +9288,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": null,
         "translations": null,
@@ -9073,6 +9332,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": null,
         "translations": null,
@@ -9118,6 +9378,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": [
           "m2a"
@@ -9145,6 +9406,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -9188,6 +9450,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -9231,6 +9494,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -9274,6 +9538,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -9317,6 +9582,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -9360,6 +9626,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -9403,6 +9670,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -9446,6 +9714,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -9489,6 +9758,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "uuid"
@@ -9565,6 +9835,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -9610,6 +9881,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "user-created"
@@ -9657,6 +9929,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "date-created"
@@ -9704,6 +9977,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": [
           "user-updated"
@@ -9751,6 +10025,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": [
           "date-updated"
@@ -9796,6 +10071,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": [
           "alias",
@@ -9840,6 +10116,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -9883,6 +10160,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -9926,6 +10204,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -9969,6 +10248,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -10012,6 +10292,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -10055,6 +10336,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -10135,6 +10417,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -10180,6 +10463,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": [
           "user-created"
@@ -10227,6 +10511,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": [
           "date-created"
@@ -10274,6 +10559,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": [
           "user-updated"
@@ -10321,6 +10607,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": [
           "date-updated"
@@ -10366,6 +10653,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -10409,6 +10697,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -10452,6 +10741,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -10495,6 +10785,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -10538,6 +10829,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -10581,6 +10873,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -10624,6 +10917,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -10667,6 +10961,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -10710,6 +11005,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -10753,6 +11049,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -10796,6 +11093,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": [
           "uuid"
@@ -10872,6 +11170,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -10917,6 +11216,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": [
           "user-created"
@@ -10964,6 +11264,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 16,
         "special": [
           "date-created"
@@ -11011,6 +11312,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 17,
         "special": [
           "user-updated"
@@ -11058,6 +11360,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 18,
         "special": [
           "date-updated"
@@ -11103,6 +11406,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": [
           "alias",
@@ -11133,6 +11437,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -11163,6 +11468,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "alias",
@@ -11193,6 +11499,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "alias",
@@ -11225,6 +11532,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -11270,6 +11578,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 5,
         "special": null,
         "translations": null,
@@ -11315,6 +11624,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -11368,6 +11678,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -11421,6 +11732,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 10,
         "special": null,
         "translations": null,
@@ -11466,6 +11778,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 11,
         "special": null,
         "translations": null,
@@ -11509,6 +11822,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 7,
         "special": [
           "file"
@@ -11556,6 +11870,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 12,
         "special": null,
         "translations": null,
@@ -11599,6 +11914,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -11642,6 +11958,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -11685,6 +12002,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -11728,6 +12046,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -11771,6 +12090,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -11814,6 +12134,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -11857,6 +12178,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -11900,6 +12222,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -11943,6 +12266,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 21,
         "special": [
           "uuid"
@@ -12019,6 +12343,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -12062,6 +12387,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 22,
         "special": null,
         "translations": null,
@@ -12107,6 +12433,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 23,
         "special": [
           "user-created"
@@ -12154,6 +12481,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 24,
         "special": [
           "date-created"
@@ -12201,6 +12529,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 25,
         "special": [
           "user-updated"
@@ -12248,6 +12577,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 26,
         "special": [
           "date-updated"
@@ -12293,6 +12623,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -12338,6 +12669,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 27,
         "special": null,
         "translations": null,
@@ -12391,6 +12723,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": null,
         "translations": null,
@@ -12444,6 +12777,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": null,
         "translations": null,
@@ -12499,6 +12833,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": [
           "file"
@@ -12556,6 +12891,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -12636,6 +12972,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": null,
         "translations": null,
@@ -12681,6 +13018,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": null,
         "translations": null,
@@ -12736,6 +13074,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": null,
         "translations": null,
@@ -12782,6 +13121,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 16,
         "special": [
           "alias",
@@ -12812,6 +13152,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -12840,6 +13181,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 20,
         "special": [
           "alias",
@@ -12870,6 +13212,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "alias",
@@ -12913,6 +13256,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": [
           "alias",
@@ -12941,6 +13285,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": [
           "files"
@@ -12970,6 +13315,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 17,
         "special": [
           "m2m"
@@ -12999,6 +13345,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 18,
         "special": [
           "m2m"
@@ -13028,6 +13375,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 19,
         "special": [
           "m2m"
@@ -13068,6 +13416,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": null,
         "translations": null,
@@ -13115,6 +13464,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": [
           "m2m"
@@ -13142,6 +13492,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -13185,6 +13536,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -13228,6 +13580,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -13271,6 +13624,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -13314,6 +13668,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -13357,6 +13712,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -13400,6 +13756,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -13443,6 +13800,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -13486,6 +13844,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 29,
         "special": [
           "uuid"
@@ -13562,6 +13921,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -13605,6 +13965,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": null,
         "translations": null,
@@ -13650,6 +14011,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 31,
         "special": [
           "user-created"
@@ -13697,6 +14059,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 30,
         "special": [
           "date-created"
@@ -13744,6 +14107,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 32,
         "special": [
           "user-updated"
@@ -13791,6 +14155,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 33,
         "special": [
           "date-updated"
@@ -13836,6 +14201,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -13891,6 +14257,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": null,
         "translations": null,
@@ -13946,6 +14313,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -14014,6 +14382,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -14069,6 +14438,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": null,
         "translations": null,
@@ -14135,6 +14505,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": null,
         "translations": null,
@@ -14188,6 +14559,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": [
           "file"
@@ -14243,6 +14615,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": [
           "file"
@@ -14290,6 +14663,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 26,
         "special": [
           "o2m"
@@ -14319,6 +14693,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -14359,6 +14734,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": [
           "alias",
@@ -14389,6 +14765,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "alias",
@@ -14419,6 +14796,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 23,
         "special": [
           "alias",
@@ -14447,6 +14825,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 28,
         "special": [
           "alias",
@@ -14477,6 +14856,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 27,
         "special": [
           "m2m"
@@ -14506,6 +14886,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 24,
         "special": [
           "m2m"
@@ -14535,6 +14916,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 25,
         "special": [
           "m2m"
@@ -14564,6 +14946,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 34,
         "special": [
           "cast-boolean"
@@ -14609,6 +14992,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 35,
         "special": [
           "m2m"
@@ -14636,6 +15020,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": null,
         "translations": null,
@@ -14679,6 +15064,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 18,
         "special": null,
         "translations": null,
@@ -14722,6 +15108,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 16,
         "special": null,
         "translations": null,
@@ -14765,6 +15152,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 19,
         "special": null,
         "translations": null,
@@ -14808,6 +15196,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 20,
         "special": null,
         "translations": null,
@@ -14851,6 +15240,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 21,
         "special": null,
         "translations": null,
@@ -14894,6 +15284,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 22,
         "special": null,
         "translations": null,
@@ -14937,6 +15328,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 17,
         "special": null,
         "translations": null,
@@ -14982,6 +15374,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": [
           "alias",
@@ -15010,6 +15403,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "uuid"
@@ -15098,6 +15492,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -15141,6 +15536,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -15186,6 +15582,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": [
           "date-created"
@@ -15233,6 +15630,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "user-updated"
@@ -15280,6 +15678,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "date-updated"
@@ -15325,6 +15724,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": null,
         "translations": null,
@@ -15370,6 +15770,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": [
           "file"
@@ -15415,6 +15816,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -15460,6 +15862,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": [
           "m2m"
@@ -15487,6 +15890,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": [
           "uuid"
@@ -15563,6 +15967,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -15608,6 +16013,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": [
           "user-created"
@@ -15655,6 +16061,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": [
           "date-created"
@@ -15702,6 +16109,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": [
           "user-updated"
@@ -15749,6 +16157,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": [
           "date-updated"
@@ -15794,6 +16203,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": [
           "alias",
@@ -15824,6 +16234,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -15854,6 +16265,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "alias",
@@ -15884,6 +16296,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "alias",
@@ -15916,6 +16329,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -15961,6 +16375,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 5,
         "special": null,
         "translations": null,
@@ -16014,6 +16429,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -16059,6 +16475,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 7,
         "special": null,
         "translations": null,
@@ -16102,6 +16519,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -16145,6 +16563,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -16188,6 +16607,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -16231,6 +16651,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -16274,6 +16695,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 17,
         "special": [
           "uuid"
@@ -16350,6 +16772,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -16393,6 +16816,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 18,
         "special": null,
         "translations": null,
@@ -16438,6 +16862,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 19,
         "special": [
           "user-created"
@@ -16485,6 +16910,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 20,
         "special": [
           "date-created"
@@ -16532,6 +16958,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 21,
         "special": [
           "user-updated"
@@ -16579,6 +17006,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 22,
         "special": [
           "date-updated"
@@ -16624,6 +17052,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -16679,6 +17108,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": null,
         "translations": null,
@@ -16745,6 +17175,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -16800,6 +17231,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": null,
         "translations": null,
@@ -16855,6 +17287,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": [
           "file"
@@ -16912,6 +17345,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": [
           "m2o"
@@ -16959,6 +17393,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": [
           "m2o"
@@ -17006,6 +17441,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": [
           "m2o"
@@ -17051,6 +17487,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 16,
         "special": [
           "alias",
@@ -17081,6 +17518,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -17121,6 +17559,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": [
           "alias",
@@ -17151,6 +17590,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "alias",
@@ -17181,6 +17621,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": [
           "alias",
@@ -17211,6 +17652,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": [
           "alias",
@@ -17241,6 +17683,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": [
           "m2m"
@@ -17268,6 +17711,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -17311,6 +17755,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -17354,6 +17799,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -17397,6 +17843,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -17440,6 +17887,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 16,
         "special": [
           "uuid"
@@ -17516,6 +17964,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -17561,6 +18010,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 17,
         "special": [
           "user-created"
@@ -17608,6 +18058,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 18,
         "special": [
           "date-created"
@@ -17655,6 +18106,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 19,
         "special": [
           "user-updated"
@@ -17702,6 +18154,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 20,
         "special": [
           "date-updated"
@@ -17747,6 +18200,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": [
           "alias",
@@ -17777,6 +18231,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -17807,6 +18262,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "alias",
@@ -17837,6 +18293,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "alias",
@@ -17869,6 +18326,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -17914,6 +18372,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 5,
         "special": null,
         "translations": null,
@@ -17957,6 +18416,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -18010,6 +18470,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -18063,6 +18524,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 10,
         "special": null,
         "translations": null,
@@ -18106,6 +18568,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 12,
         "special": null,
         "translations": null,
@@ -18149,6 +18612,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 13,
         "special": null,
         "translations": null,
@@ -18192,6 +18656,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 11,
         "special": null,
         "translations": null,
@@ -18235,6 +18700,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 7,
         "special": [
           "file"
@@ -18280,6 +18746,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 14,
         "special": null,
         "translations": null,
@@ -18323,6 +18790,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -18366,6 +18834,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -18409,6 +18878,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -18452,6 +18922,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -18495,6 +18966,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -18538,6 +19010,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -18581,6 +19054,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -18624,6 +19098,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -18667,6 +19142,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 27,
         "special": [
           "uuid"
@@ -18743,6 +19219,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -18786,6 +19263,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 34,
         "special": null,
         "translations": null,
@@ -18831,6 +19309,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 30,
         "special": [
           "user-created"
@@ -18878,6 +19357,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 31,
         "special": [
           "date-created"
@@ -18925,6 +19405,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 32,
         "special": [
           "user-updated"
@@ -18972,6 +19453,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 33,
         "special": [
           "date-updated"
@@ -19017,6 +19499,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": null,
         "translations": null,
@@ -19074,6 +19557,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 28,
         "special": null,
         "translations": null,
@@ -19146,6 +19630,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -19247,6 +19732,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -19302,6 +19788,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": null,
         "translations": null,
@@ -19357,6 +19844,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": [
           "file"
@@ -19402,6 +19890,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": [
           "file"
@@ -19474,6 +19963,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": null,
         "translations": null,
@@ -19529,6 +20019,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": [
           "file"
@@ -19576,6 +20067,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": null,
         "translations": null,
@@ -19636,6 +20128,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 17,
         "special": null,
         "translations": null,
@@ -19681,6 +20174,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 18,
         "special": null,
         "translations": null,
@@ -19726,6 +20220,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 19,
         "special": null,
         "translations": null,
@@ -19771,6 +20266,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 20,
         "special": null,
         "translations": null,
@@ -19816,6 +20312,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 24,
         "special": [
           "o2m"
@@ -19843,6 +20340,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 26,
         "special": [
           "alias",
@@ -19873,6 +20371,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": [
           "alias",
@@ -19903,6 +20402,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "alias",
@@ -19943,6 +20443,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "alias",
@@ -19973,6 +20474,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 21,
         "special": [
           "alias",
@@ -20001,6 +20503,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 29,
         "special": null,
         "translations": null,
@@ -20056,6 +20559,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -20086,6 +20590,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 22,
         "special": [
           "m2m"
@@ -20115,6 +20620,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 23,
         "special": [
           "m2m"
@@ -20144,6 +20650,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 25,
         "special": [
           "m2m"
@@ -20173,6 +20680,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 16,
         "special": null,
         "translations": null,
@@ -20216,6 +20724,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 35,
         "special": null,
         "translations": null,
@@ -20259,6 +20768,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 36,
         "special": null,
         "translations": null,
@@ -20302,6 +20812,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 37,
         "special": [
           "cast-boolean"
@@ -20347,6 +20858,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "alias",
@@ -20375,6 +20887,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "uuid"
@@ -20451,6 +20964,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -20496,6 +21010,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "user-created"
@@ -20543,6 +21058,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "date-created"
@@ -20590,6 +21106,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": [
           "user-updated"
@@ -20637,6 +21154,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": [
           "date-updated"
@@ -20682,6 +21200,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": [
           "alias",
@@ -20726,6 +21245,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -20769,6 +21289,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -20812,6 +21333,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -20898,6 +21420,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -20943,6 +21466,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "user-created"
@@ -20990,6 +21514,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": [
           "date-created"
@@ -21037,6 +21562,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "user-updated"
@@ -21084,6 +21610,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "date-updated"
@@ -21129,6 +21656,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": null,
         "translations": null,
@@ -21172,6 +21700,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -21215,6 +21744,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -21258,6 +21788,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": null,
         "translations": null,
@@ -21301,6 +21832,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": null,
         "translations": null,
@@ -21344,6 +21876,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": null,
         "translations": null,
@@ -21387,6 +21920,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": null,
         "translations": null,
@@ -21430,6 +21964,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": null,
         "translations": null,
@@ -21473,6 +22008,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "uuid"
@@ -21561,6 +22097,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -21604,6 +22141,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -21649,6 +22187,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": [
           "user-created"
@@ -21696,6 +22235,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "date-created"
@@ -21743,6 +22283,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "user-updated"
@@ -21790,6 +22331,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "date-updated"
@@ -21835,6 +22377,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -21878,6 +22421,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -21923,6 +22467,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": null,
         "translations": null,
@@ -21966,6 +22511,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": null,
         "translations": null,
@@ -22009,6 +22555,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": null,
         "translations": null,
@@ -22052,6 +22599,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": null,
         "translations": null,
@@ -22097,6 +22645,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": [
           "file"
@@ -22145,6 +22694,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 16,
         "special": [
           "m2m"
@@ -22175,6 +22725,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 17,
         "special": [
           "m2m"
@@ -22202,6 +22753,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 19,
         "special": [
           "cast-boolean"
@@ -22247,6 +22799,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 18,
         "special": null,
         "translations": null,
@@ -22290,6 +22843,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 20,
         "special": null,
         "translations": null,
@@ -22333,6 +22887,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 21,
         "special": [
           "cast-boolean"
@@ -22378,6 +22933,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 22,
         "special": [
           "m2m"
@@ -22405,6 +22961,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": null,
         "translations": null,
@@ -22448,6 +23005,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -22491,6 +23049,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -22534,6 +23093,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -22577,6 +23137,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -22620,6 +23181,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -22663,6 +23225,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -22706,6 +23269,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -22751,6 +23315,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "user-created"
@@ -22798,6 +23363,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "date-created"
@@ -22845,6 +23411,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "user-updated"
@@ -22892,6 +23459,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": [
           "date-updated"
@@ -22937,6 +23505,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -22980,6 +23549,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -23038,6 +23608,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -23081,6 +23652,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "uuid"
@@ -23169,6 +23741,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -23212,6 +23785,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -23257,6 +23831,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": [
           "user-created"
@@ -23304,6 +23879,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "date-created"
@@ -23351,6 +23927,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "user-updated"
@@ -23398,6 +23975,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "date-updated"
@@ -23458,6 +24036,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -23503,6 +24082,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 9,
         "special": [
           "m2a"
@@ -23511,6 +24091,98 @@
         "validation": null,
         "validation_message": null,
         "width": "full"
+      }
+    },
+    {
+      "collection": "ratings",
+      "field": "update_token",
+      "type": "uuid",
+      "meta": {
+        "collection": "ratings",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "update_token",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": {
+          "iconLeft": "vpn_key"
+        },
+        "readonly": true,
+        "required": true,
+        "searchable": true,
+        "sort": 10,
+        "special": [
+          "uuid"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "update_token",
+        "table": "ratings",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ratings",
+      "field": "comment",
+      "type": "text",
+      "meta": {
+        "collection": "ratings",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "comment",
+        "group": null,
+        "hidden": false,
+        "interface": "input-multiline",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 11,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "comment",
+        "table": "ratings",
+        "data_type": "text",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
       }
     },
     {
@@ -23530,6 +24202,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -23573,6 +24246,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -23616,6 +24290,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -23659,6 +24334,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -23702,6 +24378,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "uuid"
@@ -23790,6 +24467,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -23835,6 +24513,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "user-created"
@@ -23882,6 +24561,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": [
           "date-created"
@@ -23929,6 +24609,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "user-updated"
@@ -23976,6 +24657,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "date-updated"
@@ -24021,6 +24703,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": null,
         "translations": null,
@@ -24080,6 +24763,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -24123,6 +24807,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -24166,6 +24851,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -24209,6 +24895,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -24252,6 +24939,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": null,
         "special": null,
         "translations": null,
@@ -24295,6 +24983,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 28,
         "special": [
           "uuid"
@@ -24371,6 +25060,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -24414,6 +25104,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": null,
         "translations": null,
@@ -24459,6 +25150,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 30,
         "special": [
           "user-created"
@@ -24506,6 +25198,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 31,
         "special": [
           "date-created"
@@ -24553,6 +25246,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 32,
         "special": [
           "user-updated"
@@ -24600,6 +25294,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 33,
         "special": [
           "date-updated"
@@ -24645,6 +25340,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -24688,6 +25384,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 29,
         "special": null,
         "translations": null,
@@ -24733,6 +25430,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": null,
         "translations": null,
@@ -24788,6 +25486,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -24843,6 +25542,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": null,
         "translations": null,
@@ -24898,6 +25598,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -24951,6 +25652,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": null,
         "translations": null,
@@ -25004,6 +25706,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": [
           "file"
@@ -25049,6 +25752,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": [
           "file"
@@ -25096,6 +25800,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": null,
         "translations": null,
@@ -25141,6 +25846,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": null,
         "translations": null,
@@ -25186,6 +25892,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 17,
         "special": null,
         "translations": null,
@@ -25231,6 +25938,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 18,
         "special": null,
         "translations": null,
@@ -25276,6 +25984,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 19,
         "special": null,
         "translations": null,
@@ -25321,6 +26030,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 20,
         "special": null,
         "translations": null,
@@ -25366,6 +26076,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 25,
         "special": [
           "o2m"
@@ -25395,6 +26106,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -25425,6 +26137,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "alias",
@@ -25455,6 +26168,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 21,
         "special": [
           "alias",
@@ -25495,6 +26209,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": [
           "alias",
@@ -25523,6 +26238,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 27,
         "special": [
           "alias",
@@ -25553,6 +26269,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 22,
         "special": [
           "m2m"
@@ -25582,6 +26299,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 24,
         "special": [
           "m2m"
@@ -25611,6 +26329,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 26,
         "special": [
           "m2m"
@@ -25638,6 +26357,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 16,
         "special": null,
         "translations": null,
@@ -25683,6 +26403,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 34,
         "special": [
           "m2m"
@@ -25712,6 +26433,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 35,
         "special": [
           "cast-boolean"
@@ -25757,6 +26479,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": [
           "uuid"
@@ -25833,6 +26556,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -25876,6 +26600,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": null,
         "translations": null,
@@ -25921,6 +26646,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 16,
         "special": [
           "user-created"
@@ -25968,6 +26694,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 17,
         "special": [
           "date-created"
@@ -26015,6 +26742,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 18,
         "special": [
           "user-updated"
@@ -26062,6 +26790,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 19,
         "special": [
           "date-updated"
@@ -26107,6 +26836,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -26162,6 +26892,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": null,
         "translations": null,
@@ -26207,6 +26938,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "alias",
@@ -26237,6 +26969,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "alias",
@@ -26267,6 +27000,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "alias",
@@ -26295,6 +27029,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 13,
         "special": [
           "alias",
@@ -26335,6 +27070,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": [
           "alias",
@@ -26365,6 +27101,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": [
           "m2m"
@@ -26394,6 +27131,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": [
           "m2m"
@@ -26423,6 +27161,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": [
           "m2m"
@@ -26452,6 +27191,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": [
           "m2m"
@@ -26481,6 +27221,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": [
           "m2m"
@@ -26508,6 +27249,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "uuid"
@@ -26596,6 +27338,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -26639,6 +27382,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -26684,6 +27428,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": [
           "user-created"
@@ -26731,6 +27476,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "date-created"
@@ -26778,6 +27524,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "user-updated"
@@ -26825,6 +27572,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "date-updated"
@@ -26870,6 +27618,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": null,
         "translations": null,
@@ -26925,6 +27674,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -26968,6 +27718,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": null,
         "translations": null,
@@ -27013,6 +27764,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": [
           "file"
@@ -27058,6 +27810,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": null,
         "translations": null,
@@ -27104,6 +27857,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 14,
         "special": [
           "m2m"
@@ -27134,6 +27888,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 15,
         "special": [
           "m2m"
@@ -27165,6 +27920,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 16,
         "special": [
           "m2m"
@@ -27196,6 +27952,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 17,
         "special": [
           "m2m"
@@ -27223,6 +27980,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -27266,6 +28024,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -27309,6 +28068,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -27352,6 +28112,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -27395,6 +28156,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": null,
         "translations": null,
@@ -27438,6 +28200,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -27481,6 +28244,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -27524,6 +28288,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -27567,6 +28332,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "uuid"
@@ -27655,6 +28421,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -27698,6 +28465,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": null,
         "translations": null,
@@ -27743,6 +28511,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "user-created"
@@ -27790,6 +28559,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "date-created"
@@ -27837,6 +28607,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 7,
         "special": [
           "user-updated"
@@ -27884,6 +28655,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 8,
         "special": [
           "date-updated"
@@ -27939,6 +28711,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 9,
         "special": null,
         "translations": null,
@@ -27984,6 +28757,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 10,
         "special": null,
         "translations": null,
@@ -28032,6 +28806,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 3,
         "special": null,
         "translations": null,
@@ -28075,6 +28850,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 1,
         "special": [
           "uuid"
@@ -28163,6 +28939,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 2,
         "special": null,
         "translations": null,
@@ -28208,6 +28985,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 3,
         "special": [
           "user-created"
@@ -28255,6 +29033,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 4,
         "special": [
           "date-created"
@@ -28302,6 +29081,7 @@
         },
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 5,
         "special": [
           "user-updated"
@@ -28349,6 +29129,7 @@
         "options": null,
         "readonly": true,
         "required": false,
+        "searchable": true,
         "sort": 6,
         "special": [
           "date-updated"
@@ -28394,6 +29175,7 @@
         "options": null,
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 8,
         "special": [
           "file"
@@ -28446,6 +29228,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 10,
         "special": null,
         "translations": null,
@@ -28500,6 +29283,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 11,
         "special": [
           "cast-json"
@@ -28548,6 +29332,7 @@
         },
         "readonly": false,
         "required": true,
+        "searchable": true,
         "sort": 7,
         "special": [
           "m2o"
@@ -28593,6 +29378,7 @@
         "options": null,
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 12,
         "special": [
           "cast-json"
@@ -28665,6 +29451,7 @@
         },
         "readonly": false,
         "required": false,
+        "searchable": true,
         "sort": 9,
         "special": [
           "cast-json"
@@ -28691,6 +29478,29 @@
         "has_auto_increment": false,
         "foreign_key_table": null,
         "foreign_key_column": null
+      }
+    }
+  ],
+  "systemFields": [
+    {
+      "collection": "directus_activity",
+      "field": "timestamp",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_revisions",
+      "field": "activity",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_revisions",
+      "field": "parent",
+      "schema": {
+        "is_indexed": true
       }
     }
   ],
@@ -28996,6 +29806,31 @@
       }
     },
     {
+      "collection": "conference_page",
+      "field": "video",
+      "related_collection": "directus_files",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "conference_page",
+        "many_field": "video",
+        "one_allowed_collections": null,
+        "one_collection": "directus_files",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "conference_page",
+        "column": "video",
+        "foreign_key_table": "directus_files",
+        "foreign_key_column": "id",
+        "constraint_name": "conference_page_video_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
+      }
+    },
+    {
       "collection": "conferences",
       "field": "user_created",
       "related_collection": "directus_users",
@@ -29091,6 +29926,31 @@
         "foreign_key_table": "directus_files",
         "foreign_key_column": "id",
         "constraint_name": "conferences_poster_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
+      }
+    },
+    {
+      "collection": "conferences",
+      "field": "video",
+      "related_collection": "directus_files",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "conferences",
+        "many_field": "video",
+        "one_allowed_collections": null,
+        "one_collection": "directus_files",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "conferences",
+        "column": "video",
+        "foreign_key_table": "directus_files",
+        "foreign_key_column": "id",
+        "constraint_name": "conferences_video_foreign",
         "on_update": "NO ACTION",
         "on_delete": "SET NULL"
       }

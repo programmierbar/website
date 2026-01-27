@@ -32,7 +32,7 @@
                 <video
                     class="min-h-80 w-full object-cover"
                     :src="videoUrl"
-                    :alt="homePage.video.title || ''"
+                    :aria-label="homePage.video.title || ''"
                     autoplay
                     loop
                     muted
@@ -94,9 +94,9 @@ import { useDirectus } from '~/composables/useDirectus'
 import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'
 import { useLoadingScreen, usePageMeta, usePodcastPlayer } from '../composables';
-import { DIRECTUS_CMS_URL } from '../config'
 import type { ConferenceItem, DirectusHomePage, DirectusTestimonialItem, LatestPodcastItem, MeetupItem } from '../types';
 import TestimonialSlider from '~/components/TestimonialSlider.vue';
+import { getAssetUrl } from '~/helpers/getAssetUrl';
 
 const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
 
@@ -183,7 +183,7 @@ usePageMeta(homePage)
 useJsonld(generatePodcastSeries())
 
 // Create Video URL
-const videoUrl = computed(() => homePage.value && `${DIRECTUS_CMS_URL}/assets/${homePage.value?.video.id}`)
+const videoUrl = computed(() => getAssetUrl(homePage.value?.video))
 </script>
 
 <style>

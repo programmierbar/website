@@ -1,14 +1,40 @@
 <template>
     <div v-if="conference && conferencePage" class='text-white'>
       <article class="relative">
+
         <section class="relative">
-          <PageCoverImage :cover-image="conference.cover_image" v-if="conference.cover_image" :overlay="false" />
+          <PageCoverImage v-if='!conference.video && conference.cover_image' :cover-image="conference.cover_image" :overlay="false" />
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
-            <SectionHeading element="h1">
+            <Breadcrumbs :breadcrumbs="breadcrumbs" />
+            <SectionHeading class="mt-8 md:mt-0 md:pt-2/5-screen lg:pt-1/2-screen" element="h1">
               {{ conference.title }}
             </SectionHeading>
             <InnerHtml
-              class="mt-2 text-md lg:text-2xl font-light leading-normal z-30 relative"
+              class="mt-8 text-3xl md:text-5xl font-black leading-normal text-white"
+              :html="conference.headline_1"
+            />
+          </div>
+        </section>
+
+        <section v-if='conference.video' class='mt-16 md:mt-28 lg:mt-32'>
+          <ScrollDownMouse />
+          <div class="bg-gray-900">
+            <video
+              class="min-h-80 w-full object-cover"
+              :src="videoUrl || ''"
+              :aria-label="conference.video.title || ''"
+              autoplay
+              loop
+              muted
+              playsinline
+            />
+          </div>
+        </section>
+
+        <section class="relative">
+          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
+            <InnerHtml
+              class="mt-2 text-2xl font-light leading-normal text-white"
               :html="conference.text_1"
             />
           </div>
@@ -178,6 +204,7 @@ import ConferenceGallery from '~/components/ConferenceGallery.vue';
 import ConferenceTickets from '~/components/ConferenceTickets.vue';
 import TestimonialSlider from '~/components/TestimonialSlider.vue';
 import type { TalkItem, DirectusFileItem } from '~/types';
+import { getAssetUrl } from '~/helpers/getAssetUrl';
 
 // Add route and router
 const route = useRoute()
@@ -269,6 +296,8 @@ const galleryImages: ComputedRef<DirectusFileItem []> = computed(() => {
 
   return images;
 })
+
+const videoUrl = computed(() => getAssetUrl(pageData.value?.conference?.video))
 
 // Set loading screen
 useLoadingScreen(conference, conferencePage)

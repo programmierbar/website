@@ -68,7 +68,7 @@ export function useDirectus() {
   async function getConferencePage() {
     return await directus.request(
       readSingleton('conference_page', {
-        fields: ['*', 'cover_image.*'],
+        fields: ['*', 'cover_image.*', 'video.*'],
       })
     )
   }
@@ -406,6 +406,8 @@ export function useDirectus() {
             'text_1',
             'cover_image.*',
             'cover_image',
+            'video.*',
+            'video',
             'poster',
             'poster.*',
             'gallery_images',
