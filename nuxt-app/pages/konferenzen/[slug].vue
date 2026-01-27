@@ -297,7 +297,7 @@ const galleryImages: ComputedRef<DirectusFileItem []> = computed(() => {
   return images;
 })
 
-const videoUrl = computed(() => pageData.value?.conference?.video && `${getAssetUrl(pageData.value?.conference?.video)}`)
+const videoUrl = computed(() => getAssetUrl(pageData.value?.conference?.video))
 
 // Set loading screen
 useLoadingScreen(conference, conferencePage)

@@ -183,7 +183,7 @@ usePageMeta(homePage)
 useJsonld(generatePodcastSeries())
 
 // Create Video URL
-const videoUrl = computed(() => homePage.value?.video && `${getAssetUrl(homePage.value?.video)}`)
+const videoUrl = computed(() => getAssetUrl(homePage.value?.video))
 </script>
 
 <style>

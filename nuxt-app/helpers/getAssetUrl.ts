@@ -3,12 +3,12 @@ import { DIRECTUS_CMS_URL } from '~/config';
 /**
  * Helper function to build the URL of an asset from Directus CMS.
  *
- * @param file The file object with an id property or a string id.
+ * @param file The file object with an id property or a string id or null
  * @param options The options object with a queryParams property.
  *
  * @returns The full URL to the asset.
  */
-export function getAssetUrl(file: { id: string } | string, options?: {queryParams: {}}): string {
+export function getAssetUrl(file?: { id: string } | string | null, options?: {queryParams: {}}): string {
 
   if (!file) return '';
 
