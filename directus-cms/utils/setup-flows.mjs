@@ -323,6 +323,200 @@ async function createCalendarViewPresets(token) {
     }
 }
 
+async function createTranscriptUploadFlow(token) {
+    console.log('\n=== Creating Transcript Upload Flow ===');
+
+    const flowName = 'Process Transcript Upload';
+
+    if (await flowExists(token, flowName)) {
+        console.log('  Flow already exists, skipping');
+        return;
+    }
+
+    // Create the flow - triggers on podcast update
+    const flowResponse = await fetch(`${DIRECTUS_URL}/flows`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            name: flowName,
+            icon: 'description',
+            color: '#8B5CF6',
+            description: 'Updates publishing status when transcript is uploaded',
+            status: 'active',
+            trigger: 'event',
+            accountability: 'all',
+            options: {
+                type: 'filter',
+                scope: ['items.update'],
+                collections: ['podcasts']
+            }
+        })
+    });
+
+    if (!flowResponse.ok) {
+        const error = await flowResponse.text();
+        console.error('  Failed to create flow:', error);
+        return;
+    }
+
+    const flow = await flowResponse.json();
+    const flowId = flow.data.id;
+    console.log('  Created flow:', flowId);
+
+    // Create operation: Check if transcript was added and update status
+    const checkAndUpdateOp = await fetch(`${DIRECTUS_URL}/operations`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            name: 'Check Transcript & Update Status',
+            key: 'check_transcript',
+            type: 'exec',
+            position_x: 19,
+            position_y: 1,
+            flow: flowId,
+            options: {
+                code: `
+module.exports = async function(data) {
+    const payload = data.$trigger.payload;
+    const keys = data.$trigger.keys;
+
+    // Check if transcript_text or transcript_file was updated
+    const hasTranscriptText = payload.transcript_text && payload.transcript_text.trim().length > 0;
+    const hasTranscriptFile = payload.transcript_file;
+
+    if (!hasTranscriptText && !hasTranscriptFile) {
+        // No transcript change, skip
+        return { skip: true };
+    }
+
+    return {
+        skip: false,
+        podcastId: keys[0],
+        hasTranscript: true
+    };
+}
+`
+            }
+        })
+    });
+
+    if (!checkAndUpdateOp.ok) {
+        console.error('  Failed to create check transcript operation');
+        return;
+    }
+
+    const checkOp = await checkAndUpdateOp.json();
+    console.log('  Created check transcript operation');
+
+    // Create condition operation to check if we should continue
+    const conditionOp = await fetch(`${DIRECTUS_URL}/operations`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            name: 'Should Update Status?',
+            key: 'condition_check',
+            type: 'condition',
+            position_x: 37,
+            position_y: 1,
+            flow: flowId,
+            options: {
+                filter: {
+                    _and: [
+                        { 'check_transcript.skip': { _eq: false } }
+                    ]
+                }
+            }
+        })
+    });
+
+    if (!conditionOp.ok) {
+        console.error('  Failed to create condition operation');
+        return;
+    }
+
+    const condOp = await conditionOp.json();
+    console.log('  Created condition operation');
+
+    // Create operation: Update podcast status
+    const updatePodcastOp = await fetch(`${DIRECTUS_URL}/operations`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            name: 'Update Podcast Status',
+            key: 'update_podcast',
+            type: 'item-update',
+            position_x: 55,
+            position_y: 1,
+            flow: flowId,
+            options: {
+                collection: 'podcasts',
+                key: '{{check_transcript.podcastId}}',
+                payload: {
+                    publishing_status: 'transcript_ready',
+                    transcript_uploaded_at: '{{$now}}'
+                }
+            }
+        })
+    });
+
+    if (!updatePodcastOp.ok) {
+        console.error('  Failed to create update podcast operation');
+        return;
+    }
+
+    const updateOp = await updatePodcastOp.json();
+    console.log('  Created update podcast operation');
+
+    // Link operations: check -> condition -> update
+    await fetch(`${DIRECTUS_URL}/operations/${checkOp.data.id}`, {
+        method: 'PATCH',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            resolve: condOp.data.id
+        })
+    });
+
+    await fetch(`${DIRECTUS_URL}/operations/${condOp.data.id}`, {
+        method: 'PATCH',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            resolve: updateOp.data.id
+        })
+    });
+
+    // Set first operation on flow
+    await fetch(`${DIRECTUS_URL}/flows/${flowId}`, {
+        method: 'PATCH',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            operation: checkOp.data.id
+        })
+    });
+
+    console.log('  Flow setup complete!');
+}
+
 async function main() {
     console.log('=== Setting up Directus Flows and Presets ===');
     console.log(`Directus URL: ${DIRECTUS_URL}`);
@@ -333,6 +527,7 @@ async function main() {
 
         await createSpeakerTokenGenerationFlow(token);
         await createCalendarViewPresets(token);
+        await createTranscriptUploadFlow(token);
 
         console.log('\n=== Setup Complete ===');
     } catch (error) {
