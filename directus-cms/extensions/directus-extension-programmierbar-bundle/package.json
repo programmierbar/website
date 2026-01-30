@@ -70,6 +70,26 @@
                 "source": "src/algolia-index/index.ts"
             },
             {
+                "type": "hook",
+                "name": "member-matching",
+                "source": "src/member-matching/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "content-generation",
+                "source": "src/content-generation/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "content-approval",
+                "source": "src/content-approval/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "social-media-publish",
+                "source": "src/social-media-publish/index.ts"
+            },
+            {
                 "type": "endpoint",
                 "name": "conference",
                 "source": "src/conference/index.ts"

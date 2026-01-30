@@ -4,6 +4,71 @@ This document outlines the vision and tasks for automating the programmier.bar p
 
 ---
 
+## Implementation Progress
+
+> Last updated: 2026-01-30
+
+### Completed Phases
+
+#### Phase 1: CMS Schema & Calendar Views ✅
+- **1.1** Planning fields added to Podcast collection (`recording_date`, `planned_publish_date`, `publishing_status`)
+- **1.2** Recording calendar view created in Directus
+- **1.3** Publishing calendar view created in Directus
+- **1.4** Speaker portal fields added (`portal_token`, `portal_token_expires`, `portal_submission_status`, etc.)
+
+#### Phase 2: Transcription Pipeline (Partial)
+- **2.1** ✅ Transcription services researched (Deepgram, AssemblyAI evaluated)
+- Transcript upload workflow implemented via Directus hook for manual Riverside transcript uploads
+- Automatic transcription from audio not yet implemented
+
+#### Phase 3: AI Content Generation ✅
+- **3.1** ✅ Shownotes style analyzed
+- **3.2** ✅ Shownotes generation prompt designed
+- **3.3** ✅ `podcast_generated_content` collection created with fields:
+  - `podcast_id`, `content_type`, `generated_text`, `status`, `generated_at`, `llm_model`, `prompt_version`
+  - Status simplified to two states: `generated` and `approved`
+- **3.4** ✅ Social media post prompts designed (LinkedIn, Instagram, Bluesky, Mastodon)
+- **3.5** ✅ Content generation implemented as Directus hook (`content-generation`) using Google Gemini API
+  - Triggers when `publishing_status` changes to `transcript_ready`
+  - Generates shownotes and social media posts from transcript
+- **3.6** ✅ Content review interface: O2M relation allows viewing/editing generated content directly in podcast edit page
+- **3.7** ✅ Approval workflow implemented as Directus hook (`content-approval`):
+  - Copies approved shownotes to podcast `description` field
+  - Updates podcast `publishing_status` to `approved` when all content is approved
+
+#### Phase 5: Speaker Self-Service Portal (Partial)
+- **5.2** ✅ Token generation flow implemented
+- **5.3** ✅ Speaker portal frontend page created (`/speaker-portal`)
+
+#### Phase 7: Heise.de Integration (Partial)
+- **7.1** ✅ Heise fields added to Podcast collection
+
+### Key Files Created/Modified
+
+**Directus Extension Hooks:**
+- `directus-cms/extensions/.../src/content-generation/index.ts` - AI content generation from transcripts
+- `directus-cms/extensions/.../src/content-approval/index.ts` - Approval workflow automation
+- `directus-cms/extensions/.../src/podcast-transcript/index.ts` - Transcript upload handling
+
+**Utility Scripts:**
+- `directus-cms/utils/setup-flows.mjs` - Sets up Directus flows and presets
+- `directus-cms/utils/setup-generated-content-relation.mjs` - Creates O2M relation for content review
+- `directus-cms/utils/cleanup-old-flow.mjs` - Removes deprecated flow data
+
+**Environment Variables Required:**
+- `GEMINI_API_KEY` - For AI content generation (add to Directus .env)
+
+### Remaining Work
+
+- **Phase 2**: Automatic transcription from audio upload (currently manual transcript upload)
+- **Phase 4**: Social media publishing automation
+- **Phase 5**: Complete speaker portal (email notifications, deadline reminders, admin review)
+- **Phase 6**: Asset production pipeline (background removal, image generation)
+- **Phase 7**: Heise.de document generation and email sending
+- **Phase 8**: Hook migration and documentation
+
+---
+
 ## Table of Contents
 
 1. [Overview](#overview)
