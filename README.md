@@ -10,15 +10,14 @@ Source code of: [https://www.programmier.bar/](https://www.programmier.bar/)
 
 ## Setup
 
-These install instructions assume you are using node version ^19.0.0 and have `yarn` installed.
-If not please, run `npm install -g yarn` before following these instructions. 
+These install instructions assume you are using Node.js version 20 or 22 (CI uses v22).
 
 ### Nuxt-App (Website)
 
 _All commands should be run from within `./nuxt-app/`_
 
-- To install the dependencies run `yarn install`, this will also trigger the `postinstall` hook and run `nuxt prepare` for you.
-- Spin up a hot-reloading development server by running `yarn run dev` and open the URL shown in your console output.
+- To install the dependencies run `npm install`, this will also trigger the `postinstall` hook and run `nuxt prepare` for you.
+- Spin up a hot-reloading development server by running `npm run dev` and open the URL shown in your console output.
 
 ### Directus
 
@@ -29,37 +28,33 @@ If you need a development instance of directus however, please follow the below 
 
 _All commands should be run from within `./directus-cms/`_
 
-- In order to have everything configured, make a copy of `.env.example` named `.env`
-- To install the dependencies run `yarn install`.
-- Then bootstrap directus using `yarn run bootstrap`. 
-- To build the code required for the extensions run `yarn run build`.
-- Spin up a development server by running `yarn run start` and open the URL shown in your console output.
+1. Copy `.env.example` to `.env`
+2. Install dependencies: `npm install`
+3. Build the extensions: `cd extensions/directus-extension-programmierbar-bundle && npm install && npm run build && cd ../..`
+4. Bootstrap Directus: `npm run bootstrap`
+5. Apply the schema: `npm run apply-schema` (confirm with 'y')
+6. Set up local dev environment: `npm run setup-local`
+7. Start the server: `npm run start`
 
-You can find the default login credentials in the `.env` file.
+You can find the default login credentials in the `.env` file (admin@programmier.bar / 123456).
 
-If you need pre-defined data structures available, you can run `yarn run apply-schema` 
-Please be aware that - for now - the included schema is not guaranteed to be in sync with the production schema.
-For instructions on how to obtain a recent schema.json file, please see `directus-cms/_requests/Directus.http`.
+**Quick setup for local development:**
+
+After the initial setup, running `npm run setup-local` will configure public permissions and populate sample data so the Nuxt website renders properly with the local Directus instance.
+
+To use the local Directus with Nuxt, create `nuxt-app/.env` with:
+```
+DIRECTUS_CMS_URL=http://localhost:8055
+```
 
 #### Extensions
 
 All extensions that are plain JavaScript and **do not** require a build process are located in `directus-cms/extensions`.
 They will automatically be loaded at runtime.
 
-Extension that **do** require a build process are located in `directus-cms/extensions-src`.
-Here, every extension is its own independent subproject that needs to be build and symlinked.
+Extensions that **do** require a build process are located in `directus-cms/extensions/directus-extension-programmierbar-bundle`.
+Build with: `npm install && npm run build`
 
-While each extension can technically be different, you can refer to our docker build process
-to see how they are being build: [Dockerfile.directus](./Dockerfile.directus)
-
-##### Publishable Interface Extension
-
-Navigate to `directus-cms/extensions-src/publishable` and run the following commands:
-
-* `npm install`
-* `npm run build`
-* `npm run link ../../extensions`
-
-## Feedback 😍 ♥️ 
+## Feedback
 
 We welcome any form of [feedback](https://www.programmier.bar/kontakt)! If you are interested, you can also create a pull request directly.
