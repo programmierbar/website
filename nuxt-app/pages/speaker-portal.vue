@@ -12,7 +12,7 @@
             <div v-else-if="error" class="mt-16">
                 <SectionHeading element="h1">Access Denied</SectionHeading>
                 <p class="mt-8 text-xl text-pink">{{ error }}</p>
-                <p class="mt-4 text-lg text-gray-400">
+                <p class="mt-4 text-lg text-white/60">
                     If you believe this is an error, please contact us at
                     <a href="mailto:podcast@programmier.bar" class="text-lime hover:text-blue">
                         podcast@programmier.bar
@@ -125,14 +125,14 @@
                                 required
                                 maxlength="2000"
                             />
-                            <p class="mt-1 text-sm text-gray-400">{{ formData.description?.length || 0 }} / 2000 Zeichen</p>
+                            <p class="mt-1 text-sm text-white/60">{{ formData.description?.length || 0 }} / 2000 Zeichen</p>
                         </div>
                     </div>
 
                     <!-- Social Links Section -->
                     <div class="bg-gray-900 p-6 md:p-8 lg:p-12">
                         <h2 class="mb-6 text-xl font-bold text-lime md:text-2xl">Social Media & Links</h2>
-                        <p class="mb-6 text-gray-400">Alle Felder sind optional. LinkedIn empfehlen wir besonders, da wir dich dort taggen können.</p>
+                        <p class="mb-6 text-white/60">Alle Felder sind optional. LinkedIn empfehlen wir besonders, da wir dich dort taggen können.</p>
 
                         <div class="grid gap-6 md:grid-cols-2">
                             <div>
@@ -218,7 +218,7 @@
                             <!-- Profile Image -->
                             <div>
                                 <label class="form-label">Profilbild *</label>
-                                <p class="mb-4 text-sm text-gray-400">
+                                <p class="mb-4 text-sm text-white/60">
                                     Ein professionelles Portrait. Mindestens 800x800 Pixel, JPG oder PNG.
                                 </p>
                                 <div class="relative">
@@ -239,7 +239,7 @@
                                             class="h-full w-full object-contain"
                                             alt="Profile preview"
                                         />
-                                        <span v-else class="text-gray-400">Klicken zum Hochladen</span>
+                                        <span v-else class="text-white/60">Klicken zum Hochladen</span>
                                     </div>
                                 </div>
                             </div>
@@ -247,7 +247,7 @@
                             <!-- Action Image -->
                             <div>
                                 <label class="form-label">Action Shot / Candid Foto *</label>
-                                <p class="mb-4 text-sm text-gray-400">
+                                <p class="mb-4 text-sm text-white/60">
                                     Ein lockeres Foto bei der Arbeit oder einer Aktivität. Mindestens 800x800 Pixel.
                                 </p>
                                 <div class="relative">
@@ -268,7 +268,7 @@
                                             class="h-full w-full object-contain"
                                             alt="Action preview"
                                         />
-                                        <span v-else class="text-gray-400">Klicken zum Hochladen</span>
+                                        <span v-else class="text-white/60">Klicken zum Hochladen</span>
                                     </div>
                                 </div>
                             </div>
@@ -479,7 +479,7 @@ async function submitForm(event: Event) {
 
 <style lang="postcss" scoped>
 .form-label {
-    @apply mb-2 block text-sm font-medium text-gray-300;
+    @apply mb-2 block text-sm font-medium text-white/70;
 }
 
 .form-input {
