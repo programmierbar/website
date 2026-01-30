@@ -295,11 +295,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { getMetaInfo } from '~/helpers'
 
 const route = useRoute()
-const runtimeConfig = useRuntimeConfig()
 
 const breadcrumbs = [{ label: 'Speaker Portal' }]
 
@@ -403,6 +402,10 @@ function formatDate(dateString: string): string {
 function handleProfileImageChange(event: Event) {
     const input = event.target as HTMLInputElement
     if (input.files && input.files[0]) {
+        // Revoke previous object URL to prevent memory leak
+        if (profileImagePreview.value) {
+            URL.revokeObjectURL(profileImagePreview.value)
+        }
         profileImageFile.value = input.files[0]
         profileImagePreview.value = URL.createObjectURL(input.files[0])
     }
@@ -411,10 +414,24 @@ function handleProfileImageChange(event: Event) {
 function handleActionImageChange(event: Event) {
     const input = event.target as HTMLInputElement
     if (input.files && input.files[0]) {
+        // Revoke previous object URL to prevent memory leak
+        if (actionImagePreview.value) {
+            URL.revokeObjectURL(actionImagePreview.value)
+        }
         actionImageFile.value = input.files[0]
         actionImagePreview.value = URL.createObjectURL(input.files[0])
     }
 }
+
+// Clean up object URLs on component unmount
+onBeforeUnmount(() => {
+    if (profileImagePreview.value) {
+        URL.revokeObjectURL(profileImagePreview.value)
+    }
+    if (actionImagePreview.value) {
+        URL.revokeObjectURL(actionImagePreview.value)
+    }
+})
 
 async function submitForm(event: Event) {
     const formElement = event.target as HTMLFormElement

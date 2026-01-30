@@ -1,3 +1,21 @@
+import { z } from 'zod'
+
+const speakerDataSchema = z.object({
+    academic_title: z.string().max(50).optional().nullable(),
+    first_name: z.string().min(1, 'Vorname ist erforderlich').max(100),
+    last_name: z.string().min(1, 'Nachname ist erforderlich').max(100),
+    occupation: z.string().min(1, 'Jobtitel und Unternehmen sind erforderlich').max(200),
+    description: z.string().min(1, 'Beschreibung ist erforderlich').max(2000),
+    website_url: z.string().url().max(500).optional().or(z.literal('')),
+    linkedin_url: z.string().url().max(500).optional().or(z.literal('')),
+    twitter_url: z.string().url().max(500).optional().or(z.literal('')),
+    bluesky_url: z.string().max(100).optional().or(z.literal('')),
+    github_url: z.string().url().max(500).optional().or(z.literal('')),
+    instagram_url: z.string().url().max(500).optional().or(z.literal('')),
+    youtube_url: z.string().url().max(500).optional().or(z.literal('')),
+    mastodon_url: z.string().url().max(500).optional().or(z.literal('')),
+})
+
 export default defineEventHandler(async (event) => {
     const formData = await readMultipartFormData(event)
 
@@ -10,7 +28,7 @@ export default defineEventHandler(async (event) => {
 
     // Extract form fields
     let token: string | undefined
-    let data: any
+    let rawData: any
     let profileImage: { filename: string; data: Buffer; type: string } | undefined
     let actionImage: { filename: string; data: Buffer; type: string } | undefined
 
@@ -18,7 +36,7 @@ export default defineEventHandler(async (event) => {
         if (field.name === 'token') {
             token = field.data.toString()
         } else if (field.name === 'data') {
-            data = JSON.parse(field.data.toString())
+            rawData = JSON.parse(field.data.toString())
         } else if (field.name === 'profile_image' && field.filename) {
             profileImage = {
                 filename: field.filename,
@@ -41,12 +59,23 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    if (!data) {
+    if (!rawData) {
         throw createError({
             statusCode: 400,
             message: 'Form data is required',
         })
     }
+
+    // Validate form data with Zod
+    const parseResult = speakerDataSchema.safeParse(rawData)
+    if (!parseResult.success) {
+        const firstError = parseResult.error.errors[0]
+        throw createError({
+            statusCode: 400,
+            message: firstError?.message || 'Ungültige Formulardaten',
+        })
+    }
+    const data = parseResult.data
 
     const config = useRuntimeConfig()
     const directusUrl = config.public.directusCmsUrl || 'http://localhost:8055'
@@ -119,6 +148,13 @@ export default defineEventHandler(async (event) => {
             if (uploadResponse.ok) {
                 const uploadData = await uploadResponse.json()
                 profileImageId = uploadData.data.id
+            } else {
+                const errorText = await uploadResponse.text()
+                console.error('Failed to upload profile image:', errorText)
+                throw createError({
+                    statusCode: 500,
+                    message: 'Profilbild konnte nicht hochgeladen werden. Bitte versuche es erneut.',
+                })
             }
         }
 
@@ -138,6 +174,13 @@ export default defineEventHandler(async (event) => {
             if (uploadResponse.ok) {
                 const uploadData = await uploadResponse.json()
                 actionImageId = uploadData.data.id
+            } else {
+                const errorText = await uploadResponse.text()
+                console.error('Failed to upload action image:', errorText)
+                throw createError({
+                    statusCode: 500,
+                    message: 'Action Shot konnte nicht hochgeladen werden. Bitte versuche es erneut.',
+                })
             }
         }
 
@@ -155,6 +198,7 @@ export default defineEventHandler(async (event) => {
             github_url: data.github_url || null,
             instagram_url: data.instagram_url || null,
             youtube_url: data.youtube_url || null,
+            mastodon_url: data.mastodon_url || null,
             portal_submission_status: 'submitted',
             portal_token: null, // Invalidate token after submission
         }
