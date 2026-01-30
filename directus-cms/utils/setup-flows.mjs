@@ -479,6 +479,53 @@ module.exports = async function(data) {
     const updateOp = await updatePodcastOp.json();
     console.log('  Created update podcast operation');
 
+    // Create operation: Trigger content generation via webhook
+    const NUXT_URL = process.env.NUXT_URL || 'http://localhost:3000';
+    const triggerGenerationOp = await fetch(`${DIRECTUS_URL}/operations`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            name: 'Trigger Content Generation',
+            key: 'trigger_generation',
+            type: 'request',
+            position_x: 73,
+            position_y: 1,
+            flow: flowId,
+            options: {
+                method: 'POST',
+                url: `${NUXT_URL}/api/generate-content`,
+                headers: [
+                    { header: 'Content-Type', value: 'application/json' }
+                ],
+                body: '{"podcastId": {{check_transcript.podcastId}}}'
+            }
+        })
+    });
+
+    if (!triggerGenerationOp.ok) {
+        const error = await triggerGenerationOp.text();
+        console.error('  Failed to create trigger generation operation:', error);
+        // Continue without this operation - content generation can be triggered manually
+    } else {
+        const triggerOp = await triggerGenerationOp.json();
+        console.log('  Created trigger content generation operation');
+
+        // Link update -> trigger
+        await fetch(`${DIRECTUS_URL}/operations/${updateOp.data.id}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                resolve: triggerOp.data.id
+            })
+        });
+    }
+
     // Link operations: check -> condition -> update
     await fetch(`${DIRECTUS_URL}/operations/${checkOp.data.id}`, {
         method: 'PATCH',
