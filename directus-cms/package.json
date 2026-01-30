@@ -11,7 +11,9 @@
     "prestart": "npm run migrate:db",
     "start": "directus start",
     "snapshot-schema": "directus schema snapshot ./schema.json --format json",
-    "apply-schema": "directus schema apply ./schema.json"
+    "apply-schema": "directus schema apply ./schema.json",
+    "setup-local": "node ./utils/setup-local.mjs",
+    "setup-local:with-data": "node ./utils/setup-local.mjs --import-data"
   },
   "dependencies": {
     "directus": "^11.0",
