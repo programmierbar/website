@@ -29,9 +29,11 @@ export default defineNuxtConfig({
 
     runtimeConfig: {
         emailPassword: '',
+        directusAdminToken: '', // Set via NUXT_DIRECTUS_ADMIN_TOKEN env var
         public: {
             FLAG_SHOW_LOGIN: FLAG_SHOW_LOGIN,
             DISCORD_INVITE_LINK: DISCORD_INVITE_LINK,
+            directusCmsUrl: DIRECTUS_CMS_URL,
         },
     },
 
