@@ -1,13 +1,11 @@
-/**
- * API endpoint for AI content generation from podcast transcripts.
- * Called by Directus Flow when publishing_status changes to 'transcript_ready'.
- *
- * Requires: NUXT_GEMINI_API_KEY environment variable
- */
+import type { Logger } from 'pino'
 
-interface GenerateContentRequest {
-    podcastId: number
-    secret?: string // Optional secret for webhook security
+interface HookServices {
+    logger: Logger
+    ItemsService: any
+    getSchema: () => Promise<any>
+    env: Record<string, string>
+    eventContext: any
 }
 
 interface PodcastData {
@@ -16,8 +14,8 @@ interface PodcastData {
     type: string
     number?: string
     transcript_text?: string
-    speakers?: Array<{ speakers_id: { first_name: string; last_name: string; occupation?: string; description?: string } }>
-    members?: Array<{ members_id: { name: string } }>
+    speakers?: Array<{ speaker: { first_name: string; last_name: string; occupation?: string; description?: string } }>
+    members?: Array<{ member: { first_name: string; last_name: string } }>
 }
 
 const WORD_COUNT_TARGETS: Record<string, string> = {
@@ -31,15 +29,15 @@ function buildShownotesPrompt(podcast: PodcastData): string {
     const episodeType = podcast.type || 'other'
     const wordCount = WORD_COUNT_TARGETS[episodeType] || '150-400'
 
-    const hosts = podcast.members?.map((m) => m.members_id?.name).filter(Boolean).join(', ') || 'programmier.bar Team'
+    const hosts = podcast.members?.map((m) => `${m.member?.first_name} ${m.member?.last_name}`.trim()).filter(Boolean).join(', ') || 'programmier.bar Team'
 
     const guests =
-        podcast.speakers?.map((s) => `${s.speakers_id?.first_name} ${s.speakers_id?.last_name}`).filter(Boolean).join(', ') || ''
+        podcast.speakers?.map((s) => `${s.speaker?.first_name} ${s.speaker?.last_name}`).filter(Boolean).join(', ') || ''
 
     const guestInfo =
         podcast.speakers
             ?.map((s) => {
-                const speaker = s.speakers_id
+                const speaker = s.speaker
                 if (!speaker) return ''
                 return `${speaker.first_name} ${speaker.last_name}${speaker.occupation ? ` - ${speaker.occupation}` : ''}${speaker.description ? `: ${speaker.description}` : ''}`
             })
@@ -88,11 +86,11 @@ function buildSocialPrompt(
     topics: string[]
 ): string {
     const guests =
-        podcast.speakers?.map((s) => `${s.speakers_id?.first_name} ${s.speakers_id?.last_name}`).filter(Boolean).join(', ') || ''
+        podcast.speakers?.map((s) => `${s.speaker?.first_name} ${s.speaker?.last_name}`).filter(Boolean).join(', ') || ''
 
     const guestCompanies =
         podcast.speakers
-            ?.map((s) => s.speakers_id?.occupation?.split(' at ')[1] || s.speakers_id?.occupation)
+            ?.map((s) => s.speaker?.occupation?.split(' at ')[1] || s.speaker?.occupation)
             .filter(Boolean)
             .join(', ') || ''
 
@@ -192,7 +190,7 @@ Antworte im JSON-Format:
 
 async function callGemini(apiKey: string, systemPrompt: string, userPrompt: string): Promise<string> {
     const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
         {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -237,58 +235,55 @@ function extractJson(text: string): any {
     throw new Error('Could not extract JSON from response')
 }
 
-export default defineEventHandler(async (event) => {
-    const body = await readBody<GenerateContentRequest>(event)
-
-    if (!body.podcastId) {
-        throw createError({
-            statusCode: 400,
-            message: 'podcastId is required',
-        })
-    }
-
-    const config = useRuntimeConfig()
-    const geminiApiKey = config.geminiApiKey
-    const directusUrl = config.public.directusCmsUrl || 'http://localhost:8055'
-    const adminToken = config.directusAdminToken
-
-    if (!geminiApiKey) {
-        throw createError({
-            statusCode: 500,
-            message: 'GEMINI_API_KEY not configured',
-        })
-    }
-
-    if (!adminToken) {
-        throw createError({
-            statusCode: 500,
-            message: 'DIRECTUS_ADMIN_TOKEN not configured',
-        })
-    }
+export async function generateContent(hookName: string, podcastId: number, services: HookServices): Promise<void> {
+    const { logger, ItemsService, getSchema, env, eventContext } = services
+    const geminiApiKey = env.GEMINI_API_KEY
 
     try {
+        const schema = await getSchema()
+
+        // Create services
+        const podcastsService = new ItemsService('podcasts', {
+            schema,
+            accountability: eventContext.accountability,
+        })
+
+        const generatedContentService = new ItemsService('podcast_generated_content', {
+            schema,
+            accountability: eventContext.accountability,
+        })
+
         // Fetch podcast with related data
-        const podcastResponse = await fetch(
-            `${directusUrl}/items/podcasts/${body.podcastId}?fields=id,title,type,number,transcript_text,speakers.speakers_id.first_name,speakers.speakers_id.last_name,speakers.speakers_id.occupation,speakers.speakers_id.description,members.members_id.name`,
-            { headers: { Authorization: `Bearer ${adminToken}` } }
-        )
-
-        if (!podcastResponse.ok) {
-            throw new Error(`Failed to fetch podcast: ${podcastResponse.status}`)
-        }
-
-        const podcastData = await podcastResponse.json()
-        const podcast: PodcastData = podcastData.data
+        const podcast: PodcastData = await podcastsService.readOne(podcastId, {
+            fields: [
+                'id',
+                'title',
+                'type',
+                'number',
+                'transcript_text',
+                'speakers.speaker.first_name',
+                'speakers.speaker.last_name',
+                'speakers.speaker.occupation',
+                'speakers.speaker.description',
+                'members.member.first_name',
+                'members.member.last_name',
+            ],
+        })
 
         if (!podcast.transcript_text) {
-            throw createError({
-                statusCode: 400,
-                message: 'Podcast has no transcript',
-            })
+            logger.warn(`${hookName}: Podcast ${podcastId} has no transcript, skipping content generation`)
+            return
         }
 
-        console.log(`Generating content for podcast: ${podcast.title}`)
+        logger.info(`${hookName}: Generating content for podcast: ${podcast.title}`)
 
+        // Update status to transcript_ready
+        logger.info(`${hookName}: Updating status to transcript_ready`)
+        await podcastsService.updateOne(podcastId, {
+            publishing_status: 'transcript_ready',
+        })
+
+        logger.info(`${hookName}: Calling Gemini API for shownotes`)
         // System prompt for shownotes
         const shownotesSystemPrompt = `Du bist ein erfahrener Content-Redakteur für den deutschen Entwickler-Podcast "programmier.bar".
 Deine Aufgabe ist es, ansprechende Shownotes für Podcast-Episoden zu erstellen, die sowohl informativ als auch einladend sind.
@@ -302,32 +297,46 @@ Stilrichtlinien:
 
         // Generate shownotes
         const shownotesPrompt = buildShownotesPrompt(podcast)
+        logger.info(`${hookName}: Sending request to Gemini API`)
         const shownotesResponse = await callGemini(geminiApiKey, shownotesSystemPrompt, shownotesPrompt)
+        logger.info(`${hookName}: Received response from Gemini API`)
         const shownotesData = extractJson(shownotesResponse)
 
-        console.log('Shownotes generated')
+        logger.info(`${hookName}: Shownotes generated for podcast ${podcastId}`)
 
         // Store shownotes in podcast_generated_content
-        const shownotesRecord = await fetch(`${directusUrl}/items/podcast_generated_content`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${adminToken}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                podcast_id: podcast.id,
-                content_type: 'shownotes',
-                generated_text: JSON.stringify(shownotesData),
-                status: 'generated',
-                generated_at: new Date().toISOString(),
-                llm_model: 'gemini-1.5-flash',
-                prompt_version: '1.0',
-            }),
-        })
+        // Format: description followed by topics, timestamps, and resources
+        let shownotesText = shownotesData.description || ''
 
-        if (!shownotesRecord.ok) {
-            console.error('Failed to store shownotes:', await shownotesRecord.text())
+        if (shownotesData.topics && shownotesData.topics.length > 0) {
+            shownotesText += '\n\n<strong>Themen:</strong>\n<ul>\n'
+            shownotesText += shownotesData.topics.map((t: string) => `<li>${t}</li>`).join('\n')
+            shownotesText += '\n</ul>'
         }
+
+        if (shownotesData.timestamps && shownotesData.timestamps.length > 0) {
+            shownotesText += '\n\n<strong>Timestamps:</strong>\n<ul>\n'
+            shownotesText += shownotesData.timestamps.map((ts: { time: string; topic: string }) => `<li>${ts.time} - ${ts.topic}</li>`).join('\n')
+            shownotesText += '\n</ul>'
+        }
+
+        if (shownotesData.resources && shownotesData.resources.length > 0) {
+            shownotesText += '\n\n<strong>Ressourcen:</strong>\n<ul>\n'
+            shownotesText += shownotesData.resources.map((r: { name: string; url?: string }) =>
+                r.url ? `<li><a href="${r.url}">${r.name}</a></li>` : `<li>${r.name}</li>`
+            ).join('\n')
+            shownotesText += '\n</ul>'
+        }
+
+        await generatedContentService.createOne({
+            podcast_id: podcast.id,
+            content_type: 'shownotes',
+            generated_text: shownotesText,
+            status: 'generated',
+            generated_at: new Date().toISOString(),
+            llm_model: 'gemini-3-flash-preview',
+            prompt_version: '1.0',
+        })
 
         // Generate social media posts
         const platforms: Array<'linkedin' | 'instagram' | 'bluesky' | 'mastodon'> = [
@@ -350,53 +359,42 @@ Stilrichtlinien:
                 const socialResponse = await callGemini(geminiApiKey, socialSystemPrompts[platform], socialPrompt)
                 const socialData = extractJson(socialResponse)
 
-                await fetch(`${directusUrl}/items/podcast_generated_content`, {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${adminToken}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        podcast_id: podcast.id,
-                        content_type: `social_${platform}`,
-                        generated_text: JSON.stringify(socialData),
-                        status: 'generated',
-                        generated_at: new Date().toISOString(),
-                        llm_model: 'gemini-1.5-flash',
-                        prompt_version: '1.0',
-                    }),
+                // Format social post: text + hashtags (if available)
+                let socialText = socialData.post_text || ''
+                if (socialData.hashtags && socialData.hashtags.length > 0) {
+                    socialText += '\n\n' + socialData.hashtags.join(' ')
+                }
+                if (socialData.tagging_suggestions && socialData.tagging_suggestions.length > 0) {
+                    socialText += '\n\nTagging: ' + socialData.tagging_suggestions.join(', ')
+                }
+
+                await generatedContentService.createOne({
+                    podcast_id: podcast.id,
+                    content_type: `social_${platform}`,
+                    generated_text: socialText,
+                    status: 'generated',
+                    generated_at: new Date().toISOString(),
+                    llm_model: 'gemini-3-flash-preview',
+                    prompt_version: '1.0',
                 })
 
-                console.log(`${platform} post generated`)
+                logger.info(`${hookName}: ${platform} post generated for podcast ${podcastId}`)
             } catch (err) {
-                console.error(`Failed to generate ${platform} post:`, err)
+                logger.error(`${hookName}: Failed to generate ${platform} post for podcast ${podcastId}:`, err)
             }
         }
 
         // Update podcast status to content_review
-        await fetch(`${directusUrl}/items/podcasts/${podcast.id}`, {
-            method: 'PATCH',
-            headers: {
-                Authorization: `Bearer ${adminToken}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                publishing_status: 'content_review',
-            }),
+        await podcastsService.updateOne(podcastId, {
+            publishing_status: 'content_review',
         })
 
-        console.log('Content generation complete')
-
-        return {
-            success: true,
-            message: 'Content generated successfully',
-            podcastId: podcast.id,
-        }
+        logger.info(`${hookName}: Content generation complete for podcast ${podcastId}`)
     } catch (err: any) {
-        console.error('Content generation error:', err)
-        throw createError({
-            statusCode: 500,
-            message: err.message || 'Content generation failed',
-        })
+        logger.error(`${hookName}: Content generation error for podcast ${podcastId}: ${err?.message || err}`)
+        if (err?.stack) {
+            logger.error(`${hookName}: Stack trace: ${err.stack}`)
+        }
+        throw err
     }
-})
+}
