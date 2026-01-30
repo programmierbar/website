@@ -80,6 +80,11 @@
                 "source": "src/content-approval/index.ts"
             },
             {
+                "type": "hook",
+                "name": "social-media-publish",
+                "source": "src/social-media-publish/index.ts"
+            },
+            {
                 "type": "endpoint",
                 "name": "conference",
                 "source": "src/conference/index.ts"
