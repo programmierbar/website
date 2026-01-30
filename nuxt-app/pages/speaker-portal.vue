@@ -399,27 +399,78 @@ function formatDate(dateString: string): string {
     })
 }
 
-function handleProfileImageChange(event: Event) {
+const MIN_IMAGE_SIZE = 800
+
+function validateImageDimensions(file: File): Promise<{ valid: boolean; width: number; height: number }> {
+    return new Promise((resolve) => {
+        const img = new Image()
+        const objectUrl = URL.createObjectURL(file)
+
+        img.onload = () => {
+            URL.revokeObjectURL(objectUrl)
+            resolve({
+                valid: img.width >= MIN_IMAGE_SIZE && img.height >= MIN_IMAGE_SIZE,
+                width: img.width,
+                height: img.height,
+            })
+        }
+
+        img.onerror = () => {
+            URL.revokeObjectURL(objectUrl)
+            resolve({ valid: false, width: 0, height: 0 })
+        }
+
+        img.src = objectUrl
+    })
+}
+
+async function handleProfileImageChange(event: Event) {
     const input = event.target as HTMLInputElement
     if (input.files && input.files[0]) {
+        const file = input.files[0]
+
+        // Validate image dimensions
+        const { valid, width, height } = await validateImageDimensions(file)
+        if (!valid) {
+            formError.value = `Profilbild muss mindestens ${MIN_IMAGE_SIZE}x${MIN_IMAGE_SIZE} Pixel groß sein. Dein Bild: ${width}x${height} Pixel.`
+            formState.value = 'error'
+            input.value = '' // Reset input
+            return
+        }
+
         // Revoke previous object URL to prevent memory leak
         if (profileImagePreview.value) {
             URL.revokeObjectURL(profileImagePreview.value)
         }
-        profileImageFile.value = input.files[0]
-        profileImagePreview.value = URL.createObjectURL(input.files[0])
+        formError.value = ''
+        formState.value = 'pending'
+        profileImageFile.value = file
+        profileImagePreview.value = URL.createObjectURL(file)
     }
 }
 
-function handleActionImageChange(event: Event) {
+async function handleActionImageChange(event: Event) {
     const input = event.target as HTMLInputElement
     if (input.files && input.files[0]) {
+        const file = input.files[0]
+
+        // Validate image dimensions
+        const { valid, width, height } = await validateImageDimensions(file)
+        if (!valid) {
+            formError.value = `Action Shot muss mindestens ${MIN_IMAGE_SIZE}x${MIN_IMAGE_SIZE} Pixel groß sein. Dein Bild: ${width}x${height} Pixel.`
+            formState.value = 'error'
+            input.value = '' // Reset input
+            return
+        }
+
         // Revoke previous object URL to prevent memory leak
         if (actionImagePreview.value) {
             URL.revokeObjectURL(actionImagePreview.value)
         }
-        actionImageFile.value = input.files[0]
-        actionImagePreview.value = URL.createObjectURL(input.files[0])
+        formError.value = ''
+        formState.value = 'pending'
+        actionImageFile.value = file
+        actionImagePreview.value = URL.createObjectURL(file)
     }
 }
 
