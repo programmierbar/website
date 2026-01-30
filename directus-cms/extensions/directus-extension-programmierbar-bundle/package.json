@@ -71,6 +71,11 @@
             },
             {
                 "type": "hook",
+                "name": "member-matching",
+                "source": "src/member-matching/index.ts"
+            },
+            {
+                "type": "hook",
                 "name": "content-generation",
                 "source": "src/content-generation/index.ts"
             },
