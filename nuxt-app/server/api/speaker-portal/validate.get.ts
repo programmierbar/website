@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
     try {
         // Query Directus for speaker with this token
         const response = await fetch(
-            `${directusUrl}/items/speakers?filter[portal_token][_eq]=${encodeURIComponent(token)}&fields=id,first_name,last_name,academic_title,occupation,description,website_url,linkedin_url,twitter_url,bluesky_url,github_url,instagram_url,youtube_url,mastodon_url,portal_token_expires,portal_submission_status,portal_submission_deadline,profile_image,action_image`
+            `${directusUrl}/items/speakers?filter[portal_token][_eq]=${encodeURIComponent(token)}&fields=id,first_name,last_name,academic_title,occupation,description,website_url,linkedin_url,twitter_url,bluesky_url,github_url,instagram_url,youtube_url,portal_token_expires,portal_submission_status,portal_submission_deadline,profile_image,event_image`
         )
 
         if (!response.ok) {
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
         if (!data.data || data.data.length === 0) {
             throw createError({
                 statusCode: 404,
-                message: 'Invalid token. Please check your invitation link.',
+                message: 'Ungültiger Token. Bitte überprüfe deinen Einladungslink.',
             })
         }
 
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
             if (expiresAt < new Date()) {
                 throw createError({
                     statusCode: 410,
-                    message: 'This token has expired. Please contact us for a new invitation.',
+                    message: 'Dieser Token ist abgelaufen. Bitte kontaktiere uns für eine neue Einladung.',
                 })
             }
         }
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
         if (speaker.portal_submission_status === 'submitted' || speaker.portal_submission_status === 'approved') {
             throw createError({
                 statusCode: 409,
-                message: 'You have already submitted your information. Contact us if you need to make changes.',
+                message: 'Du hast deine Informationen bereits eingereicht. Kontaktiere uns, falls du Änderungen vornehmen möchtest.',
             })
         }
 
@@ -67,10 +67,9 @@ export default defineEventHandler(async (event) => {
                 github_url: speaker.github_url,
                 instagram_url: speaker.instagram_url,
                 youtube_url: speaker.youtube_url,
-                mastodon_url: speaker.mastodon_url,
                 portal_submission_deadline: speaker.portal_submission_deadline,
                 profile_image: speaker.profile_image,
-                action_image: speaker.action_image,
+                event_image: speaker.event_image,
             },
         }
     } catch (err: any) {
@@ -80,7 +79,7 @@ export default defineEventHandler(async (event) => {
         console.error('Speaker portal validation error:', err)
         throw createError({
             statusCode: 500,
-            message: 'An error occurred while validating your access.',
+            message: 'Ein Fehler ist bei der Überprüfung deines Zugangs aufgetreten.',
         })
     }
 })

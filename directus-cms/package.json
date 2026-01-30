@@ -15,7 +15,8 @@
     "setup-local": "node ./utils/setup-local.mjs",
     "setup-local:with-data": "node ./utils/setup-local.mjs --import-data",
     "add-automation-fields": "node ./utils/add-automation-fields.mjs",
-    "setup-flows": "node ./utils/setup-flows.mjs"
+    "setup-flows": "node ./utils/setup-flows.mjs",
+    "generate-speaker-tokens": "node ./utils/generate-speaker-tokens.mjs"
   },
   "dependencies": {
     "directus": "^11.0",

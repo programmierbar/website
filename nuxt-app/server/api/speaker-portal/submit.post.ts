@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
                 data: field.data,
                 type: field.type || 'image/jpeg',
             }
-        } else if (field.name === 'action_image' && field.filename) {
+        } else if (field.name === 'event_image' && field.filename) {
             actionImage = {
                 filename: field.filename,
                 data: field.data,
@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
         if (!validateData.data || validateData.data.length === 0) {
             throw createError({
                 statusCode: 404,
-                message: 'Invalid token',
+                message: 'Ungültiger Token',
             })
         }
 
@@ -76,7 +76,7 @@ export default defineEventHandler(async (event) => {
         if (speaker.portal_token_expires && new Date(speaker.portal_token_expires) < new Date()) {
             throw createError({
                 statusCode: 410,
-                message: 'Token expired',
+                message: 'Token abgelaufen',
             })
         }
 
@@ -84,7 +84,7 @@ export default defineEventHandler(async (event) => {
         if (speaker.portal_submission_status === 'submitted' || speaker.portal_submission_status === 'approved') {
             throw createError({
                 statusCode: 409,
-                message: 'Already submitted',
+                message: 'Bereits eingereicht',
             })
         }
 
@@ -95,7 +95,7 @@ export default defineEventHandler(async (event) => {
             console.error('DIRECTUS_ADMIN_TOKEN not configured')
             throw createError({
                 statusCode: 500,
-                message: 'Server configuration error',
+                message: 'Serverkonfigurationsfehler',
             })
         }
 
@@ -155,7 +155,6 @@ export default defineEventHandler(async (event) => {
             github_url: data.github_url || null,
             instagram_url: data.instagram_url || null,
             youtube_url: data.youtube_url || null,
-            mastodon_url: data.mastodon_url || null,
             portal_submission_status: 'submitted',
             portal_token: null, // Invalidate token after submission
         }
@@ -164,7 +163,7 @@ export default defineEventHandler(async (event) => {
             updateData.profile_image = profileImageId
         }
         if (actionImageId) {
-            updateData.action_image = actionImageId
+            updateData.event_image = actionImageId
         }
 
         const updateResponse = await fetch(`${directusUrl}/items/speakers/${speaker.id}`, {
@@ -193,7 +192,7 @@ export default defineEventHandler(async (event) => {
         console.error('Speaker portal submission error:', err)
         throw createError({
             statusCode: 500,
-            message: 'An error occurred while saving your information.',
+            message: 'Ein Fehler ist beim Speichern deiner Informationen aufgetreten.',
         })
     }
 })

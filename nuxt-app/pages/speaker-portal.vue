@@ -5,15 +5,15 @@
 
             <!-- Loading State -->
             <div v-if="loading" class="mt-16 text-center">
-                <p class="text-xl text-white">Validating access...</p>
+                <p class="text-xl text-white">Zugang wird überprüft...</p>
             </div>
 
             <!-- Error State -->
             <div v-else-if="error" class="mt-16">
-                <SectionHeading element="h1">Access Denied</SectionHeading>
+                <SectionHeading element="h1">Zugang verweigert</SectionHeading>
                 <p class="mt-8 text-xl text-pink">{{ error }}</p>
                 <p class="mt-4 text-lg text-white/60">
-                    If you believe this is an error, please contact us at
+                    Falls du glaubst, dass es sich um einen Fehler handelt, kontaktiere uns bitte unter
                     <a href="mailto:podcast@programmier.bar" class="text-lime hover:text-blue">
                         podcast@programmier.bar
                     </a>
@@ -431,7 +431,7 @@ async function submitForm(event: Event) {
         return
     }
 
-    if (!actionImageFile.value && !speaker.value?.action_image) {
+    if (!actionImageFile.value && !speaker.value?.event_image) {
         formError.value = 'Bitte lade ein Action Shot hoch.'
         formState.value = 'error'
         return
@@ -454,7 +454,7 @@ async function submitForm(event: Event) {
             submitData.append('profile_image', profileImageFile.value)
         }
         if (actionImageFile.value) {
-            submitData.append('action_image', actionImageFile.value)
+            submitData.append('event_image', actionImageFile.value)
         }
 
         const response = await fetch('/api/speaker-portal/submit', {
