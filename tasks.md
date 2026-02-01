@@ -6,7 +6,7 @@ This document outlines the vision and tasks for automating the programmier.bar p
 
 ## Implementation Progress
 
-> Last updated: 2026-01-30
+> Last updated: 2026-02-01
 
 ### Completed Phases
 
@@ -36,12 +36,29 @@ This document outlines the vision and tasks for automating the programmier.bar p
   - Copies approved shownotes to podcast `description` field
   - Updates podcast `publishing_status` to `approved` when all content is approved
 
-#### Phase 5: Speaker Self-Service Portal (Partial)
+#### Phase 5: Speaker Self-Service Portal ✅
 - **5.2** ✅ Token generation flow implemented
 - **5.3** ✅ Speaker portal frontend page created (`/speaker-portal`)
+- **5.4** ✅ Email notification hook implemented (`speaker-portal-notifications`)
+  - Sends invitation email when token is generated
+  - Sends confirmation email to speaker upon submission
+  - Sends admin notification when speaker submits
+- **5.5** ✅ Portal submission endpoint complete (`/api/speaker-portal/submit`)
+- **5.7** ✅ Deadline reminder system implemented
+  - Scheduled task runs daily at 9:00 AM
+  - Sends reminders 3 days and 1 day before deadline
 
-#### Phase 7: Heise.de Integration (Partial)
+#### Phase 7: Heise.de Integration ✅
 - **7.1** ✅ Heise fields added to Podcast collection
+- **7.2** ✅ Heise document specification created (`directus-cms/docs/heise_document_spec.md`)
+- **7.3** ✅ Document generation hook implemented (`heise-integration`)
+  - Triggers when `heise_eligible` is set to true AND shownotes are approved
+  - Generates HTML document from podcast data
+  - Stores document in `podcast_generated_content` collection
+- **7.5** ✅ Email sending hook implemented
+  - Triggers when `heise_document_status` changes to `approved`
+  - Sends formatted HTML email to Heise contact
+  - Updates status to `sent` and records timestamp
 
 ### Key Files Created/Modified
 
@@ -49,6 +66,15 @@ This document outlines the vision and tasks for automating the programmier.bar p
 - `directus-cms/extensions/.../src/content-generation/index.ts` - AI content generation from transcripts
 - `directus-cms/extensions/.../src/content-approval/index.ts` - Approval workflow automation
 - `directus-cms/extensions/.../src/podcast-transcript/index.ts` - Transcript upload handling
+- `directus-cms/extensions/.../src/speaker-portal-notifications/index.ts` - Speaker portal email notifications
+- `directus-cms/extensions/.../src/speaker-portal-notifications/emailTemplates.ts` - Email HTML templates
+- `directus-cms/extensions/.../src/speaker-portal-notifications/sendEmail.ts` - SMTP email utility
+- `directus-cms/extensions/.../src/heise-integration/index.ts` - Heise document generation and email hook
+- `directus-cms/extensions/.../src/heise-integration/documentGenerator.ts` - Heise document template generator
+- `directus-cms/extensions/.../src/heise-integration/sendEmail.ts` - SMTP email utility for Heise
+
+**Documentation:**
+- `directus-cms/docs/heise_document_spec.md` - Heise document format specification
 
 **Utility Scripts:**
 - `directus-cms/utils/setup-flows.mjs` - Sets up Directus flows and presets
@@ -57,14 +83,23 @@ This document outlines the vision and tasks for automating the programmier.bar p
 
 **Environment Variables Required:**
 - `GEMINI_API_KEY` - For AI content generation (add to Directus .env)
+- `EMAIL_SMTP_HOST` - SMTP server hostname (e.g., `smtp.gmail.com`)
+- `EMAIL_SMTP_PORT` - SMTP port (default: `465`)
+- `EMAIL_SMTP_USER` - SMTP username
+- `EMAIL_SMTP_PASSWORD` - SMTP password
+- `EMAIL_SMTP_SECURE` - Use TLS (default: `true`)
+- `EMAIL_FROM` - Sender email address (default: `programmier.bar <noreply@programmier.bar>`)
+- `WEBSITE_URL` - Base URL for links (default: `https://programmier.bar`)
+- `ADMIN_NOTIFICATION_EMAIL` - Admin email for notifications (default: `podcast@programmier.bar`)
+- `HEISE_CONTACT_EMAIL` - Heise.de editorial contact email (required for Heise integration)
 
 ### Remaining Work
 
 - **Phase 2**: Automatic transcription from audio upload (currently manual transcript upload)
 - **Phase 4**: Social media publishing automation
-- **Phase 5**: Complete speaker portal (email notifications, deadline reminders, admin review)
+- **Phase 5**: Admin review interface (Directus panel for approving/rejecting speaker submissions)
 - **Phase 6**: Asset production pipeline (background removal, image generation)
-- **Phase 7**: Heise.de document generation and email sending
+- **Phase 7**: Heise review interface (Directus panel for previewing/editing documents before sending)
 - **Phase 8**: Hook migration and documentation
 
 ---
