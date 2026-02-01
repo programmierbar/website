@@ -121,7 +121,6 @@
     },
     "devDependencies": {
         "@directus/errors": "^0.3.2",
-        "@types/nodemailer": "^6.4.14",
         "@directus/extensions-sdk": "12.1.4",
         "@directus/sdk": "^18.0.3",
         "@ianvs/prettier-plugin-sort-imports": "^4.2.1",
@@ -145,8 +144,5 @@
         "typescript": "^5.9.2",
         "typescript-eslint": "^8.0.0-alpha.20",
         "vue": "^3.5.18"
-    },
-    "dependencies": {
-        "nodemailer": "^6.9.9"
     }
 }

@@ -66,12 +66,14 @@ This document outlines the vision and tasks for automating the programmier.bar p
 - `directus-cms/extensions/.../src/content-generation/index.ts` - AI content generation from transcripts
 - `directus-cms/extensions/.../src/content-approval/index.ts` - Approval workflow automation
 - `directus-cms/extensions/.../src/podcast-transcript/index.ts` - Transcript upload handling
-- `directus-cms/extensions/.../src/speaker-portal-notifications/index.ts` - Speaker portal email notifications
-- `directus-cms/extensions/.../src/speaker-portal-notifications/emailTemplates.ts` - Email HTML templates
-- `directus-cms/extensions/.../src/speaker-portal-notifications/sendEmail.ts` - SMTP email utility
-- `directus-cms/extensions/.../src/heise-integration/index.ts` - Heise document generation and email hook
-- `directus-cms/extensions/.../src/heise-integration/documentGenerator.ts` - Heise document template generator
-- `directus-cms/extensions/.../src/heise-integration/sendEmail.ts` - SMTP email utility for Heise
+- `directus-cms/extensions/.../src/speaker-portal-notifications/index.ts` - Speaker portal email notifications (uses CMS templates)
+- `directus-cms/extensions/.../src/heise-integration/index.ts` - Heise document generation and email hook (uses CMS templates)
+- `directus-cms/extensions/.../src/heise-integration/documentGenerator.ts` - Heise document fallback generator
+- `directus-cms/extensions/.../src/shared/email-service.ts` - Shared email utility using Directus MailService
+
+**New CMS Collections:**
+- `email_templates` - Editable email templates (subject, HTML body with Handlebars variables)
+- `automation_settings` - Configuration settings (Heise contact email, admin email, website URL, etc.)
 
 **Documentation:**
 - `directus-cms/docs/heise_document_spec.md` - Heise document format specification
@@ -80,18 +82,28 @@ This document outlines the vision and tasks for automating the programmier.bar p
 - `directus-cms/utils/setup-flows.mjs` - Sets up Directus flows and presets
 - `directus-cms/utils/setup-generated-content-relation.mjs` - Creates O2M relation for content review
 - `directus-cms/utils/cleanup-old-flow.mjs` - Removes deprecated flow data
+- `directus-cms/utils/setup-email-templates.mjs` - Creates email_templates and automation_settings collections with default data
 
 **Environment Variables Required:**
 - `GEMINI_API_KEY` - For AI content generation (add to Directus .env)
+- `EMAIL_TRANSPORT` - Directus email transport (e.g., `smtp`)
 - `EMAIL_SMTP_HOST` - SMTP server hostname (e.g., `smtp.gmail.com`)
 - `EMAIL_SMTP_PORT` - SMTP port (default: `465`)
 - `EMAIL_SMTP_USER` - SMTP username
 - `EMAIL_SMTP_PASSWORD` - SMTP password
-- `EMAIL_SMTP_SECURE` - Use TLS (default: `true`)
-- `EMAIL_FROM` - Sender email address (default: `programmier.bar <noreply@programmier.bar>`)
-- `WEBSITE_URL` - Base URL for links (default: `https://programmier.bar`)
-- `ADMIN_NOTIFICATION_EMAIL` - Admin email for notifications (default: `podcast@programmier.bar`)
-- `HEISE_CONTACT_EMAIL` - Heise.de editorial contact email (required for Heise integration)
+- `EMAIL_FROM` - Sender email address (default: `noreply@programmier.bar`)
+
+**CMS-Based Configuration (in `automation_settings` collection):**
+- `heise_contact_email` - Heise.de editorial contact email
+- `admin_notification_email` - Admin email for notifications
+- `website_url` - Base URL for links in emails
+- `speaker_portal_token_validity_days` - Token validity period
+
+**Setup Instructions:**
+1. Configure Directus email in `.env` (EMAIL_TRANSPORT, EMAIL_SMTP_*, EMAIL_FROM)
+2. Run: `cd directus-cms && node utils/setup-email-templates.mjs`
+3. Open Directus and configure settings in "Automation Settings" collection
+4. Customize email templates in "Email Templates" collection if needed
 
 ### Remaining Work
 

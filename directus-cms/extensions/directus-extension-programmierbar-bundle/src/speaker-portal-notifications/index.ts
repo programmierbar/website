@@ -1,13 +1,11 @@
 import { defineHook } from '@directus/extensions-sdk'
-import { sendEmail } from './sendEmail.js'
 import {
-    buildInvitationEmail,
-    buildReminderEmail,
-    buildUrgentReminderEmail,
-    buildSubmissionConfirmationEmail,
-    buildAdminNotificationEmail,
-    type SpeakerEmailData,
-} from './emailTemplates.js'
+    sendTemplatedEmail,
+    getSetting,
+    getSettings,
+    formatDateGerman,
+    type EmailServiceContext,
+} from '../shared/email-service.js'
 
 const HOOK_NAME = 'speaker-portal-notifications'
 
@@ -16,48 +14,40 @@ const REMINDER_SCHEDULE = '0 9 * * *'
 
 export default defineHook(({ action, schedule }, hookContext) => {
     const logger = hookContext.logger
-    const env = hookContext.env
-    const ItemsService = hookContext.services.ItemsService
+    const services = hookContext.services
     const getSchema = hookContext.getSchema
+    const ItemsService = services.ItemsService
 
-    // Check for required email configuration
-    const emailHost = env.EMAIL_SMTP_HOST
-    const emailUser = env.EMAIL_SMTP_USER
-    const emailPassword = env.EMAIL_SMTP_PASSWORD
-    const websiteUrl = env.WEBSITE_URL || 'https://programmier.bar'
-    const adminEmail = env.ADMIN_NOTIFICATION_EMAIL || 'podcast@programmier.bar'
-
-    if (!emailHost || !emailUser || !emailPassword) {
-        logger.warn(`${HOOK_NAME}: Email SMTP not configured. Speaker notifications will not be active.`)
-        return
-    }
-
-    const emailConfig = {
-        host: emailHost,
-        port: parseInt(env.EMAIL_SMTP_PORT || '465'),
-        secure: env.EMAIL_SMTP_SECURE !== 'false',
-        user: emailUser,
-        password: emailPassword,
-        from: env.EMAIL_FROM || 'programmier.bar <noreply@programmier.bar>',
+    // Check if MailService is available
+    if (!services.MailService) {
+        logger.warn(`${HOOK_NAME}: MailService not available. Email notifications will not work.`)
+        logger.warn(`${HOOK_NAME}: Make sure Directus email is configured in .env (EMAIL_TRANSPORT, etc.)`)
     }
 
     /**
      * Build the portal URL for a speaker token.
      */
-    function buildPortalUrl(token: string): string {
+    async function buildPortalUrl(token: string, context: EmailServiceContext): Promise<string> {
+        const websiteUrl = (await getSetting('website_url', context)) || 'https://programmier.bar'
         return `${websiteUrl}/speaker-portal?token=${encodeURIComponent(token)}`
     }
 
     /**
      * Send invitation email when a speaker's portal token is generated.
-     * Triggers when portal_token is set on a speaker record.
      */
     action('speakers.items.update', async function (metadata, eventContext) {
         const { payload, keys } = metadata
 
-        // Only proceed if portal_token was just set (token generation)
+        // Only proceed if portal_token was just set
         if (!payload.portal_token) {
             return
+        }
+
+        const context: EmailServiceContext = {
+            logger,
+            services,
+            getSchema,
+            accountability: eventContext.accountability,
         }
 
         try {
@@ -81,12 +71,12 @@ export default defineHook(({ action, schedule }, hookContext) => {
                     ],
                 })
 
-                // Only send if speaker has email and status is pending (newly generated token)
+                // Only send if speaker has email and status is pending
                 if (!speaker?.email || speaker.portal_submission_status !== 'pending') {
                     continue
                 }
 
-                // Check if token matches (to verify this is the token being set)
+                // Verify this is the token being set
                 if (speaker.portal_token !== payload.portal_token) {
                     continue
                 }
@@ -106,7 +96,6 @@ export default defineHook(({ action, schedule }, hookContext) => {
                         accountability: eventContext.accountability,
                     })
 
-                    // Find podcast relations for this speaker
                     const relations = await podcastSpeakersService.readByQuery({
                         filter: { speaker: { _eq: speakerId } },
                         fields: ['podcast'],
@@ -122,34 +111,33 @@ export default defineHook(({ action, schedule }, hookContext) => {
                         recordingDate = podcast?.recording_date
                     }
                 } catch {
-                    // Podcast lookup is optional, continue without it
+                    // Podcast lookup is optional
                 }
 
-                const emailData: SpeakerEmailData = {
-                    firstName: speaker.first_name,
-                    lastName: speaker.last_name,
-                    email: speaker.email,
-                    portalUrl: buildPortalUrl(speaker.portal_token),
-                    deadline: speaker.portal_submission_deadline,
-                    podcastTitle,
-                    recordingDate,
-                }
-
-                const email = buildInvitationEmail(emailData)
+                const portalUrl = await buildPortalUrl(speaker.portal_token, context)
+                const deadline = speaker.portal_submission_deadline
+                    ? formatDateGerman(speaker.portal_submission_deadline)
+                    : 'in den nächsten zwei Wochen'
 
                 logger.info(`${HOOK_NAME}: Sending invitation email to ${speaker.email}`)
 
-                await sendEmail(
+                await sendTemplatedEmail(
                     {
+                        templateKey: 'speaker_invitation',
                         to: speaker.email,
-                        subject: email.subject,
-                        html: email.html,
+                        data: {
+                            first_name: speaker.first_name,
+                            last_name: speaker.last_name,
+                            portal_url: portalUrl,
+                            deadline,
+                            podcast_title: podcastTitle,
+                            recording_date: recordingDate ? formatDateGerman(recordingDate) : undefined,
+                        },
                     },
-                    emailConfig,
-                    logger
+                    context
                 )
 
-                logger.info(`${HOOK_NAME}: Invitation email sent to ${speaker.first_name} ${speaker.last_name}`)
+                logger.info(`${HOOK_NAME}: Invitation sent to ${speaker.first_name} ${speaker.last_name}`)
             }
         } catch (err: any) {
             logger.error(`${HOOK_NAME}: Error sending invitation email: ${err?.message || err}`)
@@ -157,8 +145,7 @@ export default defineHook(({ action, schedule }, hookContext) => {
     })
 
     /**
-     * Send confirmation email when a speaker submits their information.
-     * Triggers when portal_submission_status changes to 'submitted'.
+     * Send confirmation when a speaker submits their information.
      */
     action('speakers.items.update', async function (metadata, eventContext) {
         const { payload, keys } = metadata
@@ -166,6 +153,13 @@ export default defineHook(({ action, schedule }, hookContext) => {
         // Only proceed if status is being set to 'submitted'
         if (payload.portal_submission_status !== 'submitted') {
             return
+        }
+
+        const context: EmailServiceContext = {
+            logger,
+            services,
+            getSchema,
+            accountability: eventContext.accountability,
         }
 
         try {
@@ -211,46 +205,41 @@ export default defineHook(({ action, schedule }, hookContext) => {
                         podcastTitle = podcast?.title
                     }
                 } catch {
-                    // Optional, continue
+                    // Optional
                 }
 
-                const emailData: SpeakerEmailData = {
-                    firstName: speaker.first_name,
-                    lastName: speaker.last_name,
-                    email: speaker.email,
-                    portalUrl: '',
-                    podcastTitle,
+                const emailData = {
+                    first_name: speaker.first_name,
+                    last_name: speaker.last_name,
+                    podcast_title: podcastTitle,
                 }
 
                 // Send confirmation to speaker
-                const confirmationEmail = buildSubmissionConfirmationEmail(emailData)
-
                 logger.info(`${HOOK_NAME}: Sending submission confirmation to ${speaker.email}`)
 
-                await sendEmail(
+                await sendTemplatedEmail(
                     {
+                        templateKey: 'speaker_submission_confirmation',
                         to: speaker.email,
-                        subject: confirmationEmail.subject,
-                        html: confirmationEmail.html,
+                        data: emailData,
                     },
-                    emailConfig,
-                    logger
+                    context
                 )
 
                 // Send notification to admin
-                const adminNotificationEmail = buildAdminNotificationEmail(emailData)
+                const adminEmail = await getSetting('admin_notification_email', context)
+                if (adminEmail) {
+                    await sendTemplatedEmail(
+                        {
+                            templateKey: 'speaker_admin_notification',
+                            to: adminEmail,
+                            data: emailData,
+                        },
+                        context
+                    )
+                }
 
-                await sendEmail(
-                    {
-                        to: adminEmail,
-                        subject: adminNotificationEmail.subject,
-                        html: adminNotificationEmail.html,
-                    },
-                    emailConfig,
-                    logger
-                )
-
-                logger.info(`${HOOK_NAME}: Submission confirmation emails sent for ${speaker.first_name} ${speaker.last_name}`)
+                logger.info(`${HOOK_NAME}: Submission confirmation sent for ${speaker.first_name} ${speaker.last_name}`)
             }
         } catch (err: any) {
             logger.error(`${HOOK_NAME}: Error sending submission confirmation: ${err?.message || err}`)
@@ -259,10 +248,16 @@ export default defineHook(({ action, schedule }, hookContext) => {
 
     /**
      * Scheduled task to send deadline reminders.
-     * Runs daily at 9:00 AM.
      */
     schedule(REMINDER_SCHEDULE, async () => {
         logger.info(`${HOOK_NAME}: Running deadline reminder check`)
+
+        const context: EmailServiceContext = {
+            logger,
+            services,
+            getSchema,
+            accountability: { admin: true },
+        }
 
         try {
             const schema = await getSchema()
@@ -271,6 +266,9 @@ export default defineHook(({ action, schedule }, hookContext) => {
                 schema,
                 accountability: { admin: true },
             })
+
+            const settings = await getSettings(['website_url'], context)
+            const websiteUrl = settings.website_url || 'https://programmier.bar'
 
             const now = new Date()
             const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
@@ -303,53 +301,45 @@ export default defineHook(({ action, schedule }, hookContext) => {
 
                 // Skip if deadline already passed
                 if (deadline < now) {
-                    logger.info(`${HOOK_NAME}: Deadline passed for ${speaker.email}, skipping reminder`)
+                    logger.info(`${HOOK_NAME}: Deadline passed for ${speaker.email}, skipping`)
                     continue
                 }
 
-                const emailData: SpeakerEmailData = {
-                    firstName: speaker.first_name,
-                    lastName: speaker.last_name,
-                    email: speaker.email,
-                    portalUrl: buildPortalUrl(speaker.portal_token),
-                    deadline: speaker.portal_submission_deadline,
+                const portalUrl = `${websiteUrl}/speaker-portal?token=${encodeURIComponent(speaker.portal_token)}`
+                const deadlineFormatted = formatDateGerman(deadline)
+
+                const emailData = {
+                    first_name: speaker.first_name,
+                    last_name: speaker.last_name,
+                    portal_url: portalUrl,
+                    deadline: deadlineFormatted,
                 }
 
-                // Check if deadline is within 1 day (urgent reminder)
+                // Urgent reminder (1 day before)
                 if (deadline <= oneDayFromNow) {
-                    logger.info(`${HOOK_NAME}: Sending urgent reminder to ${speaker.email} (deadline in ~1 day)`)
+                    logger.info(`${HOOK_NAME}: Sending urgent reminder to ${speaker.email}`)
 
-                    const urgentEmail = buildUrgentReminderEmail(emailData)
-
-                    await sendEmail(
+                    await sendTemplatedEmail(
                         {
+                            templateKey: 'speaker_urgent_reminder',
                             to: speaker.email,
-                            subject: urgentEmail.subject,
-                            html: urgentEmail.html,
+                            data: emailData,
                         },
-                        emailConfig,
-                        logger
+                        context
                     )
-
-                    logger.info(`${HOOK_NAME}: Urgent reminder sent to ${speaker.email}`)
                 }
-                // Check if deadline is within 3 days (regular reminder)
+                // Regular reminder (3 days before)
                 else if (deadline <= threeDaysFromNow) {
-                    logger.info(`${HOOK_NAME}: Sending reminder to ${speaker.email} (deadline in ~3 days)`)
+                    logger.info(`${HOOK_NAME}: Sending reminder to ${speaker.email}`)
 
-                    const reminderEmail = buildReminderEmail(emailData)
-
-                    await sendEmail(
+                    await sendTemplatedEmail(
                         {
+                            templateKey: 'speaker_reminder',
                             to: speaker.email,
-                            subject: reminderEmail.subject,
-                            html: reminderEmail.html,
+                            data: emailData,
                         },
-                        emailConfig,
-                        logger
+                        context
                     )
-
-                    logger.info(`${HOOK_NAME}: Reminder sent to ${speaker.email}`)
                 }
             }
 
