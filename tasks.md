@@ -74,6 +74,7 @@ This document outlines the vision and tasks for automating the programmier.bar p
 **New CMS Collections:**
 - `email_templates` - Editable email templates (subject, HTML body with Handlebars variables)
 - `automation_settings` - Configuration settings (Heise contact email, admin email, website URL, etc.)
+- `ai_prompts` - Editable AI prompts for content generation (shownotes, social media posts)
 
 **Documentation:**
 - `directus-cms/docs/heise_document_spec.md` - Heise document format specification
@@ -83,6 +84,7 @@ This document outlines the vision and tasks for automating the programmier.bar p
 - `directus-cms/utils/setup-generated-content-relation.mjs` - Creates O2M relation for content review
 - `directus-cms/utils/cleanup-old-flow.mjs` - Removes deprecated flow data
 - `directus-cms/utils/setup-email-templates.mjs` - Creates email_templates and automation_settings collections with default data
+- `directus-cms/utils/setup-ai-prompts.mjs` - Creates ai_prompts collection with default prompts for content generation
 
 **Environment Variables Required:**
 - `GEMINI_API_KEY` - For AI content generation (add to Directus .env)
@@ -99,11 +101,22 @@ This document outlines the vision and tasks for automating the programmier.bar p
 - `website_url` - Base URL for links in emails
 - `speaker_portal_token_validity_days` - Token validity period
 
+**AI Prompts (in `ai_prompts` collection):**
+- `shownotes_system` - System prompt for shownotes generation (style guidelines)
+- `shownotes_user` - User prompt template for shownotes (supports Handlebars variables)
+- `shownotes_word_counts` - JSON config for word count targets per episode type
+- `social_linkedin_system` / `social_linkedin_user` - LinkedIn post prompts
+- `social_instagram_system` / `social_instagram_user` - Instagram post prompts
+- `social_bluesky_system` / `social_bluesky_user` - Bluesky post prompts
+- `social_mastodon_system` / `social_mastodon_user` - Mastodon post prompts
+
 **Setup Instructions:**
 1. Configure Directus email in `.env` (EMAIL_TRANSPORT, EMAIL_SMTP_*, EMAIL_FROM)
 2. Run: `cd directus-cms && node utils/setup-email-templates.mjs`
-3. Open Directus and configure settings in "Automation Settings" collection
-4. Customize email templates in "Email Templates" collection if needed
+3. Run: `cd directus-cms && node utils/setup-ai-prompts.mjs`
+4. Open Directus and configure settings in "Automation Settings" collection
+5. Customize email templates in "Email Templates" collection if needed
+6. Customize AI prompts in "AI Prompts" collection if needed (changes take effect immediately)
 
 ### Remaining Work
 
