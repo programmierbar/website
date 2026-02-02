@@ -6,7 +6,7 @@ This document outlines the vision and tasks for automating the programmier.bar p
 
 ## Implementation Progress
 
-> Last updated: 2026-01-30
+> Last updated: 2026-02-01
 
 ### Completed Phases
 
@@ -36,12 +36,29 @@ This document outlines the vision and tasks for automating the programmier.bar p
   - Copies approved shownotes to podcast `description` field
   - Updates podcast `publishing_status` to `approved` when all content is approved
 
-#### Phase 5: Speaker Self-Service Portal (Partial)
+#### Phase 5: Speaker Self-Service Portal ✅
 - **5.2** ✅ Token generation flow implemented
 - **5.3** ✅ Speaker portal frontend page created (`/speaker-portal`)
+- **5.4** ✅ Email notification hook implemented (`speaker-portal-notifications`)
+  - Sends invitation email when token is generated
+  - Sends confirmation email to speaker upon submission
+  - Sends admin notification when speaker submits
+- **5.5** ✅ Portal submission endpoint complete (`/api/speaker-portal/submit`)
+- **5.7** ✅ Deadline reminder system implemented
+  - Scheduled task runs daily at 9:00 AM
+  - Sends reminders 3 days and 1 day before deadline
 
-#### Phase 7: Heise.de Integration (Partial)
+#### Phase 7: Heise.de Integration ✅
 - **7.1** ✅ Heise fields added to Podcast collection
+- **7.2** ✅ Heise document specification created (`directus-cms/docs/heise_document_spec.md`)
+- **7.3** ✅ Document generation hook implemented (`heise-integration`)
+  - Triggers when `heise_eligible` is set to true AND shownotes are approved
+  - Generates HTML document from podcast data
+  - Stores document in `podcast_generated_content` collection
+- **7.5** ✅ Email sending hook implemented
+  - Triggers when `heise_document_status` changes to `approved`
+  - Sends formatted HTML email to Heise contact
+  - Updates status to `sent` and records timestamp
 
 ### Key Files Created/Modified
 
@@ -49,22 +66,65 @@ This document outlines the vision and tasks for automating the programmier.bar p
 - `directus-cms/extensions/.../src/content-generation/index.ts` - AI content generation from transcripts
 - `directus-cms/extensions/.../src/content-approval/index.ts` - Approval workflow automation
 - `directus-cms/extensions/.../src/podcast-transcript/index.ts` - Transcript upload handling
+- `directus-cms/extensions/.../src/speaker-portal-notifications/index.ts` - Speaker portal email notifications (uses CMS templates)
+- `directus-cms/extensions/.../src/heise-integration/index.ts` - Heise document generation and email hook (uses CMS templates)
+- `directus-cms/extensions/.../src/heise-integration/documentGenerator.ts` - Heise document fallback generator
+- `directus-cms/extensions/.../src/shared/email-service.ts` - Shared email utility using Directus MailService
+
+**New CMS Collections:**
+- `email_templates` - Editable email templates (subject, HTML body with Handlebars variables)
+- `automation_settings` - Configuration settings (Heise contact email, admin email, website URL, etc.)
+- `ai_prompts` - Editable AI prompts for content generation (shownotes, social media posts)
+
+**Documentation:**
+- `directus-cms/docs/heise_document_spec.md` - Heise document format specification
 
 **Utility Scripts:**
 - `directus-cms/utils/setup-flows.mjs` - Sets up Directus flows and presets
 - `directus-cms/utils/setup-generated-content-relation.mjs` - Creates O2M relation for content review
 - `directus-cms/utils/cleanup-old-flow.mjs` - Removes deprecated flow data
+- `directus-cms/utils/setup-email-templates.mjs` - Creates email_templates and automation_settings collections with default data
+- `directus-cms/utils/setup-ai-prompts.mjs` - Creates ai_prompts collection with default prompts for content generation
 
 **Environment Variables Required:**
 - `GEMINI_API_KEY` - For AI content generation (add to Directus .env)
+- `EMAIL_TRANSPORT` - Directus email transport (e.g., `smtp`)
+- `EMAIL_SMTP_HOST` - SMTP server hostname (e.g., `smtp.gmail.com`)
+- `EMAIL_SMTP_PORT` - SMTP port (default: `465`)
+- `EMAIL_SMTP_USER` - SMTP username
+- `EMAIL_SMTP_PASSWORD` - SMTP password
+- `EMAIL_FROM` - Sender email address (default: `noreply@programmier.bar`)
+
+**CMS-Based Configuration (in `automation_settings` collection):**
+- `heise_contact_email` - Heise.de editorial contact email
+- `admin_notification_email` - Admin email for notifications
+- `website_url` - Base URL for links in emails
+- `speaker_portal_token_validity_days` - Token validity period
+
+**AI Prompts (in `ai_prompts` collection):**
+- `shownotes_system` - System prompt for shownotes generation (style guidelines)
+- `shownotes_user` - User prompt template for shownotes (supports Handlebars variables)
+- `shownotes_word_counts` - JSON config for word count targets per episode type
+- `social_linkedin_system` / `social_linkedin_user` - LinkedIn post prompts
+- `social_instagram_system` / `social_instagram_user` - Instagram post prompts
+- `social_bluesky_system` / `social_bluesky_user` - Bluesky post prompts
+- `social_mastodon_system` / `social_mastodon_user` - Mastodon post prompts
+
+**Setup Instructions:**
+1. Configure Directus email in `.env` (EMAIL_TRANSPORT, EMAIL_SMTP_*, EMAIL_FROM)
+2. Run: `cd directus-cms && node utils/setup-email-templates.mjs`
+3. Run: `cd directus-cms && node utils/setup-ai-prompts.mjs`
+4. Open Directus and configure settings in "Automation Settings" collection
+5. Customize email templates in "Email Templates" collection if needed
+6. Customize AI prompts in "AI Prompts" collection if needed (changes take effect immediately)
 
 ### Remaining Work
 
 - **Phase 2**: Automatic transcription from audio upload (currently manual transcript upload)
 - **Phase 4**: Social media publishing automation
-- **Phase 5**: Complete speaker portal (email notifications, deadline reminders, admin review)
+- **Phase 5**: Admin review interface (Directus panel for approving/rejecting speaker submissions)
 - **Phase 6**: Asset production pipeline (background removal, image generation)
-- **Phase 7**: Heise.de document generation and email sending
+- **Phase 7**: Heise review interface (Directus panel for previewing/editing documents before sending)
 - **Phase 8**: Hook migration and documentation
 
 ---
