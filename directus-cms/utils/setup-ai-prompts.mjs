@@ -121,7 +121,7 @@ Antworte im folgenden JSON-Format:
     {
         key: 'social_linkedin_user',
         name: 'LinkedIn User Prompt',
-        description: 'User prompt template for generating LinkedIn posts',
+        description: 'User prompt template for generating LinkedIn posts. The shownotes are generated first and passed as context.',
         category: 'social_media',
         prompt_text: `Erstelle einen LinkedIn-Post für diese Podcast-Episode:
 
@@ -130,14 +130,17 @@ Antworte im folgenden JSON-Format:
 **Gäste:** {{guests}}
 **Unternehmen:** {{guest_companies}}
 
+**Shownotes (Zusammenfassung der Episode):**
+{{shownotes}}
+
 **Key Topics:**
 {{topics}}
 
 ---
 
-Erstelle einen LinkedIn-Post mit:
+Basierend auf den Shownotes, erstelle einen LinkedIn-Post mit:
 1. Hook (erste 2 Zeilen sind am wichtigsten - vor "mehr anzeigen")
-2. 2-3 Key Takeaways oder interessante Punkte
+2. 2-3 Key Takeaways oder interessante Punkte aus den Shownotes
 3. Call-to-Action mit Link-Platzhalter [LINK]
 4. 3-5 relevante Hashtags
 
@@ -154,6 +157,7 @@ Antworte im JSON-Format:
             { name: 'episode_type', description: 'Type of episode' },
             { name: 'guests', description: 'Guest names' },
             { name: 'guest_companies', description: 'Guest companies/organizations' },
+            { name: 'shownotes', description: 'Generated shownotes description (HTML)' },
             { name: 'topics', description: 'Key topics as bullet points' },
         ]),
     },
@@ -170,21 +174,25 @@ Antworte im JSON-Format:
     {
         key: 'social_instagram_user',
         name: 'Instagram User Prompt',
-        description: 'User prompt template for generating Instagram posts',
+        description: 'User prompt template for generating Instagram posts. The shownotes are generated first and passed as context.',
         category: 'social_media',
         prompt_text: `Erstelle eine Instagram-Caption für diese Podcast-Episode:
 
 **Titel:** {{title}}
 **Typ:** {{episode_type}}
 **Gäste:** {{guests}}
+
+**Shownotes (Zusammenfassung der Episode):**
+{{shownotes}}
+
 **Key Topics:**
 {{topics}}
 
 ---
 
-Erstelle eine Instagram-Caption mit:
+Basierend auf den Shownotes, erstelle eine Instagram-Caption mit:
 1. Aufmerksamkeitsstarke erste Zeile
-2. 2-3 Sätze zum Inhalt
+2. 2-3 Sätze zum Inhalt (kurze Version der Shownotes)
 3. Call-to-Action ("Link in Bio")
 4. 10-15 relevante Hashtags (Mix aus großen und Nischen-Tags)
 
@@ -197,6 +205,7 @@ Antworte im JSON-Format:
             { name: 'title', description: 'Episode title' },
             { name: 'episode_type', description: 'Type of episode' },
             { name: 'guests', description: 'Guest names' },
+            { name: 'shownotes', description: 'Generated shownotes description (HTML)' },
             { name: 'topics', description: 'Key topics as bullet points' },
         ]),
     },
@@ -213,17 +222,20 @@ Antworte im JSON-Format:
     {
         key: 'social_bluesky_user',
         name: 'Bluesky User Prompt',
-        description: 'User prompt template for generating Bluesky posts',
+        description: 'User prompt template for generating Bluesky posts. The shownotes are generated first and passed as context.',
         category: 'social_media',
         prompt_text: `Erstelle einen Bluesky-Post für diese Podcast-Episode:
 
 **Titel:** {{title}}
 **Gäste:** {{guests}}
 
+**Shownotes (Zusammenfassung der Episode):**
+{{shownotes}}
+
 ---
 
-Erstelle einen Bluesky-Post (max 300 Zeichen inkl. Link-Platzhalter [LINK]) mit:
-1. Hook oder interessantes Zitat
+Basierend auf den Shownotes, erstelle einen Bluesky-Post (max 300 Zeichen inkl. Link-Platzhalter [LINK]) mit:
+1. Hook oder interessantes Zitat aus der Episode
 2. Kurze Info zur Episode
 3. Platz für Link
 
@@ -234,6 +246,7 @@ Antworte im JSON-Format:
         variables: JSON.stringify([
             { name: 'title', description: 'Episode title' },
             { name: 'guests', description: 'Guest names' },
+            { name: 'shownotes', description: 'Generated shownotes description (HTML)' },
         ]),
     },
 
@@ -249,19 +262,23 @@ Antworte im JSON-Format:
     {
         key: 'social_mastodon_user',
         name: 'Mastodon User Prompt',
-        description: 'User prompt template for generating Mastodon posts',
+        description: 'User prompt template for generating Mastodon posts. The shownotes are generated first and passed as context.',
         category: 'social_media',
         prompt_text: `Erstelle einen Mastodon-Post für diese Podcast-Episode:
 
 **Titel:** {{title}}
 **Gäste:** {{guests}}
+
+**Shownotes (Zusammenfassung der Episode):**
+{{shownotes}}
+
 **Topics:**
 {{topics}}
 
 ---
 
-Erstelle einen Mastodon-Post (max 500 Zeichen) mit:
-1. Beschreibung der Episode
+Basierend auf den Shownotes, erstelle einen Mastodon-Post (max 500 Zeichen) mit:
+1. Kurze Beschreibung der Episode (aus den Shownotes)
 2. Was Hörer:innen lernen können
 3. Link-Platzhalter [LINK]
 4. 3-5 Hashtags
@@ -274,6 +291,7 @@ Antworte im JSON-Format:
         variables: JSON.stringify([
             { name: 'title', description: 'Episode title' },
             { name: 'guests', description: 'Guest names' },
+            { name: 'shownotes', description: 'Generated shownotes description (HTML)' },
             { name: 'topics', description: 'Key topics as bullet points' },
         ]),
     },

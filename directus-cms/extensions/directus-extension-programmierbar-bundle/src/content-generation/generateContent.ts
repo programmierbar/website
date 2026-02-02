@@ -187,7 +187,7 @@ Antworte im folgenden JSON-Format:
 function buildSocialPrompt(
     platform: 'linkedin' | 'instagram' | 'bluesky' | 'mastodon',
     podcast: PodcastData,
-    topics: string[],
+    shownotes: { description: string; topics: string[] },
     prompts: Map<string, string>
 ): { system: string; user: string } {
     const guests =
@@ -202,7 +202,8 @@ function buildSocialPrompt(
             .filter(Boolean)
             .join(', ') || ''
 
-    const topicsText = topics.map((t) => `- ${t}`).join('\n')
+    const topicsText = shownotes.topics.map((t) => `- ${t}`).join('\n')
+    const shownotesDescription = shownotes.description || ''
 
     // Default system prompts
     const defaultSystemPrompts: Record<string, string> = {
@@ -221,14 +222,17 @@ function buildSocialPrompt(
 **Gäste:** {{guests}}
 **Unternehmen:** {{guest_companies}}
 
+**Shownotes (Zusammenfassung der Episode):**
+{{shownotes}}
+
 **Key Topics:**
 {{topics}}
 
 ---
 
-Erstelle einen LinkedIn-Post mit:
+Basierend auf den Shownotes, erstelle einen LinkedIn-Post mit:
 1. Hook (erste 2 Zeilen sind am wichtigsten - vor "mehr anzeigen")
-2. 2-3 Key Takeaways oder interessante Punkte
+2. 2-3 Key Takeaways oder interessante Punkte aus den Shownotes
 3. Call-to-Action mit Link-Platzhalter [LINK]
 4. 3-5 relevante Hashtags
 
@@ -246,14 +250,18 @@ Antworte im JSON-Format:
 **Titel:** {{title}}
 **Typ:** {{episode_type}}
 **Gäste:** {{guests}}
+
+**Shownotes (Zusammenfassung der Episode):**
+{{shownotes}}
+
 **Key Topics:**
 {{topics}}
 
 ---
 
-Erstelle eine Instagram-Caption mit:
+Basierend auf den Shownotes, erstelle eine Instagram-Caption mit:
 1. Aufmerksamkeitsstarke erste Zeile
-2. 2-3 Sätze zum Inhalt
+2. 2-3 Sätze zum Inhalt (kurze Version der Shownotes)
 3. Call-to-Action ("Link in Bio")
 4. 10-15 relevante Hashtags (Mix aus großen und Nischen-Tags)
 
@@ -268,10 +276,13 @@ Antworte im JSON-Format:
 **Titel:** {{title}}
 **Gäste:** {{guests}}
 
+**Shownotes (Zusammenfassung der Episode):**
+{{shownotes}}
+
 ---
 
-Erstelle einen Bluesky-Post (max 300 Zeichen inkl. Link-Platzhalter [LINK]) mit:
-1. Hook oder interessantes Zitat
+Basierend auf den Shownotes, erstelle einen Bluesky-Post (max 300 Zeichen inkl. Link-Platzhalter [LINK]) mit:
+1. Hook oder interessantes Zitat aus der Episode
 2. Kurze Info zur Episode
 3. Platz für Link
 
@@ -284,13 +295,17 @@ Antworte im JSON-Format:
 
 **Titel:** {{title}}
 **Gäste:** {{guests}}
+
+**Shownotes (Zusammenfassung der Episode):**
+{{shownotes}}
+
 **Topics:**
 {{topics}}
 
 ---
 
-Erstelle einen Mastodon-Post (max 500 Zeichen) mit:
-1. Beschreibung der Episode
+Basierend auf den Shownotes, erstelle einen Mastodon-Post (max 500 Zeichen) mit:
+1. Kurze Beschreibung der Episode (aus den Shownotes)
 2. Was Hörer:innen lernen können
 3. Link-Platzhalter [LINK]
 4. 3-5 Hashtags
@@ -312,6 +327,7 @@ Antworte im JSON-Format:
         guests: guests || 'Keine Gäste',
         guest_companies: guestCompanies || 'N/A',
         topics: topicsText,
+        shownotes: shownotesDescription,
     })
 
     return { system: systemPrompt, user: userPrompt }
@@ -493,7 +509,15 @@ export async function generateContent(hookName: string, podcastId: number, servi
 
         for (const platform of platforms) {
             try {
-                const socialPrompts = buildSocialPrompt(platform, podcast, shownotesData.topics || [], prompts)
+                const socialPrompts = buildSocialPrompt(
+                    platform,
+                    podcast,
+                    {
+                        description: shownotesData.description || '',
+                        topics: shownotesData.topics || [],
+                    },
+                    prompts
+                )
                 const socialResponse = await callGemini(geminiApiKey, socialPrompts.system, socialPrompts.user)
                 const socialData = extractJson(socialResponse)
 
