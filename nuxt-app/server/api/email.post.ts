@@ -13,10 +13,9 @@ export default defineEventHandler(async (event) => {
   // Get parsed client data
     const clientData = await zh.useValidatedBody(event, EmailSchema).catch((e) => {
         const data = JSON.parse(e.data)
-        const {
-            path: [key],
-            message,
-        } = data.issues[0]
+        const issue = data.issues?.[0]
+        const key = issue?.path?.[0] ?? 'input'
+        const message = issue?.message ?? 'Validation error'
 
         throw createError({ statusCode: 400, message: `${key}: ${message}` })
     })
