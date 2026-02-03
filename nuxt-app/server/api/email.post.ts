@@ -1,25 +1,25 @@
-import { zh } from 'h3-zod'
 import { EmailSchema, sendEmail } from '../utils'
 import { filterSpam } from '../../helpers';
 
 export default defineEventHandler(async (event) => {
-  // Check honeypot before validation to avoid leaking form structure to bots
-  const rawBody = await readBody(event)
-  if (rawBody?.honeypot) {
-    // Silently fail without revealing form structure
-    return 'Deine Nachricht wurde an uns versendet.'
-  }
+    // Read body once and use for both honeypot check and validation
+    const rawBody = await readBody(event)
 
-  // Get parsed client data
-    const clientData = await zh.useValidatedBody(event, EmailSchema).catch((e) => {
-        const data = JSON.parse(e.data)
-        const {
-            path: [key],
-            message,
-        } = data.issues[0]
+    // Check honeypot before validation to avoid leaking form structure to bots
+    if (rawBody?.honeypot) {
+        // Silently fail without revealing form structure
+        return 'Deine Nachricht wurde an uns versendet.'
+    }
 
+    // Validate the body with Zod schema
+    const parseResult = EmailSchema.safeParse(rawBody)
+    if (!parseResult.success) {
+        const issue = parseResult.error.issues[0]
+        const key = issue?.path?.[0] ?? 'input'
+        const message = issue?.message ?? 'Validation error'
         throw createError({ statusCode: 400, message: `${key}: ${message}` })
-    })
+    }
+    const clientData = parseResult.data
 
     const spamValidation = await filterSpam(clientData);
 
