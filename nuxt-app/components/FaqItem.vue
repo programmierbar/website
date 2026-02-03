@@ -1,5 +1,5 @@
 <template>
-  <div class='flex justify-between py-3 text-2xl' v-on:click='toggle' data-cursor-hover>
+  <div class='flex justify-between py-3 text-2xl' data-cursor-hover @click='toggle'>
     <p class='text-white font-bold'>
       {{ faq.question }}
     </p>

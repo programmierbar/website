@@ -5,7 +5,8 @@
         flex flex-col
         lg:grid lg:grid-cols-2 lg:grid-rows-[auto_1fr]
     ">
-    <div class="
+    <div
+class="
             order-1 <!-- Mobile order -->
             lg:order-none <!-- Reset order for grid -->
             lg:col-start-1 lg:row-start-1 <!-- Desktop grid placement -->
@@ -26,7 +27,8 @@
       />
     </div>
 
-    <div class="
+    <div
+class="
             order-2 <!-- Mobile order -->
             lg:order-none <!-- Reset order for grid -->
             lg:col-start-2 lg:row-start-1 lg:row-span-2 <!-- Desktop grid placement & span -->

@@ -13,8 +13,8 @@ export default eventHandler(async function(event) {
     return;
   }
 
-  let slug = match[1];
-  let voteString = match[2];
+  const slug = match[1];
+  const voteString = match[2];
 
   // Type narrowing: the regex already validated this is "up" or "down"
   // We use a type guard to make TypeScript aware of this
@@ -26,7 +26,7 @@ export default eventHandler(async function(event) {
 
   const directus = useDirectus();
 
-  let podcast = await directus.getPodcastBySlug(slug);
+  const podcast = await directus.getPodcastBySlug(slug);
 
   if (!podcast) {
     throw createError({ statusCode: 404, message: 'Podcast not found' });

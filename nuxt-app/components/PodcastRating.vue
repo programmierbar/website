@@ -1,10 +1,10 @@
 <template>
   <div class='flex flex-col w-full items-end mt-8 space-y-8'>
     <div v-if="!message" class='bg-gray-500 rounded-full w-fit box-border p-2'>
-      <button type="button" class="inline-block p-1 md:p-3 border-white border-r-1" @click='rate("up")' data-cursor-hover>
+      <button type="button" class="inline-block p-1 md:p-3 border-white border-r-1" data-cursor-hover @click='rate("up")'>
         <thumbs_up class='inline -mt-1 md:-mt-2 h-4 md:h-6 pr-1'/>
       </button>
-      <button type="button" class="inline-block p-1 md:p-3" @click='rate("down")' data-cursor-hover>
+      <button type="button" class="inline-block p-1 md:p-3" data-cursor-hover @click='rate("down")'>
         <thumbs_down class='inline h-4 md:h-6 pl-2'/>
       </button>
     </div>
