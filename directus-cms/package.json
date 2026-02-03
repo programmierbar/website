@@ -5,6 +5,9 @@
   "license": "MIT",
   "type": "commonjs",
   "scripts": {
+    "setup": "./setup.sh",
+    "setup:reset": "./setup.sh --reset",
+    "setup:no-data": "./setup.sh --no-data",
     "migrate:db": "directus database migrate:latest",
     "postbootstrap": "npm run migrate:db",
     "bootstrap": "directus bootstrap",
@@ -26,5 +29,8 @@
   },
   "devDependencies": {
     "prettier": "^2.5.1"
+  },
+  "overrides": {
+    "isolated-vm": "^6.0.2"
   }
 }
