@@ -32,14 +32,14 @@ const lastItemElement = ref<HTMLElement>()
 
 // Create first an last index reference
 const firstIndex = ref(0)
-const lastIndex = ref(Math.min(props.items.length - 1, 9))
+const lastIndex = ref(Math.min((props.items?.length ?? 0) - 1, 9))
 
 // Create padding start and end list reference
 const paddingStartList = ref<number[]>([])
 const paddingEndList = ref<number[]>([])
 
 // Create items to be rendered
-const renderItems = computed(() => props.items.slice(firstIndex.value, lastIndex.value + 1))
+const renderItems = computed(() => (props.items ?? []).slice(firstIndex.value, lastIndex.value + 1))
 
 // Create viewport items reference
 const viewportItems = ref(new Set())
@@ -55,14 +55,15 @@ const addViewportItem = (item: unknown) => {
 watch(
     () => props.items,
     () => {
-        firstIndex.value = Math.max(Math.min(props.items.length - 11, firstIndex.value), 0)
+        const itemsLength = props.items?.length ?? 0
+        firstIndex.value = Math.max(Math.min(itemsLength - 11, firstIndex.value), 0)
         lastIndex.value = Math.max(
-            Math.min(props.items.length - 1, lastIndex.value),
-            Math.min(props.items.length - 1, 9),
+            Math.min(itemsLength - 1, lastIndex.value),
+            Math.min(itemsLength - 1, 9),
             0
         )
         paddingStartList.value = paddingStartList.value.slice(0, firstIndex.value)
-        paddingEndList.value = paddingEndList.value.slice(lastIndex.value + 1, props.items.length)
+        paddingEndList.value = paddingEndList.value.slice(lastIndex.value + 1, itemsLength)
         viewportItems.value = new Set()
     }
 )
@@ -174,7 +175,7 @@ const handleScroll = () => {
 
         // Check position of last item element if user scrolls down, last
         // index is not reached and last item element exists
-    } else if (scrollDirection === 'down' && lastIndex.value < props.items.length - 1 && lastItemElement.value) {
+    } else if (scrollDirection === 'down' && lastIndex.value < (props.items?.length ?? 0) - 1 && lastItemElement.value) {
         // Destructure client rect of last item element
         const { top, left } = lastItemElement.value.getBoundingClientRect()
 

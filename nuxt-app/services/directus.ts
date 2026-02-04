@@ -24,8 +24,13 @@ import type {
   DirectusSpeakerItem,
   DirectusTagItem,
   DirectusProfileItem,
-  DirectusTranscriptItem, DirectusTestimonialItem, DirectusCocktailMenu, DirectusRatingItem,
-} from '../types';
+  DirectusTranscriptItem,
+  DirectusTestimonialItem,
+  DirectusCocktailMenu,
+  DirectusRatingItem,
+  DirectusTicketOrderItem,
+  DirectusTicketItem,
+} from '../types'
 
 export type Collections = {
     home_page: DirectusHomePage
@@ -50,11 +55,13 @@ export type Collections = {
     members: DirectusMemberItem[]
     speakers: DirectusSpeakerItem[]
     picks_of_the_day: DirectusPickOfTheDayItem[]
-    profiles: DirectusProfileItem[],
-    ratings: DirectusRatingItem[],
+    profiles: DirectusProfileItem[]
+    ratings: DirectusRatingItem[]
     tags: DirectusTagItem[]
     testimonials: DirectusTestimonialItem[]
     transcripts: DirectusTranscriptItem[]
+    ticket_orders: DirectusTicketOrderItem[]
+    tickets: DirectusTicketItem[]
 }
 
 export const directus = createDirectus<Collections>(DIRECTUS_CMS_URL)

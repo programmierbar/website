@@ -215,6 +215,103 @@ const EMAIL_TEMPLATES = [
 </html>`,
     },
     {
+        key: 'ticket_order_confirmation',
+        name: 'Ticket Order Confirmation (Purchaser)',
+        description: 'Email sent to the purchaser with all tickets after successful payment',
+        subject: 'Deine Tickets für die {{conference_title}} - Bestellnummer {{order_number}}',
+        body_html: `<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+    <div style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); padding: 30px; border-radius: 10px 10px 0 0;">
+        <h1 style="color: #fff; margin: 0; font-size: 24px;">programmier.bar</h1>
+        <p style="color: #00A1FF; margin: 10px 0 0 0; font-size: 14px;">Deine Tickets für die {{conference_title}}</p>
+    </div>
+
+    <div style="background: #fff; padding: 30px; border: 1px solid #e5e5e5; border-top: none; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #1a1a1a; margin-top: 0;">Hallo {{purchaser_name}}!</h2>
+
+        <p>Vielen Dank für deine Bestellung! Hier sind deine Tickets:</p>
+
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>Bestellnummer:</strong> {{order_number}}</p>
+            <p style="margin: 10px 0 0 0;"><strong>Gesamtbetrag:</strong> {{total_amount}} (inkl. 19% MwSt.)</p>
+        </div>
+
+        <h3 style="color: #333; margin-top: 30px;">Deine Tickets</h3>
+
+        {{{ticket_list_html}}}
+
+        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;" />
+
+        <p style="color: #666;">
+            Bitte bringe diese E-Mail oder die QR-Codes auf deinem Smartphone zum Event mit.
+            Falls du Fragen hast, kontaktiere uns unter
+            <a href="mailto:podcast@programmier.bar" style="color: #00A1FF;">podcast@programmier.bar</a>.
+        </p>
+
+        <p style="color: #666;">Wir freuen uns auf dich!</p>
+
+        <p style="color: #666;">Dein programmier.bar Team</p>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #999;">
+            <p style="margin: 0;">
+                Lotum media GmbH<br />
+                Am Goldstein 1 | 61231 Bad Nauheim | Deutschland
+            </p>
+            <p style="margin: 10px 0 0 0;">
+                Tel.: +49 (0) 6032 – 92 55 07 0<br />
+                Mail: podcast@programmier.bar<br />
+                Web: www.programmier.bar
+            </p>
+        </div>
+    </div>
+</body>
+</html>`,
+    },
+    {
+        key: 'ticket_order_attendee',
+        name: 'Ticket Order Confirmation (Attendee)',
+        description: 'Email sent to individual attendees when they are different from the purchaser',
+        subject: 'Dein Ticket für die {{conference_title}}',
+        body_html: `<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+    <div style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); padding: 30px; border-radius: 10px 10px 0 0;">
+        <h1 style="color: #fff; margin: 0; font-size: 24px;">programmier.bar</h1>
+        <p style="color: #00A1FF; margin: 10px 0 0 0; font-size: 14px;">Dein Ticket für die {{conference_title}}</p>
+    </div>
+
+    <div style="background: #fff; padding: 30px; border: 1px solid #e5e5e5; border-top: none; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #1a1a1a; margin-top: 0;">Hallo {{attendee_name}}!</h2>
+
+        <p>Ein Ticket für die {{conference_title}} wurde für dich gebucht. Hier ist dein Ticket:</p>
+
+        <div style="margin: 30px 0; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+            <p style="margin: 5px 0; color: #666;">Ticket-Code: <strong>{{ticket_code}}</strong></p>
+            <div style="text-align: center; margin-top: 15px;">
+                <img src="{{qr_code_url}}" alt="QR Code" style="width: 200px; height: 200px;" />
+            </div>
+            <p style="text-align: center; font-size: 12px; color: #999; margin-top: 15px;">
+                Bitte zeige diesen QR-Code beim Check-in vor.
+            </p>
+        </div>
+
+        <p style="color: #666;">Wir freuen uns auf dich!</p>
+
+        <p style="color: #666;">Dein programmier.bar Team</p>
+    </div>
+</body>
+</html>`,
+    },
+    {
         key: 'heise_document',
         name: 'Heise.de Document',
         description: 'Document template sent to Heise.de for podcast episodes',

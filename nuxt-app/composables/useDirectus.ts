@@ -434,6 +434,7 @@ export function useDirectus() {
             'tickets_url',
             'tickets_on_sale',
             'tickets_text',
+            // 'ticketing_enabled', // TODO: Enable once schema is deployed to production
             'partners',
             'partners.*',
             'partners.partner.*',
@@ -862,6 +863,19 @@ export function useDirectus() {
     }
   }
 
+  /**
+   * Get ticket settings via API (uses admin auth on server)
+   */
+  async function getTicketSettings() {
+    try {
+      const response = await $fetch('/api/tickets/settings')
+      return response
+    } catch (e: unknown) {
+      console.error('Error fetching ticket settings', e)
+      return null
+    }
+  }
+
     return {
         getHomepage,
         getPodcastPage,
@@ -903,5 +917,6 @@ export function useDirectus() {
         getProfileById,
         getTestimonials,
         createRating,
+        getTicketSettings,
     }
 }

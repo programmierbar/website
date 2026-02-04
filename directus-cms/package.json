@@ -19,7 +19,8 @@
     "setup-local:with-data": "node ./utils/setup-local.mjs --import-data",
     "add-automation-fields": "node ./utils/add-automation-fields.mjs",
     "setup-flows": "node ./utils/setup-flows.mjs",
-    "generate-speaker-tokens": "node ./utils/generate-speaker-tokens.mjs"
+    "generate-speaker-tokens": "node ./utils/generate-speaker-tokens.mjs",
+    "setup-ticket-settings": "node ./utils/setup-ticket-settings.mjs"
   },
   "dependencies": {
     "@directus/sdk": "^21.0.0",
