@@ -2,7 +2,7 @@ import type { TalkItem } from '~/types';
 import { getFullSpeakerName } from 'shared-code';
 
 export const buildSpeakerNamesForTalk = function(talk: TalkItem): string {
-  let result = 'mit ';
+  const result = 'mit ';
 
   const speakers: string[] = [];
 

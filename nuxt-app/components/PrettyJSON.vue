@@ -1,5 +1,5 @@
 <template>
-  <vue-json-pretty :data="content" :theme="theme" :showLine='showLine' :showLineNumber='showLineNumber'/>
+  <vue-json-pretty :data="content" :theme="theme" :show-line='showLine' :show-line-number='showLineNumber'/>
 </template>
 
 <script setup lang='ts'>

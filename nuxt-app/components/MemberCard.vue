@@ -74,7 +74,6 @@ import InnerHtml from './InnerHtml.vue'
 const initClipPath = 'circle(16.666% at 0 25%)'
 
 export default defineComponent({
-  methods: { trackGoal },
     components: {
         DirectusImage,
         InnerHtml,
@@ -230,5 +229,6 @@ export default defineComponent({
             handleDiscoverEffect,
         }
     },
+  methods: { trackGoal },
 })
 </script>

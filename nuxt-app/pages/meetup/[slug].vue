@@ -96,7 +96,7 @@
             </div>
         </section>
 
-        <section class="relative my-16" v-if='galleryImages.length > 0'>
+        <section v-if='galleryImages.length > 0' class="relative my-16">
           <ConferenceGallery :images='galleryImages' />
         </section>
 

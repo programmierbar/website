@@ -18,11 +18,12 @@
           <template v-for='paragraph in paragraphs'>
             <dt class='font-bold'>{{ paragraph.speaker }}</dt>
             <dd class='mb-2.5'>
-              <span v-for='wordListEntry in paragraph.wordlist'
+              <span
+v-for='wordListEntry in paragraph.wordlist'
                     class='transition-colors'
                     style='transition-duration: 350ms;'
                     :class="[(wordListEntry.time < podcastPlayer.currentTime) ? 'text-lime' : '']"
-                    v-on:click='playPodcastAtTimestamp(wordListEntry.time)'>
+                    @click='playPodcastAtTimestamp(wordListEntry.time)'>
                 {{ wordListEntry.word + ' ' }}
               </span>
             </dd>

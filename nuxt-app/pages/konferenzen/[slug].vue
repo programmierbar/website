@@ -40,7 +40,7 @@
           </div>
         </section>
 
-        <section class="relative" v-if='conference.tickets_on_sale'>
+        <section v-if='conference.tickets_on_sale' class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <SectionHeading element="h2">
               Tickets
@@ -50,10 +50,11 @@
                 class="mt-2 text-2xl font-light leading-normal z-30 relative"
                 :html="conference.tickets_text"
               />
-            <ConferenceTickets :tickets='conference.tickets' :ticketsOnSale='conference.tickets_on_sale' :ticketsUrl='conference.tickets_url' />
+            <ConferenceTickets :tickets='conference.tickets' :tickets-on-sale='conference.tickets_on_sale' :tickets-url='conference.tickets_url' />
 
-            <div class='flex flex-row flex-wrap space justify-around mt-8' v-if='conference.tickets_url'>
-              <a :href='conference.tickets_url'
+            <div v-if='conference.tickets_url' class='flex flex-row flex-wrap space justify-around mt-8'>
+              <a
+:href='conference.tickets_url'
                  target='_blank'
                  data-cursor-hover
                 class="m-auto rounded-full border-4 border-lime text-sm text-lime px-8 py-4 text-left"
@@ -77,7 +78,7 @@
           </div>
         </section>
 
-        <section class="relative" v-if='conference.tickets_on_sale'>
+        <section v-if='conference.tickets_on_sale' class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
             <SectionHeading element="h2">
               Community
@@ -122,7 +123,7 @@
           </div>
         </section>
 
-        <section class="relative" v-if='!conference.tickets_on_sale'>
+        <section v-if='!conference.tickets_on_sale' class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
             <SectionHeading element="h2">
               Community
@@ -145,7 +146,7 @@
           </div>
         </section>
 
-        <section class="relative" v-if='conference.partnersPrepared.length > 0'>
+        <section v-if='conference.partnersPrepared.length > 0' class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <SectionHeading element="h2">
               Partner
@@ -197,13 +198,12 @@
 import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo, trackGoal } from '~/helpers';
-import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem } from '~/types';
+import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem, TalkItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
 import ConferenceTickets from '~/components/ConferenceTickets.vue';
 import TestimonialSlider from '~/components/TestimonialSlider.vue';
-import type { TalkItem, DirectusFileItem } from '~/types';
 import { getAssetUrl } from '~/helpers/getAssetUrl';
 
 // Add route and router
@@ -250,9 +250,9 @@ type preparedAgendaItem = {
 };
 
 const preparedAgenda: ComputedRef<preparedAgendaItem[]> = computed(() => {
-  let agenda = conference.value?.agenda.map((talk) => {
+  const agenda = conference.value?.agenda.map((talk) => {
 
-    let currentTalk: preparedAgendaItem = {
+    const currentTalk: preparedAgendaItem = {
       _object: undefined,
       ...talk,
     }

@@ -1,6 +1,7 @@
 <template>
   <!--<BackgroundSpotlight class="absolute z-20 h-192 w-auto" :class="position"/>-->
-  <div class='h-192 w-160 bg-no-repeat bg-contain absolute'
+  <div
+class='h-192 w-160 bg-no-repeat bg-contain absolute'
        :class="position"
        :style="{
          backgroundImage: `url(${backgroundSpotlightImage})`,
