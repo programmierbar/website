@@ -198,6 +198,35 @@ else
     node ./utils/setup-local.mjs
 fi
 
+# Get admin token for additional setup scripts
+echo ""
+echo -e "${YELLOW}Setting up email templates, AI prompts, and automation settings...${NC}"
+ADMIN_EMAIL="${ADMIN_EMAIL:-admin@programmier.bar}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-123456}"
+
+# Get token via API login
+TOKEN_RESPONSE=$(curl -s -X POST "http://localhost:$PORT/auth/login" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}")
+
+ADMIN_TOKEN=$(echo "$TOKEN_RESPONSE" | grep -o '"access_token":"[^"]*"' | sed 's/"access_token":"//;s/"$//')
+
+if [ -z "$ADMIN_TOKEN" ]; then
+    echo -e "  ${YELLOW}!${NC} Could not get admin token, skipping additional setup"
+else
+    # Run email templates setup (includes automation_settings)
+    DIRECTUS_URL="http://localhost:$PORT" DIRECTUS_ADMIN_TOKEN="$ADMIN_TOKEN" node ./utils/setup-email-templates.mjs 2>&1 | grep -E "created|exists|complete|Error" | while read line; do
+        echo -e "  ${GREEN}✓${NC} $line"
+    done
+
+    # Run AI prompts setup
+    DIRECTUS_URL="http://localhost:$PORT" DIRECTUS_ADMIN_TOKEN="$ADMIN_TOKEN" node ./utils/setup-ai-prompts.mjs 2>&1 | grep -E "created|exists|complete|Error" | while read line; do
+        echo -e "  ${GREEN}✓${NC} $line"
+    done
+
+    echo -e "  ${GREEN}✓${NC} Email templates, AI prompts, and automation settings configured"
+fi
+
 # Stop the temporary Directus instance
 echo ""
 echo -e "${YELLOW}Stopping temporary Directus instance...${NC}"
