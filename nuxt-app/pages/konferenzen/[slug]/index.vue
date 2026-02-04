@@ -204,7 +204,7 @@ import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue'
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
 import ConferenceTickets from '~/components/ConferenceTickets.vue';
 import TestimonialSlider from '~/components/TestimonialSlider.vue';
-import { TalkItem} from '~/types';
+import type { TalkItem } from '~/types';
 import type { DirectusFileItem } from '~/types';
 import { getAssetUrl } from '~/helpers/getAssetUrl';
 

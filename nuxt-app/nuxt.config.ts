@@ -137,4 +137,12 @@ export default defineNuxtConfig({
     },
 
     compatibilityDate: '2025-01-17',
+
+    nitro: {
+        prerender: {
+            // Don't fail build on prerender errors for image routes
+            // which require the CMS server to be running
+            failOnError: false,
+        },
+    },
 })

@@ -21,6 +21,7 @@
                 >
                     <!-- Profile image -->
                     <DirectusImage
+                        v-if="speaker.profile_image"
                         class="h-44 w-44 flex-shrink-0 overflow-hidden rounded-full object-cover sm:h-52 sm:w-52 lg:h-80 lg:w-80 xl:h-96 xl:w-96 2xl:h-112 2xl:w-112 3xl:h-120 3xl:w-120"
                         :image="speaker.profile_image"
                         :alt="fullName"
