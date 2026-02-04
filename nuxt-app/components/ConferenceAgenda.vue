@@ -35,8 +35,8 @@
           :class="{ 'text-center items-center justify-center': isNoTrack(a) }"
           :style="itemStyle(a, day)"
           :title="`${fmtTime(a.start)}–${fmtTime(a.end)}`"
-          @click='handleTalkClick(a._object)'
           :data-cursor-hover="a._object ? true : null"
+          @click='handleTalkClick(a._object)'
         >
           <header class="font-bold text-sm md:text-lg">
             {{ a._object?.title ?? a.title }}

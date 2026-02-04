@@ -72,8 +72,8 @@
               type="button"
               class="z-10 absolute left-0 top-0 h-full w-20 md:w-32 flex items-center justify-center text-white/80 hover:text-white focus:outline-none text-3xl"
               :title="'Vorheriges Bild'"
-              @click.stop="prevImage"
               :data-cursor-arrow-left="true"
+              @click.stop="prevImage"
             >
               ‹
             </button>
@@ -92,8 +92,8 @@
               type="button"
               class="z-10 absolute right-0 top-0 h-full w-20 md:w-32 flex items-center justify-center text-white/80 hover:text-white focus:outline-none text-3xl"
               :title="'Nächstes Bild'"
-              @click.stop="nextImage"
               :data-cursor-arrow-right="true"
+              @click.stop="nextImage"
             >
               ›
             </button>
@@ -113,7 +113,7 @@ import GenericListItem from './GenericListItem.vue'
 import type { DirectusFile } from '@directus/sdk';
 import type { DirectusFileItem } from '~/types';
 
-let props = defineProps<{
+const props = defineProps<{
   images: DirectusFile[] | DirectusFileItem[]
 }>()
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AngleRightIcon from '~/assets/icons/angle-right.svg'
+import AngleLeftIcon from '~/assets/icons/angle-left.svg'
 import { computed, ref } from 'vue'
 
 const props = defineProps<{
@@ -7,6 +8,7 @@ const props = defineProps<{
         component: any
         props: Record<string, any>
     }[]
+    showBackButton?: boolean
 }>()
 
 const emit = defineEmits(['lastPageReached'])
@@ -44,6 +46,14 @@ async function setPage(page: number) {
         }
     }
 }
+
+function prevPage() {
+    if (currentPage.value > 0) {
+        currentPage.value--
+    }
+}
+
+const canGoBack = computed(() => currentPage.value > 0)
 
 async function nextPage() {
     if (currentPage.value === props.components.length - 1) {
@@ -91,15 +101,28 @@ function handleKeydown(event: KeyboardEvent) {
                     @click="isDotClickable(index) && setPage(index)"
                 ></span>
             </div>
-            <div
-                class="mt-4 flex flex-row items-center justify-center"
-                :class="{ 'opacity-30': isNextButtonDisabled }"
-                @click="nextPage"
-            >
-                <button class="font-bold uppercase tracking-widest text-white" :disabled="isNextButtonDisabled">
-                    Weiter
-                </button>
-                <AngleRightIcon class="ml-2 h-6 text-white" />
+            <div class="mt-4 flex w-full flex-row items-center justify-center gap-8">
+                <div
+                    v-if="showBackButton"
+                    class="flex flex-row items-center justify-center"
+                    :class="{ 'pointer-events-none opacity-0': !canGoBack, 'cursor-pointer': canGoBack }"
+                    @click="prevPage"
+                >
+                    <AngleLeftIcon class="mr-2 h-6 text-white" />
+                    <button class="font-bold uppercase tracking-widest text-white" :disabled="!canGoBack">
+                        Zurück
+                    </button>
+                </div>
+                <div
+                    class="flex flex-row items-center justify-center"
+                    :class="{ 'opacity-30 cursor-not-allowed': isNextButtonDisabled, 'cursor-pointer': !isNextButtonDisabled }"
+                    @click="nextPage"
+                >
+                    <button class="font-bold uppercase tracking-widest text-white" :disabled="isNextButtonDisabled">
+                        Weiter
+                    </button>
+                    <AngleRightIcon class="ml-2 h-6 text-white" />
+                </div>
             </div>
         </div>
     </div>

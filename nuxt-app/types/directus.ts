@@ -147,7 +147,8 @@ export interface DirectusConferenceItem {
     partners: {
       partner: PartnerItem
       sort: number
-    }[],
+    }[]
+    ticketing_enabled: boolean
 }
 
 export interface DirectusTestimonialItem {

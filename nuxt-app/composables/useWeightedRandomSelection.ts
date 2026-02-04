@@ -26,8 +26,8 @@ export function useWeightedRandomSelection() {
     testimonials: DirectusTestimonialItem[],
     maxCount: number = 5
   ): DirectusTestimonialItem[] => {
-    if (testimonials.length <= maxCount) {
-      return testimonials
+    if (!testimonials || testimonials.length <= maxCount) {
+      return testimonials || []
     }
 
     const seed = getHourlySeed()

@@ -1,5 +1,6 @@
 <template>
-  <iframe type="text/html"
+  <iframe
+type="text/html"
           :src="videoUrl"
           frameborder="0">
   </iframe>

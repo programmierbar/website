@@ -3,9 +3,9 @@
     <template #default>
     <div class='flex flex-row flex-wrap space justify-around mt-8'>
       <div v-for="(ticket) in tickets" :key="ticket.price">
-        <ConferenceTicketLime :ticket="ticket" class='h-64' v-if='ticket.style === "lime"'/>
-        <ConferenceTicketBlue :ticket="ticket" class='h-64' v-if='ticket.style === "blue"'/>
-        <ConferenceTicketRed :ticket="ticket" class='h-64' v-if='ticket.style === "red"'/>
+        <ConferenceTicketLime v-if='ticket.style === "lime"' :ticket="ticket" class='h-64'/>
+        <ConferenceTicketBlue v-if='ticket.style === "blue"' :ticket="ticket" class='h-64'/>
+        <ConferenceTicketRed v-if='ticket.style === "red"' :ticket="ticket" class='h-64'/>
       </div>
     </div>
     </template>

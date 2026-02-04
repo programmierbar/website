@@ -28,13 +28,21 @@ export default defineNuxtConfig({
     ],
 
     runtimeConfig: {
-        emailPassword: '',
+        // Email (Mailgun API)
+        emailTransport: 'mailgun', // Set via NUXT_EMAIL_TRANSPORT env var
+        emailFrom: 'noreply@programmier.bar', // Set via NUXT_EMAIL_FROM env var
+        emailMailgunApiKey: '', // Set via NUXT_EMAIL_MAILGUN_API_KEY env var
+        emailMailgunDomain: '', // Set via NUXT_EMAIL_MAILGUN_DOMAIN env var
+        emailMailgunHost: 'api.eu.mailgun.net', // Set via NUXT_EMAIL_MAILGUN_HOST env var
         directusAdminToken: '', // Set via NUXT_DIRECTUS_ADMIN_TOKEN env var
         geminiApiKey: '', // Set via NUXT_GEMINI_API_KEY env var
+        stripeSecretKey: '', // Set via NUXT_STRIPE_SECRET_KEY env var
+        stripeWebhookSecret: '', // Set via NUXT_STRIPE_WEBHOOK_SECRET env var
         public: {
             FLAG_SHOW_LOGIN: FLAG_SHOW_LOGIN,
             DISCORD_INVITE_LINK: DISCORD_INVITE_LINK,
             directusCmsUrl: DIRECTUS_CMS_URL,
+            stripePublishableKey: '', // Set via NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY env var
         },
     },
 
