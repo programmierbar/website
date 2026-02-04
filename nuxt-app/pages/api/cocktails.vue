@@ -9,8 +9,8 @@
 
 <script setup lang="ts">
 import { useDirectus } from '~/composables/useDirectus'
-import { useLoadingScreen } from '../composables'
-import { getMetaInfo } from '../helpers'
+import { useLoadingScreen } from '~/composables/useLoadingScreen'
+import { getMetaInfo } from '~/helpers/getMetaInfo'
 
 const directus = useDirectus()
 const breadcrumbs = [{ label: 'API' }, { label: 'Cocktails' }]
