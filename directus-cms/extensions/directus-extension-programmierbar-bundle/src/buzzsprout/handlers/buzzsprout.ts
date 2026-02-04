@@ -42,7 +42,7 @@ export async function handleBuzzsprout(
 
     // Add "private", if necessary
     if (isCreation || payload.status) {
-        buzzsproutData.private = podcastData.status === 'archived'
+        buzzsproutData.private = podcastData.status !== 'published'
     }
 
     // Build url in any case because we need it for ratings links
