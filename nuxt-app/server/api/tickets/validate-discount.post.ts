@@ -23,8 +23,12 @@ export default defineEventHandler(async (event) => {
     // Fetch settings from Directus
     const settings = await getTicketSettings()
 
+    // Return unavailable if settings not configured (e.g., schema not deployed yet)
     if (!settings) {
-        throw createError({ statusCode: 500, message: 'Konnte Ticket-Einstellungen nicht laden' })
+        return {
+            valid: false,
+            message: 'Ticketing ist derzeit nicht verfügbar.',
+        }
     }
 
     // Check if code matches the configured discount code

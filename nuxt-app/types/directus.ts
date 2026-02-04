@@ -148,7 +148,7 @@ export interface DirectusConferenceItem {
       partner: PartnerItem
       sort: number
     }[]
-    ticketing_enabled: boolean
+    ticketing_enabled?: boolean // Optional until schema deployed to production
 }
 
 export interface DirectusTestimonialItem {

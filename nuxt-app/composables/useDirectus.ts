@@ -434,7 +434,7 @@ export function useDirectus() {
             'tickets_url',
             'tickets_on_sale',
             'tickets_text',
-            'ticketing_enabled',
+            // 'ticketing_enabled', // TODO: Enable once schema is deployed to production
             'partners',
             'partners.*',
             'partners.partner.*',

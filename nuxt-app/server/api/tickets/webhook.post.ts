@@ -44,10 +44,10 @@ export default defineEventHandler(async (event) => {
 
         const config = useRuntimeConfig()
         const directusUrl = config.public.directusCmsUrl || 'http://localhost:8055'
-        const adminToken = config.directusAdminToken
+        const ticketToken = config.directusTicketToken
 
-        if (!adminToken) {
-            console.error('DIRECTUS_ADMIN_TOKEN not configured')
+        if (!ticketToken) {
+            console.error('DIRECTUS_TICKET_TOKEN not configured')
             throw createError({ statusCode: 500, message: 'Server configuration error' })
         }
 
@@ -75,7 +75,7 @@ export default defineEventHandler(async (event) => {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${adminToken}`,
+                        Authorization: `Bearer ${ticketToken}`,
                     },
                     body: JSON.stringify(updatePayload),
                 }

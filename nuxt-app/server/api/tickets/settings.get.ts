@@ -3,11 +3,10 @@ import { getTicketSettings } from '../../utils/ticketSettings'
 export default defineEventHandler(async () => {
     const settings = await getTicketSettings()
 
+    // Return null if settings unavailable (e.g., schema not deployed yet)
+    // The frontend handles this gracefully
     if (!settings) {
-        throw createError({
-            statusCode: 500,
-            message: 'Konnte Ticket-Einstellungen nicht laden',
-        })
+        return null
     }
 
     // Return in snake_case format matching the store's expected interface

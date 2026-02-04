@@ -35,6 +35,7 @@ export default defineNuxtConfig({
         emailMailgunDomain: '', // Set via NUXT_EMAIL_MAILGUN_DOMAIN env var
         emailMailgunHost: 'api.eu.mailgun.net', // Set via NUXT_EMAIL_MAILGUN_HOST env var
         directusAdminToken: '', // Set via NUXT_DIRECTUS_ADMIN_TOKEN env var
+        directusTicketToken: '', // Set via NUXT_DIRECTUS_TICKET_TOKEN env var
         geminiApiKey: '', // Set via NUXT_GEMINI_API_KEY env var
         stripeSecretKey: '', // Set via NUXT_STRIPE_SECRET_KEY env var
         stripeWebhookSecret: '', // Set via NUXT_STRIPE_WEBHOOK_SECRET env var

@@ -18,10 +18,11 @@ export async function getTicketSettings(): Promise<DirectusTicketSettingsItem | 
 
     const config = useRuntimeConfig()
     const directusUrl = config.public.directusCmsUrl || 'http://localhost:8055'
-    const adminToken = config.directusAdminToken
+    const ticketToken = config.directusTicketToken
 
-    if (!adminToken) {
-        console.error('NUXT_DIRECTUS_ADMIN_TOKEN environment variable is not configured')
+    if (!ticketToken) {
+        // Not an error - ticketing may not be configured in this environment
+        console.info('Ticketing not configured: NUXT_DIRECTUS_TICKET_TOKEN not set')
         return null
     }
 
@@ -30,7 +31,7 @@ export async function getTicketSettings(): Promise<DirectusTicketSettingsItem | 
             `${directusUrl}/items/ticket_settings?fields=early_bird_price_cents,regular_price_cents,discounted_price_cents,early_bird_deadline,discount_code`,
             {
                 headers: {
-                    Authorization: `Bearer ${adminToken}`,
+                    Authorization: `Bearer ${ticketToken}`,
                 },
             }
         )
@@ -39,7 +40,7 @@ export async function getTicketSettings(): Promise<DirectusTicketSettingsItem | 
             const errorText = await response.text().catch(() => '')
             console.error(`Failed to fetch ticket settings: ${response.status} ${response.statusText}`, errorText)
             if (response.status === 401) {
-                console.error('Check that NUXT_DIRECTUS_ADMIN_TOKEN is set to a valid Directus access token')
+                console.error('Check that NUXT_DIRECTUS_TICKET_TOKEN is set to a valid Directus access token')
             }
             return null
         }

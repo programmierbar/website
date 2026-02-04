@@ -83,8 +83,8 @@ export default defineEventHandler(async (event) => {
     const settings = await getTicketSettings()
     if (!settings) {
         throw createError({
-            statusCode: 500,
-            message: 'Konnte Ticket-Einstellungen nicht laden',
+            statusCode: 503,
+            message: 'Ticketing ist derzeit nicht verfügbar. Bitte versuche es später erneut.',
         })
     }
 
@@ -99,10 +99,10 @@ export default defineEventHandler(async (event) => {
 
     const config = useRuntimeConfig()
     const directusUrl = config.public.directusCmsUrl || 'http://localhost:8055'
-    const adminToken = config.directusAdminToken
+    const ticketToken = config.directusTicketToken
 
-    if (!adminToken) {
-        console.error('DIRECTUS_ADMIN_TOKEN not configured')
+    if (!ticketToken) {
+        console.error('DIRECTUS_TICKET_TOKEN not configured')
         throw createError({
             statusCode: 500,
             message: 'Serverkonfigurationsfehler',
@@ -110,12 +110,13 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-        // Verify conference exists and ticketing is enabled
+        // Verify conference exists
+        // Note: ticketing_enabled field is optional until schema is deployed to production
         const conferenceResponse = await fetch(
-            `${directusUrl}/items/conferences/${conferenceId}?fields=id,slug,title,ticketing_enabled`,
+            `${directusUrl}/items/conferences/${conferenceId}?fields=id,slug,title`,
             {
                 headers: {
-                    Authorization: `Bearer ${adminToken}`,
+                    Authorization: `Bearer ${ticketToken}`,
                 },
             }
         )
@@ -130,12 +131,13 @@ export default defineEventHandler(async (event) => {
         const conferenceData = await conferenceResponse.json()
         const conference = conferenceData.data
 
-        if (!conference.ticketing_enabled) {
-            throw createError({
-                statusCode: 400,
-                message: 'Ticketverkauf für diese Konferenz ist nicht aktiv',
-            })
-        }
+        // TODO: Re-enable ticketing_enabled check once schema is deployed to production
+        // if (!conference.ticketing_enabled) {
+        //     throw createError({
+        //         statusCode: 400,
+        //         message: 'Ticketverkauf für diese Konferenz ist nicht aktiv',
+        //     })
+        // }
 
         // Generate order number
         const orderNumber = generateOrderNumber()
@@ -175,7 +177,7 @@ export default defineEventHandler(async (event) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${adminToken}`,
+                Authorization: `Bearer ${ticketToken}`,
             },
             body: JSON.stringify(orderPayload),
         })
@@ -231,7 +233,7 @@ export default defineEventHandler(async (event) => {
                 await fetch(`${directusUrl}/items/ticket_orders/${orderId}`, {
                     method: 'DELETE',
                     headers: {
-                        Authorization: `Bearer ${adminToken}`,
+                        Authorization: `Bearer ${ticketToken}`,
                     },
                 })
                 console.log(`Deleted orphaned order ${orderId} after Stripe failure`)
@@ -249,7 +251,7 @@ export default defineEventHandler(async (event) => {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${adminToken}`,
+                Authorization: `Bearer ${ticketToken}`,
             },
             body: JSON.stringify({
                 stripe_checkout_session_id: session.id,
