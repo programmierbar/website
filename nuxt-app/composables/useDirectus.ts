@@ -11,7 +11,7 @@ import {
 import type {
   ConferenceItem,
   DirectusMemberItem,
-  DirectusPickOfTheDayItem, DirectusPodcastItem,
+  DirectusPodcastItem,
   DirectusProfileItem,
   DirectusTagItem,
   DirectusTranscriptItem,
