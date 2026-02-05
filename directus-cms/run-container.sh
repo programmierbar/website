@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Use this command to verify the built docker container"
-echo "For local development you can also use: 'yarn run start'"
+echo "For local development you can also use: 'npm run start'"
 
 # Check if the Docker image "programmierbar/cms" is locally available
 if [[ "$(docker images -q registry.digitalocean.com/programmierbar/cms 2> /dev/null)" == "" ]]; then
