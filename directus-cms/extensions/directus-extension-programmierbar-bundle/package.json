@@ -108,6 +108,11 @@
                 "type": "hook",
                 "name": "ticket-order-processing",
                 "source": "src/ticket-order-processing/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "asset-generation",
+                "source": "src/asset-generation/index.ts"
             }
         ],
         "host": "^10.10.0"
