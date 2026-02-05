@@ -37,19 +37,19 @@ website/
 ### Nuxt App (run from `nuxt-app/`)
 
 ```bash
-yarn run dev          # Development server
-yarn run build        # Production build
-yarn run generate     # Static site generation
-yarn run eslint       # Lint with auto-fix
-yarn run prettier     # Format code
+npm run dev          # Development server
+npm run build        # Production build
+npm run generate     # Static site generation
+npm run eslint       # Lint with auto-fix
+npm run prettier     # Format code
 ```
 
 ### Directus CMS (run from `directus-cms/`)
 
 ```bash
-yarn run start        # Start Directus server
-yarn run build        # Build extensions
-yarn run migrate:db   # Database migrations
+npm run start        # Start Directus server
+npm run build        # Build extensions
+npm run migrate:db   # Database migrations
 ```
 
 ### Testing

@@ -728,7 +728,7 @@ async function main() {
         console.log('\nNext steps:')
         console.log('1. Open Directus and configure the Heise contact email in "Automation Settings"')
         console.log('2. Review and customize the email templates in "Email Templates"')
-        console.log('3. Rebuild the Directus extensions: cd extensions/directus-extension-programmierbar-bundle && yarn build')
+        console.log('3. Rebuild the Directus extensions: cd extensions/directus-extension-programmierbar-bundle && npm run build')
     } catch (err) {
         console.error('Error during setup:', err)
         process.exit(1)

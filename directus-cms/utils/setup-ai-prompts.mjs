@@ -483,7 +483,7 @@ async function main() {
         console.log('\nSetup complete!')
         console.log('\nNext steps:')
         console.log('1. Open Directus and review/customize the AI prompts in "AI Prompts"')
-        console.log('2. Rebuild the Directus extensions: cd extensions/directus-extension-programmierbar-bundle && yarn build')
+        console.log('2. Rebuild the Directus extensions: cd extensions/directus-extension-programmierbar-bundle && npm run build')
         console.log('\nNote: Changes to prompts take effect immediately - no rebuild required.')
     } catch (err) {
         console.error('Error during setup:', err)
