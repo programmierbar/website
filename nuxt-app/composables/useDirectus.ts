@@ -31,7 +31,7 @@ import { directus, type Collections } from './../services'
 const collectionWithTagsName = ['members', 'speakers', 'podcasts', 'meetups', 'picks_of_the_day'] as const
 type CollectionWithTagsName = (typeof collectionWithTagsName)[number]
 export type Tag = { name: string; count: number }
-type DirectusTag = { tag: { id: string; name: string } }
+export type DirectusTag = { tag: { id: string; name: string } }
 
 export function useDirectus() {
     async function getHomepage() {
@@ -41,7 +41,7 @@ export function useDirectus() {
                   '*',
                   { video: ['*'] },
                   { highlights: ['*', { item: ['*', { cover_image: ['*'] }, { poster: ['*'] }] }] },
-                ],
+                ] as any,
             })
         )
     }
@@ -49,7 +49,7 @@ export function useDirectus() {
     async function getPodcastPage() {
         return await directus.request(
             readSingleton('podcast_page', {
-                fields: ['*', { cover_image: ['*'] }],
+                fields: ['*', { cover_image: ['*'] }] as any,
             })
         )
     }
@@ -57,7 +57,7 @@ export function useDirectus() {
     async function getMeetupPage() {
         return await directus.request(
             readSingleton('meetup_page', {
-                fields: ['*', { cover_image: ['*'] }],
+                fields: ['*', { cover_image: ['*'] }] as any,
             })
         )
     }
@@ -65,7 +65,7 @@ export function useDirectus() {
   async function getConferencePage() {
     return await directus.request(
       readSingleton('conference_page', {
-        fields: ['*', { cover_image: ['*'] }, { video: ['*'] }],
+        fields: ['*', { cover_image: ['*'] }, { video: ['*'] }] as any,
       })
     )
   }
@@ -81,7 +81,7 @@ export function useDirectus() {
     async function getAboutPage() {
         return await directus.request(
             readSingleton('about_page', {
-                fields: ['*', { cover_image: ['*'] }],
+                fields: ['*', { cover_image: ['*'] }] as any,
             })
         )
     }
@@ -153,7 +153,7 @@ export function useDirectus() {
     async function getPicksOfTheDayPage() {
         return await directus.request(
             readSingleton('pick_of_the_day_page', {
-                fields: ['*', { cover_image: ['*'] }],
+                fields: ['*', { cover_image: ['*'] }] as any,
             })
         )
     }
@@ -179,7 +179,7 @@ export function useDirectus() {
                     { cover_image: ['*'] },
                     'audio_url',
                     { tags: [{ tag: ['id', 'name'] }] },
-                ],
+                ] as any,
                 sort: ['-published_on'],
                 limit: limit,
             })
@@ -200,7 +200,7 @@ export function useDirectus() {
                     'audio_url',
                     'description',
                     { tags: [{ tag: ['id', 'name'] }] },
-                ],
+                ] as any,
                 sort: ['-published_on'],
                 limit: -1,
             })
@@ -210,7 +210,7 @@ export function useDirectus() {
     async function getRelatedPodcasts(podcast: PodcastItem | MeetupItem, limit: number = 15) {
         return await directus.request(
             readItems('podcasts', {
-                fields: ['id', 'slug', 'published_on', 'type', 'number', 'title', { cover_image: ['*'] }, 'audio_url'],
+                fields: ['id', 'slug', 'published_on', 'type', 'number', 'title', { cover_image: ['*'] }, 'audio_url'] as any,
                 filter: {
                     _and: [
                         {
@@ -263,15 +263,15 @@ export function useDirectus() {
                         { picks_of_the_day: ['id', 'name', 'website_url', 'description', { image: ['*'] }] },
                         'tags',
                         { tags: [{ tag: ['id', 'name'] }] },
-                    ],
+                    ] as any,
                     filter: { slug: { _eq: slug } },
                     limit: 1,
                 })
             )
             .then(
-                (result) =>
+                (result: any) =>
                     result
-                        .map((podcast) => ({
+                        .map((podcast: any) => ({
                             ...podcast,
                             tagsPrepared: podcast.tags
                                 .map((tag: any) => tag.tag)
@@ -318,19 +318,19 @@ export function useDirectus() {
                         { speakers: [{ speaker: ['id', 'slug', 'academic_title', 'first_name', 'last_name', 'description', { event_image: ['*'] }] }] },
                         'tags',
                         { tags: [{ tag: ['id', 'name'] }] },
-                    ],
+                    ] as any,
                     filter: { slug: { _eq: slug } },
                     limit: 1,
                 })
             )
             .then(
-                (result) =>
+                (result: any) =>
                     result
-                        .map((meetup) => ({
+                        .map((meetup: any) => ({
                             ...meetup,
                             tagsPrepared: meetup.tags.map((tag: DirectusTag) => tag.tag) as TagItem[],
                             talksPrepared: meetup.talks
-                              .sort((a, b) => a.sort - b.sort)
+                              .sort((a: any, b: any) => a.sort - b.sort)
                               .map((talk: any) => {
                               return talk.talk;
                             }),
@@ -384,7 +384,7 @@ export function useDirectus() {
             // 'ticketing_enabled', // TODO: Enable once schema is deployed to production
             'partners',
             { partners: ['*', { partner: ['*', 'name', 'url', { image: ['*'] }] }] }
-          ],
+          ] as any,
           filter: { slug: { _eq: slug } },
           limit: 1,
         })
@@ -471,15 +471,15 @@ export function useDirectus() {
                         { podcasts: [{ podcast: ['id', 'slug', 'published_on', 'type', 'number', 'title', { cover_image: ['*'] }, 'audio_url'] }] },
                         { picks_of_the_day: ['id', 'name', 'website_url', 'description', { image: ['*'] }] },
                         { tags: [{ tag: ['id', 'name'] }] },
-                    ],
+                    ] as any,
                     filter: { slug: { _eq: slug } },
                     limit: 1,
                 })
             )
             .then(
-                (result) =>
+                (result: any) =>
                     result
-                        .map((speaker) => ({
+                        .map((speaker: any) => ({
                             ...speaker,
                             tagsPrepared: speaker.tags
                                 .map((tag: DirectusTag) => tag.tag)
@@ -538,7 +538,7 @@ export function useDirectus() {
                     'description',
                     { cover_image: ['*'] },
                     { tags: [{ tag: ['id', 'name'] }] },
-                ],
+                ] as any,
                 sort: ['-start_on'],
                 limit: -1,
             })
@@ -557,7 +557,7 @@ export function useDirectus() {
             'title',
             'text_1',
             { poster: ['*'] },
-          ],
+          ] as any,
           sort: ['-start_on'],
           limit: -1,
         })
@@ -579,7 +579,7 @@ export function useDirectus() {
                     { profile_image: ['*'] },
                     { tags: [{ tag: ['id', 'name'] }] },
                     { podcasts: [{ podcast: ['type'] }] },
-                ],
+                ] as any,
                 limit: -1,
                 sort: ['sort', '-published_on'],
                 filter: {'listed_hof': {'_eq': true}},
@@ -610,7 +610,7 @@ export function useDirectus() {
     async function getTopTagsForCollection(collection: CollectionWithTagsName, limit: number = 25) {
         const tagCounts: { [key: string]: number } = {}
         const tagItems = (await directus.request(
-            readItems(collection, { fields: [{ tags: [{ tag: ['name'] }] }], limit: -1 })
+            readItems(collection, { fields: [{ tags: [{ tag: ['name'] }] }] as any, limit: -1 })
         )) as unknown as { tags: { tag: DirectusTagItem }[] }[]
 
         for (const item of tagItems) {
@@ -651,7 +651,7 @@ export function useDirectus() {
                     'github_url',
                     'youtube_url',
                     'website_url',
-                ],
+                ] as any,
                 filter,
                 sort: ['sort']
             })
@@ -671,17 +671,17 @@ export function useDirectus() {
                         { image: ['*'] },
                         { podcast: ['slug', 'type', 'number', 'title'] },
                         { tags: [{ tag: ['id', 'name'] }] },
-                    ],
+                    ] as any,
                     limit: -1,
                     sort: ['-published_on'],
                 })
             )
-            .then((result: DirectusPickOfTheDayItem[]) =>
-                result.map((pickOfTheDay) => ({
+            .then((result: any) =>
+                result.map((pickOfTheDay: any) => ({
                     ...pickOfTheDay,
                     tagsPrepared: pickOfTheDay.tags
                         .map((tag: DirectusTag) => tag.tag)
-                        .filter((tag) => tag) as TagItem[],
+                        .filter((tag: any) => tag) as TagItem[],
                 }))
             )
     }
@@ -699,7 +699,7 @@ export function useDirectus() {
             'job_role',
             'job_employer',
             { profile_image: ['*'] }
-          ],
+          ] as any,
           limit: 1,
           filter: { id: { _eq: id } },
         })
