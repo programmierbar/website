@@ -20,10 +20,7 @@ export function getStripe(): Stripe {
 /**
  * Verify a Stripe webhook signature.
  */
-export function verifyWebhookSignature(
-    body: string | Buffer,
-    signature: string
-): Stripe.Event {
+export function verifyWebhookSignature(body: string | Buffer, signature: string): Stripe.Event {
     const config = useRuntimeConfig()
     if (!config.stripeWebhookSecret) {
         throw new Error('NUXT_STRIPE_WEBHOOK_SECRET is not configured')

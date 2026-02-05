@@ -1,8 +1,7 @@
-import type { MetaInfo } from 'vue-meta/types/vue-meta'
-import { BUZZSPROUT_TRACKING_URL, DIRECTUS_CMS_URL, TWITTER_HANDLE, WEBSITE_NAME, WEBSITE_URL } from '../config'
+import { getAssetUrl } from '~/helpers/getAssetUrl'
+import { BUZZSPROUT_TRACKING_URL, TWITTER_HANDLE, WEBSITE_NAME, WEBSITE_URL } from '../config'
 import type { FileItem } from '../types'
 import { getTrimmedString } from './getTrimmedString'
-import { getAssetUrl } from '~/helpers/getAssetUrl';
 
 interface Data {
     type: 'website' | 'podcast' | 'profile' | 'article'
@@ -36,7 +35,7 @@ export function getMetaInfo({
     firstName,
     lastName,
     noIndex,
-}: Data): MetaInfo {
+}: Data): any {
     // Create URL of current site
     const siteUrl = WEBSITE_URL + path
 
@@ -49,7 +48,7 @@ export function getMetaInfo({
 
     // Create default meta info with title, description,
     // Open Graph protocol and Twitter Cards
-    const metaInfo: MetaInfo = {
+    const metaInfo: any = {
         title: trimmedTitle,
         link: [
             {
@@ -85,6 +84,16 @@ export function getMetaInfo({
                 hid: 'og:description',
                 property: 'og:description',
                 content: trimmedDescription,
+            },
+            {
+                hid: 'og:site_name',
+                property: 'og:site_name',
+                content: WEBSITE_NAME,
+            },
+            {
+                hid: 'og:locale',
+                property: 'og:locale',
+                content: 'de_DE',
             },
 
             // Twitter Cards
@@ -123,12 +132,12 @@ export function getMetaInfo({
         const imageWidth = widthIsSmaller ? Math.round((image.width / image.height) * imageMinSize) : imageMinSize
         const imageHeight = !widthIsSmaller ? Math.round((image.height / image.width) * imageMinSize) : imageMinSize
         const imageUrl = getAssetUrl(image, {
-          queryParams: {
-            width: imageWidth,
-            height: imageHeight,
-            fit: 'cover',
-            quality: '70'
-          }
+            queryParams: {
+                width: imageWidth,
+                height: imageHeight,
+                fit: 'cover',
+                quality: '70',
+            },
         })
         metaInfo.meta = metaInfo.meta?.concat([
             // Open Graph protocol

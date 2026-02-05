@@ -11,29 +11,28 @@
                 <template #default="{ item, index, viewportItems, addViewportItem }">
                     <GenericListItem
                         :key="item.id"
-
                         :item="item"
                         :viewport-items="viewportItems"
                         :add-viewport-item="addViewportItem"
                     >
                         <template #default="{ isNewToViewport }">
                             <FadeAnimation :fade-in="isNewToViewport ? 'from_bottom' : 'none'" :threshold="0">
-                              <div
-                                class='w-72 mr-3 cursor-zoom-in'
-                                role="button"
-                                tabindex="0"
-                                :aria-label="`Bild ${index + 1} von ${images.length}`"
-                                @click.stop="openLightbox(index)"
-                                @keydown.enter.prevent="openLightbox(index)"
-                                @keydown.space.prevent="openLightbox(index)"
-                              >
-                                <DirectusImage
-                                  class="object-cover aspect-square"
-                                  :image="item"
-                                  sizes="lg:300px"
-                                  loading="lazy"
-                                />
-                              </div>
+                                <div
+                                    class="mr-3 w-72 cursor-zoom-in"
+                                    role="button"
+                                    tabindex="0"
+                                    :aria-label="`Bild ${index + 1} von ${images.length}`"
+                                    @click.stop="openLightbox(index)"
+                                    @keydown.enter.prevent="openLightbox(index)"
+                                    @keydown.space.prevent="openLightbox(index)"
+                                >
+                                    <DirectusImage
+                                        class="aspect-square object-cover"
+                                        :image="item"
+                                        sizes="lg:300px"
+                                        loading="lazy"
+                                    />
+                                </div>
                             </FadeAnimation>
                         </template>
                     </GenericListItem>
@@ -57,64 +56,64 @@
             "
             type="button"
             :title="index === 1 ? 'Scroll left' : 'Scroll right'"
-            :data-cursor-arrow-left="(index === 1 && !scrollStartReached) ? true : null"
-            :data-cursor-arrow-right="(index === 2 && !scrollEndReached) ? true : null"
+            :data-cursor-arrow-left="index === 1 && !scrollStartReached ? true : null"
+            :data-cursor-arrow-right="index === 2 && !scrollEndReached ? true : null"
             @click="() => scrollTo(index === 1 ? 'left' : 'right')"
         />
 
         <transition name="fade">
-          <div
-            v-if="isLightboxOpen"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-            @click="closeLightbox"
-          >
-            <button
-              type="button"
-              class="z-10 absolute left-0 top-0 h-full w-20 md:w-32 flex items-center justify-center text-white/80 hover:text-white focus:outline-none text-3xl"
-              :title="'Vorheriges Bild'"
-              :data-cursor-arrow-left="true"
-              @click.stop="prevImage"
+            <div
+                v-if="isLightboxOpen"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+                @click="closeLightbox"
             >
-              ‹
-            </button>
+                <button
+                    type="button"
+                    class="absolute left-0 top-0 z-10 flex h-full w-20 items-center justify-center text-3xl text-white/80 hover:text-white focus:outline-none md:w-32"
+                    :title="'Vorheriges Bild'"
+                    :data-cursor-arrow-left="true"
+                    @click.stop="prevImage"
+                >
+                    ‹
+                </button>
 
-            <div class="relative max-h-[90vh] max-w-[95vw]" @click.stop>
-              <DirectusImage
-                class="max-h-[90vh] max-w-[95vw] w-auto h-auto object-contain"
-                :image="currentImage!"
-                sizes="lg:1000px"
-                loading="auto"
-                fit="contain"
-              />
+                <div class="relative max-h-[90vh] max-w-[95vw]" @click.stop>
+                    <DirectusImage
+                        class="h-auto max-h-[90vh] w-auto max-w-[95vw] object-contain"
+                        :image="currentImage!"
+                        sizes="lg:1000px"
+                        loading="auto"
+                        fit="contain"
+                    />
+                </div>
+
+                <button
+                    type="button"
+                    class="absolute right-0 top-0 z-10 flex h-full w-20 items-center justify-center text-3xl text-white/80 hover:text-white focus:outline-none md:w-32"
+                    :title="'Nächstes Bild'"
+                    :data-cursor-arrow-right="true"
+                    @click.stop="nextImage"
+                >
+                    ›
+                </button>
             </div>
-
-            <button
-              type="button"
-              class="z-10 absolute right-0 top-0 h-full w-20 md:w-32 flex items-center justify-center text-white/80 hover:text-white focus:outline-none text-3xl"
-              :title="'Nächstes Bild'"
-              :data-cursor-arrow-right="true"
-              @click.stop="nextImage"
-            >
-              ›
-            </button>
-          </div>
         </transition>
     </div>
 </template>
 
 <script setup lang="ts">
+import type { DirectusFile } from '@directus/sdk'
 import { CLICK_SCROLL_LEFT_ARROW_EVENT_ID, CLICK_SCROLL_RIGHT_ARROW_EVENT_ID } from '~/config'
 import { trackGoal } from '~/helpers'
+import type { DirectusFileItem } from '~/types'
 import smoothscroll from 'smoothscroll-polyfill'
-import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import FadeAnimation from './FadeAnimation.vue'
 import GenericLazyList from './GenericLazyList.vue'
 import GenericListItem from './GenericListItem.vue'
-import type { DirectusFile } from '@directus/sdk';
-import type { DirectusFileItem } from '~/types';
 
 const props = defineProps<{
-  images: DirectusFile[] | DirectusFileItem[]
+    images: DirectusFile[] | DirectusFileItem[]
 }>()
 
 // Create scroll box element reference
@@ -204,37 +203,37 @@ const currentIndex = ref<number>(0)
 const currentImage = computed(() => props.images[currentIndex.value])
 
 const openLightbox = (index: number) => {
-  currentIndex.value = index
-  isLightboxOpen.value = true
+    currentIndex.value = index
+    isLightboxOpen.value = true
 }
 
 const closeLightbox = () => {
-  isLightboxOpen.value = false
+    isLightboxOpen.value = false
 }
 
 const nextImage = () => {
-  if (!props.images.length) return
-  currentIndex.value = (currentIndex.value + 1) % props.images.length
+    if (!props.images.length) return
+    currentIndex.value = (currentIndex.value + 1) % props.images.length
 }
 
 const prevImage = () => {
-  if (!props.images.length) return
-  currentIndex.value = (currentIndex.value - 1 + props.images.length) % props.images.length
+    if (!props.images.length) return
+    currentIndex.value = (currentIndex.value - 1 + props.images.length) % props.images.length
 }
 
 // Keyboard navigation for lightbox
 const handleKeydown = (e: KeyboardEvent) => {
-  if (!isLightboxOpen.value) return
-  if (e.key === 'Escape') {
-    e.preventDefault()
-    closeLightbox()
-  } else if (e.key === 'ArrowRight') {
-    e.preventDefault()
-    nextImage()
-  } else if (e.key === 'ArrowLeft') {
-    e.preventDefault()
-    prevImage()
-  }
+    if (!isLightboxOpen.value) return
+    if (e.key === 'Escape') {
+        e.preventDefault()
+        closeLightbox()
+    } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        nextImage()
+    } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        prevImage()
+    }
 }
 
 onMounted(() => window.addEventListener('keydown', handleKeydown))
@@ -277,8 +276,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown))
     }
 }
 
-.fade-enter-active, .fade-leave-active {
-  transition: opacity .2s ease;
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
 }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
 </style>

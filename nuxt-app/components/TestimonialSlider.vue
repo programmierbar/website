@@ -8,37 +8,44 @@
             @scroll="detectScrollState"
         >
             <ClientOnly>
-                <GenericLazyList class="flex" :items="randomizedTestimonials" direction="horizontal" :scroll-element="scrollBoxElement">
-                <template #default="{ item, index, viewportItems, addViewportItem }">
-                    <GenericListItem
-                        :key="item.id"
-                        :class="index > 0 && 'ml-12 ml-16 lg:ml-20 xl:ml-24 2xl:ml-32'"
-                        :item="item"
-                        :viewport-items="viewportItems"
-                        :add-viewport-item="addViewportItem"
-                    >
-                        <template #default="{ isNewToViewport }">
-                            <FadeAnimation :fade-in="isNewToViewport ? 'from_bottom' : 'none'" :threshold="0">
-                              <div class='w-60 md:w-120'>
-                                  <div>
-                                    <blockquote class='w-full'>
-                                      <QuoteStart class='mb-2 mb-5  scale-50 scale-100 origin-bottom-left' />
-                                      <InnerHtml
-                                        :html="item.text"
-                                        class='text-white font-light text-xl text-3xl italic'
-                                      />
-                                      <div class='flex justify-end'>
-                                        <QuoteEnd class='-mt-1 block scale-50 scale-100' />
-                                      </div>
-                                    </blockquote>
-                                    <p class='text-white font-light opacity-40 text-base italic mt-4 mt-10'>{{ item.subtitle }}</p>
-                                  </div>
-                              </div>
-                            </FadeAnimation>
-                        </template>
-                    </GenericListItem>
-                </template>
-            </GenericLazyList>
+                <GenericLazyList
+                    class="flex"
+                    :items="randomizedTestimonials"
+                    direction="horizontal"
+                    :scroll-element="scrollBoxElement"
+                >
+                    <template #default="{ item, index, viewportItems, addViewportItem }">
+                        <GenericListItem
+                            :key="item.id"
+                            :class="index > 0 && 'ml-12 ml-16 lg:ml-20 xl:ml-24 2xl:ml-32'"
+                            :item="item"
+                            :viewport-items="viewportItems"
+                            :add-viewport-item="addViewportItem"
+                        >
+                            <template #default="{ isNewToViewport }">
+                                <FadeAnimation :fade-in="isNewToViewport ? 'from_bottom' : 'none'" :threshold="0">
+                                    <div class="w-60 md:w-120">
+                                        <div>
+                                            <blockquote class="w-full">
+                                                <QuoteStart class="mb-2 mb-5 origin-bottom-left scale-100 scale-50" />
+                                                <InnerHtml
+                                                    :html="item.text"
+                                                    class="text-3xl text-xl font-light italic text-white"
+                                                />
+                                                <div class="flex justify-end">
+                                                    <QuoteEnd class="-mt-1 block scale-100 scale-50" />
+                                                </div>
+                                            </blockquote>
+                                            <p class="mt-10 mt-4 text-base font-light italic text-white opacity-40">
+                                                {{ item.subtitle }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </FadeAnimation>
+                            </template>
+                        </GenericListItem>
+                    </template>
+                </GenericLazyList>
             </ClientOnly>
         </div>
 
@@ -46,7 +53,7 @@
         <button
             v-for="index of 2"
             :key="index"
-            class="absolute top-0 block h-full w-5 md:w-40 from-black to-transparent transition-opacity duration-500 3xl:w-80"
+            class="absolute top-0 block h-full w-5 from-black to-transparent transition-opacity duration-500 md:w-40 3xl:w-80"
             :class="[
                 index === 1 ? 'left-0 bg-gradient-to-r' : 'right-0 bg-gradient-to-l',
                 ((index === 1 && scrollStartReached) || (index === 2 && scrollEndReached)) &&
@@ -58,29 +65,28 @@
             "
             type="button"
             :title="index === 1 ? 'Scroll left' : 'Scroll right'"
-            :data-cursor-arrow-left="(index === 1 && !scrollStartReached) ? true : null"
-            :data-cursor-arrow-right="(index === 2 && !scrollEndReached) ? true : null"
+            :data-cursor-arrow-left="index === 1 && !scrollStartReached ? true : null"
+            :data-cursor-arrow-right="index === 2 && !scrollEndReached ? true : null"
             @click="() => scrollTo(index === 1 ? 'left' : 'right')"
         />
     </div>
 </template>
 
 <script setup lang="ts">
+import QuoteEnd from '~/assets/icons/quote-end.svg'
+import QuoteStart from '~/assets/icons/quote-start.svg'
+import { useWeightedRandomSelection } from '~/composables/useWeightedRandomSelection'
 import { CLICK_SCROLL_LEFT_ARROW_EVENT_ID, CLICK_SCROLL_RIGHT_ARROW_EVENT_ID } from '~/config'
 import { trackGoal } from '~/helpers'
-import type { DirectusTestimonialItem, SpeakerPreviewItem } from '~/types';
+import type { DirectusTestimonialItem, SpeakerPreviewItem } from '~/types'
 import smoothscroll from 'smoothscroll-polyfill'
 import { onMounted, ref } from 'vue'
 import FadeAnimation from './FadeAnimation.vue'
 import GenericLazyList from './GenericLazyList.vue'
 import GenericListItem from './GenericListItem.vue'
 
-import QuoteEnd from '~/assets/icons/quote-end.svg'
-import QuoteStart from '~/assets/icons/quote-start.svg'
-import { useWeightedRandomSelection } from '~/composables/useWeightedRandomSelection'
-
 const props = defineProps<{
-  testimonials: DirectusTestimonialItem[]
+    testimonials: DirectusTestimonialItem[]
 }>()
 
 const { selectTestimonials } = useWeightedRandomSelection()

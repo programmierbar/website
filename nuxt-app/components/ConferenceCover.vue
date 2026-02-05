@@ -27,7 +27,7 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import { defineComponent, onMounted, reactive } from 'vue'
-import type { ConferenceItem } from '../types';
+import type { ConferenceItem } from '../types'
 import DirectusImage from './DirectusImage.vue'
 
 export default defineComponent({
@@ -35,7 +35,7 @@ export default defineComponent({
         DirectusImage,
     },
     props: {
-      conference: {
+        conference: {
             type: Object as PropType<Pick<ConferenceItem, 'start_on' | 'end_on' | 'title' | 'poster'>>,
             required: true,
         },

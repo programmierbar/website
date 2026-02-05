@@ -18,7 +18,7 @@ const store = useTicketCheckoutStore()
         <h3 class="mb-4 text-lg font-bold text-white">Zusammenfassung</h3>
 
         <div class="space-y-2 text-sm">
-            <div class="flex justify-between text-gray-300">
+            <div class="text-gray-300 flex justify-between">
                 <span>{{ store.ticketCount }}x Ticket</span>
                 <span>{{ store.formatPrice(store.unitPriceCents) }}</span>
             </div>
@@ -48,12 +48,12 @@ const store = useTicketCheckoutStore()
             <template v-else>
                 <hr class="my-3 border-gray-700" />
 
-                <div class="flex justify-between text-gray-300">
+                <div class="text-gray-300 flex justify-between">
                     <span>Zwischensumme (netto)</span>
                     <span>{{ store.formatPrice(store.totalCents) }}</span>
                 </div>
 
-                <div class="flex justify-between text-gray-300">
+                <div class="text-gray-300 flex justify-between">
                     <span>zzgl. 19% MwSt.</span>
                     <span>{{ store.formatPrice(store.vatAmountCents) }}</span>
                 </div>

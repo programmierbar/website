@@ -77,12 +77,10 @@
         />
 
         <section class="relative">
-          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
-            <SectionHeading element="h2">
-              Community
-            </SectionHeading>
-            <TestimonialSlider :testimonials='testimonials' />
-          </div>
+            <div class="container mt-16 px-6 md:mb-16 md:mt-28 md:pl-48 lg:mb-48 lg:mt-32 lg:pr-8 3xl:px-8">
+                <SectionHeading element="h2"> Community </SectionHeading>
+                <TestimonialSlider :testimonials="testimonials" />
+            </div>
         </section>
     </div>
 </template>
@@ -90,13 +88,13 @@
 <script setup lang="ts">
 import BrandLogoIcon from '~/assets/images/brand-logo.svg'
 import PrimaryPbButton from '~/components/PrimaryPbButton.vue'
+import TestimonialSlider from '~/components/TestimonialSlider.vue'
 import { useDirectus } from '~/composables/useDirectus'
+import { getAssetUrl } from '~/helpers/getAssetUrl'
 import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'
-import { useLoadingScreen, usePageMeta, usePodcastPlayer } from '../composables';
-import type { ConferenceItem, DirectusHomePage, DirectusTestimonialItem, LatestPodcastItem, MeetupItem } from '../types';
-import TestimonialSlider from '~/components/TestimonialSlider.vue';
-import { getAssetUrl } from '~/helpers/getAssetUrl';
+import { useLoadingScreen, usePageMeta, usePodcastPlayer } from '../composables'
+import type { ConferenceItem, DirectusHomePage, DirectusTestimonialItem, LatestPodcastItem, MeetupItem } from '../types'
 
 const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
 
@@ -111,7 +109,7 @@ const { data: pageData } = useAsyncData(async () => {
         directus.getLatestPodcasts(),
         directus.getPodcastCount(),
         directus.getMeetups(),
-        directus.getTestimonials()
+        directus.getTestimonials(),
     ])
 
     const upcomingMeetups = meetups.filter((meetup) => {
@@ -125,12 +123,11 @@ const { data: pageData } = useAsyncData(async () => {
 // Extract home page, latest podcasts and podcast count from page data
 const homePage: ComputedRef<DirectusHomePage | undefined> = computed(() => pageData.value?.homePage)
 const latestPodcasts: ComputedRef<LatestPodcastItem[] | undefined> = computed(() => {
+    if (!podcastPlayer.podcast?.id && pageData.value?.latestPodcasts && pageData.value?.latestPodcasts.length > 0) {
+        podcastPlayer.setPodcast(pageData.value?.latestPodcasts[0])
+    }
 
-  if (!podcastPlayer.podcast?.id && pageData.value?.latestPodcasts && pageData.value?.latestPodcasts.length > 0) {
-    podcastPlayer.setPodcast(pageData.value?.latestPodcasts[0])
-  }
-
-  return pageData.value?.latestPodcasts
+    return pageData.value?.latestPodcasts
 })
 
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])

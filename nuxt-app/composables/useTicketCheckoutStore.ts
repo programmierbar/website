@@ -1,12 +1,12 @@
-import { defineStore } from 'pinia'
 import type {
-    TicketAttendee,
-    CompanyBillingInfo,
     BillingAddress,
+    CompanyBillingInfo,
     Purchaser,
     PurchaseType,
+    TicketAttendee,
     TicketType,
 } from '~/types/tickets'
+import { defineStore } from 'pinia'
 
 interface TicketPricingSettings {
     earlyBirdPriceCents: number
@@ -179,8 +179,7 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
                 return 0
             }
             return (
-                this.ticketCount *
-                (this.pricingSettings.regularPriceCents - this.pricingSettings.discountedPriceCents)
+                this.ticketCount * (this.pricingSettings.regularPriceCents - this.pricingSettings.discountedPriceCents)
             )
         },
 
@@ -247,13 +246,18 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
         /**
          * Set pricing settings from pre-fetched data (SSR/SSG)
          */
-        setPricingSettings(settings: {
-            early_bird_price_cents: number
-            regular_price_cents: number
-            discounted_price_cents: number
-            early_bird_deadline: string
-            discount_code: string | null
-        } | null | undefined) {
+        setPricingSettings(
+            settings:
+                | {
+                      early_bird_price_cents: number
+                      regular_price_cents: number
+                      discounted_price_cents: number
+                      early_bird_deadline: string
+                      discount_code: string | null
+                  }
+                | null
+                | undefined
+        ) {
             if (!settings) {
                 this.pricingError = true
                 this.error = 'Preise konnten nicht geladen werden. Bitte versuche es später erneut.'

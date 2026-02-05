@@ -1,9 +1,9 @@
 import { BUZZSPROUT_RSS_FEED_URL, DIRECTUS_CMS_URL } from '~/config'
-import type { DirectusProfileItem, MemberItem, PodcastItem, SpeakerItem } from '~/types';
+import { getAssetUrl } from '~/helpers/getAssetUrl'
+import type { DirectusProfileItem, MemberItem, PodcastItem, SpeakerItem } from '~/types'
 import type { JsonLD } from 'nuxt-jsonld/dist/types/index.d'
 import type { Person, PodcastEpisode, PodcastSeries, WithContext } from 'schema-dts'
 import { getPodcastType } from 'shared-code'
-import { getAssetUrl } from '~/helpers/getAssetUrl';
 
 function generatePodcastUrl(podcast: PodcastItem): string {
     return `${DIRECTUS_CMS_URL}/podcast/${podcast.slug}`
@@ -85,27 +85,26 @@ function generatePodcastEpisodeFromPodcast(podcast?: PodcastItem): JsonLD | null
 }
 
 function generateProfile(profile?: DirectusProfileItem): JsonLD {
+    if (!profile) return null
 
-  if (!profile) return null
-
-  const profileSchema: WithContext<Person> = {
-    '@context': 'https://schema.org',
-    '@type': 'Person',
-    givenName: profile.first_name,
-    familyName: profile.last_name,
-    jobTitle: profile.job_role,
-    alternateName: profile.display_name,
-    image: getAssetUrl(profile.profile_image),
-  }
-
-  if (profile.job_employer) {
-    profileSchema.worksFor = {
-      '@type': 'Organization',
-      'name': profile.job_employer
+    const profileSchema: WithContext<Person> = {
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        givenName: profile.first_name,
+        familyName: profile.last_name,
+        jobTitle: profile.job_role,
+        alternateName: profile.display_name,
+        image: getAssetUrl(profile.profile_image),
     }
-  }
 
-  return profileSchema;
+    if (profile.job_employer) {
+        profileSchema.worksFor = {
+            '@type': 'Organization',
+            name: profile.job_employer,
+        }
+    }
+
+    return profileSchema
 }
 
 export { generatePersonFromSpeaker, generatePodcastEpisodeFromPodcast, generatePodcastSeries, generateProfile }

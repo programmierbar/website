@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, watch, onMounted } from 'vue'
 import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
+import { computed, onMounted, watch } from 'vue'
 import TicketPricingSummary from './TicketPricingSummary.vue'
 
 const emit = defineEmits(['validityChange'])
@@ -85,13 +85,12 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
     if (!store.personalAddress) return
     store.updatePersonalAddress({ [field]: value })
 }
-
 </script>
 
 <template>
     <div class="ticket-step-billing">
         <h2 class="mb-2 text-3xl font-bold text-white md:text-4xl">Rechnungsdaten</h2>
-        <p class="mb-8 text-lg text-gray-300">Wer bezahlt die Tickets?</p>
+        <p class="text-gray-300 mb-8 text-lg">Wer bezahlt die Tickets?</p>
 
         <!-- Purchase type toggle -->
         <div class="mb-8">
@@ -102,7 +101,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                     :class="
                         store.purchaseType === 'personal'
                             ? 'border-lime bg-lime/10 text-lime'
-                            : 'border-gray-700 text-gray-400 hover:border-gray-600'
+                            : 'text-gray-400 border-gray-700 hover:border-gray-600'
                     "
                     @click="store.setPurchaseType('personal')"
                 >
@@ -114,7 +113,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                     :class="
                         store.purchaseType === 'company'
                             ? 'border-lime bg-lime/10 text-lime'
-                            : 'border-gray-700 text-gray-400 hover:border-gray-600'
+                            : 'text-gray-400 border-gray-700 hover:border-gray-600'
                     "
                     @click="store.setPurchaseType('company')"
                 >
@@ -129,7 +128,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
 
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                    <label class="mb-2 block text-sm font-bold text-gray-400">
+                    <label class="text-gray-400 mb-2 block text-sm font-bold">
                         Vorname <span class="text-lime">*</span>
                     </label>
                     <input
@@ -142,7 +141,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-bold text-gray-400">
+                    <label class="text-gray-400 mb-2 block text-sm font-bold">
                         Nachname <span class="text-lime">*</span>
                     </label>
                     <input
@@ -155,7 +154,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                 </div>
 
                 <div class="md:col-span-2">
-                    <label class="mb-2 block text-sm font-bold text-gray-400">
+                    <label class="text-gray-400 mb-2 block text-sm font-bold">
                         E-Mail <span class="text-lime">*</span>
                     </label>
                     <input
@@ -165,9 +164,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                         class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime focus:outline-none"
                         @input="updatePurchaser('email', ($event.target as HTMLInputElement).value)"
                     />
-                    <p class="mt-1 text-xs text-[#848a98]">
-                        Bestellbestätigung wird an diese Adresse gesendet.
-                    </p>
+                    <p class="mt-1 text-xs text-[#848a98]">Bestellbestätigung wird an diese Adresse gesendet.</p>
                 </div>
             </div>
         </div>
@@ -176,16 +173,12 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
         <div v-if="store.purchaseType === 'personal'" class="mb-8">
             <button
                 type="button"
-                class="flex items-center gap-2 text-gray-400 hover:text-white transition"
+                class="text-gray-400 flex items-center gap-2 transition hover:text-white"
                 @click="store.setShowPersonalAddress(!store.showPersonalAddress)"
             >
                 <span
                     class="flex h-5 w-5 items-center justify-center rounded border transition"
-                    :class="
-                        store.showPersonalAddress
-                            ? 'border-lime bg-lime text-black'
-                            : 'border-gray-600'
-                    "
+                    :class="store.showPersonalAddress ? 'border-lime bg-lime text-black' : 'border-gray-600'"
                 >
                     <svg
                         v-if="store.showPersonalAddress"
@@ -209,9 +202,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
 
                 <div class="grid gap-4">
                     <div>
-                        <label class="mb-2 block text-sm font-bold text-gray-400">
-                            Straße und Hausnummer
-                        </label>
+                        <label class="text-gray-400 mb-2 block text-sm font-bold"> Straße und Hausnummer </label>
                         <input
                             :value="store.personalAddress.line1 || ''"
                             type="text"
@@ -222,9 +213,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                     </div>
 
                     <div>
-                        <label class="mb-2 block text-sm font-bold text-gray-400">
-                            Adresszusatz
-                        </label>
+                        <label class="text-gray-400 mb-2 block text-sm font-bold"> Adresszusatz </label>
                         <input
                             :value="store.personalAddress.line2 || ''"
                             type="text"
@@ -236,22 +225,20 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
 
                     <div class="grid gap-4 md:grid-cols-2">
                         <div>
-                            <label class="mb-2 block text-sm font-bold text-gray-400">
-                                PLZ
-                            </label>
+                            <label class="text-gray-400 mb-2 block text-sm font-bold"> PLZ </label>
                             <input
                                 :value="store.personalAddress.postalCode || ''"
                                 type="text"
                                 placeholder="12345"
                                 class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime focus:outline-none"
-                                @input="updatePersonalAddressField('postalCode', ($event.target as HTMLInputElement).value)"
+                                @input="
+                                    updatePersonalAddressField('postalCode', ($event.target as HTMLInputElement).value)
+                                "
                             />
                         </div>
 
                         <div>
-                            <label class="mb-2 block text-sm font-bold text-gray-400">
-                                Stadt
-                            </label>
+                            <label class="text-gray-400 mb-2 block text-sm font-bold"> Stadt </label>
                             <input
                                 :value="store.personalAddress.city || ''"
                                 type="text"
@@ -263,9 +250,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                     </div>
 
                     <div>
-                        <label class="mb-2 block text-sm font-bold text-gray-400">
-                            Land
-                        </label>
+                        <label class="text-gray-400 mb-2 block text-sm font-bold"> Land </label>
                         <input
                             :value="store.personalAddress.country || ''"
                             type="text"
@@ -279,12 +264,15 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
         </div>
 
         <!-- Company billing info (conditional) -->
-        <div v-if="store.purchaseType === 'company' && store.company" class="mb-8 rounded-lg border border-gray-700 bg-gray-800/50 p-6">
+        <div
+            v-if="store.purchaseType === 'company' && store.company"
+            class="mb-8 rounded-lg border border-gray-700 bg-gray-800/50 p-6"
+        >
             <h3 class="mb-4 text-lg font-bold text-white">Firmenadresse</h3>
 
             <div class="grid gap-4">
                 <div>
-                    <label class="mb-2 block text-sm font-bold text-gray-400">
+                    <label class="text-gray-400 mb-2 block text-sm font-bold">
                         Firmenname <span class="text-lime">*</span>
                     </label>
                     <input
@@ -297,7 +285,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-bold text-gray-400">
+                    <label class="text-gray-400 mb-2 block text-sm font-bold">
                         Straße und Hausnummer <span class="text-lime">*</span>
                     </label>
                     <input
@@ -310,9 +298,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-bold text-gray-400">
-                        Adresszusatz
-                    </label>
+                    <label class="text-gray-400 mb-2 block text-sm font-bold"> Adresszusatz </label>
                     <input
                         :value="store.company.address.line2 || ''"
                         type="text"
@@ -324,7 +310,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
 
                 <div class="grid gap-4 md:grid-cols-2">
                     <div>
-                        <label class="mb-2 block text-sm font-bold text-gray-400">
+                        <label class="text-gray-400 mb-2 block text-sm font-bold">
                             PLZ <span class="text-lime">*</span>
                         </label>
                         <input
@@ -337,7 +323,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                     </div>
 
                     <div>
-                        <label class="mb-2 block text-sm font-bold text-gray-400">
+                        <label class="text-gray-400 mb-2 block text-sm font-bold">
                             Stadt <span class="text-lime">*</span>
                         </label>
                         <input
@@ -351,7 +337,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-bold text-gray-400">
+                    <label class="text-gray-400 mb-2 block text-sm font-bold">
                         Land <span class="text-lime">*</span>
                     </label>
                     <input
@@ -364,9 +350,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-bold text-gray-400">
-                        Rechnungs-E-Mail (optional)
-                    </label>
+                    <label class="text-gray-400 mb-2 block text-sm font-bold"> Rechnungs-E-Mail (optional) </label>
                     <input
                         :value="store.company.billingEmail || ''"
                         type="email"
@@ -374,9 +358,7 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                         class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime focus:outline-none"
                         @input="updateCompanyField('billingEmail', ($event.target as HTMLInputElement).value)"
                     />
-                    <p class="mt-1 text-xs text-[#848a98]">
-                        Falls abweichend von der Käufer-E-Mail
-                    </p>
+                    <p class="mt-1 text-xs text-[#848a98]">Falls abweichend von der Käufer-E-Mail</p>
                 </div>
             </div>
         </div>

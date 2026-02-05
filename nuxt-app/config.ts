@@ -28,8 +28,11 @@ export const GOOGLE_MAPS_URL = 'https://goo.gl/maps/7h8a14WPPQkQL4LB8'
 export const DISCORD_INVITE_LINK = process.env.DISCORD_INVITE_LINK || 'https://discord.gg'
 
 // programmier.con Apps
-export const PROGRAMMIER_CON_APP_IOS = process.env.PROGRAMMIER_CON_APP_IOS || 'https://apps.apple.com/de/app/programmier-con/id6752691193'
-export const PROGRAMMIER_CON_APP_ANDROID = process.env.PROGRAMMIER_CON_APP_ANDROID || 'https://play.google.com/store/apps/details?id=de.programmierbar.conference&hl=de'
+export const PROGRAMMIER_CON_APP_IOS =
+    process.env.PROGRAMMIER_CON_APP_IOS || 'https://apps.apple.com/de/app/programmier-con/id6752691193'
+export const PROGRAMMIER_CON_APP_ANDROID =
+    process.env.PROGRAMMIER_CON_APP_ANDROID ||
+    'https://play.google.com/store/apps/details?id=de.programmierbar.conference&hl=de'
 
 export const ALGOLIA_INDEX = process.env.ALGOLIA_INDEX || 'programmierbar_website_prod'
 

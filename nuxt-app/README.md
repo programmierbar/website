@@ -11,8 +11,8 @@ npm install
 
 Prepare your IDE as follows:
 
--   https://prettier.io/docs/en/webstorm
--   https://www.jetbrains.com/help/webstorm/eslint.html#ws_js_eslint_automatic_configuration
+- https://prettier.io/docs/en/webstorm
+- https://www.jetbrains.com/help/webstorm/eslint.html#ws_js_eslint_automatic_configuration
 
 ## Development Server
 

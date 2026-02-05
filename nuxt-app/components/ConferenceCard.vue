@@ -31,9 +31,9 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
-import type { ConferenceItem, MeetupItem } from '../types';
-import LinkButton from './LinkButton.vue'
+import type { ConferenceItem, MeetupItem } from '../types'
 import ConferenceCover from './ConferenceCover.vue'
+import LinkButton from './LinkButton.vue'
 import MeetupStartAndEnd from './MeetupStartAndEnd.vue'
 
 export default defineComponent({

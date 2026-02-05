@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue'
 import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
+import { computed, onMounted, ref, watch } from 'vue'
 import TicketPricingSummary from './TicketPricingSummary.vue'
 
 defineProps<{
@@ -69,13 +69,11 @@ async function validateDiscount() {
 <template>
     <div class="ticket-step-quantity">
         <h2 class="mb-2 text-3xl font-bold text-white md:text-4xl">Tickets kaufen</h2>
-        <p class="mb-8 text-lg text-gray-300">{{ conferenceTitle }}</p>
+        <p class="text-gray-300 mb-8 text-lg">{{ conferenceTitle }}</p>
 
         <!-- Ticket count selector -->
         <div class="mb-8">
-            <label class="mb-3 block text-sm font-bold uppercase tracking-wider text-gray-400">
-                Anzahl Tickets
-            </label>
+            <label class="text-gray-400 mb-3 block text-sm font-bold uppercase tracking-wider"> Anzahl Tickets </label>
             <div class="flex items-center gap-4">
                 <button
                     type="button"
@@ -103,7 +101,7 @@ async function validateDiscount() {
         </div>
 
         <!-- Error state when pricing failed to load -->
-        <div v-if="store.hasPricingError" class="mb-8 rounded-lg bg-red-500/10 border border-red-500/50 p-4">
+        <div v-if="store.hasPricingError" class="bg-red-500/10 border-red-500/50 mb-8 rounded-lg border p-4">
             <p class="text-red-400 font-medium">{{ store.error }}</p>
         </div>
 
@@ -115,7 +113,7 @@ async function validateDiscount() {
                         <span v-if="store.isEarlyBird" class="font-bold text-lime">Early Bird Preis</span>
                         <span v-else>Regulärer Preis</span>
                     </p>
-                    <p v-if="store.isEarlyBird && formattedEarlyBirdDeadline" class="text-sm text-gray-400">
+                    <p v-if="store.isEarlyBird && formattedEarlyBirdDeadline" class="text-gray-400 text-sm">
                         Gültig bis {{ formattedEarlyBirdDeadline }}
                     </p>
                 </div>
@@ -128,7 +126,7 @@ async function validateDiscount() {
 
         <!-- Discount code (only shown if not early bird) -->
         <div v-if="!store.isEarlyBird" class="mb-8">
-            <label class="mb-3 block text-sm font-bold uppercase tracking-wider text-gray-400">
+            <label class="text-gray-400 mb-3 block text-sm font-bold uppercase tracking-wider">
                 Rabattcode (optional)
             </label>
             <div class="flex gap-3">
@@ -149,10 +147,8 @@ async function validateDiscount() {
                     {{ store.discountValidating ? '...' : 'Prüfen' }}
                 </button>
             </div>
-            <p v-if="discountError" class="mt-2 text-sm text-red-400">{{ discountError }}</p>
-            <p v-if="store.discountValid" class="mt-2 text-sm text-lime">
-                Rabattcode erfolgreich angewendet!
-            </p>
+            <p v-if="discountError" class="text-red-400 mt-2 text-sm">{{ discountError }}</p>
+            <p v-if="store.discountValid" class="mt-2 text-sm text-lime">Rabattcode erfolgreich angewendet!</p>
         </div>
 
         <!-- Pricing summary -->

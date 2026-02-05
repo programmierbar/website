@@ -39,10 +39,7 @@ export const BillingAddressSchema = z.object({
         .min(1, 'Bitte trage die Straße und Hausnummer ein.')
         .max(200, 'Die Adresszeile darf nicht länger als 200 Zeichen sein.'),
     line2: z.string().max(200, 'Die Adresszeile darf nicht länger als 200 Zeichen sein.').optional(),
-    city: z
-        .string()
-        .min(1, 'Bitte trage die Stadt ein.')
-        .max(100, 'Die Stadt darf nicht länger als 100 Zeichen sein.'),
+    city: z.string().min(1, 'Bitte trage die Stadt ein.').max(100, 'Die Stadt darf nicht länger als 100 Zeichen sein.'),
     postalCode: z
         .string()
         .min(1, 'Bitte trage die Postleitzahl ein.')

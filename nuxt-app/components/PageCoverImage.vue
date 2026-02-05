@@ -1,8 +1,8 @@
 <template>
     <div class="h-1/2-screen w-full lg:h-4/6-screen">
         <div class="relative h-full overflow-hidden">
-            <div v-if='shadow' class="absolute left-0 bottom-0 z-10 h-1/3 w-full shadow"/>
-            <div v-if='overlay' class="absolute left-0 top-0 z-10 h-full w-full bg-gray-900 bg-opacity-30" />
+            <div v-if="shadow" class="absolute bottom-0 left-0 z-10 h-1/3 w-full shadow" />
+            <div v-if="overlay" class="absolute left-0 top-0 z-10 h-full w-full bg-gray-900 bg-opacity-30" />
 
             <DirectusImage
                 ref="imageComponent"
@@ -33,16 +33,16 @@ export default defineComponent({
             type: Object as PropType<FileItem>,
             required: true,
         },
-      shadow: {
-        type: Boolean,
-        required: false,
-        default: true,
-      },
-      overlay: {
-        type: Boolean,
-        required: false,
-        default: true,
-      },
+        shadow: {
+            type: Boolean,
+            required: false,
+            default: true,
+        },
+        overlay: {
+            type: Boolean,
+            required: false,
+            default: true,
+        },
     },
     setup() {
         // Create image component reference
@@ -68,6 +68,6 @@ export default defineComponent({
 
 <style scoped>
 .shadow {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, #000 100%);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, #000 100%);
 }
 </style>

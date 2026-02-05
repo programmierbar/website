@@ -11,9 +11,9 @@
                         <!-- <LikeButton /> -->
                     </div>
 
-                  <PodcastRating :podcast='podcast' />
+                    <PodcastRating :podcast="podcast" />
 
-                  <SectionHeading class="mt-8 md:mt-0" element="h2"> Shownotes </SectionHeading>
+                    <SectionHeading class="mt-8 md:mt-0" element="h2"> Shownotes </SectionHeading>
 
                     <!-- Description -->
                     <InnerHtml

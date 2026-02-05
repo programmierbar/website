@@ -5,7 +5,11 @@
             :style="style"
         >
             <span v-for="occurrence in 4" :key="occurrence">
-                <span v-for="(preparedNewsItem, index) in preparedNewsItems" :key="occurrence + preparedNewsItem + index" v-html="preparedNewsItem">
+                <span
+                    v-for="(preparedNewsItem, index) in preparedNewsItems"
+                    :key="occurrence + preparedNewsItem + index"
+                    v-html="preparedNewsItem"
+                >
                 </span>
             </span>
         </p>
@@ -13,9 +17,9 @@
 </template>
 
 <script lang="ts">
+import DOMPurify from 'isomorphic-dompurify'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
-import DOMPurify from 'isomorphic-dompurify';
 
 export default defineComponent({
     props: {
@@ -28,12 +32,12 @@ export default defineComponent({
         // Create style with animation duration
         const style = computed(() => `animation-duration: ${props.news.join().length * 0.2}s`)
         const preparedNewsItems = computed(() => {
-          return props.news.map(news => `${DOMPurify.sanitize(news, {FORBID_TAGS: ['p']})} +++ `)
+            return props.news.map((news) => `${DOMPurify.sanitize(news, { FORBID_TAGS: ['p'] })} +++ `)
         })
 
         return {
-          style,
-          preparedNewsItems
+            style,
+            preparedNewsItems,
         }
     },
 })

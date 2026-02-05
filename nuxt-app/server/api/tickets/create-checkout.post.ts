@@ -1,7 +1,7 @@
-import { CreateCheckoutSchema } from '../../utils/ticketSchemas'
+import type { DirectusTicketSettingsItem, TicketType } from '~/types/tickets'
 import { getStripe } from '../../utils/stripe'
+import { CreateCheckoutSchema } from '../../utils/ticketSchemas'
 import { getTicketSettings, isEarlyBirdPeriod } from '../../utils/ticketSettings'
-import type { TicketType, DirectusTicketSettingsItem } from '~/types/tickets'
 
 /**
  * Generate a unique order number
@@ -17,11 +17,7 @@ const VAT_RATE = 0.19
 /**
  * Calculate pricing for the order (net prices + VAT)
  */
-function calculatePricing(
-    settings: DirectusTicketSettingsItem,
-    ticketCount: number,
-    discountValid: boolean
-) {
+function calculatePricing(settings: DirectusTicketSettingsItem, ticketCount: number, discountValid: boolean) {
     const isEarlyBird = isEarlyBirdPeriod(settings)
 
     let unitPriceNetCents: number
@@ -145,8 +141,7 @@ export default defineEventHandler(async (event) => {
         // Create pending order in Directus
         // Note: We store net amounts in the database, VAT is calculated
         // For billing address: use company address for company purchases, or optional personal address
-        const billingAddress =
-            purchaseType === 'company' ? company?.address : personalAddress
+        const billingAddress = purchaseType === 'company' ? company?.address : personalAddress
 
         const orderPayload = {
             order_number: orderNumber,
@@ -201,31 +196,31 @@ export default defineEventHandler(async (event) => {
         let session
         try {
             session = await stripe.checkout.sessions.create({
-            mode: 'payment',
-            payment_method_types: ['card'],
-            customer_email: purchaser.email,
-            // Use gross prices (including 19% VAT) for Stripe
-            line_items: tickets.map((ticket) => ({
-                price_data: {
-                    currency: 'eur',
-                    unit_amount: pricing.unitPriceGrossCents,
-                    product_data: {
-                        name: `${conference.title} - Ticket (inkl. 19% MwSt.)`,
-                        description: `Teilnehmer: ${ticket.firstName} ${ticket.lastName}`,
+                mode: 'payment',
+                payment_method_types: ['card'],
+                customer_email: purchaser.email,
+                // Use gross prices (including 19% VAT) for Stripe
+                line_items: tickets.map((ticket) => ({
+                    price_data: {
+                        currency: 'eur',
+                        unit_amount: pricing.unitPriceGrossCents,
+                        product_data: {
+                            name: `${conference.title} - Ticket (inkl. 19% MwSt.)`,
+                            description: `Teilnehmer: ${ticket.firstName} ${ticket.lastName}`,
+                        },
                     },
+                    quantity: 1,
+                })),
+                success_url: `${websiteUrl}/konferenzen/${conference.slug}/tickets/success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${websiteUrl}/konferenzen/${conference.slug}/tickets?cancelled=true`,
+                metadata: {
+                    order_id: orderId,
+                    conference_id: conferenceId,
+                    ticket_type: pricing.ticketType,
+                    // Store attendee info for webhook processing
+                    attendees: JSON.stringify(tickets),
                 },
-                quantity: 1,
-            })),
-            success_url: `${websiteUrl}/konferenzen/${conference.slug}/tickets/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${websiteUrl}/konferenzen/${conference.slug}/tickets?cancelled=true`,
-            metadata: {
-                order_id: orderId,
-                conference_id: conferenceId,
-                ticket_type: pricing.ticketType,
-                // Store attendee info for webhook processing
-                attendees: JSON.stringify(tickets),
-            },
-        })
+            })
         } catch (stripeErr: any) {
             // Stripe session creation failed - delete the pending order from Directus
             console.error('Stripe session creation failed:', stripeErr)

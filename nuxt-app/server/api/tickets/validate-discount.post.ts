@@ -32,8 +32,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check if code matches the configured discount code
-    const isValid =
-        settings.discount_code && code.toUpperCase() === settings.discount_code.toUpperCase()
+    const isValid = settings.discount_code && code.toUpperCase() === settings.discount_code.toUpperCase()
 
     if (isValid) {
         // Calculate discount: difference between regular and discounted price

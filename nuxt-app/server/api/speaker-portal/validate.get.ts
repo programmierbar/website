@@ -48,7 +48,8 @@ export default defineEventHandler(async (event) => {
         if (speaker.portal_submission_status === 'submitted' || speaker.portal_submission_status === 'approved') {
             throw createError({
                 statusCode: 409,
-                message: 'Du hast deine Informationen bereits eingereicht. Kontaktiere uns, falls du Änderungen vornehmen möchtest.',
+                message:
+                    'Du hast deine Informationen bereits eingereicht. Kontaktiere uns, falls du Änderungen vornehmen möchtest.',
             })
         }
 

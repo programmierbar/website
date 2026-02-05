@@ -66,11 +66,7 @@ export function isEarlyBirdPeriod(settings: DirectusTicketSettingsItem): boolean
 /**
  * Get the current unit price based on ticket type
  */
-export function getUnitPrice(
-    settings: DirectusTicketSettingsItem,
-    isEarlyBird: boolean,
-    hasDiscount: boolean
-): number {
+export function getUnitPrice(settings: DirectusTicketSettingsItem, isEarlyBird: boolean, hasDiscount: boolean): number {
     if (isEarlyBird) {
         return settings.early_bird_price_cents
     }

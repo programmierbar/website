@@ -58,7 +58,7 @@
             {{ member.occupation }}
         </div>
 
-        <IndividualPlatforms :platforms='platforms' :scope='"member"'/>
+        <IndividualPlatforms :platforms="platforms" :scope="'member'" />
     </div>
 </template>
 
@@ -110,19 +110,19 @@ export default defineComponent({
         // Create full name
         const fullName = computed(() => `${props.member.first_name} ${props.member.last_name}`)
         const platforms = computed(() => {
-          if (!props.member) {
-            return {}
-          }
+            if (!props.member) {
+                return {}
+            }
 
-          return {
-            github_url: props.member.github_url,
-            twitter_url: props.member.twitter_url,
-            bluesky_url: props.member.bluesky_url,
-            linkedin_url: props.member.linkedin_url,
-            instagram_url: props.member.instagram_url,
-            youtube_url: props.member.youtube_url,
-            website_url: props.member.website_url,
-          }
+            return {
+                github_url: props.member.github_url,
+                twitter_url: props.member.twitter_url,
+                bluesky_url: props.member.bluesky_url,
+                linkedin_url: props.member.linkedin_url,
+                instagram_url: props.member.instagram_url,
+                youtube_url: props.member.youtube_url,
+                website_url: props.member.website_url,
+            }
         })
 
         // Create element references
@@ -229,6 +229,6 @@ export default defineComponent({
             handleDiscoverEffect,
         }
     },
-  methods: { trackGoal },
+    methods: { trackGoal },
 })
 </script>

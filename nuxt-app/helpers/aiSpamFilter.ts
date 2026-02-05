@@ -1,19 +1,14 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import { z } from 'zod'
 
 export const ResponseSchema = z.object({
-  confidenceScore: z
-    .number()
-    .min(0, )
-    .max(1, ),
-  isSpam: z
-    .boolean(),
-  reason: z
-    .string(),
+    confidenceScore: z.number().min(0).max(1),
+    isSpam: z.boolean(),
+    reason: z.string(),
 })
 
 function getValidationPrompt(name: string, email: string, message: string): string {
-  return `
+    return `
     You are an advanced AI security expert tasked with validating a website's contact form submission.
     Your goal is to distinguish between genuine inquiries and spam, gibberish, or bot-like messages.
 
@@ -36,54 +31,56 @@ function getValidationPrompt(name: string, email: string, message: string): stri
     - "isSpam": Must be true if it is spam, otherwise false.
     - "reason": A brief, one-sentence explanation for your decision.
     - "confidenceScore": A value between 0.0 (definitely not spam) and 1.0 (definitely spam).
-  `;
+  `
 }
 
-export async function filterSpam(input: { name: string, email: string, message: string }): Promise<{
-  isSpam: boolean,
-  reason: string,
-  confidenceScore: number
+export async function filterSpam(input: { name: string; email: string; message: string }): Promise<{
+    isSpam: boolean
+    reason: string
+    confidenceScore: number
 }> {
-  const { name, email, message } = input;
+    const { name, email, message } = input
 
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY ?? '';
-  if (!apiKey) {
-    console.error('Google API Key is not configured.');
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Server configuration error.',
-    });
-  }
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-
-  try {
-    const prompt = getValidationPrompt(name, email, message);
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-
-    const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    let validation = JSON.parse(jsonString);
+    const apiKey = process.env.GOOGLE_GEMINI_API_KEY ?? ''
+    if (!apiKey) {
+        console.error('Google API Key is not configured.')
+        throw createError({
+            statusCode: 500,
+            statusMessage: 'Server configuration error.',
+        })
+    }
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
     try {
-      validation = ResponseSchema.parse(validation);
-    } catch(error){
-      console.error('Encountered malformed JSON response from LLM:', error);
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'An error occurred while parsing the message validation.',
-      });
+        const prompt = getValidationPrompt(name, email, message)
+        const result = await model.generateContent(prompt)
+        const responseText = result.response.text()
+
+        const jsonString = responseText
+            .replace(/```json/g, '')
+            .replace(/```/g, '')
+            .trim()
+        let validation = JSON.parse(jsonString)
+
+        try {
+            validation = ResponseSchema.parse(validation)
+        } catch (error) {
+            console.error('Encountered malformed JSON response from LLM:', error)
+            throw createError({
+                statusCode: 500,
+                statusMessage: 'An error occurred while parsing the message validation.',
+            })
+        }
+
+        console.log('Gemini Validation: isSpam=%s, confidenceScore=%s', validation.isSpam, validation.confidenceScore)
+
+        return validation
+    } catch (error) {
+        console.error('Error during Gemini validation or processing:', error)
+        throw createError({
+            statusCode: 500,
+            statusMessage: 'An error occurred while validating your message.',
+        })
     }
-
-    console.log('Gemini Validation: isSpam=%s, confidenceScore=%s', validation.isSpam, validation.confidenceScore);
-
-    return validation;
-
-  } catch (error) {
-    console.error('Error during Gemini validation or processing:', error);
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'An error occurred while validating your message.',
-    });
-  }
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, watch, onMounted } from 'vue'
 import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
+import { computed, onMounted, watch } from 'vue'
 import TicketPricingSummary from './TicketPricingSummary.vue'
 
 const emit = defineEmits(['validityChange'])
@@ -16,9 +16,7 @@ function isValidEmail(email: string): boolean {
 const isFormValid = computed(() => {
     return store.attendees.every(
         (attendee) =>
-            attendee.firstName.trim() !== '' &&
-            attendee.lastName.trim() !== '' &&
-            isValidEmail(attendee.email)
+            attendee.firstName.trim() !== '' && attendee.lastName.trim() !== '' && isValidEmail(attendee.email)
     )
 })
 
@@ -46,7 +44,7 @@ function copyPurchaserInfo(index: number) {
 <template>
     <div class="ticket-step-attendees">
         <h2 class="mb-2 text-3xl font-bold text-white md:text-4xl">Teilnehmerdaten</h2>
-        <p class="mb-8 text-lg text-gray-300">
+        <p class="text-gray-300 mb-8 text-lg">
             Bitte gib die Daten für {{ store.ticketCount === 1 ? 'den Teilnehmer' : 'alle Teilnehmer' }} ein.
         </p>
 
@@ -60,9 +58,7 @@ function copyPurchaserInfo(index: number) {
                 <div class="mb-4 flex items-center justify-between">
                     <h3 class="text-lg font-bold text-white">
                         Ticket {{ index + 1 }}
-                        <span v-if="store.ticketCount > 1" class="text-gray-400">
-                            / {{ store.ticketCount }}
-                        </span>
+                        <span v-if="store.ticketCount > 1" class="text-gray-400"> / {{ store.ticketCount }} </span>
                     </h3>
                     <button
                         v-if="store.purchaser.firstName && index > 0"
@@ -76,7 +72,7 @@ function copyPurchaserInfo(index: number) {
 
                 <div class="grid gap-4 md:grid-cols-2">
                     <div>
-                        <label class="mb-2 block text-sm font-bold text-gray-400">
+                        <label class="text-gray-400 mb-2 block text-sm font-bold">
                             Vorname <span class="text-lime">*</span>
                         </label>
                         <input
@@ -89,7 +85,7 @@ function copyPurchaserInfo(index: number) {
                     </div>
 
                     <div>
-                        <label class="mb-2 block text-sm font-bold text-gray-400">
+                        <label class="text-gray-400 mb-2 block text-sm font-bold">
                             Nachname <span class="text-lime">*</span>
                         </label>
                         <input
@@ -102,7 +98,7 @@ function copyPurchaserInfo(index: number) {
                     </div>
 
                     <div class="md:col-span-2">
-                        <label class="mb-2 block text-sm font-bold text-gray-400">
+                        <label class="text-gray-400 mb-2 block text-sm font-bold">
                             E-Mail <span class="text-lime">*</span>
                         </label>
                         <input
@@ -112,9 +108,7 @@ function copyPurchaserInfo(index: number) {
                             class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime focus:outline-none"
                             @input="updateAttendee(index, 'email', ($event.target as HTMLInputElement).value)"
                         />
-                        <p class="mt-1 text-xs text-[#848a98]">
-                            Das Ticket wird an diese E-Mail-Adresse gesendet.
-                        </p>
+                        <p class="mt-1 text-xs text-[#848a98]">Das Ticket wird an diese E-Mail-Adresse gesendet.</p>
                     </div>
                 </div>
             </div>

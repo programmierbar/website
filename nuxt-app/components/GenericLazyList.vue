@@ -3,7 +3,7 @@
         <!-- Note that not all items used here might have an id (or even be objects), so we use the index as a fallback. -->
         <slot
             v-for="(renderItem, index) in renderItems"
-            :key="renderItem?.id ?? (index + firstIndex)"
+            :key="renderItem?.id ?? index + firstIndex"
             :item="renderItem"
             :index="index + firstIndex"
             :viewport-items="viewportItems"
@@ -57,11 +57,7 @@ watch(
     () => {
         const itemsLength = props.items?.length ?? 0
         firstIndex.value = Math.max(Math.min(itemsLength - 11, firstIndex.value), 0)
-        lastIndex.value = Math.max(
-            Math.min(itemsLength - 1, lastIndex.value),
-            Math.min(itemsLength - 1, 9),
-            0
-        )
+        lastIndex.value = Math.max(Math.min(itemsLength - 1, lastIndex.value), Math.min(itemsLength - 1, 9), 0)
         paddingStartList.value = paddingStartList.value.slice(0, firstIndex.value)
         paddingEndList.value = paddingEndList.value.slice(lastIndex.value + 1, itemsLength)
         viewportItems.value = new Set()
@@ -175,7 +171,11 @@ const handleScroll = () => {
 
         // Check position of last item element if user scrolls down, last
         // index is not reached and last item element exists
-    } else if (scrollDirection === 'down' && lastIndex.value < (props.items?.length ?? 0) - 1 && lastItemElement.value) {
+    } else if (
+        scrollDirection === 'down' &&
+        lastIndex.value < (props.items?.length ?? 0) - 1 &&
+        lastItemElement.value
+    ) {
         // Destructure client rect of last item element
         const { top, left } = lastItemElement.value.getBoundingClientRect()
 

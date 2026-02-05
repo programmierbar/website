@@ -112,7 +112,7 @@ const props = defineProps<{
 const podcastPlayer = usePodcastPlayer()
 
 if ((!podcastPlayer.podcast?.id || podcastPlayer.paused) && props.podcast) {
-  podcastPlayer.setPodcast(props.podcast)
+    podcastPlayer.setPodcast(props.podcast)
 }
 
 const playOrPauseIcon = computed(() => {

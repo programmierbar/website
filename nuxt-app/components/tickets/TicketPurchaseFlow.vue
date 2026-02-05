@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
 import Pagination from '~/components/Pagination.vue'
-import TicketStepQuantity from './TicketStepQuantity.vue'
+import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
+import { computed, onMounted } from 'vue'
 import TicketStepAttendees from './TicketStepAttendees.vue'
 import TicketStepBilling from './TicketStepBilling.vue'
+import TicketStepQuantity from './TicketStepQuantity.vue'
 import TicketStepReview from './TicketStepReview.vue'
 
 const props = defineProps<{

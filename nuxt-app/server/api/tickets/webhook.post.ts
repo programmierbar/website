@@ -1,5 +1,5 @@
-import { verifyWebhookSignature } from '../../utils/stripe'
 import type Stripe from 'stripe'
+import { verifyWebhookSignature } from '../../utils/stripe'
 
 /**
  * Stripe webhook handler for ticket purchases.
@@ -69,17 +69,14 @@ export default defineEventHandler(async (event) => {
             // Use Directus filter to atomically update only if status != 'paid'
             // The filter ensures this is idempotent - duplicate webhooks won't re-process
             const filterParam = encodeURIComponent(JSON.stringify({ status: { _neq: 'paid' } }))
-            const response = await fetch(
-                `${directusUrl}/items/ticket_orders/${orderId}?filter=${filterParam}`,
-                {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${ticketToken}`,
-                    },
-                    body: JSON.stringify(updatePayload),
-                }
-            )
+            const response = await fetch(`${directusUrl}/items/ticket_orders/${orderId}?filter=${filterParam}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${ticketToken}`,
+                },
+                body: JSON.stringify(updatePayload),
+            })
 
             if (!response.ok) {
                 const errorText = await response.text()

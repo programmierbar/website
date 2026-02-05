@@ -13,10 +13,10 @@
 </template>
 
 <script lang="ts">
+import { getAssetUrl } from '~/helpers/getAssetUrl'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
 import type { FileItem } from '../types'
-import { getAssetUrl } from '~/helpers/getAssetUrl';
 
 export default defineComponent({
     props: {

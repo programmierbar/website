@@ -30,7 +30,7 @@
         <button
             v-for="index of 2"
             :key="index"
-            class="absolute top-0 block h-full w-5 md:w-40 from-black to-transparent transition-opacity duration-500 3xl:w-80"
+            class="absolute top-0 block h-full w-5 from-black to-transparent transition-opacity duration-500 md:w-40 3xl:w-80"
             :class="[
                 index === 1 ? 'left-0 bg-gradient-to-r' : 'right-0 bg-gradient-to-l',
                 ((index === 1 && scrollStartReached) || (index === 2 && scrollEndReached)) &&
@@ -42,8 +42,8 @@
             "
             type="button"
             :title="index === 1 ? 'Scroll left' : 'Scroll right'"
-            :data-cursor-arrow-left="(index === 1 && !scrollStartReached) ? true : null"
-            :data-cursor-arrow-right="(index === 2 && !scrollEndReached) ? true : null"
+            :data-cursor-arrow-left="index === 1 && !scrollStartReached ? true : null"
+            :data-cursor-arrow-right="index === 2 && !scrollEndReached ? true : null"
             @click="() => scrollTo(index === 1 ? 'left' : 'right')"
         />
     </div>
@@ -52,7 +52,7 @@
 <script setup lang="ts">
 import { CLICK_SCROLL_LEFT_ARROW_EVENT_ID, CLICK_SCROLL_RIGHT_ARROW_EVENT_ID } from '~/config'
 import { trackGoal } from '~/helpers'
-import type { SpeakerPreviewItem } from '~/types';
+import type { SpeakerPreviewItem } from '~/types'
 import smoothscroll from 'smoothscroll-polyfill'
 import { onMounted, ref } from 'vue'
 import FadeAnimation from './FadeAnimation.vue'
@@ -60,7 +60,7 @@ import GenericLazyList from './GenericLazyList.vue'
 import GenericListItem from './GenericListItem.vue'
 
 defineProps<{
-  speakers: SpeakerPreviewItem[]
+    speakers: SpeakerPreviewItem[]
 }>()
 
 // Create scroll box element reference

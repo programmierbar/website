@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 
-import type { TalkItem, PartnerItem, FileItem } from '~/types/items';
+import type { FileItem, PartnerItem, TalkItem } from '~/types/items'
 
 export interface DirectusFileItem extends FileItem {
     id: string
@@ -62,8 +62,8 @@ export interface DirectusMeetupItem {
     meetup_url: string
     youtube_url: string | null
     talks: {
-      talk: TalkItem
-      sort: number
+        talk: TalkItem
+        sort: number
     }[]
     gallery_images: {
         id: number
@@ -104,8 +104,8 @@ export interface DirectusConferenceItem {
     headline_1: string
     text_1: string
     talks: {
-      talk: TalkItem
-      sort: number
+        talk: TalkItem
+        sort: number
     }[]
     gallery_images: {
         directus_files_id: DirectusFileItem
@@ -124,38 +124,38 @@ export interface DirectusConferenceItem {
         sort: number
     }[]
     agenda: {
-      start: string
-      end: string
-      title: string
-      subtitle: string
-      track: string
-      talk_identifier: string
+        start: string
+        end: string
+        title: string
+        subtitle: string
+        track: string
+        talk_identifier: string
     }[]
     faqs: {
-      question: string
-      answer: string
-    }[],
-    tickets : {
-      price: string,
-      title: string,
-      subtitle: string,
-      style: string,
-    }[],
-    tickets_text: string,
-    tickets_url: string,
-    tickets_on_sale: Boolean,
+        question: string
+        answer: string
+    }[]
+    tickets: {
+        price: string
+        title: string
+        subtitle: string
+        style: string
+    }[]
+    tickets_text: string
+    tickets_url: string
+    tickets_on_sale: Boolean
     partners: {
-      partner: PartnerItem
-      sort: number
+        partner: PartnerItem
+        sort: number
     }[]
     ticketing_enabled?: boolean // Optional until schema deployed to production
 }
 
 export interface DirectusTestimonialItem {
-  id: string
-  text: string
-  subtitle: string
-  weight: number
+    id: string
+    text: string
+    subtitle: string
+    weight: number
 }
 
 export interface DirectusMemberItem {
@@ -243,7 +243,7 @@ export interface DirectusSpeakerItem {
         speaker: DirectusSpeakerItem
         tag: DirectusTagItem
         sort: number
-    }[],
+    }[]
     listed_hof: boolean
 }
 
@@ -267,13 +267,13 @@ export interface DirectusPickOfTheDayItem {
 }
 
 export interface DirectusRatingItem {
-  id: string
-  update_token: string
-  target: {
-    target_collection: string,
-    target: string
-  }[],
-  up_or_down: 'up' | 'down'
+    id: string
+    update_token: string
+    target: {
+        target_collection: string
+        target: string
+    }[]
+    up_or_down: 'up' | 'down'
 }
 
 export interface DirectusTagItem {
@@ -323,7 +323,7 @@ export interface DirectusHomePage {
     intro_heading: string
     highlights_heading: string
     meetup_heading: string
-    highlights: any[],
+    highlights: any[]
     video: DirectusFileItem
     news: { text: string }[]
     podcast_heading: string
@@ -355,19 +355,19 @@ export interface DirectusMeetupPage {
 }
 
 export interface DirectusConferencePage {
-  meta_title: string
-  meta_description: string
-  cover_image: DirectusFileItem
-  video: DirectusFileItem | null
-  conference_heading: string
-  intro_heading: string
-  intro_text_1: string
-  faqs_heading: string
-  faqs_text_1: string
-  faqs: {
-    question: string
-    answer: string
-  }[]
+    meta_title: string
+    meta_description: string
+    cover_image: DirectusFileItem
+    video: DirectusFileItem | null
+    conference_heading: string
+    intro_heading: string
+    intro_text_1: string
+    faqs_heading: string
+    faqs_text_1: string
+    faqs: {
+        question: string
+        answer: string
+    }[]
 }
 
 export interface DirectusHallOfFamePage {
@@ -413,8 +413,8 @@ export interface DirectusRafflePage {
 }
 
 export interface DirectusCocktailMenu {
-  status: string
-  menu: string
+    status: string
+    menu: string
 }
 
 export interface DirectusLoginPage {
@@ -440,9 +440,9 @@ export interface DirectusCocPage {
 }
 
 export interface DirectusRecordingsPage {
-  status: string
-  heading: string
-  text: string
+    status: string
+    heading: string
+    text: string
 }
 
 export interface DirectusPrivacyPage {

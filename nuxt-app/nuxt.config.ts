@@ -3,7 +3,7 @@ import svgLoader from 'vite-svg-loader'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { useDirectus } from './composables/useDirectus'
-import { DEV, DEVTOOLS, DIRECTUS_CMS_URL, FLAG_SHOW_LOGIN, DISCORD_INVITE_LINK } from './config'
+import { DEV, DEVTOOLS, DIRECTUS_CMS_URL, DISCORD_INVITE_LINK, FLAG_SHOW_LOGIN } from './config'
 
 const directus = useDirectus()
 
@@ -23,9 +23,7 @@ export default defineNuxtConfig({
     },
 
     // Global CSS: https://go.nuxtjs.dev/config-css
-    css: [
-      'vue-json-pretty/lib/styles.css',
-    ],
+    css: ['vue-json-pretty/lib/styles.css'],
 
     runtimeConfig: {
         // Email (Mailgun API)
