@@ -1,8 +1,8 @@
 import type { MetaInfo } from 'vue-meta/types/vue-meta'
-import { BUZZSPROUT_TRACKING_URL, DIRECTUS_CMS_URL, TWITTER_HANDLE, WEBSITE_NAME, WEBSITE_URL } from '../config'
+import { BUZZSPROUT_TRACKING_URL, TWITTER_HANDLE, WEBSITE_NAME, WEBSITE_URL } from '../config'
 import type { FileItem } from '../types'
 import { getTrimmedString } from './getTrimmedString'
-import { getAssetUrl } from '~/helpers/getAssetUrl';
+import { getAssetUrl } from '~/helpers/getAssetUrl'
 
 interface Data {
     type: 'website' | 'podcast' | 'profile' | 'article'
@@ -40,8 +40,11 @@ export function getMetaInfo({
     // Create URL of current site
     const siteUrl = WEBSITE_URL + path
 
-    // Trim title and add website name for subpages
-    const trimmedTitle = path === '/' ? getTrimmedString(title, 60) : getTrimmedString(title, 40) + ' | ' + WEBSITE_NAME
+    // Trim title for page title tag (include site name for browser tabs)
+    const trimmedTitle = path === '/' ? getTrimmedString(title, 60) : getTrimmedString(title, 60) + ' | ' + WEBSITE_NAME
+
+    // Trim title for Open Graph and Twitter (without site name - use og:site_name instead)
+    const ogTitle = getTrimmedString(title, 60)
 
     // Trim description, remove markdown, and replace multiple whitespace
     // characters, including line breaks, with a single space
@@ -72,6 +75,11 @@ export function getMetaInfo({
                 content: type === 'podcast' ? 'article' : type,
             },
             {
+                hid: 'og:site_name',
+                property: 'og:site_name',
+                content: WEBSITE_NAME,
+            },
+            {
                 hid: 'og:url',
                 property: 'og:url',
                 content: siteUrl,
@@ -79,7 +87,7 @@ export function getMetaInfo({
             {
                 hid: 'og:title',
                 property: 'og:title',
-                content: trimmedTitle,
+                content: ogTitle,
             },
             {
                 hid: 'og:description',
@@ -106,7 +114,7 @@ export function getMetaInfo({
             {
                 hid: 'twitter:title',
                 name: 'twitter:title',
-                content: trimmedTitle,
+                content: ogTitle,
             },
             {
                 hid: 'twitter:description',
