@@ -6,7 +6,7 @@ This document outlines the vision and tasks for automating the programmier.bar p
 
 ## Implementation Progress
 
-> Last updated: 2026-02-01
+> Last updated: 2026-02-04
 
 ### Completed Phases
 
@@ -48,6 +48,29 @@ This document outlines the vision and tasks for automating the programmier.bar p
   - Scheduled task runs daily at 9:00 AM
   - Sends reminders 3 days and 1 day before deadline
 
+#### Phase 6: Asset Production Pipeline ✅
+- **6.1** ✅ Asset templates collection created (`asset_templates`)
+  - Stores template images, AI prompts, and configuration for each asset type
+  - Supports episode-type-specific templates
+  - Template variables use Handlebars syntax ({{title}}, {{speaker_name}}, etc.)
+- **6.2** ✅ Generated assets collection created (`podcast_generated_assets`)
+  - Tracks generated assets with status (pending, generating, generated, failed, approved)
+  - Links to podcast and template records
+  - Stores generation prompts for debugging
+- **6.3** ✅ Asset generation hook implemented (`asset-generation`)
+  - Triggers when speaker's `portal_submission_status` changes to "approved"
+  - Generates all applicable assets for linked podcasts using Gemini API
+  - Automatically links cover images and banners to podcast record
+- **6.4** ✅ Regeneration support
+  - `regenerate_assets` field on podcasts to trigger manual regeneration
+  - `assets_status` field to track generation progress
+- **6.5** ✅ Default templates provided for:
+  - Episode covers (Deep Dive, News)
+  - Speaker portraits
+  - Heise banners
+  - LinkedIn post images
+  - Instagram post images
+
 #### Phase 7: Heise.de Integration ✅
 - **7.1** ✅ Heise fields added to Podcast collection
 - **7.2** ✅ Heise document specification created (`directus-cms/docs/heise_document_spec.md`)
@@ -69,15 +92,20 @@ This document outlines the vision and tasks for automating the programmier.bar p
 - `directus-cms/extensions/.../src/speaker-portal-notifications/index.ts` - Speaker portal email notifications (uses CMS templates)
 - `directus-cms/extensions/.../src/heise-integration/index.ts` - Heise document generation and email hook (uses CMS templates)
 - `directus-cms/extensions/.../src/heise-integration/documentGenerator.ts` - Heise document fallback generator
+- `directus-cms/extensions/.../src/asset-generation/index.ts` - Asset generation hook (triggered by speaker approval)
+- `directus-cms/extensions/.../src/asset-generation/generateAssets.ts` - Core asset generation logic using Gemini API
 - `directus-cms/extensions/.../src/shared/email-service.ts` - Shared email utility using Directus MailService
 
 **New CMS Collections:**
 - `email_templates` - Editable email templates (subject, HTML body with Handlebars variables)
 - `automation_settings` - Configuration settings (Heise contact email, admin email, website URL, etc.)
 - `ai_prompts` - Editable AI prompts for content generation (shownotes, social media posts)
+- `asset_templates` - Templates for AI-powered asset generation (images, prompts, variables)
+- `podcast_generated_assets` - Generated asset files with status tracking
 
 **Documentation:**
 - `directus-cms/docs/heise_document_spec.md` - Heise document format specification
+- `directus-cms/docs/asset_generation.md` - Asset generation pipeline documentation
 
 **Utility Scripts:**
 - `directus-cms/utils/setup-flows.mjs` - Sets up Directus flows and presets
@@ -85,6 +113,7 @@ This document outlines the vision and tasks for automating the programmier.bar p
 - `directus-cms/utils/cleanup-old-flow.mjs` - Removes deprecated flow data
 - `directus-cms/utils/setup-email-templates.mjs` - Creates email_templates and automation_settings collections with default data
 - `directus-cms/utils/setup-ai-prompts.mjs` - Creates ai_prompts collection with default prompts for content generation
+- `directus-cms/utils/setup-asset-templates.mjs` - Creates asset_templates and podcast_generated_assets collections with default templates
 
 **Environment Variables Required:**
 - `GEMINI_API_KEY` - For AI content generation (add to Directus .env)
@@ -114,16 +143,19 @@ This document outlines the vision and tasks for automating the programmier.bar p
 1. Configure Directus email in `.env` (EMAIL_TRANSPORT, EMAIL_SMTP_*, EMAIL_FROM)
 2. Run: `cd directus-cms && node utils/setup-email-templates.mjs`
 3. Run: `cd directus-cms && node utils/setup-ai-prompts.mjs`
-4. Open Directus and configure settings in "Automation Settings" collection
-5. Customize email templates in "Email Templates" collection if needed
-6. Customize AI prompts in "AI Prompts" collection if needed (changes take effect immediately)
+4. Run: `cd directus-cms && node utils/setup-asset-templates.mjs`
+5. Open Directus and configure settings in "Automation Settings" collection
+6. Customize email templates in "Email Templates" collection if needed
+7. Customize AI prompts in "AI Prompts" collection if needed (changes take effect immediately)
+8. Upload template images to "Asset Templates" collection and customize prompts as needed
+9. Rebuild extensions: `cd directus-cms/extensions/directus-extension-programmierbar-bundle && yarn build`
 
 ### Remaining Work
 
 - **Phase 2**: Automatic transcription from audio upload (currently manual transcript upload)
 - **Phase 4**: Social media publishing automation
 - **Phase 5**: Admin review interface (Directus panel for approving/rejecting speaker submissions)
-- **Phase 6**: Asset production pipeline (background removal, image generation)
+- **Phase 6**: Asset preview/review interface (Directus panel for reviewing generated assets before final approval)
 - **Phase 7**: Heise review interface (Directus panel for previewing/editing documents before sending)
 - **Phase 8**: Hook migration and documentation
 
