@@ -1915,6 +1915,34 @@
       "schema": {
         "name": "ticket_settings"
       }
+    },
+    {
+      "collection": "podcast_slug_history",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": null,
+        "archive_value": null,
+        "collapse": "open",
+        "collection": "podcast_slug_history",
+        "color": null,
+        "display_template": "{{old_slug}}",
+        "group": "Podcasts",
+        "hidden": false,
+        "icon": "history",
+        "item_duplication_fields": null,
+        "note": "History of old podcast slugs for redirect purposes",
+        "preview_url": null,
+        "singleton": false,
+        "sort": 2,
+        "sort_field": null,
+        "translations": null,
+        "unarchive_value": null,
+        "versioning": false
+      },
+      "schema": {
+        "name": "podcast_slug_history"
+      }
     }
   ],
   "fields": [
@@ -34398,6 +34426,194 @@
       "schema": {
         "is_indexed": true
       }
+    },
+    {
+      "collection": "podcast_slug_history",
+      "field": "id",
+      "type": "uuid",
+      "meta": {
+        "collection": "podcast_slug_history",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "searchable": true,
+        "sort": 1,
+        "special": [
+          "uuid"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "podcast_slug_history",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_indexed": false,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "podcast_slug_history",
+      "field": "podcast",
+      "type": "uuid",
+      "meta": {
+        "collection": "podcast_slug_history",
+        "conditions": null,
+        "display": "related-values",
+        "display_options": {
+          "template": "{{title}}"
+        },
+        "field": "podcast",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown-m2o",
+        "note": "The podcast this slug belonged to",
+        "options": {
+          "template": "{{title}}"
+        },
+        "readonly": false,
+        "required": true,
+        "searchable": true,
+        "sort": 2,
+        "special": [
+          "m2o"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "podcast",
+        "table": "podcast_slug_history",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": true,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "podcasts",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "podcast_slug_history",
+      "field": "old_slug",
+      "type": "string",
+      "meta": {
+        "collection": "podcast_slug_history",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "old_slug",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": "The previous slug that should redirect to the current one",
+        "options": null,
+        "readonly": false,
+        "required": true,
+        "searchable": true,
+        "sort": 3,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "old_slug",
+        "table": "podcast_slug_history",
+        "data_type": "varchar",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": true,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "podcast_slug_history",
+      "field": "date_created",
+      "type": "timestamp",
+      "meta": {
+        "collection": "podcast_slug_history",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_created",
+        "group": null,
+        "hidden": false,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "searchable": true,
+        "sort": 4,
+        "special": [
+          "date-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_created",
+        "table": "podcast_slug_history",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
     }
   ],
   "relations": [
@@ -37886,6 +38102,31 @@
         "table": "tickets",
         "column": "conference",
         "foreign_key_table": "conferences",
+        "foreign_key_column": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE",
+        "constraint_name": null
+      }
+    },
+    {
+      "collection": "podcast_slug_history",
+      "field": "podcast",
+      "related_collection": "podcasts",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "podcast_slug_history",
+        "many_field": "podcast",
+        "one_allowed_collections": null,
+        "one_collection": "podcasts",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "podcast_slug_history",
+        "column": "podcast",
+        "foreign_key_table": "podcasts",
         "foreign_key_column": "id",
         "on_update": "NO ACTION",
         "on_delete": "CASCADE",

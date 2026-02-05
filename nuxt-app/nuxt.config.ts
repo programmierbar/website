@@ -93,6 +93,30 @@ export default defineNuxtConfig({
             const speakers = await directus.getSpeakers()
             routes.push(...speakers.map((speaker) => `/hall-of-fame/${speaker.slug}`))
 
+            // Fetch podcast slug history and generate redirect rules
+            try {
+                const slugHistory = await directus.getPodcastSlugHistory()
+                if (slugHistory && slugHistory.length > 0) {
+                    nitroConfig.routeRules = nitroConfig.routeRules || {}
+                    let redirectCount = 0
+                    for (const entry of slugHistory) {
+                        const oldPath = `/podcast/${entry.oldSlug}`
+                        const newPath = `/podcast/${entry.currentSlug}`
+                        if (nitroConfig.routeRules[oldPath]) {
+                            console.warn(`Podcast slug redirect conflict: "${oldPath}" already has a route rule, skipping`)
+                            continue
+                        }
+                        nitroConfig.routeRules[oldPath] = {
+                            redirect: { to: newPath, statusCode: 301 },
+                        }
+                        redirectCount++
+                    }
+                    console.log(`Generated ${redirectCount} podcast slug redirect(s)`)
+                }
+            } catch (error) {
+                console.warn('Failed to fetch podcast slug history for redirects:', error)
+            }
+
             // ..Async logic..
             nitroConfig.prerender?.routes?.push(...routes)
         },
