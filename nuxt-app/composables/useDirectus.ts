@@ -581,7 +581,7 @@ export function useDirectus() {
                     { podcasts: [{ podcast: ['type'] }] },
                 ] as any,
                 limit: -1,
-                sort: ['sort', '-published_on'],
+                sort: ['podcasts.podcast.type' as any, 'sort', '-published_on'],
                 filter: {'listed_hof': {'_eq': true}},
             })
         )
