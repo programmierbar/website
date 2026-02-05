@@ -197,15 +197,15 @@
 <script setup lang="ts">
 import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
-import { getMetaInfo, trackGoal } from '~/helpers';
+import { getMetaInfo, trackGoal } from '~/helpers'
 import { TalkItem } from '~/types';
-import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem } from '~/types';
+import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem } from '~/types'
 import { computed, type ComputedRef } from 'vue'
-import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
-import ConferenceGallery from '~/components/ConferenceGallery.vue';
-import ConferenceTickets from '~/components/ConferenceTickets.vue';
-import TestimonialSlider from '~/components/TestimonialSlider.vue';
-import { getAssetUrl } from '~/helpers/getAssetUrl';
+import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue'
+import ConferenceGallery from '~/components/ConferenceGallery.vue'
+import ConferenceTickets from '~/components/ConferenceTickets.vue'
+import TestimonialSlider from '~/components/TestimonialSlider.vue'
+import { getAssetUrl } from '~/helpers/getAssetUrl'
 
 // Add route and router
 const route = useRoute()
