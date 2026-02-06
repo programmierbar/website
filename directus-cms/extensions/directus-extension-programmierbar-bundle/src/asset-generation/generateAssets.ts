@@ -115,7 +115,7 @@ async function getFileAsBase64(
         const mimeType = file.type || 'image/png'
 
         // Use AssetsService to get the file stream (works with any storage driver)
-        const { stream } = await assetsService.getAsset(fileId, {})
+        const { stream } = await assetsService.getAsset(fileId)
 
         const chunks: Buffer[] = []
         for await (const chunk of stream) {
