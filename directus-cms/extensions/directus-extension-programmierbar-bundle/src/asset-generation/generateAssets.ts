@@ -1,6 +1,4 @@
 import { Buffer } from 'buffer'
-import fs from 'fs/promises'
-import path from 'path'
 import { Readable } from 'stream'
 import type { Logger } from 'pino'
 
@@ -8,6 +6,7 @@ interface HookServices {
     logger: Logger
     ItemsService: any
     FilesService: any
+    AssetsService: any
     getSchema: () => Promise<any>
     env: Record<string, string>
     accountability: any
@@ -94,18 +93,18 @@ function renderTemplate(template: string, variables: Record<string, string>): st
 
 /**
  * Fetch file data from Directus and convert to base64
- * Supports both local storage (filesystem) and cloud storage (S3, etc.)
+ * Uses Directus AssetsService to handle any storage driver (local, S3, etc.)
  */
 async function getFileAsBase64(
     fileId: string,
     filesService: any,
-    env: Record<string, string>,
+    assetsService: any,
     logger: Logger
 ): Promise<{ base64: string; mimeType: string } | null> {
     try {
-        // Get file metadata including storage location
+        // Get file metadata
         const file: FileData = await filesService.readOne(fileId, {
-            fields: ['id', 'filename_disk', 'type', 'storage'],
+            fields: ['id', 'filename_disk', 'type'],
         })
 
         if (!file || !file.filename_disk) {
@@ -114,45 +113,18 @@ async function getFileAsBase64(
         }
 
         const mimeType = file.type || 'image/png'
-        let fileBuffer: Buffer
 
-        // Determine storage type - check if it's local storage
-        const storageLocations = env.STORAGE_LOCATIONS?.split(',').map((s) => s.trim()) || ['local']
-        const fileStorage = file.storage || storageLocations[0]
-        const isLocalStorage = fileStorage === 'local'
+        // Use AssetsService to get the file stream (works with any storage driver)
+        const { stream } = await assetsService.getAsset(fileId, {})
 
-        if (isLocalStorage) {
-            // Read directly from local filesystem
-            const storageRoot = env.STORAGE_LOCAL_ROOT || './uploads'
-            const filePath = path.resolve(process.cwd(), storageRoot, file.filename_disk)
-
-            logger.info(`Reading file from local storage: ${filePath}`)
-            fileBuffer = await fs.readFile(filePath)
-        } else {
-            // For cloud storage (S3, etc.), fetch via Directus assets endpoint
-            const publicUrl = env.PUBLIC_URL || env.DIRECTUS_URL || 'http://localhost:8055'
-            const assetUrl = `${publicUrl}/assets/${fileId}`
-
-            logger.info(`Fetching file from cloud storage via: ${assetUrl}`)
-
-            // Use admin token if available for internal requests
-            const headers: Record<string, string> = {}
-            if (env.ADMIN_ACCESS_TOKEN) {
-                headers['Authorization'] = `Bearer ${env.ADMIN_ACCESS_TOKEN}`
-            }
-
-            const response = await fetch(assetUrl, { headers })
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-            }
-
-            const arrayBuffer = await response.arrayBuffer()
-            fileBuffer = Buffer.from(arrayBuffer)
+        const chunks: Buffer[] = []
+        for await (const chunk of stream) {
+            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
         }
+        const fileBuffer = Buffer.concat(chunks)
 
         const base64 = fileBuffer.toString('base64')
-        logger.info(`Successfully read file ${fileId} (${fileBuffer.length} bytes) from ${isLocalStorage ? 'local' : 'cloud'} storage`)
+        logger.info(`Successfully read file ${fileId} (${fileBuffer.length} bytes)`)
 
         return { base64, mimeType }
     } catch (err: any) {
@@ -271,7 +243,7 @@ function buildTemplateVariables(
  * Generate assets for a single podcast
  */
 export async function generateAssetsForPodcast(hookName: string, podcastId: number, services: HookServices): Promise<void> {
-    const { logger, ItemsService, FilesService, getSchema, env, accountability } = services
+    const { logger, ItemsService, FilesService, AssetsService, getSchema, env, accountability } = services
     const geminiApiKey = env.GEMINI_API_KEY
 
     if (!geminiApiKey) {
@@ -299,6 +271,11 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
         })
 
         const filesService = new FilesService({
+            schema,
+            accountability,
+        })
+
+        const assetsService = new AssetsService({
             schema,
             accountability,
         })
@@ -406,7 +383,7 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
                     const templateImageData = await getFileAsBase64(
                         template.template_image,
                         filesService,
-                        env,
+                        assetsService,
                         logger
                     )
                     if (templateImageData) {
@@ -416,7 +393,7 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
 
                 // Add speaker profile image if required and available
                 if (template.requires_speaker_image && speakerProfileImageId) {
-                    const speakerImageData = await getFileAsBase64(speakerProfileImageId, filesService, env, logger)
+                    const speakerImageData = await getFileAsBase64(speakerProfileImageId, filesService, assetsService, logger)
                     if (speakerImageData) {
                         inputImages.push(speakerImageData)
                     }
