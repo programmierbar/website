@@ -7,6 +7,7 @@ export default defineHook(({ action }, hookContext) => {
     const logger = hookContext.logger
     const ItemsService = hookContext.services.ItemsService
     const FilesService = hookContext.services.FilesService
+    const AssetsService = hookContext.services.AssetsService
     const getSchema = hookContext.getSchema
     const env = hookContext.env
 
@@ -63,6 +64,7 @@ export default defineHook(({ action }, hookContext) => {
                     logger,
                     ItemsService,
                     FilesService,
+                    AssetsService,
                     getSchema,
                     env,
                     accountability: context.accountability,
@@ -114,6 +116,7 @@ export default defineHook(({ action }, hookContext) => {
                 logger,
                 ItemsService,
                 FilesService,
+                AssetsService,
                 getSchema,
                 env,
                 accountability: context.accountability,
