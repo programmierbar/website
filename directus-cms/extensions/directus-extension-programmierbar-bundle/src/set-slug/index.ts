@@ -77,8 +77,22 @@ export default defineHook(({ filter }, hookContext) => {
                         }`
                     )
 
+                    // Get the new payload with slug
+                    const newPayload = await getPayloadWithSlug(futureItem, { metadata, payload })
+
+                    // For podcasts: save old slug to history if the podcast is published and slug is changing
+                    if (
+                        metadata.collection === 'podcasts' &&
+                        item.status === 'published' &&
+                        item.slug &&
+                        newPayload.slug &&
+                        item.slug !== newPayload.slug
+                    ) {
+                        await saveSlugToHistory(item.id, item.slug, context)
+                    }
+
                     // Return payload with "slug"
-                    return await getPayloadWithSlug(futureItem, { metadata, payload })
+                    return newPayload
                 }
             }
 
@@ -93,7 +107,44 @@ export default defineHook(({ filter }, hookContext) => {
         return payload
     }
 
+    /**
+     * Saves the old slug to the podcast_slug_history collection.
+     * This allows old URLs to redirect to the new slug.
+     *
+     * @param podcastId The ID of the podcast
+     * @param oldSlug The old slug being replaced
+     * @param context The hook context
+     */
+    async function saveSlugToHistory(podcastId: string, oldSlug: string, context: { accountability: any; schema: any }) {
+        try {
+            const slugHistoryService = new ItemsService('podcast_slug_history', {
+                accountability: context.accountability,
+                schema: context.schema,
+            })
 
+            // Check if this slug already exists in history for this podcast
+            const existingEntries = await slugHistoryService.readByQuery({
+                filter: {
+                    podcast: { _eq: podcastId },
+                    old_slug: { _eq: oldSlug },
+                },
+                limit: 1,
+            })
 
+            // Only create a new entry if this slug isn't already in history
+            if (!existingEntries || existingEntries.length === 0) {
+                await slugHistoryService.createOne({
+                    podcast: podcastId,
+                    old_slug: oldSlug,
+                })
 
+                logger.info(`${HOOK_NAME} hook: Saved old slug "${oldSlug}" to history for podcast "${podcastId}"`)
+            } else {
+                logger.info(`${HOOK_NAME} hook: Slug "${oldSlug}" already exists in history for podcast "${podcastId}"`)
+            }
+        } catch (error: any) {
+            // Log but don't fail the entire operation if slug history save fails
+            logger.error(`${HOOK_NAME} hook: Failed to save slug to history: ${error.message}`)
+        }
+    }
 })

@@ -876,6 +876,36 @@ export function useDirectus() {
     }
   }
 
+  /**
+   * Get all podcast slug history entries for building redirects.
+   * Returns a list of old slugs mapped to their current podcast slugs.
+   */
+  async function getPodcastSlugHistory(): Promise<{ oldSlug: string; currentSlug: string }[]> {
+    interface SlugHistoryEntry {
+      old_slug: string
+      podcast: { slug: string } | null
+    }
+
+    return await directus
+      .request(
+        readItems('podcast_slug_history', {
+          fields: [
+            'old_slug',
+            'podcast.slug',
+          ],
+          limit: -1,
+        })
+      )
+      .then((result) =>
+        (result as SlugHistoryEntry[])
+          .filter((entry) => entry.podcast?.slug && entry.old_slug !== entry.podcast.slug)
+          .map((entry) => ({
+            oldSlug: entry.old_slug,
+            currentSlug: entry.podcast!.slug,
+          }))
+      )
+  }
+
     return {
         getHomepage,
         getPodcastPage,
@@ -918,5 +948,6 @@ export function useDirectus() {
         getTestimonials,
         createRating,
         getTicketSettings,
+        getPodcastSlugHistory,
     }
 }
