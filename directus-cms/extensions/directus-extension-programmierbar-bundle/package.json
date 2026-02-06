@@ -113,6 +113,11 @@
                 "type": "hook",
                 "name": "asset-generation",
                 "source": "src/asset-generation/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "speaker-token",
+                "source": "src/speaker-token/index.ts"
             }
         ],
         "host": "^10.10.0"
