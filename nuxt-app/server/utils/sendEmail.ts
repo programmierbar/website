@@ -1,3 +1,5 @@
+import nodemailer from 'nodemailer'
+
 type EmailData = {
     to: string
     subject: string
@@ -11,68 +13,40 @@ type EmailData = {
 }
 
 /**
- * Helper function that sends an email via Mailgun API.
+ * Helper function that sends an email via SMTP.
  *
  * @param emailData The email data including optional attachments.
  */
 export async function sendEmail(emailData: EmailData): Promise<void> {
     const config = useRuntimeConfig()
 
-    const apiKey = config.emailMailgunApiKey
-    const domain = config.emailMailgunDomain
-    const host = config.emailMailgunHost || 'api.eu.mailgun.net'
+    const host = config.emailSmtpHost
+    const port = Number(config.emailSmtpPort) || 465
+    const user = config.emailSmtpUser
+    const pass = config.emailSmtpPass
     const from = config.emailFrom || 'noreply@programmier.bar'
 
-    if (!apiKey || !domain) {
-        throw new Error('Mailgun API key or domain not configured')
+    if (!host || !user || !pass) {
+        throw new Error('SMTP host, user, or password not configured')
     }
 
-    const url = `https://${host}/v3/${domain}/messages`
-
-    // Create form data for Mailgun API
-    const formData = new FormData()
-    formData.append('from', `programmier.bar <${from}>`)
-    formData.append('to', emailData.to)
-    formData.append('subject', emailData.subject)
-    formData.append('html', emailData.html)
-
-    // Handle attachments
-    if (emailData.attachments && emailData.attachments.length > 0) {
-        for (const attachment of emailData.attachments) {
-            let blob: Blob
-            if (typeof attachment.content === 'string') {
-                // Base64 encoded content
-                const binaryString = atob(attachment.content)
-                const bytes = new Uint8Array(binaryString.length)
-                for (let i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i)
-                }
-                blob = new Blob([bytes], { type: attachment.contentType || 'application/octet-stream' })
-            } else {
-                // Buffer content
-                blob = new Blob([attachment.content], { type: attachment.contentType || 'application/octet-stream' })
-            }
-
-            if (attachment.cid) {
-                // Inline attachment (for embedding images in HTML)
-                formData.append('inline', blob, attachment.filename)
-            } else {
-                formData.append('attachment', blob, attachment.filename)
-            }
-        }
-    }
-
-    // Send request to Mailgun API
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            Authorization: `Basic ${btoa(`api:${apiKey}`)}`,
-        },
-        body: formData,
+    const transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass },
     })
 
-    if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Mailgun API error: ${response.status} ${errorText}`)
-    }
+    await transporter.sendMail({
+        from: `programmier.bar <${from}>`,
+        to: emailData.to,
+        subject: emailData.subject,
+        html: emailData.html,
+        attachments: emailData.attachments?.map((att) => ({
+            filename: att.filename,
+            content: typeof att.content === 'string' ? Buffer.from(att.content, 'base64') : att.content,
+            contentType: att.contentType,
+            cid: att.cid,
+        })),
+    })
 }
