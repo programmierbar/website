@@ -26,7 +26,8 @@ export function extractSpeakerNames(transcriptText: string): string[] {
 
     // Pattern 1: Name followed by timestamp in parentheses
     // Examples: "Jan Gregor Emge-Triebel (00:12.534)", "Fabi Fink (00:35.735)"
-    const timestampPattern = /^([A-ZÄÖÜa-zäöüß][A-ZÄÖÜa-zäöüß\-]+(?:\s+[A-ZÄÖÜa-zäöüß][A-ZÄÖÜa-zäöüß\-]+)*)\s+\(\d{2}:\d{2}\.\d+\)/gm
+    // Use [ \t]+ instead of \s+ to avoid matching across newlines
+    const timestampPattern = /^([A-ZÄÖÜa-zäöüß][A-ZÄÖÜa-zäöüß\-]+(?:[ \t]+[A-ZÄÖÜa-zäöüß][A-ZÄÖÜa-zäöüß\-]+)*)[ \t]+\(\d{2}:\d{2}\.\d+\)/gm
 
     let match
     while ((match = timestampPattern.exec(transcriptText)) !== null) {
@@ -55,6 +56,7 @@ export function extractSpeakerNames(transcriptText: string): string[] {
  * Removes accents, lowercases, normalizes hyphens/spaces, and trims.
  */
 function normalize(str: string): string {
+    if (!str) return ''
     return str
         .toLowerCase()
         .normalize('NFD')
@@ -130,9 +132,10 @@ export async function matchMembersFromTranscript(
             accountability: eventContext.accountability,
         })
 
-        // Fetch all members
+        // Fetch non-archived members only
         const allMembers: MemberData[] = await membersService.readByQuery({
             fields: ['id', 'first_name', 'last_name'],
+            filter: { status: { _neq: 'archived' } },
             limit: -1,
         })
 
