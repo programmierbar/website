@@ -495,8 +495,6 @@ export async function generateContent(hookName: string, podcastId: number, servi
             generated_text: shownotesText,
             status: 'generated',
             generated_at: new Date().toISOString(),
-            llm_model: 'gemini-3-flash-preview',
-            prompt_version: '1.0',
         })
 
         // Generate social media posts
@@ -536,8 +534,6 @@ export async function generateContent(hookName: string, podcastId: number, servi
                     generated_text: socialText,
                     status: 'generated',
                     generated_at: new Date().toISOString(),
-                    llm_model: 'gemini-3-flash-preview',
-                    prompt_version: '1.0',
                 })
 
                 logger.info(`${hookName}: ${platform} post generated for podcast ${podcastId}`)

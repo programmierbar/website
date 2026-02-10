@@ -170,8 +170,6 @@ export default defineHook(({ action }, hookContext) => {
                     generated_text: documentHtml,
                     status: 'generated',
                     generated_at: new Date().toISOString(),
-                    llm_model: 'template',
-                    prompt_version: '1.0',
                 })
 
                 // Update podcast status
