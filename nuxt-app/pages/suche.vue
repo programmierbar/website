@@ -59,11 +59,11 @@ import GenericLazyList from '~/components/GenericLazyList.vue'
 import GenericListItem from '~/components/GenericListItem.vue'
 import { useLoadingScreen } from '~/composables'
 import { getMetaInfo } from '~/helpers'
-import { computed, type ComputedRef } from 'vue';
+import { computed, watch, ref } from 'vue'
 
 import { useRoute as useNativeRoute } from 'vue-router'
-import SearchResultCard from '~/components/SearchResultCard.vue';
-import { ALGOLIA_INDEX } from '~/config';
+import SearchResultCard from '~/components/SearchResultCard.vue'
+import { ALGOLIA_INDEX } from '~/config'
 
 // Add route
 const route = useRoute()
@@ -71,22 +71,32 @@ const route = useRoute()
 const nativeRoute = useNativeRoute()
 
 const searchText = computed(() => {
-  return nativeRoute.query?.search as string;
+    return nativeRoute.query?.search as string
 })
 
-const { data: pageData } = useAsyncData(nativeRoute.fullPath, async () => {
-  if (!searchText.value) {
-    return {searchResults: []}
-  }
+// Use useAlgoliaInitIndex for direct control over searches
+const algoliaIndex = useAlgoliaInitIndex(ALGOLIA_INDEX)
 
-  const response = await useAsyncAlgoliaSearch({ indexName: ALGOLIA_INDEX, query: searchText.value })
+const searchResults = ref<Array<any>>([])
 
-  return {searchResults: response.data.value.hits};
-}, {
-  watch: [searchText]
+const performSearch = async (query: string) => {
+    if (!query) {
+        searchResults.value = []
+        return
+    }
+    const response = await algoliaIndex.search(query)
+    searchResults.value = response.hits
+}
+
+// Perform initial search
+if (searchText.value) {
+    await performSearch(searchText.value)
+}
+
+// Watch for search text changes and re-run search
+watch(searchText, async (newQuery) => {
+    await performSearch(newQuery)
 })
-
-const searchResults: ComputedRef<Array<any> | undefined> = computed(() => pageData.value?.searchResults)
 
 useLoadingScreen(searchResults)
 
