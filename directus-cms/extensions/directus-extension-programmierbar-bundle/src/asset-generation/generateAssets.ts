@@ -24,6 +24,7 @@ interface AssetTemplate {
     variables_schema: string | null
     generation_model: string | null
     output_format: string | null
+    title_contains: string | null
 }
 
 interface PodcastData {
@@ -331,10 +332,21 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
                 'variables_schema',
                 'generation_model',
                 'output_format',
+                'title_contains',
             ],
         })
 
-        if (!templates || templates.length === 0) {
+        // Filter by title_contains: skip templates whose title_contains doesn't match the podcast title
+        const filteredTemplates = (templates || []).filter((t) => {
+            if (!t.title_contains) return true
+            const matches = podcast.title?.toLowerCase().includes(t.title_contains.toLowerCase())
+            if (!matches) {
+                logger.info(`${hookName}: Skipping template "${t.name}" - title doesn't contain "${t.title_contains}"`)
+            }
+            return matches
+        })
+
+        if (filteredTemplates.length === 0) {
             logger.warn(`${hookName}: No active templates found for podcast type ${podcast.type}`)
             await podcastsService.updateOne(podcastId, {
                 assets_status: 'complete',
@@ -342,7 +354,7 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
             return
         }
 
-        logger.info(`${hookName}: Found ${templates.length} template(s) to process`)
+        logger.info(`${hookName}: Found ${filteredTemplates.length} template(s) to process`)
 
         // Get the primary speaker (first one)
         // NOTE: Currently only the first speaker is used for asset generation.
@@ -357,7 +369,7 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
         let failCount = 0
 
         // Process each template
-        for (const template of templates) {
+        for (const template of filteredTemplates) {
             try {
                 logger.info(`${hookName}: Processing template: ${template.name}`)
 

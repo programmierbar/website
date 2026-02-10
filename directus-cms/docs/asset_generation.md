@@ -32,6 +32,7 @@ Stores template configurations for asset generation:
 | `name` | Descriptive name for the template |
 | `asset_type` | Type of asset (episode_cover, speaker_portrait, heise_banner, etc.) |
 | `episode_type` | Specific episode type this template applies to (null = all types) |
+| `title_contains` | Only match podcasts whose title contains this text, case-insensitive (null = all titles) |
 | `active` | Whether this template is currently in use |
 | `requires_speaker_image` | Whether the template needs a speaker profile image |
 | `template_image` | Base template image to be modified by AI |
@@ -74,7 +75,8 @@ The hook triggers on:
 For each podcast, the system:
 1. Fetches all active templates
 2. Filters templates by episode type (matches `podcast.type` or templates with `episode_type: null`)
-3. Skips templates requiring speaker images if no speaker image is available
+3. Filters by `title_contains` — templates with this field set are only used when the podcast title contains the specified text (case-insensitive). Templates without `title_contains` match all podcasts of that type.
+4. Skips templates requiring speaker images if no speaker image is available
 
 ### 3. Variable Substitution
 
