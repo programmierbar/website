@@ -28,12 +28,12 @@ export default defineNuxtConfig({
     ],
 
     runtimeConfig: {
-        // Email (Mailgun API)
-        emailTransport: 'mailgun', // Set via NUXT_EMAIL_TRANSPORT env var
+        // Email (SMTP)
         emailFrom: 'noreply@programmier.bar', // Set via NUXT_EMAIL_FROM env var
-        emailMailgunApiKey: '', // Set via NUXT_EMAIL_MAILGUN_API_KEY env var
-        emailMailgunDomain: '', // Set via NUXT_EMAIL_MAILGUN_DOMAIN env var
-        emailMailgunHost: 'api.eu.mailgun.net', // Set via NUXT_EMAIL_MAILGUN_HOST env var
+        emailSmtpHost: 'smtp.gmail.com', // Set via NUXT_EMAIL_SMTP_HOST env var
+        emailSmtpPort: '465', // Set via NUXT_EMAIL_SMTP_PORT env var
+        emailSmtpUser: '', // Set via NUXT_EMAIL_SMTP_USER env var
+        emailSmtpPass: '', // Set via NUXT_EMAIL_SMTP_PASS env var
         directusAdminToken: '', // Set via NUXT_DIRECTUS_ADMIN_TOKEN env var
         directusTicketToken: '', // Set via NUXT_DIRECTUS_TICKET_TOKEN env var
         geminiApiKey: '', // Set via NUXT_GEMINI_API_KEY env var
