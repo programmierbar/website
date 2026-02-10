@@ -78,14 +78,27 @@ const searchText = computed(() => {
 const algoliaIndex = useAlgoliaInitIndex(ALGOLIA_INDEX)
 
 const searchResults = ref<Array<any>>([])
+let currentSearchId = 0
 
 const performSearch = async (query: string) => {
+    const searchId = ++currentSearchId
+
     if (!query) {
         searchResults.value = []
         return
     }
-    const response = await algoliaIndex.search(query)
-    searchResults.value = response.hits
+
+    try {
+        const response = await algoliaIndex.search(query)
+        if (searchId === currentSearchId) {
+            searchResults.value = response.hits
+        }
+    } catch (error) {
+        console.error('Algolia search failed:', error)
+        if (searchId === currentSearchId) {
+            searchResults.value = []
+        }
+    }
 }
 
 // Perform initial search
