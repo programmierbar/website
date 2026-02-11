@@ -337,13 +337,31 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
         })
 
         // Filter by title_contains: skip templates whose title_contains doesn't match the podcast title
-        const filteredTemplates = (templates || []).filter((t) => {
+        // When a specific template (with title_contains) matches for a given asset_type,
+        // exclude generic templates (title_contains: null) for that same asset_type.
+        const titleMatchedTemplates = (templates || []).filter((t) => {
             if (!t.title_contains) return true
             const matches = podcast.title?.toLowerCase().includes(t.title_contains.toLowerCase())
             if (!matches) {
                 logger.info(`${hookName}: Skipping template "${t.name}" - title doesn't contain "${t.title_contains}"`)
             }
             return matches
+        })
+
+        // Find asset_types that have a specific (title_contains) match
+        const assetTypesWithSpecificMatch = new Set(
+            titleMatchedTemplates.filter((t) => t.title_contains).map((t) => t.asset_type)
+        )
+
+        // Exclude generic templates for asset_types that have a specific match
+        const filteredTemplates = titleMatchedTemplates.filter((t) => {
+            if (!t.title_contains && assetTypesWithSpecificMatch.has(t.asset_type)) {
+                logger.info(
+                    `${hookName}: Skipping generic template "${t.name}" - a more specific template matched for asset type "${t.asset_type}"`
+                )
+                return false
+            }
+            return true
         })
 
         if (filteredTemplates.length === 0) {
@@ -477,6 +495,7 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
                     await podcastsService.updateOne(podcastId, {
                         cover_image: fileId,
                     })
+                    podcast.cover_image = fileId
                     logger.info(`${hookName}: Updated podcast cover_image to ${fileId}`)
                 } else if (template.asset_type === 'episode_cover' && podcast.cover_image) {
                     logger.info(`${hookName}: Skipping cover_image update - already has a value`)
@@ -484,6 +503,7 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
                     await podcastsService.updateOne(podcastId, {
                         banner_image: fileId,
                     })
+                    podcast.banner_image = fileId
                     logger.info(`${hookName}: Updated podcast banner_image to ${fileId}`)
                 } else if (template.asset_type === 'heise_banner' && podcast.banner_image) {
                     logger.info(`${hookName}: Skipping banner_image update - already has a value`)
