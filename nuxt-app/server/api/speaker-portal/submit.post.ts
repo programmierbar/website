@@ -80,10 +80,26 @@ export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig()
     const directusUrl = config.public.directusCmsUrl || 'http://localhost:8055'
 
+    // Get admin token for Directus API access
+    const adminToken = config.directusAdminToken
+
+    if (!adminToken) {
+        console.error('DIRECTUS_ADMIN_TOKEN not configured')
+        throw createError({
+            statusCode: 500,
+            message: 'Serverkonfigurationsfehler',
+        })
+    }
+
     try {
         // Validate token and get speaker
         const validateResponse = await fetch(
-            `${directusUrl}/items/speakers?filter[portal_token][_eq]=${encodeURIComponent(token)}&fields=id,portal_token_expires,portal_submission_status`
+            `${directusUrl}/items/speakers?filter[portal_token][_eq]=${encodeURIComponent(token)}&fields=id,portal_token_expires,portal_submission_status`,
+            {
+                headers: {
+                    Authorization: `Bearer ${adminToken}`,
+                },
+            }
         )
 
         if (!validateResponse.ok) {
@@ -114,17 +130,6 @@ export default defineEventHandler(async (event) => {
             throw createError({
                 statusCode: 409,
                 message: 'Bereits eingereicht',
-            })
-        }
-
-        // Get admin token for file uploads and speaker update
-        const adminToken = config.directusAdminToken
-
-        if (!adminToken) {
-            console.error('DIRECTUS_ADMIN_TOKEN not configured')
-            throw createError({
-                statusCode: 500,
-                message: 'Serverkonfigurationsfehler',
             })
         }
 
