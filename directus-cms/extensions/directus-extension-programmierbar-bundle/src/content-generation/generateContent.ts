@@ -11,24 +11,12 @@ interface HookServices {
 interface PodcastData {
     id: number
     title: string
+    slug: string
     type: string
     number?: string
     transcript_text?: string
     speakers?: Array<{ speaker: { first_name: string; last_name: string; occupation?: string; description?: string } }>
     members?: Array<{ member: { first_name: string; last_name: string } }>
-}
-
-interface AiPrompt {
-    key: string
-    prompt_text: string
-}
-
-// Default word count targets (used if not found in CMS)
-const DEFAULT_WORD_COUNT_TARGETS: Record<string, string> = {
-    deep_dive: '300-500',
-    cto_special: '200-350',
-    news: '100-200',
-    other: '150-400',
 }
 
 // Simple template renderer for Handlebars-like syntax
@@ -81,22 +69,8 @@ async function fetchPrompts(
     return prompts
 }
 
-function getWordCountTargets(prompts: Map<string, string>): Record<string, string> {
-    const configPrompt = prompts.get('shownotes_word_counts')
-    if (configPrompt) {
-        try {
-            return JSON.parse(configPrompt)
-        } catch {
-            // Invalid JSON, use defaults
-        }
-    }
-    return DEFAULT_WORD_COUNT_TARGETS
-}
-
-function buildShownotesPrompt(podcast: PodcastData, prompts: Map<string, string>): { system: string; user: string } {
-    const wordCountTargets = getWordCountTargets(prompts)
+function buildShownotesPrompt(podcast: PodcastData, prompts: Map<string, string>): string {
     const episodeType = podcast.type || 'other'
-    const wordCount = wordCountTargets[episodeType] || wordCountTargets['other'] || '150-400'
 
     const hosts =
         podcast.members
@@ -120,9 +94,9 @@ function buildShownotesPrompt(podcast: PodcastData, prompts: Map<string, string>
             .filter(Boolean)
             .join('\n') || ''
 
-    // Get prompts from CMS or use defaults
-    const systemPrompt =
-        prompts.get('shownotes_system') ||
+    // Get prompt from CMS or use default
+    const template =
+        prompts.get('shownotes') ||
         `Du bist ein erfahrener Content-Redakteur für den deutschen Entwickler-Podcast "programmier.bar".
 Deine Aufgabe ist es, ansprechende Shownotes für Podcast-Episoden zu erstellen, die sowohl informativ als auch einladend sind.
 
@@ -131,11 +105,9 @@ Stilrichtlinien:
 - Technische Fachbegriffe auf Englisch belassen (z.B. "TypeScript", "Machine Learning", "API")
 - Freundlich, professionell, aber nicht steif
 - HTML-Formatierung: <strong>, <em>, <ul>, <ol>, <li>, <a href="">
-- Bullet Points für Themenübersicht verwenden`
+- Bullet Points für Themenübersicht verwenden
 
-    const userTemplate =
-        prompts.get('shownotes_user') ||
-        `Erstelle Shownotes für folgende Podcast-Episode:
+Erstelle Shownotes für folgende Podcast-Episode:
 
 **Episode-Typ:** {{episode_type}}
 **Titel:** {{title}}
@@ -152,7 +124,7 @@ Stilrichtlinien:
 
 Erstelle basierend auf dem Transkript:
 
-1. **Beschreibung** ({{word_count}} Wörter): Eine einladende Episode-Beschreibung im programmier.bar Stil
+1. **Beschreibung**: Eine einladende Episode-Beschreibung im programmier.bar Stil
 
 2. **Themenübersicht**: 3-7 Hauptthemen als Bullet Points
 
@@ -170,7 +142,7 @@ Antworte im folgenden JSON-Format:
   "resources": [{"name": "Resource Name", "url": "https://..."}, ...]
 }`
 
-    const userPrompt = renderTemplate(userTemplate, {
+    return renderTemplate(template, {
         episode_type: episodeType,
         title: podcast.title,
         number: podcast.number || 'N/A',
@@ -178,10 +150,7 @@ Antworte im folgenden JSON-Format:
         guests: guests || 'Keine Gäste',
         guest_info: guestInfo,
         transcript: podcast.transcript_text || 'Kein Transkript verfügbar',
-        word_count: wordCount,
     })
-
-    return { system: systemPrompt, user: userPrompt }
 }
 
 function buildSocialPrompt(
@@ -189,7 +158,7 @@ function buildSocialPrompt(
     podcast: PodcastData,
     shownotes: { description: string; topics: string[] },
     prompts: Map<string, string>
-): { system: string; user: string } {
+): string {
     const guests =
         podcast.speakers
             ?.map((s) => `${s.speaker?.first_name} ${s.speaker?.last_name}`)
@@ -205,22 +174,17 @@ function buildSocialPrompt(
     const topicsText = shownotes.topics.map((t) => `- ${t}`).join('\n')
     const shownotesDescription = shownotes.description || ''
 
-    // Default system prompts
-    const defaultSystemPrompts: Record<string, string> = {
-        linkedin: `Du erstellst professionelle LinkedIn-Posts für den Podcast "programmier.bar". Der Ton ist professionell aber nahbar, fachlich fundiert aber zugänglich.`,
-        instagram: `Du erstellst Instagram-Posts für "programmier.bar". Instagram ist visuell-fokussiert, der Text ist die Caption. Emoji sind erlaubt und erwünscht.`,
-        bluesky: `Du erstellst Posts für Bluesky für "programmier.bar". Bluesky ist ähnlich wie Twitter, mit 300 Zeichen Limit pro Post. Kurz und prägnant.`,
-        mastodon: `Du erstellst Posts für Mastodon für "programmier.bar". Mastodon hat ein 500 Zeichen Limit und eine tech-affine, Community-orientierte Nutzerschaft.`,
-    }
+    // Default prompts (system + user merged)
+    const defaultPrompts: Record<string, string> = {
+        linkedin: `Du erstellst professionelle LinkedIn-Posts für den Podcast "programmier.bar". Der Ton ist professionell aber nahbar, fachlich fundiert aber zugänglich.
 
-    // Default user prompts
-    const defaultUserPrompts: Record<string, string> = {
-        linkedin: `Erstelle einen LinkedIn-Post für diese Podcast-Episode:
+Erstelle einen LinkedIn-Post für diese Podcast-Episode:
 
 **Titel:** {{title}}
 **Typ:** {{episode_type}}
 **Gäste:** {{guests}}
 **Unternehmen:** {{guest_companies}}
+**Slug:** {{slug}}
 
 **Shownotes (Zusammenfassung der Episode):**
 {{shownotes}}
@@ -245,11 +209,14 @@ Antworte im JSON-Format:
   "tagging_suggestions": ["@Person1", "@Company1"]
 }`,
 
-        instagram: `Erstelle eine Instagram-Caption für diese Podcast-Episode:
+        instagram: `Du erstellst Instagram-Posts für "programmier.bar". Instagram ist visuell-fokussiert, der Text ist die Caption. Emoji sind erlaubt und erwünscht.
+
+Erstelle eine Instagram-Caption für diese Podcast-Episode:
 
 **Titel:** {{title}}
 **Typ:** {{episode_type}}
 **Gäste:** {{guests}}
+**Slug:** {{slug}}
 
 **Shownotes (Zusammenfassung der Episode):**
 {{shownotes}}
@@ -271,10 +238,13 @@ Antworte im JSON-Format:
   "hashtags": ["#tag1", "#tag2", ...]
 }`,
 
-        bluesky: `Erstelle einen Bluesky-Post für diese Podcast-Episode:
+        bluesky: `Du erstellst Posts für Bluesky für "programmier.bar". Bluesky ist ähnlich wie Twitter, mit 300 Zeichen Limit pro Post. Kurz und prägnant.
+
+Erstelle einen Bluesky-Post für diese Podcast-Episode:
 
 **Titel:** {{title}}
 **Gäste:** {{guests}}
+**Slug:** {{slug}}
 
 **Shownotes (Zusammenfassung der Episode):**
 {{shownotes}}
@@ -291,10 +261,13 @@ Antworte im JSON-Format:
   "post_text": "Der vollständige Post-Text (max 300 Zeichen)"
 }`,
 
-        mastodon: `Erstelle einen Mastodon-Post für diese Podcast-Episode:
+        mastodon: `Du erstellst Posts für Mastodon für "programmier.bar". Mastodon hat ein 500 Zeichen Limit und eine tech-affine, Community-orientierte Nutzerschaft.
+
+Erstelle einen Mastodon-Post für diese Podcast-Episode:
 
 **Titel:** {{title}}
 **Gäste:** {{guests}}
+**Slug:** {{slug}}
 
 **Shownotes (Zusammenfassung der Episode):**
 {{shownotes}}
@@ -317,23 +290,21 @@ Antworte im JSON-Format:
 }`,
     }
 
-    // Get prompts from CMS or use defaults
-    const systemPrompt = prompts.get(`social_${platform}_system`) || defaultSystemPrompts[platform]
-    const userTemplate = prompts.get(`social_${platform}_user`) || defaultUserPrompts[platform]
+    // Get prompt from CMS or use default
+    const template = prompts.get(`social_${platform}`) || defaultPrompts[platform]
 
-    const userPrompt = renderTemplate(userTemplate, {
+    return renderTemplate(template, {
         title: podcast.title,
         episode_type: podcast.type || 'other',
+        slug: podcast.slug || '',
         guests: guests || 'Keine Gäste',
         guest_companies: guestCompanies || 'N/A',
         topics: topicsText,
         shownotes: shownotesDescription,
     })
-
-    return { system: systemPrompt, user: userPrompt }
 }
 
-async function callGemini(apiKey: string, systemPrompt: string, userPrompt: string): Promise<string> {
+async function callGemini(apiKey: string, prompt: string): Promise<string> {
     const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
         {
@@ -342,7 +313,7 @@ async function callGemini(apiKey: string, systemPrompt: string, userPrompt: stri
             body: JSON.stringify({
                 contents: [
                     {
-                        parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }],
+                        parts: [{ text: prompt }],
                     },
                 ],
                 generationConfig: {
@@ -404,19 +375,7 @@ export async function generateContent(hookName: string, podcastId: number, servi
         })
 
         // Fetch AI prompts from CMS
-        const promptKeys = [
-            'shownotes_system',
-            'shownotes_user',
-            'shownotes_word_counts',
-            'social_linkedin_system',
-            'social_linkedin_user',
-            'social_instagram_system',
-            'social_instagram_user',
-            'social_bluesky_system',
-            'social_bluesky_user',
-            'social_mastodon_system',
-            'social_mastodon_user',
-        ]
+        const promptKeys = ['shownotes', 'social_linkedin', 'social_instagram', 'social_bluesky', 'social_mastodon']
         const prompts = await fetchPrompts(promptsService, promptKeys, logger, hookName)
         logger.info(`${hookName}: Loaded ${prompts.size} AI prompts from CMS`)
 
@@ -425,6 +384,7 @@ export async function generateContent(hookName: string, podcastId: number, servi
             fields: [
                 'id',
                 'title',
+                'slug',
                 'type',
                 'number',
                 'transcript_text',
@@ -453,9 +413,9 @@ export async function generateContent(hookName: string, podcastId: number, servi
         logger.info(`${hookName}: Calling Gemini API for shownotes`)
 
         // Generate shownotes
-        const shownotesPrompts = buildShownotesPrompt(podcast, prompts)
+        const shownotesPrompt = buildShownotesPrompt(podcast, prompts)
         logger.info(`${hookName}: Sending request to Gemini API`)
-        const shownotesResponse = await callGemini(geminiApiKey, shownotesPrompts.system, shownotesPrompts.user)
+        const shownotesResponse = await callGemini(geminiApiKey, shownotesPrompt)
         logger.info(`${hookName}: Received response from Gemini API`)
         const shownotesData = extractJson(shownotesResponse)
 
@@ -507,7 +467,7 @@ export async function generateContent(hookName: string, podcastId: number, servi
 
         for (const platform of platforms) {
             try {
-                const socialPrompts = buildSocialPrompt(
+                const socialPrompt = buildSocialPrompt(
                     platform,
                     podcast,
                     {
@@ -516,7 +476,7 @@ export async function generateContent(hookName: string, podcastId: number, servi
                     },
                     prompts
                 )
-                const socialResponse = await callGemini(geminiApiKey, socialPrompts.system, socialPrompts.user)
+                const socialResponse = await callGemini(geminiApiKey, socialPrompt)
                 const socialData = extractJson(socialResponse)
 
                 // Format social post: text + hashtags (if available)
