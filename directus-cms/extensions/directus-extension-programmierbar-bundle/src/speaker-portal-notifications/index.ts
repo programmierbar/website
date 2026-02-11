@@ -33,7 +33,114 @@ export default defineHook(({ action, schedule }, hookContext) => {
     }
 
     /**
-     * Send invitation email when a speaker's portal token is generated.
+     * Send invitation email for a single speaker.
+     */
+    async function sendInvitationForSpeaker(speakerId: string, accountability: any) {
+        const context: EmailServiceContext = {
+            logger,
+            services,
+            getSchema,
+            accountability,
+        }
+
+        const schema = await getSchema()
+
+        const speakersService = new ItemsService('speakers', {
+            schema,
+            accountability,
+        })
+
+        const speaker = await speakersService.readOne(speakerId, {
+            fields: [
+                'id',
+                'first_name',
+                'last_name',
+                'email',
+                'portal_token',
+                'portal_submission_deadline',
+                'portal_submission_status',
+            ],
+        })
+
+        // Only send if speaker has email, token, and status is pending
+        if (!speaker?.email || !speaker.portal_token || speaker.portal_submission_status !== 'pending') {
+            return
+        }
+
+        // Find related podcast for context
+        let podcastTitle: string | undefined
+        let recordingDate: string | undefined
+
+        try {
+            const podcastSpeakersService = new ItemsService('podcasts_speakers', {
+                schema,
+                accountability,
+            })
+
+            const podcastsService = new ItemsService('podcasts', {
+                schema,
+                accountability,
+            })
+
+            const relations = await podcastSpeakersService.readByQuery({
+                filter: { speaker: { _eq: speakerId } },
+                fields: ['podcast'],
+                limit: 1,
+                sort: ['-id'],
+            })
+
+            if (relations && relations.length > 0 && relations[0].podcast) {
+                const podcast = await podcastsService.readOne(relations[0].podcast, {
+                    fields: ['title', 'recording_date'],
+                })
+                podcastTitle = podcast?.title
+                recordingDate = podcast?.recording_date
+            }
+        } catch {
+            // Podcast lookup is optional
+        }
+
+        const portalUrl = await buildPortalUrl(speaker.portal_token, context)
+        const deadline = speaker.portal_submission_deadline
+            ? formatDateGerman(speaker.portal_submission_deadline)
+            : 'in den nächsten zwei Wochen'
+
+        logger.info(`${HOOK_NAME}: Sending invitation email to ${speaker.email}`)
+
+        await sendTemplatedEmail(
+            {
+                templateKey: 'speaker_invitation',
+                to: speaker.email,
+                data: {
+                    first_name: speaker.first_name,
+                    last_name: speaker.last_name,
+                    portal_url: portalUrl,
+                    deadline,
+                    podcast_title: podcastTitle,
+                    recording_date: recordingDate ? formatDateGerman(recordingDate) : undefined,
+                },
+            },
+            context
+        )
+
+        logger.info(`${HOOK_NAME}: Invitation sent to ${speaker.first_name} ${speaker.last_name}`)
+    }
+
+    /**
+     * Send invitation email when a new speaker is created (token is auto-generated).
+     */
+    action('speakers.items.create', async function (metadata, eventContext) {
+        const { key } = metadata
+
+        try {
+            await sendInvitationForSpeaker(key, eventContext.accountability)
+        } catch (err: any) {
+            logger.error(`${HOOK_NAME}: Error sending invitation email on create: ${err?.message || err}`)
+        }
+    })
+
+    /**
+     * Send invitation email when a speaker's portal token is regenerated.
      */
     action('speakers.items.update', async function (metadata, eventContext) {
         const { payload, keys } = metadata
@@ -43,104 +150,12 @@ export default defineHook(({ action, schedule }, hookContext) => {
             return
         }
 
-        const context: EmailServiceContext = {
-            logger,
-            services,
-            getSchema,
-            accountability: eventContext.accountability,
-        }
-
         try {
-            const schema = await getSchema()
-
-            const speakersService = new ItemsService('speakers', {
-                schema,
-                accountability: eventContext.accountability,
-            })
-
             for (const speakerId of keys) {
-                const speaker = await speakersService.readOne(speakerId, {
-                    fields: [
-                        'id',
-                        'first_name',
-                        'last_name',
-                        'email',
-                        'portal_token',
-                        'portal_submission_deadline',
-                        'portal_submission_status',
-                    ],
-                })
-
-                // Only send if speaker has email and status is pending
-                if (!speaker?.email || speaker.portal_submission_status !== 'pending') {
-                    continue
-                }
-
-                // Verify this is the token being set
-                if (speaker.portal_token !== payload.portal_token) {
-                    continue
-                }
-
-                // Find related podcast for context
-                let podcastTitle: string | undefined
-                let recordingDate: string | undefined
-
-                try {
-                    const podcastSpeakersService = new ItemsService('podcasts_speakers', {
-                        schema,
-                        accountability: eventContext.accountability,
-                    })
-
-                    const podcastsService = new ItemsService('podcasts', {
-                        schema,
-                        accountability: eventContext.accountability,
-                    })
-
-                    const relations = await podcastSpeakersService.readByQuery({
-                        filter: { speaker: { _eq: speakerId } },
-                        fields: ['podcast'],
-                        limit: 1,
-                        sort: ['-id'],
-                    })
-
-                    if (relations && relations.length > 0 && relations[0].podcast) {
-                        const podcast = await podcastsService.readOne(relations[0].podcast, {
-                            fields: ['title', 'recording_date'],
-                        })
-                        podcastTitle = podcast?.title
-                        recordingDate = podcast?.recording_date
-                    }
-                } catch {
-                    // Podcast lookup is optional
-                }
-
-                const portalUrl = await buildPortalUrl(speaker.portal_token, context)
-                const deadline = speaker.portal_submission_deadline
-                    ? formatDateGerman(speaker.portal_submission_deadline)
-                    : 'in den nächsten zwei Wochen'
-
-                logger.info(`${HOOK_NAME}: Sending invitation email to ${speaker.email}`)
-
-                await sendTemplatedEmail(
-                    {
-                        templateKey: 'speaker_invitation',
-                        to: speaker.email,
-                        data: {
-                            first_name: speaker.first_name,
-                            last_name: speaker.last_name,
-                            portal_url: portalUrl,
-                            deadline,
-                            podcast_title: podcastTitle,
-                            recording_date: recordingDate ? formatDateGerman(recordingDate) : undefined,
-                        },
-                    },
-                    context
-                )
-
-                logger.info(`${HOOK_NAME}: Invitation sent to ${speaker.first_name} ${speaker.last_name}`)
+                await sendInvitationForSpeaker(speakerId, eventContext.accountability)
             }
         } catch (err: any) {
-            logger.error(`${HOOK_NAME}: Error sending invitation email: ${err?.message || err}`)
+            logger.error(`${HOOK_NAME}: Error sending invitation email on update: ${err?.message || err}`)
         }
     })
 
