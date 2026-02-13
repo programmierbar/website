@@ -1,5 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { generateContent } from './generateContent.js'
+import { postSlackMessage } from '../shared/postSlackMessage.ts'
 
 const HOOK_NAME = 'content-generation'
 
@@ -35,8 +36,19 @@ export default defineHook(({ action }, hookContext) => {
             getSchema,
             env,
             eventContext,
-        }).catch((err) => {
+        }).catch(async (err) => {
             logger.error(`${HOOK_NAME} hook: Content generation failed for podcast ${podcastId}:`, err)
+
+            try {
+                const podcastUrl = `${env.PUBLIC_URL}admin/content/podcasts/${podcastId}`
+                await postSlackMessage(
+                    `:warning: *${HOOK_NAME}*: Content generation failed for podcast ${podcastId}.\n` +
+                        `Error: ${err?.message || err}\n` +
+                        `Podcast: ${podcastUrl}`
+                )
+            } catch (slackErr: any) {
+                logger.error(`${HOOK_NAME} hook: Failed to send Slack notification: ${slackErr.message}`)
+            }
         })
     })
 })

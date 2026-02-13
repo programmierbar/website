@@ -169,7 +169,6 @@ export default defineHook(({ action }, hookContext) => {
                     content_type: 'heise_document',
                     generated_text: documentHtml,
                     status: 'generated',
-                    generated_at: new Date().toISOString(),
                 })
 
                 // Update podcast status
