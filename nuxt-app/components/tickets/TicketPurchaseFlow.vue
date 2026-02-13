@@ -16,7 +16,6 @@ const props = defineProps<{
         regular_price_cents: number
         discounted_price_cents: number
         early_bird_deadline: string
-        discount_code: string | null
     } | null
 }>()
 

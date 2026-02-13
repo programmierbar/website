@@ -6,6 +6,7 @@ import type {
   DirectusConferenceItem,
   DirectusSpeakerItem,
   DirectusMemberItem,
+  PurchaseType,
 } from '~/types/directus';
 
 export type LatestPodcastItem = Pick<
@@ -192,4 +193,58 @@ export interface DirectusTranscriptItem {
   service: DirectusTranscriptItemServices,
   supported_features: string[]
   raw_response: null | DeepgramTranscriptResponse
+}
+
+// Ticket checkout types
+
+export interface TicketAttendee {
+    firstName: string
+    lastName: string
+    email: string
+}
+
+export interface BillingAddress {
+    line1: string
+    line2?: string
+    city: string
+    postalCode: string
+    country: string
+}
+
+export interface CompanyBillingInfo {
+    name: string
+    address: BillingAddress
+    billingEmail?: string
+}
+
+export interface Purchaser {
+    firstName: string
+    lastName: string
+    email: string
+}
+
+export interface CreateCheckoutRequest {
+    conferenceId: string
+    purchaseType: PurchaseType
+    purchaser: Purchaser
+    company?: CompanyBillingInfo
+    personalAddress?: BillingAddress
+    tickets: TicketAttendee[]
+    discountCode?: string
+}
+
+export interface CreateCheckoutResponse {
+    checkoutUrl: string
+    orderId: string
+}
+
+export interface ValidateDiscountRequest {
+    code: string
+    conferenceId: string
+}
+
+export interface ValidateDiscountResponse {
+    valid: boolean
+    discountAmountCents?: number
+    message?: string
 }
