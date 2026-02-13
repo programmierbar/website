@@ -1,4 +1,5 @@
 import type { Logger } from 'pino'
+import { postSlackMessage } from '../shared/postSlackMessage.ts'
 
 interface HookServices {
     logger: Logger
@@ -148,7 +149,14 @@ export async function matchMembersFromTranscript(
         logger.info(`${hookName}: First 500 chars of transcript: ${transcriptText.substring(0, 500)}`)
 
         if (speakerNames.length === 0) {
-            logger.info(`${hookName}: No speaker names found in transcript, skipping member matching`)
+            logger.warn(`${hookName}: No speaker names found in transcript for podcast ${podcastId}`)
+            try {
+                await postSlackMessage(
+                    `:warning: *${hookName} hook*: Keine Sprecher im Transkript von Podcast ${podcastId} erkannt. Bitte Members manuell zuweisen: https://admin.programmier.bar/admin/content/podcasts/${podcastId}`
+                )
+            } catch (slackError: any) {
+                logger.error(`${hookName}: Could not post to Slack: ${slackError.message}`)
+            }
             return
         }
 
@@ -159,7 +167,14 @@ export async function matchMembersFromTranscript(
         )
 
         if (matchedMembers.length === 0) {
-            logger.info(`${hookName}: No members matched, skipping update`)
+            logger.warn(`${hookName}: No members matched for podcast ${podcastId} (speakers: [${speakerNames.join(', ')}])`)
+            try {
+                await postSlackMessage(
+                    `:warning: *${hookName} hook*: Keine Members für Podcast ${podcastId} zugeordnet (Sprecher: ${speakerNames.join(', ')}). Bitte manuell zuweisen: https://admin.programmier.bar/admin/content/podcasts/${podcastId}`
+                )
+            } catch (slackError: any) {
+                logger.error(`${hookName}: Could not post to Slack: ${slackError.message}`)
+            }
             return
         }
 
@@ -189,6 +204,13 @@ export async function matchMembersFromTranscript(
         logger.error(`${hookName}: Member matching error for podcast ${podcastId}: ${err?.message || err}`)
         if (err?.stack) {
             logger.error(`${hookName}: Stack trace: ${err.stack}`)
+        }
+        try {
+            await postSlackMessage(
+                `:warning: *${hookName} hook*: Member-Matching für Podcast ${podcastId} fehlgeschlagen. Error: ${err?.message || err}`
+            )
+        } catch (slackError: any) {
+            logger.error(`${hookName}: Could not post to Slack: ${slackError.message}`)
         }
         // Don't throw - member matching failure shouldn't block other operations
     }
