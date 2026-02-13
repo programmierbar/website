@@ -1,6 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { matchMembersFromTranscript } from './matchMembers.js'
-import { postSlackMessage } from '../shared/postSlackMessage.js'
+import { postSlackMessage } from '../shared/postSlackMessage.ts'
 
 const HOOK_NAME = 'member-matching'
 

@@ -1,5 +1,5 @@
 import type { Logger } from 'pino'
-import { postSlackMessage } from '../shared/postSlackMessage.js'
+import { postSlackMessage } from '../shared/postSlackMessage.ts'
 
 interface HookServices {
     logger: Logger
