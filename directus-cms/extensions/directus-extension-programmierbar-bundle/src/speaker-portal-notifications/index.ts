@@ -6,6 +6,7 @@ import {
     formatDateGerman,
     type EmailServiceContext,
 } from '../shared/email-service.js'
+import { postSlackMessage } from '../shared/postSlackMessage.js'
 
 const HOOK_NAME = 'speaker-portal-notifications'
 
@@ -16,6 +17,7 @@ export default defineHook(({ action, schedule }, hookContext) => {
     const logger = hookContext.logger
     const services = hookContext.services
     const getSchema = hookContext.getSchema
+    const env = hookContext.env
     const ItemsService = services.ItemsService
 
     // Check if MailService is available
@@ -241,17 +243,15 @@ export default defineHook(({ action, schedule }, hookContext) => {
                     context
                 )
 
-                // Send notification to admin
-                const adminEmail = await getSetting('admin_notification_email', context)
-                if (adminEmail) {
-                    await sendTemplatedEmail(
-                        {
-                            templateKey: 'speaker_admin_notification',
-                            to: adminEmail,
-                            data: emailData,
-                        },
-                        context
+                // Notify admin via Slack
+                const speakerName = `${speaker.first_name} ${speaker.last_name}`
+                const podcastInfo = podcastTitle ? ` für "${podcastTitle}"` : ''
+                try {
+                    await postSlackMessage(
+                        `:white_check_mark: *Speaker Portal*: ${speakerName} hat die Informationen${podcastInfo} eingereicht. ${env.PUBLIC_URL}admin/content/speakers/${speakerId}`
                     )
+                } catch (slackError: any) {
+                    logger.error(`${HOOK_NAME}: Failed to send Slack notification: ${slackError?.message}`)
                 }
 
                 logger.info(`${HOOK_NAME}: Submission confirmation sent for ${speaker.first_name} ${speaker.last_name}`)
