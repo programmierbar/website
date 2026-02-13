@@ -864,12 +864,15 @@ export function useDirectus() {
   }
 
   /**
-   * Get ticket settings via API (uses admin auth on server)
+   * Get public ticket settings directly from Directus (no auth required)
    */
   async function getTicketSettings() {
     try {
-      const response = await $fetch('/api/tickets/settings')
-      return response
+      return await directus.request(
+        readSingleton('ticket_settings', {
+          fields: ['early_bird_price_cents', 'regular_price_cents', 'discounted_price_cents', 'early_bird_deadline'],
+        })
+      )
     } catch (e: unknown) {
       console.error('Error fetching ticket settings', e)
       return null

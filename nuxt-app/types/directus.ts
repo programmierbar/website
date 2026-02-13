@@ -225,6 +225,11 @@ export interface DirectusSpeakerItem {
     github_url: string | null
     instagram_url: string | null
     youtube_url: string | null
+    mastodon_url: string | null
+    portal_token: string | null
+    portal_token_expires: string | null
+    portal_submission_status: string | null
+    portal_submission_deadline: string | null
     meetups: {
         id: number
         speaker: DirectusSpeakerItem
@@ -448,4 +453,65 @@ export interface DirectusRecordingsPage {
 export interface DirectusPrivacyPage {
     heading: string
     text: string
+}
+
+// Ticket system types
+
+export type TicketOrderStatus = 'pending' | 'paid' | 'cancelled'
+export type TicketStatus = 'valid' | 'checked_in' | 'cancelled'
+export type TicketType = 'early_bird' | 'regular' | 'discounted'
+export type PurchaseType = 'personal' | 'company'
+
+export interface DirectusTicketOrderItem {
+    id: string
+    order_number: string
+    conference: string // Reference to conference ID
+    status: TicketOrderStatus
+    purchase_type: PurchaseType
+    purchaser_first_name: string
+    purchaser_last_name: string
+    purchaser_email: string
+    company_name: string | null
+    billing_address_line1: string | null
+    billing_address_line2: string | null
+    billing_city: string | null
+    billing_postal_code: string | null
+    billing_country: string | null
+    billing_email: string | null
+    subtotal_cents: number
+    discount_amount_cents: number
+    total_cents: number
+    discount_code_used: string | null
+    stripe_checkout_session_id: string
+    ticket_type: TicketType
+    stripe_payment_intent_id: string | null
+    date_created: string
+    date_paid: string | null
+    attendees_json: string | null
+    vat_amount_cents: number
+    total_gross_cents: number
+}
+
+export interface DirectusTicketItem {
+    id: string
+    ticket_code: string
+    order: string // Reference to ticket_order ID
+    conference: string // Reference to conference ID
+    attendee_first_name: string
+    attendee_last_name: string
+    attendee_email: string
+    ticket_type: TicketType
+    price_cents: number
+    status: TicketStatus
+    checked_in_at: string | null
+    date_created: string
+}
+
+export interface DirectusTicketSettingsItem {
+    id: number
+    early_bird_price_cents: number
+    regular_price_cents: number
+    discounted_price_cents: number
+    early_bird_deadline: string
+    discount_code: string | null
 }

@@ -1,7 +1,7 @@
-import { CreateCheckoutSchema } from '../../utils/ticketSchemas'
+import { CreateCheckoutSchema } from '../../utils/schema'
 import { getStripe } from '../../utils/stripe'
-import { getTicketSettings, isEarlyBirdPeriod } from '../../utils/ticketSettings'
-import type { TicketType, DirectusTicketSettingsItem } from '~/types/tickets'
+import { isEarlyBirdPeriod } from '../../utils/ticketSettings'
+import type { TicketType, DirectusTicketSettingsItem } from '~/types/directus'
 
 /**
  * Generate a unique order number
@@ -80,8 +80,10 @@ export default defineEventHandler(async (event) => {
     const { conferenceId, purchaseType, purchaser, company, personalAddress, tickets, discountCode } = parseResult.data
 
     // Fetch ticket settings from Directus
-    const settings = await getTicketSettings()
-    if (!settings) {
+    let settings
+    try {
+        settings = await useAuthenticatedDirectus().getTicketSettings()
+    } catch {
         throw createError({
             statusCode: 503,
             message: 'Ticketing ist derzeit nicht verfügbar. Bitte versuche es später erneut.',
@@ -97,39 +99,12 @@ export default defineEventHandler(async (event) => {
     // Calculate pricing
     const pricing = calculatePricing(settings, tickets.length, discountValid)
 
-    const config = useRuntimeConfig()
-    const directusUrl = config.public.directusCmsUrl || 'http://localhost:8055'
-    const ticketToken = config.directusTicketToken
-
-    if (!ticketToken) {
-        console.error('DIRECTUS_TICKET_TOKEN not configured')
-        throw createError({
-            statusCode: 500,
-            message: 'Serverkonfigurationsfehler',
-        })
-    }
+    const directus = useAuthenticatedDirectus()
 
     try {
         // Verify conference exists
         // Note: ticketing_enabled field is optional until schema is deployed to production
-        const conferenceResponse = await fetch(
-            `${directusUrl}/items/conferences/${conferenceId}?fields=id,slug,title`,
-            {
-                headers: {
-                    Authorization: `Bearer ${ticketToken}`,
-                },
-            }
-        )
-
-        if (!conferenceResponse.ok) {
-            throw createError({
-                statusCode: 404,
-                message: 'Konferenz nicht gefunden',
-            })
-        }
-
-        const conferenceData = await conferenceResponse.json()
-        const conference = conferenceData.data
+        const conference = await directus.getConference(conferenceId)
 
         // TODO: Re-enable ticketing_enabled check once schema is deployed to production
         // if (!conference.ticketing_enabled) {
@@ -148,7 +123,7 @@ export default defineEventHandler(async (event) => {
         const billingAddress =
             purchaseType === 'company' ? company?.address : personalAddress
 
-        const orderPayload = {
+        const order = await directus.createTicketOrder({
             order_number: orderNumber,
             conference: conferenceId,
             status: 'pending',
@@ -171,28 +146,9 @@ export default defineEventHandler(async (event) => {
             discount_code_used: discountValid ? discountCode : null,
             ticket_type: pricing.ticketType,
             stripe_checkout_session_id: '', // Will be updated after creating Stripe session
-        }
-
-        const createOrderResponse = await fetch(`${directusUrl}/items/ticket_orders`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${ticketToken}`,
-            },
-            body: JSON.stringify(orderPayload),
         })
 
-        if (!createOrderResponse.ok) {
-            const errorText = await createOrderResponse.text()
-            console.error('Failed to create order:', errorText)
-            throw createError({
-                statusCode: 500,
-                message: 'Fehler beim Erstellen der Bestellung',
-            })
-        }
-
-        const orderData = await createOrderResponse.json()
-        const orderId = orderData.data.id
+        const orderId = order.id
 
         // Create Stripe Checkout Session
         const stripe = getStripe()
@@ -230,12 +186,7 @@ export default defineEventHandler(async (event) => {
             // Stripe session creation failed - delete the pending order from Directus
             console.error('Stripe session creation failed:', stripeErr)
             try {
-                await fetch(`${directusUrl}/items/ticket_orders/${orderId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        Authorization: `Bearer ${ticketToken}`,
-                    },
-                })
+                await directus.deleteTicketOrder(orderId)
                 console.log(`Deleted orphaned order ${orderId} after Stripe failure`)
             } catch (deleteErr) {
                 console.error('Failed to delete orphaned order:', deleteErr)
@@ -247,15 +198,8 @@ export default defineEventHandler(async (event) => {
         }
 
         // Update order with Stripe session ID
-        await fetch(`${directusUrl}/items/ticket_orders/${orderId}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${ticketToken}`,
-            },
-            body: JSON.stringify({
-                stripe_checkout_session_id: session.id,
-            }),
+        await directus.updateTicketOrder(orderId, {
+            stripe_checkout_session_id: session.id,
         })
 
         return {
