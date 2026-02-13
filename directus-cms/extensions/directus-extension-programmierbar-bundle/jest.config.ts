@@ -14,6 +14,8 @@ const config: Config = {
   moduleNameMapper: {
     // Handle module aliases (if needed)
     '^../../../../../shared-code/(.*)$': '<rootDir>/../../../shared-code/$1',
+    // Resolve .js imports to .ts source files (ESM convention)
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   // Setup files if needed
   // setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
