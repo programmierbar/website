@@ -1,5 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { generateAssetsForPodcast, regenerateAssets } from './generateAssets.ts'
+import { postSlackMessage } from '../shared/postSlackMessage.ts'
 
 const HOOK_NAME = 'asset-generation'
 
@@ -68,8 +69,19 @@ export default defineHook(({ action }, hookContext) => {
                     getSchema,
                     env,
                     accountability: context.accountability,
-                }).catch((err) => {
+                }).catch(async (err) => {
                     logger.error(`${HOOK_NAME}: Asset generation failed for podcast ${podcastId}: ${err.message}`)
+
+                    try {
+                        const podcastUrl = `${env.PUBLIC_URL}admin/content/podcasts/${podcastId}`
+                        await postSlackMessage(
+                            `:warning: *${HOOK_NAME}*: Asset generation failed for podcast ${podcastId}.\n` +
+                                `Error: ${err.message}\n` +
+                                `Podcast: ${podcastUrl}`
+                        )
+                    } catch (slackErr: any) {
+                        logger.error(`${HOOK_NAME}: Failed to send Slack notification: ${slackErr.message}`)
+                    }
                 })
             }
         } catch (err: any) {
@@ -120,8 +132,19 @@ export default defineHook(({ action }, hookContext) => {
                 getSchema,
                 env,
                 accountability: context.accountability,
-            }).catch((err) => {
+            }).catch(async (err) => {
                 logger.error(`${HOOK_NAME}: Asset regeneration failed for podcast ${podcastId}: ${err.message}`)
+
+                try {
+                    const podcastUrl = `${env.PUBLIC_URL}admin/content/podcasts/${podcastId}`
+                    await postSlackMessage(
+                        `:warning: *${HOOK_NAME}*: Asset regeneration failed for podcast ${podcastId}.\n` +
+                            `Error: ${err.message}\n` +
+                            `Podcast: ${podcastUrl}`
+                    )
+                } catch (slackErr: any) {
+                    logger.error(`${HOOK_NAME}: Failed to send Slack notification: ${slackErr.message}`)
+                }
             })
         }
     })
