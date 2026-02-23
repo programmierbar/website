@@ -40,7 +40,7 @@
           </div>
         </section>
 
-        <section v-if='conference.tickets_on_sale' class="relative">
+        <section v-if='showTicketSection' class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8">
             <SectionHeading element="h2">
               Tickets
@@ -50,20 +50,16 @@
                 class="mt-2 text-2xl font-light leading-normal z-30 relative"
                 :html="conference.tickets_text"
               />
-            <ConferenceTickets :tickets='conference.tickets' :tickets-on-sale='conference.tickets_on_sale' :tickets-url='conference.tickets_url' />
 
-            <div v-if='conference.tickets_url' class='flex flex-row flex-wrap space justify-around mt-8'>
-              <a
-:href='conference.tickets_url'
-                 target='_blank'
-                 data-cursor-hover
+            <div class='flex flex-row flex-wrap space justify-around mt-8'>
+              <NuxtLink
+                :to="`/konferenzen/${conference.slug}/tickets`"
+                data-cursor-hover
                 class="m-auto rounded-full border-4 border-lime text-sm text-lime px-8 py-4 text-left"
-                type="submit"
               >
                 <div class='flex flex-row'>
                   <div>
                     <span class='uppercase font-bold text-xl md:text-4xl'>Zu den Tickets</span>
-                    <br /><span class='text-xl md:text-3xl'>via Wix.com</span>
                   </div>
                   <div class='pl-4 md:pl-12'>
                     <svg xmlns="http://www.w3.org/2000/svg" width="65" height="66" viewBox="0 0 65 66" fill="none">
@@ -72,13 +68,12 @@
                     </svg>
                   </div>
                 </div>
-
-              </a>
+              </NuxtLink>
             </div>
           </div>
         </section>
 
-        <section v-if='conference.tickets_on_sale' class="relative">
+        <section v-if='showTicketSection' class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
             <SectionHeading element="h2">
               Community
@@ -123,7 +118,7 @@
           </div>
         </section>
 
-        <section v-if='!conference.tickets_on_sale' class="relative">
+        <section v-if='!showTicketSection' class="relative">
           <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
             <SectionHeading element="h2">
               Community
@@ -202,7 +197,6 @@ import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, D
 import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
-import ConferenceTickets from '~/components/ConferenceTickets.vue';
 import TestimonialSlider from '~/components/TestimonialSlider.vue';
 import { getAssetUrl } from '~/helpers/getAssetUrl';
 
@@ -238,6 +232,18 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
 const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageData.value?.conference)
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
+
+const isConferenceOver = computed(() => {
+    if (!conference.value?.end_on) return false
+    const endDate = new Date(conference.value.end_on)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return endDate < today
+})
+
+const showTicketSection = computed(() => {
+    return conference.value?.ticketing_enabled === true && !isConferenceOver.value
+})
 
 type preparedAgendaItem = {
   start: string
