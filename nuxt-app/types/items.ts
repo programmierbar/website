@@ -215,6 +215,7 @@ export interface CompanyBillingInfo {
     name: string
     address: BillingAddress
     billingEmail?: string
+    vatId?: string
 }
 
 export interface Purchaser {

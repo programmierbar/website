@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { VAT_RATE } from '~/config'
 import type { TicketAttendee, CompanyBillingInfo, BillingAddress, Purchaser } from '~/types/items'
 import type { PurchaseType, TicketType } from '~/types/directus'
 
@@ -186,10 +187,10 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
         },
 
         /**
-         * VAT rate (19% in Germany)
+         * VAT rate (from config)
          */
         vatRate(): number {
-            return 0.19
+            return VAT_RATE
         },
 
         /**

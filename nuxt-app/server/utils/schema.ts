@@ -104,6 +104,10 @@ export const CompanyBillingSchema = z.object({
         .email('Die Rechnungs-E-Mail-Adresse scheint ungültig zu sein.')
         .max(200, 'Die E-Mail-Adresse darf nicht länger als 200 Zeichen sein.')
         .optional(),
+    vatId: z
+        .string()
+        .max(50, 'Die USt-IdNr. darf nicht länger als 50 Zeichen sein.')
+        .optional(),
 })
 
 export const CreateCheckoutSchema = z
