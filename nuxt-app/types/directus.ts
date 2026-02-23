@@ -135,20 +135,12 @@ export interface DirectusConferenceItem {
       question: string
       answer: string
     }[],
-    tickets : {
-      price: string,
-      title: string,
-      subtitle: string,
-      style: string,
-    }[],
     tickets_text: string,
-    tickets_url: string,
-    tickets_on_sale: Boolean,
+    ticketing_enabled: boolean,
     partners: {
       partner: PartnerItem
       sort: number
     }[]
-    ticketing_enabled?: boolean // Optional until schema deployed to production
 }
 
 export interface DirectusTestimonialItem {

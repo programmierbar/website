@@ -85,7 +85,7 @@ export function useAuthenticatedDirectus() {
     async function getConference(id: string) {
         return await client.request(
             readItem('conferences', id, {
-                fields: ['id', 'slug', 'title'],
+                fields: ['id', 'slug', 'title', 'ticketing_enabled'],
             })
         )
     }

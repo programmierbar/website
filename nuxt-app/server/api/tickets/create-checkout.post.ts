@@ -102,17 +102,15 @@ export default defineEventHandler(async (event) => {
     const directus = useAuthenticatedDirectus()
 
     try {
-        // Verify conference exists
-        // Note: ticketing_enabled field is optional until schema is deployed to production
+        // Verify conference exists and ticketing is enabled
         const conference = await directus.getConference(conferenceId)
 
-        // TODO: Re-enable ticketing_enabled check once schema is deployed to production
-        // if (!conference.ticketing_enabled) {
-        //     throw createError({
-        //         statusCode: 400,
-        //         message: 'Ticketverkauf für diese Konferenz ist nicht aktiv',
-        //     })
-        // }
+        if (!conference.ticketing_enabled) {
+            throw createError({
+                statusCode: 400,
+                message: 'Ticketverkauf für diese Konferenz ist nicht aktiv',
+            })
+        }
 
         // Generate order number
         const orderNumber = generateOrderNumber()

@@ -430,11 +430,8 @@ export function useDirectus() {
             'speakers.*',
             'speakers.speakers_id.*',
             'speakers.speakers_id.profile_image.*',
-            'tickets',
-            'tickets_url',
-            'tickets_on_sale',
             'tickets_text',
-            // 'ticketing_enabled', // TODO: Enable once schema is deployed to production
+            'ticketing_enabled',
             'partners',
             'partners.*',
             'partners.partner.*',
