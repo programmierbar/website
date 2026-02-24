@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { VAT_RATE_PERCENT } from '~/config'
 import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
 
 defineProps<{
@@ -41,7 +42,7 @@ const store = useTicketCheckoutStore()
                     <span>{{ store.formatPrice(store.totalCents) }}</span>
                 </div>
 
-                <p class="mt-2 text-xs text-[#848a98]">Alle Preise netto zzgl. 19% MwSt.</p>
+                <p class="mt-2 text-xs text-[#848a98]">Alle Preise netto zzgl. {{ VAT_RATE_PERCENT }}% MwSt.</p>
             </template>
 
             <!-- VAT breakdown view (Steps 3-4) -->
@@ -54,7 +55,7 @@ const store = useTicketCheckoutStore()
                 </div>
 
                 <div class="flex justify-between text-gray-300">
-                    <span>zzgl. 19% MwSt.</span>
+                    <span>zzgl. {{ VAT_RATE_PERCENT }}% MwSt.</span>
                     <span>{{ store.formatPrice(store.vatAmountCents) }}</span>
                 </div>
 
@@ -65,7 +66,7 @@ const store = useTicketCheckoutStore()
                     <span>{{ store.formatPrice(store.totalWithVatCents) }}</span>
                 </div>
 
-                <p class="mt-2 text-xs text-[#848a98]">Bruttopreis inkl. 19% MwSt.</p>
+                <p class="mt-2 text-xs text-[#848a98]">Bruttopreis inkl. {{ VAT_RATE_PERCENT }}% MwSt.</p>
             </template>
         </div>
     </div>

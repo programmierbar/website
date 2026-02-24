@@ -464,6 +464,7 @@ export interface DirectusTicketOrderItem {
     purchaser_last_name: string
     purchaser_email: string
     company_name: string | null
+    company_vat_id: string | null
     billing_address_line1: string | null
     billing_address_line2: string | null
     billing_city: string | null

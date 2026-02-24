@@ -365,6 +365,19 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
 
                 <div>
                     <label class="mb-2 block text-sm font-bold text-gray-400">
+                        USt-IdNr. (optional)
+                    </label>
+                    <input
+                        :value="store.company.vatId || ''"
+                        type="text"
+                        placeholder="DE123456789"
+                        class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime focus:outline-none"
+                        @input="updateCompanyField('vatId', ($event.target as HTMLInputElement).value)"
+                    />
+                </div>
+
+                <div>
+                    <label class="mb-2 block text-sm font-bold text-gray-400">
                         Rechnungs-E-Mail (optional)
                     </label>
                     <input

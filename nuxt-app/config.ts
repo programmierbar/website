@@ -33,6 +33,10 @@ export const PROGRAMMIER_CON_APP_ANDROID = process.env.PROGRAMMIER_CON_APP_ANDRO
 
 export const ALGOLIA_INDEX = process.env.ALGOLIA_INDEX || 'programmierbar_website_prod'
 
+// Ticketing
+export const VAT_RATE = 0.19
+export const VAT_RATE_PERCENT = Math.round(VAT_RATE * 100)
+
 // Event IDs
 export const PLAY_PODCAST_EVENT_ID = 'PLAY_PODCAST'
 export const PAUSE_PODCAST_EVENT_ID = 'PAUSE_PODCAST'
