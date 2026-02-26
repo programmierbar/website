@@ -234,6 +234,9 @@ export default defineEventHandler(async (event) => {
         if (err.statusCode) {
             throw err
         }
+        if (err?.response?.status === 404) {
+            throw createError({ statusCode: 404, message: 'Konferenz nicht gefunden' })
+        }
         console.error('Checkout creation error:', err)
         throw createError({
             statusCode: 500,
