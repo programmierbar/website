@@ -34,8 +34,7 @@ export default defineNuxtConfig({
         emailSmtpPort: '465', // Set via NUXT_EMAIL_SMTP_PORT env var
         emailSmtpUser: '', // Set via NUXT_EMAIL_SMTP_USER env var
         emailSmtpPass: '', // Set via NUXT_EMAIL_SMTP_PASS env var
-        directusAdminToken: '', // Set via NUXT_DIRECTUS_ADMIN_TOKEN env var
-        directusTicketToken: '', // Set via NUXT_DIRECTUS_TICKET_TOKEN env var
+        directusApiToken: '', // Set via NUXT_DIRECTUS_API_TOKEN env var
         geminiApiKey: '', // Set via NUXT_GEMINI_API_KEY env var
         stripeSecretKey: '', // Set via NUXT_STRIPE_SECRET_KEY env var
         stripeWebhookSecret: '', // Set via NUXT_STRIPE_WEBHOOK_SECRET env var

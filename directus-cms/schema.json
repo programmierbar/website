@@ -20405,7 +20405,9 @@
           "required": false,
           "searchable": true,
           "sort": 10,
-          "special": null,
+          "special": [
+            "date-created"
+          ],
           "translations": null,
           "validation": null,
           "validation_message": null,
@@ -20883,7 +20885,9 @@
           "required": false,
           "searchable": true,
           "sort": 6,
-          "special": null,
+          "special": [
+            "date-created"
+          ],
           "translations": null,
           "validation": null,
           "validation_message": null,

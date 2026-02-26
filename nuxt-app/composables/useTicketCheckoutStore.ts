@@ -1,12 +1,7 @@
 import { defineStore } from 'pinia'
-import type {
-    TicketAttendee,
-    CompanyBillingInfo,
-    BillingAddress,
-    Purchaser,
-    PurchaseType,
-    TicketType,
-} from '~/types/tickets'
+import { VAT_RATE } from '~/config'
+import type { TicketAttendee, CompanyBillingInfo, BillingAddress, Purchaser } from '~/types/items'
+import type { PurchaseType, TicketType } from '~/types/directus'
 
 interface TicketPricingSettings {
     earlyBirdPriceCents: number
@@ -192,10 +187,10 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
         },
 
         /**
-         * VAT rate (19% in Germany)
+         * VAT rate (from config)
          */
         vatRate(): number {
-            return 0.19
+            return VAT_RATE
         },
 
         /**
@@ -233,10 +228,8 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
             if (this.pricingLoaded) return
 
             try {
-                const settings = await $fetch('/api/tickets/settings')
-                this.pricingSettings = settings as TicketPricingSettings
-                this.pricingLoaded = true
-                this.pricingError = false
+                const settings = await useDirectus().getTicketSettings()
+                this.setPricingSettings(settings)
             } catch (e) {
                 console.error('Failed to fetch pricing settings', e)
                 this.pricingError = true
@@ -252,7 +245,6 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
             regular_price_cents: number
             discounted_price_cents: number
             early_bird_deadline: string
-            discount_code: string | null
         } | null | undefined) {
             if (!settings) {
                 this.pricingError = true
@@ -286,7 +278,6 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
                 regular_price_cents: number
                 discounted_price_cents: number
                 early_bird_deadline: string
-                discount_code: string | null
             } | null
         ) {
             // Use pre-fetched settings if available (from SSR/SSG)

@@ -1,10 +1,4 @@
-import { z } from 'zod'
-import { getTicketSettings } from '../../utils/ticketSettings'
-
-// Discount codes are global (not conference-specific)
-const ValidateDiscountSchema = z.object({
-    code: z.string().min(1, 'Bitte trage einen Rabattcode ein.').max(50),
-})
+import { ValidateDiscountSchema } from '../../utils/schema'
 
 export default defineEventHandler(async (event) => {
     const rawBody = await readBody(event)
@@ -21,10 +15,10 @@ export default defineEventHandler(async (event) => {
     const { code } = parseResult.data
 
     // Fetch settings from Directus
-    const settings = await getTicketSettings()
-
-    // Return unavailable if settings not configured (e.g., schema not deployed yet)
-    if (!settings) {
+    let settings
+    try {
+        settings = await useAuthenticatedDirectus().getTicketSettings()
+    } catch {
         return {
             valid: false,
             message: 'Ticketing ist derzeit nicht verfügbar.',

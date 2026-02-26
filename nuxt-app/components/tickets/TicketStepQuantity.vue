@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue'
+import { VAT_RATE_PERCENT } from '~/config'
 import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
 import TicketPricingSummary from './TicketPricingSummary.vue'
 
@@ -123,7 +124,7 @@ async function validateDiscount() {
                     {{ store.formatPrice(store.unitPriceCents) }}
                 </p>
             </div>
-            <p class="mt-2 text-xs text-[#848a98]">zzgl. 19% MwSt.</p>
+            <p class="mt-2 text-xs text-[#848a98]">zzgl. {{ VAT_RATE_PERCENT }}% MwSt.</p>
         </div>
 
         <!-- Discount code (only shown if not early bird) -->

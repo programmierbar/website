@@ -11,11 +11,14 @@ export default defineHook(({ action }, hookContext) => {
     action('podcast_generated_content.items.update', async function (metadata, eventContext) {
         const { payload, keys } = metadata
 
-        // Only proceed if status is being set to 'approved'
-        if (payload.status !== 'approved') {
-            return
+        if (payload.status === 'approved') {
+            await handleApproval(keys, eventContext)
+        } else if (payload.status && payload.status !== 'approved') {
+            await handleUnapproval(keys, eventContext)
         }
+    })
 
+    async function handleApproval(keys: string[], eventContext: any) {
         try {
             const schema = await getSchema()
 
@@ -76,7 +79,51 @@ export default defineHook(({ action }, hookContext) => {
         } catch (err: any) {
             logger.error(`${HOOK_NAME}: Error processing content approval: ${err?.message || err}`)
         }
-    })
+    }
+
+    async function handleUnapproval(keys: string[], eventContext: any) {
+        try {
+            const schema = await getSchema()
+
+            const generatedContentService = new ItemsService('podcast_generated_content', {
+                schema,
+                accountability: eventContext.accountability,
+            })
+
+            const podcastsService = new ItemsService('podcasts', {
+                schema,
+                accountability: eventContext.accountability,
+            })
+
+            // Process each unapproved content item
+            for (const contentId of keys) {
+                const content = await generatedContentService.readOne(contentId, {
+                    fields: ['id', 'podcast_id'],
+                })
+
+                if (!content || !content.podcast_id) {
+                    continue
+                }
+
+                // If the podcast was marked as approved, revert to content_review
+                const podcast = await podcastsService.readOne(content.podcast_id, {
+                    fields: ['publishing_status'],
+                })
+
+                if (podcast.publishing_status === 'approved') {
+                    logger.info(
+                        `${HOOK_NAME}: Content unapproved for podcast ${content.podcast_id}, reverting status to 'content_review'`
+                    )
+
+                    await podcastsService.updateOne(content.podcast_id, {
+                        publishing_status: 'content_review',
+                    })
+                }
+            }
+        } catch (err: any) {
+            logger.error(`${HOOK_NAME}: Error processing content unapproval: ${err?.message || err}`)
+        }
+    }
 
     logger.info(`${HOOK_NAME} hook registered`)
 })

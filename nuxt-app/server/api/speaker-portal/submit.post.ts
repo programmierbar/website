@@ -1,20 +1,4 @@
-import { z } from 'zod'
-
-const speakerDataSchema = z.object({
-    academic_title: z.string().max(50).optional().nullable(),
-    first_name: z.string().min(1, 'Vorname ist erforderlich').max(100),
-    last_name: z.string().min(1, 'Nachname ist erforderlich').max(100),
-    occupation: z.string().min(1, 'Jobtitel und Unternehmen sind erforderlich').max(200),
-    description: z.string().min(1, 'Beschreibung ist erforderlich').max(2000),
-    website_url: z.string().url().max(500).optional().or(z.literal('')),
-    linkedin_url: z.string().url().max(500).optional().or(z.literal('')),
-    twitter_url: z.string().url().max(500).optional().or(z.literal('')),
-    bluesky_url: z.string().max(100).optional().or(z.literal('')),
-    github_url: z.string().url().max(500).optional().or(z.literal('')),
-    instagram_url: z.string().url().max(500).optional().or(z.literal('')),
-    youtube_url: z.string().url().max(500).optional().or(z.literal('')),
-    mastodon_url: z.string().url().max(500).optional().or(z.literal('')),
-})
+import { SpeakerSubmissionSchema } from '../../utils/schema'
 
 export default defineEventHandler(async (event) => {
     const formData = await readMultipartFormData(event)
@@ -67,7 +51,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Validate form data with Zod
-    const parseResult = speakerDataSchema.safeParse(rawData)
+    const parseResult = SpeakerSubmissionSchema.safeParse(rawData)
     if (!parseResult.success) {
         const firstError = parseResult.error.errors[0]
         throw createError({
@@ -77,45 +61,18 @@ export default defineEventHandler(async (event) => {
     }
     const data = parseResult.data
 
-    const config = useRuntimeConfig()
-    const directusUrl = config.public.directusCmsUrl || 'http://localhost:8055'
-
-    // Get admin token for Directus API access
-    const adminToken = config.directusAdminToken
-
-    if (!adminToken) {
-        console.error('DIRECTUS_ADMIN_TOKEN not configured')
-        throw createError({
-            statusCode: 500,
-            message: 'Serverkonfigurationsfehler',
-        })
-    }
+    const directus = useAuthenticatedDirectus()
 
     try {
         // Validate token and get speaker
-        const validateResponse = await fetch(
-            `${directusUrl}/items/speakers?filter[portal_token][_eq]=${encodeURIComponent(token)}&fields=id,portal_token_expires,portal_submission_status`,
-            {
-                headers: {
-                    Authorization: `Bearer ${adminToken}`,
-                },
-            }
-        )
+        const speaker = await directus.getSpeakerByPortalToken(token)
 
-        if (!validateResponse.ok) {
-            throw new Error('Failed to validate token')
-        }
-
-        const validateData = await validateResponse.json()
-
-        if (!validateData.data || validateData.data.length === 0) {
+        if (!speaker) {
             throw createError({
                 statusCode: 404,
                 message: 'Ungültiger Token',
             })
         }
-
-        const speaker = validateData.data[0]
 
         // Check expiration
         if (speaker.portal_token_expires && new Date(speaker.portal_token_expires) < new Date()) {
@@ -142,25 +99,8 @@ export default defineEventHandler(async (event) => {
             const blob = new Blob([profileImage.data], { type: profileImage.type })
             imageFormData.append('file', blob, profileImage.filename)
 
-            const uploadResponse = await fetch(`${directusUrl}/files`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${adminToken}`,
-                },
-                body: imageFormData,
-            })
-
-            if (uploadResponse.ok) {
-                const uploadData = await uploadResponse.json()
-                profileImageId = uploadData.data.id
-            } else {
-                const errorText = await uploadResponse.text()
-                console.error('Failed to upload profile image:', errorText)
-                throw createError({
-                    statusCode: 500,
-                    message: 'Profilbild konnte nicht hochgeladen werden. Bitte versuche es erneut.',
-                })
-            }
+            const uploadResult = await directus.uploadFile(imageFormData)
+            profileImageId = uploadResult.id
         }
 
         if (actionImage) {
@@ -168,25 +108,8 @@ export default defineEventHandler(async (event) => {
             const blob = new Blob([actionImage.data], { type: actionImage.type })
             imageFormData.append('file', blob, actionImage.filename)
 
-            const uploadResponse = await fetch(`${directusUrl}/files`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${adminToken}`,
-                },
-                body: imageFormData,
-            })
-
-            if (uploadResponse.ok) {
-                const uploadData = await uploadResponse.json()
-                actionImageId = uploadData.data.id
-            } else {
-                const errorText = await uploadResponse.text()
-                console.error('Failed to upload action image:', errorText)
-                throw createError({
-                    statusCode: 500,
-                    message: 'Action Shot konnte nicht hochgeladen werden. Bitte versuche es erneut.',
-                })
-            }
+            const uploadResult = await directus.uploadFile(imageFormData)
+            actionImageId = uploadResult.id
         }
 
         // Update speaker record
@@ -215,20 +138,7 @@ export default defineEventHandler(async (event) => {
             updateData.event_image = actionImageId
         }
 
-        const updateResponse = await fetch(`${directusUrl}/items/speakers/${speaker.id}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${adminToken}`,
-            },
-            body: JSON.stringify(updateData),
-        })
-
-        if (!updateResponse.ok) {
-            const errorText = await updateResponse.text()
-            console.error('Failed to update speaker:', errorText)
-            throw new Error('Failed to save speaker data')
-        }
+        await directus.updateSpeaker(speaker.id, updateData)
 
         return {
             success: true,

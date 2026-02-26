@@ -42,19 +42,9 @@ export default defineEventHandler(async (event) => {
             throw createError({ statusCode: 400, message: 'Missing order_id' })
         }
 
-        const config = useRuntimeConfig()
-        const directusUrl = config.public.directusCmsUrl || 'http://localhost:8055'
-        const ticketToken = config.directusTicketToken
-
-        if (!ticketToken) {
-            console.error('DIRECTUS_TICKET_TOKEN not configured')
-            throw createError({ statusCode: 500, message: 'Server configuration error' })
-        }
+        const directus = useAuthenticatedDirectus()
 
         try {
-            // Atomic idempotent update: only update if status is NOT already 'paid'
-            // This prevents race conditions from duplicate webhooks by using Directus
-            // filter to ensure only pending orders are updated
             const updatePayload: Record<string, unknown> = {
                 status: 'paid',
                 stripe_payment_intent_id: session.payment_intent,
@@ -66,31 +56,13 @@ export default defineEventHandler(async (event) => {
                 updatePayload.attendees_json = attendeesJson
             }
 
-            // Use Directus filter to atomically update only if status != 'paid'
-            // The filter ensures this is idempotent - duplicate webhooks won't re-process
-            const filterParam = encodeURIComponent(JSON.stringify({ status: { _neq: 'paid' } }))
-            const response = await fetch(
-                `${directusUrl}/items/ticket_orders/${orderId}?filter=${filterParam}`,
-                {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${ticketToken}`,
-                    },
-                    body: JSON.stringify(updatePayload),
-                }
-            )
+            // Atomic idempotent update: only update if status is NOT already 'paid'.
+            // The filter ensures duplicate webhooks don't re-process the order.
+            const result = await directus.updateTicketOrder(orderId, updatePayload, {
+                filter: { status: { _neq: 'paid' } },
+            })
 
-            if (!response.ok) {
-                const errorText = await response.text()
-                console.error('Failed to update order:', errorText)
-                throw createError({ statusCode: 500, message: 'Failed to update order' })
-            }
-
-            // Check if the update actually modified the record
-            // Directus returns the updated item, or null/empty if filter didn't match
-            const result = await response.json()
-            if (!result.data) {
+            if (!result) {
                 console.log(`Order ${orderId} already marked as paid - skipping duplicate webhook`)
                 return { received: true, message: 'Already processed' }
             }

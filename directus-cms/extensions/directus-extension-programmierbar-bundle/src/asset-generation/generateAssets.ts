@@ -1,6 +1,8 @@
 import { Buffer } from 'buffer'
 import { Readable } from 'stream'
 import type { Logger } from 'pino'
+import { generateImageWithGemini } from '../shared/gemini.ts'
+import { renderTemplate } from '../shared/templateRenderer.ts'
 
 interface HookServices {
     logger: Logger
@@ -72,27 +74,6 @@ const EPISODE_TYPE_DISPLAY: Record<string, string> = {
 }
 
 /**
- * Simple template renderer for Handlebars-like syntax
- */
-function renderTemplate(template: string, variables: Record<string, string>): string {
-    let result = template
-
-    // Handle simple variables {{variable}}
-    for (const [key, value] of Object.entries(variables)) {
-        const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g')
-        result = result.replace(regex, value || '')
-    }
-
-    // Handle conditional blocks {{#if variable}}...{{/if}}
-    const ifBlockRegex = /\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g
-    result = result.replace(ifBlockRegex, (_, varName, content) => {
-        return variables[varName] ? content : ''
-    })
-
-    return result
-}
-
-/**
  * Fetch file data from Directus and convert to base64
  * Uses Directus AssetsService to handle any storage driver (local, S3, etc.)
  */
@@ -135,88 +116,6 @@ async function getFileAsBase64(
 }
 
 /**
- * Call Gemini API for image generation
- * Uses responseModalities: ['TEXT', 'IMAGE'] as per Gemini image generation API
- */
-async function generateImageWithGemini(
-    apiKey: string,
-    prompt: string,
-    inputImages: Array<{ base64: string; mimeType: string }>,
-    model: string,
-    logger: Logger
-): Promise<{ imageBase64: string; mimeType: string } | null> {
-    // Build the request parts
-    const parts: any[] = []
-
-    // Add input images first (template image, speaker image, etc.)
-    for (const img of inputImages) {
-        parts.push({
-            inlineData: {
-                mimeType: img.mimeType,
-                data: img.base64,
-            },
-        })
-    }
-
-    // Add the text prompt
-    parts.push({ text: prompt })
-
-    const requestBody = {
-        contents: [{ parts }],
-        generationConfig: {
-            // Request both text and image output - this is the correct format for image generation
-            responseModalities: ['TEXT', 'IMAGE'],
-        },
-    }
-
-    logger.info(`Calling Gemini model ${model} for image generation`)
-
-    const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody),
-        }
-    )
-
-    if (!response.ok) {
-        const errorText = await response.text()
-        logger.error(`Gemini API error: ${response.status} - ${errorText}`)
-        throw new Error(`Gemini API error: ${response.status}`)
-    }
-
-    const data = await response.json()
-
-    // Extract the generated image from the response
-    const candidate = data.candidates?.[0]
-    if (!candidate) {
-        logger.warn('No candidates in Gemini response')
-        return null
-    }
-
-    // Check for image data in the response - Gemini returns JPEG by default
-    const imagePart = candidate.content?.parts?.find(
-        (part: any) => part.inlineData?.mimeType?.startsWith('image/')
-    )
-
-    if (imagePart?.inlineData) {
-        return {
-            imageBase64: imagePart.inlineData.data,
-            mimeType: imagePart.inlineData.mimeType || 'image/jpeg',
-        }
-    }
-
-    // If no image, check if there's text (might be an error or the model doesn't support image generation)
-    const textPart = candidate.content?.parts?.find((part: any) => part.text)
-    if (textPart) {
-        logger.warn(`Gemini returned text instead of image: ${textPart.text.substring(0, 200)}`)
-    }
-
-    return null
-}
-
-/**
  * Build template variables from podcast and speaker data
  */
 function buildTemplateVariables(
@@ -250,6 +149,11 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
     if (!geminiApiKey) {
         logger.error(`${hookName}: GEMINI_API_KEY not configured, skipping asset generation`)
         return
+    }
+
+    const storageLocation = env.STORAGE_LOCATIONS?.split(',')[0]
+    if (!storageLocation) {
+        throw new Error(`${hookName}: STORAGE_LOCATIONS environment variable is not configured`)
     }
 
     try {
@@ -475,7 +379,7 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
                     title: fileTitle,
                     type: actualMimeType,
                     filename_download: filename,
-                    storage: env.STORAGE_LOCATIONS?.split(',')[0] || 'local',
+                    storage: storageLocation,
                 })
 
                 // Create the generated asset record
@@ -487,7 +391,6 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
                     generated_file: fileId,
                     generation_prompt: renderedPrompt,
                     generation_model: model,
-                    generated_at: new Date().toISOString(),
                 })
 
                 // Auto-link certain asset types to the podcast (only if not already set)
@@ -572,7 +475,10 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
 }
 
 /**
- * Regenerate assets for a podcast (deletes existing and creates new)
+ * Regenerate assets for a podcast.
+ *
+ * Clears podcast references to generated assets before deleting them to avoid
+ * broken references if regeneration fails partway through.
  */
 export async function regenerateAssets(hookName: string, podcastId: number, services: HookServices): Promise<void> {
     const { logger, ItemsService, FilesService, getSchema, accountability } = services
@@ -580,7 +486,6 @@ export async function regenerateAssets(hookName: string, podcastId: number, serv
     try {
         const schema = await getSchema()
 
-        // Delete existing generated assets for this podcast
         const generatedAssetsService = new ItemsService('podcast_generated_assets', {
             schema,
             accountability,
@@ -591,9 +496,14 @@ export async function regenerateAssets(hookName: string, podcastId: number, serv
             accountability,
         })
 
+        const podcastsService = new ItemsService('podcasts', {
+            schema,
+            accountability,
+        })
+
         const existingAssets = await generatedAssetsService.readByQuery({
             filter: { podcast_id: { _eq: podcastId } },
-            fields: ['id', 'generated_file'],
+            fields: ['id', 'generated_file', 'asset_type'],
         })
 
         if (existingAssets && existingAssets.length > 0) {
@@ -601,6 +511,24 @@ export async function regenerateAssets(hookName: string, podcastId: number, serv
             const fileIds = existingAssets
                 .map((a: { id: number; generated_file?: string }) => a.generated_file)
                 .filter(Boolean)
+
+            // Read current podcast to check if cover/banner reference generated assets
+            const podcast = await podcastsService.readOne(podcastId, {
+                fields: ['cover_image', 'banner_image'],
+            })
+
+            // Clear podcast references to assets being deleted to avoid broken state
+            const updates: Record<string, null> = {}
+            if (podcast.cover_image && fileIds.includes(podcast.cover_image)) {
+                updates.cover_image = null
+            }
+            if (podcast.banner_image && fileIds.includes(podcast.banner_image)) {
+                updates.banner_image = null
+            }
+            if (Object.keys(updates).length > 0) {
+                logger.info(`${hookName}: Clearing podcast references to generated assets being deleted`)
+                await podcastsService.updateOne(podcastId, updates)
+            }
 
             // Delete the asset records first
             const assetIds = existingAssets.map((a: { id: number }) => a.id)
