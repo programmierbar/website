@@ -1,6 +1,7 @@
 import type { Logger } from 'pino'
 import { callGemini, extractJson } from '../shared/gemini.ts'
 import { renderTemplate } from '../shared/templateRenderer.ts'
+import { fetchSlackContext } from '../shared/fetchSlackContext.ts'
 
 interface HookServices {
     logger: Logger
@@ -50,7 +51,7 @@ async function fetchPrompts(
     return prompts
 }
 
-function buildShownotesPrompt(podcast: PodcastData, prompts: Map<string, string>): string {
+function buildShownotesPrompt(podcast: PodcastData, prompts: Map<string, string>, slackContext?: string | null): string {
     const episodeType = podcast.type || 'other'
 
     const hosts =
@@ -85,6 +86,7 @@ function buildShownotesPrompt(podcast: PodcastData, prompts: Map<string, string>
         guests: guests || 'Keine Gäste',
         guest_info: guestInfo,
         transcript: podcast.transcript_text || 'Kein Transkript verfügbar',
+        slack_context: slackContext || '',
     })
 }
 
@@ -175,6 +177,33 @@ export async function generateContent(hookName: string, podcastId: number, servi
 
         logger.info(`${hookName}: Generating content for podcast: ${podcast.title}`)
 
+        // Fetch Slack context for news podcasts
+        let slackContext: string | null = null
+        if (podcast.type === 'news' && env.SLACK_BOT_TOKEN) {
+            logger.info(`${hookName}: Fetching Slack context for news podcast`)
+            slackContext = await fetchSlackContext({
+                podcastType: podcast.type,
+                podcastTitle: podcast.title,
+                slackBotToken: env.SLACK_BOT_TOKEN,
+                logger,
+                getSettingValue: async (key: string) => {
+                    const settingsService = new ItemsService('automation_settings', {
+                        schema,
+                        accountability: eventContext.accountability,
+                    })
+                    const settings = await settingsService.readByQuery({
+                        filter: { key: { _eq: key } },
+                        fields: ['value'],
+                        limit: 1,
+                    })
+                    return settings?.[0]?.value || null
+                },
+            })
+            if (slackContext) {
+                logger.info(`${hookName}: Slack context fetched successfully`)
+            }
+        }
+
         // Update status to transcript_ready
         logger.info(`${hookName}: Updating status to transcript_ready`)
         await podcastsService.updateOne(podcastId, {
@@ -184,7 +213,7 @@ export async function generateContent(hookName: string, podcastId: number, servi
         logger.info(`${hookName}: Calling Gemini API for shownotes`)
 
         // Generate shownotes
-        const shownotesPrompt = buildShownotesPrompt(podcast, prompts)
+        const shownotesPrompt = buildShownotesPrompt(podcast, prompts, slackContext)
         logger.info(`${hookName}: Sending request to Gemini API`)
         const shownotesResponse = await callGemini(geminiApiKey, shownotesPrompt)
         logger.info(`${hookName}: Received response from Gemini API`)
