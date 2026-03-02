@@ -1,5 +1,5 @@
 export interface FlashMessage {
-  type: "rating"
+  type: "rating" | "rating-error"
   text: string
   payload: { }
 }

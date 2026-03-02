@@ -23,22 +23,12 @@ const { message, setMessage, clearMessage } = useFlashMessage();
 const props = defineProps<{ podcast: DirectusPodcastItem }>()
 
 const rate = async function(upOrDown: "up" | "down") {
-  // Call a server endpoint that will handle metadata collection
-  const response = await $fetch.raw(`/podcast/${props.podcast.slug}/${upOrDown}`);
-  if (!response.ok) {
-    setMessage(
-      'Leider trat ein Fehler auf.',
-      'rating',
-      {}
-    );
-    return;
+  try {
+    const result = await $fetch<{ success: boolean; message: string }>(`/podcast/${props.podcast.slug}/${upOrDown}`);
+    setMessage(result.message, 'rating', {});
+  } catch {
+    setMessage('Leider trat ein Fehler auf.', 'rating', {});
   }
-
-  setMessage(
-    'Vielen Dank für dein Feedback!',
-    'rating',
-    {}
-  );
 }
 
 onUnmounted(() => {

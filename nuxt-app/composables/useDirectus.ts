@@ -842,63 +842,31 @@ export function useDirectus() {
     }
 
   async function createRating(vote: "up" | "down", podcast: DirectusPodcastItem, metadata?: Record<string, string>) {
-    try {
-
-      const payload: Pick<DirectusRatingItem, "up_or_down" | "target" | "referer_url" | "ip" | "user_agent"> = {
-        up_or_down: vote,
-        target: [
-          {
-            target_collection: 'podcasts',
-            target: podcast.id
-          }
-        ],
-      }
-
-      if (metadata?.ip) {
-        // Validate IP address format
-        const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
-        const ipv6Regex = /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
-
-        if (ipv4Regex.test(metadata.ip)) {
-          // Anonymize IPv4 by zeroing last 2 octets
-          const parts = metadata.ip.split('.');
-          parts[3] = '0';
-          parts[2] = '0';
-          payload.ip = parts.join('.');
-        } else if (ipv6Regex.test(metadata.ip)) {
-          // Anonymize IPv6 by zeroing last 64 bits
-          const parts = metadata.ip.split(':');
-          const halfLength = Math.ceil(parts.length / 2);
-          for (let i = halfLength; i < parts.length; i++) {
-            parts[i] = '0';
-          }
-          payload.ip = parts.join(':');
-        } else {
-          console.warn('Invalid IP address format:', metadata.ip);
-          return;
+    const payload: Pick<DirectusRatingItem, "up_or_down" | "target" | "referer_url" | "ip" | "user_agent"> = {
+      up_or_down: vote,
+      target: [
+        {
+          target_collection: 'podcasts',
+          target: podcast.id
         }
-
-        // Use SHA256 to Hash IP
-        const msgUint8 = new TextEncoder().encode(payload.ip)
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8)
-        const hashArray = Array.from(new Uint8Array(hashBuffer))
-        payload.ip = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
-      }
-
-      if (metadata?.user_agent) {
-        // Remove all numbers to anonymize user agent
-        payload.user_agent = metadata.user_agent.replace(/\d+/g, '')
-      }
-
-      if (metadata?.referer_url) {
-        payload.referer_url = metadata.referer_url
-      }
-
-      return await directus.request(createItem('ratings', payload))
-    } catch (e: unknown) {
-      console.error('Error while persisting new feedback', e)
-      return e
+      ],
     }
+
+    // IP is already anonymized and hashed server-side
+    if (metadata?.ip) {
+      payload.ip = metadata.ip
+    }
+
+    if (metadata?.user_agent) {
+      // Remove all numbers to anonymize user agent
+      payload.user_agent = metadata.user_agent.replace(/\d+/g, '')
+    }
+
+    if (metadata?.referer_url) {
+      payload.referer_url = metadata.referer_url
+    }
+
+    return await directus.request(createItem('ratings', payload))
   }
 
   /**
