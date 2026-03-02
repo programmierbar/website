@@ -28,6 +28,7 @@ import { DIRECTUS_CMS_URL, WEBSITE_URL } from './../config'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { directus, type Collections } from './../services'
+import { anonymizeAndHashIP } from './../helpers/'
 
 const collectionWithTagsName = ['members', 'speakers', 'podcasts', 'meetups', 'picks_of_the_day'] as const
 type CollectionWithTagsName = (typeof collectionWithTagsName)[number]
@@ -852,9 +853,11 @@ export function useDirectus() {
       ],
     }
 
-    // IP is already anonymized and hashed server-side
     if (metadata?.ip) {
-      payload.ip = metadata.ip
+      const hashedIP = await anonymizeAndHashIP(metadata.ip)
+      if (hashedIP) {
+        payload.ip = hashedIP
+      }
     }
 
     if (metadata?.user_agent) {
