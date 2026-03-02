@@ -33,7 +33,21 @@ export default eventHandler(async function(event) {
   }
 
   try {
-    await directus.createRating(vote, podcast);
+    const metadata: Record<string, string> = {};
+    const ip = event.node.req.headers['x-forwarded-for'] as string || event.node.req.socket.remoteAddress;
+    const userAgent = event.node.req.headers['user-agent'];
+    const referrer = event.node.req.headers['referer'];
+    if (ip) {
+      metadata['ip'] = ip;
+    }
+    if (userAgent) {
+      metadata['user_agent'] = userAgent;
+    }
+    if (referrer) {
+      metadata['referer_url'] = referrer;
+    }
+
+    const response = await directus.createRating(vote, podcast, metadata);
 
     // Set flash message cookie on success
     setCookie(event, 'flash-message', JSON.stringify({

@@ -17,21 +17,28 @@
 <script setup lang='ts'>
 import thumbs_up from '~/assets/icons/thumb-up.svg'
 import thumbs_down from '~/assets/icons/thumb-down.svg'
-import { useDirectus } from '~/composables/useDirectus'
 import type { DirectusPodcastItem } from '~/types';
 
 const { message, setMessage, clearMessage } = useFlashMessage();
-const directus = useDirectus();
-
 const props = defineProps<{ podcast: DirectusPodcastItem }>()
 
 const rate = async function(upOrDown: "up" | "down") {
-  await directus.createRating(upOrDown, props.podcast);
+  // Call a server endpoint that will handle metadata collection
+  const response = await $fetch.raw(`/podcast/${props.podcast.slug}/${upOrDown}`);
+  if (!response.ok) {
     setMessage(
+      'Leider trat ein Fehler auf.',
+      'rating',
+      {}
+    );
+    return;
+  }
+
+  setMessage(
     'Vielen Dank für dein Feedback!',
     'rating',
     {}
-    );
+  );
 }
 
 onUnmounted(() => {
