@@ -24,7 +24,11 @@ const props = defineProps<{ podcast: DirectusPodcastItem }>()
 
 const rate = async function(upOrDown: "up" | "down") {
   try {
-    const result = await $fetch<{ success: boolean; message: string }>(`/podcast/${props.podcast.slug}/${upOrDown}`);
+    const result = await $fetch<{ success: boolean; message: string }>(`/podcast/${props.podcast.slug}/${upOrDown}`, {
+      headers: {
+        Accept: "application/json",
+      }
+    });
     setMessage(result.message, 'rating', {});
   } catch {
     setMessage('Leider trat ein Fehler auf.', 'rating', {});
