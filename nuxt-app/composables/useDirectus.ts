@@ -13,6 +13,7 @@ import type {
   DirectusMemberItem,
   DirectusPickOfTheDayItem, DirectusPodcastItem,
   DirectusProfileItem,
+  DirectusRatingItem,
   DirectusTagItem,
   DirectusTranscriptItem,
   LoginProvider,
@@ -27,6 +28,7 @@ import { DIRECTUS_CMS_URL, WEBSITE_URL } from './../config'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { directus, type Collections } from './../services'
+import { anonymizeAndHashIP } from './../helpers/'
 
 const collectionWithTagsName = ['members', 'speakers', 'podcasts', 'meetups', 'picks_of_the_day'] as const
 type CollectionWithTagsName = (typeof collectionWithTagsName)[number]
@@ -840,24 +842,34 @@ export function useDirectus() {
         }
     }
 
-  async function createRating(vote: "up" | "down", podcast: DirectusPodcastItem) {
-    try {
-      const result = await directus.request(createItem('ratings', {
-        up_or_down: vote,
-        target: [
-          {
-            target_collection: 'podcasts',
-            target: podcast.id
-          }
-        ],
-      }))
-
-      return result;
-
-    } catch (e: unknown) {
-      console.error('Error while persisting new feedback', e)
-      return e
+  async function createRating(vote: "up" | "down", podcast: DirectusPodcastItem, metadata?: Record<string, string>) {
+    const payload: Pick<DirectusRatingItem, "up_or_down" | "target" | "referer_url" | "ip" | "user_agent"> = {
+      up_or_down: vote,
+      target: [
+        {
+          target_collection: 'podcasts',
+          target: podcast.id
+        }
+      ],
     }
+
+    if (metadata?.ip) {
+      const hashedIP = await anonymizeAndHashIP(metadata.ip)
+      if (hashedIP) {
+        payload.ip = hashedIP
+      }
+    }
+
+    if (metadata?.user_agent) {
+      // Remove all numbers to anonymize user agent
+      payload.user_agent = metadata.user_agent.replace(/\d+/g, '')
+    }
+
+    if (metadata?.referer_url) {
+      payload.referer_url = metadata.referer_url
+    }
+
+    return await directus.request(createItem('ratings', payload))
   }
 
   /**

@@ -1,4 +1,4 @@
-import { DIRECTUS_CMS_URL } from '~/config';
+import { DIRECTUS_CMS_URL } from './../config';
 
 /**
  * Helper function to build the URL of an asset from Directus CMS.

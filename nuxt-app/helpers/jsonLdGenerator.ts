@@ -3,7 +3,7 @@ import type { DirectusProfileItem, MemberItem, PodcastItem, SpeakerItem } from '
 import type { JsonLD } from 'nuxt-jsonld/dist/types/index.d'
 import type { Person, PodcastEpisode, PodcastSeries, WithContext } from 'schema-dts'
 import { getPodcastType } from 'shared-code'
-import { getAssetUrl } from '~/helpers/getAssetUrl';
+import { getAssetUrl } from './getAssetUrl';
 
 function generatePodcastUrl(podcast: PodcastItem): string {
     return `${DIRECTUS_CMS_URL}/podcast/${podcast.slug}`
