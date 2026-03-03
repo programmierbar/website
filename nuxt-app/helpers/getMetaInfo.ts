@@ -2,7 +2,7 @@ import type { MetaInfo } from 'vue-meta/types/vue-meta'
 import { BUZZSPROUT_TRACKING_URL, DIRECTUS_CMS_URL, TWITTER_HANDLE, WEBSITE_NAME, WEBSITE_URL } from '../config'
 import type { FileItem } from '../types'
 import { getTrimmedString } from './getTrimmedString'
-import { getAssetUrl } from '~/helpers/getAssetUrl';
+import { getAssetUrl } from './getAssetUrl';
 
 interface Data {
     type: 'website' | 'podcast' | 'profile' | 'article'

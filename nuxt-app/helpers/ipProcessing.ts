@@ -1,6 +1,3 @@
-import { directus } from '~/services';
-import { readSingleton } from '@directus/sdk';
-
 /**
  * Expand a compressed IPv6 address to its full 8-group form.
  * Handles ::1, ::ffff:x.x.x.x, and other compressed forms.
