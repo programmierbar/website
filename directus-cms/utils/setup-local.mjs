@@ -1055,11 +1055,11 @@ async function importAdminCollections(token) {
 
     // 3. ai_prompts
     const aiPrompts = await fetchFromProductionAdmin('ai_prompts', {
-        fields: ['key', 'name', 'prompt_text', 'category', 'variables', 'description'],
+        fields: ['key', 'name', 'prompt_text', 'category', 'description'],
     });
     if (aiPrompts.length) {
         await importKeyedCollection(token, 'ai_prompts', aiPrompts,
-            ['key', 'name', 'prompt_text', 'category', 'variables', 'description']);
+            ['key', 'name', 'prompt_text', 'category', 'description']);
     }
 
     // 4. asset_templates (includes template_image file download)
@@ -1078,7 +1078,7 @@ async function importAdminCollections(token) {
 async function main() {
     console.log(`Setting up local Directus at ${DIRECTUS_URL}\n`);
 
-    const token = await getToken();
+    let token = await getToken();
     if (!token) {
         console.error('Failed to authenticate. Is Directus running?');
         process.exit(1);
