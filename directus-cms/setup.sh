@@ -7,8 +7,8 @@
 # - Sample data imported from the production site
 #
 # Usage:
-#   ./setup.sh              # Full setup with sample data
-#   ./setup.sh --no-data    # Setup without importing data
+#   ./setup.sh              # Full setup with production data
+#   ./setup.sh --no-data    # Setup without importing production data
 #   ./setup.sh --reset      # Delete existing DB and start fresh
 #
 
@@ -149,8 +149,21 @@ fi
 # Apply schema
 echo ""
 echo -e "${YELLOW}Applying schema...${NC}"
-echo "y" | npm run apply-schema 2>&1 | grep -E "applied|Create|Update|Delete" | tail -5 || true
-echo -e "  ${GREEN}✓${NC} Schema applied"
+# schema.json may have a "data" wrapper from the Directus API export — unwrap it
+SCHEMA_FILE="./schema.json"
+SCHEMA_APPLY="$SCHEMA_FILE"
+if node -e "const s=require('$SCHEMA_FILE'); process.exit(s.data ? 0 : 1)" 2>/dev/null; then
+    node -e "const s=require('$SCHEMA_FILE'); process.stdout.write(JSON.stringify(s.data, null, 2))" > /tmp/directus-schema-unwrapped.json
+    SCHEMA_APPLY="/tmp/directus-schema-unwrapped.json"
+    echo -e "  ${GREEN}✓${NC} Unwrapped schema.json"
+fi
+if yes | npx directus schema apply "$SCHEMA_APPLY" > /tmp/directus-schema-apply.log 2>&1; then
+    echo -e "  ${GREEN}✓${NC} Schema applied"
+else
+    echo -e "  ${RED}✗${NC} Schema apply failed:"
+    tail -10 /tmp/directus-schema-apply.log
+    exit 1
+fi
 
 # Start Directus in background for setup
 echo ""
@@ -189,6 +202,14 @@ done
 echo ""
 echo -e "  ${GREEN}✓${NC} Directus is running on http://localhost:$PORT"
 
+# Export PROD_API_TOKEN from .env so setup-local.mjs can use it
+if [ -f .env ]; then
+    PROD_API_TOKEN_LINE=$(grep -v '^#' .env | grep 'PROD_API_TOKEN' || true)
+    if [ -n "$PROD_API_TOKEN_LINE" ]; then
+        export $PROD_API_TOKEN_LINE
+    fi
+fi
+
 # Run setup-local script
 echo ""
 echo -e "${YELLOW}Setting up local environment...${NC}"
@@ -196,35 +217,6 @@ if [ "$IMPORT_DATA" = true ]; then
     node ./utils/setup-local.mjs --import-data
 else
     node ./utils/setup-local.mjs
-fi
-
-# Get admin token for additional setup scripts
-echo ""
-echo -e "${YELLOW}Setting up email templates, AI prompts, and automation settings...${NC}"
-ADMIN_EMAIL="${ADMIN_EMAIL:-admin@programmier.bar}"
-ADMIN_PASSWORD="${ADMIN_PASSWORD:-123456}"
-
-# Get token via API login
-TOKEN_RESPONSE=$(curl -s -X POST "http://localhost:$PORT/auth/login" \
-    -H "Content-Type: application/json" \
-    -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}")
-
-ADMIN_TOKEN=$(echo "$TOKEN_RESPONSE" | grep -o '"access_token":"[^"]*"' | sed 's/"access_token":"//;s/"$//')
-
-if [ -z "$ADMIN_TOKEN" ]; then
-    echo -e "  ${YELLOW}!${NC} Could not get admin token, skipping additional setup"
-else
-    # Run email templates setup (includes automation_settings)
-    DIRECTUS_URL="http://localhost:$PORT" DIRECTUS_ADMIN_TOKEN="$ADMIN_TOKEN" node ./utils/setup-email-templates.mjs 2>&1 | grep -E "created|exists|complete|Error" | while read line; do
-        echo -e "  ${GREEN}✓${NC} $line"
-    done
-
-    # Run AI prompts setup
-    DIRECTUS_URL="http://localhost:$PORT" DIRECTUS_ADMIN_TOKEN="$ADMIN_TOKEN" node ./utils/setup-ai-prompts.mjs 2>&1 | grep -E "created|exists|complete|Error" | while read line; do
-        echo -e "  ${GREEN}✓${NC} $line"
-    done
-
-    echo -e "  ${GREEN}✓${NC} Email templates, AI prompts, and automation settings configured"
 fi
 
 # Stop the temporary Directus instance
@@ -246,6 +238,14 @@ echo ""
 echo -e "Admin panel: ${BLUE}http://localhost:$PORT${NC}"
 echo -e "Login:       ${BLUE}admin@programmier.bar / 123456${NC}"
 echo ""
-echo -e "To use with Nuxt, create ${BLUE}nuxt-app/.env${NC} with:"
-echo -e "  ${BLUE}DIRECTUS_CMS_URL=http://localhost:$PORT${NC}"
+echo -e "To set up the Nuxt frontend:"
+echo -e "  ${BLUE}cd nuxt-app && npx vercel env pull .env${NC}"
+echo -e "  Then set ${BLUE}DIRECTUS_CMS_URL=http://localhost:$PORT${NC} in .env"
+echo -e "  Or copy ${BLUE}.env.example${NC} to ${BLUE}.env${NC} and edit manually."
 echo ""
+echo ""
+if [ -z "$PROD_API_TOKEN" ]; then
+    echo -e "${YELLOW}Tip:${NC} Set ${BLUE}PROD_API_TOKEN${NC} in directus-cms/.env to also import"
+    echo -e "email templates, AI prompts, and asset templates from production."
+    echo ""
+fi

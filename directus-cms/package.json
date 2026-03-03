@@ -7,20 +7,13 @@
   "scripts": {
     "setup": "./setup.sh",
     "setup:reset": "./setup.sh --reset",
-    "setup:no-data": "./setup.sh --no-data",
     "migrate:db": "directus database migrate:latest",
     "postbootstrap": "npm run migrate:db",
     "bootstrap": "directus bootstrap",
     "prestart": "npm run migrate:db",
     "start": "directus start",
     "snapshot-schema": "directus schema snapshot ./schema.json --format json",
-    "apply-schema": "directus schema apply ./schema.json",
-    "setup-local": "node ./utils/setup-local.mjs",
-    "setup-local:with-data": "node ./utils/setup-local.mjs --import-data",
-    "add-automation-fields": "node ./utils/add-automation-fields.mjs",
-    "setup-flows": "node ./utils/setup-flows.mjs",
-    "generate-speaker-tokens": "node ./utils/generate-speaker-tokens.mjs",
-    "setup-ticket-settings": "node ./utils/setup-ticket-settings.mjs"
+    "apply-schema": "directus schema apply ./schema.json"
   },
   "dependencies": {
     "@directus/sdk": "^21.0.0",
