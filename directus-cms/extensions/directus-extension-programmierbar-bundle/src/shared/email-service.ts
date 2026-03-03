@@ -214,7 +214,7 @@ export async function sendTemplatedEmail(
 
 /**
  * Send a raw email (without using a template from CMS).
- * Useful for dynamically generated content like Heise documents.
+ * Useful for dynamically generated content.
  */
 export async function sendRawEmail(
     options: {

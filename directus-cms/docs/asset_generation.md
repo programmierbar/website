@@ -30,7 +30,7 @@ Stores template configurations for asset generation:
 | Field | Description |
 |-------|-------------|
 | `name` | Descriptive name for the template |
-| `asset_type` | Type of asset (episode_cover, speaker_portrait, heise_banner, etc.) |
+| `asset_type` | Type of asset (episode_cover, speaker_portrait, social_linkedin, etc.) |
 | `episode_type` | Specific episode type this template applies to (null = all types) |
 | `title_contains` | Only match podcasts whose title contains this text, case-insensitive (null = all titles) |
 | `active` | Whether this template is currently in use |
@@ -153,7 +153,6 @@ The setup script creates default templates for:
 - Episode Cover - Deep Dive
 - Episode Cover - News
 - Speaker Portrait
-- Heise Banner
 - LinkedIn Post Image
 - Instagram Post Image
 

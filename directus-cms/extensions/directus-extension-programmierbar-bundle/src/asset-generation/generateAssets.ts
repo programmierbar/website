@@ -402,14 +402,6 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
                     logger.info(`${hookName}: Updated podcast cover_image to ${fileId}`)
                 } else if (template.asset_type === 'episode_cover' && podcast.cover_image) {
                     logger.info(`${hookName}: Skipping cover_image update - already has a value`)
-                } else if (template.asset_type === 'heise_banner' && !podcast.banner_image) {
-                    await podcastsService.updateOne(podcastId, {
-                        banner_image: fileId,
-                    })
-                    podcast.banner_image = fileId
-                    logger.info(`${hookName}: Updated podcast banner_image to ${fileId}`)
-                } else if (template.asset_type === 'heise_banner' && podcast.banner_image) {
-                    logger.info(`${hookName}: Skipping banner_image update - already has a value`)
                 }
 
                 successCount++

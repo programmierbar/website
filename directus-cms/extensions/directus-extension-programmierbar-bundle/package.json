@@ -95,11 +95,6 @@
                 "source": "src/speaker-portal-notifications/index.ts"
             },
             {
-                "type": "hook",
-                "name": "heise-integration",
-                "source": "src/heise-integration/index.ts"
-            },
-            {
                 "type": "endpoint",
                 "name": "conference",
                 "source": "src/conference/index.ts"
