@@ -1,4 +1,4 @@
-# CLAUDE.md - Project Guide for AI Assistants
+# AGENTS.md - Project Guide for AI Assistants
 
 This file provides context for AI assistants working with the programmier.bar website codebase.
 
@@ -58,6 +58,31 @@ npm run migrate:db   # Database migrations
 # In directus-cms/extensions/directus-extension-programmierbar-bundle/
 npm test              # Run Jest tests
 ```
+
+## Code Principles
+
+### Consolidation & DRY
+
+- Never duplicate logic across modules. If a pattern (API access, LLM calls, template handling, schema definitions) is used in more than one place, extract it into a shared abstraction with a clear, generic name.
+- Tokens, API keys, and credentials should be managed in one place — not scattered across features.
+- Types and schemas belong in established, canonical locations. Don't create new files when existing ones cover the same domain.
+
+### No Hidden Behavior
+
+- No fallback values for critical configuration. Fail explicitly if config is missing — silent fallbacks cause data loss or broken state in production.
+- No hardcoded defaults buried in business logic (prompts, URLs, feature flags). If it affects behavior, it must be visible and configurable.
+- Treat missing or empty data as a failure worth surfacing, not a reason to silently exit.
+
+### Observability & Failure Handling
+
+- If a failure requires human intervention, notify through the team's established channel (e.g. Slack). Log-only visibility is insufficient for anything that blocks a workflow.
+- Prefer loud failures over silent degradation.
+
+### Further Reading
+
+Additional hints can be found in:
+* .claude/rules/directus-conventions.md
+* .claude/rules/nuxt-conventions.md
 
 ## Code Style
 
