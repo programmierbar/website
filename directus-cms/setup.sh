@@ -202,11 +202,27 @@ done
 echo ""
 echo -e "  ${GREEN}✓${NC} Directus is running on http://localhost:$PORT"
 
-# Export PROD_API_TOKEN from .env so setup-local.mjs can use it
+# Export PROD_API_TOKEN and OP_ENVIRONMENT_ID from .env
 if [ -f .env ]; then
     PROD_API_TOKEN_LINE=$(grep -v '^#' .env | grep 'PROD_API_TOKEN' || true)
     if [ -n "$PROD_API_TOKEN_LINE" ]; then
         export $PROD_API_TOKEN_LINE
+    fi
+    OP_ENV_LINE=$(grep -v '^#' .env | grep 'OP_ENVIRONMENT_ID' || true)
+    if [ -n "$OP_ENV_LINE" ]; then
+        export $OP_ENV_LINE
+    fi
+fi
+
+# Build the command prefix for 1Password Environment
+OP_RUN_PREFIX=""
+if [ -n "$OP_ENVIRONMENT_ID" ]; then
+    if command -v op &> /dev/null; then
+        OP_RUN_PREFIX="op run --environment $OP_ENVIRONMENT_ID --"
+        echo -e "  ${GREEN}✓${NC} Will load secrets from 1Password Environment"
+    else
+        echo -e "  ${YELLOW}!${NC} OP_ENVIRONMENT_ID is set but 'op' CLI is not installed"
+        echo -e "    Install: ${BLUE}https://developer.1password.com/docs/cli/get-started/${NC}"
     fi
 fi
 
@@ -214,9 +230,9 @@ fi
 echo ""
 echo -e "${YELLOW}Setting up local environment...${NC}"
 if [ "$IMPORT_DATA" = true ]; then
-    node ./utils/setup-local.mjs --import-data
+    $OP_RUN_PREFIX node ./utils/setup-local.mjs --import-data
 else
-    node ./utils/setup-local.mjs
+    $OP_RUN_PREFIX node ./utils/setup-local.mjs
 fi
 
 # Stop the temporary Directus instance
@@ -244,8 +260,9 @@ echo -e "  Then set ${BLUE}DIRECTUS_CMS_URL=http://localhost:$PORT${NC} in .env"
 echo -e "  Or copy ${BLUE}.env.example${NC} to ${BLUE}.env${NC} and edit manually."
 echo ""
 echo ""
-if [ -z "$PROD_API_TOKEN" ]; then
-    echo -e "${YELLOW}Tip:${NC} Set ${BLUE}PROD_API_TOKEN${NC} in directus-cms/.env to also import"
-    echo -e "email templates, AI prompts, and asset templates from production."
+if [ -z "$OP_ENVIRONMENT_ID" ] && [ -z "$PROD_API_TOKEN" ]; then
+    echo -e "${YELLOW}Tip:${NC} Set ${BLUE}PROD_API_TOKEN${NC} in directus-cms/.env (or set ${BLUE}OP_ENVIRONMENT_ID${NC}"
+    echo -e "to load it from a 1Password Environment) to also import email templates,"
+    echo -e "AI prompts, and asset templates from production."
     echo ""
 fi
