@@ -30,6 +30,7 @@
         "stripe": "^20.3.0",
         "vite-svg-loader": "^5.1.0",
         "vue-json-pretty": "^2.5.0",
+        "web-haptics": "^0.0.6",
         "zod": "^3.22.4"
     },
     "devDependencies": {
