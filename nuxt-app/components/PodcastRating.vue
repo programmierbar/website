@@ -18,21 +18,30 @@
 import thumbs_up from '~/assets/icons/thumb-up.svg'
 import thumbs_down from '~/assets/icons/thumb-down.svg'
 import type { DirectusPodcastItem } from '~/types';
+import { useWebHaptics } from "web-haptics/vue";
+import { defaultPatterns } from "web-haptics";
+
 
 const { message, setMessage, clearMessage } = useFlashMessage();
 const props = defineProps<{ podcast: DirectusPodcastItem }>()
+const { trigger } = useWebHaptics();
+const istActive = ref(false);
 
 const rate = async function(upOrDown: "up" | "down") {
+  if (istActive.value) return;
+  istActive.value = true
   try {
     const result = await $fetch<{ success: boolean; message: string }>(`/podcast/${props.podcast.slug}/${upOrDown}`, {
       headers: {
         Accept: "application/json",
       }
     });
+    trigger(defaultPatterns.buzz, );
     setMessage(result.message, 'rating', {});
   } catch {
     setMessage('Leider trat ein Fehler auf.', 'rating', {});
   }
+  istActive.value = false
 }
 
 onUnmounted(() => {
