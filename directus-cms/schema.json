@@ -284,7 +284,7 @@
           "sort_field": "sort",
           "translations": null,
           "unarchive_value": null,
-          "versioning": false
+          "versioning": true
         },
         "schema": {
           "name": "ai_prompts"
@@ -3080,53 +3080,6 @@
       },
       {
         "collection": "ai_prompts",
-        "field": "variables",
-        "type": "json",
-        "meta": {
-          "collection": "ai_prompts",
-          "conditions": null,
-          "display": null,
-          "display_options": null,
-          "field": "variables",
-          "group": null,
-          "hidden": false,
-          "interface": "input-code",
-          "note": "JSON array documenting available template variables: [{\"name\": \"var\", \"description\": \"...\"}]",
-          "options": {
-            "language": "json",
-            "lineNumber": true
-          },
-          "readonly": false,
-          "required": false,
-          "searchable": true,
-          "sort": 8,
-          "special": null,
-          "translations": null,
-          "validation": null,
-          "validation_message": null,
-          "width": "full"
-        },
-        "schema": {
-          "name": "variables",
-          "table": "ai_prompts",
-          "data_type": "json",
-          "default_value": null,
-          "max_length": null,
-          "numeric_precision": null,
-          "numeric_scale": null,
-          "is_nullable": true,
-          "is_unique": false,
-          "is_indexed": false,
-          "is_primary_key": false,
-          "is_generated": false,
-          "generation_expression": null,
-          "has_auto_increment": false,
-          "foreign_key_table": null,
-          "foreign_key_column": null
-        }
-      },
-      {
-        "collection": "ai_prompts",
         "field": "date_updated",
         "type": "timestamp",
         "meta": {
@@ -3384,6 +3337,10 @@
               {
                 "text": "Instagram Image",
                 "value": "social_instagram"
+              },
+              {
+                "text": "Episode Banner",
+                "value": "episode_banner"
               }
             ]
           },
@@ -3504,7 +3461,7 @@
           "readonly": false,
           "required": true,
           "searchable": true,
-          "sort": 6,
+          "sort": 7,
           "special": [
             "cast-boolean"
           ],
@@ -3552,7 +3509,7 @@
           "readonly": false,
           "required": true,
           "searchable": true,
-          "sort": 7,
+          "sort": 8,
           "special": [
             "cast-boolean"
           ],
@@ -3601,7 +3558,7 @@
           "readonly": false,
           "required": true,
           "searchable": true,
-          "sort": 9,
+          "sort": 10,
           "special": null,
           "translations": null,
           "validation": null,
@@ -3648,7 +3605,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 10,
+          "sort": 11,
           "special": null,
           "translations": null,
           "validation": null,
@@ -3694,7 +3651,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 11,
+          "sort": 12,
           "special": null,
           "translations": null,
           "validation": null,
@@ -3753,7 +3710,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 12,
+          "sort": 13,
           "special": null,
           "translations": null,
           "validation": null,
@@ -3797,7 +3754,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 13,
+          "sort": 14,
           "special": [
             "date-created"
           ],
@@ -3843,7 +3800,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 14,
+          "sort": 15,
           "special": [
             "date-updated"
           ],
@@ -3889,7 +3846,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 8,
+          "sort": 9,
           "special": [
             "file"
           ],
@@ -3915,6 +3872,52 @@
           "has_auto_increment": false,
           "foreign_key_table": "directus_files",
           "foreign_key_column": "id"
+        }
+      },
+      {
+        "collection": "asset_templates",
+        "field": "title_contains",
+        "type": "string",
+        "meta": {
+          "collection": "asset_templates",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "title_contains",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": {
+            "placeholder": "If the title contains this text, this template is used instead of the default one."
+          },
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 6,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "full"
+        },
+        "schema": {
+          "name": "title_contains",
+          "table": "asset_templates",
+          "data_type": "character varying",
+          "default_value": null,
+          "max_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
         }
       },
       {
@@ -4022,7 +4025,7 @@
           "options": {
             "font": "monospace"
           },
-          "readonly": true,
+          "readonly": false,
           "required": true,
           "searchable": true,
           "sort": 3,
@@ -9576,11 +9579,23 @@
           "field": "body_html",
           "group": null,
           "hidden": false,
-          "interface": "input-code",
+          "interface": "input-rich-text-html",
           "note": "HTML email body. Supports Handlebars variables.",
           "options": {
-            "language": "htmlmixed",
-            "lineNumber": true
+            "toolbar": [
+              "bold",
+              "italic",
+              "underline",
+              "h1",
+              "h2",
+              "h3",
+              "bullist",
+              "numlist",
+              "link",
+              "code",
+              "removeformat",
+              "fullscreen"
+            ]
           },
           "readonly": false,
           "required": true,
@@ -20027,52 +20042,6 @@
       },
       {
         "collection": "podcast_generated_assets",
-        "field": "template_id",
-        "type": "integer",
-        "meta": {
-          "collection": "podcast_generated_assets",
-          "conditions": null,
-          "display": null,
-          "display_options": null,
-          "field": "template_id",
-          "group": null,
-          "hidden": false,
-          "interface": "select-dropdown-m2o",
-          "note": "The template used to generate this asset",
-          "options": {
-            "template": "{{name}}"
-          },
-          "readonly": false,
-          "required": false,
-          "searchable": true,
-          "sort": 3,
-          "special": null,
-          "translations": null,
-          "validation": null,
-          "validation_message": null,
-          "width": "half"
-        },
-        "schema": {
-          "name": "template_id",
-          "table": "podcast_generated_assets",
-          "data_type": "integer",
-          "default_value": null,
-          "max_length": null,
-          "numeric_precision": 32,
-          "numeric_scale": 0,
-          "is_nullable": true,
-          "is_unique": false,
-          "is_indexed": false,
-          "is_primary_key": false,
-          "is_generated": false,
-          "generation_expression": null,
-          "has_auto_increment": false,
-          "foreign_key_table": null,
-          "foreign_key_column": null
-        }
-      },
-      {
-        "collection": "podcast_generated_assets",
         "field": "asset_type",
         "type": "string",
         "meta": {
@@ -20195,52 +20164,6 @@
           "numeric_precision": null,
           "numeric_scale": null,
           "is_nullable": false,
-          "is_unique": false,
-          "is_indexed": false,
-          "is_primary_key": false,
-          "is_generated": false,
-          "generation_expression": null,
-          "has_auto_increment": false,
-          "foreign_key_table": null,
-          "foreign_key_column": null
-        }
-      },
-      {
-        "collection": "podcast_generated_assets",
-        "field": "generated_file",
-        "type": "uuid",
-        "meta": {
-          "collection": "podcast_generated_assets",
-          "conditions": null,
-          "display": null,
-          "display_options": null,
-          "field": "generated_file",
-          "group": null,
-          "hidden": false,
-          "interface": "file-image",
-          "note": "The generated asset file",
-          "options": null,
-          "readonly": false,
-          "required": false,
-          "searchable": true,
-          "sort": 6,
-          "special": [
-            "file"
-          ],
-          "translations": null,
-          "validation": null,
-          "validation_message": null,
-          "width": "full"
-        },
-        "schema": {
-          "name": "generated_file",
-          "table": "podcast_generated_assets",
-          "data_type": "uuid",
-          "default_value": null,
-          "max_length": null,
-          "numeric_precision": null,
-          "numeric_scale": null,
-          "is_nullable": true,
           "is_unique": false,
           "is_indexed": false,
           "is_primary_key": false,
@@ -20405,9 +20328,7 @@
           "required": false,
           "searchable": true,
           "sort": 10,
-          "special": [
-            "date-created"
-          ],
+          "special": null,
           "translations": null,
           "validation": null,
           "validation_message": null,
@@ -20498,7 +20419,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 2,
+          "sort": 3,
           "special": [
             "m2o"
           ],
@@ -20523,6 +20444,103 @@
           "generation_expression": null,
           "has_auto_increment": false,
           "foreign_key_table": "podcasts",
+          "foreign_key_column": "id"
+        }
+      },
+      {
+        "collection": "podcast_generated_assets",
+        "field": "template_id",
+        "type": "integer",
+        "meta": {
+          "collection": "podcast_generated_assets",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "template_id",
+          "group": null,
+          "hidden": false,
+          "interface": "select-dropdown-m2o",
+          "note": null,
+          "options": {
+            "enableCreate": false
+          },
+          "readonly": false,
+          "required": true,
+          "searchable": true,
+          "sort": 2,
+          "special": [
+            "m2o"
+          ],
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "full"
+        },
+        "schema": {
+          "name": "template_id",
+          "table": "podcast_generated_assets",
+          "data_type": "integer",
+          "default_value": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": "asset_templates",
+          "foreign_key_column": "id"
+        }
+      },
+      {
+        "collection": "podcast_generated_assets",
+        "field": "generated_file",
+        "type": "uuid",
+        "meta": {
+          "collection": "podcast_generated_assets",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "generated_file",
+          "group": null,
+          "hidden": false,
+          "interface": "file-image",
+          "note": null,
+          "options": {
+            "enableCreate": false,
+            "enableSelect": false
+          },
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 6,
+          "special": [
+            "file"
+          ],
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "full"
+        },
+        "schema": {
+          "name": "generated_file",
+          "table": "podcast_generated_assets",
+          "data_type": "uuid",
+          "default_value": null,
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": "directus_files",
           "foreign_key_column": "id"
         }
       },
@@ -20695,7 +20713,83 @@
         "type": "text",
         "meta": {
           "collection": "podcast_generated_content",
-          "conditions": null,
+          "conditions": [
+            {
+              "name": "Configure Soft Limit LinkedIn",
+              "options": {
+                "softLength": 3000
+              },
+              "rule": {
+                "_and": [
+                  {
+                    "content_type": {
+                      "_eq": "social_linkedin"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Configure Soft Limit Instagram",
+              "options": {
+                "softLength": 2200
+              },
+              "rule": {
+                "_and": [
+                  {
+                    "content_type": {
+                      "_eq": "social_instagram"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Configure Soft Limit Mastodon",
+              "options": {
+                "softLength": 500
+              },
+              "rule": {
+                "_and": [
+                  {
+                    "content_type": {
+                      "_eq": "social_mastodon"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Configure Soft Limit Bluesky",
+              "options": {
+                "softLength": 300
+              },
+              "rule": {
+                "_and": [
+                  {
+                    "content_type": {
+                      "_eq": "social_bluesky"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Configure Soft Limit Shownotes",
+              "options": {
+                "softLength": 4000
+              },
+              "rule": {
+                "_and": [
+                  {
+                    "content_type": {
+                      "_eq": "shownotes"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
           "display": "formatted-value",
           "display_options": null,
           "field": "generated_text",
@@ -20716,50 +20810,6 @@
         },
         "schema": {
           "name": "generated_text",
-          "table": "podcast_generated_content",
-          "data_type": "text",
-          "default_value": null,
-          "max_length": null,
-          "numeric_precision": null,
-          "numeric_scale": null,
-          "is_nullable": true,
-          "is_unique": false,
-          "is_indexed": false,
-          "is_primary_key": false,
-          "is_generated": false,
-          "generation_expression": null,
-          "has_auto_increment": false,
-          "foreign_key_table": null,
-          "foreign_key_column": null
-        }
-      },
-      {
-        "collection": "podcast_generated_content",
-        "field": "edited_text",
-        "type": "text",
-        "meta": {
-          "collection": "podcast_generated_content",
-          "conditions": null,
-          "display": "formatted-value",
-          "display_options": null,
-          "field": "edited_text",
-          "group": null,
-          "hidden": false,
-          "interface": "input-rich-text-md",
-          "note": "Human-edited version (if modified)",
-          "options": null,
-          "readonly": false,
-          "required": false,
-          "searchable": true,
-          "sort": 4,
-          "special": null,
-          "translations": null,
-          "validation": null,
-          "validation_message": null,
-          "width": "full"
-        },
-        "schema": {
-          "name": "edited_text",
           "table": "podcast_generated_content",
           "data_type": "text",
           "default_value": null,
@@ -20885,9 +20935,7 @@
           "required": false,
           "searchable": true,
           "sort": 6,
-          "special": [
-            "date-created"
-          ],
+          "special": null,
           "translations": null,
           "validation": null,
           "validation_message": null,
@@ -20945,140 +20993,6 @@
           "data_type": "timestamp with time zone",
           "default_value": null,
           "max_length": null,
-          "numeric_precision": null,
-          "numeric_scale": null,
-          "is_nullable": true,
-          "is_unique": false,
-          "is_indexed": false,
-          "is_primary_key": false,
-          "is_generated": false,
-          "generation_expression": null,
-          "has_auto_increment": false,
-          "foreign_key_table": null,
-          "foreign_key_column": null
-        }
-      },
-      {
-        "collection": "podcast_generated_content",
-        "field": "approved_by",
-        "type": "uuid",
-        "meta": {
-          "collection": "podcast_generated_content",
-          "conditions": null,
-          "display": "user",
-          "display_options": null,
-          "field": "approved_by",
-          "group": null,
-          "hidden": false,
-          "interface": "select-dropdown-m2o",
-          "note": "User who approved the content",
-          "options": null,
-          "readonly": false,
-          "required": false,
-          "searchable": true,
-          "sort": 8,
-          "special": [
-            "m2o"
-          ],
-          "translations": null,
-          "validation": null,
-          "validation_message": null,
-          "width": "half"
-        },
-        "schema": {
-          "name": "approved_by",
-          "table": "podcast_generated_content",
-          "data_type": "uuid",
-          "default_value": null,
-          "max_length": null,
-          "numeric_precision": null,
-          "numeric_scale": null,
-          "is_nullable": true,
-          "is_unique": false,
-          "is_indexed": false,
-          "is_primary_key": false,
-          "is_generated": false,
-          "generation_expression": null,
-          "has_auto_increment": false,
-          "foreign_key_table": null,
-          "foreign_key_column": null
-        }
-      },
-      {
-        "collection": "podcast_generated_content",
-        "field": "llm_model",
-        "type": "string",
-        "meta": {
-          "collection": "podcast_generated_content",
-          "conditions": null,
-          "display": "raw",
-          "display_options": null,
-          "field": "llm_model",
-          "group": null,
-          "hidden": false,
-          "interface": "input",
-          "note": "Which LLM model was used",
-          "options": null,
-          "readonly": false,
-          "required": false,
-          "searchable": true,
-          "sort": 9,
-          "special": null,
-          "translations": null,
-          "validation": null,
-          "validation_message": null,
-          "width": "half"
-        },
-        "schema": {
-          "name": "llm_model",
-          "table": "podcast_generated_content",
-          "data_type": "character varying",
-          "default_value": null,
-          "max_length": 255,
-          "numeric_precision": null,
-          "numeric_scale": null,
-          "is_nullable": true,
-          "is_unique": false,
-          "is_indexed": false,
-          "is_primary_key": false,
-          "is_generated": false,
-          "generation_expression": null,
-          "has_auto_increment": false,
-          "foreign_key_table": null,
-          "foreign_key_column": null
-        }
-      },
-      {
-        "collection": "podcast_generated_content",
-        "field": "prompt_version",
-        "type": "string",
-        "meta": {
-          "collection": "podcast_generated_content",
-          "conditions": null,
-          "display": "raw",
-          "display_options": null,
-          "field": "prompt_version",
-          "group": null,
-          "hidden": false,
-          "interface": "input",
-          "note": "Version of the prompt used",
-          "options": null,
-          "readonly": false,
-          "required": false,
-          "searchable": true,
-          "sort": 10,
-          "special": null,
-          "translations": null,
-          "validation": null,
-          "validation_message": null,
-          "width": "half"
-        },
-        "schema": {
-          "name": "prompt_version",
-          "table": "podcast_generated_content",
-          "data_type": "character varying",
-          "default_value": null,
-          "max_length": 255,
           "numeric_precision": null,
           "numeric_scale": null,
           "is_nullable": true,
@@ -23518,7 +23432,7 @@
           "display_options": null,
           "field": "transcript",
           "group": null,
-          "hidden": true,
+          "hidden": false,
           "interface": "input-multiline",
           "note": null,
           "options": {
@@ -24476,238 +24390,6 @@
       },
       {
         "collection": "podcasts",
-        "field": "heise_eligible",
-        "type": "boolean",
-        "meta": {
-          "collection": "podcasts",
-          "conditions": null,
-          "display": "boolean",
-          "display_options": null,
-          "field": "heise_eligible",
-          "group": null,
-          "hidden": false,
-          "interface": "boolean",
-          "note": "Whether this episode should go to Heise.de",
-          "options": null,
-          "readonly": false,
-          "required": false,
-          "searchable": true,
-          "sort": 42,
-          "special": null,
-          "translations": null,
-          "validation": null,
-          "validation_message": null,
-          "width": "half"
-        },
-        "schema": {
-          "name": "heise_eligible",
-          "table": "podcasts",
-          "data_type": "boolean",
-          "default_value": false,
-          "max_length": null,
-          "numeric_precision": null,
-          "numeric_scale": null,
-          "is_nullable": false,
-          "is_unique": false,
-          "is_indexed": false,
-          "is_primary_key": false,
-          "is_generated": false,
-          "generation_expression": null,
-          "has_auto_increment": false,
-          "foreign_key_table": null,
-          "foreign_key_column": null
-        }
-      },
-      {
-        "collection": "podcasts",
-        "field": "heise_document_status",
-        "type": "string",
-        "meta": {
-          "collection": "podcasts",
-          "conditions": null,
-          "display": "labels",
-          "display_options": {
-            "choices": [
-              {
-                "background": "#6B7280",
-                "foreground": "#FFFFFF",
-                "value": "not_applicable"
-              },
-              {
-                "background": "#F59E0B",
-                "foreground": "#FFFFFF",
-                "value": "pending"
-              },
-              {
-                "background": "#3B82F6",
-                "foreground": "#FFFFFF",
-                "value": "generated"
-              },
-              {
-                "background": "#8B5CF6",
-                "foreground": "#FFFFFF",
-                "value": "approved"
-              },
-              {
-                "background": "#10B981",
-                "foreground": "#FFFFFF",
-                "value": "sent"
-              }
-            ],
-            "showAsDot": true
-          },
-          "field": "heise_document_status",
-          "group": null,
-          "hidden": false,
-          "interface": "select-dropdown",
-          "note": "Status of Heise.de document",
-          "options": {
-            "choices": [
-              {
-                "text": "Not Applicable",
-                "value": "not_applicable"
-              },
-              {
-                "text": "Pending",
-                "value": "pending"
-              },
-              {
-                "text": "Generated",
-                "value": "generated"
-              },
-              {
-                "text": "Approved",
-                "value": "approved"
-              },
-              {
-                "text": "Sent",
-                "value": "sent"
-              }
-            ]
-          },
-          "readonly": false,
-          "required": false,
-          "searchable": true,
-          "sort": 43,
-          "special": null,
-          "translations": null,
-          "validation": null,
-          "validation_message": null,
-          "width": "half"
-        },
-        "schema": {
-          "name": "heise_document_status",
-          "table": "podcasts",
-          "data_type": "character varying",
-          "default_value": "not_applicable",
-          "max_length": 255,
-          "numeric_precision": null,
-          "numeric_scale": null,
-          "is_nullable": true,
-          "is_unique": false,
-          "is_indexed": false,
-          "is_primary_key": false,
-          "is_generated": false,
-          "generation_expression": null,
-          "has_auto_increment": false,
-          "foreign_key_table": null,
-          "foreign_key_column": null
-        }
-      },
-      {
-        "collection": "podcasts",
-        "field": "heise_sent_at",
-        "type": "timestamp",
-        "meta": {
-          "collection": "podcasts",
-          "conditions": null,
-          "display": "datetime",
-          "display_options": {
-            "relative": true
-          },
-          "field": "heise_sent_at",
-          "group": null,
-          "hidden": false,
-          "interface": "datetime",
-          "note": "When email was sent to Heise.de",
-          "options": null,
-          "readonly": false,
-          "required": false,
-          "searchable": true,
-          "sort": 45,
-          "special": null,
-          "translations": null,
-          "validation": null,
-          "validation_message": null,
-          "width": "half"
-        },
-        "schema": {
-          "name": "heise_sent_at",
-          "table": "podcasts",
-          "data_type": "timestamp with time zone",
-          "default_value": null,
-          "max_length": null,
-          "numeric_precision": null,
-          "numeric_scale": null,
-          "is_nullable": true,
-          "is_unique": false,
-          "is_indexed": false,
-          "is_primary_key": false,
-          "is_generated": false,
-          "generation_expression": null,
-          "has_auto_increment": false,
-          "foreign_key_table": null,
-          "foreign_key_column": null
-        }
-      },
-      {
-        "collection": "podcasts",
-        "field": "heise_document",
-        "type": "uuid",
-        "meta": {
-          "collection": "podcasts",
-          "conditions": null,
-          "display": "file",
-          "display_options": null,
-          "field": "heise_document",
-          "group": null,
-          "hidden": false,
-          "interface": "file",
-          "note": "Generated Heise.de document",
-          "options": null,
-          "readonly": false,
-          "required": false,
-          "searchable": true,
-          "sort": 44,
-          "special": [
-            "file"
-          ],
-          "translations": null,
-          "validation": null,
-          "validation_message": null,
-          "width": "half"
-        },
-        "schema": {
-          "name": "heise_document",
-          "table": "podcasts",
-          "data_type": "uuid",
-          "default_value": null,
-          "max_length": null,
-          "numeric_precision": null,
-          "numeric_scale": null,
-          "is_nullable": true,
-          "is_unique": false,
-          "is_indexed": false,
-          "is_primary_key": false,
-          "is_generated": false,
-          "generation_expression": null,
-          "has_auto_increment": false,
-          "foreign_key_table": null,
-          "foreign_key_column": null
-        }
-      },
-      {
-        "collection": "podcasts",
         "field": "generated_content",
         "type": "alias",
         "meta": {
@@ -24736,7 +24418,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 47,
+          "sort": 48,
           "special": [
             "o2m"
           ],
@@ -24757,7 +24439,7 @@
           "display_options": null,
           "field": "regenerate_assets",
           "group": null,
-          "hidden": false,
+          "hidden": true,
           "interface": "boolean",
           "note": "Set to true to trigger asset regeneration",
           "options": {
@@ -24766,7 +24448,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 49,
+          "sort": 53,
           "special": null,
           "translations": null,
           "validation": null,
@@ -24833,7 +24515,7 @@
           "readonly": true,
           "required": false,
           "searchable": true,
-          "sort": 50,
+          "sort": 52,
           "special": null,
           "translations": null,
           "validation": null,
@@ -24861,38 +24543,6 @@
       },
       {
         "collection": "podcasts",
-        "field": "divider-ltpgj9",
-        "type": "alias",
-        "meta": {
-          "collection": "podcasts",
-          "conditions": null,
-          "display": null,
-          "display_options": null,
-          "field": "divider-ltpgj9",
-          "group": null,
-          "hidden": false,
-          "interface": "presentation-divider",
-          "note": null,
-          "options": {
-            "icon": "newsmode",
-            "title": "Heise"
-          },
-          "readonly": false,
-          "required": false,
-          "searchable": true,
-          "sort": 41,
-          "special": [
-            "alias",
-            "no-data"
-          ],
-          "translations": null,
-          "validation": null,
-          "validation_message": null,
-          "width": "full"
-        }
-      },
-      {
-        "collection": "podcasts",
         "field": "divider-ah8gte",
         "type": "alias",
         "meta": {
@@ -24906,8 +24556,9 @@
           "interface": "presentation-divider",
           "note": null,
           "options": {
-            "icon": "image",
-            "title": "Assets"
+            "icon": "convert_to_text",
+            "inlineTitle": true,
+            "title": "Text Generation"
           },
           "readonly": false,
           "required": false,
@@ -24944,9 +24595,126 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 51,
+          "sort": 49,
           "special": [
             "o2m"
+          ],
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "full"
+        }
+      },
+      {
+        "collection": "podcasts",
+        "field": "transcript_text",
+        "type": "text",
+        "meta": {
+          "collection": "podcasts",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "transcript_text",
+          "group": null,
+          "hidden": false,
+          "interface": "input-multiline",
+          "note": null,
+          "options": {
+            "placeholder": "Paste the raw Riverside transcript here for content generation to start. The script also tries to match members and set them accordingly."
+          },
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 47,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "full"
+        },
+        "schema": {
+          "name": "transcript_text",
+          "table": "podcasts",
+          "data_type": "text",
+          "default_value": null,
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "podcasts",
+        "field": "links-w5dkfp",
+        "type": "alias",
+        "meta": {
+          "collection": "podcasts",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "links-w5dkfp",
+          "group": null,
+          "hidden": false,
+          "interface": "presentation-links",
+          "note": null,
+          "options": {
+            "links": [
+              {
+                "actionType": "flow",
+                "flow": "5e02bb2c-5c49-4dc1-9c73-5a092f649759",
+                "icon": "reset_image",
+                "label": "Regenerate Media Assets",
+                "type": "primary"
+              }
+            ]
+          },
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 51,
+          "special": [
+            "alias",
+            "no-data"
+          ],
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "half"
+        }
+      },
+      {
+        "collection": "podcasts",
+        "field": "divider-vs6q7w",
+        "type": "alias",
+        "meta": {
+          "collection": "podcasts",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "divider-vs6q7w",
+          "group": null,
+          "hidden": false,
+          "interface": "presentation-divider",
+          "note": null,
+          "options": {
+            "inlineTitle": true,
+            "title": "Media Assets"
+          },
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 50,
+          "special": [
+            "alias",
+            "no-data"
           ],
           "translations": null,
           "validation": null,
@@ -28270,6 +28038,169 @@
         }
       },
       {
+        "collection": "ratings",
+        "field": "ip",
+        "type": "string",
+        "meta": {
+          "collection": "ratings",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "ip",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 13,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "full"
+        },
+        "schema": {
+          "name": "ip",
+          "table": "ratings",
+          "data_type": "character varying",
+          "default_value": null,
+          "max_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "ratings",
+        "field": "user_agent",
+        "type": "string",
+        "meta": {
+          "collection": "ratings",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "user_agent",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 14,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "full"
+        },
+        "schema": {
+          "name": "user_agent",
+          "table": "ratings",
+          "data_type": "character varying",
+          "default_value": null,
+          "max_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "ratings",
+        "field": "referer_url",
+        "type": "string",
+        "meta": {
+          "collection": "ratings",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "referer_url",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 15,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "full"
+        },
+        "schema": {
+          "name": "referer_url",
+          "table": "ratings",
+          "data_type": "character varying",
+          "default_value": null,
+          "max_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "ratings",
+        "field": "divider_request_data",
+        "type": "alias",
+        "meta": {
+          "collection": "ratings",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "divider_request_data",
+          "group": null,
+          "hidden": false,
+          "interface": "presentation-divider",
+          "note": null,
+          "options": {
+            "title": "Request Data"
+          },
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 12,
+          "special": [
+            "alias",
+            "no-data"
+          ],
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "full"
+        }
+      },
+      {
         "collection": "ratings_target",
         "field": "id",
         "type": "integer",
@@ -30469,7 +30400,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 11,
+          "sort": 12,
           "special": null,
           "translations": null,
           "validation": null,
@@ -30523,7 +30454,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 12,
+          "sort": 13,
           "special": [
             "file"
           ],
@@ -30569,7 +30500,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 13,
+          "sort": 14,
           "special": [
             "file"
           ],
@@ -30617,7 +30548,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 14,
+          "sort": 15,
           "special": null,
           "translations": null,
           "validation": null,
@@ -30663,7 +30594,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 15,
+          "sort": 16,
           "special": null,
           "translations": null,
           "validation": null,
@@ -30709,7 +30640,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 17,
+          "sort": 18,
           "special": null,
           "translations": null,
           "validation": null,
@@ -30755,7 +30686,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 18,
+          "sort": 19,
           "special": null,
           "translations": null,
           "validation": null,
@@ -30801,7 +30732,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 19,
+          "sort": 20,
           "special": null,
           "translations": null,
           "validation": null,
@@ -30847,7 +30778,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 20,
+          "sort": 21,
           "special": null,
           "translations": null,
           "validation": null,
@@ -30985,7 +30916,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 21,
+          "sort": 22,
           "special": [
             "alias",
             "no-data"
@@ -31086,7 +31017,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 22,
+          "sort": 23,
           "special": [
             "m2m"
           ],
@@ -31174,7 +31105,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 16,
+          "sort": 17,
           "special": null,
           "translations": null,
           "validation": null,
@@ -31296,7 +31227,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 100,
+          "sort": 36,
           "special": null,
           "translations": null,
           "validation": null,
@@ -31342,7 +31273,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 101,
+          "sort": 37,
           "special": null,
           "translations": null,
           "validation": null,
@@ -31420,7 +31351,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 102,
+          "sort": 38,
           "special": null,
           "translations": null,
           "validation": null,
@@ -31466,7 +31397,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 103,
+          "sort": 39,
           "special": null,
           "translations": null,
           "validation": null,
@@ -31479,6 +31410,52 @@
           "data_type": "timestamp with time zone",
           "default_value": null,
           "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "speakers",
+        "field": "email",
+        "type": "string",
+        "meta": {
+          "collection": "speakers",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "email",
+          "group": null,
+          "hidden": true,
+          "interface": "input",
+          "note": null,
+          "options": {
+            "iconLeft": "alternate_email"
+          },
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 11,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "full"
+        },
+        "schema": {
+          "name": "email",
+          "table": "speakers",
+          "data_type": "character varying",
+          "default_value": null,
+          "max_length": 255,
           "numeric_precision": null,
           "numeric_scale": null,
           "is_nullable": true,
@@ -34330,7 +34307,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 10,
+          "sort": 11,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34374,7 +34351,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 11,
+          "sort": 12,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34418,7 +34395,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 12,
+          "sort": 13,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34462,7 +34439,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 13,
+          "sort": 14,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34506,7 +34483,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 14,
+          "sort": 15,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34550,7 +34527,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 15,
+          "sort": 16,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34594,7 +34571,7 @@
           "readonly": false,
           "required": true,
           "searchable": true,
-          "sort": 16,
+          "sort": 17,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34638,7 +34615,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 17,
+          "sort": 18,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34682,7 +34659,7 @@
           "readonly": false,
           "required": true,
           "searchable": true,
-          "sort": 18,
+          "sort": 19,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34726,7 +34703,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 19,
+          "sort": 20,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34770,7 +34747,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 20,
+          "sort": 21,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34814,7 +34791,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 21,
+          "sort": 22,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34892,7 +34869,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 22,
+          "sort": 23,
           "special": null,
           "translations": null,
           "validation": null,
@@ -34938,7 +34915,7 @@
           "readonly": true,
           "required": false,
           "searchable": false,
-          "sort": 23,
+          "sort": 24,
           "special": [
             "cast-json"
           ],
@@ -34984,7 +34961,7 @@
           "readonly": true,
           "required": false,
           "searchable": true,
-          "sort": 24,
+          "sort": 25,
           "special": null,
           "translations": null,
           "validation": null,
@@ -35028,7 +35005,7 @@
           "readonly": true,
           "required": false,
           "searchable": true,
-          "sort": 25,
+          "sort": 26,
           "special": null,
           "translations": null,
           "validation": null,
@@ -35074,7 +35051,7 @@
           "readonly": true,
           "required": false,
           "searchable": true,
-          "sort": 26,
+          "sort": 27,
           "special": [
             "date-created"
           ],
@@ -35122,7 +35099,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 27,
+          "sort": 28,
           "special": null,
           "translations": null,
           "validation": null,
@@ -35170,7 +35147,7 @@
           "readonly": false,
           "required": false,
           "searchable": true,
-          "sort": 28,
+          "sort": 29,
           "special": [
             "o2m"
           ],
@@ -35178,6 +35155,50 @@
           "validation": null,
           "validation_message": null,
           "width": "full"
+        }
+      },
+      {
+        "collection": "ticket_orders",
+        "field": "company_vat_id",
+        "type": "string",
+        "meta": {
+          "collection": "ticket_orders",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "company_vat_id",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 10,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "full"
+        },
+        "schema": {
+          "name": "company_vat_id",
+          "table": "ticket_orders",
+          "data_type": "character varying",
+          "default_value": null,
+          "max_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
         }
       },
       {
@@ -36039,12 +36060,410 @@
           "translations": null,
           "validation": null,
           "validation_message": null,
-          "width": "half"
+          "width": "fill"
         },
         "schema": {
           "name": "date_created",
           "table": "tickets",
           "data_type": "timestamp with time zone",
+          "default_value": null,
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "tickets",
+        "field": "profile_token",
+        "type": "uuid",
+        "meta": {
+          "collection": "tickets",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "profile_token",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 13,
+          "special": [
+            "uuid"
+          ],
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "half"
+        },
+        "schema": {
+          "name": "profile_token",
+          "table": "tickets",
+          "data_type": "uuid",
+          "default_value": null,
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "tickets",
+        "field": "profile_status",
+        "type": "string",
+        "meta": {
+          "collection": "tickets",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "profile_status",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 14,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "half"
+        },
+        "schema": {
+          "name": "profile_status",
+          "table": "tickets",
+          "data_type": "character varying",
+          "default_value": "pending",
+          "max_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "tickets",
+        "field": "job_title",
+        "type": "string",
+        "meta": {
+          "collection": "tickets",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "job_title",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 15,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "half"
+        },
+        "schema": {
+          "name": "job_title",
+          "table": "tickets",
+          "data_type": "character varying",
+          "default_value": null,
+          "max_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "tickets",
+        "field": "dietary_preferences",
+        "type": "string",
+        "meta": {
+          "collection": "tickets",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "dietary_preferences",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 16,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "half"
+        },
+        "schema": {
+          "name": "dietary_preferences",
+          "table": "tickets",
+          "data_type": "character varying",
+          "default_value": null,
+          "max_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "tickets",
+        "field": "pronouns",
+        "type": "string",
+        "meta": {
+          "collection": "tickets",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "pronouns",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 17,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "half"
+        },
+        "schema": {
+          "name": "pronouns",
+          "table": "tickets",
+          "data_type": "character varying",
+          "default_value": null,
+          "max_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "tickets",
+        "field": "tshirt_size",
+        "type": "string",
+        "meta": {
+          "collection": "tickets",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "tshirt_size",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 18,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "half"
+        },
+        "schema": {
+          "name": "tshirt_size",
+          "table": "tickets",
+          "data_type": "character varying",
+          "default_value": null,
+          "max_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "tickets",
+        "field": "last_event_visited",
+        "type": "string",
+        "meta": {
+          "collection": "tickets",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "last_event_visited",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 19,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "half"
+        },
+        "schema": {
+          "name": "last_event_visited",
+          "table": "tickets",
+          "data_type": "character varying",
+          "default_value": null,
+          "max_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "tickets",
+        "field": "heard_about_from",
+        "type": "string",
+        "meta": {
+          "collection": "tickets",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "heard_about_from",
+          "group": null,
+          "hidden": false,
+          "interface": "input",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 20,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "half"
+        },
+        "schema": {
+          "name": "heard_about_from",
+          "table": "tickets",
+          "data_type": "character varying",
+          "default_value": null,
+          "max_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_nullable": true,
+          "is_unique": false,
+          "is_indexed": false,
+          "is_primary_key": false,
+          "is_generated": false,
+          "generation_expression": null,
+          "has_auto_increment": false,
+          "foreign_key_table": null,
+          "foreign_key_column": null
+        }
+      },
+      {
+        "collection": "tickets",
+        "field": "additional_notes",
+        "type": "text",
+        "meta": {
+          "collection": "tickets",
+          "conditions": null,
+          "display": null,
+          "display_options": null,
+          "field": "additional_notes",
+          "group": null,
+          "hidden": false,
+          "interface": "input-multiline",
+          "note": null,
+          "options": null,
+          "readonly": false,
+          "required": false,
+          "searchable": true,
+          "sort": 21,
+          "special": null,
+          "translations": null,
+          "validation": null,
+          "validation_message": null,
+          "width": "full"
+        },
+        "schema": {
+          "name": "additional_notes",
+          "table": "tickets",
+          "data_type": "text",
           "default_value": null,
           "max_length": null,
           "numeric_precision": null,
@@ -38748,6 +39167,56 @@
           "foreign_key_table": "podcasts",
           "foreign_key_column": "id",
           "constraint_name": "podcast_generated_assets_podcast_id_foreign",
+          "on_update": "NO ACTION",
+          "on_delete": "SET NULL"
+        }
+      },
+      {
+        "collection": "podcast_generated_assets",
+        "field": "template_id",
+        "related_collection": "asset_templates",
+        "meta": {
+          "junction_field": null,
+          "many_collection": "podcast_generated_assets",
+          "many_field": "template_id",
+          "one_allowed_collections": null,
+          "one_collection": "asset_templates",
+          "one_collection_field": null,
+          "one_deselect_action": "nullify",
+          "one_field": null,
+          "sort_field": null
+        },
+        "schema": {
+          "table": "podcast_generated_assets",
+          "column": "template_id",
+          "foreign_key_table": "asset_templates",
+          "foreign_key_column": "id",
+          "constraint_name": "podcast_generated_assets_template_id_foreign",
+          "on_update": "NO ACTION",
+          "on_delete": "SET NULL"
+        }
+      },
+      {
+        "collection": "podcast_generated_assets",
+        "field": "generated_file",
+        "related_collection": "directus_files",
+        "meta": {
+          "junction_field": null,
+          "many_collection": "podcast_generated_assets",
+          "many_field": "generated_file",
+          "one_allowed_collections": null,
+          "one_collection": "directus_files",
+          "one_collection_field": null,
+          "one_deselect_action": "nullify",
+          "one_field": null,
+          "sort_field": null
+        },
+        "schema": {
+          "table": "podcast_generated_assets",
+          "column": "generated_file",
+          "foreign_key_table": "directus_files",
+          "foreign_key_column": "id",
+          "constraint_name": "podcast_generated_assets_generated_file_foreign",
           "on_update": "NO ACTION",
           "on_delete": "SET NULL"
         }
