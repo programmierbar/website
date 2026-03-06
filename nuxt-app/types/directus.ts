@@ -271,6 +271,7 @@ export interface DirectusRatingItem {
     target: string
   }[],
   up_or_down: 'up' | 'down'
+  comment?: string
   ip?: string
   user_agent?: string
   referer_url?: string

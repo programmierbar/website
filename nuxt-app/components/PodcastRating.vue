@@ -15,7 +15,7 @@
   </div>
 
     <form
-
+      v-if='ratingId'
       class='contact-form flex flex-col items-center space-y-10 lg:items-end'
       :class='formState'
       novalidate
@@ -108,14 +108,17 @@ const submitForm = async (event: Event) => {
       }
 
       formState.value = 'submitting';
+      await directus.addCommentToRating({id: ratingId.value}, comment.value);
 
-      console.log('Adding comment to rating with id', comment.value, ratingId.value)
-
-      //await directus.addCommentToRating({id: props.podcast.id}, comment.value)
+      comment.value = '';
       formState.value = 'submitted'
   } catch (error: any) {
     formState.value = 'error'
-    formError.value = error.message
+    if (error.message) {
+      formError.value = error.message
+    } else {
+      formError.value = 'Kommentar konnte nicht gespeichert werden.'
+    }
   }
 }
 

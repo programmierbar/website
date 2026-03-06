@@ -873,10 +873,8 @@ export function useDirectus() {
   }
 
   async function addCommentToRating(rating: {id: string}, comment: string) {
-
     return await directus.request(updateItem('ratings', rating.id, { comment }));
   }
-
 
   /**
    * Get public ticket settings directly from Directus (no auth required)
