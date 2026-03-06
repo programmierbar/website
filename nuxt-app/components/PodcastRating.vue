@@ -14,8 +14,16 @@
     </div>
   </div>
 
+    <Transition
+      enter-active-class='transition duration-500 ease-out'
+      enter-from-class='opacity-0 translate-y-8'
+      enter-to-class='opacity-100 translate-y-0'
+      leave-active-class='transition duration-300 ease-in'
+      leave-from-class='opacity-100 translate-y-0'
+      leave-to-class='opacity-0 translate-y-8'
+    >
     <form
-      v-if='ratingId'
+      v-if='ratingId && formState !== "submitted"'
       class='contact-form flex flex-col items-center space-y-10 lg:items-end'
       :class='formState'
       novalidate
@@ -55,6 +63,7 @@
         {{ formState === 'submitted' ? 'Gesendet' : 'Senden' }}
       </button>
     </form>
+    </Transition>
 
 </template>
 
