@@ -45,7 +45,7 @@ export default defineHook(({ action }, hookContext) => {
             // Log start info
             logger.info(`${HOOK_NAME} hook: Start "${metadata.collection}" action function`)
 
-            if (['profiles'].includes(metadata.collection)) {
+            if (['profiles', 'ratings', 'ratings_target'].includes(metadata.collection)) {
                 logger.info(
                     `${HOOK_NAME} hook: Updated item was in "${metadata.collection}" collection. ` +
                     `Exiting hook early.`
@@ -58,6 +58,10 @@ export default defineHook(({ action }, hookContext) => {
 
             // Deploy website only if status field exists
             if (!fields.status) {
+                logger.info(
+                    `${HOOK_NAME} hook: Item has not status field.` +
+                    `Exiting hook early.`
+                );
                 return
             }
 
@@ -75,6 +79,10 @@ export default defineHook(({ action }, hookContext) => {
             const contentUpdateRelevant = item.status === 'published' || (type === 'update' && payload.status)
 
             if (!contentUpdateRelevant) {
+                logger.info(
+                    `${HOOK_NAME} hook: Item update not relevant` +
+                    `Exiting hook early.`
+                );
                 return
             }
 
