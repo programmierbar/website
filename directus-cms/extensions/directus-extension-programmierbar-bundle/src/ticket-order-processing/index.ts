@@ -1,112 +1,24 @@
 import { defineHook } from '@directus/extensions-sdk'
-import QRCode from 'qrcode'
+import { randomUUID } from 'node:crypto'
+import { Readable } from 'node:stream'
 import { sendTemplatedEmail, getSetting, type EmailServiceContext } from '../shared/email-service.js'
+import { generateUniqueTicketCode, formatPrice } from '../shared/qr-utils.js'
+import {
+    generateInvoicePdf,
+    generateInvoiceNumber,
+    ticketTypeLabel,
+    type InvoiceData,
+} from '../shared/invoice-generator.js'
 
 const HOOK_NAME = 'ticket-order-processing'
-
-/**
- * Generate a unique ticket code
- */
-function generateTicketCode(): string {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Avoiding ambiguous chars
-    let code = 'TKT-'
-    for (let i = 0; i < 6; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    return code
-}
-
-/**
- * Generate a unique ticket code with retry logic to avoid collisions
- */
-async function generateUniqueTicketCode(
-    ticketsService: any,
-    maxRetries: number = 5
-): Promise<string> {
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-        const code = generateTicketCode()
-        // Check if code already exists
-        const existing = await ticketsService.readByQuery({
-            filter: { ticket_code: { _eq: code } },
-            limit: 1,
-        })
-        if (!existing || existing.length === 0) {
-            return code
-        }
-    }
-    // If all retries fail, add timestamp for guaranteed uniqueness
-    const timestamp = Date.now().toString(36).toUpperCase()
-    return `TKT-${timestamp}`
-}
-
-/**
- * Generate QR code as base64 data URL for embedding in emails
- */
-async function generateQRCodeDataUrl(ticketCode: string, websiteUrl: string): Promise<string> {
-    const verifyUrl = `${websiteUrl}/ticket/${ticketCode}`
-    try {
-        return await QRCode.toDataURL(verifyUrl, {
-            width: 200,
-            margin: 2,
-            color: {
-                dark: '#000000',
-                light: '#ffffff',
-            },
-        })
-    } catch (err) {
-        // Fallback: return empty string if QR generation fails
-        console.error('Failed to generate QR code:', err)
-        return ''
-    }
-}
-
-/**
- * Format price in Euro
- */
-function formatPrice(cents: number): string {
-    return new Intl.NumberFormat('de-DE', {
-        style: 'currency',
-        currency: 'EUR',
-    }).format(cents / 100)
-}
-
-/**
- * Build the HTML for the ticket list (to be inserted into the template)
- */
-function buildTicketListHtml(
-    tickets: Array<{
-        attendeeName: string
-        attendeeEmail: string
-        ticketCode: string
-        qrCodeDataUrl: string
-    }>
-): string {
-    return tickets
-        .map(
-            (ticket) => `
-        <div style="margin-bottom: 30px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-            <h3 style="margin: 0 0 10px 0; color: #00A1FF;">${ticket.attendeeName}</h3>
-            <p style="margin: 5px 0; color: #666;">Ticket-Code: <strong>${ticket.ticketCode}</strong></p>
-            <p style="margin: 5px 0; color: #666;">E-Mail: ${ticket.attendeeEmail}</p>
-            ${ticket.qrCodeDataUrl ? `
-            <div style="text-align: center; margin-top: 15px;">
-                <img src="${ticket.qrCodeDataUrl}" alt="QR Code" style="width: 200px; height: 200px;" />
-            </div>
-            ` : ''}
-            <p style="text-align: center; font-size: 12px; color: #999;">
-                Bitte zeige diesen QR-Code oder den Ticket-Code beim Check-in vor.
-            </p>
-        </div>
-    `
-        )
-        .join('')
-}
 
 export default defineHook(({ action }, hookContext) => {
     const logger = hookContext.logger
     const services = hookContext.services
     const getSchema = hookContext.getSchema
+    const env = hookContext.env
     const ItemsService = services.ItemsService
+    const FilesService = services.FilesService
 
     // Check if MailService is available
     if (!services.MailService) {
@@ -116,6 +28,8 @@ export default defineHook(({ action }, hookContext) => {
 
     /**
      * Process order when status changes to 'paid'
+     * Creates tickets with profile tokens, generates invoice, and sends emails
+     * (QR codes are generated later when the attendee completes their profile)
      */
     action('ticket_orders.items.update', async function (metadata, eventContext) {
         const { payload, keys } = metadata
@@ -155,17 +69,29 @@ export default defineHook(({ action }, hookContext) => {
             for (const orderId of keys) {
                 logger.info(`${HOOK_NAME}: Processing paid order ${orderId}`)
 
-                // Get order details
+                // Get order details (including billing fields for invoice)
                 const order = await ordersService.readOne(orderId, {
                     fields: [
                         'id',
                         'order_number',
                         'conference',
+                        'purchase_type',
                         'purchaser_first_name',
                         'purchaser_last_name',
                         'purchaser_email',
+                        'company_name',
+                        'company_vat_id',
+                        'billing_address_line1',
+                        'billing_address_line2',
+                        'billing_city',
+                        'billing_postal_code',
+                        'billing_country',
+                        'billing_email',
+                        'subtotal_cents',
+                        'discount_amount_cents',
                         'total_cents',
                         'total_gross_cents',
+                        'vat_amount_cents',
                         'attendees_json',
                         'ticket_type',
                     ],
@@ -176,9 +102,9 @@ export default defineHook(({ action }, hookContext) => {
                     continue
                 }
 
-                // Get conference title
+                // Get conference details (title + start_on for invoice year)
                 const conference = await conferencesService.readOne(order.conference, {
-                    fields: ['title'],
+                    fields: ['title', 'start_on'],
                 })
 
                 if (!conference) {
@@ -207,21 +133,85 @@ export default defineHook(({ action }, hookContext) => {
                     continue
                 }
 
-                // Create individual tickets
+                const pricePerTicket = Math.round((order.total_cents || 0) / attendees.length)
+                const purchaserName = `${order.purchaser_first_name} ${order.purchaser_last_name}`
+
+                // --- Generate invoice ---
+                const conferenceYear = new Date(conference.start_on).getFullYear()
+                const invoiceNumber = await generateInvoiceNumber(ordersService, conferenceYear)
+
+                const now = new Date()
+                const invoiceDate = now.toLocaleDateString('de-DE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                })
+
+                const grossPerTicket = Math.round((order.total_gross_cents || 0) / attendees.length)
+
+                const invoiceData: InvoiceData = {
+                    invoiceNumber,
+                    invoiceDate,
+                    purchaserName,
+                    purchaserEmail: order.purchaser_email,
+                    companyName: order.company_name,
+                    companyVatId: order.company_vat_id,
+                    billingAddressLine1: order.billing_address_line1,
+                    billingAddressLine2: order.billing_address_line2,
+                    billingCity: order.billing_city,
+                    billingPostalCode: order.billing_postal_code,
+                    billingCountry: order.billing_country,
+                    conferenceTitle: conference.title,
+                    ticketType: ticketTypeLabel(order.ticket_type),
+                    ticketCount: attendees.length,
+                    unitPriceGrossCents: grossPerTicket,
+                    subtotalCents: order.subtotal_cents || order.total_cents,
+                    discountAmountCents: order.discount_amount_cents || 0,
+                    vatAmountCents: order.vat_amount_cents || 0,
+                    totalGrossCents: order.total_gross_cents || order.total_cents,
+                }
+
+                logger.info(`${HOOK_NAME}: Generating invoice ${invoiceNumber} for order ${order.order_number}`)
+                const pdfBuffer = await generateInvoicePdf(invoiceData)
+
+                // Upload PDF to Directus files
+                const filesService = new FilesService({
+                    accountability: { admin: true },
+                    schema,
+                })
+
+                const invoiceFileName = `Rechnung-${invoiceNumber}.pdf`
+                const storageLocation = env.STORAGE_LOCATIONS?.split(',')[0]
+
+                const pdfStream = Readable.from([pdfBuffer])
+                const fileId = await filesService.uploadOne(pdfStream, {
+                    type: 'application/pdf',
+                    filename_download: invoiceFileName,
+                    title: `Rechnung ${invoiceNumber}`,
+                    ...(storageLocation && { storage: storageLocation }),
+                })
+
+                // Update order with invoice number and file reference
+                await ordersService.updateOne(orderId, {
+                    invoice_number: invoiceNumber,
+                    invoice_file: fileId,
+                })
+
+                logger.info(`${HOOK_NAME}: Invoice ${invoiceNumber} generated and stored (file: ${fileId})`)
+
+                // --- Create individual tickets with profile tokens (no QR codes yet) ---
                 const ticketRecords: Array<{
                     attendeeName: string
                     attendeeEmail: string
                     ticketCode: string
-                    qrCodeDataUrl: string
+                    profileToken: string
                 }> = []
-
-                const pricePerTicket = Math.round((order.total_cents || 0) / attendees.length)
 
                 for (const attendee of attendees) {
                     const ticketCode = await generateUniqueTicketCode(ticketsService)
-                    const qrCodeDataUrl = await generateQRCodeDataUrl(ticketCode, websiteUrl)
+                    const profileToken = randomUUID()
 
-                    // Create ticket in database
+                    // Create ticket in database with pending profile
                     await ticketsService.createOne({
                         ticket_code: ticketCode,
                         order: orderId,
@@ -232,63 +222,72 @@ export default defineHook(({ action }, hookContext) => {
                         ticket_type: order.ticket_type,
                         price_cents: pricePerTicket,
                         status: 'valid',
+                        profile_token: profileToken,
+                        profile_status: 'pending',
                     })
 
                     ticketRecords.push({
                         attendeeName: `${attendee.firstName} ${attendee.lastName}`,
                         attendeeEmail: attendee.email,
                         ticketCode,
-                        qrCodeDataUrl,
+                        profileToken,
                     })
 
-                    logger.info(`${HOOK_NAME}: Created ticket ${ticketCode} for ${attendee.email}`)
+                    logger.info(`${HOOK_NAME}: Created ticket ${ticketCode} for ${attendee.email} (profile pending)`)
                 }
 
-                // Send confirmation email to purchaser using template
-                const purchaserName = `${order.purchaser_first_name} ${order.purchaser_last_name}`
-                const ticketListHtml = buildTicketListHtml(ticketRecords)
+                // --- Send purchaser confirmation email with invoice PDF ---
                 const totalAmount = formatPrice(order.total_gross_cents || order.total_cents)
 
                 await sendTemplatedEmail(
                     {
                         templateKey: 'ticket_order_confirmation',
                         to: order.purchaser_email,
+                        cc: order.billing_email || undefined,
                         data: {
                             purchaser_name: purchaserName,
                             conference_title: conference.title,
                             order_number: order.order_number,
                             total_amount: totalAmount,
-                            ticket_list_html: ticketListHtml,
+                            ticket_count: ticketRecords.length,
+                            invoice_number: invoiceNumber,
                         },
+                        attachments: [
+                            {
+                                filename: invoiceFileName,
+                                content: pdfBuffer,
+                                contentType: 'application/pdf',
+                            },
+                        ],
                     },
                     context
                 )
 
-                logger.info(`${HOOK_NAME}: Sent confirmation email to purchaser ${order.purchaser_email}`)
+                logger.info(`${HOOK_NAME}: Sent confirmation email with invoice to ${order.purchaser_email}`)
 
-                // Send individual emails to attendees (if different from purchaser)
+                // --- Send profile invitation email to all attendees ---
                 for (const ticket of ticketRecords) {
-                    if (ticket.attendeeEmail.toLowerCase() !== order.purchaser_email.toLowerCase()) {
-                        await sendTemplatedEmail(
-                            {
-                                templateKey: 'ticket_order_attendee',
-                                to: ticket.attendeeEmail,
-                                data: {
-                                    attendee_name: ticket.attendeeName,
-                                    conference_title: conference.title,
-                                    ticket_code: ticket.ticketCode,
-                                    qr_code_data_url: ticket.qrCodeDataUrl,
-                                },
-                            },
-                            context
-                        )
+                    const portalUrl = `${websiteUrl}/ticket-portal?token=${encodeURIComponent(ticket.profileToken)}`
 
-                        logger.info(`${HOOK_NAME}: Sent ticket email to attendee ${ticket.attendeeEmail}`)
-                    }
+                    await sendTemplatedEmail(
+                        {
+                            templateKey: 'ticket_profile_invitation',
+                            to: ticket.attendeeEmail,
+                            data: {
+                                attendee_name: ticket.attendeeName,
+                                conference_title: conference.title,
+                                portal_url: portalUrl,
+                                purchaser_name: purchaserName,
+                            },
+                        },
+                        context
+                    )
+
+                    logger.info(`${HOOK_NAME}: Sent profile invitation to ${ticket.attendeeEmail}`)
                 }
 
                 logger.info(
-                    `${HOOK_NAME}: Order ${order.order_number} completed successfully with ${ticketRecords.length} tickets`
+                    `${HOOK_NAME}: Order ${order.order_number} processed with ${ticketRecords.length} tickets, invoice ${invoiceNumber}`
                 )
             }
         } catch (err: any) {

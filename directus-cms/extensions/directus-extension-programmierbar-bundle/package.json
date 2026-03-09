@@ -113,6 +113,11 @@
                 "type": "hook",
                 "name": "speaker-token",
                 "source": "src/speaker-token/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "ticket-profile-completion",
+                "source": "src/ticket-profile-completion/index.ts"
             }
         ],
         "host": "^10.10.0"
@@ -130,9 +135,11 @@
         "test:watch": "jest --watch"
     },
     "dependencies": {
+        "pdfkit": "^0.16.0",
         "qrcode": "^1.5.4"
     },
     "devDependencies": {
+        "@types/pdfkit": "^0.13.9",
         "@types/qrcode": "^1.5.5",
         "@directus/errors": "^0.3.2",
         "@directus/extensions-sdk": "12.1.4",

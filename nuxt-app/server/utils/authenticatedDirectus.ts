@@ -11,7 +11,7 @@ import {
     uploadFiles,
 } from '@directus/sdk'
 import type { Collections } from '~/services/directus'
-import type { DirectusTicketSettingsItem, DirectusTicketOrderItem } from '~/types/directus'
+import type { DirectusTicketSettingsItem, DirectusTicketOrderItem, DirectusTicketItem } from '~/types/directus'
 
 export function useAuthenticatedDirectus() {
     const config = useRuntimeConfig()
@@ -114,6 +114,60 @@ export function useAuthenticatedDirectus() {
         return await client.request(deleteItem('ticket_orders', id))
     }
 
+    async function getTicketByProfileToken(token: string) {
+        const tickets = await client.request(
+            readItems('tickets', {
+                filter: { profile_token: { _eq: token } },
+                fields: [
+                    'id',
+                    'ticket_code',
+                    'order',
+                    'conference',
+                    'attendee_first_name',
+                    'attendee_last_name',
+                    'attendee_email',
+                    'profile_status',
+                    'job_title',
+                    'company',
+                    'dietary_preferences',
+                    'pronouns',
+                    'tshirt_size',
+                    'last_event_visited',
+                    'heard_about_from',
+                    'additional_notes',
+                ],
+                limit: 1,
+            })
+        )
+
+        return tickets?.[0] ?? null
+    }
+
+    async function updateTicket(id: string, data: Partial<DirectusTicketItem>) {
+        return await client.request(updateItem('tickets', id, data as any))
+    }
+
+    async function getTicketsByOrderId(orderId: string) {
+        return await client.request(
+            readItems('tickets', {
+                filter: { order: { _eq: orderId } },
+                fields: ['id', 'profile_token', 'profile_status'],
+            })
+        )
+    }
+
+    async function getTicketOrderBySessionId(sessionId: string) {
+        const orders = await client.request(
+            readItems('ticket_orders', {
+                filter: { stripe_checkout_session_id: { _eq: sessionId } },
+                fields: ['id', 'status'],
+                limit: 1,
+            })
+        )
+
+        return orders?.[0] ?? null
+    }
+
     return {
         getSpeakerByPortalToken,
         updateSpeaker,
@@ -124,5 +178,9 @@ export function useAuthenticatedDirectus() {
         createTicketOrder,
         updateTicketOrder,
         deleteTicketOrder,
+        getTicketByProfileToken,
+        updateTicket,
+        getTicketsByOrderId,
+        getTicketOrderBySessionId,
     }
 }

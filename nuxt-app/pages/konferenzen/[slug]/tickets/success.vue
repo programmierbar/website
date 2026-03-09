@@ -1,17 +1,83 @@
 <script setup lang="ts">
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo } from '~/helpers'
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
 
 const route = useRoute()
 const directus = useDirectus()
 const store = useTicketCheckoutStore()
 
+// Polling state
+const orderReady = ref(false)
+const ticketCount = ref(0)
+const profileUrl = ref<string | null>(null)
+const pollingDone = ref(false)
+let pollInterval: ReturnType<typeof setInterval> | null = null
+
 // Clear the checkout store on success (client-side only)
 onMounted(() => {
     store.resetBySlug(route.params.slug as string)
+
+    // Start polling for ticket creation
+    const sessionId = route.query.session_id as string
+    if (sessionId) {
+        startPolling(sessionId)
+    } else {
+        pollingDone.value = true
+    }
 })
+
+onBeforeUnmount(() => {
+    if (pollInterval) {
+        clearInterval(pollInterval)
+    }
+})
+
+async function checkOrderStatus(sessionId: string) {
+    try {
+        const response = await fetch(`/api/tickets/order-status?session_id=${encodeURIComponent(sessionId)}`)
+        if (!response.ok) return
+
+        const data = await response.json()
+        if (data.ready) {
+            orderReady.value = true
+            ticketCount.value = data.ticketCount
+            profileUrl.value = data.profileUrl || null
+            pollingDone.value = true
+
+            if (pollInterval) {
+                clearInterval(pollInterval)
+                pollInterval = null
+            }
+        }
+    } catch {
+        // Silently retry on next interval
+    }
+}
+
+function startPolling(sessionId: string) {
+    // Immediately check once
+    checkOrderStatus(sessionId)
+
+    let attempts = 0
+    const maxAttempts = 15 // 30 seconds at 2s intervals
+
+    pollInterval = setInterval(() => {
+        attempts++
+        if (attempts >= maxAttempts) {
+            pollingDone.value = true
+            if (pollInterval) {
+                clearInterval(pollInterval)
+                pollInterval = null
+            }
+            return
+        }
+        checkOrderStatus(sessionId)
+    }, 2000)
+}
+
+const isSingleTicket = computed(() => ticketCount.value === 1)
 
 // Query conference data
 const { data: pageData } = useAsyncData(route.fullPath, async () => {
@@ -72,20 +138,57 @@ useHead(() =>
                     Deine Bestellung war erfolgreich.
                 </p>
 
-                <div class="mt-8 rounded-lg bg-gray-800/50 p-6 text-left">
+                <!-- Loading state while polling -->
+                <div v-if="!pollingDone" class="mt-8 rounded-lg bg-gray-800/50 p-6">
+                    <p class="text-gray-300">Deine Tickets werden vorbereitet...</p>
+                </div>
+
+                <!-- Single ticket: show button to complete ticket -->
+                <div v-else-if="orderReady && isSingleTicket && profileUrl" class="mt-8 rounded-lg bg-gray-800/50 p-6 text-left">
+                    <h2 class="mb-4 text-lg font-bold text-lime">Nächster Schritt</h2>
+                    <p class="text-gray-300">
+                        Bitte vervollständige deine Angaben, damit wir dir dein Ticket mit QR-Code zusenden können.
+                    </p>
+                    <div class="mt-6 text-center">
+                        <NuxtLink
+                            :to="profileUrl"
+                            class="inline-block rounded-lg bg-lime px-8 py-4 font-bold text-black transition hover:bg-lime/90"
+                        >
+                            Ticket vervollständigen
+                        </NuxtLink>
+                    </div>
+                </div>
+
+                <!-- Multi ticket: show info about emails -->
+                <div v-else-if="orderReady && !isSingleTicket" class="mt-8 rounded-lg bg-gray-800/50 p-6 text-left">
                     <h2 class="mb-4 text-lg font-bold text-lime">Was passiert jetzt?</h2>
                     <ul class="space-y-3 text-gray-300">
                         <li class="flex items-start gap-3">
                             <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">1</span>
-                            <span>Du erhältst in Kürze eine Bestätigungs-E-Mail mit deinen Tickets.</span>
+                            <span>Du erhältst in Kürze eine Bestätigungs-E-Mail.</span>
                         </li>
                         <li class="flex items-start gap-3">
                             <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">2</span>
-                            <span>Jedes Ticket enthält einen QR-Code, den du beim Check-in vorzeigen kannst.</span>
+                            <span>Alle Teilnehmer erhalten eine E-Mail mit einem Link zur Vervollständigung ihrer Angaben.</span>
                         </li>
                         <li class="flex items-start gap-3">
                             <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">3</span>
-                            <span>Falls du mehrere Tickets gekauft hast, werden die anderen Teilnehmer ebenfalls per E-Mail benachrichtigt.</span>
+                            <span>Sobald die Angaben vervollständigt sind, wird das Ticket mit QR-Code per E-Mail versendet.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Fallback: polling timed out or no session_id -->
+                <div v-else class="mt-8 rounded-lg bg-gray-800/50 p-6 text-left">
+                    <h2 class="mb-4 text-lg font-bold text-lime">Was passiert jetzt?</h2>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex items-start gap-3">
+                            <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">1</span>
+                            <span>Alle Teilnehmer erhalten eine E-Mail mit einem Link zur Vervollständigung ihrer Angaben.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">2</span>
+                            <span>Sobald die Angaben vervollständigt sind, wird das Ticket mit QR-Code per E-Mail versendet.</span>
                         </li>
                     </ul>
                 </div>

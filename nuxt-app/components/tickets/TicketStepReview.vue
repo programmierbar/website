@@ -109,13 +109,15 @@ async function proceedToPayment() {
                 <input
                     v-model="termsAccepted"
                     type="checkbox"
-                    class="mt-1 h-5 w-5 rounded border-gray-600 bg-gray-800 text-lime focus:ring-lime focus:ring-offset-0"
+                    class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-600 bg-gray-800 text-lime focus:ring-lime focus:ring-offset-0"
                 />
                 <span class="text-sm text-gray-300">
-                    Ich akzeptiere die
-                    <a href="/agb" target="_blank" class="text-lime hover:underline">AGB</a>
-                    und
-                    <a href="/datenschutz" target="_blank" class="text-lime hover:underline">Datenschutzbestimmungen</a>.
+                    Ich akzeptiere die Hinweise zu den
+                    <a href="/verhaltensregeln" target="_blank" class="text-lime hover:underline">Verhaltensregeln</a>, den
+                    <a href="/aufnahmen" target="_blank" class="text-lime hover:underline">Foto- und Videoaufnahmen</a>, dem
+                    <a href="/datenschutz" target="_blank" class="text-lime hover:underline">Datenschutz</a>
+                    und die
+                    <a href="/agb" target="_blank" class="text-lime hover:underline">AGB</a>.
                     <span class="text-lime">*</span>
                 </span>
             </label>
@@ -134,7 +136,7 @@ async function proceedToPayment() {
             @click="proceedToPayment"
         >
             <span v-if="store.isLoading">Wird verarbeitet...</span>
-            <span v-else>Jetzt bezahlen - {{ store.formatPrice(store.totalWithVatCents) }}</span>
+            <span v-else>Zur Zahlung</span>
         </button>
 
         <p class="mt-4 text-center text-sm text-[#848a98]">
