@@ -31,7 +31,8 @@ import type {
   DirectusTicketOrderItem,
   DirectusTicketItem,
   DirectusTicketSettingsItem,
-} from '../types'
+  DirectusAgbPage,
+} from '../types';
 
 export type Collections = {
     home_page: DirectusHomePage
@@ -44,6 +45,7 @@ export type Collections = {
     contact_page: DirectusContactPage
     imprint_page: DirectusImprintPage
     privacy_page: DirectusPrivacyPage
+    agb_page: DirectusAgbPage
     raffle_page: DirectusRafflePage
     login_page: DirectusLoginPage
     profile_creation_page: DirectusProfileCreationPage
