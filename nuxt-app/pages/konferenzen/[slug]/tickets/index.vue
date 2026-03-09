@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import TicketPurchaseFlow from '~/components/tickets/TicketPurchaseFlow.vue'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo } from '~/helpers'
 import { computed, onMounted, ref } from 'vue'
-import TicketPurchaseFlow from '~/components/tickets/TicketPurchaseFlow.vue'
 
 const route = useRoute()
 const directus = useDirectus()
@@ -70,10 +70,10 @@ const breadcrumbs = computed(() => [
             <!-- Cancelled message -->
             <div
                 v-if="wasCancelled"
-                class="mb-8 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4 text-yellow-200"
+                class="border-yellow-500/50 bg-yellow-500/10 text-yellow-200 mb-8 rounded-lg border p-4"
             >
                 <p class="font-medium">Zahlung abgebrochen</p>
-                <p class="mt-1 text-sm text-yellow-200/80">
+                <p class="text-yellow-200/80 mt-1 text-sm">
                     Die Zahlung wurde abgebrochen. Du kannst es erneut versuchen.
                 </p>
             </div>
@@ -81,11 +81,8 @@ const breadcrumbs = computed(() => [
             <!-- Error state -->
             <div v-if="error" class="text-center">
                 <h1 class="text-3xl font-bold">Fehler</h1>
-                <p class="mt-4 text-gray-400">{{ error.message }}</p>
-                <NuxtLink
-                    to="/konferenzen"
-                    class="mt-8 inline-block rounded-lg bg-lime px-6 py-3 font-bold text-black"
-                >
+                <p class="text-gray-400 mt-4">{{ error.message }}</p>
+                <NuxtLink to="/konferenzen" class="mt-8 inline-block rounded-lg bg-lime px-6 py-3 font-bold text-black">
                     Zurück zu Konferenzen
                 </NuxtLink>
             </div>
@@ -93,9 +90,7 @@ const breadcrumbs = computed(() => [
             <!-- Ticketing not available -->
             <div v-else-if="conference && !ticketingAvailable" class="text-center">
                 <h1 class="text-3xl font-bold">Ticketverkauf nicht verfügbar</h1>
-                <p class="mt-4 text-gray-400">
-                    Der Ticketverkauf für diese Konferenz ist derzeit nicht aktiv.
-                </p>
+                <p class="text-gray-400 mt-4">Der Ticketverkauf für diese Konferenz ist derzeit nicht aktiv.</p>
                 <NuxtLink
                     :to="`/konferenzen/${route.params.slug}`"
                     class="mt-8 inline-block rounded-lg bg-lime px-6 py-3 font-bold text-black"
