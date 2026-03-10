@@ -51,23 +51,54 @@
                 :html="conference.tickets_text"
               />
 
-            <div class='flex flex-row flex-wrap space justify-around mt-8'>
+            <!-- Ticket price cards -->
+            <div v-if="ticketSettings" class="relative z-30 mt-12 grid gap-6 sm:grid-cols-2 lg:max-w-2xl">
+              <!-- Early Bird -->
+              <div
+                class="group relative overflow-hidden rounded-2xl border-2 border-lime bg-[radial-gradient(ellipse_at_top_right,_rgba(99,102,241,0.4),_rgba(168,85,247,0.3)_35%,_rgba(207,255,0,0.12)_70%,_transparent)] p-6 transition-all hover:border-lime hover:shadow-[0_0_30px_rgba(207,255,0,0.15)]"
+              >
+                <div class="mb-1 text-xs font-bold uppercase tracking-widest text-lime">Early Bird</div>
+                <div v-if="isEarlyBird" class="mb-1 inline-block rounded-full bg-lime/20 px-2 py-0.5 text-xs font-medium text-lime">
+                  Jetzt verfügbar
+                </div>
+                <div class="mt-2 flex items-baseline gap-1">
+                  <span class="text-5xl font-black text-white">{{ formatCentsShort(ticketSettings.early_bird_price_cents) }}</span>
+                  <span class="text-lg text-gray-400">€</span>
+                </div>
+                <div class="mt-1 text-sm text-gray-400">
+                  {{ formatCentsGross(ticketSettings.early_bird_price_cents) }} inkl. MwSt.
+                </div>
+              </div>
+
+              <!-- Regular -->
+              <div
+                class="group relative overflow-hidden rounded-2xl border border-gray-500 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(99,102,241,0.35),_rgba(168,85,247,0.2)_45%,_transparent)] p-6 transition-all hover:border-gray-400"
+              >
+                <div class="mb-1 text-xs font-bold uppercase tracking-widest text-gray-400">Regulär</div>
+                <div v-if="!isEarlyBird" class="mb-1 inline-block rounded-full bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-300">
+                  Aktueller Preis
+                </div>
+                <div class="mt-2 flex items-baseline gap-1">
+                  <span class="text-5xl font-black text-white">{{ formatCentsShort(ticketSettings.regular_price_cents) }}</span>
+                  <span class="text-lg text-gray-400">€</span>
+                </div>
+                <div class="mt-1 text-sm text-gray-400">
+                  {{ formatCentsGross(ticketSettings.regular_price_cents) }} inkl. MwSt.
+                </div>
+              </div>
+            </div>
+
+            <!-- CTA Button -->
+            <div class="relative z-30 mt-10">
               <NuxtLink
                 :to="`/konferenzen/${conference.slug}/tickets`"
                 data-cursor-hover
-                class="m-auto rounded-full border-4 border-lime text-sm text-lime px-8 py-4 text-left"
+                class="inline-flex items-center gap-4 rounded-full bg-lime px-10 py-4 font-bold uppercase text-black transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(207,255,0,0.3)]"
               >
-                <div class='flex flex-row'>
-                  <div>
-                    <span class='uppercase font-bold text-xl md:text-4xl'>Zu den Tickets</span>
-                  </div>
-                  <div class='pl-4 md:pl-12'>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="65" height="66" viewBox="0 0 65 66" fill="none">
-                      <path d="M14.5378 17.334L47.7277 17.334L47.7291 50.9206" stroke="#CFFF00" stroke-width="5.34" stroke-linecap="round"/>
-                      <path d="M14.8991 46.5993C13.8564 47.642 13.8564 49.3326 14.8991 50.3753C15.9418 51.418 17.6324 51.418 18.6751 50.3753L14.8991 46.5993ZM47.6378 17.6366L45.7498 15.7486L14.8991 46.5993L16.7871 48.4873L18.6751 50.3753L49.5258 19.5246L47.6378 17.6366Z" fill="#CFFF00"/>
-                    </svg>
-                  </div>
-                </div>
+                <span class="text-xl md:text-2xl">Tickets kaufen</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
               </NuxtLink>
             </div>
           </div>
@@ -193,12 +224,13 @@
 import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo, trackGoal } from '~/helpers';
-import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem, TalkItem } from '~/types';
+import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem, DirectusTicketSettingsItem, TalkItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
 import TestimonialSlider from '~/components/TestimonialSlider.vue';
 import { getAssetUrl } from '~/helpers/getAssetUrl';
+import { VAT_RATE } from '~/config';
 
 // Add route and router
 const route = useRoute()
@@ -208,10 +240,11 @@ const directus = useDirectus()
 // Query conference and page
 const { data: pageData } = useAsyncData(route.fullPath, async () => {
     // Query conference and page async
-    const [conference, conferencePage, testimonials] = await Promise.all([
+    const [conference, conferencePage, testimonials, ticketSettings] = await Promise.all([
         directus.getConferenceBySlug(route.params.slug as string),
         directus.getConferencePage(),
         directus.getTestimonials(),
+        directus.getTicketSettings().catch(() => null),
     ])
 
     // Throw error if meetup does not exist
@@ -225,13 +258,28 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
     }
 
     // Return conference and page
-    return { conference, conferencePage, testimonials }
+    return { conference, conferencePage, testimonials, ticketSettings }
 })
 
 // Extract conference and page from page data
 const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageData.value?.conference)
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
+const ticketSettings: ComputedRef<DirectusTicketSettingsItem | null> = computed(() => pageData.value?.ticketSettings || null)
+
+const isEarlyBird = computed(() => {
+    if (!ticketSettings.value?.early_bird_deadline) return false
+    return new Date() <= new Date(ticketSettings.value.early_bird_deadline)
+})
+
+function formatCentsShort(netCents: number): string {
+    return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(netCents / 100)
+}
+
+function formatCentsGross(netCents: number): string {
+    const grossCents = Math.round(netCents * (1 + VAT_RATE))
+    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(grossCents / 100)
+}
 
 const isConferenceOver = computed(() => {
     if (!conference.value?.end_on) return false

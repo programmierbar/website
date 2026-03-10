@@ -486,7 +486,11 @@ export interface DirectusTicketOrderItem {
     attendees_json: string | null
     vat_amount_cents: number
     total_gross_cents: number
+    invoice_number: string | null
+    invoice_file: string | null // Reference to directus_files ID
 }
+
+export type TicketProfileStatus = 'pending' | 'completed'
 
 export interface DirectusTicketItem {
     id: string
@@ -501,6 +505,16 @@ export interface DirectusTicketItem {
     status: TicketStatus
     checked_in_at: string | null
     date_created: string
+    profile_token: string | null
+    profile_status: TicketProfileStatus
+    job_title: string | null
+    company: string | null
+    dietary_preferences: string | null
+    pronouns: string | null
+    tshirt_size: string | null
+    last_event_visited: string | null
+    heard_about_from: string | null
+    additional_notes: string | null
 }
 
 export interface DirectusTicketSettingsItem {

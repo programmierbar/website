@@ -55,11 +55,19 @@ export interface EmailServiceContext {
     accountability?: any
 }
 
+export interface EmailAttachment {
+    filename: string
+    content: Buffer
+    contentType?: string
+}
+
 export interface SendEmailOptions {
     templateKey: string
     to: string
     data: Record<string, any>
     replyTo?: string
+    cc?: string
+    attachments?: EmailAttachment[]
 }
 
 /**
@@ -202,6 +210,14 @@ export async function sendTemplatedEmail(
             subject,
             html,
             ...(options.replyTo && { replyTo: options.replyTo }),
+            ...(options.cc && { cc: options.cc }),
+            ...(options.attachments && {
+                attachments: options.attachments.map((a) => ({
+                    filename: a.filename,
+                    content: a.content,
+                    contentType: a.contentType || 'application/pdf',
+                })),
+            }),
         })
 
         logger.info(`Email sent to ${options.to} using template '${options.templateKey}'`)
