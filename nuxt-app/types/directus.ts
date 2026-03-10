@@ -265,12 +265,12 @@ export interface DirectusPickOfTheDayItem {
 
 export interface DirectusRatingItem {
   id: string
-  update_token: string
   target: {
     target_collection: string,
     target: string
   }[],
   up_or_down: 'up' | 'down'
+  comment?: string
   ip?: string
   user_agent?: string
   referer_url?: string

@@ -39,6 +39,7 @@ export default eventHandler(async function(event) {
 
   let success = false;
   let message = '';
+  let rating: {id: string} | null = null;
 
   try {
     const metadata: Record<string, string> = {};
@@ -62,7 +63,7 @@ export default eventHandler(async function(event) {
       metadata['referer_url'] = referrer;
     }
 
-    await directus.createRating(vote, podcast, metadata);
+    rating = await directus.createRating(vote, podcast, metadata);
     success = true;
     message = 'Vielen Dank für dein Feedback!';
   } catch (error) {
@@ -75,14 +76,16 @@ export default eventHandler(async function(event) {
   // Content negotiation: JSON response for fetch() calls
   if (wantsJson) {
     event.node.res.setHeader('Vary', 'Accept')
-    return { success, message };
+    return { success, message, payload: {id: rating?.id} };
   }
 
   // Redirect response for direct browser navigation
   setCookie(event, 'flash-message', JSON.stringify({
     text: message,
     type: 'rating',
-    payload: {}
+    payload: {
+      id: rating?.id
+    }
   }), {
     maxAge: 60, // 60 seconds
     path: '/'
