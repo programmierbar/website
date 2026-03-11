@@ -163,6 +163,25 @@ export const TicketProfileSchema = z.object({
     additional_notes: z.string().max(1000, 'Maximal 1000 Zeichen.').optional().or(z.literal('')),
 })
 
+// Ticket portal (attendee profile completion)
+
+export const TicketProfileSchema = z.object({
+    job_title: z
+        .string()
+        .min(1, 'Bitte trage deinen Job/Rolle ein.')
+        .max(100, 'Der Job/Rolle darf nicht länger als 100 Zeichen sein.'),
+    company: z
+        .string()
+        .min(1, 'Bitte trage dein Unternehmen ein.')
+        .max(100, 'Das Unternehmen darf nicht länger als 100 Zeichen sein.'),
+    dietary_preferences: z.string().max(200, 'Maximal 200 Zeichen.').optional().or(z.literal('')),
+    pronouns: z.string().max(50, 'Maximal 50 Zeichen.').optional().or(z.literal('')),
+    tshirt_size: z.enum(['S', 'M', 'L', 'XL', 'XXL', '']).optional(),
+    last_event_visited: z.string().max(200, 'Maximal 200 Zeichen.').optional().or(z.literal('')),
+    heard_about_from: z.string().max(500, 'Maximal 500 Zeichen.').optional().or(z.literal('')),
+    additional_notes: z.string().max(1000, 'Maximal 1000 Zeichen.').optional().or(z.literal('')),
+})
+
 export type CreateCheckoutInput = z.infer<typeof CreateCheckoutSchema>
 export type TicketAttendeeInput = z.infer<typeof TicketAttendeeSchema>
 export type TicketProfileInput = z.infer<typeof TicketProfileSchema>

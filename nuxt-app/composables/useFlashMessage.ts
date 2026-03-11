@@ -1,7 +1,7 @@
 export interface FlashMessage {
   type: "rating" | "rating-error"
   text: string
-  payload: { }
+  payload: any
 }
 
 export const useFlashMessage = () => {

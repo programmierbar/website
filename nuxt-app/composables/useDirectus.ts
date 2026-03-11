@@ -6,7 +6,7 @@ import {
   readProviders,
   readSingleton,
   rest,
-  type QueryFilter, createItem,
+  type QueryFilter, createItem, updateItem,
 } from '@directus/sdk';
 import type {
   ConferenceItem,
@@ -876,6 +876,10 @@ export function useDirectus() {
     return await directus.request(createItem('ratings', payload))
   }
 
+  async function addCommentToRating(rating: {id: string}, comment: string) {
+    return await directus.request(updateItem('ratings', rating.id, { comment }));
+  }
+
     return {
         getHomepage,
         getPodcastPage,
@@ -917,5 +921,6 @@ export function useDirectus() {
         getProfileById,
         getTestimonials,
         createRating,
+        addCommentToRating,
     }
 }

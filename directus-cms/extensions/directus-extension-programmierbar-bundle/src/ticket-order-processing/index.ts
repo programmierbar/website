@@ -154,6 +154,7 @@ export default defineHook(({ action }, hookContext) => {
                     }
                 }
 
+
                 const pricePerTicket = Math.round((order.total_cents || 0) / attendees.length)
                 const purchaserName = `${order.purchaser_first_name} ${order.purchaser_last_name}`
 
