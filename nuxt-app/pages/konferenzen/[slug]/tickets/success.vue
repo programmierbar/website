@@ -21,8 +21,9 @@ onMounted(() => {
 
     // Start polling for ticket creation
     const sessionId = route.query.session_id as string
-    if (sessionId) {
-        startPolling(sessionId)
+    const orderId = route.query.order_id as string
+    if (sessionId || orderId) {
+        startPolling(sessionId, orderId)
     } else {
         pollingDone.value = true
     }
@@ -34,9 +35,12 @@ onBeforeUnmount(() => {
     }
 })
 
-async function checkOrderStatus(sessionId: string) {
+async function checkOrderStatus(sessionId?: string, orderId?: string) {
     try {
-        const response = await fetch(`/api/tickets/order-status?session_id=${encodeURIComponent(sessionId)}`)
+        const params = sessionId
+            ? `session_id=${encodeURIComponent(sessionId)}`
+            : `order_id=${encodeURIComponent(orderId!)}`
+        const response = await fetch(`/api/tickets/order-status?${params}`)
         if (!response.ok) return
 
         const data = await response.json()
@@ -56,9 +60,9 @@ async function checkOrderStatus(sessionId: string) {
     }
 }
 
-function startPolling(sessionId: string) {
+function startPolling(sessionId?: string, orderId?: string) {
     // Immediately check once
-    checkOrderStatus(sessionId)
+    checkOrderStatus(sessionId, orderId)
 
     let attempts = 0
     const maxAttempts = 15 // 30 seconds at 2s intervals
@@ -73,7 +77,7 @@ function startPolling(sessionId: string) {
             }
             return
         }
-        checkOrderStatus(sessionId)
+        checkOrderStatus(sessionId, orderId)
     }, 2000)
 }
 

@@ -8,6 +8,32 @@ const store = useTicketCheckoutStore()
 
 const termsAccepted = ref(false)
 const paymentError = ref('')
+const discountCodeInput = ref(store.discountCode || '')
+const discountMessage = ref('')
+
+async function applyDiscountCode() {
+    if (!discountCodeInput.value.trim()) return
+    store.setDiscountCode(discountCodeInput.value.trim())
+    discountMessage.value = ''
+    const valid = await store.validateDiscountCode()
+    if (valid) {
+        discountMessage.value = store.pricingSettings?.discountLabel
+            ? `Rabattcode "${store.pricingSettings.discountLabel}" angewendet!`
+            : 'Rabattcode erfolgreich angewendet!'
+    } else {
+        discountMessage.value = store.error || 'Ungültiger Rabattcode.'
+    }
+}
+
+function removeDiscountCode() {
+    discountCodeInput.value = ''
+    store.setDiscountCode('')
+    discountMessage.value = ''
+    if (store.pricingSettings) {
+        store.pricingSettings.discountPriceCents = null
+        store.pricingSettings.discountLabel = null
+    }
+}
 
 const isFormValid = computed(() => termsAccepted.value)
 
@@ -99,8 +125,51 @@ async function proceedToPayment() {
         </div>
 
         <!-- Pricing summary -->
-        <div class="mb-8">
+        <div class="mb-6">
             <TicketPricingSummary :show-vat="true" />
+        </div>
+
+        <!-- Discount code -->
+        <div v-if="!store.isEarlyBird" class="mb-8 rounded-lg border border-gray-700 bg-gray-800/50 p-6">
+            <h3 class="mb-3 text-sm font-bold text-white">Rabattcode</h3>
+            <div v-if="store.discountValid" class="flex items-center justify-between">
+                <div>
+                    <span class="text-sm text-green-400">
+                        {{ store.pricingSettings?.discountLabel || store.discountCode }}
+                    </span>
+                    <span class="ml-2 text-sm text-gray-400">
+                        &ndash; {{ store.formatPrice(store.discountAmountCents) }} Rabatt
+                    </span>
+                </div>
+                <button
+                    type="button"
+                    class="text-sm text-gray-400 hover:text-white"
+                    @click="removeDiscountCode"
+                >
+                    Entfernen
+                </button>
+            </div>
+            <div v-else class="flex gap-3">
+                <input
+                    v-model="discountCodeInput"
+                    type="text"
+                    placeholder="Code eingeben"
+                    class="flex-1 rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm text-white placeholder-gray-500 focus:border-lime focus:outline-none focus:ring-1 focus:ring-lime"
+                    @keyup.enter="applyDiscountCode"
+                />
+                <button
+                    type="button"
+                    class="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-white transition hover:border-lime hover:text-lime disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="!discountCodeInput.trim() || store.discountValidating"
+                    @click="applyDiscountCode"
+                >
+                    <span v-if="store.discountValidating">...</span>
+                    <span v-else>Einlösen</span>
+                </button>
+            </div>
+            <p v-if="discountMessage && !store.discountValid" class="mt-2 text-sm text-red-400">
+                {{ discountMessage }}
+            </p>
         </div>
 
         <!-- Terms checkbox -->

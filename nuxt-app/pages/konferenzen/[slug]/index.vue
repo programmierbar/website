@@ -52,21 +52,22 @@
               />
 
             <!-- Ticket price cards -->
-            <div v-if="ticketSettings" class="relative z-30 mt-12 grid gap-6 sm:grid-cols-2 lg:max-w-2xl">
+            <div v-if="conference.ticket_regular_price_cents" class="relative z-30 mt-12 grid gap-6 sm:grid-cols-2 lg:max-w-2xl">
               <!-- Early Bird -->
               <div
+                v-if="conference.ticket_early_bird_price_cents"
                 class="group relative overflow-hidden rounded-2xl border-2 border-lime bg-[radial-gradient(ellipse_at_top_right,_rgba(99,102,241,0.4),_rgba(168,85,247,0.3)_35%,_rgba(207,255,0,0.12)_70%,_transparent)] p-6 transition-all hover:border-lime hover:shadow-[0_0_30px_rgba(207,255,0,0.15)]"
               >
                 <div class="mb-1 text-xs font-bold uppercase tracking-widest text-lime">Early Bird</div>
                 <div v-if="isEarlyBird" class="mb-1 inline-block rounded-full bg-lime/20 px-2 py-0.5 text-xs font-medium text-lime">
-                  Jetzt verfügbar
+                  Jetzt verfügbar – bis {{ formatDeadline(conference.ticket_early_bird_deadline) }}
                 </div>
                 <div class="mt-2 flex items-baseline gap-1">
-                  <span class="text-5xl font-black text-white">{{ formatCentsShort(ticketSettings.early_bird_price_cents) }}</span>
+                  <span class="text-5xl font-black text-white">{{ formatCentsShort(conference.ticket_early_bird_price_cents ?? 0) }}</span>
                   <span class="text-lg text-gray-400">€</span>
                 </div>
                 <div class="mt-1 text-sm text-gray-400">
-                  {{ formatCentsGross(ticketSettings.early_bird_price_cents) }} inkl. MwSt.
+                  {{ formatCentsGross(conference.ticket_early_bird_price_cents ?? 0) }} inkl. MwSt.
                 </div>
               </div>
 
@@ -79,11 +80,11 @@
                   Aktueller Preis
                 </div>
                 <div class="mt-2 flex items-baseline gap-1">
-                  <span class="text-5xl font-black text-white">{{ formatCentsShort(ticketSettings.regular_price_cents) }}</span>
+                  <span class="text-5xl font-black text-white">{{ formatCentsShort(conference.ticket_regular_price_cents ?? 0) }}</span>
                   <span class="text-lg text-gray-400">€</span>
                 </div>
                 <div class="mt-1 text-sm text-gray-400">
-                  {{ formatCentsGross(ticketSettings.regular_price_cents) }} inkl. MwSt.
+                  {{ formatCentsGross(conference.ticket_regular_price_cents ?? 0) }} inkl. MwSt.
                 </div>
               </div>
             </div>
@@ -224,7 +225,7 @@
 import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo, trackGoal } from '~/helpers';
-import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem, DirectusTicketSettingsItem, TalkItem } from '~/types';
+import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem, TalkItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
@@ -240,11 +241,10 @@ const directus = useDirectus()
 // Query conference and page
 const { data: pageData } = useAsyncData(route.fullPath, async () => {
     // Query conference and page async
-    const [conference, conferencePage, testimonials, ticketSettings] = await Promise.all([
+    const [conference, conferencePage, testimonials] = await Promise.all([
         directus.getConferenceBySlug(route.params.slug as string),
         directus.getConferencePage(),
         directus.getTestimonials(),
-        directus.getTicketSettings().catch(() => null),
     ])
 
     // Throw error if meetup does not exist
@@ -258,22 +258,26 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
     }
 
     // Return conference and page
-    return { conference, conferencePage, testimonials, ticketSettings }
+    return { conference, conferencePage, testimonials }
 })
 
 // Extract conference and page from page data
 const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageData.value?.conference)
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
-const ticketSettings: ComputedRef<DirectusTicketSettingsItem | null> = computed(() => pageData.value?.ticketSettings || null)
 
 const isEarlyBird = computed(() => {
-    if (!ticketSettings.value?.early_bird_deadline) return false
-    return new Date() <= new Date(ticketSettings.value.early_bird_deadline)
+    if (!conference.value?.ticket_early_bird_deadline) return false
+    return new Date() <= new Date(conference.value.ticket_early_bird_deadline)
 })
 
 function formatCentsShort(netCents: number): string {
     return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(netCents / 100)
+}
+
+function formatDeadline(deadline: string | null): string {
+    if (!deadline) return ''
+    return new Date(deadline).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 function formatCentsGross(netCents: number): string {

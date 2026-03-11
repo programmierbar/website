@@ -4,11 +4,12 @@ import type { TicketAttendee, CompanyBillingInfo, BillingAddress, Purchaser } fr
 import type { PurchaseType, TicketType } from '~/types/directus'
 
 interface TicketPricingSettings {
-    earlyBirdPriceCents: number
-    regularPriceCents: number
-    discountedPriceCents: number
-    earlyBirdDeadline: string
+    earlyBirdPriceCents: number | null
+    regularPriceCents: number | null
+    earlyBirdDeadline: string | null
     isEarlyBird: boolean
+    discountPriceCents: number | null
+    discountLabel: string | null
 }
 
 interface TicketCheckoutState {
@@ -131,19 +132,26 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
         },
 
         /**
-         * Get unit price per ticket in cents (returns 0 if settings not loaded)
+         * Base price per ticket (before any discount) in cents
          */
-        unitPriceCents(): number {
+        basePriceCents(): number {
             if (!this.pricingSettings) {
                 return 0
             }
-            if (this.isEarlyBird) {
+            if (this.isEarlyBird && this.pricingSettings.earlyBirdPriceCents) {
                 return this.pricingSettings.earlyBirdPriceCents
             }
-            if (this.discountValid) {
-                return this.pricingSettings.discountedPriceCents
+            return this.pricingSettings.regularPriceCents ?? 0
+        },
+
+        /**
+         * Effective unit price per ticket in cents (after discount if applicable)
+         */
+        unitPriceCents(): number {
+            if (this.discountValid && !this.isEarlyBird && this.pricingSettings?.discountPriceCents !== null && this.pricingSettings?.discountPriceCents !== undefined) {
+                return this.pricingSettings.discountPriceCents
             }
-            return this.pricingSettings.regularPriceCents
+            return this.basePriceCents
         },
 
         /**
@@ -160,23 +168,20 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
         },
 
         /**
-         * Calculate subtotal in cents
+         * Calculate subtotal in cents (based on base price, before discount)
          */
         subtotalCents(): number {
-            return this.ticketCount * this.unitPriceCents
+            return this.ticketCount * this.basePriceCents
         },
 
         /**
          * Calculate discount amount in cents
          */
         discountAmountCents(): number {
-            if (!this.discountValid || this.isEarlyBird || !this.pricingSettings) {
+            if (!this.discountValid || this.isEarlyBird || !this.pricingSettings || this.pricingSettings.discountPriceCents === null) {
                 return 0
             }
-            return (
-                this.ticketCount *
-                (this.pricingSettings.regularPriceCents - this.pricingSettings.discountedPriceCents)
-            )
+            return this.ticketCount * (this.basePriceCents - this.pricingSettings.discountPriceCents)
         },
 
         /**
@@ -222,45 +227,30 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
 
     actions: {
         /**
-         * Fetch pricing settings from the API
-         */
-        async fetchPricingSettings(): Promise<void> {
-            if (this.pricingLoaded) return
-
-            try {
-                const settings = await useDirectus().getTicketSettings()
-                this.setPricingSettings(settings)
-            } catch (e) {
-                console.error('Failed to fetch pricing settings', e)
-                this.pricingError = true
-                this.error = 'Preise konnten nicht geladen werden. Bitte versuche es später erneut.'
-            }
-        },
-
-        /**
-         * Set pricing settings from pre-fetched data (SSR/SSG)
+         * Set pricing settings from conference data
          */
         setPricingSettings(settings: {
-            early_bird_price_cents: number
-            regular_price_cents: number
-            discounted_price_cents: number
-            early_bird_deadline: string
+            ticket_early_bird_price_cents: number | null
+            ticket_regular_price_cents: number | null
+            ticket_early_bird_deadline: string | null
         } | null | undefined) {
-            if (!settings) {
+            if (!settings || settings.ticket_regular_price_cents === null) {
                 this.pricingError = true
                 this.error = 'Preise konnten nicht geladen werden. Bitte versuche es später erneut.'
                 return
             }
 
-            const deadline = new Date(settings.early_bird_deadline)
-            const isEarlyBird = new Date() <= deadline
+            const isEarlyBird = settings.ticket_early_bird_deadline
+                ? new Date() <= new Date(settings.ticket_early_bird_deadline)
+                : false
 
             this.pricingSettings = {
-                earlyBirdPriceCents: settings.early_bird_price_cents,
-                regularPriceCents: settings.regular_price_cents,
-                discountedPriceCents: settings.discounted_price_cents,
-                earlyBirdDeadline: settings.early_bird_deadline,
+                earlyBirdPriceCents: settings.ticket_early_bird_price_cents,
+                regularPriceCents: settings.ticket_regular_price_cents,
+                earlyBirdDeadline: settings.ticket_early_bird_deadline,
                 isEarlyBird,
+                discountPriceCents: null,
+                discountLabel: null,
             }
             this.pricingLoaded = true
             this.pricingError = false
@@ -274,10 +264,9 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
             slug: string,
             title: string,
             preloadedSettings?: {
-                early_bird_price_cents: number
-                regular_price_cents: number
-                discounted_price_cents: number
-                early_bird_deadline: string
+                ticket_early_bird_price_cents: number | null
+                ticket_regular_price_cents: number | null
+                ticket_early_bird_deadline: string | null
             } | null
         ) {
             // Use pre-fetched settings if available (from SSR/SSG)
@@ -458,10 +447,18 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
                     method: 'POST',
                     body: {
                         code: this.discountCode.trim(),
+                        conferenceId: this.conferenceId,
                     },
                 })
 
-                this.discountValid = (response as { valid: boolean }).valid
+                const result = response as { valid: boolean; discountPriceCents?: number; discountLabel?: string }
+                this.discountValid = result.valid
+
+                if (result.valid && this.pricingSettings) {
+                    this.pricingSettings.discountPriceCents = result.discountPriceCents ?? null
+                    this.pricingSettings.discountLabel = result.discountLabel ?? null
+                }
+
                 this.persistState()
                 return this.discountValid
             } catch (e: any) {

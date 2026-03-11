@@ -3,7 +3,7 @@ import { CreateCheckoutSchema } from '../../utils/schema'
 import { getStripe } from '../../utils/stripe'
 import { isEarlyBirdPeriod } from '../../utils/ticketSettings'
 import { VAT_RATE, VAT_RATE_PERCENT } from '~/config'
-import type { TicketType, DirectusTicketSettingsItem, DirectusTicketOrderItem } from '~/types/directus'
+import type { TicketType, DirectusTicketOrderItem } from '~/types/directus'
 import type { TicketAttendee } from '~/types/items'
 import type { CreateCheckoutInput } from '../../utils/schema'
 
@@ -13,31 +13,38 @@ function generateOrderNumber(): string {
     return `ORD-${year}-${random}`
 }
 
+interface ConferencePricing {
+    ticket_early_bird_price_cents: number | null
+    ticket_regular_price_cents: number | null
+    ticket_early_bird_deadline: string | null
+}
+
 function calculatePricing(
-    settings: DirectusTicketSettingsItem,
+    conference: ConferencePricing,
     ticketCount: number,
-    discountValid: boolean
+    discountPriceCents: number | null
 ) {
-    const isEarlyBird = isEarlyBirdPeriod(settings)
+    const isEarlyBird = isEarlyBirdPeriod(conference.ticket_early_bird_deadline)
 
     let unitPriceNetCents: number
     let ticketType: TicketType
 
-    if (isEarlyBird) {
-        unitPriceNetCents = settings.early_bird_price_cents
+    if (isEarlyBird && conference.ticket_early_bird_price_cents) {
+        unitPriceNetCents = conference.ticket_early_bird_price_cents
         ticketType = 'early_bird'
-    } else if (discountValid) {
-        unitPriceNetCents = settings.discounted_price_cents
+    } else if (discountPriceCents !== null) {
+        unitPriceNetCents = discountPriceCents
         ticketType = 'discounted'
     } else {
-        unitPriceNetCents = settings.regular_price_cents
+        unitPriceNetCents = conference.ticket_regular_price_cents ?? 0
         ticketType = 'regular'
     }
 
     const subtotalNetCents = ticketCount * unitPriceNetCents
+    const regularPriceCents = conference.ticket_regular_price_cents ?? 0
     const discountAmountCents =
-        discountValid && !isEarlyBird
-            ? ticketCount * (settings.regular_price_cents - settings.discounted_price_cents)
+        discountPriceCents !== null && !isEarlyBird
+            ? ticketCount * (regularPriceCents - discountPriceCents)
             : 0
     const totalNetCents = subtotalNetCents
 
@@ -45,7 +52,6 @@ function calculatePricing(
     const unitPriceGrossCents = Math.round(unitPriceNetCents * (1 + VAT_RATE))
 
     // Calculate VAT and gross amounts from per-ticket gross to ensure consistency
-    // This ensures ticketCount * unitPriceGrossCents === totalGrossCents
     const totalGrossCents = ticketCount * unitPriceGrossCents
     const vatAmountCents = totalGrossCents - totalNetCents
 
@@ -61,16 +67,13 @@ function calculatePricing(
     }
 }
 
-/**
- * Build the Directus ticket order payload from checkout input and computed pricing.
- */
 function buildOrderPayload(
     input: CreateCheckoutInput,
     orderNumber: string,
     pricing: ReturnType<typeof calculatePricing>,
-    discountValid: boolean
+    discountCodeId: string | null
 ): Partial<DirectusTicketOrderItem> {
-    const { conferenceId, purchaseType, purchaser, company, personalAddress, discountCode } = input
+    const { conferenceId, purchaseType, purchaser, company, personalAddress } = input
     const billingAddress = purchaseType === 'company' ? company?.address : personalAddress
 
     return {
@@ -94,15 +97,12 @@ function buildOrderPayload(
         total_cents: pricing.totalNetCents,
         vat_amount_cents: pricing.vatAmountCents,
         total_gross_cents: pricing.totalGrossCents,
-        discount_code_used: discountValid ? (discountCode || null) : null,
+        discount_code_used: discountCodeId,
         ticket_type: pricing.ticketType,
         stripe_checkout_session_id: '', // Will be updated after creating Stripe session
     }
 }
 
-/**
- * Build the Stripe Checkout Session creation params from checkout input and computed pricing.
- */
 function buildStripeSessionParams(
     tickets: TicketAttendee[],
     pricing: ReturnType<typeof calculatePricing>,
@@ -153,27 +153,6 @@ export default defineEventHandler(async (event) => {
     }
 
     const input = parseResult.data
-
-    // Fetch ticket settings from Directus
-    let settings
-    try {
-        settings = await useAuthenticatedDirectus().getTicketSettings()
-    } catch {
-        throw createError({
-            statusCode: 503,
-            message: 'Ticketing ist derzeit nicht verfügbar. Bitte versuche es später erneut.',
-        })
-    }
-
-    // Validate discount code if provided
-    const discountValid =
-        input.discountCode && settings.discount_code
-            ? input.discountCode.toUpperCase() === settings.discount_code.toUpperCase()
-            : false
-
-    // Calculate pricing
-    const pricing = calculatePricing(settings, input.tickets.length, discountValid)
-
     const directus = useAuthenticatedDirectus()
 
     try {
@@ -187,10 +166,65 @@ export default defineEventHandler(async (event) => {
             })
         }
 
+        // Hard limit check: count existing tickets and reject if limit would be exceeded
+        if (conference.ticket_max_quantity !== null) {
+            const existingTickets = await directus.countPaidTicketsForConference(input.conferenceId)
+            if (existingTickets + input.tickets.length > conference.ticket_max_quantity) {
+                const remaining = Math.max(0, conference.ticket_max_quantity - existingTickets)
+                throw createError({
+                    statusCode: 409,
+                    message:
+                        remaining === 0
+                            ? 'Leider sind alle Tickets ausverkauft.'
+                            : `Nur noch ${remaining} Ticket(s) verfügbar. Bitte reduziere die Anzahl.`,
+                })
+            }
+        }
+
+        // Validate discount code if provided
+        let discountPriceCents: number | null = null
+        let discountCodeId: string | null = null
+
+        if (input.discountCode) {
+            const discountCode = await directus.getDiscountCode(input.conferenceId, input.discountCode)
+            if (discountCode) {
+                // Check max_uses
+                if (discountCode.max_uses !== null) {
+                    const uses = await directus.countDiscountCodeUses(discountCode.id)
+                    if (uses >= discountCode.max_uses) {
+                        throw createError({
+                            statusCode: 400,
+                            message: 'Dieser Rabattcode wurde bereits zu oft verwendet.',
+                        })
+                    }
+                }
+                discountPriceCents = discountCode.price_cents
+                discountCodeId = discountCode.id
+            }
+        }
+
+        // Calculate pricing
+        const pricing = calculatePricing(conference, input.tickets.length, discountPriceCents)
+
         const orderNumber = generateOrderNumber()
-        const orderPayload = buildOrderPayload(input, orderNumber, pricing, discountValid)
+        const orderPayload = buildOrderPayload(input, orderNumber, pricing, discountCodeId)
         const order = await directus.createTicketOrder(orderPayload)
         const orderId = order.id
+        const websiteUrl = process.env.WEBSITE_URL || 'http://localhost:3000'
+
+        // Free ticket: skip Stripe, mark as paid directly
+        if (pricing.totalGrossCents === 0) {
+            await directus.updateTicketOrder(orderId, {
+                status: 'paid',
+                date_paid: new Date().toISOString(),
+                attendees_json: JSON.stringify(input.tickets),
+            })
+
+            return {
+                checkoutUrl: `${websiteUrl}/konferenzen/${conference.slug}/tickets/success?order_id=${orderId}`,
+                orderId,
+            }
+        }
 
         // Create Stripe Checkout Session
         const stripe = getStripe()

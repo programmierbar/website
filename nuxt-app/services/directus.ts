@@ -30,7 +30,7 @@ import type {
   DirectusRatingItem,
   DirectusTicketOrderItem,
   DirectusTicketItem,
-  DirectusTicketSettingsItem,
+  DirectusTicketDiscountCodeItem,
 } from '../types'
 
 export type Collections = {
@@ -63,7 +63,7 @@ export type Collections = {
     transcripts: DirectusTranscriptItem[]
     ticket_orders: DirectusTicketOrderItem[]
     tickets: DirectusTicketItem[]
-    ticket_settings: DirectusTicketSettingsItem
+    ticket_discount_codes: DirectusTicketDiscountCodeItem[]
 }
 
 export const directus = createDirectus<Collections>(DIRECTUS_CMS_URL)

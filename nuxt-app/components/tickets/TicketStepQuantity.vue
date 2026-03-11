@@ -24,9 +24,6 @@ const formattedEarlyBirdDeadline = computed(() => {
     })
 })
 
-const discountCodeInput = ref(store.discountCode)
-const discountError = ref('')
-
 // This step is valid when pricing is loaded and at least 1 ticket is selected
 const isFormValid = computed(() => store.ticketCount >= 1 && store.pricingLoaded && !store.hasPricingError)
 
@@ -50,21 +47,6 @@ function incrementTickets() {
     }
 }
 
-async function validateDiscount() {
-    if (!discountCodeInput.value.trim()) {
-        discountError.value = ''
-        return
-    }
-
-    store.setDiscountCode(discountCodeInput.value)
-    const valid = await store.validateDiscountCode()
-
-    if (!valid && store.error) {
-        discountError.value = store.error
-    } else {
-        discountError.value = ''
-    }
-}
 </script>
 
 <template>
@@ -125,35 +107,6 @@ async function validateDiscount() {
                 </p>
             </div>
             <p class="mt-2 text-xs text-[#848a98]">zzgl. {{ VAT_RATE_PERCENT }}% MwSt.</p>
-        </div>
-
-        <!-- Discount code (only shown if not early bird) -->
-        <div v-if="!store.isEarlyBird" class="mb-8">
-            <label class="mb-3 block text-sm font-bold uppercase tracking-wider text-gray-400">
-                Rabattcode (optional)
-            </label>
-            <div class="flex gap-3">
-                <input
-                    v-model="discountCodeInput"
-                    type="text"
-                    placeholder="Code eingeben"
-                    class="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime focus:outline-none"
-                    @blur="validateDiscount"
-                    @keyup.enter="validateDiscount"
-                />
-                <button
-                    type="button"
-                    class="rounded-lg bg-gray-700 px-6 py-3 font-bold text-white transition hover:bg-gray-600 disabled:cursor-wait disabled:opacity-50"
-                    :disabled="store.discountValidating"
-                    @click="validateDiscount"
-                >
-                    {{ store.discountValidating ? '...' : 'Prüfen' }}
-                </button>
-            </div>
-            <p v-if="discountError" class="mt-2 text-sm text-red-400">{{ discountError }}</p>
-            <p v-if="store.discountValid" class="mt-2 text-sm text-lime">
-                Rabattcode erfolgreich angewendet!
-            </p>
         </div>
 
         <!-- Pricing summary -->
