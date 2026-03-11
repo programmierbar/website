@@ -225,7 +225,7 @@
 import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo, trackGoal } from '~/helpers';
-import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem, DirectusTicketSettingsItem, TalkItem } from '~/types';
+import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem, TalkItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
@@ -241,11 +241,10 @@ const directus = useDirectus()
 // Query conference and page
 const { data: pageData } = useAsyncData(route.fullPath, async () => {
     // Query conference and page async
-    const [conference, conferencePage, testimonials, ticketSettings] = await Promise.all([
+    const [conference, conferencePage, testimonials] = await Promise.all([
         directus.getConferenceBySlug(route.params.slug as string),
         directus.getConferencePage(),
         directus.getTestimonials(),
-        directus.getTicketSettings().catch(() => null),
     ])
 
     // Throw error if meetup does not exist
@@ -259,28 +258,13 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
     }
 
     // Return conference and page
-    return { conference, conferencePage, testimonials, ticketSettings }
+    return { conference, conferencePage, testimonials }
 })
 
 // Extract conference and page from page data
 const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageData.value?.conference)
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
-const ticketSettings: ComputedRef<DirectusTicketSettingsItem | null> = computed(() => pageData.value?.ticketSettings || null)
-
-const isEarlyBird = computed(() => {
-    if (!ticketSettings.value?.early_bird_deadline) return false
-    return new Date() <= new Date(ticketSettings.value.early_bird_deadline)
-})
-
-function formatCentsShort(netCents: number): string {
-    return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(netCents / 100)
-}
-
-function formatCentsGross(netCents: number): string {
-    const grossCents = Math.round(netCents * (1 + VAT_RATE))
-    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(grossCents / 100)
-}
 
 const isEarlyBird = computed(() => {
     if (!conference.value?.ticket_early_bird_deadline) return false
