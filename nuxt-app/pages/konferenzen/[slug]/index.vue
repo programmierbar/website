@@ -56,14 +56,22 @@
               <!-- Early Bird -->
               <div
                 v-if="conference.ticket_early_bird_price_cents"
-                class="group relative overflow-hidden rounded-2xl border-2 border-lime bg-[radial-gradient(ellipse_at_top_right,_rgba(99,102,241,0.4),_rgba(168,85,247,0.3)_35%,_rgba(207,255,0,0.12)_70%,_transparent)] p-6 transition-all hover:border-lime hover:shadow-[0_0_30px_rgba(207,255,0,0.15)]"
+                :class="[
+                  'group relative overflow-hidden rounded-2xl p-6 transition-all',
+                  isEarlyBird
+                    ? 'border-2 border-lime bg-[radial-gradient(ellipse_at_top_right,_rgba(99,102,241,0.4),_rgba(168,85,247,0.3)_35%,_rgba(207,255,0,0.12)_70%,_transparent)] hover:shadow-[0_0_30px_rgba(207,255,0,0.15)]'
+                    : 'opacity-60 border border-gray-700 bg-[radial-gradient(ellipse_at_top_right,_rgba(99,102,241,0.4),_rgba(168,85,247,0.3)_35%,_rgba(207,255,0,0.12)_70%,_transparent)]',
+                ]"
               >
                 <div class="mb-1 text-xs font-bold uppercase tracking-widest text-lime">Early Bird</div>
                 <div v-if="isEarlyBird" class="mb-1 inline-block rounded-full bg-lime/20 px-2 py-0.5 text-xs font-medium text-lime">
                   Jetzt verfügbar – bis {{ formatDeadline(conference.ticket_early_bird_deadline) }}
                 </div>
+                <div v-else class="mb-1 inline-block rounded-full bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-400">
+                  Abgelaufen
+                </div>
                 <div class="mt-2 flex items-baseline gap-1">
-                  <span class="text-5xl font-black text-white">{{ formatCentsShort(conference.ticket_early_bird_price_cents ?? 0) }}</span>
+                  <span :class="['text-5xl font-black text-white', { 'line-through': !isEarlyBird }]">{{ formatCentsShort(conference.ticket_early_bird_price_cents ?? 0) }}</span>
                   <span class="text-lg text-gray-400">€</span>
                 </div>
                 <div class="mt-1 text-sm text-gray-400">
@@ -73,10 +81,15 @@
 
               <!-- Regular -->
               <div
-                class="group relative overflow-hidden rounded-2xl border border-gray-500 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(99,102,241,0.35),_rgba(168,85,247,0.2)_45%,_transparent)] p-6 transition-all hover:border-gray-400"
+                :class="[
+                  'group relative overflow-hidden rounded-2xl p-6 transition-all',
+                  !isEarlyBird
+                    ? 'border-2 border-lime bg-[radial-gradient(ellipse_at_bottom_left,_rgba(99,102,241,0.35),_rgba(168,85,247,0.2)_45%,_transparent)] hover:shadow-[0_0_30px_rgba(207,255,0,0.15)]'
+                    : 'border border-gray-500 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(99,102,241,0.35),_rgba(168,85,247,0.2)_45%,_transparent)] hover:border-gray-400',
+                ]"
               >
-                <div class="mb-1 text-xs font-bold uppercase tracking-widest text-gray-400">Regulär</div>
-                <div v-if="!isEarlyBird" class="mb-1 inline-block rounded-full bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-300">
+                <div :class="['mb-1 text-xs font-bold uppercase tracking-widest', !isEarlyBird ? 'text-lime' : 'text-gray-400']">Regulär</div>
+                <div v-if="!isEarlyBird" class="mb-1 inline-block rounded-full bg-lime/20 px-2 py-0.5 text-xs font-medium text-lime">
                   Aktueller Preis
                 </div>
                 <div class="mt-2 flex items-baseline gap-1">
