@@ -35,7 +35,7 @@ class="
             pl-0 lg:pl-10
             mb-5 lg:mb-0
         ">
-      <EmbeddedVideoPlayer v-if='talk.video_url' :url='talk.video_url'/>
+      <EmbeddedVideoPlayer v-if='talk.video_url' :url='talk.video_url' :thumbnail='talk.thumbnail'/>
       <DirectusImage
         v-if='!talk.video_url && talk.thumbnail'
         class='object-cover aspect-video w-full'
