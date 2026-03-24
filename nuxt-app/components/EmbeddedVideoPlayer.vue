@@ -24,7 +24,7 @@
         <p class="mt-2 max-w-md text-center text-xs text-white/80 md:text-sm">
           Durch Klicken werden Daten an YouTube übertragen.
           <NuxtLink class="underline hover:text-white" to="/datenschutz" data-cursor-hover>
-            Mehr Infos
+            Datenschutz
           </NuxtLink>
         </p>
         <label class="flex cursor-pointer items-center gap-2 text-xs text-white/70 md:text-sm">
