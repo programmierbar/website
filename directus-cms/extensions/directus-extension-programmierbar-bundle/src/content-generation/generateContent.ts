@@ -1,5 +1,5 @@
 import type { Logger } from 'pino'
-import { callGemini, extractJson } from '../shared/gemini.ts'
+import { callGemini, extractHtml } from '../shared/gemini.ts'
 import { renderTemplate } from '../shared/templateRenderer.ts'
 import { fetchSlackContext } from '../shared/fetchSlackContext.ts'
 
@@ -93,7 +93,7 @@ function buildShownotesPrompt(podcast: PodcastData, prompts: Map<string, string>
 function buildSocialPrompt(
     platform: 'linkedin' | 'instagram' | 'bluesky' | 'mastodon',
     podcast: PodcastData,
-    shownotes: { description: string; topics: string[] },
+    shownotes: string,
     prompts: Map<string, string>
 ): string {
     const guests =
@@ -108,9 +108,6 @@ function buildSocialPrompt(
             .filter(Boolean)
             .join(', ') || ''
 
-    const topicsText = shownotes.topics.map((t) => `- ${t}`).join('\n')
-    const shownotesDescription = shownotes.description || ''
-
     const template = prompts.get(`social_${platform}`)!
 
     return renderTemplate(template, {
@@ -119,8 +116,7 @@ function buildSocialPrompt(
         slug: podcast.slug || '',
         guests: guests || 'Keine Gäste',
         guest_companies: guestCompanies || 'N/A',
-        topics: topicsText,
-        shownotes: shownotesDescription,
+        shownotes,
     })
 }
 
@@ -179,6 +175,9 @@ export async function generateContent(hookName: string, podcastId: number, servi
 
         // Fetch Slack context for news podcasts
         let slackContext: string | null = null
+        if (podcast.type === 'news' && !env.SLACK_BOT_TOKEN) {
+            logger.warn(`${hookName}: SLACK_BOT_TOKEN not set. Slack context for news shownotes will not be available.`)
+        }
         if (podcast.type === 'news' && env.SLACK_BOT_TOKEN) {
             logger.info(`${hookName}: Fetching Slack context for news podcast`)
             slackContext = await fetchSlackContext({
@@ -212,47 +211,19 @@ export async function generateContent(hookName: string, podcastId: number, servi
 
         logger.info(`${hookName}: Calling Gemini API for shownotes`)
 
-        // Generate shownotes
+        // Generate shownotes (returns HTML directly, no JSON wrapping)
         const shownotesPrompt = buildShownotesPrompt(podcast, prompts, slackContext)
         logger.info(`${hookName}: Sending request to Gemini API`)
         const shownotesResponse = await callGemini(geminiApiKey, shownotesPrompt)
         logger.info(`${hookName}: Received response from Gemini API`)
-        const shownotesData = extractJson(shownotesResponse)
+        const shownotesHtml = extractHtml(shownotesResponse)
 
         logger.info(`${hookName}: Shownotes generated for podcast ${podcastId}`)
-
-        // Store shownotes in podcast_generated_content
-        // Format: description followed by topics, timestamps, and resources
-        let shownotesText = shownotesData.description || ''
-
-        if (shownotesData.topics && shownotesData.topics.length > 0) {
-            shownotesText += '\n\n<strong>Themen:</strong>\n<ul>\n'
-            shownotesText += shownotesData.topics.map((t: string) => `<li>${t}</li>`).join('\n')
-            shownotesText += '\n</ul>'
-        }
-
-        if (shownotesData.timestamps && shownotesData.timestamps.length > 0) {
-            shownotesText += '\n\n<strong>Timestamps:</strong>\n<ul>\n'
-            shownotesText += shownotesData.timestamps
-                .map((ts: { time: string; topic: string }) => `<li>${ts.time} - ${ts.topic}</li>`)
-                .join('\n')
-            shownotesText += '\n</ul>'
-        }
-
-        if (shownotesData.resources && shownotesData.resources.length > 0) {
-            shownotesText += '\n\n<strong>Ressourcen:</strong>\n<ul>\n'
-            shownotesText += shownotesData.resources
-                .map((r: { name: string; url?: string }) =>
-                    r.url ? `<li><a href="${r.url}">${r.name}</a></li>` : `<li>${r.name}</li>`
-                )
-                .join('\n')
-            shownotesText += '\n</ul>'
-        }
 
         await generatedContentService.createOne({
             podcast_id: podcast.id,
             content_type: 'shownotes',
-            generated_text: shownotesText,
+            generated_text: shownotesHtml,
             status: 'generated',
         })
 
@@ -269,23 +240,11 @@ export async function generateContent(hookName: string, podcastId: number, servi
                 const socialPrompt = buildSocialPrompt(
                     platform,
                     podcast,
-                    {
-                        description: shownotesData.description || '',
-                        topics: shownotesData.topics || [],
-                    },
+                    shownotesHtml,
                     prompts
                 )
                 const socialResponse = await callGemini(geminiApiKey, socialPrompt)
-                const socialData = extractJson(socialResponse)
-
-                // Format social post: text + hashtags (if available)
-                let socialText = socialData.post_text || ''
-                if (socialData.hashtags && socialData.hashtags.length > 0) {
-                    socialText += '\n\n' + socialData.hashtags.join(' ')
-                }
-                if (socialData.tagging_suggestions && socialData.tagging_suggestions.length > 0) {
-                    socialText += '\n\nTagging: ' + socialData.tagging_suggestions.join(', ')
-                }
+                const socialText = socialResponse.trim()
 
                 await generatedContentService.createOne({
                     podcast_id: podcast.id,
