@@ -134,3 +134,15 @@ export function extractJson(text: string): any {
     }
     throw new Error('Could not extract JSON from response')
 }
+
+/**
+ * Extract HTML from a Gemini text response.
+ * Strips markdown code fences (```html ... ```) if present, returns the raw HTML.
+ */
+export function extractHtml(text: string): string {
+    const htmlMatch = text.match(/```html\n?([\s\S]*?)\n?```/)
+    if (htmlMatch) {
+        return htmlMatch[1].trim()
+    }
+    return text.trim()
+}
