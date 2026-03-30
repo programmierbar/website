@@ -104,6 +104,7 @@ export default defineEventHandler(async (event) => {
             imageFormData.append('file', blob, profileImage.filename)
 
             const uploadResult = await directus.uploadFile(imageFormData)
+            console.log(`[speaker-portal] Profile upload response:`, JSON.stringify(uploadResult).substring(0, 500))
             profileImageId = uploadResult.id
             console.log(`[speaker-portal] Profile image uploaded: ${profileImageId}`)
         } else {
@@ -117,6 +118,7 @@ export default defineEventHandler(async (event) => {
             imageFormData.append('file', blob, actionImage.filename)
 
             const uploadResult = await directus.uploadFile(imageFormData)
+            console.log(`[speaker-portal] Action upload response:`, JSON.stringify(uploadResult).substring(0, 500))
             actionImageId = uploadResult.id
             console.log(`[speaker-portal] Action image uploaded: ${actionImageId}`)
         } else {
