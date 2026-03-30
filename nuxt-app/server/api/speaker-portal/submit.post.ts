@@ -36,6 +36,9 @@ export default defineEventHandler(async (event) => {
         }
     }
 
+    console.log(`[speaker-portal] Parsed ${formData.length} multipart fields: ${formData.map((f) => `${f.name}(${f.filename ? `file:${f.data.length}b` : 'text'})`).join(', ')}`)
+    console.log(`[speaker-portal] profileImage: ${profileImage ? `${profileImage.filename} (${profileImage.data.length} bytes)` : 'missing'}, actionImage: ${actionImage ? `${actionImage.filename} (${actionImage.data.length} bytes)` : 'missing'}`)
+
     if (!token) {
         throw createError({
             statusCode: 400,
@@ -95,21 +98,29 @@ export default defineEventHandler(async (event) => {
         let actionImageId: string | undefined
 
         if (profileImage) {
+            console.log(`[speaker-portal] Uploading profile image: ${profileImage.filename} (${profileImage.data.length} bytes)`)
             const imageFormData = new FormData()
             const blob = new Blob([profileImage.data], { type: profileImage.type })
             imageFormData.append('file', blob, profileImage.filename)
 
             const uploadResult = await directus.uploadFile(imageFormData)
             profileImageId = uploadResult.id
+            console.log(`[speaker-portal] Profile image uploaded: ${profileImageId}`)
+        } else {
+            console.log('[speaker-portal] No profile image in form data, skipping upload')
         }
 
         if (actionImage) {
+            console.log(`[speaker-portal] Uploading action image: ${actionImage.filename} (${actionImage.data.length} bytes)`)
             const imageFormData = new FormData()
             const blob = new Blob([actionImage.data], { type: actionImage.type })
             imageFormData.append('file', blob, actionImage.filename)
 
             const uploadResult = await directus.uploadFile(imageFormData)
             actionImageId = uploadResult.id
+            console.log(`[speaker-portal] Action image uploaded: ${actionImageId}`)
+        } else {
+            console.log('[speaker-portal] No action image in form data, skipping upload')
         }
 
         // Update speaker record
