@@ -74,12 +74,22 @@ export function useAuthenticatedDirectus() {
             body: formData,
         })
 
-        if (!response.ok) {
+        if (!response.ok && response.status !== 204) {
             const errorText = await response.text()
             throw new Error(`Directus file upload failed (${response.status}): ${errorText}`)
         }
 
-        const result = await response.json()
+        // Log response details to diagnose
+        console.log(`[uploadFile] Status: ${response.status}, Headers:`, Object.fromEntries(response.headers.entries()))
+
+        const text = await response.text()
+        console.log(`[uploadFile] Body (first 500 chars):`, text.substring(0, 500))
+
+        if (!text) {
+            throw new Error(`Directus file upload returned ${response.status} with empty body`)
+        }
+
+        const result = JSON.parse(text)
         return result.data
     }
 
