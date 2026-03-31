@@ -9,6 +9,7 @@ import {
     updateItem,
     deleteItem,
 } from '@directus/sdk'
+
 import type { Collections } from '~/services/directus'
 import type { DirectusTicketSettingsItem, DirectusTicketOrderItem, DirectusTicketItem } from '~/types/directus'
 
@@ -62,10 +63,13 @@ export function useAuthenticatedDirectus() {
         return await client.request(updateItem('speakers', id, data as any))
     }
 
-    async function uploadFile(formData: FormData) {
-        // Use fetch directly instead of the SDK's uploadFiles command.
-        // The SDK sets Content-Type: multipart/form-data without a boundary,
-        // which prevents Node.js fetch from auto-setting the correct boundary.
+    async function uploadFile(formData: FormData): Promise<{ id: string }> {
+        // Generate a file ID upfront so we don't depend on the response body.
+        // Directus returns 204 (no content) when the API token lacks read
+        // permission on directus_files, but the file is still created.
+        const fileId = crypto.randomUUID()
+        formData.append('id', fileId)
+
         const response = await fetch(`${config.public.directusCmsUrl}/files`, {
             method: 'POST',
             headers: {
@@ -79,18 +83,7 @@ export function useAuthenticatedDirectus() {
             throw new Error(`Directus file upload failed (${response.status}): ${errorText}`)
         }
 
-        // Log response details to diagnose
-        console.log(`[uploadFile] Status: ${response.status}, Headers:`, Object.fromEntries(response.headers.entries()))
-
-        const text = await response.text()
-        console.log(`[uploadFile] Body (first 500 chars):`, text.substring(0, 500))
-
-        if (!text) {
-            throw new Error(`Directus file upload returned ${response.status} with empty body`)
-        }
-
-        const result = JSON.parse(text)
-        return result.data
+        return { id: fileId }
     }
 
     async function getTicketSettings(): Promise<DirectusTicketSettingsItem> {
