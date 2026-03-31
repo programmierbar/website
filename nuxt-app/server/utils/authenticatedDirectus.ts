@@ -64,12 +64,8 @@ export function useAuthenticatedDirectus() {
     }
 
     async function uploadFile(formData: FormData): Promise<{ id: string }> {
-        // Generate a file ID upfront so we don't depend on the response body.
-        // Directus returns 204 (no content) when the API token lacks read
-        // permission on directus_files, but the file is still created.
-        const fileId = crypto.randomUUID()
-        formData.append('id', fileId)
-
+        // Use fetch directly — the Directus SDK's uploadFiles command
+        // sets Content-Type without a boundary, breaking Node.js fetch.
         const response = await fetch(`${config.public.directusCmsUrl}/files`, {
             method: 'POST',
             headers: {
@@ -78,12 +74,13 @@ export function useAuthenticatedDirectus() {
             body: formData,
         })
 
-        if (!response.ok && response.status !== 204) {
+        if (!response.ok) {
             const errorText = await response.text()
             throw new Error(`Directus file upload failed (${response.status}): ${errorText}`)
         }
 
-        return { id: fileId }
+        const result = await response.json()
+        return result.data
     }
 
     async function getTicketSettings(): Promise<DirectusTicketSettingsItem> {
