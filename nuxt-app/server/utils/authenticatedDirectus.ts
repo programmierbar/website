@@ -8,6 +8,7 @@ import {
     createItem,
     updateItem,
     deleteItem,
+    uploadFiles,
 } from '@directus/sdk'
 
 import type { Collections } from '~/services/directus'
@@ -63,24 +64,8 @@ export function useAuthenticatedDirectus() {
         return await client.request(updateItem('speakers', id, data as any))
     }
 
-    async function uploadFile(formData: FormData): Promise<{ id: string }> {
-        // Use fetch directly — the Directus SDK's uploadFiles command
-        // sets Content-Type without a boundary, breaking Node.js fetch.
-        const response = await fetch(`${config.public.directusCmsUrl}/files`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${apiToken}`,
-            },
-            body: formData,
-        })
-
-        if (!response.ok) {
-            const errorText = await response.text()
-            throw new Error(`Directus file upload failed (${response.status}): ${errorText}`)
-        }
-
-        const result = await response.json()
-        return result.data
+    async function uploadFile(formData: FormData) {
+        return await client.request(uploadFiles(formData))
     }
 
     async function getTicketSettings(): Promise<DirectusTicketSettingsItem> {
