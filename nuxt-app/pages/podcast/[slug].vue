@@ -212,7 +212,7 @@ const downloadUrl = computed(
 // Create breadcrumb list
 const breadcrumbs = computed(() => [
     { label: 'Podcast', href: '/podcast' },
-    { label: `${type.value} ${podcast.value?.number}` },
+    { label: `${type.value} ${podcast.value?.number ? podcast.value.number : ''}` },
 ])
 
 // Create platform list
