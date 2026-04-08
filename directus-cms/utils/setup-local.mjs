@@ -11,6 +11,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@programmier.bar';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123456';
 const PROD_URL = 'https://admin.programmier.bar';
 const PROD_API_TOKEN = process.env.PROD_API_TOKEN || '';
+const DIRECTUS_LOCAL_ADMIN_TOKEN = 'random_SECRET_t0ken!';
 
 // Collections that need public read access
 const PUBLIC_COLLECTIONS = [
@@ -65,26 +66,42 @@ const PUBLIC_COLLECTIONS = [
     'home_page_podcasts',
 ];
 
-// Token management — Directus access tokens expire after 15 minutes by default.
-// Long-running imports (especially file downloads) can exceed this, so we
-// re-authenticate when the token is older than 10 minutes.
-let _cachedToken = null;
-let _tokenObtainedAt = 0;
-const TOKEN_MAX_AGE_MS = 10 * 60 * 1000;
-
+let _isTokenSet = false;
 async function getToken() {
-    if (_cachedToken && (Date.now() - _tokenObtainedAt) < TOKEN_MAX_AGE_MS) {
-        return _cachedToken;
-    }
-    const res = await fetch(`${DIRECTUS_URL}/auth/login`, {
+    if (_isTokenSet) return DIRECTUS_LOCAL_ADMIN_TOKEN;
+
+    let res = await fetch(`${DIRECTUS_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
     });
-    const data = await res.json();
-    _cachedToken = data.data?.access_token;
-    _tokenObtainedAt = Date.now();
-    return _cachedToken;
+    let data = await res.json();
+    let tmpToken = data.data?.access_token;
+    res = await fetch(`${DIRECTUS_URL}/users/me`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${tmpToken}`,
+        }
+    });
+    data = await res.json();
+    let id = data.data?.id;
+    res = await fetch(`${DIRECTUS_URL}/users/${id}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${tmpToken}`,
+        },
+        body: JSON.stringify({ token: DIRECTUS_LOCAL_ADMIN_TOKEN }),
+    });
+
+    if (!res.ok) {
+        throw new Error('Could not set admin user token.');
+    }
+
+    _isTokenSet = true;
+
+    return DIRECTUS_LOCAL_ADMIN_TOKEN
 }
 
 async function getOrCreatePublicPolicy(token) {
