@@ -4,14 +4,14 @@ import {
     staticToken,
     readItem,
     readItems,
-    readSingleton,
+    aggregate,
     createItem,
     updateItem,
     deleteItem,
     uploadFiles,
 } from '@directus/sdk'
 import type { Collections } from '~/services/directus'
-import type { DirectusTicketSettingsItem, DirectusTicketOrderItem, DirectusTicketItem } from '~/types/directus'
+import type { DirectusTicketOrderItem, DirectusTicketItem, DirectusTicketDiscountCodeItem } from '~/types/directus'
 
 export function useAuthenticatedDirectus() {
     const config = useRuntimeConfig()
@@ -67,27 +67,68 @@ export function useAuthenticatedDirectus() {
         return await client.request(uploadFiles(formData))
     }
 
-    async function getTicketSettings(): Promise<DirectusTicketSettingsItem> {
+    async function getConference(id: string) {
         return await client.request(
-            readSingleton('ticket_settings', {
+            readItem('conferences', id, {
                 fields: [
                     'id',
-                    'early_bird_price_cents',
-                    'regular_price_cents',
-                    'discounted_price_cents',
-                    'early_bird_deadline',
-                    'discount_code',
+                    'slug',
+                    'title',
+                    'ticketing_enabled',
+                    'ticket_early_bird_price_cents',
+                    'ticket_regular_price_cents',
+                    'ticket_early_bird_deadline',
+                    'ticket_max_quantity',
                 ],
             })
         )
     }
 
-    async function getConference(id: string) {
-        return await client.request(
-            readItem('conferences', id, {
-                fields: ['id', 'slug', 'title', 'ticketing_enabled'],
+    async function getDiscountCode(conferenceId: string, code: string): Promise<DirectusTicketDiscountCodeItem | null> {
+        const codes = await client.request(
+            readItems('ticket_discount_codes', {
+                filter: {
+                    conference: { _eq: conferenceId },
+                    active: { _eq: true },
+                },
+                fields: ['id', 'conference', 'code', 'price_cents', 'label', 'max_uses', 'active'],
             })
         )
+        const upperCode = code.toUpperCase()
+        const match = (codes as DirectusTicketDiscountCodeItem[])?.find(
+            (c) => c.code.toUpperCase() === upperCode
+        )
+        return match ?? null
+    }
+
+    async function countPaidTicketsForConference(conferenceId: string): Promise<number> {
+        const result = await client.request(
+            aggregate('tickets' as any, {
+                aggregate: { count: ['id'] },
+                query: {
+                    filter: {
+                        conference: { _eq: conferenceId },
+                        status: { _neq: 'cancelled' },
+                    },
+                },
+            })
+        )
+        return Number(result?.[0]?.count?.id ?? 0)
+    }
+
+    async function countDiscountCodeUses(discountCodeId: string): Promise<number> {
+        const result = await client.request(
+            aggregate('ticket_orders' as any, {
+                aggregate: { count: ['id'] },
+                query: {
+                    filter: {
+                        discount_code_used: { _eq: discountCodeId },
+                        status: { _neq: 'cancelled' },
+                    },
+                },
+            })
+        )
+        return Number(result?.[0]?.count?.id ?? 0)
     }
 
     async function getTicketOrder(id: string) {
@@ -172,8 +213,10 @@ export function useAuthenticatedDirectus() {
         getSpeakerByPortalToken,
         updateSpeaker,
         uploadFile,
-        getTicketSettings,
         getConference,
+        getDiscountCode,
+        countPaidTicketsForConference,
+        countDiscountCodeUses,
         getTicketOrder,
         createTicketOrder,
         updateTicketOrder,

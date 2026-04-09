@@ -442,6 +442,10 @@ export function useDirectus() {
             'speakers.speakers_id.profile_image.*',
             'tickets_text',
             'ticketing_enabled',
+            'ticket_early_bird_price_cents',
+            'ticket_regular_price_cents',
+            'ticket_early_bird_deadline',
+            'ticket_max_quantity',
             'partners',
             'partners.*',
             'partners.partner.*',
@@ -884,22 +888,6 @@ export function useDirectus() {
     return await directus.request(updateItem('ratings', rating.id, { comment }));
   }
 
-  /**
-   * Get public ticket settings directly from Directus (no auth required)
-   */
-  async function getTicketSettings() {
-    try {
-      return await directus.request(
-        readSingleton('ticket_settings', {
-          fields: ['early_bird_price_cents', 'regular_price_cents', 'discounted_price_cents', 'early_bird_deadline'],
-        })
-      )
-    } catch (e: unknown) {
-      console.error('Error fetching ticket settings', e)
-      return null
-    }
-  }
-
     return {
         getHomepage,
         getPodcastPage,
@@ -943,6 +931,5 @@ export function useDirectus() {
         getTestimonials,
         createRating,
         addCommentToRating,
-        getTicketSettings,
     }
 }

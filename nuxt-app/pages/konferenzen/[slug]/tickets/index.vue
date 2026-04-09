@@ -15,12 +15,9 @@ onMounted(() => {
     }
 })
 
-// Query conference data and ticket settings
+// Query conference data
 const { data: pageData, error } = useAsyncData(route.fullPath, async () => {
-    const [conference, ticketSettings] = await Promise.all([
-        directus.getConferenceBySlug(route.params.slug as string),
-        directus.getTicketSettings(),
-    ])
+    const conference = await directus.getConferenceBySlug(route.params.slug as string)
 
     if (!conference) {
         throw createError({
@@ -29,11 +26,10 @@ const { data: pageData, error } = useAsyncData(route.fullPath, async () => {
         })
     }
 
-    return { conference, ticketSettings }
+    return { conference }
 })
 
 const conference = computed(() => pageData.value?.conference)
-const ticketSettings = computed(() => pageData.value?.ticketSettings)
 
 // Check if ticketing is enabled
 const ticketingAvailable = computed(() => {
@@ -105,7 +101,11 @@ const breadcrumbs = computed(() => [
                 :conference-id="conference.id"
                 :conference-slug="conference.slug"
                 :conference-title="conference.title"
-                :ticket-settings="ticketSettings"
+                :ticket-settings="{
+                    ticket_early_bird_price_cents: conference.ticket_early_bird_price_cents,
+                    ticket_regular_price_cents: conference.ticket_regular_price_cents,
+                    ticket_early_bird_deadline: conference.ticket_early_bird_deadline,
+                }"
             />
 
             <!-- Loading state -->

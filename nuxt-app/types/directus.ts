@@ -137,6 +137,10 @@ export interface DirectusConferenceItem {
     }[],
     tickets_text: string,
     ticketing_enabled: boolean,
+    ticket_early_bird_price_cents: number | null,
+    ticket_regular_price_cents: number | null,
+    ticket_early_bird_deadline: string | null,
+    ticket_max_quantity: number | null,
     partners: {
       partner: PartnerItem
       sort: number
@@ -523,11 +527,12 @@ export interface DirectusTicketItem {
     additional_notes: string | null
 }
 
-export interface DirectusTicketSettingsItem {
-    id: number
-    early_bird_price_cents: number
-    regular_price_cents: number
-    discounted_price_cents: number
-    early_bird_deadline: string
-    discount_code: string | null
+export interface DirectusTicketDiscountCodeItem {
+    id: string
+    conference: string
+    code: string
+    price_cents: number
+    label: string | null
+    max_uses: number | null
+    active: boolean
 }

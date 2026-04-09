@@ -1,18 +1,21 @@
 export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const sessionId = query.session_id as string
+    const orderId = query.order_id as string
 
-    if (!sessionId) {
+    if (!sessionId && !orderId) {
         throw createError({
             statusCode: 400,
-            message: 'session_id is required',
+            message: 'session_id or order_id is required',
         })
     }
 
     try {
         const directus = useAuthenticatedDirectus()
 
-        const order = await directus.getTicketOrderBySessionId(sessionId)
+        const order = orderId
+            ? await directus.getTicketOrder(orderId)
+            : await directus.getTicketOrderBySessionId(sessionId)
 
         if (!order) {
             return { ready: false, ticketCount: 0 }

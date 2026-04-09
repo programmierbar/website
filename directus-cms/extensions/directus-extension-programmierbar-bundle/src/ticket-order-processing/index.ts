@@ -102,9 +102,9 @@ export default defineHook(({ action }, hookContext) => {
                     continue
                 }
 
-                // Get conference details (title + start_on for invoice year)
+                // Get conference details (title + start_on for invoice year + ticket limit)
                 const conference = await conferencesService.readOne(order.conference, {
-                    fields: ['title', 'start_on'],
+                    fields: ['title', 'start_on', 'ticket_max_quantity'],
                 })
 
                 if (!conference) {
@@ -132,6 +132,28 @@ export default defineHook(({ action }, hookContext) => {
                     logger.error(`${HOOK_NAME}: No attendees found for order ${orderId}`)
                     continue
                 }
+
+                // Hard limit check: verify ticket limit before creating tickets
+                if (conference.ticket_max_quantity !== null && conference.ticket_max_quantity !== undefined) {
+                    const existingTickets = await ticketsService.readByQuery({
+                        filter: {
+                            conference: { _eq: order.conference },
+                            status: { _neq: 'cancelled' },
+                        },
+                        aggregate: { count: ['id'] },
+                    })
+                    const currentCount = Number(existingTickets?.[0]?.count?.id ?? 0)
+                    if (currentCount + attendees.length > conference.ticket_max_quantity) {
+                        logger.error(
+                            `${HOOK_NAME}: Ticket limit exceeded for conference ${order.conference}. ` +
+                            `Current: ${currentCount}, requested: ${attendees.length}, limit: ${conference.ticket_max_quantity}. ` +
+                            `Marking order ${orderId} as cancelled.`
+                        )
+                        await ordersService.updateOne(orderId, { status: 'cancelled' })
+                        continue
+                    }
+                }
+
 
                 const pricePerTicket = Math.round((order.total_cents || 0) / attendees.length)
                 const purchaserName = `${order.purchaser_first_name} ${order.purchaser_last_name}`

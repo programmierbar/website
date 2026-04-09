@@ -12,10 +12,9 @@ const props = defineProps<{
     conferenceSlug: string
     conferenceTitle: string
     ticketSettings?: {
-        early_bird_price_cents: number
-        regular_price_cents: number
-        discounted_price_cents: number
-        early_bird_deadline: string
+        ticket_early_bird_price_cents: number | null
+        ticket_regular_price_cents: number | null
+        ticket_early_bird_deadline: string | null
     } | null
 }>()
 
