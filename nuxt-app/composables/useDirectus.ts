@@ -99,6 +99,14 @@ export function useDirectus() {
         )
     }
 
+    async function getAgbPage() {
+      return await directus.request(
+        readSingleton('agb_page', {
+          fields: ['*'],
+        })
+      )
+    }
+
     async function getImprintPage() {
         return await directus.request(
             readSingleton('imprint_page', {
@@ -889,6 +897,7 @@ export function useDirectus() {
         getPicksOfTheDayPage,
         getAboutPage,
         getPrivacyPage,
+        getAgbPage,
         getRafflePage,
         getLoginPage,
         getProfileCreationPage,
