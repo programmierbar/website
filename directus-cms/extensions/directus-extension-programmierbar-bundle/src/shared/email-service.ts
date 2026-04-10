@@ -84,7 +84,7 @@ export async function getSetting(
         const schema = await getSchema()
         const settingsService = new ItemsService('automation_settings', {
             schema,
-            accountability: accountability || { admin: true },
+            accountability: { admin: true },
         })
 
         const settings = await settingsService.readByQuery({
@@ -120,7 +120,7 @@ export async function getSettings(
         const schema = await getSchema()
         const settingsService = new ItemsService('automation_settings', {
             schema,
-            accountability: accountability || { admin: true },
+            accountability: { admin: true },
         })
 
         const settings = await settingsService.readByQuery({
@@ -152,7 +152,7 @@ export async function getEmailTemplate(
         const schema = await getSchema()
         const templatesService = new ItemsService('email_templates', {
             schema,
-            accountability: accountability || { admin: true },
+            accountability: { admin: true },
         })
 
         const templates = await templatesService.readByQuery({
@@ -201,7 +201,7 @@ export async function sendTemplatedEmail(
         // Create MailService instance
         const mailService = new MailService({
             schema,
-            accountability: accountability || { admin: true },
+            accountability: { admin: true },
         })
 
         // Send the email
@@ -249,7 +249,7 @@ export async function sendRawEmail(
 
         const mailService = new MailService({
             schema,
-            accountability: accountability || { admin: true },
+            accountability: { admin: true },
         })
 
         await mailService.send({
