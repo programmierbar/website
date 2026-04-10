@@ -116,7 +116,6 @@ function buildStripeSessionParams(
 
     return {
         mode: 'payment',
-        payment_method_types: ['card'],
         customer_email: purchaserEmail,
         line_items: tickets.map((ticket) => ({
             price_data: {
