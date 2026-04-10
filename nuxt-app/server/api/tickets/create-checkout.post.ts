@@ -2,7 +2,7 @@ import type Stripe from 'stripe'
 import { CreateCheckoutSchema } from '../../utils/schema'
 import { getStripe } from '../../utils/stripe'
 import { isEarlyBirdPeriod } from '../../utils/ticketSettings'
-import { VAT_RATE, VAT_RATE_PERCENT } from '~/config'
+import { VAT_RATE, VAT_RATE_PERCENT, WEBSITE_URL } from '~/config'
 import type { TicketType, DirectusTicketOrderItem } from '~/types/directus'
 import type { TicketAttendee } from '~/types/items'
 import type { CreateCheckoutInput } from '../../utils/schema'
@@ -112,7 +112,7 @@ function buildStripeSessionParams(
     orderId: string,
     conferenceId: string
 ): Stripe.Checkout.SessionCreateParams {
-    const websiteUrl = process.env.WEBSITE_URL || 'http://localhost:3000'
+    const websiteUrl = WEBSITE_URL
 
     return {
         mode: 'payment',
@@ -209,7 +209,7 @@ export default defineEventHandler(async (event) => {
         const orderPayload = buildOrderPayload(input, orderNumber, pricing, discountCodeId)
         const order = await directus.createTicketOrder(orderPayload)
         const orderId = order.id
-        const websiteUrl = process.env.WEBSITE_URL || 'http://localhost:3000'
+        const websiteUrl = WEBSITE_URL
 
         // Free ticket: skip Stripe, mark as paid directly
         if (pricing.totalGrossCents === 0) {
