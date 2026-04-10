@@ -290,7 +290,12 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
                 this.showPersonalAddress = stored.showPersonalAddress || false
                 this.personalAddress = stored.personalAddress || null
                 this.discountCode = stored.discountCode || ''
-                this.discountValid = stored.discountValid || false
+                this.discountValid = false
+
+                // Re-validate discount code if one was persisted
+                if (stored.discountValid && stored.discountCode) {
+                    this.validateDiscountCode()
+                }
             } else {
                 // Initialize fresh state
                 this.conferenceId = id
