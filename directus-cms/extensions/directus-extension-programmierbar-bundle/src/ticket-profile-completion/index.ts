@@ -1,6 +1,11 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { sendTemplatedEmail, getSetting, type EmailServiceContext } from '../shared/email-service.js'
 import { generateQRCodeBuffer } from '../shared/ticket-utils.js'
+import {
+    generateAppleWalletPass,
+    generateGoogleWalletUrl,
+    type WalletPassInput,
+} from '../shared/wallet-pass-generator.js'
 
 const HOOK_NAME = 'ticket-profile-completion'
 
@@ -8,6 +13,7 @@ export default defineHook(({ action }, hookContext) => {
     const logger = hookContext.logger
     const services = hookContext.services
     const getSchema = hookContext.getSchema
+    const env = hookContext.env
     const ItemsService = services.ItemsService
 
     // Check if MailService is available
@@ -16,7 +22,7 @@ export default defineHook(({ action }, hookContext) => {
     }
 
     /**
-     * Send final ticket email with QR code when profile_status changes to 'completed'
+     * Send final ticket email with QR code and wallet passes when profile_status changes to 'completed'
      */
     action('tickets.items.update', async function (metadata, eventContext) {
         const { payload, keys } = metadata
@@ -59,6 +65,7 @@ export default defineHook(({ action }, hookContext) => {
                         'attendee_first_name',
                         'attendee_last_name',
                         'attendee_email',
+                        'profile_token',
                     ],
                 })
 
@@ -68,7 +75,7 @@ export default defineHook(({ action }, hookContext) => {
                 }
 
                 const conference = await conferencesService.readOne(ticket.conference, {
-                    fields: ['title'],
+                    fields: ['title', 'start_on', 'end_on'],
                 })
 
                 if (!conference) {
@@ -81,7 +88,53 @@ export default defineHook(({ action }, hookContext) => {
                 const attendeeName = `${ticket.attendee_first_name} ${ticket.attendee_last_name}`
                 const qrCid = `qrcode-${ticket.ticket_code}@programmier.bar`
 
-                // Send final ticket email with QR code as CID attachment
+                // Generate wallet passes
+                const walletInput: WalletPassInput = {
+                    ticketCode: ticket.ticket_code,
+                    attendeeName,
+                    attendeeEmail: ticket.attendee_email,
+                    conferenceTitle: conference.title,
+                    conferenceDate: conference.start_on,
+                    conferenceEndDate: conference.end_on,
+                    websiteUrl,
+                }
+
+                const attachments = [
+                    {
+                        filename: `qrcode-${ticket.ticket_code}.png`,
+                        content: qrCodeBuffer,
+                        contentType: 'image/png',
+                        cid: qrCid,
+                    },
+                ]
+
+                // Apple Wallet: attach .pkpass to email + provide download URL
+                let appleWalletUrl: string | null = null
+                try {
+                    const applePassBuffer = await generateAppleWalletPass(walletInput, env)
+                    if (applePassBuffer) {
+                        attachments.push({
+                            filename: `${ticket.ticket_code}.pkpass`,
+                            content: applePassBuffer,
+                            contentType: 'application/vnd.apple.pkpass',
+                            cid: '',
+                        })
+                        const tokenParam = encodeURIComponent(ticket.profile_token)
+                        appleWalletUrl = `${websiteUrl}/api/directus/ticket-wallet/apple/${ticket.ticket_code}?token=${tokenParam}`
+                    }
+                } catch (err: any) {
+                    logger.warn(`${HOOK_NAME}: Apple Wallet pass generation failed: ${err?.message || err}`)
+                }
+
+                // Google Wallet: generate "Add to Wallet" URL
+                let googleWalletUrl: string | null = null
+                try {
+                    googleWalletUrl = generateGoogleWalletUrl(walletInput, env)
+                } catch (err: any) {
+                    logger.warn(`${HOOK_NAME}: Google Wallet URL generation failed: ${err?.message || err}`)
+                }
+
+                // Send final ticket email with QR code and wallet links
                 await sendTemplatedEmail(
                     {
                         templateKey: 'ticket_profile_completed',
@@ -91,21 +144,17 @@ export default defineHook(({ action }, hookContext) => {
                             conference_title: conference.title,
                             ticket_code: ticket.ticket_code,
                             qr_code_cid: qrCid,
+                            apple_wallet_url: appleWalletUrl || '',
+                            google_wallet_url: googleWalletUrl || '',
                         },
-                        attachments: [
-                            {
-                                filename: `qrcode-${ticket.ticket_code}.png`,
-                                content: qrCodeBuffer,
-                                contentType: 'image/png',
-                                cid: qrCid,
-                            },
-                        ],
+                        attachments,
                     },
                     context
                 )
 
                 logger.info(
-                    `${HOOK_NAME}: Sent final ticket email with QR code to ${ticket.attendee_email} (${ticket.ticket_code})`
+                    `${HOOK_NAME}: Sent final ticket email to ${ticket.attendee_email} (${ticket.ticket_code})` +
+                        `${appleWalletUrl ? ' +Apple' : ''}${googleWalletUrl ? ' +Google' : ''}`
                 )
             }
         } catch (err: any) {

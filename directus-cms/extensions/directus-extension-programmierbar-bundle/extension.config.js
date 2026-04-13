@@ -1,17 +1,16 @@
 /**
  * Custom Rollup config for the Directus extension bundle.
  *
- * pdfkit uses `__dirname` internally to locate built-in font files.
- * When bundled into an ESM module, `__dirname` is not available.
- * By marking pdfkit as external, it loads from node_modules at runtime
- * where CJS globals (__dirname) work correctly.
+ * Some dependencies (pdfkit, passkit-generator) use Node.js globals like
+ * `__dirname` or native modules that don't work when bundled into ESM.
+ * By marking them as external, they load from node_modules at runtime.
  */
 export default {
     plugins: [
         {
-            name: 'externalize-pdfkit',
+            name: 'externalize-native-modules',
             resolveId(id) {
-                if (id === 'pdfkit') {
+                if (id === 'pdfkit' || id === 'passkit-generator') {
                     return { id, external: true }
                 }
                 return null

@@ -118,6 +118,11 @@
                 "type": "hook",
                 "name": "ticket-profile-completion",
                 "source": "src/ticket-profile-completion/index.ts"
+            },
+            {
+                "type": "endpoint",
+                "name": "ticket-wallet",
+                "source": "src/ticket-wallet/index.ts"
             }
         ],
         "host": "^10.10.0"
@@ -135,6 +140,7 @@
         "test:watch": "jest --watch"
     },
     "dependencies": {
+        "passkit-generator": "^3.5.0",
         "pdfkit": "^0.16.0",
         "qrcode": "^1.5.4"
     },
