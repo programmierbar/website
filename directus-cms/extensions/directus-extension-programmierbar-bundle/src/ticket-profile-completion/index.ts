@@ -1,6 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { sendTemplatedEmail, getSetting, type EmailServiceContext } from '../shared/email-service.js'
-import { generateQRCodeDataUrl, buildTicketCardHtml } from '../shared/qr-utils.js'
+import { generateQRCodeBuffer } from '../shared/ticket-utils.js'
 
 const HOOK_NAME = 'ticket-profile-completion'
 
@@ -76,18 +76,12 @@ export default defineHook(({ action }, hookContext) => {
                     continue
                 }
 
-                // Generate QR code now that profile is complete
-                const qrCodeDataUrl = await generateQRCodeDataUrl(ticket.ticket_code, websiteUrl)
+                // Generate QR code as buffer for CID embedding
+                const qrCodeBuffer = await generateQRCodeBuffer(ticket.ticket_code, websiteUrl)
                 const attendeeName = `${ticket.attendee_first_name} ${ticket.attendee_last_name}`
+                const qrCid = `qrcode-${ticket.ticket_code}@programmier.bar`
 
-                const ticketCardHtml = buildTicketCardHtml({
-                    attendeeName,
-                    attendeeEmail: ticket.attendee_email,
-                    ticketCode: ticket.ticket_code,
-                    qrCodeDataUrl,
-                })
-
-                // Send final ticket email with QR code
+                // Send final ticket email with QR code as CID attachment
                 await sendTemplatedEmail(
                     {
                         templateKey: 'ticket_profile_completed',
@@ -96,9 +90,16 @@ export default defineHook(({ action }, hookContext) => {
                             attendee_name: attendeeName,
                             conference_title: conference.title,
                             ticket_code: ticket.ticket_code,
-                            qr_code_data_url: qrCodeDataUrl,
-                            ticket_card_html: ticketCardHtml,
+                            qr_code_cid: qrCid,
                         },
+                        attachments: [
+                            {
+                                filename: `qrcode-${ticket.ticket_code}.png`,
+                                content: qrCodeBuffer,
+                                contentType: 'image/png',
+                                cid: qrCid,
+                            },
+                        ],
                     },
                     context
                 )
