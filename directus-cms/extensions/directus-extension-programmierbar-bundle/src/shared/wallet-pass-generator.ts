@@ -52,11 +52,17 @@ function loadAppleConfig(env: Record<string, string>): AppleWalletConfig | null 
 }
 
 function loadWalletAssets(): Record<string, Buffer> {
-    const distDir = path.dirname(fileURLToPath(import.meta.url))
-    const assetsDir = path.resolve(distDir, '..', 'assets', 'wallet')
-    const files: Record<string, Buffer> = {}
+    const currentDir = path.dirname(fileURLToPath(import.meta.url))
+    // Works from both dist/ (built) and src/shared/ (tsx)
+    const candidates = [
+        path.resolve(currentDir, '..', 'assets', 'wallet'),
+        path.resolve(currentDir, '..', '..', 'assets', 'wallet'),
+    ]
+    const assetsDir = candidates.find((dir) => fs.existsSync(dir))
+    if (!assetsDir) return {}
 
-    const expected = ['icon.png', 'icon@2x.png', 'logo.png', 'logo@2x.png']
+    const files: Record<string, Buffer> = {}
+    const expected = ['icon.png', 'icon@2x.png', 'logo.png', 'logo@2x.png', 'background.png', 'background@2x.png']
     for (const name of expected) {
         const filePath = path.join(assetsDir, name)
         if (fs.existsSync(filePath)) {
@@ -240,6 +246,19 @@ export function generateGoogleWalletUrl(
         },
     }
 
+    // Include class definition in the JWT so Google creates it on-the-fly if needed
+    const eventTicketClass = {
+        id: classId,
+        issuerName: 'programmier.bar',
+        eventName: {
+            defaultValue: {
+                language: 'de',
+                value: input.conferenceTitle,
+            },
+        },
+        reviewStatus: 'UNDER_REVIEW',
+    }
+
     const now = Math.floor(Date.now() / 1000)
     const jwtPayload = {
         iss: config.serviceAccountEmail,
@@ -248,6 +267,7 @@ export function generateGoogleWalletUrl(
         iat: now,
         origins: [input.websiteUrl],
         payload: {
+            eventTicketClasses: [eventTicketClass],
             eventTicketObjects: [eventTicketObject],
         },
     }
