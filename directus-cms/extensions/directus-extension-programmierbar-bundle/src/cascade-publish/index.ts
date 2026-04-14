@@ -43,26 +43,27 @@ export default defineHook(({ action }, hookContext) => {
     const getSchema = hookContext.getSchema
     const env = hookContext.env
 
-    action('podcasts.items.create', async (metadata) => {
-        await handlePublishAction('podcasts', metadata, PODCAST_RELATIONS)
+    action('podcasts.items.create', async (metadata, eventContext) => {
+        await handlePublishAction('podcasts', metadata, PODCAST_RELATIONS, eventContext)
     })
 
-    action('podcasts.items.update', async (metadata) => {
-        await handlePublishAction('podcasts', metadata, PODCAST_RELATIONS)
+    action('podcasts.items.update', async (metadata, eventContext) => {
+        await handlePublishAction('podcasts', metadata, PODCAST_RELATIONS, eventContext)
     })
 
-    action('meetups.items.create', async (metadata) => {
-        await handlePublishAction('meetups', metadata, MEETUP_RELATIONS)
+    action('meetups.items.create', async (metadata, eventContext) => {
+        await handlePublishAction('meetups', metadata, MEETUP_RELATIONS, eventContext)
     })
 
-    action('meetups.items.update', async (metadata) => {
-        await handlePublishAction('meetups', metadata, MEETUP_RELATIONS)
+    action('meetups.items.update', async (metadata, eventContext) => {
+        await handlePublishAction('meetups', metadata, MEETUP_RELATIONS, eventContext)
     })
 
     async function handlePublishAction(
         parentCollection: string,
         metadata: Record<string, any>,
-        relations: CascadeRelation[]
+        relations: CascadeRelation[],
+        eventContext: Record<string, any>
     ) {
         if (metadata.payload.status !== 'published') {
             return
@@ -92,14 +93,17 @@ export default defineHook(({ action }, hookContext) => {
             }
 
             // Read the parent item with nested relation data
-            const parentService = new ItemsService(parentCollection, { schema })
+            const parentService = new ItemsService(parentCollection, {
+                schema,
+                accountability: eventContext.accountability,
+            })
             const parentItem = await parentService.readOne(parentKey, { fields })
 
             const errors: Error[] = []
 
             for (const relation of relations) {
                 try {
-                    await cascadePublishRelation(schema, parentItem, relation)
+                    await cascadePublishRelation(schema, parentItem, relation, eventContext)
                 } catch (error: any) {
                     logger.error(
                         `${HOOK_NAME}: Failed to cascade ${relation.targetCollection} for ${parentCollection} ${parentKey}: ${error.message}`
@@ -122,7 +126,7 @@ export default defineHook(({ action }, hookContext) => {
         }
     }
 
-    async function cascadePublishRelation(schema: any, parentItem: any, relation: CascadeRelation) {
+    async function cascadePublishRelation(schema: any, parentItem: any, relation: CascadeRelation, eventContext: Record<string, any>) {
         const relatedItems = parentItem[relation.relationField]
         if (!Array.isArray(relatedItems) || relatedItems.length === 0) {
             logger.info(`${HOOK_NAME}: No related ${relation.targetCollection} items found`)
@@ -145,7 +149,10 @@ export default defineHook(({ action }, hookContext) => {
             return
         }
 
-        const targetService = new ItemsService(relation.targetCollection, { schema })
+        const targetService = new ItemsService(relation.targetCollection, {
+            schema,
+            accountability: eventContext.accountability,
+        })
         await targetService.updateMany(draftIds, { status: 'published' })
 
         logger.info(
