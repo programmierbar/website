@@ -119,8 +119,9 @@ export default defineHook(({ action }, hookContext) => {
                             contentType: 'application/vnd.apple.pkpass',
                             cid: '',
                         })
+                        const directusUrl = (env.PUBLIC_URL || '').replace(/\/+$/, '')
                         const tokenParam = encodeURIComponent(ticket.profile_token)
-                        appleWalletUrl = `${websiteUrl}/api/directus/ticket-wallet/apple/${ticket.ticket_code}?token=${tokenParam}`
+                        appleWalletUrl = `${directusUrl}/ticket-wallet/apple/${ticket.ticket_code}?token=${tokenParam}`
                     }
                 } catch (err: any) {
                     logger.warn(`${HOOK_NAME}: Apple Wallet pass generation failed: ${err?.message || err}`)
