@@ -219,7 +219,7 @@ export function generateGoogleWalletUrl(
         state: 'ACTIVE',
         heroImage: {
             sourceUri: {
-                uri: `${input.websiteUrl}/og-image.png`,
+                uri: `${input.websiteUrl}/wallet_google_hero.png`,
             },
         },
         textModulesData: [
@@ -250,6 +250,12 @@ export function generateGoogleWalletUrl(
     const eventTicketClass = {
         id: classId,
         issuerName: 'programmier.bar',
+        logo: {
+            sourceUri: {
+                uri: `${input.websiteUrl}/wallet_google_logo.png`,
+            },
+        },
+        hexBackgroundColor: '#003F64',
         eventName: {
             defaultValue: {
                 language: 'de',
