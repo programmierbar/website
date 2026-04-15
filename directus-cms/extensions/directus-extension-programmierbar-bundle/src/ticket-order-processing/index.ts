@@ -2,7 +2,7 @@ import { defineHook } from '@directus/extensions-sdk'
 import { randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
 import { sendTemplatedEmail, getSetting, type EmailServiceContext } from '../shared/email-service.js'
-import { generateUniqueTicketCode, formatPrice } from '../shared/qr-utils.js'
+import { generateUniqueTicketCode, formatPrice } from '../shared/ticket-utils.js'
 import {
     generateInvoicePdf,
     generateInvoiceNumber,

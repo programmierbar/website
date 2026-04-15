@@ -59,6 +59,7 @@ export interface EmailAttachment {
     filename: string
     content: Buffer
     contentType?: string
+    cid?: string
 }
 
 export interface SendEmailOptions {
@@ -216,6 +217,7 @@ export async function sendTemplatedEmail(
                     filename: a.filename,
                     content: a.content,
                     contentType: a.contentType || 'application/pdf',
+                    ...(a.cid && { cid: a.cid }),
                 })),
             }),
         })
