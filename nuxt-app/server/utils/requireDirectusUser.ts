@@ -13,6 +13,14 @@ export async function requireDirectusUser(event: H3Event) {
         throw createError({ statusCode: 401, message: 'Not authenticated' })
     }
 
+    // Attempt to refresh the session first, so short-lived access tokens
+    // don't cause 401s while a valid refresh token still exists.
+    await fetch(`${config.public.directusCmsUrl}/auth/refresh`, {
+        method: 'POST',
+        headers: { cookie, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'cookie' }),
+    }).catch(() => {})
+
     const response = await fetch(`${config.public.directusCmsUrl}/users/me`, {
         headers: { cookie },
     })

@@ -126,8 +126,6 @@ let scanner: any = null
 let scanCooldown = false
 
 onMounted(async () => {
-    await refreshStats()
-
     try {
         const user = await directus.getCurrentUser()
         isAuthenticated.value = !!user
@@ -137,6 +135,7 @@ onMounted(async () => {
     authChecked.value = true
 
     if (isAuthenticated.value) {
+        await refreshStats()
         await initScanner()
     }
 })
