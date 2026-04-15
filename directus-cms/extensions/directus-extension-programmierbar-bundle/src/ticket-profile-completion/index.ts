@@ -53,6 +53,8 @@ export default defineHook(({ action }, hookContext) => {
             })
 
             const websiteUrl = (await getSetting('website_url', context)) || 'https://programmier.bar'
+            const venueName = await getSetting('conference_venue_name', context)
+            const venueAddress = await getSetting('conference_venue_address', context)
 
             for (const ticketId of keys) {
                 logger.info(`${HOOK_NAME}: Processing completed profile for ticket ${ticketId}`)
@@ -96,6 +98,8 @@ export default defineHook(({ action }, hookContext) => {
                     conferenceTitle: conference.title,
                     conferenceDate: conference.start_on,
                     conferenceEndDate: conference.end_on,
+                    venueName: venueName || undefined,
+                    venueAddress: venueAddress || undefined,
                     websiteUrl,
                 }
 
