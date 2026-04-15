@@ -3,6 +3,7 @@
  * Run from the extension bundle root:
  *   npx tsx src/shared/__tests__/test-wallet-passes.ts
  */
+import { createSign } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { config } from 'dotenv'
@@ -23,8 +24,154 @@ const dummyTicket: WalletPassInput = {
     websiteUrl: 'https://programmier.bar',
 }
 
+// --- Google Wallet REST API helpers ---
+
+function base64url(input: string | Buffer): string {
+    const buf = typeof input === 'string' ? Buffer.from(input) : input
+    return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+function createOAuthJwt(serviceAccountEmail: string, privateKey: string): string {
+    const now = Math.floor(Date.now() / 1000)
+    const header = { alg: 'RS256', typ: 'JWT' }
+    const payload = {
+        iss: serviceAccountEmail,
+        scope: 'https://www.googleapis.com/auth/wallet_object.issuer',
+        aud: 'https://oauth2.googleapis.com/token',
+        iat: now,
+        exp: now + 3600,
+    }
+    const encodedHeader = base64url(JSON.stringify(header))
+    const encodedPayload = base64url(JSON.stringify(payload))
+    const sign = createSign('RSA-SHA256')
+    sign.update(`${encodedHeader}.${encodedPayload}`)
+    const signature = base64url(sign.sign(privateKey))
+    return `${encodedHeader}.${encodedPayload}.${signature}`
+}
+
+async function getAccessToken(serviceAccountEmail: string, privateKey: string): Promise<string> {
+    const jwt = createOAuthJwt(serviceAccountEmail, privateKey)
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+    })
+    const data = await res.json() as any
+    if (!res.ok) {
+        throw new Error(`OAuth failed: ${JSON.stringify(data)}`)
+    }
+    return data.access_token
+}
+
+async function upsertGoogleWalletClass(env: Record<string, string>): Promise<void> {
+    const issuerId = env.GOOGLE_WALLET_ISSUER_ID
+    const email = env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL
+    const privateKey = Buffer.from(env.GOOGLE_WALLET_PRIVATE_KEY_BASE64, 'base64').toString('utf-8')
+
+    // Must match the constant in wallet-pass-generator.ts
+    const classSuffix = 'programmiercon_ticket_v4'
+    const classId = `${issuerId}.${classSuffix}`
+
+    const classDefinition = {
+        id: classId,
+        issuerName: 'programmier.bar',
+        logo: {
+            sourceUri: {
+                uri: `${dummyTicket.websiteUrl}/wallet_google_logo.png`,
+            },
+        },
+        hexBackgroundColor: '#003F64',
+        eventName: {
+            defaultValue: {
+                language: 'de',
+                value: dummyTicket.conferenceTitle,
+            },
+        },
+        venue: {
+            name: {
+                defaultValue: {
+                    language: 'de',
+                    value: 'Bad Nauheim',
+                },
+            },
+            address: {
+                defaultValue: {
+                    language: 'de',
+                    value: 'Bad Nauheim, Deutschland',
+                },
+            },
+        },
+        dateTime: {
+            start: dummyTicket.conferenceDate,
+            end: dummyTicket.conferenceEndDate,
+        },
+        reviewStatus: 'UNDER_REVIEW',
+    }
+
+    console.log('Getting OAuth access token...')
+    const accessToken = await getAccessToken(email, privateKey)
+
+    console.log(`Upserting class ${classId}...`)
+
+    // Try PUT (update) first, then POST (create) if 404
+    const putRes = await fetch(
+        `https://walletobjects.googleapis.com/walletobjects/v1/eventTicketClass/${classId}`,
+        {
+            method: 'PUT',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(classDefinition),
+        }
+    )
+
+    if (putRes.ok) {
+        console.log('Class updated successfully via REST API')
+        const data = await putRes.json()
+        console.log('Class data:', JSON.stringify(data, null, 2))
+        return
+    }
+
+    if (putRes.status === 404) {
+        console.log('Class not found, creating...')
+        const postRes = await fetch(
+            'https://walletobjects.googleapis.com/walletobjects/v1/eventTicketClass',
+            {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(classDefinition),
+            }
+        )
+        if (postRes.ok) {
+            console.log('Class created successfully via REST API')
+            const data = await postRes.json()
+            console.log('Class data:', JSON.stringify(data, null, 2))
+        } else {
+            const err = await postRes.text()
+            console.error(`Failed to create class (${postRes.status}): ${err}`)
+        }
+        return
+    }
+
+    const err = await putRes.text()
+    console.error(`Failed to update class (${putRes.status}): ${err}`)
+}
+
+// --- Main ---
+
 async function main() {
     const env = process.env as Record<string, string>
+    const command = process.argv[2]
+
+    // If called with "upsert-class", just create/update the Google class via REST API
+    if (command === 'upsert-class') {
+        await upsertGoogleWalletClass(env)
+        return
+    }
 
     console.log('\n--- Apple Wallet ---')
     const hasAppleConfig = !!(
@@ -57,7 +204,6 @@ async function main() {
     console.log('\n--- Google Wallet ---')
     const hasGoogleConfig = !!(
         env.GOOGLE_WALLET_ISSUER_ID &&
-        env.GOOGLE_WALLET_CLASS_ID &&
         env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL &&
         env.GOOGLE_WALLET_PRIVATE_KEY_BASE64
     )
@@ -90,7 +236,7 @@ async function main() {
             '  Apple:  APPLE_WALLET_PASS_TYPE_ID, APPLE_WALLET_TEAM_ID, APPLE_WALLET_SIGNER_CERT_BASE64, APPLE_WALLET_SIGNER_KEY_BASE64, APPLE_WALLET_WWDR_BASE64'
         )
         console.log(
-            '  Google: GOOGLE_WALLET_ISSUER_ID, GOOGLE_WALLET_CLASS_ID, GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL, GOOGLE_WALLET_PRIVATE_KEY_BASE64'
+            '  Google: GOOGLE_WALLET_ISSUER_ID, GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL, GOOGLE_WALLET_PRIVATE_KEY_BASE64'
         )
     }
 }

@@ -22,9 +22,10 @@ interface AppleWalletConfig {
     wwdr: string | Buffer
 }
 
+const GOOGLE_WALLET_CLASS_SUFFIX = 'programmiercon_ticket_v4'
+
 interface GoogleWalletConfig {
     issuerId: string
-    classId: string
     serviceAccountEmail: string
     privateKey: string
 }
@@ -168,17 +169,15 @@ export async function generateAppleWalletPass(
 
 function loadGoogleConfig(env: Record<string, string>): GoogleWalletConfig | null {
     const issuerId = env.GOOGLE_WALLET_ISSUER_ID
-    const classId = env.GOOGLE_WALLET_CLASS_ID
     const email = env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL
     const keyBase64 = env.GOOGLE_WALLET_PRIVATE_KEY_BASE64
 
-    if (!issuerId || !classId || !email || !keyBase64) {
+    if (!issuerId || !email || !keyBase64) {
         return null
     }
 
     return {
         issuerId,
-        classId,
         serviceAccountEmail: email,
         privateKey: Buffer.from(keyBase64, 'base64').toString('utf-8'),
     }
@@ -211,7 +210,7 @@ export function generateGoogleWalletUrl(
 
     const verifyUrl = `${input.websiteUrl}/ticket/${input.ticketCode}`
     const objectId = `${config.issuerId}.${input.ticketCode}`
-    const classId = `${config.issuerId}.${config.classId}`
+    const classId = `${config.issuerId}.${GOOGLE_WALLET_CLASS_SUFFIX}`
 
     const eventTicketObject = {
         id: objectId,
@@ -261,6 +260,24 @@ export function generateGoogleWalletUrl(
                 language: 'de',
                 value: input.conferenceTitle,
             },
+        },
+        venue: {
+            name: {
+                defaultValue: {
+                    language: 'de',
+                    value: 'Bad Nauheim',
+                },
+            },
+            address: {
+                defaultValue: {
+                    language: 'de',
+                    value: 'Bad Nauheim, Deutschland',
+                },
+            },
+        },
+        dateTime: {
+            start: input.conferenceDate,
+            ...(input.conferenceEndDate && { end: input.conferenceEndDate }),
         },
         reviewStatus: 'UNDER_REVIEW',
     }
