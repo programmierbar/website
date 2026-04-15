@@ -11,6 +11,8 @@ export interface WalletPassInput {
     conferenceTitle: string
     conferenceDate: string // ISO date string (start_on)
     conferenceEndDate?: string // ISO date string (end_on)
+    venueName?: string // e.g. "Bad Nauheim"
+    venueAddress?: string // e.g. "Bad Nauheim, Deutschland"
     websiteUrl: string
 }
 
@@ -22,10 +24,9 @@ interface AppleWalletConfig {
     wwdr: string | Buffer
 }
 
-const GOOGLE_WALLET_CLASS_SUFFIX = 'programmiercon_ticket_v4'
-
 interface GoogleWalletConfig {
     issuerId: string
+    classSuffix: string
     serviceAccountEmail: string
     privateKey: string
 }
@@ -143,11 +144,22 @@ export async function generateAppleWalletPass(
         }
     )
 
-    pass.auxiliaryFields.push({
-        key: 'ticketCode',
-        label: 'TICKET-CODE',
-        value: input.ticketCode,
-    })
+    pass.auxiliaryFields.push(
+        {
+            key: 'ticketCode',
+            label: 'TICKET-CODE',
+            value: input.ticketCode,
+        },
+        ...(input.venueName
+            ? [
+                  {
+                      key: 'location',
+                      label: 'ORT',
+                      value: input.venueName,
+                  },
+              ]
+            : [])
+    )
 
     pass.backFields.push(
         {
@@ -169,15 +181,17 @@ export async function generateAppleWalletPass(
 
 function loadGoogleConfig(env: Record<string, string>): GoogleWalletConfig | null {
     const issuerId = env.GOOGLE_WALLET_ISSUER_ID
+    const classSuffix = env.GOOGLE_WALLET_CLASS_ID
     const email = env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL
     const keyBase64 = env.GOOGLE_WALLET_PRIVATE_KEY_BASE64
 
-    if (!issuerId || !email || !keyBase64) {
+    if (!issuerId || !classSuffix || !email || !keyBase64) {
         return null
     }
 
     return {
         issuerId,
+        classSuffix,
         serviceAccountEmail: email,
         privateKey: Buffer.from(keyBase64, 'base64').toString('utf-8'),
     }
@@ -210,7 +224,7 @@ export function generateGoogleWalletUrl(
 
     const verifyUrl = `${input.websiteUrl}/ticket/${input.ticketCode}`
     const objectId = `${config.issuerId}.${input.ticketCode}`
-    const classId = `${config.issuerId}.${GOOGLE_WALLET_CLASS_SUFFIX}`
+    const classId = `${config.issuerId}.${config.classSuffix}`
 
     const eventTicketObject = {
         id: objectId,
@@ -261,20 +275,24 @@ export function generateGoogleWalletUrl(
                 value: input.conferenceTitle,
             },
         },
-        venue: {
-            name: {
-                defaultValue: {
-                    language: 'de',
-                    value: 'Bad Nauheim',
+        ...(input.venueName && {
+            venue: {
+                name: {
+                    defaultValue: {
+                        language: 'de',
+                        value: input.venueName,
+                    },
                 },
+                ...(input.venueAddress && {
+                    address: {
+                        defaultValue: {
+                            language: 'de',
+                            value: input.venueAddress,
+                        },
+                    },
+                }),
             },
-            address: {
-                defaultValue: {
-                    language: 'de',
-                    value: 'Bad Nauheim, Deutschland',
-                },
-            },
-        },
+        }),
         dateTime: {
             start: input.conferenceDate,
             ...(input.conferenceEndDate && { end: input.conferenceEndDate }),

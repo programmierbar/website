@@ -21,6 +21,8 @@ const dummyTicket: WalletPassInput = {
     conferenceTitle: 'programmier.con 2026',
     conferenceDate: '2026-11-25T08:00:00.000Z',
     conferenceEndDate: '2026-11-26T22:00:00.000Z',
+    venueName: 'Bad Nauheim',
+    venueAddress: 'Bad Nauheim, Deutschland',
     websiteUrl: 'https://programmier.bar',
 }
 
@@ -65,11 +67,15 @@ async function getAccessToken(serviceAccountEmail: string, privateKey: string): 
 
 async function upsertGoogleWalletClass(env: Record<string, string>): Promise<void> {
     const issuerId = env.GOOGLE_WALLET_ISSUER_ID
+    const classSuffix = env.GOOGLE_WALLET_CLASS_ID
     const email = env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL
     const privateKey = Buffer.from(env.GOOGLE_WALLET_PRIVATE_KEY_BASE64, 'base64').toString('utf-8')
 
-    // Must match the constant in wallet-pass-generator.ts
-    const classSuffix = 'programmiercon_ticket_v4'
+    if (!classSuffix) {
+        console.error('GOOGLE_WALLET_CLASS_ID env var is required')
+        return
+    }
+
     const classId = `${issuerId}.${classSuffix}`
 
     const classDefinition = {
@@ -87,20 +93,24 @@ async function upsertGoogleWalletClass(env: Record<string, string>): Promise<voi
                 value: dummyTicket.conferenceTitle,
             },
         },
-        venue: {
-            name: {
-                defaultValue: {
-                    language: 'de',
-                    value: 'Bad Nauheim',
+        ...(dummyTicket.venueName && {
+            venue: {
+                name: {
+                    defaultValue: {
+                        language: 'de',
+                        value: dummyTicket.venueName,
+                    },
                 },
+                ...(dummyTicket.venueAddress && {
+                    address: {
+                        defaultValue: {
+                            language: 'de',
+                            value: dummyTicket.venueAddress,
+                        },
+                    },
+                }),
             },
-            address: {
-                defaultValue: {
-                    language: 'de',
-                    value: 'Bad Nauheim, Deutschland',
-                },
-            },
-        },
+        }),
         dateTime: {
             start: dummyTicket.conferenceDate,
             end: dummyTicket.conferenceEndDate,
@@ -204,6 +214,7 @@ async function main() {
     console.log('\n--- Google Wallet ---')
     const hasGoogleConfig = !!(
         env.GOOGLE_WALLET_ISSUER_ID &&
+        env.GOOGLE_WALLET_CLASS_ID &&
         env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL &&
         env.GOOGLE_WALLET_PRIVATE_KEY_BASE64
     )
@@ -236,7 +247,7 @@ async function main() {
             '  Apple:  APPLE_WALLET_PASS_TYPE_ID, APPLE_WALLET_TEAM_ID, APPLE_WALLET_SIGNER_CERT_BASE64, APPLE_WALLET_SIGNER_KEY_BASE64, APPLE_WALLET_WWDR_BASE64'
         )
         console.log(
-            '  Google: GOOGLE_WALLET_ISSUER_ID, GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL, GOOGLE_WALLET_PRIVATE_KEY_BASE64'
+            '  Google: GOOGLE_WALLET_ISSUER_ID, GOOGLE_WALLET_CLASS_ID, GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL, GOOGLE_WALLET_PRIVATE_KEY_BASE64'
         )
     }
 }
