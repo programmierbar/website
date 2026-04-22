@@ -8,7 +8,15 @@ export default defineCachedEventHandler(
         const conference = await directus.getLatestConferenceWithTicketing()
 
         if (!conference) {
-            throw createError({ statusCode: 404, message: 'No conference with ticketing found' })
+            return {
+                conference: {
+                    id: null,
+                    title: 'No active conference',
+                    slug: null,
+                },
+                sold: 0,
+                max: 0,
+            }
         }
 
         const sold = await directus.countPaidTicketsForConference(conference.id)
@@ -20,7 +28,7 @@ export default defineCachedEventHandler(
                 slug: conference.slug,
             },
             sold,
-            max: conference.ticket_max_quantity ?? null,
+            max: conference.ticket_max_quantity ?? 0,
         }
     },
     {
