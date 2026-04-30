@@ -91,7 +91,7 @@ useEventListener(useWindow(), 'mousemove', handleMouseCursor)
 
 <style>
 @media (pointer: fine) {
-    * {
+    html.js-custom-cursor * {
         cursor: none !important;
     }
     body {

@@ -9,6 +9,17 @@ const directus = useDirectus()
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+    app: {
+        head: {
+            script: [
+                // Synchronous inline script: adds the class before first paint so cursor: none
+                // CSS (scoped to html.js-custom-cursor) only applies when JS is enabled.
+                // When JS is disabled, this script never runs and the default cursor stays visible.
+                { innerHTML: "document.documentElement.classList.add('js-custom-cursor')" },
+            ],
+        },
+    },
+
     // Target: https://go.nuxtjs.dev/config-target
     ssr: true,
 
