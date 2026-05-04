@@ -135,7 +135,7 @@ async function proceedToPayment() {
         </div>
 
         <!-- Discount code -->
-        <div v-if="!store.isEarlyBird" class="mb-8 rounded-lg border border-gray-700 bg-gray-800/50 p-6">
+        <div class="mb-8 rounded-lg border border-gray-700 bg-gray-800/50 p-6">
             <h3 class="mb-3 text-sm font-bold text-white">Rabattcode</h3>
             <div v-if="store.discountValid" class="flex items-center justify-between">
                 <div>
