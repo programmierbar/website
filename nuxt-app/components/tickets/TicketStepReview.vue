@@ -17,9 +17,13 @@ async function applyDiscountCode() {
     discountMessage.value = ''
     const valid = await store.validateDiscountCode()
     if (valid) {
-        discountMessage.value = store.pricingSettings?.discountLabel
-            ? `Rabattcode "${store.pricingSettings.discountLabel}" angewendet!`
-            : 'Rabattcode erfolgreich angewendet!'
+        if (store.isEmployeeCode) {
+            discountMessage.value = 'Mitarbeiter-Code erkannt — keine Zahlung nötig.'
+        } else {
+            discountMessage.value = store.pricingSettings?.discountLabel
+                ? `Rabattcode "${store.pricingSettings.discountLabel}" angewendet!`
+                : 'Rabattcode erfolgreich angewendet!'
+        }
     } else {
         discountMessage.value = store.error || 'Ungültiger Rabattcode.'
     }
@@ -32,6 +36,7 @@ function removeDiscountCode() {
     if (store.pricingSettings) {
         store.pricingSettings.discountPriceCents = null
         store.pricingSettings.discountLabel = null
+        store.pricingSettings.isEmployeeCode = false
     }
 }
 
@@ -205,11 +210,17 @@ async function proceedToPayment() {
             @click="proceedToPayment"
         >
             <span v-if="store.isLoading">Wird verarbeitet...</span>
+            <span v-else-if="store.isEmployeeCode">Ticket bestätigen</span>
             <span v-else>Zur Zahlung</span>
         </button>
 
         <p class="mt-4 text-center text-sm text-[#848a98]">
-            Du wirst zur sicheren Zahlungsseite von Stripe weitergeleitet.
+            <span v-if="store.isEmployeeCode">
+                Mit dem Mitarbeiter-Code ist keine Zahlung nötig.
+            </span>
+            <span v-else>
+                Du wirst zur sicheren Zahlungsseite von Stripe weitergeleitet.
+            </span>
         </p>
     </div>
 </template>
