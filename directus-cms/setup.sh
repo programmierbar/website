@@ -51,8 +51,8 @@ if ! command -v node &> /dev/null; then
 fi
 
 NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
-if [ "$NODE_VERSION" -lt 19 ]; then
-    echo -e "${RED}Error: Node.js v19+ is required (found $(node -v))${NC}"
+if [ "$NODE_VERSION" -lt 22 ]; then
+    echo -e "${RED}Error: Node.js v22+ is required (found $(node -v))${NC}"
     exit 1
 fi
 echo -e "  ${GREEN}✓${NC} Node.js $(node -v)"
