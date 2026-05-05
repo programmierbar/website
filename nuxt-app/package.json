@@ -12,7 +12,7 @@
         "prettier": "prettier . --write"
     },
     "dependencies": {
-        "@directus/sdk": "^17.0.0",
+        "@directus/sdk": "^21.3.0",
         "@google/generative-ai": "^0.24.1",
         "@nuxtjs/tailwindcss": "^6.11.4",
         "@pinia/nuxt": "^0.5.1",
