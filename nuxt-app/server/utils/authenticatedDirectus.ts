@@ -91,7 +91,7 @@ export function useAuthenticatedDirectus() {
                     conference: { _eq: conferenceId },
                     active: { _eq: true },
                 },
-                fields: ['id', 'conference', 'code', 'price_cents', 'label', 'max_uses', 'active'],
+                fields: ['id', 'conference', 'code', 'price_cents', 'label', 'max_uses', 'active', 'is_employee_code'],
             })
         )
         const upperCode = code.toUpperCase()
@@ -109,6 +109,7 @@ export function useAuthenticatedDirectus() {
                     filter: {
                         conference: { _eq: conferenceId },
                         status: { _neq: 'cancelled' },
+                        is_internal: { _neq: true },
                     },
                 },
             })
@@ -239,6 +240,7 @@ export function useAuthenticatedDirectus() {
                     filter: {
                         conference: { _eq: conferenceId },
                         status: { _eq: 'checked_in' },
+                        is_internal: { _neq: true },
                     },
                 },
             })

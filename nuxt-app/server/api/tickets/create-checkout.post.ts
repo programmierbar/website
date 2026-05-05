@@ -71,7 +71,8 @@ function buildOrderPayload(
     input: CreateCheckoutInput,
     orderNumber: string,
     pricing: ReturnType<typeof calculatePricing>,
-    discountCodeId: string | null
+    discountCodeId: string | null,
+    isInternal: boolean
 ): Partial<DirectusTicketOrderItem> {
     const { conferenceId, purchaseType, purchaser, company, personalAddress } = input
     const billingAddress = purchaseType === 'company' ? company?.address : personalAddress
@@ -100,6 +101,7 @@ function buildOrderPayload(
         discount_code_used: discountCodeId,
         ticket_type: pricing.ticketType,
         stripe_checkout_session_id: '', // Will be updated after creating Stripe session
+        is_internal: isInternal,
     }
 }
 
@@ -165,24 +167,10 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Hard limit check: count existing tickets and reject if limit would be exceeded
-        if (conference.ticket_max_quantity !== null) {
-            const existingTickets = await directus.countPaidTicketsForConference(input.conferenceId)
-            if (existingTickets + input.tickets.length > conference.ticket_max_quantity) {
-                const remaining = Math.max(0, conference.ticket_max_quantity - existingTickets)
-                throw createError({
-                    statusCode: 409,
-                    message:
-                        remaining === 0
-                            ? 'Leider sind alle Tickets ausverkauft.'
-                            : `Nur noch ${remaining} Ticket(s) verfügbar. Bitte reduziere die Anzahl.`,
-                })
-            }
-        }
-
         // Validate discount code if provided
         let discountPriceCents: number | null = null
         let discountCodeId: string | null = null
+        let isInternal = false
 
         if (input.discountCode) {
             const discountCode = await directus.getDiscountCode(input.conferenceId, input.discountCode)
@@ -199,14 +187,44 @@ export default defineEventHandler(async (event) => {
                 }
                 discountPriceCents = discountCode.price_cents
                 discountCodeId = discountCode.id
+                if (discountCode.is_employee_code === true) {
+                    isInternal = true
+                    discountPriceCents = 0
+                }
             }
         }
 
-        // Calculate pricing
-        const pricing = calculatePricing(conference, input.tickets.length, discountPriceCents)
+        // Hard limit check: internal tickets don't consume capacity
+        if (!isInternal && conference.ticket_max_quantity !== null) {
+            const existingTickets = await directus.countPaidTicketsForConference(input.conferenceId)
+            if (existingTickets + input.tickets.length > conference.ticket_max_quantity) {
+                const remaining = Math.max(0, conference.ticket_max_quantity - existingTickets)
+                throw createError({
+                    statusCode: 409,
+                    message:
+                        remaining === 0
+                            ? 'Leider sind alle Tickets ausverkauft.'
+                            : `Nur noch ${remaining} Ticket(s) verfügbar. Bitte reduziere die Anzahl.`,
+                })
+            }
+        }
+
+        // Calculate pricing — internal employee orders are always free, regardless of early bird
+        const pricing = isInternal
+            ? {
+                  unitPriceNetCents: 0,
+                  unitPriceGrossCents: 0,
+                  ticketType: 'discounted' as const,
+                  subtotalNetCents: 0,
+                  discountAmountCents: 0,
+                  totalNetCents: 0,
+                  vatAmountCents: 0,
+                  totalGrossCents: 0,
+              }
+            : calculatePricing(conference, input.tickets.length, discountPriceCents)
 
         const orderNumber = generateOrderNumber()
-        const orderPayload = buildOrderPayload(input, orderNumber, pricing, discountCodeId)
+        const orderPayload = buildOrderPayload(input, orderNumber, pricing, discountCodeId, isInternal)
         const order = await directus.createTicketOrder(orderPayload)
         const orderId = order.id
         const websiteUrl = WEBSITE_URL

@@ -56,6 +56,7 @@ export default defineEventHandler(async (event) => {
         discountPriceCents: discountCode.price_cents,
         discountLabel: discountCode.label,
         discountAmountCents,
+        isEmployeeCode: discountCode.is_employee_code === true,
         message: 'Rabattcode erfolgreich angewendet!',
     }
 })
