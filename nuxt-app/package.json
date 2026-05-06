@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "engines": {
-        "node": ">=22.12.0"
+        "node": "^22.12.0"
     },
     "scripts": {
         "build": "nuxt build",
@@ -54,6 +54,8 @@
     },
     "overrides": {
         "vue": "latest",
-        "minimatch": "^9.0.7"
+        "minimatch": "^9.0.7",
+        "html-encoding-sniffer": "^4.0.0",
+        "jsdom": "~27.3.0"
     }
 }
