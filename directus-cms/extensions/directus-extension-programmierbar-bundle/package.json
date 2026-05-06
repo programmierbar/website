@@ -156,7 +156,7 @@
         "@types/jest": "^29.5.12",
         "@types/node": "^24.1.0",
         "algoliasearch": "^5.18.0",
-        "axios": "^1.7.2",
+        "axios": "^1.16.0",
         "dotenv": "^16.4.7",
         "eslint": "^9.5.0",
         "eslint-config-prettier": "^9.1.0",
@@ -171,5 +171,8 @@
         "typescript": "^5.9.2",
         "typescript-eslint": "^8.0.0-alpha.20",
         "vue": "^3.5.18"
+    },
+    "overrides": {
+        "axios": "$axios"
     }
 }

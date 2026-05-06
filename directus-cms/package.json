@@ -25,6 +25,36 @@
     "prettier": "^2.5.1"
   },
   "overrides": {
-    "isolated-vm": "^6.0.2"
+    "isolated-vm": "^6.0.2",
+    "@aws-sdk/client-s3": "latest",
+    "@aws-sdk/client-sesv2": "latest",
+    "@aws-sdk/client-sso": "latest",
+    "@aws-sdk/core": "latest",
+    "@aws-sdk/credential-provider-env": "latest",
+    "@aws-sdk/credential-provider-http": "latest",
+    "@aws-sdk/credential-provider-ini": "latest",
+    "@aws-sdk/credential-provider-node": "latest",
+    "@aws-sdk/credential-provider-process": "latest",
+    "@aws-sdk/credential-provider-sso": "latest",
+    "@aws-sdk/credential-provider-web-identity": "latest",
+    "@aws-sdk/middleware-flexible-checksums": "latest",
+    "@aws-sdk/middleware-sdk-s3": "latest",
+    "@aws-sdk/middleware-user-agent": "latest",
+    "@aws-sdk/nested-clients": "latest",
+    "@aws-sdk/signature-v4-multi-region": "latest",
+    "@aws-sdk/token-providers": "latest",
+    "@aws-sdk/util-user-agent-node": "latest",
+    "@aws-sdk/xml-builder": "latest",
+    "fast-xml-parser": "^5.7.3",
+    "cacache": "^20.0.4",
+    "make-fetch-happen": "^15.0.5",
+    "node-gyp": "^12.3.0",
+    "http-proxy-agent": "^7.0.2",
+    "retry-request": "^8.0.2",
+    "teeny-request": "^10.1.2",
+    "@tootallnate/once": "^3.0.1",
+    "tar": "^7.5.14",
+    "uuid": "^11.1.1",
+    "axios": "^1.16.0"
   }
 }
