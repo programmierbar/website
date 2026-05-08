@@ -77,7 +77,7 @@ import { ref } from 'vue';
 import { useDirectus } from '~/composables/useDirectus';
 
 const { message, setMessage, clearMessage } = useFlashMessage();
-const props = defineProps<{ podcast: DirectusPodcastItem }>();
+const props = defineProps<{ podcast: DirectusPodcastItem; initialVote?: 'up' | 'down' }>();
 const { trigger } = useWebHaptics();
 const istActive = ref(false);
 
@@ -96,10 +96,9 @@ const rate = async function(upOrDown: 'up' | 'down') {
   istActive.value = true;
   try {
     trigger(defaultPatterns.buzz);
-    const result = await $fetch<{ success: boolean; message: string, payload: any }>(`/podcast/${props.podcast.slug}/${upOrDown}`, {
-      headers: {
-        Accept: 'application/json',
-      },
+    const result = await $fetch<{ success: boolean; message: string; payload: any }>('/api/vote', {
+      method: 'POST',
+      body: { episode_id: props.podcast.id, direction: upOrDown },
     });
     setMessage(result.message, 'rating', {});
     ratingId.value = result.payload?.id;
@@ -108,6 +107,23 @@ const rate = async function(upOrDown: 'up' | 'down') {
   }
   istActive.value = false;
 };
+
+// When arriving via a vote URL (/podcast/slug/up|down), fire the vote automatically.
+// The watch handles both SSR-hydration (data already present) and client-side navigation
+// (data arrives asynchronously). The guard prevents double-firing on re-renders.
+const autoVoted = ref(false);
+if (import.meta.client && props.initialVote) {
+  watch(
+    () => props.podcast?.id,
+    (id) => {
+      if (id && !autoVoted.value) {
+        autoVoted.value = true;
+        rate(props.initialVote!);
+      }
+    },
+    { immediate: true }
+  );
+}
 
 const submitForm = async (event: Event) => {
   try {

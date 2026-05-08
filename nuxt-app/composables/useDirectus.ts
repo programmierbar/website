@@ -1,6 +1,7 @@
 import {
   aggregate,
   createUser,
+  readItem,
   readItems,
   readMe,
   readProviders,
@@ -324,6 +325,17 @@ export function useDirectus() {
                         }))
                         .pop() as PodcastItem
             )
+    }
+
+    async function getPodcastById(id: string): Promise<{ id: string; slug: string } | null> {
+        try {
+            const podcast = await directus.request(
+                readItem('podcasts', id, { fields: ['id', 'slug'] })
+            )
+            return podcast as { id: string; slug: string }
+        } catch {
+            return null
+        }
     }
 
     async function getMeetupBySlug(slug: string) {
@@ -919,6 +931,7 @@ export function useDirectus() {
         getAllTopTags,
         getTopTagsForCollection,
         getPodcastBySlug,
+        getPodcastById,
         getMeetupBySlug,
         getConferenceBySlug,
         getSpeakerBySlug,

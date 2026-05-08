@@ -11,7 +11,7 @@
                         <!-- <LikeButton /> -->
                     </div>
 
-                  <PodcastRating :podcast='podcast' />
+                  <PodcastRating :podcast='podcast' :initial-vote='initialVote' />
 
                   <SectionHeading class="mt-8 md:mt-0" element="h2"> Shownotes </SectionHeading>
 
@@ -138,53 +138,41 @@ import type { PodcastItem, TagItem } from '~/types'
 import { getFullPodcastTitle, getPodcastType } from 'shared-code'
 import { computed, type ComputedRef } from 'vue'
 
-// Add route and router
+const props = defineProps<{
+    slug: string
+    initialVote?: 'up' | 'down'
+}>()
+
 const route = useRoute()
 const directus = useDirectus()
 
-// Query podcast, pick of the day,
-// speaker count and related podcasts
-const { data: pageData } = useAsyncData(route.fullPath, async () => {
+const { data: pageData } = useAsyncData(`podcast-${props.slug}`, async () => {
     const [podcast, pickOfTheDayCount, speakerCount] = await Promise.all([
-        // Podcast
-        await directus.getPodcastBySlug(route.params.slug as string),
-        // Pick of the day count
+        await directus.getPodcastBySlug(props.slug),
         await directus.getPickOfTheDayCount(),
-        // Speaker count
         await directus.getSpeakersCount(),
     ])
-    // Throw error if podcast does not exist
     if (!podcast) {
         throw new Error('The podcast was not found.')
     }
 
-    // Transcript
     const transcript = await directus.getTranscriptForPodcast(podcast)
-
-    // Query related podcasts
     const relatedPodcasts = podcast.tagsPrepared.length ? await directus.getRelatedPodcasts(podcast) : []
 
-    // Return podcast, pick of the day and
-    // speaker count and related podcasts
     return { podcast, pickOfTheDayCount, speakerCount, relatedPodcasts, transcript }
 })
 
-// Extract podcast, pick of the day, speaker
-// and related podcasts count from page data
 const podcast: ComputedRef<PodcastItem | undefined> = computed(() => pageData.value?.podcast)
 const pickOfTheDayCount = computed(() => pageData.value?.pickOfTheDayCount)
 const speakerCount = computed(() => pageData.value?.speakerCount)
 const relatedPodcasts = computed(() => pageData.value?.relatedPodcasts)
 const transcript = computed(() => pageData.value?.transcript)
 
-// Set loading screen
 useLoadingScreen(podcast, pickOfTheDayCount, speakerCount)
 
-// Convert number to local string
 const pickOfTheDayCountString = useLocaleString(pickOfTheDayCount)
 const speakerCountString = useLocaleString(speakerCount)
 
-// Set page meta data
 useHead(() =>
     podcast.value
         ? getMetaInfo({
@@ -201,21 +189,17 @@ useHead(() =>
 
 useJsonld(generatePodcastEpisodeFromPodcast(podcast.value))
 
-// Create podcast type
 const type = computed(() => podcast.value && getPodcastType(podcast.value))
 
-// Create download URL
 const downloadUrl = computed(
     () => podcast.value && `${BUZZSPROUT_TRACKING_URL}/${podcast.value.audio_url}?download=true`
 )
 
-// Create breadcrumb list
 const breadcrumbs = computed(() => [
     { label: 'Podcast', href: '/podcast' },
     { label: `${type.value} ${podcast.value?.number ? podcast.value.number : ''}` },
 ])
 
-// Create platform list
 const platforms = computed(() => [
     {
         name: 'Apple Podcast',

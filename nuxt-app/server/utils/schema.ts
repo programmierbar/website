@@ -169,6 +169,12 @@ export const CheckinScanSchema = z.object({
     ticketCode: z.string().min(1),
 })
 
+export const VoteSchema = z.object({
+    episode_id: z.string().min(1),
+    direction: z.enum(['up', 'down']),
+})
+
 export type CreateCheckoutInput = z.infer<typeof CreateCheckoutSchema>
 export type TicketAttendeeInput = z.infer<typeof TicketAttendeeSchema>
 export type TicketProfileInput = z.infer<typeof TicketProfileSchema>
+export type VoteInput = z.infer<typeof VoteSchema>
