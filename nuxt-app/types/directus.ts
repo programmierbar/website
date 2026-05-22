@@ -25,7 +25,7 @@ export interface DirectusPodcastItem {
     apple_url: string
     google_url: string
     spotify_url: string
-    youtube_url: string
+    youtube_url: string | null
     picks_of_the_day: (string | DirectusPickOfTheDayItem)[]
     members: (
         | number
