@@ -271,6 +271,7 @@ export function useDirectus() {
                         'apple_url',
                         'google_url',
                         'spotify_url',
+                        'youtube_url',
                         'speakers',
                         'speakers.speaker.id',
                         'speakers.speaker.slug',
