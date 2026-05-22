@@ -14,6 +14,7 @@
                       v-if="podcast.youtube_url"
                       :url="podcast.youtube_url"
                       :thumbnail="podcast.cover_image"
+                      :sync-with-podcast-player="podcast"
                       class="mt-8 md:mt-14"
                   />
 
