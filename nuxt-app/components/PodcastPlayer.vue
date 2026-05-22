@@ -132,6 +132,8 @@
                         step="1"
                         :style="`--progress-percentage: ${progressString}`"
                         data-cursor-hover
+                        @pointerdown="podcastPlayer.beginScrubbing"
+                        @keydown="podcastPlayer.beginScrubbing"
                         @change="changeCurrentTime"
                     />
                     <div class="mr-6 mt-0.5 text-sm xl:mr-0 xl:text-base">

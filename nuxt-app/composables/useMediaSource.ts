@@ -76,20 +76,12 @@ export function createYouTubePlayerSource(player: YT.Player, callbacks: SourceCa
                     /* ignore */
                 }
                 callbacks.onPlay()
-                startPolling()
                 break
             case YT.PlayerState.PAUSED:
-                try {
-                    callbacks.onTimeUpdate(player.getCurrentTime())
-                } catch {
-                    /* ignore */
-                }
                 callbacks.onPause()
-                stopPolling()
                 break
             case YT.PlayerState.ENDED:
                 callbacks.onEnded()
-                stopPolling()
                 break
             default:
                 break
@@ -97,6 +89,11 @@ export function createYouTubePlayerSource(player: YT.Player, callbacks: SourceCa
     }
 
     player.addEventListener('onStateChange', onStateChange)
+
+    // Poll continuously so that seeks inside the YouTube iframe (which may
+    // happen while paused, and which have no dedicated IFrame API event) still
+    // propagate to the bar UI.
+    startPolling()
 
     return {
         play: () => player.playVideo(),
