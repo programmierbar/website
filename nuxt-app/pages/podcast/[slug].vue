@@ -13,6 +13,13 @@
 
                   <PodcastRating :podcast='podcast' />
 
+                    <EmbeddedVideoPlayer
+                        v-if="podcast.youtube_url"
+                        :url="podcast.youtube_url"
+                        :thumbnail="podcast.cover_image"
+                        class="mt-8 md:mt-14"
+                    />
+
                   <SectionHeading class="mt-8 md:mt-0" element="h2"> Shownotes </SectionHeading>
 
                     <!-- Description -->
