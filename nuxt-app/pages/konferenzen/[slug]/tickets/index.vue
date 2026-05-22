@@ -43,7 +43,7 @@ useHead(() =>
               type: 'website',
               path: route.path,
               title: `Tickets - ${conference.value.title}`,
-              description: `Tickets für die ${conference.value.title} kaufen`,
+              description: `Tickets für die ${conference.value.title} sichern`,
               image: conference.value.cover_image,
           })
         : {}
@@ -70,7 +70,7 @@ const breadcrumbs = computed(() => [
             >
                 <p class="font-medium">Zahlung abgebrochen</p>
                 <p class="text-yellow-200/80 mt-1 text-sm">
-                    Die Zahlung wurde abgebrochen. Du kannst es erneut versuchen.
+                    Die Zahlung wurde abgebrochen. Bitte versuche es erneut.
                 </p>
             </div>
 
@@ -110,7 +110,7 @@ const breadcrumbs = computed(() => [
 
             <!-- Loading state -->
             <div v-else class="text-center">
-                <p class="text-gray-400">Laden...</p>
+                <p class="text-gray-400">Lädt…</p>
             </div>
         </div>
     </div>

@@ -20,7 +20,7 @@ const store = useTicketCheckoutStore()
 
         <div class="space-y-2 text-sm">
             <div class="flex justify-between text-gray-300">
-                <span>{{ store.ticketCount }}x Ticket</span>
+                <span>{{ store.ticketCount }}× Ticket</span>
                 <span>{{ store.formatPrice(store.unitPriceCents) }}</span>
             </div>
 
@@ -29,7 +29,7 @@ const store = useTicketCheckoutStore()
             </div>
 
             <div v-if="store.discountValid && (store.isEmployeeCode || !store.isEarlyBird)" class="flex justify-between text-lime">
-                <span>{{ store.isEmployeeCode ? 'Mitarbeiter-Code' : `Rabatt (${store.discountCode})` }}</span>
+                <span>{{ store.isEmployeeCode ? 'Team-Code' : `Rabatt (${store.discountCode})` }}</span>
                 <span>-{{ store.formatPrice(store.discountAmountCents) }}</span>
             </div>
 
@@ -42,7 +42,7 @@ const store = useTicketCheckoutStore()
                     <span>{{ store.formatPrice(store.totalCents) }}</span>
                 </div>
 
-                <p class="mt-2 text-xs text-[#848a98]">Alle Preise netto zzgl. {{ VAT_RATE_PERCENT }}% MwSt.</p>
+                <p class="mt-2 text-xs text-[#848a98]">Alle Preise netto zzgl. {{ VAT_RATE_PERCENT }} % MwSt.</p>
             </template>
 
             <!-- VAT breakdown view (Steps 3-4) -->
@@ -55,7 +55,7 @@ const store = useTicketCheckoutStore()
                 </div>
 
                 <div class="flex justify-between text-gray-300">
-                    <span>zzgl. {{ VAT_RATE_PERCENT }}% MwSt.</span>
+                    <span>zzgl. {{ VAT_RATE_PERCENT }} % MwSt.</span>
                     <span>{{ store.formatPrice(store.vatAmountCents) }}</span>
                 </div>
 
@@ -66,7 +66,7 @@ const store = useTicketCheckoutStore()
                     <span>{{ store.formatPrice(store.totalWithVatCents) }}</span>
                 </div>
 
-                <p class="mt-2 text-xs text-[#848a98]">Bruttopreis inkl. {{ VAT_RATE_PERCENT }}% MwSt.</p>
+                <p class="mt-2 text-xs text-[#848a98]">Bruttopreis inkl. {{ VAT_RATE_PERCENT }} % MwSt.</p>
             </template>
         </div>
     </div>
