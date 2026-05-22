@@ -193,23 +193,35 @@ watch(
 onBeforeUnmount(() => {
   if (!syncEnabled.value || !podcastPlayer || !player) return
 
-  if (ourSourceActive) {
-    let seekTime = 0
-    let wasPlaying = false
+  // Capture state before tearing the player down.
+  const shouldHandoff = ourSourceActive
+  let seekTime = 0
+  let wasPlaying = false
+  if (shouldHandoff) {
     try {
       seekTime = player.getCurrentTime() ?? 0
-      wasPlaying = player.getPlayerState() === YT.PlayerState.PLAYING
     } catch {
-      /* player may be in an unusable state; fall back to defaults */
+      /* player may be in an unusable state; fall back to 0 */
     }
-    podcastPlayer.switchToAudioElement({ seekTime, autoplay: wasPlaying })
+    // Use the bar's own play state rather than player.getPlayerState() —
+    // by the time onBeforeUnmount runs, YT may have already flipped away
+    // from PLAYING.
+    wasPlaying = !podcastPlayer.paused
   }
 
+  // Destroy the YouTube player FIRST. While the iframe is alive Chrome
+  // ties media-session state to it, and starting the audio element load
+  // before the iframe is gone can cause the audio fetch to fail with a
+  // MEDIA_ERR_SRC_NOT_SUPPORTED ("Format error").
   try {
     player.destroy()
   } catch {
     /* ignore — iframe may already be detached */
   }
   player = null
+
+  if (shouldHandoff) {
+    podcastPlayer.switchToAudioElement({ seekTime, autoplay: wasPlaying })
+  }
 })
 </script>
