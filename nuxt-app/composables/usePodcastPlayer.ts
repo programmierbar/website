@@ -22,6 +22,13 @@ const audioState = reactive({
     paused: true,
 })
 
+// True while the user is dragging the bar's scrub slider. While true, incoming
+// time updates from the active source are suppressed so the slider thumb
+// doesn't snap back to the pre-drag position. Cleared on `setCurrentTime`,
+// which is called from the slider's @change handler (and from the 15s skip
+// buttons, which is also fine).
+let isScrubbing = false
+
 // Keep the active source's volume in sync with the slider.
 watch(
     () => audioState.volume,
@@ -32,11 +39,7 @@ watch(
 
 const callbacks: SourceCallbacks = {
     onTimeUpdate: (time) => {
-        // The scrub bar binds to audioState.currentTime via v-model, so it changes
-        // ahead of the actual source while the user is dragging. The 5-second guard
-        // prevents in-flight time updates from snapping the slider back to the
-        // pre-seek position.
-        if (Math.abs(time - audioState.currentTime) < 5) {
+        if (!isScrubbing) {
             audioState.currentTime = time
         }
     },
@@ -93,12 +96,22 @@ export function usePodcastPlayer() {
     }
 
     /**
-     * Seeks the currently active media source to the given time.
+     * Seeks the currently active media source to the given time. Also clears
+     * the scrubbing flag — any committed seek ends a drag.
      */
     const setCurrentTime = (time: number) => {
+        isScrubbing = false
         if (!activeSource.value) return
         activeSource.value.seek(time)
         audioState.currentTime = time
+    }
+
+    /**
+     * Called by the bar UI when the user starts dragging the scrub slider, so
+     * that source-driven time updates don't fight the drag.
+     */
+    const beginScrubbing = () => {
+        isScrubbing = true
     }
 
     const backward = () => setCurrentTime(Math.max(audioState.currentTime - 15, 0))
@@ -203,6 +216,7 @@ export function usePodcastPlayer() {
         play,
         pause,
         setCurrentTime,
+        beginScrubbing,
         backward,
         forward,
         setPodcast,
