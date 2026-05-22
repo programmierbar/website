@@ -15,10 +15,26 @@ export interface MediaSource {
 }
 
 export function createAudioElementSource(audio: HTMLAudioElement, callbacks: SourceCallbacks): MediaSource {
+    const reportDuration = () => {
+        // load() resets duration to NaN and fires durationchange before the
+        // real metadata arrives. Filter so transient resets don't shrink the
+        // bar's max value (which would otherwise visually snap the scrubber).
+        const duration = audio.duration
+        if (Number.isFinite(duration) && duration > 0) {
+            callbacks.onDurationChange(duration)
+        }
+    }
     const handlers: Record<string, () => void> = {
-        timeupdate: () => callbacks.onTimeUpdate(audio.currentTime),
-        loadedmetadata: () => callbacks.onDurationChange(audio.duration),
-        durationchange: () => callbacks.onDurationChange(audio.duration),
+        timeupdate: () => {
+            // load() resets currentTime to 0; some browsers fire timeupdate
+            // during that reset. Ignore until the element has real data so we
+            // don't clobber a freshly-applied seek with a stale 0.
+            if (audio.readyState >= 1 /* HAVE_METADATA */) {
+                callbacks.onTimeUpdate(audio.currentTime)
+            }
+        },
+        loadedmetadata: reportDuration,
+        durationchange: reportDuration,
         play: () => callbacks.onPlay(),
         pause: () => callbacks.onPause(),
         ended: () => callbacks.onEnded(),
@@ -29,7 +45,12 @@ export function createAudioElementSource(audio: HTMLAudioElement, callbacks: Sou
 
     return {
         play: () => {
-            void audio.play()
+            audio.play().catch(() => {
+                // Playback can be rejected (autoplay policy, src error, etc.);
+                // reflect the real state in the bar instead of pretending we're
+                // playing.
+                callbacks.onPause()
+            })
         },
         pause: () => audio.pause(),
         seek: (time: number) => {

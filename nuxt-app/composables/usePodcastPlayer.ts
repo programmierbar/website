@@ -165,8 +165,12 @@ export function usePodcastPlayer() {
 
         const audio = audioElement.value
         const targetPodcast = podcast.value
-        const needsLoad = !audio.src || !audio.src.endsWith(targetPodcast.audio_url)
-        if (needsLoad) {
+
+        // Mirror the bar's normal `setPodcast`: assign src only when it
+        // actually changes, and otherwise leave the element alone. Extra
+        // teardown ops here (pause/removeAttribute/load) interact badly with
+        // the Buzzsprout CDN during unmount.
+        if (audio.src !== targetPodcast.audio_url) {
             audio.src = targetPodcast.audio_url
         }
 
@@ -181,16 +185,21 @@ export function usePodcastPlayer() {
                 /* duration may not be known yet on some browsers; ignore */
             }
             audioState.currentTime = options.seekTime
-            if (options.autoplay) {
-                source.play()
-                audioState.paused = false
-            }
         }
 
         if (audio.readyState >= 1 /* HAVE_METADATA */) {
             applySeek()
         } else {
             audio.addEventListener('loadedmetadata', applySeek, { once: true })
+        }
+
+        if (options.autoplay) {
+            const startPlayback = () => source.play()
+            if (audio.readyState >= 3 /* HAVE_FUTURE_DATA */) {
+                startPlayback()
+            } else {
+                audio.addEventListener('canplay', startPlayback, { once: true })
+            }
         }
     }
 
