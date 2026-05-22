@@ -134,7 +134,7 @@ export async function generateAppleWalletPass(
     pass.secondaryFields.push(
         {
             key: 'attendee',
-            label: 'TEILNEHMER',
+            label: 'TEILNEHMER:IN',
             value: input.attendeeName,
         },
         {
