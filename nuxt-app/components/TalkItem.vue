@@ -32,6 +32,7 @@ class="
             order-2 <!-- Mobile order -->
             lg:order-none <!-- Reset order for grid -->
             lg:col-start-2 lg:row-start-1 lg:row-span-2 <!-- Desktop grid placement & span -->
+            lg:self-start <!-- Don't stretch to row-span height, keep aspect-ratio -->
             pl-0 lg:pl-10
             mb-5 lg:mb-0
         ">
