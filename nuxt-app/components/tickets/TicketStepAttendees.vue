@@ -45,9 +45,9 @@ function copyPurchaserInfo(index: number) {
 
 <template>
     <div class="ticket-step-attendees">
-        <h2 class="mb-2 text-3xl font-bold text-white md:text-4xl">Teilnehmerdaten</h2>
+        <h2 class="mb-2 text-3xl font-bold text-white md:text-4xl">Teilnehmenden-Daten</h2>
         <p class="mb-8 text-lg text-gray-300">
-            Bitte gib die Daten für {{ store.ticketCount === 1 ? 'den Teilnehmer' : 'alle Teilnehmer' }} ein.
+            Bitte gib die Daten aller Teilnehmenden ein.
         </p>
 
         <!-- Attendee forms -->
@@ -70,7 +70,7 @@ function copyPurchaserInfo(index: number) {
                         class="text-sm text-lime hover:underline"
                         @click="copyPurchaserInfo(index)"
                     >
-                        Käuferdaten übernehmen
+                        Käufer:innen-Daten übernehmen
                     </button>
                 </div>
 
@@ -82,7 +82,7 @@ function copyPurchaserInfo(index: number) {
                         <input
                             :value="attendee.firstName"
                             type="text"
-                            placeholder="Max"
+                            placeholder="Mika"
                             class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime focus:outline-none"
                             @input="updateAttendee(index, 'firstName', ($event.target as HTMLInputElement).value)"
                         />
@@ -95,7 +95,7 @@ function copyPurchaserInfo(index: number) {
                         <input
                             :value="attendee.lastName"
                             type="text"
-                            placeholder="Mustermann"
+                            placeholder="Muster"
                             class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime focus:outline-none"
                             @input="updateAttendee(index, 'lastName', ($event.target as HTMLInputElement).value)"
                         />
@@ -108,7 +108,7 @@ function copyPurchaserInfo(index: number) {
                         <input
                             :value="attendee.email"
                             type="email"
-                            placeholder="max@beispiel.de"
+                            placeholder="mika@beispiel.de"
                             class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime focus:outline-none"
                             @input="updateAttendee(index, 'email', ($event.target as HTMLInputElement).value)"
                         />

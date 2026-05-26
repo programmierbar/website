@@ -18,10 +18,10 @@ async function applyDiscountCode() {
     const valid = await store.validateDiscountCode()
     if (valid) {
         if (store.isEmployeeCode) {
-            discountMessage.value = 'Mitarbeiter-Code erkannt — keine Zahlung nötig.'
+            discountMessage.value = 'Team-Code erkannt – keine Zahlung nötig.'
         } else {
             discountMessage.value = store.pricingSettings?.discountLabel
-                ? `Rabattcode "${store.pricingSettings.discountLabel}" angewendet!`
+                ? `Rabattcode „${store.pricingSettings.discountLabel}“ angewendet!`
                 : 'Rabattcode erfolgreich angewendet!'
         }
     } else {
@@ -77,7 +77,7 @@ async function proceedToPayment() {
 
         <!-- Attendees summary -->
         <div class="mb-6 rounded-lg border border-gray-700 bg-gray-800/50 p-6">
-            <h3 class="mb-4 text-lg font-bold text-white">Teilnehmer ({{ store.ticketCount }})</h3>
+            <h3 class="mb-4 text-lg font-bold text-white">Teilnehmende ({{ store.ticketCount }})</h3>
             <div class="space-y-3">
                 <div
                     v-for="(attendee, index) in store.attendees"
@@ -209,14 +209,14 @@ async function proceedToPayment() {
             :disabled="!termsAccepted || store.isLoading"
             @click="proceedToPayment"
         >
-            <span v-if="store.isLoading">Wird verarbeitet...</span>
+            <span v-if="store.isLoading">Wird verarbeitet…</span>
             <span v-else-if="store.isEmployeeCode">Ticket bestätigen</span>
             <span v-else>Zur Zahlung</span>
         </button>
 
         <p class="mt-4 text-center text-sm text-[#848a98]">
             <span v-if="store.isEmployeeCode">
-                Mit dem Mitarbeiter-Code ist keine Zahlung nötig.
+                Durch den Team-Code ist keine Zahlung nötig.
             </span>
             <span v-else>
                 Du wirst zur sicheren Zahlungsseite von Stripe weitergeleitet.

@@ -5,7 +5,7 @@
 
             <!-- Loading State -->
             <div v-if="loading" class="mt-16 text-center">
-                <p class="text-xl text-white">Zugang wird überprüft...</p>
+                <p class="text-xl text-white">Zugang wird überprüft…</p>
             </div>
 
             <!-- Error State -->
@@ -56,7 +56,7 @@
                                     v-model="formData.job_title"
                                     type="text"
                                     class="form-input"
-                                    placeholder="z.B. Senior Developer, CTO, Product Manager"
+                                    placeholder="z. B. Senior Developer, CTO, Product Managerin"
                                     required
                                     maxlength="100"
                                 />
@@ -81,7 +81,7 @@
                                     v-model="formData.pronouns"
                                     type="text"
                                     class="form-input"
-                                    placeholder="z.B. sie/ihr, er/ihm, they/them"
+                                    placeholder="z. B. sie/ihr, er/ihm, they/them"
                                     maxlength="50"
                                 />
                             </div>
@@ -100,7 +100,7 @@
                                     v-model="formData.dietary_preferences"
                                     type="text"
                                     class="form-input"
-                                    placeholder="z.B. vegetarisch, vegan, glutenfrei"
+                                    placeholder="z. B. vegetarisch, vegan, glutenfrei"
                                     maxlength="200"
                                 />
                             </div>
@@ -132,7 +132,7 @@
                                     v-model="formData.last_event_visited"
                                     type="text"
                                     class="form-input"
-                                    placeholder="z.B. San Juan Conf 2025, programmier.bar Meetup #42"
+                                    placeholder="z. B. San Juan Conf 2025, programmier.bar Meetup #42"
                                     maxlength="200"
                                 />
                             </div>
@@ -144,7 +144,7 @@
                                     v-model="formData.heard_about_from"
                                     type="text"
                                     class="form-input"
-                                    placeholder="z.B. Podcast, Social Media, Empfehlung"
+                                    placeholder="z. B. Podcast, Social Media, Empfehlung"
                                     maxlength="500"
                                 />
                             </div>
@@ -175,7 +175,7 @@
                             class="h-14 w-64 rounded-full border-4 border-lime text-sm font-black uppercase tracking-widest text-lime transition-all hover:bg-lime hover:text-black disabled:cursor-not-allowed disabled:opacity-50 md:h-16 md:w-80 md:border-5 md:text-lg lg:h-20 lg:w-112 lg:border-6 lg:text-xl"
                             :disabled="formState === 'submitting'"
                         >
-                            {{ formState === 'submitting' ? 'Wird gesendet...' : 'Absenden' }}
+                            {{ formState === 'submitting' ? 'Wird gesendet…' : 'Absenden' }}
                         </button>
                     </div>
                 </form>

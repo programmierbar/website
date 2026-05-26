@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
         console.error('Ticket portal submission error:', err)
         throw createError({
             statusCode: 500,
-            message: 'Ein Fehler ist beim Speichern deiner Angaben aufgetreten.',
+            message: 'Beim Speichern deiner Angaben ist ein Fehler aufgetreten.',
         })
     }
 })

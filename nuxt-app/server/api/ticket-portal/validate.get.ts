@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
         console.error('Ticket portal validation error:', err)
         throw createError({
             statusCode: 500,
-            message: 'Ein Fehler ist bei der Überprüfung deines Zugangs aufgetreten.',
+            message: 'Bei der Überprüfung deines Zugangs ist ein Fehler aufgetreten.',
         })
     }
 })
