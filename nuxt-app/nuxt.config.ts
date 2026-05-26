@@ -170,4 +170,19 @@ export default defineNuxtConfig({
             failOnError: true,
         },
     },
+
+    routeRules: {
+        '/**': { isr: true },
+
+        '/konferenz/*/tickets/**': { isr: false },
+        '/ticket-portal': { isr: false },
+        '/speaker-portal': { isr: false },
+        '/suche': { isr: false },
+        '/api/**': { isr: false },
+
+        // Not in use currently
+        //'/login-callback': { isr: false },
+        //'/login': { isr: false },
+        //'/profile-creation': { isr: false },
+    },
 })
