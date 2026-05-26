@@ -92,7 +92,20 @@ export default defineNuxtConfig({
                 return
             }
 
-            const routes: string[] = []
+            const routes: string[] = [
+              '/',
+              '/podcast',
+              '/meetup',
+              '/konferenz',
+              '/hall-of-fame',
+              '/ueber-uns',
+              '/impressum',
+              '/datenschutz',
+              '/kontakt',
+              '/verhaltensregeln',
+              '/aufnahmen',
+              '/pick-of-the-day',
+            ]
 
             const podcasts = await directus.getPodcasts(10)
             routes.push(...podcasts.map((podcast) => `/podcast/${podcast.slug}`))
@@ -103,7 +116,7 @@ export default defineNuxtConfig({
             const conferences = await directus.getConferences()
             routes.push(...conferences.map((conference) => `/konferenz/${conference.slug}`))
 
-            const speakers = await directus.getSpeakers(50) // CTO + Next ~10
+            const speakers = await directus.getSpeakersForBuild(15)
             routes.push(...speakers.map((speaker) => `/hall-of-fame/${speaker.slug}`))
 
             // ..Async logic..

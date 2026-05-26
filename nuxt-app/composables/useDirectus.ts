@@ -669,6 +669,61 @@ export function useDirectus() {
         )
     }
 
+  async function getSpeakersForBuild(limit: number) {
+
+      const ctos =  await directus.request(
+        readItems('speakers', {
+          fields: [
+            'id',
+            'slug',
+            'published_on',
+            'academic_title',
+            'first_name',
+            'last_name',
+            'occupation',
+            'description',
+            'profile_image.*',
+            'tags.tag.id',
+            'tags.tag.name',
+            'podcasts.podcast.type',
+          ],
+          limit: Math.round(limit/2),
+          sort: ['sort', '-published_on'],
+          filter: {
+            listed_hof: { _eq: true },
+            podcasts: { podcast: { type: { _eq: 'cto_special' } } },
+          },
+        })
+      )
+
+    const others =  await directus.request(
+      readItems('speakers', {
+        fields: [
+          'id',
+          'slug',
+          'published_on',
+          'academic_title',
+          'first_name',
+          'last_name',
+          'occupation',
+          'description',
+          'profile_image.*',
+          'tags.tag.id',
+          'tags.tag.name',
+          'podcasts.podcast.type',
+        ],
+        limit: Math.round(limit/2),
+        sort: ['sort', '-published_on'],
+        filter: {
+          listed_hof: { _eq: true },
+          podcasts: { podcast: { type: { _neq: 'cto_special' } } },
+        },
+      })
+    )
+
+    return [...ctos, ...others]
+  }
+
     async function getAllTopTags() {
         const allTags: Tag[] = []
         for (const collection of collectionWithTagsName) {
@@ -912,6 +967,7 @@ export function useDirectus() {
         getMeetups,
         getConferences,
         getSpeakers,
+        getSpeakersForBuild,
         getPodcastCount,
         getPickOfTheDayCount,
         getSpeakersCount,
