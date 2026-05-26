@@ -78,7 +78,23 @@ const localConsent = ref(false)
 const useFallbackThumbnail = ref(false)
 const iframeRef = ref<HTMLIFrameElement | null>(null)
 
-const showVideo = computed(() => hasConsented.value || localConsent.value)
+// True when the bar is currently bound to a *different* episode than this
+// page's. In that case we don't want to auto-load the video on page visit —
+// it would otherwise stomp the in-progress audio of the other episode. The
+// user must explicitly click "Video laden" to take over (setting
+// `localConsent`).
+const hasConflictingPlayback = computed(() => {
+  if (!syncEnabled.value || !podcastPlayer || !props.syncWithPodcastPlayer) return false
+  const current = podcastPlayer.podcast
+  if (!current) return false
+  return current.id !== props.syncWithPodcastPlayer.id
+})
+
+const showVideo = computed(() => {
+  if (localConsent.value) return true
+  if (hasConflictingPlayback.value) return false
+  return hasConsented.value
+})
 
 function getVideoId(urlString: string): string | null {
   try {
@@ -152,6 +168,15 @@ async function initYouTubePlayer() {
       events: {
         onReady: () => {
           if (!player || !props.syncWithPodcastPlayer || !podcastPlayer) return
+
+          // If the bar already has *this* episode loaded (e.g. user
+          // navigated away and is now returning), pick up its current
+          // position so the video doesn't restart from zero. Read the
+          // time before `setPodcast`, which resets `currentTime` to 0.
+          const currentBarPodcast = podcastPlayer.podcast
+          const sameEpisode = currentBarPodcast?.id === props.syncWithPodcastPlayer.id
+          const resumeAt = sameEpisode ? podcastPlayer.currentTime : 0
+
           podcastPlayer.setPodcast(props.syncWithPodcastPlayer, {
             sourceFactory: (cb) => {
               const source = createYouTubePlayerSource(player!, cb)
@@ -164,9 +189,13 @@ async function initYouTubePlayer() {
               return source
             },
           })
-          // User already clicked "Video laden" — start playback now so the
-          // single click load+play feels natural.
           try {
+            if (resumeAt > 0) {
+              player.seekTo(resumeAt, true)
+            }
+            // User already clicked "Video laden" (or returned to a page
+            // they previously consented on) — start playback so the
+            // single-click load+play feels natural.
             player.playVideo()
           } catch {
             /* autoplay may be blocked; ignore */
