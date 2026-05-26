@@ -206,7 +206,7 @@ useHead(() =>
                 <div class="mt-12 flex flex-col gap-4 sm:flex-row sm:justify-center">
                     <NuxtLink
                         v-if="conference"
-                        :to="`/konferenzen/${conference.slug}`"
+                        :to="`/konferenz/${conference.slug}`"
                         class="rounded-lg bg-lime px-8 py-4 font-bold text-black transition hover:bg-lime/90"
                     >
                         Zurück zur Konferenz

@@ -7,7 +7,7 @@ export default eventHandler(function(event) {
   }
 
   const host = 'https://programmier.bar';
-  const path = '/konferenzen/flutter-day-2024';
+  const path = '/konferenz/flutter-day-2024';
 
   const redirectUrl = `${host}${path}`;
 

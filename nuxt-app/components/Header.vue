@@ -151,7 +151,7 @@ const mainMenuItems = [
     { label: 'Home', href: '/' },
     { label: 'Podcast', href: '/podcast' },
     { label: 'Meetup', href: '/meetup' },
-    { label: 'Konferenzen', href: '/konferenzen' },
+    { label: 'Konferenzen', href: '/konferenz' },
     { label: 'Hall of Fame', href: '/hall-of-fame' },
     { label: 'Pick of the Day', href: '/pick-of-the-day' },
     { label: 'Über uns', href: '/ueber-uns' },
