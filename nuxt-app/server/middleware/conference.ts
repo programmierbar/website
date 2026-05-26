@@ -43,7 +43,7 @@ export default eventHandler(function(event) {
   }
 
   const host = 'https://programmier.bar';
-  const path = '/konferenzen/programmier-con-web-ai-edition-2025';
+  const path = '/konferenz/programmier-con-web-ai-edition-2025';
 
   const redirectUrl = `${host}${path}`;
 

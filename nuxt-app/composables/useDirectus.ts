@@ -200,7 +200,7 @@ export function useDirectus() {
         )
     }
 
-    async function getPodcasts() {
+    async function getPodcasts(limit: number = -1) {
         return await directus.request(
             readItems('podcasts', {
                 fields: [
@@ -217,7 +217,7 @@ export function useDirectus() {
                     'tags.tag.name',
                 ],
                 sort: ['-published_on'],
-                limit: -1,
+                limit: limit,
             })
         )
     }
@@ -605,7 +605,7 @@ export function useDirectus() {
         return Number(result.pop()?.count)
     }
 
-    async function getMeetups() {
+    async function getMeetups(limit: number = -1) {
         return await directus.request(
             readItems('meetups', {
                 fields: [
@@ -621,7 +621,7 @@ export function useDirectus() {
                     'tags.tag.name',
                 ],
                 sort: ['-start_on'],
-                limit: -1,
+                limit: limit,
             })
         )
     }
@@ -645,7 +645,7 @@ export function useDirectus() {
       )
     }
 
-    async function getSpeakers() {
+    async function getSpeakers(limit: number = -1) {
         return await directus.request(
             readItems('speakers', {
                 fields: [
@@ -662,7 +662,7 @@ export function useDirectus() {
                     'tags.tag.name',
                     'podcasts.podcast.type',
                 ],
-                limit: -1,
+                limit: limit,
                 sort: ['podcasts.podcast.type', 'sort', '-published_on'],
                 filter: {'listed_hof': {'_eq': true}},
             })
