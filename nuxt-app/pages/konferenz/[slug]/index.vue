@@ -105,7 +105,7 @@
             <!-- CTA Button -->
             <div class="relative z-30 mt-10">
               <NuxtLink
-                :to="`/konferenzen/${conference.slug}/tickets`"
+                :to="`/konferenz/${conference.slug}/tickets`"
                 data-cursor-hover
                 class="inline-flex items-center gap-4 rounded-full bg-lime px-10 py-4 font-bold uppercase text-black transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(207,255,0,0.3)]"
               >
@@ -388,5 +388,5 @@ useHead(() =>
 )
 
 // Create breadcrumb list
-const breadcrumbs = computed(() => [{ label: 'Konferenz', href: '/konferenzen' }, { label: conference.value?.title || '' }])
+const breadcrumbs = computed(() => [{ label: 'Konferenz', href: '/konferenz' }, { label: conference.value?.title || '' }])
 </script>

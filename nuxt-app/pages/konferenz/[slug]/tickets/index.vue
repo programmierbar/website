@@ -51,8 +51,8 @@ useHead(() =>
 
 // Breadcrumbs
 const breadcrumbs = computed(() => [
-    { label: 'Konferenz', href: '/konferenzen' },
-    { label: conference.value?.title || '', href: `/konferenzen/${route.params.slug}` },
+    { label: 'Konferenz', href: '/konferenz' },
+    { label: conference.value?.title || '', href: `/konferenz/${route.params.slug}` },
     { label: 'Tickets' },
 ])
 </script>
@@ -78,7 +78,7 @@ const breadcrumbs = computed(() => [
             <div v-if="error" class="text-center">
                 <h1 class="text-3xl font-bold">Fehler</h1>
                 <p class="text-gray-400 mt-4">{{ error.message }}</p>
-                <NuxtLink to="/konferenzen" class="mt-8 inline-block rounded-lg bg-lime px-6 py-3 font-bold text-black">
+                <NuxtLink to="/konferenz" class="mt-8 inline-block rounded-lg bg-lime px-6 py-3 font-bold text-black">
                     Zurück zu Konferenzen
                 </NuxtLink>
             </div>
@@ -88,7 +88,7 @@ const breadcrumbs = computed(() => [
                 <h1 class="text-3xl font-bold">Ticketverkauf nicht verfügbar</h1>
                 <p class="text-gray-400 mt-4">Der Ticketverkauf für diese Konferenz ist derzeit nicht aktiv.</p>
                 <NuxtLink
-                    :to="`/konferenzen/${route.params.slug}`"
+                    :to="`/konferenz/${route.params.slug}`"
                     class="mt-8 inline-block rounded-lg bg-lime px-6 py-3 font-bold text-black"
                 >
                     Zurück zur Konferenz

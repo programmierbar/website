@@ -92,15 +92,31 @@ export default defineNuxtConfig({
                 return
             }
 
-            const routes: string[] = []
+            const routes: string[] = [
+              '/',
+              '/podcast',
+              '/meetup',
+              '/konferenz',
+              '/hall-of-fame',
+              '/ueber-uns',
+              '/impressum',
+              '/datenschutz',
+              '/kontakt',
+              '/verhaltensregeln',
+              '/aufnahmen',
+              '/pick-of-the-day',
+            ]
 
-            const podcasts = await directus.getPodcasts()
+            const podcasts = await directus.getPodcasts(10)
             routes.push(...podcasts.map((podcast) => `/podcast/${podcast.slug}`))
 
-            const meetups = await directus.getMeetups()
+            const meetups = await directus.getMeetups(3)
             routes.push(...meetups.map((meetup) => `/meetup/${meetup.slug}`))
 
-            const speakers = await directus.getSpeakers()
+            const conferences = await directus.getConferences()
+            routes.push(...conferences.map((conference) => `/konferenz/${conference.slug}`))
+
+            const speakers = await directus.getSpeakersForBuild(15)
             routes.push(...speakers.map((speaker) => `/hall-of-fame/${speaker.slug}`))
 
             // ..Async logic..
@@ -151,9 +167,22 @@ export default defineNuxtConfig({
 
     nitro: {
         prerender: {
-            // Don't fail build on prerender errors for image routes
-            // which require the CMS server to be running
-            failOnError: false,
+            failOnError: true,
         },
+    },
+
+    routeRules: {
+        '/**': { isr: true },
+
+        '/konferenz/*/tickets/**': { isr: false },
+        '/ticket-portal': { isr: false },
+        '/speaker-portal': { isr: false },
+        '/suche': { isr: false },
+        '/api/**': { isr: false },
+
+        // Not in use currently
+        //'/login-callback': { isr: false },
+        //'/login': { isr: false },
+        //'/profile-creation': { isr: false },
     },
 })

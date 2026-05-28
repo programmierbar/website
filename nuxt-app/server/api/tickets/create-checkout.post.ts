@@ -130,8 +130,8 @@ function buildStripeSessionParams(
             },
             quantity: 1,
         })),
-        success_url: `${websiteUrl}/konferenzen/${conferenceSlug}/tickets/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${websiteUrl}/konferenzen/${conferenceSlug}/tickets?cancelled=true`,
+        success_url: `${websiteUrl}/konferenz/${conferenceSlug}/tickets/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${websiteUrl}/konferenz/${conferenceSlug}/tickets?cancelled=true`,
         metadata: {
             order_id: orderId,
             conference_id: conferenceId,
@@ -238,7 +238,7 @@ export default defineEventHandler(async (event) => {
             })
 
             return {
-                checkoutUrl: `${websiteUrl}/konferenzen/${conference.slug}/tickets/success?order_id=${orderId}`,
+                checkoutUrl: `${websiteUrl}/konferenz/${conference.slug}/tickets/success?order_id=${orderId}`,
                 orderId,
             }
         }
