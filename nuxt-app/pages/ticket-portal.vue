@@ -127,7 +127,7 @@
                         <div class="space-y-6">
                             <!-- Last Event Visited -->
                             <div>
-                                <label class="form-label">Letztes Event besucht? (optional)</label>
+                                <label class="form-label">Welches Tech-Event hast du zuletzt besucht? (optional)</label>
                                 <input
                                     v-model="formData.last_event_visited"
                                     type="text"
