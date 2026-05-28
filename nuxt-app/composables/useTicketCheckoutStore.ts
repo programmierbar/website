@@ -160,7 +160,7 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
             if (this.isEmployeeCode) {
                 return 0
             }
-            if (this.discountValid && !this.isEarlyBird && this.pricingSettings?.discountPriceCents !== null && this.pricingSettings?.discountPriceCents !== undefined) {
+            if (this.discountValid && this.pricingSettings?.discountPriceCents !== null && this.pricingSettings?.discountPriceCents !== undefined) {
                 return this.pricingSettings.discountPriceCents
             }
             return this.basePriceCents
@@ -173,11 +173,11 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
             if (this.isEmployeeCode) {
                 return 'discounted'
             }
-            if (this.isEarlyBird) {
-                return 'early_bird'
-            }
             if (this.discountValid) {
                 return 'discounted'
+            }
+            if (this.isEarlyBird) {
+                return 'early_bird'
             }
             return 'regular'
         },
@@ -196,7 +196,7 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
             if (this.isEmployeeCode) {
                 return this.ticketCount * this.basePriceCents
             }
-            if (!this.discountValid || this.isEarlyBird || !this.pricingSettings || this.pricingSettings.discountPriceCents === null) {
+            if (!this.discountValid || !this.pricingSettings || this.pricingSettings.discountPriceCents === null) {
                 return 0
             }
             return this.ticketCount * (this.basePriceCents - this.pricingSettings.discountPriceCents)
