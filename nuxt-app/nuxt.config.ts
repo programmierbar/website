@@ -174,6 +174,7 @@ export default defineNuxtConfig({
     routeRules: {
         '/**': { isr: true },
 
+        '/konferenz/*/tickets': { isr: false },
         '/konferenz/*/tickets/**': { isr: false },
         '/ticket-portal': { isr: false },
         '/speaker-portal': { isr: false },
