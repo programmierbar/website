@@ -44,12 +44,15 @@ function calculatePricing(
         ticketType = 'regular'
     }
 
-    const subtotalNetCents = ticketCount * unitPriceNetCents
     const discountAmountCents =
         discountPriceCents !== null
             ? ticketCount * (basePriceCents - discountPriceCents)
             : 0
-    const totalNetCents = subtotalNetCents
+    const subtotalNetCents =
+        discountPriceCents !== null
+            ? ticketCount * basePriceCents
+            : ticketCount * unitPriceNetCents
+    const totalNetCents = subtotalNetCents - discountAmountCents
 
     // Calculate gross unit price for Stripe line items (round per-ticket for consistency)
     const unitPriceGrossCents = Math.round(unitPriceNetCents * (1 + VAT_RATE))
