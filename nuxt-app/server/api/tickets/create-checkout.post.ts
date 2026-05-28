@@ -25,26 +25,29 @@ function calculatePricing(
     discountPriceCents: number | null
 ) {
     const isEarlyBird = isEarlyBirdPeriod(conference.ticket_early_bird_deadline)
+    const basePriceCents =
+        isEarlyBird && conference.ticket_early_bird_price_cents
+            ? conference.ticket_early_bird_price_cents
+            : conference.ticket_regular_price_cents ?? 0
 
     let unitPriceNetCents: number
     let ticketType: TicketType
 
-    if (isEarlyBird && conference.ticket_early_bird_price_cents) {
-        unitPriceNetCents = conference.ticket_early_bird_price_cents
-        ticketType = 'early_bird'
-    } else if (discountPriceCents !== null) {
+    if (discountPriceCents !== null) {
         unitPriceNetCents = discountPriceCents
         ticketType = 'discounted'
+    } else if (isEarlyBird && conference.ticket_early_bird_price_cents) {
+        unitPriceNetCents = conference.ticket_early_bird_price_cents
+        ticketType = 'early_bird'
     } else {
         unitPriceNetCents = conference.ticket_regular_price_cents ?? 0
         ticketType = 'regular'
     }
 
     const subtotalNetCents = ticketCount * unitPriceNetCents
-    const regularPriceCents = conference.ticket_regular_price_cents ?? 0
     const discountAmountCents =
-        discountPriceCents !== null && !isEarlyBird
-            ? ticketCount * (regularPriceCents - discountPriceCents)
+        discountPriceCents !== null
+            ? ticketCount * (basePriceCents - discountPriceCents)
             : 0
     const totalNetCents = subtotalNetCents
 

@@ -28,7 +28,7 @@ const store = useTicketCheckoutStore()
                 <span class="rounded bg-lime/20 px-2 py-0.5 text-xs font-bold">Early Bird</span>
             </div>
 
-            <div v-if="store.discountValid && (store.isEmployeeCode || !store.isEarlyBird)" class="flex justify-between text-lime">
+            <div v-if="store.discountValid" class="flex justify-between text-lime">
                 <span>{{ store.isEmployeeCode ? 'Team-Code' : `Rabatt (${store.discountCode})` }}</span>
                 <span>-{{ store.formatPrice(store.discountAmountCents) }}</span>
             </div>
