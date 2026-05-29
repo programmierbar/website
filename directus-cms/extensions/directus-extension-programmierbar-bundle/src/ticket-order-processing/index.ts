@@ -178,7 +178,10 @@ export default defineHook(({ action }, hookContext) => {
                         year: 'numeric',
                     })
 
-                    const grossPerTicket = Math.round((order.total_gross_cents || 0) / attendees.length)
+                    // Derive per-ticket price from the pre-discount subtotal so the line item reconciles with Zwischensumme; the Rabatt line takes us down to the actual total.
+                    const subtotalCents = order.subtotal_cents || order.total_cents || 0
+                    const baseUnitNetCents = Math.round(subtotalCents / attendees.length)
+                    const grossPerTicket = Math.round(baseUnitNetCents * 1.19)
 
                     const invoiceData: InvoiceData = {
                         invoiceNumber,
