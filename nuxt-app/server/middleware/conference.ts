@@ -20,6 +20,12 @@ export default eventHandler(function(event) {
     return;
   }
 
+  // Skip API routes and internal Nuxt routes so they aren't 302'd to the apex,
+  // which would break client-side $fetch calls (e.g. discount validation).
+  if (requestPath.startsWith('/api/') || requestPath.startsWith('/_')) {
+    return;
+  }
+
   if (requestPath === pathToMatch) {
 
     let redirectUrl = '';
