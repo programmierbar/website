@@ -181,6 +181,10 @@ export default defineNuxtConfig({
         '/suche': { isr: false },
         '/api/**': { isr: false },
 
+        // /app UA-branches between iOS/Android store URLs on conference hosts;
+        // a cached response would pin the first-seen platform for everyone.
+        '/app': { isr: false },
+
         // Not in use currently
         //'/login-callback': { isr: false },
         //'/login': { isr: false },
