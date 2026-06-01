@@ -9,22 +9,26 @@
         {
             "source": "/((?!api/|_).*)",
             "has": [{ "type": "host", "value": "cfp\\.programmier\\.bar" }],
-            "destination": "https://docs.google.com/forms/d/e/1FAIpQLSdswI25P39NaWoH1BP5XCBzvSfcH1ATPbW6YtBMBa6cfGuhdQ/viewform?usp=header"
+            "destination": "https://docs.google.com/forms/d/e/1FAIpQLSdswI25P39NaWoH1BP5XCBzvSfcH1ATPbW6YtBMBa6cfGuhdQ/viewform?usp=header",
+            "permanent": false
         },
         {
             "source": "/((?!api/|_).*)",
             "has": [{ "type": "host", "value": "discord\\.programmier\\.bar" }],
-            "destination": "https://discord.gg"
+            "destination": "https://discord.gg/SvkGpjxSMe",
+            "permanent": false
         },
         {
             "source": "/((?!api/|_).*)",
             "has": [{ "type": "host", "value": "flutterday\\.programmier\\.bar" }],
-            "destination": "https://programmier.bar/konferenz/flutter-day-2024"
+            "destination": "https://programmier.bar/konferenz/flutter-day-2024",
+            "permanent": false
         },
         {
             "source": "/((?!api/|_|app$).*)",
             "has": [{ "type": "host", "value": "(con|conference|konferenz)\\.programmier\\.bar" }],
-            "destination": "https://programmier.bar/konferenz/programmier-con-2026-web-ai-edition"
+            "destination": "https://programmier.bar/konferenz/programmier-con-2026-web-ai-edition",
+            "permanent": false
         }
     ]
 }
