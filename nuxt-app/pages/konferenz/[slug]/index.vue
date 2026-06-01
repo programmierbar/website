@@ -312,10 +312,15 @@ function formatCentsGross(netCents: number): string {
 
 const isConferenceOver = computed(() => {
     if (!conference.value?.end_on) return false
-    const endDate = new Date(conference.value.end_on)
-    const today = new Date(now.value)
-    today.setHours(0, 0, 0, 0)
-    return endDate < today
+    // Compare in Europe/Berlin calendar days so SSR (UTC) and client (local)
+    // agree across the UTC<->Berlin day boundary. en-CA gives sortable YYYY-MM-DD.
+    const berlinDay = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Berlin',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    })
+    return berlinDay.format(new Date(conference.value.end_on)) < berlinDay.format(now.value)
 })
 
 const showTicketSection = computed(() => {
