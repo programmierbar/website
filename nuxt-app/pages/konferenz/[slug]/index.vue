@@ -253,25 +253,30 @@ const directus = useDirectus()
 
 // Query conference and page
 const { data: pageData, error } = await useAsyncData(route.fullPath, async () => {
-    // Query conference and page async
-    const [conference, conferencePage, testimonials] = await Promise.all([
-        directus.getConferenceBySlug(route.params.slug as string),
-        directus.getConferencePage(),
-        directus.getTestimonials(),
-    ])
+    const slug = route.params.slug as string
+    try {
+        const [conference, conferencePage, testimonials] = await Promise.all([
+            directus.getConferenceBySlug(slug),
+            directus.getConferencePage(),
+            directus.getTestimonials(),
+        ])
 
-    // Throw error if meetup does not exist
-    if (!conference) {
-        throw new Error('The conference was not found.')
+        if (!conference) {
+            throw new Error(`Conference with slug "${slug}" not found in Directus.`)
+        }
+
+        if (!conferencePage) {
+          throw new Error('Could not load the conference singleton page from Directus.')
+        }
+
+        return { conference, conferencePage, testimonials }
+    } catch (err) {
+        // Surface the underlying error in prerender/runtime logs so transient
+        // Directus failures can be told apart from real data issues. The
+        // outer createError below only carries a single message string.
+        console.error(`[konferenz/${slug}] data fetch failed:`, err)
+        throw err
     }
-
-    // Throw error if meetup does not exist
-    if (!conferencePage) {
-      throw new Error('Could not access conference page.')
-    }
-
-    // Return conference and page
-    return { conference, conferencePage, testimonials }
 })
 
 // Re-throw as a fatal error so prerender (with failOnError) aborts the build
@@ -281,6 +286,7 @@ if (error.value) {
         statusCode: 500,
         statusMessage: error.value.message || 'Failed to load conference page.',
         fatal: true,
+        cause: error.value,
     })
 }
 
