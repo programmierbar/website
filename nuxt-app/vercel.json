@@ -2,6 +2,11 @@
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "redirects": [
         {
+            "source": "/konferenzen/:path*",
+            "destination": "https://programmier.bar/konferenz/:path*",
+            "permanent": true
+        },
+        {
             "source": "/((?!api/|_).*)",
             "has": [{ "type": "host", "value": "cfp\\.programmier\\.bar" }],
             "destination": "https://docs.google.com/forms/d/e/1FAIpQLSdswI25P39NaWoH1BP5XCBzvSfcH1ATPbW6YtBMBa6cfGuhdQ/viewform?usp=header"
