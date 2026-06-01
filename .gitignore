@@ -83,3 +83,4 @@ $RECYCLE.BIN/
 .worktrees/
 .security-key
 logs/security/
+/.playwright-mcp
