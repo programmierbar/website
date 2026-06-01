@@ -237,7 +237,7 @@
 <script setup lang="ts">
 import { useLoadingScreen, useNow } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
-import { getMetaInfo, trackGoal } from '~/helpers';
+import { getMetaInfo, parseCmsDate, trackGoal } from '~/helpers';
 import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem, TalkItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
@@ -299,7 +299,7 @@ const now = useNow()
 
 const isEarlyBird = computed(() => {
     if (!conference.value?.ticket_early_bird_deadline) return false
-    return now.value <= new Date(conference.value.ticket_early_bird_deadline)
+    return now.value <= parseCmsDate(conference.value.ticket_early_bird_deadline)
 })
 
 function formatCentsShort(netCents: number): string {
@@ -308,7 +308,7 @@ function formatCentsShort(netCents: number): string {
 
 function formatDeadline(deadline: string | null): string {
     if (!deadline) return ''
-    return new Date(deadline).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric' })
+    return parseCmsDate(deadline).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 function formatCentsGross(netCents: number): string {
@@ -326,7 +326,7 @@ const isConferenceOver = computed(() => {
         month: '2-digit',
         day: '2-digit',
     })
-    return berlinDay.format(new Date(conference.value.end_on)) < berlinDay.format(now.value)
+    return berlinDay.format(parseCmsDate(conference.value.end_on)) < berlinDay.format(now.value)
 })
 
 const showTicketSection = computed(() => {

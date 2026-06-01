@@ -8,6 +8,7 @@
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
 import type { MeetupItem } from '../types'
+import { parseCmsDate } from '~/helpers'
 
 export default defineComponent({
     props: {
@@ -22,8 +23,8 @@ export default defineComponent({
 
         // Get start and end time
         const startAndEndTime = computed(() => {
-            const startDate = new Date(props.meetup.start_on)
-            const endDate = new Date(props.meetup.end_on)
+            const startDate = parseCmsDate(props.meetup.start_on)
+            const endDate = parseCmsDate(props.meetup.end_on)
 
             // Determine "same day" in Berlin, not in the runtime's local tz.
             const dayFmt = new Intl.DateTimeFormat('en-CA', {
