@@ -302,7 +302,7 @@ function formatCentsShort(netCents: number): string {
 
 function formatDeadline(deadline: string | null): string {
     if (!deadline) return ''
-    return new Date(deadline).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    return new Date(deadline).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 function formatCentsGross(netCents: number): string {

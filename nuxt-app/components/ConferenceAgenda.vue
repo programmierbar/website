@@ -96,11 +96,12 @@ const fmtTime = (s: string) => {
     return '';
   }
 
-  return d.toLocaleTimeString(['DE'], { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
 }
 
 const fmtDay = (isoDay: string) =>
-  new Date(isoDay).toLocaleDateString(['DE'], {
+  new Date(isoDay).toLocaleDateString('de-DE', {
+    timeZone: 'Europe/Berlin',
     weekday: 'long',
     year: 'numeric',
     month: 'short',
