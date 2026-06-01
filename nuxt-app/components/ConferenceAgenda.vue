@@ -54,6 +54,7 @@
 import { computed } from 'vue';
 import type { TalkItem } from '~/types';
 import { buildSpeakerNamesForTalk } from '~/helpers/buildSpeakerNamesForTalk';
+import { parseCmsDate } from '~/helpers';
 
 type Agenda = {
   start: string;   // ISO string, e.g. "2025-10-29T09:15:00"
@@ -87,7 +88,7 @@ const COMPACT_BY_STARTS = true;
 const TIME_COL_WIDTH = 'var(--time-col-width, 8rem)';
 
 /** ===== Utils ===== */
-const toDate = (s: string) => new Date(s);
+const toDate = (s: string) => parseCmsDate(s);
 const dayKey = (d: Date) => d.toISOString().slice(0, 10);
 const fmtTime = (s: string) => {
   const d = toDate(s);
@@ -100,7 +101,7 @@ const fmtTime = (s: string) => {
 }
 
 const fmtDay = (isoDay: string) =>
-  new Date(isoDay).toLocaleDateString('de-DE', {
+  parseCmsDate(isoDay).toLocaleDateString('de-DE', {
     timeZone: 'Europe/Berlin',
     weekday: 'long',
     year: 'numeric',
