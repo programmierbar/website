@@ -458,7 +458,10 @@ export function useDirectus() {
         })
       )
       .then((result) => {
-        const singleResult = result.pop() as unknown as ConferenceItem
+        const singleResult = result.pop() as unknown as ConferenceItem | undefined
+        if (!singleResult) {
+          throw new Error(`Conference with slug "${slug}" not found in Directus.`)
+        }
         const speakersPrepared = singleResult.speakers.map((speaker: any) => {
               return {
                 first_name: speaker.speakers_id.first_name,

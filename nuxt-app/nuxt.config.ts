@@ -172,7 +172,7 @@ export default defineNuxtConfig({
     },
 
     routeRules: {
-        '/**': { isr: true },
+        '/**': { isr: 3600 },
 
         '/konferenz/*/tickets': { isr: false },
         '/konferenz/*/tickets/**': { isr: false },

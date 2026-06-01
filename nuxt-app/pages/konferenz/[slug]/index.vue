@@ -252,7 +252,7 @@ const route = useRoute()
 const directus = useDirectus()
 
 // Query conference and page
-const { data: pageData } = useAsyncData(route.fullPath, async () => {
+const { data: pageData, error } = await useAsyncData(route.fullPath, async () => {
     // Query conference and page async
     const [conference, conferencePage, testimonials] = await Promise.all([
         directus.getConferenceBySlug(route.params.slug as string),
@@ -273,6 +273,16 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
     // Return conference and page
     return { conference, conferencePage, testimonials }
 })
+
+// Re-throw as a fatal error so prerender (with failOnError) aborts the build
+// instead of baking the failure into a cached blank page via ISR.
+if (error.value) {
+    throw createError({
+        statusCode: 500,
+        statusMessage: error.value.message || 'Failed to load conference page.',
+        fatal: true,
+    })
+}
 
 // Extract conference and page from page data
 const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageData.value?.conference)
