@@ -235,7 +235,7 @@
 </template>
 
 <script setup lang="ts">
-import { useLoadingScreen } from '~/composables'
+import { useLoadingScreen, useNow } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo, trackGoal } from '~/helpers';
 import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem, TalkItem } from '~/types';
@@ -289,9 +289,11 @@ const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageD
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
+const now = useNow()
+
 const isEarlyBird = computed(() => {
     if (!conference.value?.ticket_early_bird_deadline) return false
-    return new Date() <= new Date(conference.value.ticket_early_bird_deadline)
+    return now.value <= new Date(conference.value.ticket_early_bird_deadline)
 })
 
 function formatCentsShort(netCents: number): string {
@@ -311,7 +313,7 @@ function formatCentsGross(netCents: number): string {
 const isConferenceOver = computed(() => {
     if (!conference.value?.end_on) return false
     const endDate = new Date(conference.value.end_on)
-    const today = new Date()
+    const today = new Date(now.value)
     today.setHours(0, 0, 0, 0)
     return endDate < today
 })
