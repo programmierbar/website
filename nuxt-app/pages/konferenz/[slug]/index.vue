@@ -235,9 +235,9 @@
 </template>
 
 <script setup lang="ts">
-import { useLoadingScreen } from '~/composables'
+import { useLoadingScreen, useNow } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
-import { getMetaInfo, trackGoal } from '~/helpers';
+import { getMetaInfo, parseCmsDate, trackGoal } from '~/helpers';
 import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem, TalkItem } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
@@ -253,25 +253,30 @@ const directus = useDirectus()
 
 // Query conference and page
 const { data: pageData, error } = await useAsyncData(route.fullPath, async () => {
-    // Query conference and page async
-    const [conference, conferencePage, testimonials] = await Promise.all([
-        directus.getConferenceBySlug(route.params.slug as string),
-        directus.getConferencePage(),
-        directus.getTestimonials(),
-    ])
+    const slug = route.params.slug as string
+    try {
+        const [conference, conferencePage, testimonials] = await Promise.all([
+            directus.getConferenceBySlug(slug),
+            directus.getConferencePage(),
+            directus.getTestimonials(),
+        ])
 
-    // Throw error if meetup does not exist
-    if (!conference) {
-        throw new Error('The conference was not found.')
+        if (!conference) {
+            throw new Error(`Conference with slug "${slug}" not found in Directus.`)
+        }
+
+        if (!conferencePage) {
+          throw new Error('Could not load the conference singleton page from Directus.')
+        }
+
+        return { conference, conferencePage, testimonials }
+    } catch (err) {
+        // Surface the underlying error in prerender/runtime logs so transient
+        // Directus failures can be told apart from real data issues. The
+        // outer createError below only carries a single message string.
+        console.error(`[konferenz/${slug}] data fetch failed:`, err)
+        throw err
     }
-
-    // Throw error if meetup does not exist
-    if (!conferencePage) {
-      throw new Error('Could not access conference page.')
-    }
-
-    // Return conference and page
-    return { conference, conferencePage, testimonials }
 })
 
 // Re-throw as a fatal error so prerender (with failOnError) aborts the build
@@ -281,6 +286,7 @@ if (error.value) {
         statusCode: 500,
         statusMessage: error.value.message || 'Failed to load conference page.',
         fatal: true,
+        cause: error.value,
     })
 }
 
@@ -289,9 +295,11 @@ const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageD
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
+const now = useNow()
+
 const isEarlyBird = computed(() => {
     if (!conference.value?.ticket_early_bird_deadline) return false
-    return new Date() <= new Date(conference.value.ticket_early_bird_deadline)
+    return now.value <= parseCmsDate(conference.value.ticket_early_bird_deadline)
 })
 
 function formatCentsShort(netCents: number): string {
@@ -300,7 +308,7 @@ function formatCentsShort(netCents: number): string {
 
 function formatDeadline(deadline: string | null): string {
     if (!deadline) return ''
-    return new Date(deadline).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    return parseCmsDate(deadline).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 function formatCentsGross(netCents: number): string {
@@ -310,10 +318,15 @@ function formatCentsGross(netCents: number): string {
 
 const isConferenceOver = computed(() => {
     if (!conference.value?.end_on) return false
-    const endDate = new Date(conference.value.end_on)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return endDate < today
+    // Compare in Europe/Berlin calendar days so SSR (UTC) and client (local)
+    // agree across the UTC<->Berlin day boundary. en-CA gives sortable YYYY-MM-DD.
+    const berlinDay = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Berlin',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    })
+    return berlinDay.format(parseCmsDate(conference.value.end_on)) < berlinDay.format(now.value)
 })
 
 const showTicketSection = computed(() => {
