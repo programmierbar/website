@@ -1,5 +1,6 @@
 <template>
     <div>
+        <NuxtLoadingIndicator color="#CFFF00" :height="5" />
         <MouseCursor />
         <Header />
         <main class="min-h-screen">
