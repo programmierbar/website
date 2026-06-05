@@ -8,7 +8,7 @@
       sizes='sm:150px md:300px'
       loading='lazy'
     />
-    <div class='mt-3 p-4 lg:mt-6 lg:p-9 flex flex-col min-h-60 max-h-60 lg:min-h-120 lg:max-h-120 flex-shrink-0' :class="[isExpanded ? 'max-h-full' : '']" @click='isExpanded = !isExpanded'>
+    <div class='mt-3 p-4 lg:mt-6 lg:p-9 flex flex-col min-h-60 max-h-60 lg:min-h-120 lg:max-h-120 flex-shrink-0' :class="[isExpanded ? '!max-h-full' : '']" @click='isExpanded = !isExpanded'>
       <div>
         <p class='font-black lg:text-3xl mb-2'>{{ fullName }}</p>
         <p class='font-light lg:text-xl italic'>{{ speaker.occupation }}</p>
