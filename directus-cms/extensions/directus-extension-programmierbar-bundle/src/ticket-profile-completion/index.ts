@@ -123,9 +123,17 @@ export default defineHook(({ action }, hookContext) => {
                             contentType: 'application/vnd.apple.pkpass',
                             cid: '',
                         })
-                        const directusUrl = (env.PUBLIC_URL || '').replace(/\/+$/, '')
-                        const tokenParam = encodeURIComponent(ticket.profile_token)
-                        appleWalletUrl = `${directusUrl}/ticket-wallet/apple/${ticket.ticket_code}?token=${tokenParam}`
+                        // Only emit a re-download link when we actually have a token to
+                        // authenticate it with; otherwise the URL would carry "token=null".
+                        if (ticket.profile_token) {
+                            const directusUrl = (env.PUBLIC_URL || '').replace(/\/+$/, '')
+                            const tokenParam = encodeURIComponent(ticket.profile_token)
+                            appleWalletUrl = `${directusUrl}/ticket-wallet/apple/${ticket.ticket_code}?token=${tokenParam}`
+                        } else {
+                            logger.warn(
+                                `${HOOK_NAME}: Ticket ${ticket.ticket_code} has no profile_token; skipping Apple Wallet re-download link`
+                            )
+                        }
                     }
                 } catch (err: any) {
                     logger.warn(`${HOOK_NAME}: Apple Wallet pass generation failed: ${err?.message || err}`)

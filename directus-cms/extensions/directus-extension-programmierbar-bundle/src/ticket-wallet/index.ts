@@ -23,6 +23,14 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             return
         }
 
+        // profile_token is a UUID column; reject anything that isn't one (e.g. the
+        // literal string "null") before it reaches the DB and triggers a 500.
+        const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        if (!UUID_RE.test(token)) {
+            res.status(400).send({ error: 'Invalid token' })
+            return
+        }
+
         try {
             const schema = await context.getSchema()
 
