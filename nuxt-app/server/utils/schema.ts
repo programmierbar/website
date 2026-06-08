@@ -99,11 +99,16 @@ export const CompanyBillingSchema = z.object({
         .min(1, 'Bitte trage den Firmennamen ein.')
         .max(200, 'Der Firmenname darf nicht länger als 200 Zeichen sein.'),
     address: BillingAddressSchema,
-    billingEmail: z
-        .string()
-        .email('Die Rechnungs-E-Mail-Adresse scheint ungültig zu sein.')
-        .max(200, 'Die E-Mail-Adresse darf nicht länger als 200 Zeichen sein.')
-        .optional(),
+    // Treat a cleared (empty/whitespace-only) optional field as "not provided"
+    // so it passes validation instead of failing the email check.
+    billingEmail: z.preprocess(
+        (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+        z
+            .string()
+            .email('Die Rechnungs-E-Mail-Adresse scheint ungültig zu sein.')
+            .max(200, 'Die E-Mail-Adresse darf nicht länger als 200 Zeichen sein.')
+            .optional()
+    ),
     vatId: z
         .string()
         .max(50, 'Die USt-IdNr. darf nicht länger als 50 Zeichen sein.')
