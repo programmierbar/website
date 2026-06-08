@@ -306,7 +306,11 @@ export function generateGoogleWalletUrl(
         aud: 'google',
         typ: 'savetowallet',
         iat: now,
-        origins: [input.websiteUrl],
+        // No `origins`: this link is delivered by email and opened directly
+        // (Gmail / Wallet app), not from a button hosted on our domain. With
+        // `origins` set, Google only redeems the JWT when the save is initiated
+        // from one of those domains, so an email link fails with a generic
+        // "something went wrong" error.
         payload: {
             eventTicketClasses: [eventTicketClass],
             eventTicketObjects: [eventTicketObject],
