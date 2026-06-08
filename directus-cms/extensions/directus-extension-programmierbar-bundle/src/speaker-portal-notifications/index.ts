@@ -30,7 +30,7 @@ export default defineHook(({ action, schedule }, hookContext) => {
      * Build the portal URL for a speaker token.
      */
     async function buildPortalUrl(token: string, context: EmailServiceContext): Promise<string> {
-        const websiteUrl = (await getSetting('website_url', context)) || 'https://programmier.bar'
+        const websiteUrl = (await getSetting('website_url', context)) || 'https://www.programmier.bar'
         return `${websiteUrl}/speaker-portal?token=${encodeURIComponent(token)}`
     }
 
@@ -283,7 +283,7 @@ export default defineHook(({ action, schedule }, hookContext) => {
             })
 
             const settings = await getSettings(['website_url'], context)
-            const websiteUrl = settings.website_url || 'https://programmier.bar'
+            const websiteUrl = settings.website_url || 'https://www.programmier.bar'
 
             const now = new Date()
             const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
