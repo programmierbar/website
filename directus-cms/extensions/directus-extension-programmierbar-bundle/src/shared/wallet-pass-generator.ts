@@ -259,47 +259,6 @@ export function generateGoogleWalletUrl(
         },
     }
 
-    // Include class definition in the JWT so Google creates it on-the-fly if needed
-    const eventTicketClass = {
-        id: classId,
-        issuerName: 'programmier.bar',
-        logo: {
-            sourceUri: {
-                uri: `${input.websiteUrl}/wallet_google_logo.png`,
-            },
-        },
-        hexBackgroundColor: '#003F64',
-        eventName: {
-            defaultValue: {
-                language: 'de',
-                value: input.conferenceTitle,
-            },
-        },
-        ...(input.venueName && {
-            venue: {
-                name: {
-                    defaultValue: {
-                        language: 'de',
-                        value: input.venueName,
-                    },
-                },
-                ...(input.venueAddress && {
-                    address: {
-                        defaultValue: {
-                            language: 'de',
-                            value: input.venueAddress,
-                        },
-                    },
-                }),
-            },
-        }),
-        dateTime: {
-            start: input.conferenceDate,
-            ...(input.conferenceEndDate && { end: input.conferenceEndDate }),
-        },
-        reviewStatus: 'UNDER_REVIEW',
-    }
-
     const now = Math.floor(Date.now() / 1000)
     const jwtPayload = {
         iss: config.serviceAccountEmail,
@@ -311,8 +270,14 @@ export function generateGoogleWalletUrl(
         // `origins` set, Google only redeems the JWT when the save is initiated
         // from one of those domains, so an email link fails with a generic
         // "something went wrong" error.
+        //
+        // "Skinny" JWT: reference the existing, approved EventTicketClass by id
+        // (managed in the Google Pay & Wallet Console) and only send the object.
+        // We must NOT inline the class here: re-declaring an already-APPROVED
+        // class as `reviewStatus: UNDER_REVIEW` makes Google treat the save as a
+        // test/preview, so only the issuer and allowlisted test accounts can save
+        // it — everyone else gets the generic "something went wrong" error.
         payload: {
-            eventTicketClasses: [eventTicketClass],
             eventTicketObjects: [eventTicketObject],
         },
     }
