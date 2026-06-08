@@ -52,7 +52,7 @@ export default defineHook(({ action }, hookContext) => {
                 accountability: { admin: true },
             })
 
-            const websiteUrl = (await getSetting('website_url', context)) || 'https://programmier.bar'
+            const websiteUrl = (await getSetting('website_url', context)) || 'https://www.programmier.bar'
             const venueName = await getSetting('conference_venue_name', context)
             const venueAddress = await getSetting('conference_venue_address', context)
 

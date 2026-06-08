@@ -64,7 +64,7 @@ export default defineHook(({ action }, hookContext) => {
                 accountability: { admin: true },
             })
 
-            const websiteUrl = (await getSetting('website_url', context)) || 'https://programmier.bar'
+            const websiteUrl = (await getSetting('website_url', context)) || 'https://www.programmier.bar'
 
             for (const orderId of keys) {
                 logger.info(`${HOOK_NAME}: Processing paid order ${orderId}`)
