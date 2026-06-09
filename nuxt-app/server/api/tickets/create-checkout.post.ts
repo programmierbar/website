@@ -108,6 +108,7 @@ function buildOrderPayload(
         ticket_type: pricing.ticketType,
         stripe_checkout_session_id: '', // Will be updated after creating Stripe session
         is_internal: isInternal,
+        attendees_json: JSON.stringify(input.tickets),
     }
 }
 
@@ -142,7 +143,6 @@ function buildStripeSessionParams(
             order_id: orderId,
             conference_id: conferenceId,
             ticket_type: pricing.ticketType,
-            attendees: JSON.stringify(tickets),
         },
     }
 }
@@ -240,7 +240,6 @@ export default defineEventHandler(async (event) => {
             await directus.updateTicketOrder(orderId, {
                 status: 'paid',
                 date_paid: new Date().toISOString(),
-                attendees_json: JSON.stringify(input.tickets),
             })
 
             return {
