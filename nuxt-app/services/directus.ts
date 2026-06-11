@@ -71,3 +71,41 @@ export type Collections = {
 export const directus = createDirectus<Collections>(DIRECTUS_CMS_URL)
     .with(authentication('session', { credentials: 'include' }))
     .with(rest())
+
+// Statuses that indicate a transient upstream condition worth retrying.
+const TRANSIENT_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504])
+
+function isTransientError(error: unknown): boolean {
+    // Directus SDK API errors carry the raw Response; network-level failures
+    // (DNS, connection reset, timeout) surface as a TypeError without one.
+    const status = (error as { response?: { status?: number } } | null)?.response?.status
+    return status !== undefined ? TRANSIENT_STATUS_CODES.has(status) : error instanceof TypeError
+}
+
+// During prerender every route fetches live from Directus and a single failed
+// request aborts the whole deploy (prerender.failOnError). Nitro's own
+// prerender retry option is ineffective (it is passed to a plain fetch that
+// ignores it), so transient failures are retried here with backoff instead.
+// Scoped to prerender on purpose: prerendering only ever reads, while at
+// runtime this client also performs mutations that must not be re-sent.
+if (import.meta.prerender) {
+    const MAX_RETRIES = 3
+    const baseRequest: typeof directus.request = directus.request.bind(directus)
+    directus.request = (async (options: Parameters<typeof baseRequest>[0]) => {
+        for (let attempt = 0; ; attempt++) {
+            try {
+                return await baseRequest(options)
+            } catch (error) {
+                if (attempt >= MAX_RETRIES || !isTransientError(error)) {
+                    throw error
+                }
+                const delayMs = 1000 * 2 ** attempt
+                console.warn(
+                    `[directus] Transient request failure, retry ${attempt + 1}/${MAX_RETRIES} in ${delayMs}ms:`,
+                    error
+                )
+                await new Promise((resolve) => setTimeout(resolve, delayMs))
+            }
+        }
+    }) as typeof directus.request
+}
