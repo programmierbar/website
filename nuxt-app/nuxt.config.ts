@@ -3,6 +3,7 @@ import svgLoader from 'vite-svg-loader'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { useDirectus } from './composables/useDirectus'
+import { enableDirectusRetries } from './services'
 import { DEV, DEVTOOLS, DIRECTUS_CMS_URL, FLAG_SHOW_LOGIN, DISCORD_INVITE_LINK } from './config'
 
 const directus = useDirectus()
@@ -91,6 +92,10 @@ export default defineNuxtConfig({
             if (nitroConfig.dev) {
                 return
             }
+
+            // The route-discovery fetches below are read-only and run before
+            // prerendering, so transient Directus failures may retry safely.
+            enableDirectusRetries()
 
             const routes: string[] = [
               '/',

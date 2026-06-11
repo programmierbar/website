@@ -82,13 +82,20 @@ function isTransientError(error: unknown): boolean {
     return status !== undefined ? TRANSIENT_STATUS_CODES.has(status) : error instanceof TypeError
 }
 
-// During prerender every route fetches live from Directus and a single failed
-// request aborts the whole deploy (prerender.failOnError). Nitro's own
-// prerender retry option is ineffective (it is passed to a plain fetch that
-// ignores it), so transient failures are retried here with backoff instead.
-// Scoped to prerender on purpose: prerendering only ever reads, while at
-// runtime this client also performs mutations that must not be re-sent.
-if (import.meta.prerender) {
+// Build-time fetches are all reads, and a single failed request aborts the
+// whole deploy (prerender.failOnError). Nitro's own prerender retry option is
+// ineffective (it is passed to a plain fetch that ignores it), so transient
+// failures are retried here with backoff instead. Retrying is opt-in via this
+// function on purpose: at runtime this client also performs mutations that
+// must not be re-sent.
+let retriesEnabled = false
+
+export function enableDirectusRetries(): void {
+    if (retriesEnabled) {
+        return
+    }
+    retriesEnabled = true
+
     const MAX_RETRIES = 3
     const baseRequest: typeof directus.request = directus.request.bind(directus)
     directus.request = (async (options: Parameters<typeof baseRequest>[0]) => {
@@ -108,4 +115,12 @@ if (import.meta.prerender) {
             }
         }
     }) as typeof directus.request
+}
+
+// Prerendering only ever reads. The static guard keeps the wrapper out of the
+// deployed server and client bundles. The route-discovery fetches in
+// nuxt.config.ts run before prerendering in a separate module instance and
+// opt in by calling enableDirectusRetries() themselves.
+if (import.meta.prerender) {
+    enableDirectusRetries()
 }
