@@ -6,10 +6,17 @@
 
             <div class="relative mt-8 md:mt-14">
                 <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
-                    <div class="flex items-center justify-between space-x-4">
-                        <Breadcrumbs :breadcrumbs="breadcrumbs" />
-                        <!-- <LikeButton /> -->
-                    </div>
+                  <div class="flex items-center justify-between space-x-4">
+                      <Breadcrumbs :breadcrumbs="breadcrumbs" />
+                  </div>
+
+                  <EmbeddedVideoPlayer
+                      v-if="podcast.youtube_url"
+                      :url="podcast.youtube_url"
+                      :sync-with-podcast-player="podcast"
+                      :spotlights='true'
+                      class="mt-8 md:mt-14"
+                  />
 
                   <PodcastRating :podcast='podcast' />
 

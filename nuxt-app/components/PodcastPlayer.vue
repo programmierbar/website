@@ -132,6 +132,8 @@
                         step="1"
                         :style="`--progress-percentage: ${progressString}`"
                         data-cursor-hover
+                        @pointerdown="podcastPlayer.beginScrubbing"
+                        @keydown="beginScrubbingOnSeekKey"
                         @change="changeCurrentTime"
                     />
                     <div class="mr-6 mt-0.5 text-sm xl:mr-0 xl:text-base">
@@ -270,6 +272,31 @@ const expandPlayer = () => {
  */
 const collapsePlayer = () => {
     isExpanded.value = false
+}
+
+// Keys that actually move a range input's value (and therefore emit a
+// `change` event that clears the scrubbing flag). Other keys — Tab, modifiers,
+// etc. — must NOT begin scrubbing, otherwise the flag would never be cleared
+// and time updates would stay suppressed indefinitely.
+const SEEK_KEYS = new Set([
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'ArrowDown',
+    'PageUp',
+    'PageDown',
+    'Home',
+    'End',
+])
+
+/**
+ * It begins scrubbing only when a real seek key is pressed, so that a matching
+ * `change` event is guaranteed to follow and clear the scrubbing flag.
+ */
+const beginScrubbingOnSeekKey = (event: KeyboardEvent) => {
+    if (SEEK_KEYS.has(event.key)) {
+        podcastPlayer.beginScrubbing()
+    }
 }
 
 /**
