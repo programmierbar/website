@@ -1,11 +1,17 @@
 <template>
   <div class="relative">
-    <!-- Spotlight blobs — the signature blurred blue/pink glow behind the stage.
-         The boxes stay within the stage's horizontal bounds (so they never push
-         the page wider); the blur halo alone provides the bleed past the frame. -->
-    <div v-if='spotlights' class="pointer-events-none absolute inset-x-0 -inset-y-10 z-0 opacity-50 blur-[70px]" aria-hidden="true">
-      <div class="absolute left-0 -top-6 h-56 w-56 rounded-full bg-blue md:h-72 md:w-72" />
-      <div class="absolute -bottom-6 right-0 h-48 w-48 rounded-full bg-pink md:h-64 md:w-64" />
+    <!-- Spotlight glow — the signature blurred blue/pink light behind the stage.
+         Each spotlight matches the Figma spec (671px circle, opacity .8,
+         blur 150px). The soft blur halo provides the bleed past the frame; the
+         circle boxes themselves are sized down on smaller screens so they never
+         push the page wider than the viewport. -->
+    <div v-if="spotlights" class="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
+      <div
+        class="absolute left-0 top-0 h-64 w-64 rounded-full bg-blue opacity-80 blur-[150px] md:h-96 md:w-96 lg:h-160 lg:w-160"
+      />
+      <div
+        class="absolute bottom-0 right-0 h-64 w-64 rounded-full bg-pink opacity-80 blur-[150px] md:h-96 md:w-96  lg:h-160 lg:w-160"
+      />
     </div>
 
     <!-- Stage — sharp frame with a fine lime hairline -->
@@ -106,7 +112,6 @@
 </template>
 
 <script setup lang="ts">
-import { getPodcastTypeAndNumber } from 'shared-code'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import LeaveSiteIcon from '~/assets/icons/leave-site.svg'
 import PlayIcon from '~/assets/icons/play.svg'
@@ -134,12 +139,6 @@ const { hasConsented, grantConsent } = useVideoConsent()
 
 const syncEnabled = computed(() => Boolean(props.syncWithPodcastPlayer))
 const podcastPlayer = syncEnabled.value ? usePodcastPlayer() : null
-
-// Brand overlay label, e.g. "Deep Dive 152". Derived from the synced podcast
-// when available; otherwise the overlay just shows the YouTube link.
-const episodeLabel = computed(() =>
-  props.syncWithPodcastPlayer ? getPodcastTypeAndNumber(props.syncWithPodcastPlayer) : ''
-)
 
 const rememberChoice = ref(false)
 const localConsent = ref(false)
