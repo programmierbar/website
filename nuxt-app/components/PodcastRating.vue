@@ -89,25 +89,44 @@ const formError = ref('');
 
 const comment = ref('');
 
-let ratingId = ref(message.value?.payload?.id || '');
+const ratingId = ref(message.value?.payload?.id || '');
 
 const rate = async function(upOrDown: 'up' | 'down') {
   if (istActive.value) return;
   istActive.value = true;
   try {
     trigger(defaultPatterns.buzz);
-    const result = await $fetch<{ success: boolean; message: string, payload: any }>(`/podcast/${props.podcast.slug}/${upOrDown}`, {
-      headers: {
-        Accept: 'application/json',
+    const result = await $fetch<{ id?: string }>('/api/vote', {
+      method: 'POST',
+      body: {
+        slug: props.podcast.slug,
+        direction: upOrDown,
       },
     });
-    setMessage(result.message, 'rating', {});
-    ratingId.value = result.payload?.id;
+    setMessage('Vielen Dank für dein Feedback!', 'rating', {});
+    ratingId.value = result?.id ?? '';
   } catch {
     setMessage('Leider trat ein Fehler auf.', 'rating', {});
   }
   istActive.value = false;
 };
+
+// Show-note links (/podcast/[slug]/[up|down]) redirect here with ?vote=…
+// instead of writing on GET. Cast the vote client-side so crawlers, which
+// don't run this, never register one.
+const route = useRoute();
+const router = useRouter();
+
+onMounted(() => {
+  const vote = route.query.vote;
+  if ((vote === 'up' || vote === 'down') && !message.value) {
+    rate(vote);
+    // Drop the query param so a refresh or back-navigation doesn't re-vote.
+    const query = { ...route.query };
+    delete query.vote;
+    router.replace({ query });
+  }
+});
 
 const submitForm = async (event: Event) => {
   try {

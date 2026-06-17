@@ -15,6 +15,13 @@ export const EmailSchema = z.object({
         .max(1000, 'Deine Nachricht darf nicht länger als 1.000 Zeichen lang sein.'),
 })
 
+// Podcast vote (rating)
+
+export const VoteSchema = z.object({
+    slug: z.string().min(1, 'Slug ist erforderlich.'),
+    direction: z.enum(['up', 'down']),
+})
+
 // Speaker portal submission
 
 export const SpeakerSubmissionSchema = z.object({
