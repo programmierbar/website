@@ -1,59 +1,115 @@
 <template>
-  <div class="relative w-full aspect-video bg-gray-900">
-    <!-- Consent placeholder -->
-    <template v-if="!showVideo">
-      <img
-        v-if="thumbnailUrl"
-        :src="thumbnailUrl"
-        :alt="'Video-Vorschaubild'"
-        class="absolute inset-0 h-full w-full object-cover"
-        @error="onThumbnailError"
-      />
-      <div class="absolute inset-0 bg-black/50" />
-      <div class="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6">
-        <button
-          class="flex flex-col items-center gap-4"
-          data-cursor-hover
-          @click="handleLoadVideo"
-        >
-          <PlayCircleFilledIcon class="h-16 w-16 text-lime md:h-20 md:w-20" />
-          <span class="rounded-full border-2 border-lime px-6 py-2 text-sm font-bold text-lime transition-colors hover:bg-lime hover:text-black md:text-base">
-            Video laden
-          </span>
-        </button>
-        <p class="mt-2 max-w-md text-center text-xs text-white/80 md:text-sm">
-          Durch Klicken werden Daten an YouTube übertragen.
-          <NuxtLink class="underline hover:text-white" to="/datenschutz" data-cursor-hover>
-            Datenschutz
-          </NuxtLink>
-        </p>
-        <label class="flex cursor-pointer items-center gap-2 text-xs text-white/70 md:text-sm">
-          <input
-            v-model="rememberChoice"
-            type="checkbox"
-            class="accent-lime"
-          />
-          Immer YouTube-Videos erlauben
-        </label>
-      </div>
-    </template>
+  <div class="relative">
+    <!-- Spotlight blobs — the signature blurred blue/pink glow behind the stage.
+         The boxes stay within the stage's horizontal bounds (so they never push
+         the page wider); the blur halo alone provides the bleed past the frame. -->
+    <div v-if='spotlights' class="pointer-events-none absolute inset-x-0 -inset-y-10 z-0 opacity-50 blur-[70px]" aria-hidden="true">
+      <div class="absolute left-0 -top-6 h-56 w-56 rounded-full bg-blue md:h-72 md:w-72" />
+      <div class="absolute -bottom-6 right-0 h-48 w-48 rounded-full bg-pink md:h-64 md:w-64" />
+    </div>
 
-    <!-- Iframe (loaded after consent) -->
-    <iframe
-      v-else
-      ref="iframeRef"
-      type="text/html"
-      :src="embedUrl"
-      class="h-full w-full"
-      frameborder="0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen
-    />
+    <!-- Stage — sharp frame with a fine lime hairline -->
+    <div class="relative z-10 aspect-video w-full overflow-hidden bg-gray-900 outline outline-1 -outline-offset-1 outline-lime/40">
+      <!-- Consent placeholder -->
+      <template v-if="!showVideo">
+        <img
+          v-if="thumbnailUrl"
+          :src="thumbnailUrl"
+          alt="Video-Vorschaubild"
+          class="absolute inset-0 h-full w-full object-cover"
+          @error="onThumbnailError"
+        />
+        <div class="absolute inset-0 bg-black/50" />
+
+        <!-- Brand overlay (episode + link to YouTube) -->
+        <div class="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-3 bg-gradient-to-b from-black/70 to-transparent px-4 py-4 md:px-5">
+          <a
+            :href="url"
+            target="_blank"
+            rel="noreferrer"
+            class="ml-auto inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-white transition-colors hover:text-lime"
+            data-cursor-hover
+          >
+            <LeaveSiteIcon class="h-4 w-4" />
+            Auf YouTube ansehen
+          </a>
+        </div>
+
+        <!-- Center play button with pulse glow -->
+        <div class="absolute inset-0 flex items-center justify-center">
+          <button
+            class="embedded-video-player__pulse relative rounded-full text-lime transition-transform hover:scale-105"
+            aria-label="Video laden"
+            data-cursor-hover
+            @click="handleLoadVideo"
+          >
+            <PlayCircleFilledIcon class="h-20 w-20 md:h-24 md:w-24" />
+          </button>
+        </div>
+
+        <!-- Consent bar -->
+        <div class="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/80 to-transparent px-4 py-5 md:px-6">
+          <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-3">
+            <button
+              class="inline-flex items-center gap-2 rounded-full border-3 border-lime px-6 py-2 text-sm font-black uppercase tracking-widest text-lime transition-colors hover:bg-lime hover:text-black"
+              data-cursor-hover
+              @click="handleLoadVideo"
+            >
+              <PlayIcon class="h-4 w-4" />
+              Video laden
+            </button>
+            <p class="text-xs font-light text-white/80">
+              Es werden Daten an YouTube übertragen.
+              <NuxtLink class="text-blue underline hover:text-white" to="/datenschutz" data-cursor-hover>
+                Datenschutz
+              </NuxtLink>
+            </p>
+            <label class="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-white/70">
+              <input
+                v-model="rememberChoice"
+                type="checkbox"
+                class="h-4 w-4 accent-lime"
+              />
+              Immer erlauben
+            </label>
+          </div>
+        </div>
+      </template>
+
+      <!-- Iframe (loaded after consent) — native YouTube controls -->
+      <template v-else>
+        <iframe
+          ref="iframeRef"
+          type="text/html"
+          :src="embedUrl"
+          class="absolute inset-0 h-full w-full"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        />
+        <!-- Persistent brand overlay above the native chrome -->
+        <!-- <div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-3 bg-gradient-to-b from-black/70 to-transparent px-4 py-4 md:px-5">
+          <a
+            :href="url"
+            target="_blank"
+            rel="noreferrer"
+            class="pointer-events-auto ml-auto inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-white transition-colors hover:text-lime"
+            data-cursor-hover
+          >
+            <LeaveSiteIcon class="h-4 w-4" />
+            Auf YouTube ansehen
+          </a>
+        </div>-->
+      </template>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { getPodcastTypeAndNumber } from 'shared-code'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import LeaveSiteIcon from '~/assets/icons/leave-site.svg'
+import PlayIcon from '~/assets/icons/play.svg'
 import PlayCircleFilledIcon from '~/assets/icons/play-circle-filled.svg'
 import { createYouTubePlayerSource } from '~/composables/useMediaSource'
 import { usePodcastPlayer } from '~/composables/usePodcastPlayer'
@@ -62,16 +118,28 @@ import { useYouTubeIframeApi } from '~/composables/useYouTubeIframeApi'
 import { getAssetUrl } from '~/helpers/getAssetUrl'
 import type { FileItem, PodcastItem } from '~/types'
 
-const props = defineProps<{
-  url: string
-  thumbnail?: FileItem | null
-  syncWithPodcastPlayer?: PodcastItem | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    url: string
+    thumbnail?: FileItem | null
+    syncWithPodcastPlayer?: PodcastItem | null
+    spotlights: boolean
+  }>(),
+  {
+    spotlights: false,
+  }
+)
 
 const { hasConsented, grantConsent } = useVideoConsent()
 
 const syncEnabled = computed(() => Boolean(props.syncWithPodcastPlayer))
 const podcastPlayer = syncEnabled.value ? usePodcastPlayer() : null
+
+// Brand overlay label, e.g. "Deep Dive 152". Derived from the synced podcast
+// when available; otherwise the overlay just shows the YouTube link.
+const episodeLabel = computed(() =>
+  props.syncWithPodcastPlayer ? getPodcastTypeAndNumber(props.syncWithPodcastPlayer) : ''
+)
 
 const rememberChoice = ref(false)
 const localConsent = ref(false)
@@ -254,3 +322,32 @@ onBeforeUnmount(() => {
   }
 })
 </script>
+
+<style scoped>
+.embedded-video-player__pulse::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    box-shadow: 0 0 0 0 rgba(207, 255, 0, 0.55);
+    animation: embedded-video-player-pulse 2.6s ease-out infinite;
+}
+
+@keyframes embedded-video-player-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(207, 255, 0, 0.5);
+    }
+    70% {
+        box-shadow: 0 0 0 26px rgba(207, 255, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(207, 255, 0, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .embedded-video-player__pulse::after {
+        animation: none;
+    }
+}
+</style>
