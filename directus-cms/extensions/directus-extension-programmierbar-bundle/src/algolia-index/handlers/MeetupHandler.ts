@@ -80,8 +80,13 @@ export class MeetupHandler extends AbstractItemHandler{
         return [{
             _type : 'meetup',
             title: item.title,
-            description: description || undefined,
-            talks: talks || undefined,
+            // Always send a string (empty when there's no content), never `undefined`. The hook and
+            // rebuild push via partialUpdateObject, which drops `undefined` properties from the
+            // request — so an `undefined` here would leave a now-empty field showing its previous
+            // (possibly stale raw-HTML) value in the index instead of clearing it. An empty string
+            // explicitly overwrites it.
+            description: description,
+            talks: talks,
             published_on: item.published_on,
             image: item.cover_image ? `${this.env.PUBLIC_URL}assets/${item.cover_image}` : undefined,
             slug: item.slug,
