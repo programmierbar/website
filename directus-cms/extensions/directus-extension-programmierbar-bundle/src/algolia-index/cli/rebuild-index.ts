@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 import meow from 'meow';
-import { createDirectus, rest, readItems } from '@directus/sdk';
+import { createDirectus, rest } from '@directus/sdk';
 import { createFetchRequester } from '@algolia/requester-fetch';
 import { searchClient } from '@algolia/client-search';
 import 'dotenv/config'
 
 import { getHandlers } from './../handlers/index.ts';
+import { streamItems } from './../util/pagination.ts';
 
 const cli = meow(`
     Usage
@@ -54,15 +55,12 @@ for (const configurationItem of configuration) {
     if (cli.input.lastIndexOf(configurationItem.collection) !== -1) {
         console.log('Rebuilding index for collection: ' + configurationItem.collection);
 
-        const items = await directusClient.request(
-            readItems(configurationItem.collection, {
-                fields: configurationItem.handler.indexFields,
-                limit: -1,
-            })
-        );
-
+        // Stream the collection page by page (page size decided by the handler) instead of loading
+        // it all at once. Transcripts in particular cannot be read with `limit: -1` — each row holds
+        // a full hour of audio transcription. Streaming also keeps memory bounded: we process and
+        // push one item before fetching the next.
         let counter = 0;
-        for (const item of items) {
+        for await (const item of streamItems(directusClient, configurationItem.collection, configurationItem.handler)) {
             counter++;
             const payloads = configurationItem.handler.buildAttributes(item).map((payload) => {
                 return {

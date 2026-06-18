@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 import meow from 'meow';
-import { createDirectus, rest, readItems } from '@directus/sdk';
+import { createDirectus, rest } from '@directus/sdk';
 import { createFetchRequester } from '@algolia/requester-fetch';
 import { searchClient } from '@algolia/client-search';
 import 'dotenv/config'
 
 import { getHandlers } from './../handlers/index.ts';
+import { collectItems } from './../util/pagination.ts';
 
 const cli = meow(`
     Usage
@@ -77,13 +78,10 @@ async function repairCollection(configItem: typeof configuration[0]): Promise<Re
 
     console.log(`\n🔍 Analyzing collection: ${configItem.collection}`);
 
-    // Get all items from Directus
-    const dbItems = await directusClient.request(
-        readItems(configItem.collection, {
-            fields: configItem.handler.indexFields,
-            limit: -1,
-        })
-    );
+    // Get all items from Directus. The repair pass diffs the whole collection against the index, so
+    // it genuinely needs every item in memory — but we still fetch through the handler's pagination
+    // (collectItems) so large collections like transcripts don't fail the bulk read with limit: -1.
+    const dbItems = await collectItems(directusClient, configItem.collection, configItem.handler);
 
     stats.totalDbItems = dbItems.length;
     console.log(`📊 Found ${stats.totalDbItems} items in database`);
