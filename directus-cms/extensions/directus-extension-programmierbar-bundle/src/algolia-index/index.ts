@@ -80,6 +80,19 @@ export default defineHook(({ action }, hookContext) => {
         })
     })
 
+    // Talks are their own collection embedded into meetups (see MeetupHandler). Editing a talk's
+    // title/abstract must refresh the meetup entries that embed it — see handleRelatedTalkChange for
+    // why only `update` is wired up (create/delete are covered by the accompanying meetup update).
+    action('talks.items.update', async function (metadata, eventContext) {
+        handleRelatedTalkChange(metadata, eventContext, {
+            meetupHandler: handlers.meetupHandler,
+            client,
+            ItemsService,
+            logger,
+            env
+        });
+    })
+
     action('speakers.items.create', async function (metadata, eventContext) {
         handleUpdateAction(metadata, eventContext, {
             handler: handlers.speakerHandler,
@@ -185,24 +198,57 @@ async function handleUpdateAction(metadata, eventContext, dependencies: {
         return
     }
 
-    const { fields: collectionFields } = eventContext.schema.collections[metadata.collection]
+    // The actual reindex lives in reindexByKey (shared with the talk-change path). We pass the change
+    // payload so it can skip needless work when no indexed field changed.
+    await reindexByKey({
+        handler,
+        collection: metadata.collection,
+        itemKey,
+        eventContext,
+        ItemsService,
+        client,
+        logger,
+        env,
+        changedPayload: metadata.payload,
+    })
+}
 
-    // ---------------------------------------------------------------------------------------------
-    // Re-read the FULL item from the database and build the index entry from *that*.
-    //
-    // This is the heart of the fix. `metadata.payload` only contains the fields that changed in this
-    // one save (the diff). Editors save title, cover, description and (for transcripts) the raw
-    // transcript independently and in no fixed order, so any single save's payload is usually a tiny
-    // subset of the item. Building the index entry from that subset used to:
-    //   - create sparse podcast entries missing title/cover/date (only the changed field made it in),
-    //     because `buildAttributes` reads `item.<field>` and missing fields serialize to `undefined`;
-    //   - for transcripts, omit the related `podcast` metadata entirely and crash in
-    //     `buildDistinctKey` (`item.podcast.id`) whenever the save didn't include the relation.
-    //
-    // Reading the full item via the handler's declared `indexFields` is exactly what the rebuild /
-    // repair CLIs do, so the live hook and the CLIs now produce identical entries. `indexFields` is
-    // the single source of truth for "what does this handler need to build an entry".
-    const itemsService = new ItemsService(metadata.collection, {
+/**
+ * Reads the FULL item from the database and (re)builds its Algolia entry from *that* item.
+ *
+ * This is the heart of the indexing fix. `metadata.payload` only contains the fields that changed in
+ * a single save (the diff). Editors save title, cover, description and (for transcripts) the raw
+ * transcript independently and in no fixed order, so any one save's payload is usually a tiny subset
+ * of the item. Building the entry from that subset used to:
+ *   - create sparse podcast entries missing title/cover/date (only the changed field made it in),
+ *     because `buildAttributes` reads `item.<field>` and missing fields serialize to `undefined`;
+ *   - for transcripts, omit the related `podcast` metadata entirely and crash in `buildDistinctKey`
+ *     (`item.podcast.id`) whenever the save didn't include the relation.
+ *
+ * Reading the full item via the handler's declared `indexFields` is exactly what the rebuild / repair
+ * CLIs do, so the live hook and the CLIs produce identical entries. `indexFields` is the single
+ * source of truth for "what does this handler need to build an entry".
+ *
+ * `changedPayload` is the diff that triggered the reindex, used only to gate needless work. Callers
+ * that can't supply a meaningful diff (e.g. a meetup reindexed because one of its talks changed)
+ * omit it, which forces a rebuild.
+ */
+async function reindexByKey(dependencies: {
+    handler: ItemHandler,
+    collection: string,
+    itemKey: any,
+    eventContext: any,
+    ItemsService,
+    client: SearchClient,
+    logger,
+    env,
+    changedPayload?: any,
+}): Promise<void> {
+    const { handler, collection, itemKey, eventContext, ItemsService, client, logger, env, changedPayload } = dependencies;
+
+    const { fields: collectionFields } = eventContext.schema.collections[collection]
+
+    const itemsService = new ItemsService(collection, {
         accountability: eventContext.accountability,
         schema: eventContext.schema,
     }) as ItemsServiceType;
@@ -216,7 +262,7 @@ async function handleUpdateAction(metadata, eventContext, dependencies: {
     const item = await itemsService.readOne(itemKey, { fields: fieldsToRead })
 
     // Only published items belong in the index. Action hooks run *after* the write, so the item we
-    // just read already reflects the new status; there is no need to also inspect metadata.payload.
+    // just read already reflects the new status; there is no need to also inspect the diff.
     if (collectionFields.status && item.status !== 'published') {
         logger.info(`${HOOK_NAME} hook: Item "${itemKey}" is not published (status: "${item.status}"). Ensuring it is absent from the search index.`)
         // Always issue the delete (it is idempotent): this covers depublishing as well as items that
@@ -227,10 +273,11 @@ async function handleUpdateAction(metadata, eventContext, dependencies: {
         return
     }
 
-    // `updateRequired` is intentionally evaluated against the diff (metadata.payload): it answers
-    // "did a field we index actually change in this save?" and lets us skip needless reindexing when
-    // an unrelated field was touched. The index *content* is always built from the full item above.
-    if (!handler.updateRequired(metadata.payload)) {
+    // When triggered by a direct edit we gate on the diff: `updateRequired` answers "did a field we
+    // index actually change in this save?" and lets us skip needless reindexing when an unrelated
+    // field was touched. Talk-driven reindexes pass no diff and always rebuild (the meetup row itself
+    // may not have changed at all, only the related talk's text).
+    if (changedPayload !== undefined && !handler.updateRequired(changedPayload)) {
         logger.info(`${HOOK_NAME} hook: No search index update necessary`)
         return
     }
@@ -268,6 +315,77 @@ async function handleUpdateAction(metadata, eventContext, dependencies: {
     }
 
     logger.info(`${HOOK_NAME} hook: Updated search index "${env.ALGOLIA_INDEX}" for "${handler.collectionName}" item "${itemKey}"`)
+}
+
+/**
+ * Reindexes the meetups that embed a talk whose content just changed.
+ *
+ * Talk title/abstract live in the standalone `talks` collection (shared by meetups and conferences),
+ * so editing a talk fires `talks.items.*` — NOT `meetups.items.*`. Without this handler, a talk edit
+ * would never refresh the meetup entries that embed its text. We resolve every meetup linked to the
+ * changed talk via the talk's reverse `meetups` alias (the `meetups_talks` junction) and rebuild each.
+ *
+ * Scope: wired to `talks.items.update` only.
+ *   - create: a brand-new talk isn't linked to a meetup yet; linking happens through a meetup save
+ *     (`meetups.items.update` with `talks` in the payload), already handled via updateRequired.
+ *   - delete: the talk can no longer be read to find its meetups; Directus removes the junction rows,
+ *     which updates the meetups' `talks` field and triggers `meetups.items.update` to refresh them.
+ */
+async function handleRelatedTalkChange(metadata, eventContext, dependencies: {
+    meetupHandler: ItemHandler,
+    client: SearchClient,
+    ItemsService,
+    logger,
+    env
+}) {
+    const { meetupHandler, client, ItemsService, logger, env } = dependencies;
+
+    const talkKey = metadata.key || (metadata.keys && metadata.keys[0])
+    if (!talkKey) {
+        logger.error(`${HOOK_NAME} hook: Error: Invalid talk key`)
+        return
+    }
+
+    // Skip talk saves that don't touch indexed talk fields (e.g. only the video URL or thumbnail
+    // changed) — those can't affect any meetup entry.
+    const payload = metadata.payload || {}
+    if (payload.title === undefined && payload.abstract === undefined) {
+        logger.info(`${HOOK_NAME} hook: Talk "${talkKey}" change does not affect indexed fields; skipping.`)
+        return
+    }
+
+    const talksService = new ItemsService('talks', {
+        accountability: eventContext.accountability,
+        schema: eventContext.schema,
+    }) as ItemsServiceType;
+
+    // `meetups` is the talk's reverse M2M alias → rows of the `meetups_talks` junction, each with a
+    // `meetup` id.
+    const talk = await talksService.readOne(talkKey, { fields: ['meetups.meetup'] })
+    const meetupIds = (talk?.meetups ?? [])
+        .map((row: any) => row?.meetup)
+        .filter(Boolean)
+
+    if (meetupIds.length === 0) {
+        logger.info(`${HOOK_NAME} hook: Talk "${talkKey}" is not linked to any meetup; nothing to reindex.`)
+        return
+    }
+
+    logger.info(`${HOOK_NAME} hook: Talk "${talkKey}" changed; reindexing ${meetupIds.length} linked meetup(s).`)
+
+    for (const meetupId of meetupIds) {
+        // No changedPayload → always rebuild: the meetup row itself hasn't changed, only the talk text.
+        await reindexByKey({
+            handler: meetupHandler,
+            collection: 'meetups',
+            itemKey: meetupId,
+            eventContext,
+            ItemsService,
+            client,
+            logger,
+            env,
+        })
+    }
 }
 
 async function handleDeleteAction(metadata, eventContext, dependencies: {
