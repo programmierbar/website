@@ -8,6 +8,14 @@ export class TranscriptHandler extends AbstractItemHandler {
         return 'transcripts';
     }
 
+    // Every field read by updateRequired(), buildAttributes() and buildDistinctKey(). `status` is
+    // added by the hook. The deep `podcast.*` read is CRITICAL: the related podcast supplies the
+    // entry's title/number/date/cover/slug AND its id for the distinct key. Without it the hook
+    // builds metadata-less entries and crashes on `item.podcast.id`.
+    get indexFields(): string[] {
+        return ['id', 'podcast.*', 'speakers.*', 'service', 'supported_features', 'raw_response'];
+    }
+
     updateRequired(item: any): boolean {
         return (
             item.podcast ||
@@ -23,6 +31,9 @@ export class TranscriptHandler extends AbstractItemHandler {
     }
 
     buildDistinctKey(item: any): string {
+        // Depends on `podcast` being loaded (see indexFields). The hook and CLIs always read
+        // `podcast.*`, so this is safe; it would throw for a transcript with no podcast linked, which
+        // is not a valid state for an indexable transcript.
         return `podcast-${item.podcast.id}`;
     }
 

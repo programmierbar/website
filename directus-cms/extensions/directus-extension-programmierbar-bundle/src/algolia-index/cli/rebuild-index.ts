@@ -40,32 +40,14 @@ const itemHandlers = getHandlers({
     PUBLIC_URL: PUBLIC_URL,
 }, {});
 
+// The fields to fetch are taken from each handler's `indexFields` (the single source of truth shared
+// with the live hook), so the CLI can never drift out of sync with what the handler actually reads.
 const configuration = [
-    {
-        collection: 'podcasts',
-        fields: ['id', 'title', 'slug', 'description', 'number', 'type', 'published_on', 'cover_image'],
-        handler: itemHandlers.podcastHandler,
-    },
-    {
-        collection: 'meetups',
-        fields: ['id', 'title', 'slug', 'description', 'published_on', 'cover_image'],
-        handler: itemHandlers.meetupHandler,
-    },
-    {
-        collection: 'speakers',
-        fields: ['id', 'first_name', 'last_name', 'academic_title', 'description', 'published_on', 'slug', 'profile_image'],
-        handler: itemHandlers.speakerHandler,
-    },
-    {
-        collection: 'picks_of_the_day',
-        fields: ['id', 'name', 'website_url', 'description', 'published_on', 'image'],
-        handler: itemHandlers.pickOfTheDayHandler,
-    },
-    {
-        collection: 'transcripts',
-        fields: ['id', 'podcast.*', 'speakers.*', 'service', 'supported_features', 'raw_response'],
-        handler: itemHandlers.transcriptHandler,
-    },
+    { collection: 'podcasts', handler: itemHandlers.podcastHandler },
+    { collection: 'meetups', handler: itemHandlers.meetupHandler },
+    { collection: 'speakers', handler: itemHandlers.speakerHandler },
+    { collection: 'picks_of_the_day', handler: itemHandlers.pickOfTheDayHandler },
+    { collection: 'transcripts', handler: itemHandlers.transcriptHandler },
 ]
 
 for (const configurationItem of configuration) {
@@ -74,7 +56,7 @@ for (const configurationItem of configuration) {
 
         const items = await directusClient.request(
             readItems(configurationItem.collection, {
-                fields: configurationItem.fields,
+                fields: configurationItem.handler.indexFields,
                 limit: -1,
             })
         );
