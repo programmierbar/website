@@ -70,6 +70,11 @@ for (const configurationItem of configuration) {
                 }
             });
 
+            // Transcripts (and any handler that fans an item out into a VARIABLE number of objects)
+            // must delete the item's existing entries first: when the chunk count shrinks, the
+            // now-orphaned `${id}_N` records would otherwise linger. Single-object collections
+            // (meetups, podcasts, ...) don't need this — the full-record replace below overwrites
+            // their one `${id}_0` entry in place.
             if (configurationItem.handler.requiresDistinctDeletionBeforeUpdate()) {
                 const results = await algoliaClient.browseObjects({
                     indexName: ALGOLIA_INDEX,
@@ -89,12 +94,19 @@ for (const configurationItem of configuration) {
                 });
             }
 
+            // Write each payload as a FULL-RECORD REPLACE (addOrUpdateObject = PUT), NOT a partial
+            // merge. This is a correctness fix, not a style choice: partialUpdateObject MERGES into the
+            // stored record, and Algolia refuses to merge into a record that is already over its 10 KB
+            // limit — so a stale, oversized entry (e.g. an old meetup indexed with a full raw-HTML
+            // description) could never shrink itself, however much the source text was trimmed; the
+            // write was rejected citing the EXISTING record's size. A full replace overwrites the whole
+            // record (dropping any stale attributes too) and is accepted as long as the NEW payload
+            // fits — which the handlers' size guards ensure.
             await Promise.all(payloads.map(async (payload, index) => {
-                await algoliaClient.partialUpdateObject({
+                await algoliaClient.addOrUpdateObject({
                     indexName: ALGOLIA_INDEX,
                     objectID: `${item.id}_${index}`,
-                    attributesToUpdate: payload,
-                    createIfNotExists: true,
+                    body: payload,
                 });
             }));
 
