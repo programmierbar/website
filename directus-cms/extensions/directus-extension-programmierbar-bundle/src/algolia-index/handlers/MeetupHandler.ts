@@ -7,11 +7,16 @@ const MAX_TALK_TEXT_LENGTH = 2500;
 const MAX_DESCRIPTION_LENGTH = 2500;
 
 // Algolia rejects any record over a hard 10 KB (10000-byte) limit, and a rejected record means the
-// meetup vanishes from search entirely. These byte budgets keep us safely under that ceiling even
-// for a meetup with a long description AND many talks. We give the description first claim on the
-// budget (it's what the search result card shows) and let the talk text use whatever remains.
+// meetup vanishes from search entirely. This is the combined byte budget for the two free-text
+// fields (description + talks); the remaining ~1 KB is headroom for the small fixed fields (title,
+// slug, image URL, ids, JSON overhead). Some real meetups — e.g. conference-style ones whose whole
+// agenda sits in the description — exceed the limit on their own, so we hard-cap the text by BYTE
+// length (Algolia counts UTF-8 bytes; German umlauts/emoji cost 2–4 each).
 const MAX_RECORD_TEXT_BYTES = 9000;
-const MAX_DESCRIPTION_BYTES = 5000;
+// Talks take at most this share of the budget; the description (the snippet shown in search results)
+// gets whatever is left, so a talk-less meetup can still use almost the entire allowance for its text
+// rather than being cut short by a fixed, smaller cap.
+const MAX_TALK_TEXT_BYTES = 4000;
 
 export class MeetupHandler extends AbstractItemHandler{
 
@@ -70,12 +75,14 @@ export class MeetupHandler extends AbstractItemHandler{
             talks = this.buildTalkText(item, sanitizeFull);
         }
 
-        // Final byte-budget guard. Sanitizing already removes the worst offenders, but a genuinely
-        // long meetup (big description + many talks) could still exceed Algolia's 10 KB hard limit, so
-        // we cap by UTF-8 byte length. Description gets first claim; talks take whatever's left.
-        description = truncateToByteLimit(description, MAX_DESCRIPTION_BYTES);
-        const remainingTalkBytes = MAX_RECORD_TEXT_BYTES - Buffer.byteLength(description, 'utf8');
-        talks = truncateToByteLimit(talks, Math.max(0, remainingTalkBytes));
+        // Final byte-budget guard. Sanitizing removes the worst offenders, but a long meetup (or one
+        // whose whole agenda lives in the description) can still blow past Algolia's 10 KB hard limit,
+        // so we cap the two text fields by UTF-8 byte length to keep them under MAX_RECORD_TEXT_BYTES.
+        // Talks get a bounded share; the description (the snippet shown in search) then takes whatever
+        // of the budget is left, so it's only ever cut at the longest length that still fits.
+        talks = truncateToByteLimit(talks, MAX_TALK_TEXT_BYTES);
+        const remainingDescriptionBytes = MAX_RECORD_TEXT_BYTES - Buffer.byteLength(talks, 'utf8');
+        description = truncateToByteLimit(description, Math.max(0, remainingDescriptionBytes));
 
         return [{
             _type : 'meetup',
