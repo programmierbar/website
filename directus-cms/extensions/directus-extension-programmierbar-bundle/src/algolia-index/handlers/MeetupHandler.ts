@@ -7,11 +7,16 @@ const MAX_TALK_TEXT_LENGTH = 2500;
 const MAX_DESCRIPTION_LENGTH = 2500;
 
 // Algolia rejects any record over a hard 10 KB (10000-byte) limit, and a rejected record means the
-// meetup vanishes from search entirely. These byte budgets keep us safely under that ceiling even
-// for a meetup with a long description AND many talks. We give the description first claim on the
-// budget (it's what the search result card shows) and let the talk text use whatever remains.
-const MAX_RECORD_TEXT_BYTES = 9000;
-const MAX_DESCRIPTION_BYTES = 5000;
+// meetup vanishes from search entirely. We target this slightly lower ceiling for the payload this
+// handler builds, leaving the remaining headroom for the `distinct` and `_directus_reference` fields
+// that the rebuild/repair CLIs and the live hook append to every payload after buildAttributes()
+// returns (two UUIDs, ~110 bytes). Algolia counts the SERIALIZED record (UTF-8 bytes, including JSON
+// escaping), so the fitting logic below measures JSON.stringify() rather than guessing field sizes.
+const MAX_PAYLOAD_BYTES = 9700;
+// Talks take at most this share of the budget; the description (the snippet shown in search results)
+// then gets whatever is left, so a talk-less meetup can still use almost the entire allowance for its
+// text rather than being cut short by a fixed, smaller cap.
+const MAX_TALK_TEXT_BYTES = 4000;
 
 export class MeetupHandler extends AbstractItemHandler{
 
@@ -70,14 +75,10 @@ export class MeetupHandler extends AbstractItemHandler{
             talks = this.buildTalkText(item, sanitizeFull);
         }
 
-        // Final byte-budget guard. Sanitizing already removes the worst offenders, but a genuinely
-        // long meetup (big description + many talks) could still exceed Algolia's 10 KB hard limit, so
-        // we cap by UTF-8 byte length. Description gets first claim; talks take whatever's left.
-        description = truncateToByteLimit(description, MAX_DESCRIPTION_BYTES);
-        const remainingTalkBytes = MAX_RECORD_TEXT_BYTES - Buffer.byteLength(description, 'utf8');
-        talks = truncateToByteLimit(talks, Math.max(0, remainingTalkBytes));
+        // Talks get a bounded share of the budget; the description takes whatever is left.
+        talks = truncateToByteLimit(talks, MAX_TALK_TEXT_BYTES);
 
-        return [{
+        const payload = {
             _type : 'meetup',
             title: item.title,
             // Always send a string (empty when there's no content), never `undefined`. The hook and
@@ -90,7 +91,31 @@ export class MeetupHandler extends AbstractItemHandler{
             published_on: item.published_on,
             image: item.cover_image ? `${this.env.PUBLIC_URL}assets/${item.cover_image}` : undefined,
             slug: item.slug,
-        }]
+        };
+
+        // Final size guard against Algolia's 10 KB hard limit. We measure the SERIALIZED payload and
+        // trim the description (the only remaining unbounded field) until it fits. Measuring the real
+        // JSON — rather than budgeting by field length — is what makes this correct in the awkward
+        // cases: long titles/slugs (the schema allows 255 chars each) eat into the same budget, and
+        // JSON escaping (every `\n` in a conference agenda becomes `\\n`) makes the serialized size
+        // larger than the raw byte count.
+        this.fitPayloadToByteLimit(payload);
+
+        return [payload];
+    }
+
+    // Trims `payload.description` until the serialized payload is within MAX_PAYLOAD_BYTES. Loops
+    // because JSON escaping means a raw-byte trim doesn't map 1:1 onto serialized bytes; it converges
+    // in one or two passes. `talks` is already bounded, so the description is the only field we cut.
+    private fitPayloadToByteLimit(payload: Record<string, any>): void {
+        while (
+            payload.description.length > 0 &&
+            Buffer.byteLength(JSON.stringify(payload), 'utf8') > MAX_PAYLOAD_BYTES
+        ) {
+            const overflowBytes = Buffer.byteLength(JSON.stringify(payload), 'utf8') - MAX_PAYLOAD_BYTES;
+            const descriptionBytes = Buffer.byteLength(payload.description, 'utf8');
+            payload.description = truncateToByteLimit(payload.description, Math.max(0, descriptionBytes - overflowBytes));
+        }
     }
 
     // Joins the meetup's intro and description into a single sanitized snippet. Both are rich-text
