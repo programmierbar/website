@@ -6,6 +6,13 @@ export class MeetupHandler extends AbstractItemHandler{
         return 'meetups';
     }
 
+    // Every field read by updateRequired() and buildAttributes(). `status` is added by the hook.
+    // NOTE: `intro` is required by buildAttributes() but was historically missing from the CLI field
+    // list, so rebuilt meetups silently lost their intro text. It is included here now.
+    get indexFields(): string[] {
+        return ['id', 'title', 'slug', 'intro', 'description', 'published_on', 'cover_image'];
+    }
+
     updateRequired(item: any): boolean {
         return (
             item.title ||
