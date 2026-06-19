@@ -2,6 +2,7 @@ import { defineHook } from '@directus/extensions-sdk'
 import axios from 'axios'
 import { createHookErrorConstructor } from '../shared/errors.ts'
 import { postSlackMessage } from './../shared/postSlackMessage.ts'
+import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'deploy-website'
 
@@ -18,16 +19,16 @@ export default defineHook(({ action }, hookContext) => {
     /**
      * It deploys our website on created items, if necessary.
      */
-    action('items.create', ({ payload, ...metadata }, context) =>
+    action('items.create', safeAction(HOOK_NAME, logger, ({ payload, ...metadata }, context) =>
         handleAction('create', { payload, metadata, context })
-    )
+    ))
 
     /**
      * It deploys our website on updated items, if necessary.
      */
-    action('items.update', ({ payload, ...metadata }, context) =>
+    action('items.update', safeAction(HOOK_NAME, logger, ({ payload, ...metadata }, context) =>
         handleAction('update', { payload, metadata, context })
-    )
+    ))
 
     async function handleAction(
         type: string,

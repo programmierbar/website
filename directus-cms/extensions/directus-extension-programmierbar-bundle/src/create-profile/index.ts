@@ -1,6 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { createHookErrorConstructor } from '../shared/errors.ts'
-import { FilterHandler} from '@directus/types'
+import type { FilterHandler} from '@directus/types'
 
 const HOOK_NAME = 'create-profile'
 

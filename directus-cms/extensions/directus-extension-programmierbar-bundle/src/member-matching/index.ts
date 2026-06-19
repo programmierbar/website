@@ -1,6 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { matchMembersFromTranscript } from './matchMembers.js'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
+import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'member-matching'
 
@@ -41,6 +42,6 @@ export default defineHook(({ action }, hookContext) => {
     }
 
     // Trigger on podcast creation or update when transcript_text is present
-    action('podcasts.items.create', handlePodcastAction)
-    action('podcasts.items.update', handlePodcastAction)
+    action('podcasts.items.create', safeAction(HOOK_NAME, logger, handlePodcastAction))
+    action('podcasts.items.update', safeAction(HOOK_NAME, logger, handlePodcastAction))
 })

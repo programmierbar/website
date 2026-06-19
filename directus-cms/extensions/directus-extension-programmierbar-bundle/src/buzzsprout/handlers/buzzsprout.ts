@@ -1,4 +1,5 @@
-import { AxiosRequestConfig, default as axios } from 'axios';
+import type { AxiosRequestConfig} from 'axios';
+import { default as axios } from 'axios';
 // @ts-ignore
 import { getFullPodcastTitle, getUrlSlug } from '../../../../../../shared-code/index.ts'
 import { postSlackMessage } from '../../shared/postSlackMessage.ts'

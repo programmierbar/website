@@ -7,6 +7,7 @@ import {
     type EmailServiceContext,
 } from '../shared/email-service.js'
 import { postSlackMessage } from '../shared/postSlackMessage.js'
+import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'speaker-portal-notifications'
 
@@ -131,7 +132,7 @@ export default defineHook(({ action, schedule }, hookContext) => {
     /**
      * Send invitation email when a new speaker is created (token is auto-generated).
      */
-    action('speakers.items.create', async function (metadata, eventContext) {
+    action('speakers.items.create', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
         const { key } = metadata
 
         try {
@@ -139,12 +140,12 @@ export default defineHook(({ action, schedule }, hookContext) => {
         } catch (err: any) {
             logger.error(`${HOOK_NAME}: Error sending invitation email on create: ${err?.message || err}`)
         }
-    })
+    }))
 
     /**
      * Send invitation email when a speaker's portal token is regenerated.
      */
-    action('speakers.items.update', async function (metadata, eventContext) {
+    action('speakers.items.update', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
         const { payload, keys } = metadata
 
         // Only proceed if portal_token was just set
@@ -159,12 +160,12 @@ export default defineHook(({ action, schedule }, hookContext) => {
         } catch (err: any) {
             logger.error(`${HOOK_NAME}: Error sending invitation email on update: ${err?.message || err}`)
         }
-    })
+    }))
 
     /**
      * Send confirmation when a speaker submits their information.
      */
-    action('speakers.items.update', async function (metadata, eventContext) {
+    action('speakers.items.update', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
         const { payload, keys } = metadata
 
         // Only proceed if status is being set to 'submitted'
@@ -259,7 +260,7 @@ export default defineHook(({ action, schedule }, hookContext) => {
         } catch (err: any) {
             logger.error(`${HOOK_NAME}: Error sending submission confirmation: ${err?.message || err}`)
         }
-    })
+    }))
 
     /**
      * Scheduled task to send deadline reminders.

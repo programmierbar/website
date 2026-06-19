@@ -1,4 +1,4 @@
-import { AbstractItemHandler, ItemHandler } from './ItemHandler.ts';
+import { AbstractItemHandler } from './ItemHandler.ts';
 
 export class PickOfTheDayHandler extends AbstractItemHandler {
 

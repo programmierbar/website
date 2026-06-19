@@ -60,7 +60,7 @@ function detectFacets(text: string): BlueskyFacet[] {
     const encoder = new TextEncoder()
 
     // Detect URLs
-    const urlRegex = /https?:\/\/[^\s<>\"{}|\\^`\[\]]+/g
+    const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/g
     let match: RegExpExecArray | null
     while ((match = urlRegex.exec(text)) !== null) {
         const byteStart = encoder.encode(text.slice(0, match.index)).length

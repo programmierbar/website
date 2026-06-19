@@ -9,6 +9,7 @@ import {
     ticketTypeLabel,
     type InvoiceData,
 } from '../shared/invoice-generator.js'
+import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'ticket-order-processing'
 
@@ -31,7 +32,7 @@ export default defineHook(({ action }, hookContext) => {
      * Creates tickets with profile tokens, generates invoice, and sends emails
      * (QR codes are generated later when the attendee completes their profile)
      */
-    action('ticket_orders.items.update', async function (metadata, eventContext) {
+    action('ticket_orders.items.update', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
         const { payload, keys } = metadata
 
         // Only proceed if status is being set to 'paid'
@@ -333,7 +334,7 @@ export default defineHook(({ action }, hookContext) => {
         } catch (err: any) {
             logger.error(`${HOOK_NAME}: Error processing order: ${err?.message || err}`)
         }
-    })
+    }))
 
     logger.info(`${HOOK_NAME} hook registered`)
 })
