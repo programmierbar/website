@@ -1,6 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { publishToBluesky } from './bluesky.js'
 import { publishToMastodon } from './mastodon.js'
+import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'social-media-publish'
 
@@ -23,7 +24,7 @@ export default defineHook(({ action }, hookContext) => {
 
     // Trigger when a social_media_posts item is updated to 'scheduled' and scheduled_for is now or in the past
     // OR when manually triggered by setting status to 'publishing'
-    action('social_media_posts.items.update', async function (metadata, eventContext) {
+    action('social_media_posts.items.update', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
         const { payload, keys } = metadata
 
         // Only proceed if status is being set to 'publishing'
@@ -104,7 +105,7 @@ export default defineHook(({ action }, hookContext) => {
                 })
             }
         }
-    })
+    }))
 
     logger.info(`${HOOK_NAME} hook registered`)
 })

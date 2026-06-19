@@ -103,7 +103,7 @@ describe('isPublishable', () => {
             false,
             'missing audio_file',
         ],
-    ])('Episode %s should be publishable: %s', async (item, expected, reason
+    ])('Episode %s should be publishable: %s', async (item, expected, _reason
     ) => {
         const result = isPublishable(item, PodcastFields);
         expect(result).toBe(expected);
@@ -164,7 +164,7 @@ describe('isPublishable', () => {
             'Other episodes do not require a number',
         ],
 
-    ])('Number is optional for some episodes %s to be publishable: %s', async (item, expected, reason
+    ])('Number is optional for some episodes %s to be publishable: %s', async (item, expected, _reason
     ) => {
         const result = isPublishable(item, PodcastFields);
         expect(result).toBe(expected);

@@ -1,10 +1,11 @@
 import { defineHook } from '@directus/extensions-sdk';
 import { createFetchRequester } from '@algolia/requester-fetch';
 import { searchClient } from '@algolia/client-search';
- import { ItemHandler } from './handlers/ItemHandler.ts';
+ import type { ItemHandler } from './handlers/ItemHandler.ts';
 import { getHandlers } from './handlers/index.ts'
-import { SearchClient } from 'algoliasearch';
-import { ItemsService as ItemsServiceType } from '../buzzsprout/handlers/types.js';
+import type { SearchClient } from 'algoliasearch';
+import type { ItemsService as ItemsServiceType } from '../buzzsprout/handlers/types.js';
+import { safeAction } from '../shared/safeHook.ts';
 const HOOK_NAME = 'algolia-index'
 
 export default defineHook(({ action }, hookContext) => {
@@ -22,163 +23,50 @@ export default defineHook(({ action }, hookContext) => {
 
     const client = searchClient(env.ALGOLIA_APP_ID, env.ALGOLIA_API_KEY, { requester: createFetchRequester() });
 
-    action('podcasts.items.create', async function (metadata, eventContext) {
-        handleUpdateAction(metadata, eventContext, {
-            handler: handlers.podcastHandler,
-            client,
-            ItemsService,
-            logger,
-            env
-        });
-    })
+    // safeAction wraps each callback so a thrown error / rejected promise is caught and logged
+    // instead of becoming an unhandled rejection that crashes the CMS. The callbacks RETURN the
+    // handler promise so safeAction's `.catch` can observe it.
+    const onUpdate = (handler: ItemHandler) =>
+        safeAction(HOOK_NAME, logger, (metadata, eventContext) =>
+            handleUpdateAction(metadata, eventContext, { handler, client, ItemsService, logger, env })
+        )
+    const onDelete = (handler: ItemHandler) =>
+        safeAction(HOOK_NAME, logger, (metadata, eventContext) =>
+            handleDeleteAction(metadata, eventContext, { handler, client, logger, env })
+        )
 
-    action('podcasts.items.update', async function (metadata, eventContext) {
-        handleUpdateAction(metadata, eventContext, {
-            handler: handlers.podcastHandler,
-            client,
-            ItemsService,
-            logger,
-            env
-        });
-    })
+    action('podcasts.items.create', onUpdate(handlers.podcastHandler))
+    action('podcasts.items.update', onUpdate(handlers.podcastHandler))
+    action('podcasts.items.delete', onDelete(handlers.podcastHandler))
 
-    action('podcasts.items.delete', async function(metadata, eventContext) {
-        handleDeleteAction(metadata, eventContext, {
-            handler: handlers.podcastHandler,
-            client,
-            logger,
-            env
-        })
-    })
-
-    action('meetups.items.create', async function (metadata, eventContext) {
-        handleUpdateAction(metadata, eventContext, {
-            handler: handlers.meetupHandler,
-            client,
-            ItemsService,
-            logger,
-            env
-        });
-    })
-
-    action('meetups.items.update', async function (metadata, eventContext) {
-        handleUpdateAction(metadata, eventContext, {
-            handler: handlers.meetupHandler,
-            client,
-            ItemsService,
-            logger,
-            env
-        });
-    })
-
-    action('meetups.items.delete', async function(metadata, eventContext) {
-        handleDeleteAction(metadata, eventContext, {
-            handler: handlers.meetupHandler,
-            client,
-            logger,
-            env
-        })
-    })
+    action('meetups.items.create', onUpdate(handlers.meetupHandler))
+    action('meetups.items.update', onUpdate(handlers.meetupHandler))
+    action('meetups.items.delete', onDelete(handlers.meetupHandler))
 
     // Talks are their own collection embedded into meetups (see MeetupHandler). Editing a talk's
     // title/abstract must refresh the meetup entries that embed it — see handleRelatedTalkChange for
     // why only `update` is wired up (create/delete are covered by the accompanying meetup update).
-    action('talks.items.update', async function (metadata, eventContext) {
+    action('talks.items.update', safeAction(HOOK_NAME, logger, (metadata, eventContext) =>
         handleRelatedTalkChange(metadata, eventContext, {
             meetupHandler: handlers.meetupHandler,
             client,
             ItemsService,
             logger,
             env
-        });
-    })
-
-    action('speakers.items.create', async function (metadata, eventContext) {
-        handleUpdateAction(metadata, eventContext, {
-            handler: handlers.speakerHandler,
-            client,
-            ItemsService,
-            logger,
-            env
-        });
-    })
-
-    action('speakers.items.update', async function (metadata, eventContext) {
-        handleUpdateAction(metadata, eventContext, {
-            handler: handlers.speakerHandler,
-            client,
-            ItemsService,
-            logger,
-            env
-        });
-    })
-
-    action('speakers.items.delete', async function(metadata, eventContext) {
-        handleDeleteAction(metadata, eventContext, {
-            handler: handlers.speakerHandler,
-            client,
-            logger,
-            env
         })
-    })
+    ))
 
-    action('picks_of_the_day.items.create', async function (metadata, eventContext) {
-        handleUpdateAction(metadata, eventContext, {
-            handler: handlers.pickOfTheDayHandler,
-            client,
-            ItemsService,
-            logger,
-            env
-        });
-    })
+    action('speakers.items.create', onUpdate(handlers.speakerHandler))
+    action('speakers.items.update', onUpdate(handlers.speakerHandler))
+    action('speakers.items.delete', onDelete(handlers.speakerHandler))
 
-    action('picks_of_the_day.items.update', async function (metadata, eventContext) {
-        handleUpdateAction(metadata, eventContext, {
-            handler: handlers.pickOfTheDayHandler,
-            client,
-            ItemsService,
-            logger,
-            env
-        });
-    })
+    action('picks_of_the_day.items.create', onUpdate(handlers.pickOfTheDayHandler))
+    action('picks_of_the_day.items.update', onUpdate(handlers.pickOfTheDayHandler))
+    action('picks_of_the_day.items.delete', onDelete(handlers.pickOfTheDayHandler))
 
-    action('picks_of_the_day.items.delete', async function(metadata, eventContext) {
-        handleDeleteAction(metadata, eventContext, {
-            handler: handlers.pickOfTheDayHandler,
-            client,
-            logger,
-            env
-        })
-    })
-
-    action('transcripts.items.create', async function (metadata, eventContext) {
-        handleUpdateAction(metadata, eventContext, {
-            handler: handlers.transcriptHandler,
-            client,
-            ItemsService,
-            logger,
-            env
-        });
-    })
-
-    action('transcripts.items.update', async function (metadata, eventContext) {
-        handleUpdateAction(metadata, eventContext, {
-            handler: handlers.transcriptHandler,
-            client,
-            ItemsService,
-            logger,
-            env
-        });
-    })
-
-    action('transcripts.items.delete', async function(metadata, eventContext) {
-        handleDeleteAction(metadata, eventContext, {
-            handler: handlers.transcriptHandler,
-            client,
-            logger,
-            env
-        })
-    })
+    action('transcripts.items.create', onUpdate(handlers.transcriptHandler))
+    action('transcripts.items.update', onUpdate(handlers.transcriptHandler))
+    action('transcripts.items.delete', onDelete(handlers.transcriptHandler))
 });
 
 async function handleUpdateAction(metadata, eventContext, dependencies: {

@@ -2,6 +2,7 @@ import { defineHook } from '@directus/extensions-sdk'
 import { handlePickOfTheDayAction } from './handlers/handlePickOfTheDayAction.ts'
 import { handlePodcastAction } from './handlers/handlePodcastAction.ts'
 import { handleTagAction } from './handlers/handleTagAction.ts'
+import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'buzzsprout'
 
@@ -15,9 +16,9 @@ export default defineHook(({ action }, hookContext) => {
         return
     }
 
-    action('podcasts.items.create', function (metadata, eventContext) {
+    const podcastHandler = (metadata: any, eventContext: any) => {
         const { payload } = metadata
-        handlePodcastAction(
+        return handlePodcastAction(
             HOOK_NAME,
             {
                 payload,
@@ -26,23 +27,13 @@ export default defineHook(({ action }, hookContext) => {
             },
             { logger, ItemsService, env }
         )
-    })
-    action('podcasts.items.update', function (metadata, eventContext) {
-        const { payload } = metadata
-        handlePodcastAction(
-            HOOK_NAME,
-            {
-                payload,
-                metadata: { ...metadata, collection: 'podcasts' },
-                context: eventContext,
-            },
-            { logger, ItemsService, env }
-        )
-    })
+    }
+    action('podcasts.items.create', safeAction(HOOK_NAME, logger, podcastHandler))
+    action('podcasts.items.update', safeAction(HOOK_NAME, logger, podcastHandler))
 
-    action('picks_of_the_day.items.create', function (metadata, eventContext) {
+    const pickHandler = (metadata: any, eventContext: any) => {
         const { payload } = metadata
-        handlePickOfTheDayAction(
+        return handlePickOfTheDayAction(
             HOOK_NAME,
             {
                 payload,
@@ -51,23 +42,13 @@ export default defineHook(({ action }, hookContext) => {
             },
             { logger, ItemsService, env }
         )
-    })
-    action('picks_of_the_day.items.update', function (metadata, eventContext) {
-        const { payload } = metadata
-        handlePickOfTheDayAction(
-            HOOK_NAME,
-            {
-                payload,
-                metadata: { ...metadata, collection: 'picks_of_the_day' },
-                context: eventContext,
-            },
-            { logger, ItemsService, env }
-        )
-    })
+    }
+    action('picks_of_the_day.items.create', safeAction(HOOK_NAME, logger, pickHandler))
+    action('picks_of_the_day.items.update', safeAction(HOOK_NAME, logger, pickHandler))
 
-    action('tags.items.create', function (metadata, eventContext) {
+    const tagHandler = (metadata: any, eventContext: any) => {
         const { payload } = metadata
-        handleTagAction(
+        return handleTagAction(
             HOOK_NAME,
             {
                 payload,
@@ -76,18 +57,8 @@ export default defineHook(({ action }, hookContext) => {
             },
             { logger, ItemsService, env }
         )
-    })
-    action('tags.items.update', function (metadata, eventContext) {
-        const { payload } = metadata
-        handleTagAction(
-            HOOK_NAME,
-            {
-                payload,
-                metadata: { ...metadata, collection: 'tags' },
-                context: eventContext,
-            },
-            { logger, ItemsService, env }
-        )
-    })
+    }
+    action('tags.items.create', safeAction(HOOK_NAME, logger, tagHandler))
+    action('tags.items.update', safeAction(HOOK_NAME, logger, tagHandler))
 })
 

@@ -26,6 +26,11 @@
             },
             {
                 "type": "hook",
+                "name": "process-guard",
+                "source": "src/process-guard/index.ts"
+            },
+            {
+                "type": "hook",
                 "name": "deploy-website",
                 "source": "src/deploy-website/index.ts"
             },
@@ -133,6 +138,7 @@
         "link": "directus-extension link",
         "add": "directus-extension add",
         "eslint": "eslint --fix .",
+        "lint": "eslint .",
         "prettier": "prettier . --write",
         "algolia-index-rebuild": "tsx src/algolia-index/cli/rebuild-index.ts",
         "algolia-index-repair": "tsx src/algolia-index/cli/repair-index.ts",

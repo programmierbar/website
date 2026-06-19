@@ -1,5 +1,5 @@
 import { readItems } from '@directus/sdk';
-import { ItemHandler } from '../handlers/ItemHandler.ts';
+import type { ItemHandler } from '../handlers/ItemHandler.ts';
 
 // Shared bulk-read helpers for the rebuild/repair CLIs.
 //

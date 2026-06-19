@@ -6,6 +6,7 @@ import {
     generateGoogleWalletUrl,
     type WalletPassInput,
 } from '../shared/wallet-pass-generator.js'
+import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'ticket-profile-completion'
 
@@ -24,7 +25,7 @@ export default defineHook(({ action }, hookContext) => {
     /**
      * Send final ticket email with QR code and wallet passes when profile_status changes to 'completed'
      */
-    action('tickets.items.update', async function (metadata, eventContext) {
+    action('tickets.items.update', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
         const { payload, keys } = metadata
 
         // Only proceed if profile_status is being set to 'completed'
@@ -173,7 +174,7 @@ export default defineHook(({ action }, hookContext) => {
         } catch (err: any) {
             logger.error(`${HOOK_NAME}: Error processing profile completion: ${err?.message || err}`)
         }
-    })
+    }))
 
     logger.info(`${HOOK_NAME} hook registered`)
 })

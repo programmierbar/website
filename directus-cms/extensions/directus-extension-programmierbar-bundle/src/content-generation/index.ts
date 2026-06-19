@@ -1,6 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { generateContent } from './generateContent.js'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
+import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'content-generation'
 
@@ -16,7 +17,7 @@ export default defineHook(({ action }, hookContext) => {
     }
 
     // Trigger on podcast update when transcript_text is added
-    action('podcasts.items.update', async function (metadata, eventContext) {
+    action('podcasts.items.update', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
         const { payload, keys } = metadata
 
         // Check if transcript_text was updated
@@ -50,5 +51,5 @@ export default defineHook(({ action }, hookContext) => {
                 logger.error(`${HOOK_NAME} hook: Failed to send Slack notification: ${slackErr.message}`)
             }
         })
-    })
+    }))
 })

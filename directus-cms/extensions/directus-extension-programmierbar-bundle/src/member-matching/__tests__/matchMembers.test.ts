@@ -1,5 +1,6 @@
 import { describe, expect, test } from '@jest/globals'
-import { extractSpeakerNames, findMatchingMembers, MemberData } from './../matchMembers.ts'
+import type { MemberData } from './../matchMembers.ts';
+import { extractSpeakerNames, findMatchingMembers } from './../matchMembers.ts'
 
 describe('extractSpeakerNames', () => {
     test('should extract names with timestamp format', () => {

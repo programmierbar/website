@@ -1,4 +1,5 @@
 import { defineHook } from '@directus/extensions-sdk'
+import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'content-approval'
 
@@ -8,7 +9,7 @@ export default defineHook(({ action }, hookContext) => {
     const getSchema = hookContext.getSchema
 
     // Listen for updates to podcast_generated_content
-    action('podcast_generated_content.items.update', async function (metadata, eventContext) {
+    action('podcast_generated_content.items.update', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
         const { payload, keys } = metadata
 
         if (payload.status === 'approved') {
@@ -16,7 +17,7 @@ export default defineHook(({ action }, hookContext) => {
         } else if (payload.status && payload.status !== 'approved') {
             await handleUnapproval(keys, eventContext)
         }
-    })
+    }))
 
     async function handleApproval(keys: string[], eventContext: any) {
         try {
