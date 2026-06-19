@@ -2,10 +2,10 @@
   <div class='w-48 lg:w-96 speaker-box'>
     <DirectusImage
       v-if='speaker.profile_image'
-      class='object-cover aspect-square'
+      class='w-full object-cover aspect-square'
       :image='speaker.profile_image'
       :alt='fullName'
-      sizes='sm:150px md:300px'
+      sizes='sm:150px md:300px lg:400px'
       loading='lazy'
     />
     <div class='mt-3 p-4 lg:mt-6 lg:p-9 flex flex-col min-h-60 max-h-60 lg:min-h-120 lg:max-h-120 flex-shrink-0' :class="[isExpanded ? '!max-h-full' : '']" @click='isExpanded = !isExpanded'>
