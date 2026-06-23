@@ -105,7 +105,7 @@ useHead(() =>
         ? getMetaInfo({
               type: 'website',
               path: route.path,
-              title: `Bestellung erfolgreich - ${conference.value.title}`,
+              title: `Bestellung erfolgreich – ${conference.value.title}`,
               description: `Deine Tickets für die ${conference.value.title} wurden bestellt`,
               image: conference.value.cover_image,
           })
@@ -144,7 +144,7 @@ useHead(() =>
 
                 <!-- Loading state while polling -->
                 <div v-if="!pollingDone" class="mt-8 rounded-lg bg-gray-800/50 p-6">
-                    <p class="text-gray-300">Deine Tickets werden vorbereitet...</p>
+                    <p class="text-gray-300">Deine Tickets werden vorbereitet…</p>
                 </div>
 
                 <!-- Single ticket: show button to complete ticket -->
@@ -169,11 +169,11 @@ useHead(() =>
                     <ul class="space-y-3 text-gray-300">
                         <li class="flex items-start gap-3">
                             <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">1</span>
-                            <span>Du erhältst in Kürze eine Bestätigungs-E-Mail.</span>
+                            <span>Du erhältst in Kürze eine Bestätigungsmail.</span>
                         </li>
                         <li class="flex items-start gap-3">
                             <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">2</span>
-                            <span>Alle Teilnehmer erhalten eine E-Mail mit einem Link zur Vervollständigung ihrer Angaben.</span>
+                            <span>Alle Teilnehmenden erhalten eine E-Mail mit einem Link zur Vervollständigung ihrer Angaben.</span>
                         </li>
                         <li class="flex items-start gap-3">
                             <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">3</span>
@@ -188,7 +188,7 @@ useHead(() =>
                     <ul class="space-y-3 text-gray-300">
                         <li class="flex items-start gap-3">
                             <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">1</span>
-                            <span>Alle Teilnehmer erhalten eine E-Mail mit einem Link zur Vervollständigung ihrer Angaben.</span>
+                            <span>Alle Teilnehmenden erhalten eine E-Mail mit einem Link zur Vervollständigung ihrer Angaben.</span>
                         </li>
                         <li class="flex items-start gap-3">
                             <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">2</span>
@@ -198,16 +198,15 @@ useHead(() =>
                 </div>
 
                 <p class="mt-8 text-sm text-[#848a98]">
-                    Keine E-Mail erhalten? Prüfe deinen Spam-Ordner oder kontaktiere uns unter
+                    Keine E-Mail erhalten? Bitte prüfe deinen Spam-Ordner oder kontaktiere uns unter
                     <a href="mailto:podcast@programmier.bar" class="text-lime hover:underline">
-                        podcast@programmier.bar
-                    </a>
+                        podcast@programmier.bar</a>.
                 </p>
 
                 <div class="mt-12 flex flex-col gap-4 sm:flex-row sm:justify-center">
                     <NuxtLink
                         v-if="conference"
-                        :to="`/konferenzen/${conference.slug}`"
+                        :to="`/konferenz/${conference.slug}`"
                         class="rounded-lg bg-lime px-8 py-4 font-bold text-black transition hover:bg-lime/90"
                     >
                         Zurück zur Konferenz

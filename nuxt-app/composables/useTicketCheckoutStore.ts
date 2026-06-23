@@ -10,6 +10,7 @@ interface TicketPricingSettings {
     isEarlyBird: boolean
     discountPriceCents: number | null
     discountLabel: string | null
+    isEmployeeCode: boolean
 }
 
 interface TicketCheckoutState {
@@ -145,10 +146,21 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
         },
 
         /**
-         * Effective unit price per ticket in cents (after discount if applicable)
+         * Whether the validated discount code is an employee code
+         */
+        isEmployeeCode(): boolean {
+            return this.discountValid && this.pricingSettings?.isEmployeeCode === true
+        },
+
+        /**
+         * Effective unit price per ticket in cents (after discount if applicable).
+         * Employee codes override early bird and always price at zero.
          */
         unitPriceCents(): number {
-            if (this.discountValid && !this.isEarlyBird && this.pricingSettings?.discountPriceCents !== null && this.pricingSettings?.discountPriceCents !== undefined) {
+            if (this.isEmployeeCode) {
+                return 0
+            }
+            if (this.discountValid && this.pricingSettings?.discountPriceCents !== null && this.pricingSettings?.discountPriceCents !== undefined) {
                 return this.pricingSettings.discountPriceCents
             }
             return this.basePriceCents
@@ -158,11 +170,14 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
          * Get ticket type based on current pricing
          */
         ticketType(): TicketType {
-            if (this.isEarlyBird) {
-                return 'early_bird'
+            if (this.isEmployeeCode) {
+                return 'discounted'
             }
             if (this.discountValid) {
                 return 'discounted'
+            }
+            if (this.isEarlyBird) {
+                return 'early_bird'
             }
             return 'regular'
         },
@@ -178,7 +193,10 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
          * Calculate discount amount in cents
          */
         discountAmountCents(): number {
-            if (!this.discountValid || this.isEarlyBird || !this.pricingSettings || this.pricingSettings.discountPriceCents === null) {
+            if (this.isEmployeeCode) {
+                return this.ticketCount * this.basePriceCents
+            }
+            if (!this.discountValid || !this.pricingSettings || this.pricingSettings.discountPriceCents === null) {
                 return 0
             }
             return this.ticketCount * (this.basePriceCents - this.pricingSettings.discountPriceCents)
@@ -251,6 +269,7 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
                 isEarlyBird,
                 discountPriceCents: null,
                 discountLabel: null,
+                isEmployeeCode: false,
             }
             this.pricingLoaded = true
             this.pricingError = false
@@ -456,12 +475,14 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
                     },
                 })
 
-                const result = response as { valid: boolean; discountPriceCents?: number; discountLabel?: string }
+                const result = response as { valid: boolean; discountPriceCents?: number; discountLabel?: string; isEmployeeCode?: boolean }
                 this.discountValid = result.valid
 
                 if (result.valid && this.pricingSettings) {
-                    this.pricingSettings.discountPriceCents = result.discountPriceCents ?? null
+                    const isEmployeeCode = result.isEmployeeCode === true
+                    this.pricingSettings.discountPriceCents = isEmployeeCode ? 0 : (result.discountPriceCents ?? null)
                     this.pricingSettings.discountLabel = result.discountLabel ?? null
+                    this.pricingSettings.isEmployeeCode = isEmployeeCode
                 }
 
                 this.persistState()

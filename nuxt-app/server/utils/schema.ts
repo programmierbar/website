@@ -15,6 +15,13 @@ export const EmailSchema = z.object({
         .max(1000, 'Deine Nachricht darf nicht länger als 1.000 Zeichen lang sein.'),
 })
 
+// Podcast vote (rating)
+
+export const VoteSchema = z.object({
+    slug: z.string().min(1, 'Slug ist erforderlich.'),
+    direction: z.enum(['up', 'down']),
+})
+
 // Speaker portal submission
 
 export const SpeakerSubmissionSchema = z.object({
@@ -99,11 +106,16 @@ export const CompanyBillingSchema = z.object({
         .min(1, 'Bitte trage den Firmennamen ein.')
         .max(200, 'Der Firmenname darf nicht länger als 200 Zeichen sein.'),
     address: BillingAddressSchema,
-    billingEmail: z
-        .string()
-        .email('Die Rechnungs-E-Mail-Adresse scheint ungültig zu sein.')
-        .max(200, 'Die E-Mail-Adresse darf nicht länger als 200 Zeichen sein.')
-        .optional(),
+    // Treat a cleared (empty/whitespace-only) optional field as "not provided"
+    // so it passes validation instead of failing the email check.
+    billingEmail: z.preprocess(
+        (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+        z
+            .string()
+            .email('Die Rechnungs-E-Mail-Adresse scheint ungültig zu sein.')
+            .max(200, 'Die E-Mail-Adresse darf nicht länger als 200 Zeichen sein.')
+            .optional()
+    ),
     vatId: z
         .string()
         .max(50, 'Die USt-IdNr. darf nicht länger als 50 Zeichen sein.')
@@ -161,6 +173,12 @@ export const TicketProfileSchema = z.object({
     last_event_visited: z.string().max(200, 'Maximal 200 Zeichen.').optional().or(z.literal('')),
     heard_about_from: z.string().max(500, 'Maximal 500 Zeichen.').optional().or(z.literal('')),
     additional_notes: z.string().max(1000, 'Maximal 1000 Zeichen.').optional().or(z.literal('')),
+})
+
+// Check-in
+
+export const CheckinScanSchema = z.object({
+    ticketCode: z.string().min(1),
 })
 
 export type CreateCheckoutInput = z.infer<typeof CreateCheckoutSchema>

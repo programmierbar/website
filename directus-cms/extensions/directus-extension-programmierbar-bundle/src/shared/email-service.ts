@@ -59,6 +59,7 @@ export interface EmailAttachment {
     filename: string
     content: Buffer
     contentType?: string
+    cid?: string
 }
 
 export interface SendEmailOptions {
@@ -77,7 +78,7 @@ export async function getSetting(
     key: string,
     context: EmailServiceContext
 ): Promise<string | null> {
-    const { services, getSchema, accountability, logger } = context
+    const { services, getSchema, logger } = context
     const { ItemsService } = services
 
     try {
@@ -111,7 +112,7 @@ export async function getSettings(
     keys: string[],
     context: EmailServiceContext
 ): Promise<Record<string, string>> {
-    const { services, getSchema, accountability, logger } = context
+    const { services, getSchema, logger } = context
     const { ItemsService } = services
 
     const result: Record<string, string> = {}
@@ -145,7 +146,7 @@ export async function getEmailTemplate(
     key: string,
     context: EmailServiceContext
 ): Promise<{ subject: string; body_html: string } | null> {
-    const { services, getSchema, accountability, logger } = context
+    const { services, getSchema, logger } = context
     const { ItemsService } = services
 
     try {
@@ -180,7 +181,7 @@ export async function sendTemplatedEmail(
     options: SendEmailOptions,
     context: EmailServiceContext
 ): Promise<boolean> {
-    const { logger, services, getSchema, accountability } = context
+    const { logger, services, getSchema } = context
     const { MailService } = services
 
     try {
@@ -216,6 +217,7 @@ export async function sendTemplatedEmail(
                     filename: a.filename,
                     content: a.content,
                     contentType: a.contentType || 'application/pdf',
+                    ...(a.cid && { cid: a.cid }),
                 })),
             }),
         })
@@ -241,7 +243,7 @@ export async function sendRawEmail(
     },
     context: EmailServiceContext
 ): Promise<boolean> {
-    const { logger, services, getSchema, accountability } = context
+    const { logger, services, getSchema } = context
     const { MailService } = services
 
     try {

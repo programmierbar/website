@@ -60,7 +60,11 @@ export default defineEventHandler(async (event) => {
             heard_about_from: data.heard_about_from || null,
             additional_notes: data.additional_notes || null,
             profile_status: 'completed',
-            profile_token: null, // Invalidate token after submission
+            // Keep profile_token valid: it doubles as the access secret for the
+            // Apple Wallet download endpoint (/ticket-wallet/apple/:code?token=),
+            // and the final ticket email with that link is only sent *after*
+            // completion. Re-submission is already prevented by the
+            // profile_status === 'completed' guards in this handler and validate.get.ts.
         })
 
         return {
@@ -74,7 +78,7 @@ export default defineEventHandler(async (event) => {
         console.error('Ticket portal submission error:', err)
         throw createError({
             statusCode: 500,
-            message: 'Ein Fehler ist beim Speichern deiner Angaben aufgetreten.',
+            message: 'Beim Speichern deiner Angaben ist ein Fehler aufgetreten.',
         })
     }
 })

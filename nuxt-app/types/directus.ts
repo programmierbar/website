@@ -25,6 +25,7 @@ export interface DirectusPodcastItem {
     apple_url: string
     google_url: string
     spotify_url: string
+    youtube_url: string | null
     picks_of_the_day: (string | DirectusPickOfTheDayItem)[]
     members: (
         | number
@@ -327,7 +328,7 @@ export interface DirectusHomePage {
     intro_heading: string
     highlights_heading: string
     meetup_heading: string
-    highlights: any[],
+    highlights: { id: number; collection: string; item: any }[],
     video: DirectusFileItem
     news: { text: string }[]
     podcast_heading: string
@@ -498,6 +499,7 @@ export interface DirectusTicketOrderItem {
     total_gross_cents: number
     invoice_number: string | null
     invoice_file: string | null // Reference to directus_files ID
+    is_internal: boolean
 }
 
 export type TicketProfileStatus = 'pending' | 'completed'
@@ -525,6 +527,7 @@ export interface DirectusTicketItem {
     last_event_visited: string | null
     heard_about_from: string | null
     additional_notes: string | null
+    is_internal: boolean
 }
 
 export interface DirectusTicketDiscountCodeItem {
@@ -535,4 +538,5 @@ export interface DirectusTicketDiscountCodeItem {
     label: string | null
     max_uses: number | null
     active: boolean
+    is_employee_code: boolean
 }

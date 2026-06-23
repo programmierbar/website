@@ -39,6 +39,12 @@ function getValidationPrompt(name: string, email: string, message: string): stri
   `;
 }
 
+const FAIL_OPEN_RESULT = {
+  isSpam: false,
+  reason: 'AI validation unavailable; message allowed through.',
+  confidenceScore: 0,
+}
+
 export async function filterSpam(input: { name: string, email: string, message: string }): Promise<{
   isSpam: boolean,
   reason: string,
@@ -46,44 +52,28 @@ export async function filterSpam(input: { name: string, email: string, message: 
 }> {
   const { name, email, message } = input;
 
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY ?? '';
+  const apiKey = useRuntimeConfig().geminiApiKey
   if (!apiKey) {
-    console.error('Google API Key is not configured.');
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Server configuration error.',
-    });
+    console.error('Gemini API key (NUXT_GEMINI_API_KEY) is not configured.');
+    return FAIL_OPEN_RESULT
   }
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
   try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+
     const prompt = getValidationPrompt(name, email, message);
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
     const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    let validation = JSON.parse(jsonString);
-
-    try {
-      validation = ResponseSchema.parse(validation);
-    } catch(error){
-      console.error('Encountered malformed JSON response from LLM:', error);
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'An error occurred while parsing the message validation.',
-      });
-    }
+    const validation = ResponseSchema.parse(JSON.parse(jsonString));
 
     console.log('Gemini Validation: isSpam=%s, confidenceScore=%s', validation.isSpam, validation.confidenceScore);
 
     return validation;
-
   } catch (error) {
     console.error('Error during Gemini validation or processing:', error);
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'An error occurred while validating your message.',
-    });
+    return FAIL_OPEN_RESULT
   }
 }

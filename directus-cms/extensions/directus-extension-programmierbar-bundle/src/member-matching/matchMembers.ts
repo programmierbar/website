@@ -28,7 +28,7 @@ export function extractSpeakerNames(transcriptText: string): string[] {
     // Pattern 1: Name followed by timestamp in parentheses
     // Examples: "Jan Gregor Emge-Triebel (00:12.534)", "Fabi Fink (00:35.735)"
     // Use [ \t]+ instead of \s+ to avoid matching across newlines
-    const timestampPattern = /^([A-ZÄÖÜa-zäöüß][A-ZÄÖÜa-zäöüß\-]+(?:[ \t]+[A-ZÄÖÜa-zäöüß][A-ZÄÖÜa-zäöüß\-]+)*)[ \t]+\(\d{2}:\d{2}\.\d+\)/gm
+    const timestampPattern = /^([A-ZÄÖÜa-zäöüß][A-ZÄÖÜa-zäöüß-]+(?:[ \t]+[A-ZÄÖÜa-zäöüß][A-ZÄÖÜa-zäöüß-]+)*)[ \t]+\(\d{2}:\d{2}\.\d+\)/gm
 
     let match
     while ((match = timestampPattern.exec(transcriptText)) !== null) {
@@ -40,7 +40,7 @@ export function extractSpeakerNames(transcriptText: string): string[] {
 
     // Pattern 2: Name followed by colon (fallback for other transcript formats)
     // Examples: "Dennis:", "Dennis Becker:", "**Jojo**:"
-    const colonPattern = /^(?:\*\*)?([A-ZÄÖÜa-zäöüß][A-ZÄÖÜa-zäöüß\-]+(?:\s+[A-ZÄÖÜa-zäöüß][A-ZÄÖÜa-zäöüß\-]+)?)(?:\*\*)?:/gm
+    const colonPattern = /^(?:\*\*)?([A-ZÄÖÜa-zäöüß][A-ZÄÖÜa-zäöüß-]+(?:\s+[A-ZÄÖÜa-zäöüß][A-ZÄÖÜa-zäöüß-]+)?)(?:\*\*)?:/gm
 
     while ((match = colonPattern.exec(transcriptText)) !== null) {
         const name = match[1].trim()

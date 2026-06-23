@@ -8,6 +8,7 @@ import { default as axios } from 'axios'
 import { getUrlSlug } from '../../../../../shared-code/index.ts'
 import { createHookErrorConstructor } from '../shared/errors.ts'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
+import { safeAction } from '../shared/safeHook.ts'
 
 // Ignoring error here because IDE does not pick up right configuration
 // @ts-ignore
@@ -26,17 +27,17 @@ export default defineHook(({ action }, hookContext) => {
      * It sets the "image" field on newly created
      * pick of the day items, if necessary.
      */
-    action('picks_of_the_day.items.create', ({ payload, ...metadata }, context) =>
+    action('picks_of_the_day.items.create', safeAction(HOOK_NAME, logger, ({ payload, ...metadata }, context) =>
         handleAction({ payload, metadata, context })
-    )
+    ))
 
     /**
      * It sets the "image" field on updated pick
      * of the day items, if necessary.
      */
-    action('picks_of_the_day.items.update', ({ payload, ...metadata }, context) =>
+    action('picks_of_the_day.items.update', safeAction(HOOK_NAME, logger, ({ payload, ...metadata }, context) =>
         handleAction({ payload, metadata, context })
-    )
+    ))
 
     /**
      * It handles the action logic that sets the "image" field on

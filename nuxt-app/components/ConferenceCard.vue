@@ -52,7 +52,7 @@ export default defineComponent({
     },
     setup(props) {
         // Create href to meetup subpage
-        const href = computed(() => `/konferenzen/${props.conference.slug}`)
+        const href = computed(() => `/konferenz/${props.conference.slug}`)
 
         // Create plain description text
         const description = computed(() => props.conference.text_1?.replace(/<[^<>]+>/g, ''))

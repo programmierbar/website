@@ -1,5 +1,5 @@
 import { PodcastHandler } from "./PodcastHandler.ts"
-import { ItemHandler } from "./ItemHandler.ts"
+import type { ItemHandler } from "./ItemHandler.ts"
 import { MeetupHandler } from './MeetupHandler.ts';
 import { SpeakerHandler } from './SpeakerHandler.ts';
 import { PickOfTheDayHandler } from './PickOfTheDayHandler.ts';

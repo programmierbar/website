@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 import meow from 'meow';
-import { createDirectus, rest, readItems } from '@directus/sdk';
+import { createDirectus, rest } from '@directus/sdk';
 import { createFetchRequester } from '@algolia/requester-fetch';
 import { searchClient } from '@algolia/client-search';
 import 'dotenv/config'
 
 import { getHandlers } from './../handlers/index.ts';
+import { collectItems } from './../util/pagination.ts';
 
 const cli = meow(`
     Usage
@@ -44,32 +45,14 @@ const itemHandlers = getHandlers({
     PUBLIC_URL: PUBLIC_URL,
 }, {});
 
+// The fields to fetch are taken from each handler's `indexFields` (the single source of truth shared
+// with the live hook), so the CLI can never drift out of sync with what the handler actually reads.
 const configuration = [
-    {
-        collection: 'podcasts',
-        fields: ['id', 'title', 'slug', 'description', 'number', 'type', 'published_on', 'cover_image'],
-        handler: itemHandlers.podcastHandler,
-    },
-    {
-        collection: 'meetups',
-        fields: ['id', 'title', 'slug', 'description', 'published_on', 'cover_image'],
-        handler: itemHandlers.meetupHandler,
-    },
-    {
-        collection: 'speakers',
-        fields: ['id', 'first_name', 'last_name', 'academic_title', 'description', 'published_on', 'slug', 'profile_image'],
-        handler: itemHandlers.speakerHandler,
-    },
-    {
-        collection: 'picks_of_the_day',
-        fields: ['id', 'name', 'website_url', 'description', 'published_on', 'image'],
-        handler: itemHandlers.pickOfTheDayHandler,
-    },
-    {
-        collection: 'transcripts',
-        fields: ['id', 'podcast.*', 'speakers.*', 'service', 'supported_features', 'raw_response'],
-        handler: itemHandlers.transcriptHandler,
-    },
+    { collection: 'podcasts', handler: itemHandlers.podcastHandler },
+    { collection: 'meetups', handler: itemHandlers.meetupHandler },
+    { collection: 'speakers', handler: itemHandlers.speakerHandler },
+    { collection: 'picks_of_the_day', handler: itemHandlers.pickOfTheDayHandler },
+    { collection: 'transcripts', handler: itemHandlers.transcriptHandler },
 ];
 
 interface RepairStats {
@@ -95,13 +78,10 @@ async function repairCollection(configItem: typeof configuration[0]): Promise<Re
 
     console.log(`\n🔍 Analyzing collection: ${configItem.collection}`);
 
-    // Get all items from Directus
-    const dbItems = await directusClient.request(
-        readItems(configItem.collection, {
-            fields: configItem.fields,
-            limit: -1,
-        })
-    );
+    // Get all items from Directus. The repair pass diffs the whole collection against the index, so
+    // it genuinely needs every item in memory — but we still fetch through the handler's pagination
+    // (collectItems) so large collections like transcripts don't fail the bulk read with limit: -1.
+    const dbItems = await collectItems(directusClient, configItem.collection, configItem.handler);
 
     stats.totalDbItems = dbItems.length;
     console.log(`📊 Found ${stats.totalDbItems} items in database`);
@@ -153,6 +133,11 @@ async function repairCollection(configItem: typeof configuration[0]): Promise<Re
     }
 
     // Find stale items (different data)
+    //
+    // LIMITATION: this only compares the *number* of entries, not their content. It catches a
+    // transcript whose chunk count changed, but NOT a present-but-incomplete entry (e.g. a podcast
+    // that exists with only a description and no title/cover). To heal those, run the full
+    // `algolia:rebuild-index <collection>` instead — it re-pushes every field for every item.
     const staleItems = [];
     for (const [itemId, dbItem] of dbItemsMap) {
         const indexHits = indexItemsMap.get(itemId);

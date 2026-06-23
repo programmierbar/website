@@ -35,7 +35,6 @@ export default defineEventHandler(async (event) => {
         const session = stripeEvent.data.object as Stripe.Checkout.Session
 
         const orderId = session.metadata?.order_id
-        const attendeesJson = session.metadata?.attendees
 
         if (!orderId) {
             console.error('Missing order_id in checkout session metadata')
@@ -45,15 +44,14 @@ export default defineEventHandler(async (event) => {
         const directus = useAuthenticatedDirectus()
 
         try {
+            // attendees_json is already persisted on the order at creation time
+            // (see create-checkout.post.ts), so it doesn't need to round-trip
+            // through Stripe metadata — which has a 500-char-per-value limit that
+            // larger orders would exceed.
             const updatePayload: Record<string, unknown> = {
                 status: 'paid',
                 stripe_payment_intent_id: session.payment_intent,
                 date_paid: new Date().toISOString(),
-            }
-
-            // Store attendees JSON for Directus hook to process
-            if (attendeesJson) {
-                updatePayload.attendees_json = attendeesJson
             }
 
             // Atomic idempotent update: only update if status is NOT already 'paid'.

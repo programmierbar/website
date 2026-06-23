@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 import meow from 'meow';
-import { createDirectus, rest, readItems } from '@directus/sdk';
+import { createDirectus, rest } from '@directus/sdk';
 import { createFetchRequester } from '@algolia/requester-fetch';
 import { searchClient } from '@algolia/client-search';
 import 'dotenv/config'
 
 import { getHandlers } from './../handlers/index.ts';
+import { streamItems } from './../util/pagination.ts';
 
 const cli = meow(`
     Usage
@@ -40,47 +41,26 @@ const itemHandlers = getHandlers({
     PUBLIC_URL: PUBLIC_URL,
 }, {});
 
+// The fields to fetch are taken from each handler's `indexFields` (the single source of truth shared
+// with the live hook), so the CLI can never drift out of sync with what the handler actually reads.
 const configuration = [
-    {
-        collection: 'podcasts',
-        fields: ['id', 'title', 'slug', 'description', 'number', 'type', 'published_on', 'cover_image'],
-        handler: itemHandlers.podcastHandler,
-    },
-    {
-        collection: 'meetups',
-        fields: ['id', 'title', 'slug', 'description', 'published_on', 'cover_image'],
-        handler: itemHandlers.meetupHandler,
-    },
-    {
-        collection: 'speakers',
-        fields: ['id', 'first_name', 'last_name', 'academic_title', 'description', 'published_on', 'slug', 'profile_image'],
-        handler: itemHandlers.speakerHandler,
-    },
-    {
-        collection: 'picks_of_the_day',
-        fields: ['id', 'name', 'website_url', 'description', 'published_on', 'image'],
-        handler: itemHandlers.pickOfTheDayHandler,
-    },
-    {
-        collection: 'transcripts',
-        fields: ['id', 'podcast.*', 'speakers.*', 'service', 'supported_features', 'raw_response'],
-        handler: itemHandlers.transcriptHandler,
-    },
+    { collection: 'podcasts', handler: itemHandlers.podcastHandler },
+    { collection: 'meetups', handler: itemHandlers.meetupHandler },
+    { collection: 'speakers', handler: itemHandlers.speakerHandler },
+    { collection: 'picks_of_the_day', handler: itemHandlers.pickOfTheDayHandler },
+    { collection: 'transcripts', handler: itemHandlers.transcriptHandler },
 ]
 
 for (const configurationItem of configuration) {
     if (cli.input.lastIndexOf(configurationItem.collection) !== -1) {
         console.log('Rebuilding index for collection: ' + configurationItem.collection);
 
-        const items = await directusClient.request(
-            readItems(configurationItem.collection, {
-                fields: configurationItem.fields,
-                limit: -1,
-            })
-        );
-
+        // Stream the collection page by page (page size decided by the handler) instead of loading
+        // it all at once. Transcripts in particular cannot be read with `limit: -1` — each row holds
+        // a full hour of audio transcription. Streaming also keeps memory bounded: we process and
+        // push one item before fetching the next.
         let counter = 0;
-        for (const item of items) {
+        for await (const item of streamItems(directusClient, configurationItem.collection, configurationItem.handler)) {
             counter++;
             const payloads = configurationItem.handler.buildAttributes(item).map((payload) => {
                 return {
@@ -90,6 +70,11 @@ for (const configurationItem of configuration) {
                 }
             });
 
+            // Transcripts (and any handler that fans an item out into a VARIABLE number of objects)
+            // must delete the item's existing entries first: when the chunk count shrinks, the
+            // now-orphaned `${id}_N` records would otherwise linger. Single-object collections
+            // (meetups, podcasts, ...) don't need this — the full-record replace below overwrites
+            // their one `${id}_0` entry in place.
             if (configurationItem.handler.requiresDistinctDeletionBeforeUpdate()) {
                 const results = await algoliaClient.browseObjects({
                     indexName: ALGOLIA_INDEX,
@@ -109,12 +94,19 @@ for (const configurationItem of configuration) {
                 });
             }
 
+            // Write each payload as a FULL-RECORD REPLACE (addOrUpdateObject = PUT), NOT a partial
+            // merge. This is a correctness fix, not a style choice: partialUpdateObject MERGES into the
+            // stored record, and Algolia refuses to merge into a record that is already over its 10 KB
+            // limit — so a stale, oversized entry (e.g. an old meetup indexed with a full raw-HTML
+            // description) could never shrink itself, however much the source text was trimmed; the
+            // write was rejected citing the EXISTING record's size. A full replace overwrites the whole
+            // record (dropping any stale attributes too) and is accepted as long as the NEW payload
+            // fits — which the handlers' size guards ensure.
             await Promise.all(payloads.map(async (payload, index) => {
-                await algoliaClient.partialUpdateObject({
+                await algoliaClient.addOrUpdateObject({
                     indexName: ALGOLIA_INDEX,
                     objectID: `${item.id}_${index}`,
-                    attributesToUpdate: payload,
-                    createIfNotExists: true,
+                    body: payload,
                 });
             }));
 

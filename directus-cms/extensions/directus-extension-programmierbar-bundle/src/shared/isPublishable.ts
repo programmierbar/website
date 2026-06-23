@@ -21,7 +21,6 @@ interface Field {
     }
 }
 
-// eslint-disable-next-line no-unused-vars
 type LoggerFunction = (message: string) => void
 
 const isRuleForPublished = function(rule: any): boolean {

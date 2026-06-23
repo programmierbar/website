@@ -91,7 +91,7 @@ export function useAuthenticatedDirectus() {
                     conference: { _eq: conferenceId },
                     active: { _eq: true },
                 },
-                fields: ['id', 'conference', 'code', 'price_cents', 'label', 'max_uses', 'active'],
+                fields: ['id', 'conference', 'code', 'price_cents', 'label', 'max_uses', 'active', 'is_employee_code'],
             })
         )
         const upperCode = code.toUpperCase()
@@ -109,6 +109,7 @@ export function useAuthenticatedDirectus() {
                     filter: {
                         conference: { _eq: conferenceId },
                         status: { _neq: 'cancelled' },
+                        is_internal: { _neq: true },
                     },
                 },
             })
@@ -209,6 +210,57 @@ export function useAuthenticatedDirectus() {
         return orders?.[0] ?? null
     }
 
+    async function getTicketByCode(ticketCode: string) {
+        const tickets = await client.request(
+            readItems('tickets', {
+                filter: { ticket_code: { _eq: ticketCode } },
+                fields: [
+                    'id',
+                    'ticket_code',
+                    'conference',
+                    'attendee_first_name',
+                    'attendee_last_name',
+                    'attendee_email',
+                    'status',
+                    'checked_in_at',
+                    'ticket_type',
+                ],
+                limit: 1,
+            })
+        )
+
+        return tickets?.[0] ?? null
+    }
+
+    async function countCheckedInTicketsForConference(conferenceId: string): Promise<number> {
+        const result = await client.request(
+            aggregate('tickets' as any, {
+                aggregate: { count: ['id'] },
+                query: {
+                    filter: {
+                        conference: { _eq: conferenceId },
+                        status: { _eq: 'checked_in' },
+                        is_internal: { _neq: true },
+                    },
+                },
+            })
+        )
+        return Number(result?.[0]?.count?.id ?? 0)
+    }
+
+    async function getLatestConferenceWithTicketing() {
+        const conferences = await client.request(
+            readItems('conferences', {
+                filter: { ticketing_enabled: { _eq: true } },
+                fields: ['id', 'title', 'slug', 'start_on', 'ticket_max_quantity'],
+                sort: ['-start_on'],
+                limit: 1,
+            })
+        )
+
+        return conferences?.[0] ?? null
+    }
+
     return {
         getSpeakerByPortalToken,
         updateSpeaker,
@@ -225,5 +277,8 @@ export function useAuthenticatedDirectus() {
         updateTicket,
         getTicketsByOrderId,
         getTicketOrderBySessionId,
+        getTicketByCode,
+        countCheckedInTicketsForConference,
+        getLatestConferenceWithTicketing,
     }
 }

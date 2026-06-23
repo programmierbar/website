@@ -33,6 +33,18 @@ export const PROGRAMMIER_CON_APP_ANDROID = process.env.PROGRAMMIER_CON_APP_ANDRO
 
 export const ALGOLIA_INDEX = process.env.ALGOLIA_INDEX || 'programmierbar_website_prod'
 
+// Vanity-domain redirects.
+//
+// Host-wide catch-alls (cfp / discord / flutterday / conference) live in
+// vercel.json so they run at the edge, ahead of ISR. Only the dynamic rules
+// remain in server/utils/redirects.ts — those need values from here.
+export const CONFERENCE_VANITY_HOSTS = [
+    'con.programmier.bar',
+    'conference.programmier.bar',
+    'konferenz.programmier.bar',
+]
+export const WEBFINGER_HOST = 'https://social.programmier.bar'
+
 // Ticketing
 export const VAT_RATE = 0.19
 export const VAT_RATE_PERCENT = Math.round(VAT_RATE * 100)

@@ -200,7 +200,7 @@ export function useDirectus() {
         )
     }
 
-    async function getPodcasts() {
+    async function getPodcasts(limit: number = -1) {
         return await directus.request(
             readItems('podcasts', {
                 fields: [
@@ -217,7 +217,7 @@ export function useDirectus() {
                     'tags.tag.name',
                 ],
                 sort: ['-published_on'],
-                limit: -1,
+                limit: limit,
             })
         )
     }
@@ -271,6 +271,7 @@ export function useDirectus() {
                         'apple_url',
                         'google_url',
                         'spotify_url',
+                        'youtube_url',
                         'speakers',
                         'speakers.speaker.id',
                         'speakers.speaker.slug',
@@ -458,7 +459,10 @@ export function useDirectus() {
         })
       )
       .then((result) => {
-        const singleResult = result.pop() as unknown as ConferenceItem
+        const singleResult = result.pop() as unknown as ConferenceItem | undefined
+        if (!singleResult) {
+          throw new Error(`Conference with slug "${slug}" not found in Directus.`)
+        }
         const speakersPrepared = singleResult.speakers.map((speaker: any) => {
               return {
                 first_name: speaker.speakers_id.first_name,
@@ -605,7 +609,7 @@ export function useDirectus() {
         return Number(result.pop()?.count)
     }
 
-    async function getMeetups() {
+    async function getMeetups(limit: number = -1) {
         return await directus.request(
             readItems('meetups', {
                 fields: [
@@ -621,7 +625,7 @@ export function useDirectus() {
                     'tags.tag.name',
                 ],
                 sort: ['-start_on'],
-                limit: -1,
+                limit: limit,
             })
         )
     }
@@ -645,7 +649,7 @@ export function useDirectus() {
       )
     }
 
-    async function getSpeakers() {
+    async function getSpeakers(limit: number = -1) {
         return await directus.request(
             readItems('speakers', {
                 fields: [
@@ -662,12 +666,67 @@ export function useDirectus() {
                     'tags.tag.name',
                     'podcasts.podcast.type',
                 ],
-                limit: -1,
+                limit: limit,
                 sort: ['podcasts.podcast.type', 'sort', '-published_on'],
                 filter: {'listed_hof': {'_eq': true}},
             })
         )
     }
+
+  async function getSpeakersForBuild(limit: number) {
+
+      const ctos =  await directus.request(
+        readItems('speakers', {
+          fields: [
+            'id',
+            'slug',
+            'published_on',
+            'academic_title',
+            'first_name',
+            'last_name',
+            'occupation',
+            'description',
+            'profile_image.*',
+            'tags.tag.id',
+            'tags.tag.name',
+            'podcasts.podcast.type',
+          ],
+          limit: Math.round(limit/2),
+          sort: ['sort', '-published_on'],
+          filter: {
+            listed_hof: { _eq: true },
+            podcasts: { podcast: { type: { _eq: 'cto_special' } } },
+          },
+        })
+      )
+
+    const others =  await directus.request(
+      readItems('speakers', {
+        fields: [
+          'id',
+          'slug',
+          'published_on',
+          'academic_title',
+          'first_name',
+          'last_name',
+          'occupation',
+          'description',
+          'profile_image.*',
+          'tags.tag.id',
+          'tags.tag.name',
+          'podcasts.podcast.type',
+        ],
+        limit: Math.round(limit/2),
+        sort: ['sort', '-published_on'],
+        filter: {
+          listed_hof: { _eq: true },
+          podcasts: { podcast: { type: { _neq: 'cto_special' } } },
+        },
+      })
+    )
+
+    return [...ctos, ...others]
+  }
 
     async function getAllTopTags() {
         const allTags: Tag[] = []
@@ -912,6 +971,7 @@ export function useDirectus() {
         getMeetups,
         getConferences,
         getSpeakers,
+        getSpeakersForBuild,
         getPodcastCount,
         getPickOfTheDayCount,
         getSpeakersCount,

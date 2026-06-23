@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { postSlackMessage } from './../shared/postSlackMessage.ts'
-import { Dependencies } from './../buzzsprout/handlers/types.js';
+import type { Dependencies } from './../buzzsprout/handlers/types.js';
 
 function processTranscriptItem(
     HOOK_NAME: string,

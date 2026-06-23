@@ -1,9 +1,14 @@
-import { AbstractItemHandler, ItemHandler } from './ItemHandler.ts';
+import { AbstractItemHandler } from './ItemHandler.ts';
 
 export class PickOfTheDayHandler extends AbstractItemHandler {
 
     get collectionName(): string {
         return 'picks_of_the_day';
+    }
+
+    // Every field read by updateRequired() and buildAttributes(). `status` is added by the hook.
+    get indexFields(): string[] {
+        return ['id', 'name', 'website_url', 'description', 'published_on', 'image'];
     }
 
     updateRequired(item: any): boolean {

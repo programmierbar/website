@@ -6,6 +6,11 @@ export class SpeakerHandler extends AbstractItemHandler {
         return 'speakers';
     }
 
+    // Every field read by updateRequired() and buildAttributes(). `status` is added by the hook.
+    get indexFields(): string[] {
+        return ['id', 'first_name', 'last_name', 'academic_title', 'description', 'published_on', 'slug', 'profile_image'];
+    }
+
     updateRequired(item: any): boolean {
         return (
             item.first_name ||

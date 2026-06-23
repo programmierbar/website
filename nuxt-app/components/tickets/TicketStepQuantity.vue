@@ -51,7 +51,7 @@ function incrementTickets() {
 
 <template>
     <div class="ticket-step-quantity">
-        <h2 class="mb-2 text-3xl font-bold text-white md:text-4xl">Tickets kaufen</h2>
+        <h2 class="mb-2 text-3xl font-bold text-white md:text-4xl">Tickets sichern</h2>
         <p class="mb-8 text-lg text-gray-300">{{ conferenceTitle }}</p>
 
         <!-- Ticket count selector -->
@@ -95,18 +95,18 @@ function incrementTickets() {
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-white">
-                        <span v-if="store.isEarlyBird" class="font-bold text-lime">Early Bird Preis</span>
-                        <span v-else>Regulärer Preis</span>
+                        <span v-if="store.isEarlyBird" class="font-bold text-lime">Early Bird</span>
+                        <span v-else>Regulär</span>
                     </p>
                     <p v-if="store.isEarlyBird && formattedEarlyBirdDeadline" class="text-sm text-gray-400">
-                        Gültig bis {{ formattedEarlyBirdDeadline }}
+                        Verfügbar bis {{ formattedEarlyBirdDeadline }}
                     </p>
                 </div>
                 <p class="text-2xl font-bold text-white">
                     {{ store.formatPrice(store.unitPriceCents) }}
                 </p>
             </div>
-            <p class="mt-2 text-xs text-[#848a98]">zzgl. {{ VAT_RATE_PERCENT }}% MwSt.</p>
+            <p class="mt-2 text-xs text-[#848a98]">zzgl. {{ VAT_RATE_PERCENT }} % MwSt.</p>
         </div>
 
         <!-- Pricing summary -->

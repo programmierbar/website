@@ -17,9 +17,13 @@ async function applyDiscountCode() {
     discountMessage.value = ''
     const valid = await store.validateDiscountCode()
     if (valid) {
-        discountMessage.value = store.pricingSettings?.discountLabel
-            ? `Rabattcode "${store.pricingSettings.discountLabel}" angewendet!`
-            : 'Rabattcode erfolgreich angewendet!'
+        if (store.isEmployeeCode) {
+            discountMessage.value = 'Team-Code erkannt – keine Zahlung nötig.'
+        } else {
+            discountMessage.value = store.pricingSettings?.discountLabel
+                ? `Rabattcode „${store.pricingSettings.discountLabel}“ angewendet!`
+                : 'Rabattcode erfolgreich angewendet!'
+        }
     } else {
         discountMessage.value = store.error || 'Ungültiger Rabattcode.'
     }
@@ -32,6 +36,7 @@ function removeDiscountCode() {
     if (store.pricingSettings) {
         store.pricingSettings.discountPriceCents = null
         store.pricingSettings.discountLabel = null
+        store.pricingSettings.isEmployeeCode = false
     }
 }
 
@@ -72,7 +77,7 @@ async function proceedToPayment() {
 
         <!-- Attendees summary -->
         <div class="mb-6 rounded-lg border border-gray-700 bg-gray-800/50 p-6">
-            <h3 class="mb-4 text-lg font-bold text-white">Teilnehmer ({{ store.ticketCount }})</h3>
+            <h3 class="mb-4 text-lg font-bold text-white">Teilnehmende ({{ store.ticketCount }})</h3>
             <div class="space-y-3">
                 <div
                     v-for="(attendee, index) in store.attendees"
@@ -130,7 +135,7 @@ async function proceedToPayment() {
         </div>
 
         <!-- Discount code -->
-        <div v-if="!store.isEarlyBird" class="mb-8 rounded-lg border border-gray-700 bg-gray-800/50 p-6">
+        <div class="mb-8 rounded-lg border border-gray-700 bg-gray-800/50 p-6">
             <h3 class="mb-3 text-sm font-bold text-white">Rabattcode</h3>
             <div v-if="store.discountValid" class="flex items-center justify-between">
                 <div>
@@ -204,12 +209,18 @@ async function proceedToPayment() {
             :disabled="!termsAccepted || store.isLoading"
             @click="proceedToPayment"
         >
-            <span v-if="store.isLoading">Wird verarbeitet...</span>
+            <span v-if="store.isLoading">Wird verarbeitet…</span>
+            <span v-else-if="store.isEmployeeCode">Ticket bestätigen</span>
             <span v-else>Zur Zahlung</span>
         </button>
 
         <p class="mt-4 text-center text-sm text-[#848a98]">
-            Du wirst zur sicheren Zahlungsseite von Stripe weitergeleitet.
+            <span v-if="store.isEmployeeCode">
+                Durch den Team-Code ist keine Zahlung nötig.
+            </span>
+            <span v-else>
+                Du wirst zur sicheren Zahlungsseite von Stripe weitergeleitet.
+            </span>
         </p>
     </div>
 </template>

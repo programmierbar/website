@@ -1,7 +1,7 @@
-import { Dependencies } from '../buzzsprout/handlers/types.js';
+import type { Dependencies } from '../buzzsprout/handlers/types.js';
 import { createHookErrorConstructor } from './../shared/errors.ts';
 import { postSlackMessage } from './../shared/postSlackMessage.ts';
-import { Query } from '@directus/types/dist/query.js'
+import type { Query } from '@directus/types/dist/query.js'
 
 async function generateTranscriptItem(
     HOOK_NAME: string,

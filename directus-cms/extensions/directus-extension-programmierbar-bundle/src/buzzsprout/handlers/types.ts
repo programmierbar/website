@@ -62,12 +62,6 @@ export interface Env {
     BUZZSPROUT_API_TOKEN: string
 }
 
-// Base Action Data Interface
-export interface ActionData<T = Payload> {
-    payload: T
-    context: Context
-}
-
 export interface Dependencies {
     logger: Logger
     ItemsService: new (collection: string, options: any) => ItemsService

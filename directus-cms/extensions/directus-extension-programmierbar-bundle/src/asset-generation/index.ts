@@ -1,6 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { generateAssetsForPodcast, regenerateAssets } from './generateAssets.ts'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
+import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'asset-generation'
 
@@ -16,7 +17,7 @@ export default defineHook(({ action }, hookContext) => {
      * Trigger asset generation when a speaker's portal submission is approved.
      * This indicates the speaker has submitted their info and images, and an admin approved them.
      */
-    action('speakers.items.update', async ({ payload, keys }, context) => {
+    action('speakers.items.update', safeAction(HOOK_NAME, logger, async ({ payload, keys }, context) => {
         // Only trigger when portal_submission_status changes to 'approved'
         if (payload.portal_submission_status !== 'approved') {
             return
@@ -87,12 +88,12 @@ export default defineHook(({ action }, hookContext) => {
         } catch (err: any) {
             logger.error(`${HOOK_NAME}: Error processing speaker approval: ${err.message}`)
         }
-    })
+    }))
 
     /**
      * Trigger asset regeneration when regenerate_assets is set to true on a podcast.
      */
-    action('podcasts.items.update', async ({ payload, keys }, context) => {
+    action('podcasts.items.update', safeAction(HOOK_NAME, logger, async ({ payload, keys }, context) => {
         // Only trigger when regenerate_assets is set to true
         if (payload.regenerate_assets !== true) {
             return
@@ -147,5 +148,5 @@ export default defineHook(({ action }, hookContext) => {
                 }
             })
         }
-    })
+    }))
 })
