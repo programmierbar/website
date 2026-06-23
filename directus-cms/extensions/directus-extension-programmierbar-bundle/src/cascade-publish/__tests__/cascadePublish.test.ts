@@ -112,6 +112,18 @@ describe('extractDraftIds', () => {
         expect(extractDraftIds(parentItem, M2M_RELATION)).toEqual([])
     })
 
+    test('should ignore archived and published items, returning only drafts', () => {
+        const parentItem = {
+            speakers: [
+                { speaker: { id: 's1', status: 'archived' } },
+                { speaker: { id: 's2', status: 'draft' } },
+                { speaker: { id: 's3', status: 'published' } },
+            ],
+        }
+
+        expect(extractDraftIds(parentItem, M2M_RELATION)).toEqual(['s2'])
+    })
+
     test('should skip junction records with a missing child item', () => {
         const parentItem = {
             speakers: [{ speaker: null }, { speaker: { id: 's2', status: 'draft' } }],

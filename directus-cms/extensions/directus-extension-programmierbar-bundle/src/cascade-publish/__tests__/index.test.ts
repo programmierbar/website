@@ -177,6 +177,23 @@ describe('cascade-publish hook', () => {
         expect(updateManyCalls).toEqual([])
     })
 
+    test('does not change archived related items', async () => {
+        const { handlers, updateManyCalls } = setup({
+            parentItem: {
+                speakers: [
+                    { speaker: { id: 'sp1', status: 'archived' } },
+                    { speaker: { id: 'sp2', status: 'draft' } },
+                ],
+                picks_of_the_day: [{ id: 'pick1', status: 'archived' }],
+            },
+        })
+
+        await invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1'], payload: { status: 'published' } })
+
+        // Only the draft speaker is published; the archived speaker and archived pick are untouched.
+        expect(updateManyCalls).toEqual([{ collection: 'speakers', keys: ['sp2'], data: { status: 'published' } }])
+    })
+
     test('warns and skips when no key is present', async () => {
         const { handlers, updateManyCalls, logger } = setup({ parentItem: {} })
 
@@ -196,7 +213,7 @@ describe('cascade-publish hook', () => {
 
         expect(logger.error).toHaveBeenCalled()
         expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
-        const message = postSlackMessageMock.mock.calls[0][0]
+        const message = postSlackMessageMock.mock.calls[0]?.[0]
         expect(message).toContain('pod1')
         expect(message).toContain('DB exploded')
         expect(message).toContain('https://cms.example.com/admin/content/podcasts/pod1')
@@ -227,7 +244,7 @@ describe('cascade-publish hook', () => {
         expect(updateManyCalls).toEqual([])
         expect(logger.warn).toHaveBeenCalled()
         expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
-        const message = postSlackMessageMock.mock.calls[0][0]
+        const message = postSlackMessageMock.mock.calls[0]?.[0]
         expect(message).toContain('Pflichtfelder')
         expect(message).toContain('https://cms.example.com/admin/content/speakers/sp1')
     })
@@ -255,7 +272,7 @@ describe('cascade-publish hook', () => {
         // Only the complete speaker is published.
         expect(updateManyCalls).toEqual([{ collection: 'speakers', keys: ['sp1'], data: { status: 'published' } }])
         expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
-        expect(postSlackMessageMock.mock.calls[0][0]).toContain('https://cms.example.com/admin/content/speakers/sp2')
+        expect(postSlackMessageMock.mock.calls[0]?.[0]).toContain('https://cms.example.com/admin/content/speakers/sp2')
     })
 
     test('safeAction swallows errors thrown before the per-relation guard', async () => {
