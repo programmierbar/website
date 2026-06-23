@@ -1,16 +1,14 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
+import {
+    buildRelationFields,
+    CascadeRelation,
+    extractDraftIds,
+    extractParentKeys,
+    isPublishPayload,
+} from './util/cascadePublish.ts'
 
 const HOOK_NAME = 'cascade-publish'
-
-interface CascadeRelation {
-    /** The relation field name on the parent item (e.g. 'speakers', 'picks_of_the_day') */
-    relationField: string
-    /** For m2m: the field on the junction record that holds the child item (e.g. 'speaker', 'talk') */
-    childField?: string
-    /** The Directus collection of the related items */
-    targetCollection: string
-}
 
 const PODCAST_RELATIONS: CascadeRelation[] = [
     {
@@ -65,11 +63,11 @@ export default defineHook(({ action }, hookContext) => {
         relations: CascadeRelation[],
         eventContext: Record<string, any>
     ) {
-        if (metadata.payload.status !== 'published') {
+        if (!isPublishPayload(metadata.payload)) {
             return
         }
 
-        const parentKeys: string[] = metadata.keys || (metadata.key ? [metadata.key] : [])
+        const parentKeys = extractParentKeys(metadata)
         if (parentKeys.length === 0) {
             logger.warn(`${HOOK_NAME}: No key found for ${parentCollection} action`)
             return
@@ -81,16 +79,7 @@ export default defineHook(({ action }, hookContext) => {
             logger.info(`${HOOK_NAME}: ${parentCollection} ${parentKey} published, cascading to related items`)
 
             // Build the fields list for reading the parent with all its relations
-            const fields: string[] = []
-            for (const relation of relations) {
-                if (relation.childField) {
-                    fields.push(`${relation.relationField}.${relation.childField}.id`)
-                    fields.push(`${relation.relationField}.${relation.childField}.status`)
-                } else {
-                    fields.push(`${relation.relationField}.id`)
-                    fields.push(`${relation.relationField}.status`)
-                }
-            }
+            const fields = buildRelationFields(relations)
 
             // Read the parent item with nested relation data
             const parentService = new ItemsService(parentCollection, {
@@ -127,22 +116,7 @@ export default defineHook(({ action }, hookContext) => {
     }
 
     async function cascadePublishRelation(schema: any, parentItem: any, relation: CascadeRelation, eventContext: Record<string, any>) {
-        const relatedItems = parentItem[relation.relationField]
-        if (!Array.isArray(relatedItems) || relatedItems.length === 0) {
-            logger.info(`${HOOK_NAME}: No related ${relation.targetCollection} items found`)
-            return
-        }
-
-        // Extract child items: for m2m, unwrap from junction records; for o2m, use directly
-        const childItems: any[] = relation.childField
-            ? relatedItems.map((junctionRecord: any) => junctionRecord[relation.childField!]).filter(Boolean)
-            : relatedItems
-
-        // Filter for draft items only
-        const draftIds = childItems
-            .filter((item: any) => item.status === 'draft')
-            .map((item: any) => item.id)
-            .filter(Boolean)
+        const draftIds = extractDraftIds(parentItem, relation)
 
         if (draftIds.length === 0) {
             logger.info(`${HOOK_NAME}: No draft ${relation.targetCollection} items to publish`)
