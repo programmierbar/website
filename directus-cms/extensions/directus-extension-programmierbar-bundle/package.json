@@ -125,6 +125,11 @@
                 "source": "src/ticket-profile-completion/index.ts"
             },
             {
+                "type": "hook",
+                "name": "cascade-publish",
+                "source": "src/cascade-publish/index.ts"
+            },
+            {
                 "type": "endpoint",
                 "name": "ticket-wallet",
                 "source": "src/ticket-wallet/index.ts"
