@@ -92,48 +92,70 @@ export default defineHook(({ action }, hookContext) => {
             return
         }
 
-        const schema = await getSchema()
+        let schema: any
+        try {
+            schema = await getSchema()
+        } catch (error: any) {
+            logger.error(`${HOOK_NAME}: Failed to load schema for ${parentCollection} action: ${error.message}`)
+            await notifySlack(
+                `:warning: *${HOOK_NAME}*: Schema konnte nicht geladen werden. Verknüpfte Einträge für ${parentCollection} ${parentKeys.join(', ')} wurden nicht automatisch veröffentlicht.\n` +
+                    `Fehler: ${error.message}`
+            )
+            return
+        }
 
         for (const parentKey of parentKeys) {
-            logger.info(`${HOOK_NAME}: ${parentCollection} ${parentKey} published, cascading to related items`)
+            // Wrap the whole per-key flow so a failure reading the parent (permissions, transient
+            // DB/schema issue, …) is reported to Slack rather than only logged via safeAction — an
+            // unpublished cascade is a workflow-blocking failure that needs human attention.
+            try {
+                logger.info(`${HOOK_NAME}: ${parentCollection} ${parentKey} published, cascading to related items`)
 
-            // Build the fields list for reading the parent with all its relations
-            const fields = buildRelationFields(relations)
+                // Build the fields list for reading the parent with all its relations
+                const fields = buildRelationFields(relations)
 
-            // Read the parent item with nested relation data
-            const parentService = new ItemsService(parentCollection, {
-                schema,
-                accountability: eventContext.accountability,
-            })
-            const parentItem = await parentService.readOne(parentKey, { fields })
+                // Read the parent item with nested relation data
+                const parentService = new ItemsService(parentCollection, {
+                    schema,
+                    accountability: eventContext.accountability,
+                })
+                const parentItem = await parentService.readOne(parentKey, { fields })
 
-            const errors: Error[] = []
-            const skipped: SkippedItem[] = []
+                const errors: Error[] = []
+                const skipped: SkippedItem[] = []
 
-            for (const relation of relations) {
-                try {
-                    const relationSkipped = await cascadePublishRelation(schema, parentItem, relation, eventContext)
-                    skipped.push(...relationSkipped)
-                } catch (error: any) {
-                    logger.error(
-                        `${HOOK_NAME}: Failed to cascade ${relation.targetCollection} for ${parentCollection} ${parentKey}: ${error.message}`
-                    )
-                    errors.push(error)
+                for (const relation of relations) {
+                    try {
+                        const relationSkipped = await cascadePublishRelation(schema, parentItem, relation, eventContext)
+                        skipped.push(...relationSkipped)
+                    } catch (error: any) {
+                        logger.error(
+                            `${HOOK_NAME}: Failed to cascade ${relation.targetCollection} for ${parentCollection} ${parentKey}: ${error.message}`
+                        )
+                        errors.push(error)
+                    }
                 }
-            }
 
-            if (errors.length > 0) {
+                if (errors.length > 0) {
+                    await notifySlack(
+                        `:warning: *${HOOK_NAME}*: Fehler beim automatischen Veröffentlichen von verknüpften Einträgen für ${parentCollection} ${parentKey}.\n` +
+                            `Fehler: ${errors.map((e) => e.message).join(', ')}\n` +
+                            `${env.PUBLIC_URL}admin/content/${parentCollection}/${parentKey}`
+                    )
+                }
+
+                if (skipped.length > 0) {
+                    await notifySlack(
+                        `:warning: *${HOOK_NAME}*: Folgende mit ${parentCollection} ${parentKey} verknüpfte Einträge konnten nicht automatisch veröffentlicht werden, da Pflichtfelder fehlen. Bitte manuell prüfen und veröffentlichen:\n` +
+                            skipped.map((item) => `${env.PUBLIC_URL}admin/content/${item.collection}/${item.id}`).join('\n')
+                    )
+                }
+            } catch (error: any) {
+                logger.error(`${HOOK_NAME}: Failed to process ${parentCollection} ${parentKey}: ${error.message}`)
                 await notifySlack(
-                    `:warning: *${HOOK_NAME}*: Fehler beim automatischen Veröffentlichen von verknüpften Einträgen für ${parentCollection} ${parentKey}.\n` +
-                        `Fehler: ${errors.map((e) => e.message).join(', ')}\n` +
+                    `:warning: *${HOOK_NAME}*: Verknüpfte Einträge für ${parentCollection} ${parentKey} konnten nicht automatisch veröffentlicht werden.\n` +
+                        `Fehler: ${error.message}\n` +
                         `${env.PUBLIC_URL}admin/content/${parentCollection}/${parentKey}`
-                )
-            }
-
-            if (skipped.length > 0) {
-                await notifySlack(
-                    `:warning: *${HOOK_NAME}*: Folgende mit ${parentCollection} ${parentKey} verknüpfte Einträge konnten nicht automatisch veröffentlicht werden, da Pflichtfelder fehlen. Bitte manuell prüfen und veröffentlichen:\n` +
-                        skipped.map((item) => `${env.PUBLIC_URL}admin/content/${item.collection}/${item.id}`).join('\n')
                 )
             }
         }
@@ -180,7 +202,15 @@ export default defineHook(({ action }, hookContext) => {
         }
 
         if (publishableIds.length > 0) {
-            await targetService.updateMany(publishableIds, { status: 'published' })
+            // Publish one item at a time on purpose: a batched updateMany fires a single
+            // "<collection>.items.update" action carrying metadata.keys[], but the downstream
+            // hooks (Algolia index, screenshot, asset-generation, …) only ever process keys[0],
+            // so all but the first cascaded item would stay missing/stale. Per-key updateOne
+            // fires a separate action per item so every child is reindexed / post-processed.
+            // See _ADRs/0002-batch-updates-use-updateone.md.
+            for (const id of publishableIds) {
+                await targetService.updateOne(id, { status: 'published' })
+            }
             logger.info(
                 `${HOOK_NAME}: Published ${publishableIds.length} ${relation.targetCollection} item(s): ${publishableIds.join(', ')}`
             )

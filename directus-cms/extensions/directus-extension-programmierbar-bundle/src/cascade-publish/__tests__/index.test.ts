@@ -41,14 +41,17 @@ interface SetupOptions {
     childItemsByCollection?: Record<string, Array<Record<string, any>>>
     /** Field definitions returned by `FieldsService.readAll`, keyed by collection. */
     fieldsByCollection?: Record<string, Array<Record<string, any>>>
+    getSchemaError?: Error
     readOneError?: Error
     readByQueryError?: Error
-    updateManyError?: Error
+    updateOneError?: Error
 }
 
 function setup(options: SetupOptions = {}) {
     const { parentItem = {}, childItemsByCollection = {}, fieldsByCollection = {} } = options
-    const updateManyCalls: Array<{ collection: string; keys: Array<string | number>; data: Record<string, any> }> = []
+    // Children are published one-at-a-time via updateOne (see ADR 0002), so we record
+    // individual publish calls.
+    const updateOneCalls: Array<{ collection: string; id: string | number; data: Record<string, any> }> = []
     const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
 
     const ItemsService = jest.fn().mockImplementation((collection: string) => ({
@@ -70,12 +73,12 @@ function setup(options: SetupOptions = {}) {
             // Default: each requested id resolves to a complete draft item.
             return ids.map((id) => ({ id, status: 'draft' }))
         }),
-        updateMany: jest.fn(async (keys: Array<string | number>, data: Record<string, any>) => {
-            if (options.updateManyError) {
-                throw options.updateManyError
+        updateOne: jest.fn(async (id: string | number, data: Record<string, any>) => {
+            if (options.updateOneError) {
+                throw options.updateOneError
             }
-            updateManyCalls.push({ collection, keys, data })
-            return keys
+            updateOneCalls.push({ collection, id, data })
+            return id
         }),
     }))
 
@@ -93,13 +96,18 @@ function setup(options: SetupOptions = {}) {
     const hookContext = {
         logger,
         services: { ItemsService, FieldsService },
-        getSchema: jest.fn(async () => ({})),
+        getSchema: jest.fn(async () => {
+            if (options.getSchemaError) {
+                throw options.getSchemaError
+            }
+            return {}
+        }),
         env: { PUBLIC_URL: 'https://cms.example.com/' },
     }
 
     registerHook(register as any, hookContext as any)
 
-    return { handlers, updateManyCalls, logger }
+    return { handlers, updateOneCalls, logger }
 }
 
 describe('cascade-publish hook', () => {
@@ -119,7 +127,7 @@ describe('cascade-publish hook', () => {
     })
 
     test('publishes draft speakers and picks when a podcast is published', async () => {
-        const { handlers, updateManyCalls } = setup({
+        const { handlers, updateOneCalls } = setup({
             parentItem: {
                 speakers: [
                     { speaker: { id: 'sp1', status: 'draft' } },
@@ -131,15 +139,15 @@ describe('cascade-publish hook', () => {
 
         await invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1'], payload: { status: 'published' } })
 
-        expect(updateManyCalls).toEqual([
-            { collection: 'speakers', keys: ['sp1'], data: { status: 'published' } },
-            { collection: 'picks_of_the_day', keys: ['pick1'], data: { status: 'published' } },
+        expect(updateOneCalls).toEqual([
+            { collection: 'speakers', id: 'sp1', data: { status: 'published' } },
+            { collection: 'picks_of_the_day', id: 'pick1', data: { status: 'published' } },
         ])
         expect(postSlackMessageMock).not.toHaveBeenCalled()
     })
 
     test('publishes draft speakers and talks when a meetup is published', async () => {
-        const { handlers, updateManyCalls } = setup({
+        const { handlers, updateOneCalls } = setup({
             parentItem: {
                 speakers: [{ speaker: { id: 'sp1', status: 'draft' } }],
                 talks: [{ talk: { id: 't1', status: 'draft' } }],
@@ -148,24 +156,46 @@ describe('cascade-publish hook', () => {
 
         await invoke(handlers.get('meetups.items.create')!, { key: 'meetup1', payload: { status: 'published' } })
 
-        expect(updateManyCalls).toEqual([
-            { collection: 'speakers', keys: ['sp1'], data: { status: 'published' } },
-            { collection: 'talks', keys: ['t1'], data: { status: 'published' } },
+        expect(updateOneCalls).toEqual([
+            { collection: 'speakers', id: 'sp1', data: { status: 'published' } },
+            { collection: 'talks', id: 't1', data: { status: 'published' } },
+        ])
+    })
+
+    test('publishes each child individually so downstream hooks see every key', async () => {
+        const { handlers, updateOneCalls } = setup({
+            parentItem: {
+                speakers: [
+                    { speaker: { id: 'sp1', status: 'draft' } },
+                    { speaker: { id: 'sp2', status: 'draft' } },
+                    { speaker: { id: 'sp3', status: 'draft' } },
+                ],
+                picks_of_the_day: [],
+            },
+        })
+
+        await invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1'], payload: { status: 'published' } })
+
+        // One updateOne per speaker — never a single batched updateMany.
+        expect(updateOneCalls).toEqual([
+            { collection: 'speakers', id: 'sp1', data: { status: 'published' } },
+            { collection: 'speakers', id: 'sp2', data: { status: 'published' } },
+            { collection: 'speakers', id: 'sp3', data: { status: 'published' } },
         ])
     })
 
     test('does nothing when the payload status is not published', async () => {
-        const { handlers, updateManyCalls } = setup({
+        const { handlers, updateOneCalls } = setup({
             parentItem: { speakers: [{ speaker: { id: 'sp1', status: 'draft' } }] },
         })
 
         await invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1'], payload: { status: 'draft' } })
 
-        expect(updateManyCalls).toEqual([])
+        expect(updateOneCalls).toEqual([])
     })
 
     test('does not publish when there are no draft children', async () => {
-        const { handlers, updateManyCalls } = setup({
+        const { handlers, updateOneCalls } = setup({
             parentItem: {
                 speakers: [{ speaker: { id: 'sp1', status: 'published' } }],
                 picks_of_the_day: [],
@@ -174,11 +204,11 @@ describe('cascade-publish hook', () => {
 
         await invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1'], payload: { status: 'published' } })
 
-        expect(updateManyCalls).toEqual([])
+        expect(updateOneCalls).toEqual([])
     })
 
     test('does not change archived related items', async () => {
-        const { handlers, updateManyCalls } = setup({
+        const { handlers, updateOneCalls } = setup({
             parentItem: {
                 speakers: [
                     { speaker: { id: 'sp1', status: 'archived' } },
@@ -191,22 +221,22 @@ describe('cascade-publish hook', () => {
         await invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1'], payload: { status: 'published' } })
 
         // Only the draft speaker is published; the archived speaker and archived pick are untouched.
-        expect(updateManyCalls).toEqual([{ collection: 'speakers', keys: ['sp2'], data: { status: 'published' } }])
+        expect(updateOneCalls).toEqual([{ collection: 'speakers', id: 'sp2', data: { status: 'published' } }])
     })
 
     test('warns and skips when no key is present', async () => {
-        const { handlers, updateManyCalls, logger } = setup({ parentItem: {} })
+        const { handlers, updateOneCalls, logger } = setup({ parentItem: {} })
 
         await invoke(handlers.get('podcasts.items.update')!, { payload: { status: 'published' } })
 
-        expect(updateManyCalls).toEqual([])
+        expect(updateOneCalls).toEqual([])
         expect(logger.warn).toHaveBeenCalled()
     })
 
     test('sends a Slack notification when cascading fails', async () => {
         const { handlers, logger } = setup({
             parentItem: { speakers: [{ speaker: { id: 'sp1', status: 'draft' } }], picks_of_the_day: [] },
-            updateManyError: new Error('DB exploded'),
+            updateOneError: new Error('DB exploded'),
         })
 
         await invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1'], payload: { status: 'published' } })
@@ -219,21 +249,21 @@ describe('cascade-publish hook', () => {
         expect(message).toContain('https://cms.example.com/admin/content/podcasts/pod1')
     })
 
-    test('processes every key for a multi-key (batch) update', async () => {
-        const { handlers, updateManyCalls } = setup({
+    test('processes every key for a multi-key (batch) parent update', async () => {
+        const { handlers, updateOneCalls } = setup({
             parentItem: { speakers: [{ speaker: { id: 'sp1', status: 'draft' } }], picks_of_the_day: [] },
         })
 
         await invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1', 'pod2'], payload: { status: 'published' } })
 
-        expect(updateManyCalls).toEqual([
-            { collection: 'speakers', keys: ['sp1'], data: { status: 'published' } },
-            { collection: 'speakers', keys: ['sp1'], data: { status: 'published' } },
+        expect(updateOneCalls).toEqual([
+            { collection: 'speakers', id: 'sp1', data: { status: 'published' } },
+            { collection: 'speakers', id: 'sp1', data: { status: 'published' } },
         ])
     })
 
     test('skips children missing required fields and notifies via Slack', async () => {
-        const { handlers, updateManyCalls, logger } = setup({
+        const { handlers, updateOneCalls, logger } = setup({
             parentItem: { speakers: [{ speaker: { id: 'sp1', status: 'draft' } }], picks_of_the_day: [] },
             // The default child item has no `first_name`, so it fails the publishability guard.
             fieldsByCollection: { speakers: [requiredField('first_name')] },
@@ -241,7 +271,7 @@ describe('cascade-publish hook', () => {
 
         await invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1'], payload: { status: 'published' } })
 
-        expect(updateManyCalls).toEqual([])
+        expect(updateOneCalls).toEqual([])
         expect(logger.warn).toHaveBeenCalled()
         expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
         const message = postSlackMessageMock.mock.calls[0]?.[0]
@@ -250,7 +280,7 @@ describe('cascade-publish hook', () => {
     })
 
     test('publishes complete children while skipping incomplete ones in the same relation', async () => {
-        const { handlers, updateManyCalls } = setup({
+        const { handlers, updateOneCalls } = setup({
             parentItem: {
                 speakers: [
                     { speaker: { id: 'sp1', status: 'draft' } },
@@ -270,24 +300,46 @@ describe('cascade-publish hook', () => {
         await invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1'], payload: { status: 'published' } })
 
         // Only the complete speaker is published.
-        expect(updateManyCalls).toEqual([{ collection: 'speakers', keys: ['sp1'], data: { status: 'published' } }])
+        expect(updateOneCalls).toEqual([{ collection: 'speakers', id: 'sp1', data: { status: 'published' } }])
         expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
         expect(postSlackMessageMock.mock.calls[0]?.[0]).toContain('https://cms.example.com/admin/content/speakers/sp2')
     })
 
-    test('safeAction swallows errors thrown before the per-relation guard', async () => {
-        const { handlers, updateManyCalls, logger } = setup({
+    test('notifies Slack (not just logs) when reading the parent fails', async () => {
+        const { handlers, updateOneCalls, logger } = setup({
             parentItem: { speakers: [{ speaker: { id: 'sp1', status: 'draft' } }] },
             readOneError: new Error('cannot read parent'),
         })
 
-        // The reading of the parent happens outside the per-relation try/catch; safeAction
-        // must catch the rejection so it never escapes the action handler.
+        // Reading the parent happens before the per-relation try/catch. The per-key guard must
+        // catch it, notify Slack, and never let it escape the action handler.
         await expect(
             invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1'], payload: { status: 'published' } })
         ).resolves.toBeUndefined()
 
-        expect(updateManyCalls).toEqual([])
+        expect(updateOneCalls).toEqual([])
         expect(logger.error).toHaveBeenCalled()
+        expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+        const message = postSlackMessageMock.mock.calls[0]?.[0]
+        expect(message).toContain('cannot read parent')
+        expect(message).toContain('https://cms.example.com/admin/content/podcasts/pod1')
+    })
+
+    test('notifies Slack when loading the schema fails', async () => {
+        const { handlers, updateOneCalls, logger } = setup({
+            getSchemaError: new Error('schema unavailable'),
+        })
+
+        await expect(
+            invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1', 'pod2'], payload: { status: 'published' } })
+        ).resolves.toBeUndefined()
+
+        expect(updateOneCalls).toEqual([])
+        expect(logger.error).toHaveBeenCalled()
+        expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+        const message = postSlackMessageMock.mock.calls[0]?.[0]
+        expect(message).toContain('schema unavailable')
+        expect(message).toContain('pod1')
+        expect(message).toContain('pod2')
     })
 })
