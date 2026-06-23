@@ -1,5 +1,30 @@
 # GitHub Actions Workflows
 
+## Update Directus schema snapshot
+
+### Overview
+The `directus_schema_snapshot.yml` workflow keeps `directus-cms/schema.json` in sync with the production database. It fetches the live schema from the production `/schema/snapshot` endpoint, normalizes the formatting to match the committed file, and opens a pull request **only if** the schema has drifted from `main`. This replaces the manual WebStorm HTTP request in `directus-cms/_requests/Directus.http`.
+
+### Schedule
+- **Automatic**: Every Monday at 05:00 AM UTC
+- **Manual**: Can be triggered via the GitHub Actions UI (`workflow_dispatch`)
+
+### Required Secrets
+| Secret Name | Description | Example |
+|------------|-------------|---------|
+| `PUBLIC_URL` | Public URL of the production Directus CMS | `https://admin.programmier.bar` |
+| `DIRECTUS_SCHEMA_TOKEN` | Static **admin** token used to read the schema snapshot. Generate it on an admin user in Directus (Settings → the user → Token). The read-only `PROD_API_TOKEN` is **not** sufficient. | `abc123...` |
+
+### Behaviour
+- If production has drifted, the workflow opens (or updates) a PR on the `chore/directus-schema-snapshot` branch labelled `🤖 automated`. Review the diff for unexpected schema changes before merging.
+- If `schema.json` already matches production, the run completes green and creates no PR.
+- Failures surface as a red run in the Actions tab (no auto-issue is created).
+
+### Usage
+1. Go to the `Actions` tab in GitHub.
+2. Select `Update Directus schema snapshot`.
+3. Click `Run workflow`.
+
 ## Algolia Index Maintenance
 
 ### Overview
