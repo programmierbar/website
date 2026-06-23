@@ -1,5 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk'
+import { isPublishable } from '../shared/isPublishable.ts'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
+import { safeAction } from '../shared/safeHook.ts'
 import type { CascadeRelation } from './util/cascadePublish.ts'
 import { buildRelationFields, extractDraftIds, extractParentKeys, isPublishPayload } from './util/cascadePublish.ts'
 
@@ -30,27 +32,49 @@ const MEETUP_RELATIONS: CascadeRelation[] = [
     },
 ]
 
+interface SkippedItem {
+    collection: string
+    id: string | number
+}
+
 export default defineHook(({ action }, hookContext) => {
     const logger = hookContext.logger
     const ItemsService = hookContext.services.ItemsService
+    const FieldsService = hookContext.services.FieldsService
     const getSchema = hookContext.getSchema
     const env = hookContext.env
 
-    action('podcasts.items.create', async (metadata, eventContext) => {
-        await handlePublishAction('podcasts', metadata, PODCAST_RELATIONS, eventContext)
-    })
+    // safeAction wraps each callback so a thrown error / rejected promise can never
+    // escape the action and crash the CMS. The callbacks RETURN the handler promise
+    // so safeAction's `.catch` can observe failures that happen before (or outside)
+    // the per-relation try/catch below.
+    action(
+        'podcasts.items.create',
+        safeAction(HOOK_NAME, logger, (metadata, eventContext) =>
+            handlePublishAction('podcasts', metadata, PODCAST_RELATIONS, eventContext)
+        )
+    )
 
-    action('podcasts.items.update', async (metadata, eventContext) => {
-        await handlePublishAction('podcasts', metadata, PODCAST_RELATIONS, eventContext)
-    })
+    action(
+        'podcasts.items.update',
+        safeAction(HOOK_NAME, logger, (metadata, eventContext) =>
+            handlePublishAction('podcasts', metadata, PODCAST_RELATIONS, eventContext)
+        )
+    )
 
-    action('meetups.items.create', async (metadata, eventContext) => {
-        await handlePublishAction('meetups', metadata, MEETUP_RELATIONS, eventContext)
-    })
+    action(
+        'meetups.items.create',
+        safeAction(HOOK_NAME, logger, (metadata, eventContext) =>
+            handlePublishAction('meetups', metadata, MEETUP_RELATIONS, eventContext)
+        )
+    )
 
-    action('meetups.items.update', async (metadata, eventContext) => {
-        await handlePublishAction('meetups', metadata, MEETUP_RELATIONS, eventContext)
-    })
+    action(
+        'meetups.items.update',
+        safeAction(HOOK_NAME, logger, (metadata, eventContext) =>
+            handlePublishAction('meetups', metadata, MEETUP_RELATIONS, eventContext)
+        )
+    )
 
     async function handlePublishAction(
         parentCollection: string,
@@ -84,10 +108,12 @@ export default defineHook(({ action }, hookContext) => {
             const parentItem = await parentService.readOne(parentKey, { fields })
 
             const errors: Error[] = []
+            const skipped: SkippedItem[] = []
 
             for (const relation of relations) {
                 try {
-                    await cascadePublishRelation(schema, parentItem, relation, eventContext)
+                    const relationSkipped = await cascadePublishRelation(schema, parentItem, relation, eventContext)
+                    skipped.push(...relationSkipped)
                 } catch (error: any) {
                     logger.error(
                         `${HOOK_NAME}: Failed to cascade ${relation.targetCollection} for ${parentCollection} ${parentKey}: ${error.message}`
@@ -97,15 +123,18 @@ export default defineHook(({ action }, hookContext) => {
             }
 
             if (errors.length > 0) {
-                try {
-                    await postSlackMessage(
-                        `:warning: *${HOOK_NAME}*: Fehler beim automatischen Veröffentlichen von verknüpften Einträgen für ${parentCollection} ${parentKey}.\n` +
-                            `Fehler: ${errors.map((e) => e.message).join(', ')}\n` +
-                            `${env.PUBLIC_URL}admin/content/${parentCollection}/${parentKey}`
-                    )
-                } catch (slackError: any) {
-                    logger.error(`${HOOK_NAME}: Failed to send Slack notification: ${slackError.message}`)
-                }
+                await notifySlack(
+                    `:warning: *${HOOK_NAME}*: Fehler beim automatischen Veröffentlichen von verknüpften Einträgen für ${parentCollection} ${parentKey}.\n` +
+                        `Fehler: ${errors.map((e) => e.message).join(', ')}\n` +
+                        `${env.PUBLIC_URL}admin/content/${parentCollection}/${parentKey}`
+                )
+            }
+
+            if (skipped.length > 0) {
+                await notifySlack(
+                    `:warning: *${HOOK_NAME}*: Folgende mit ${parentCollection} ${parentKey} verknüpfte Einträge konnten nicht automatisch veröffentlicht werden, da Pflichtfelder fehlen. Bitte manuell prüfen und veröffentlichen:\n` +
+                        skipped.map((item) => `${env.PUBLIC_URL}admin/content/${item.collection}/${item.id}`).join('\n')
+                )
             }
         }
     }
@@ -115,23 +144,65 @@ export default defineHook(({ action }, hookContext) => {
         parentItem: any,
         relation: CascadeRelation,
         eventContext: Record<string, any>
-    ) {
+    ): Promise<SkippedItem[]> {
         const draftIds = extractDraftIds(parentItem, relation)
 
         if (draftIds.length === 0) {
             logger.info(`${HOOK_NAME}: No draft ${relation.targetCollection} items to publish`)
-            return
+            return []
         }
 
         const targetService = new ItemsService(relation.targetCollection, {
             schema,
             accountability: eventContext.accountability,
         })
-        await targetService.updateMany(draftIds, { status: 'published' })
 
-        logger.info(
-            `${HOOK_NAME}: Published ${draftIds.length} ${relation.targetCollection} item(s): ${draftIds.join(', ')}`
-        )
+        // Read the full draft items so we can verify they meet the publish
+        // requirements before forcing their status to "published".
+        const draftItems = await targetService.readByQuery({
+            filter: { id: { _in: draftIds } },
+        })
+
+        // Load the collection's field definitions to run the same publishability
+        // guard that "schedule-publication" uses.
+        const fieldsService = new FieldsService({ schema })
+        const fields = await fieldsService.readAll(relation.targetCollection)
+
+        const publishableIds: Array<string | number> = []
+        const skipped: SkippedItem[] = []
+
+        for (const item of draftItems) {
+            if (isPublishable(item, fields)) {
+                publishableIds.push(item.id)
+            } else {
+                skipped.push({ collection: relation.targetCollection, id: item.id })
+            }
+        }
+
+        if (publishableIds.length > 0) {
+            await targetService.updateMany(publishableIds, { status: 'published' })
+            logger.info(
+                `${HOOK_NAME}: Published ${publishableIds.length} ${relation.targetCollection} item(s): ${publishableIds.join(', ')}`
+            )
+        }
+
+        if (skipped.length > 0) {
+            logger.warn(
+                `${HOOK_NAME}: Skipped ${skipped.length} incomplete ${relation.targetCollection} item(s) (missing required fields): ${skipped
+                    .map((item) => item.id)
+                    .join(', ')}`
+            )
+        }
+
+        return skipped
+    }
+
+    async function notifySlack(message: string) {
+        try {
+            await postSlackMessage(message)
+        } catch (slackError: any) {
+            logger.error(`${HOOK_NAME}: Failed to send Slack notification: ${slackError.message}`)
+        }
     }
 
     logger.info(`${HOOK_NAME} hook registered`)
