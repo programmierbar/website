@@ -1,0 +1,54 @@
+name: Update Directus schema snapshot
+
+on:
+  # Run every Monday at 05:00 UTC (offset from the 06:00 Algolia maintenance job)
+  schedule:
+    - cron: '0 5 * * 1'
+
+  # Allow manual triggering from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: write # peter-evans needs to push the branch
+  pull-requests: write # ...and open the PR
+
+jobs:
+  update-schema:
+    name: Fetch production schema and open PR on drift
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch production schema snapshot
+        env:
+          DIRECTUS_URL: ${{ secrets.PUBLIC_URL }}
+          DIRECTUS_TOKEN: ${{ secrets.DIRECTUS_SCHEMA_TOKEN }}
+        run: |
+          # Strip any trailing slashes so PUBLIC_URL values like
+          # "https://admin.programmier.bar/" don't produce a "//schema/snapshot" path.
+          DIRECTUS_URL="$(echo "$DIRECTUS_URL" | sed 's#/*$##')"
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $DIRECTUS_TOKEN" \
+            -H "Accept: application/json" \
+            "$DIRECTUS_URL/schema/snapshot" -o /tmp/schema-raw.json
+          # Normalize to match the committed format: data wrapper preserved,
+          # 2-space indent, no trailing newline (see directus-cms/schema.json).
+          node -e "const fs=require('fs');const s=JSON.parse(fs.readFileSync('/tmp/schema-raw.json','utf8'));fs.writeFileSync('directus-cms/schema.json', JSON.stringify(s, null, 2))"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          add-paths: directus-cms/schema.json
+          branch: chore/directus-schema-snapshot
+          delete-branch: true
+          commit-message: 'chore(directus): update production schema snapshot'
+          title: 'chore(directus): update production schema snapshot'
+          labels: '🤖 automated'
+          body: |
+            Automated update of `directus-cms/schema.json` from the production
+            `/schema/snapshot` endpoint. Review the diff for unexpected schema drift
+            before merging.
+
+            Triggered by the **Update Directus schema snapshot** workflow.
