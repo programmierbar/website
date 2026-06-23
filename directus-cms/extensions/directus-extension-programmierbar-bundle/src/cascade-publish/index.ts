@@ -1,12 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
-import {
-    buildRelationFields,
-    CascadeRelation,
-    extractDraftIds,
-    extractParentKeys,
-    isPublishPayload,
-} from './util/cascadePublish.ts'
+import type { CascadeRelation } from './util/cascadePublish.ts'
+import { buildRelationFields, extractDraftIds, extractParentKeys, isPublishPayload } from './util/cascadePublish.ts'
 
 const HOOK_NAME = 'cascade-publish'
 
@@ -115,7 +110,12 @@ export default defineHook(({ action }, hookContext) => {
         }
     }
 
-    async function cascadePublishRelation(schema: any, parentItem: any, relation: CascadeRelation, eventContext: Record<string, any>) {
+    async function cascadePublishRelation(
+        schema: any,
+        parentItem: any,
+        relation: CascadeRelation,
+        eventContext: Record<string, any>
+    ) {
         const draftIds = extractDraftIds(parentItem, relation)
 
         if (draftIds.length === 0) {

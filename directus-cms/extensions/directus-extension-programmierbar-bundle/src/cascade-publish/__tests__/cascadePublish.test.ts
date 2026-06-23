@@ -1,11 +1,6 @@
 import { describe, expect, test } from '@jest/globals'
-import {
-    buildRelationFields,
-    CascadeRelation,
-    extractDraftIds,
-    extractParentKeys,
-    isPublishPayload,
-} from './../util/cascadePublish.ts'
+import type { CascadeRelation } from './../util/cascadePublish.ts'
+import { buildRelationFields, extractDraftIds, extractParentKeys, isPublishPayload } from './../util/cascadePublish.ts'
 
 const M2M_RELATION: CascadeRelation = {
     relationField: 'speakers',
@@ -56,17 +51,11 @@ describe('extractParentKeys', () => {
 
 describe('buildRelationFields', () => {
     test('should build nested id/status fields for m2m relations via childField', () => {
-        expect(buildRelationFields([M2M_RELATION])).toEqual([
-            'speakers.speaker.id',
-            'speakers.speaker.status',
-        ])
+        expect(buildRelationFields([M2M_RELATION])).toEqual(['speakers.speaker.id', 'speakers.speaker.status'])
     })
 
     test('should build direct id/status fields for o2m relations', () => {
-        expect(buildRelationFields([O2M_RELATION])).toEqual([
-            'picks_of_the_day.id',
-            'picks_of_the_day.status',
-        ])
+        expect(buildRelationFields([O2M_RELATION])).toEqual(['picks_of_the_day.id', 'picks_of_the_day.status'])
     })
 
     test('should combine fields for multiple relations', () => {
@@ -125,10 +114,7 @@ describe('extractDraftIds', () => {
 
     test('should skip junction records with a missing child item', () => {
         const parentItem = {
-            speakers: [
-                { speaker: null },
-                { speaker: { id: 's2', status: 'draft' } },
-            ],
+            speakers: [{ speaker: null }, { speaker: { id: 's2', status: 'draft' } }],
         }
 
         expect(extractDraftIds(parentItem, M2M_RELATION)).toEqual(['s2'])
@@ -136,10 +122,7 @@ describe('extractDraftIds', () => {
 
     test('should skip draft items without an id', () => {
         const parentItem = {
-            picks_of_the_day: [
-                { status: 'draft' },
-                { id: 'p2', status: 'draft' },
-            ],
+            picks_of_the_day: [{ status: 'draft' }, { id: 'p2', status: 'draft' }],
         }
 
         expect(extractDraftIds(parentItem, O2M_RELATION)).toEqual(['p2'])
