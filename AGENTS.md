@@ -78,9 +78,20 @@ npm test              # Run Jest tests
 - If a failure requires human intervention, notify through the team's established channel (e.g. Slack). Log-only visibility is insufficient for anything that blocks a workflow.
 - Prefer loud failures over silent degradation.
 
+### Architectural Decision Records
+
+Significant, cross-cutting technical decisions are documented as ADRs in the
+`_ADRs/` folder (numbered Markdown files, e.g. `0001-...md`). Each ADR captures
+the context, the decision, its consequences, and any deferred follow-up. Before
+changing build/test tooling, module setup, or other foundational concerns,
+**check `_ADRs/` first** — the rationale and known trade-offs are likely already
+recorded there. Add a new ADR when you make a decision future contributors would
+otherwise have to reverse-engineer.
+
 ### Further Reading
 
 Additional hints can be found in:
+* _ADRs/ — architectural decision records (see above)
 * .claude/rules/directus-conventions.md
 * .claude/rules/nuxt-conventions.md
 
