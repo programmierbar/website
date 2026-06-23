@@ -26,6 +26,9 @@ jobs:
           DIRECTUS_URL: ${{ secrets.PUBLIC_URL }}
           DIRECTUS_TOKEN: ${{ secrets.DIRECTUS_SCHEMA_TOKEN }}
         run: |
+          # Strip any trailing slashes so PUBLIC_URL values like
+          # "https://admin.programmier.bar/" don't produce a "//schema/snapshot" path.
+          DIRECTUS_URL="$(echo "$DIRECTUS_URL" | sed 's#/*$##')"
           curl --fail --silent --show-error \
             -H "Authorization: Bearer $DIRECTUS_TOKEN" \
             -H "Accept: application/json" \
