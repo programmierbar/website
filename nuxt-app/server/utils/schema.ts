@@ -12,7 +12,7 @@ export const EmailSchema = z.object({
     message: z
         .string()
         .min(50, 'Deine Nachricht muss mindestens 50 Zeichen lang sein.')
-        .max(1000, 'Deine Nachricht darf nicht länger als 1.000 Zeichen lang sein.'),
+        .max(2048, 'Deine Nachricht darf nicht länger als 2.048 Zeichen lang sein.'),
 })
 
 // Podcast vote (rating)
