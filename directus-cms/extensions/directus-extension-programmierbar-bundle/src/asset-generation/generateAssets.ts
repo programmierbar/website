@@ -245,9 +245,10 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
         // exclude generic templates (title_contains: null) for that same asset_type.
         const titleMatchedTemplates = (templates || []).filter((t) => {
             if (!t.title_contains) return true
-            const matches = podcast.title?.toLowerCase().includes(t.title_contains.toLowerCase())
+            const haystack = [podcast.title, podcast.number].filter(Boolean).join(' ').toLowerCase()
+            const matches = haystack.includes(t.title_contains.toLowerCase())
             if (!matches) {
-                logger.info(`${hookName}: Skipping template "${t.name}" - title doesn't contain "${t.title_contains}"`)
+                logger.info(`${hookName}: Skipping template "${t.name}" - title/number doesn't contain "${t.title_contains}"`)
             }
             return matches
         })
