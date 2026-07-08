@@ -84,3 +84,7 @@ $RECYCLE.BIN/
 .security-key
 logs/security/
 /.playwright-mcp
+
+/.agents/skills/plannotator*
+/.claude/skills/plannotator*
+/skills-lock.json
