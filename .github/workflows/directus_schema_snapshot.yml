@@ -33,9 +33,11 @@ jobs:
             -H "Authorization: Bearer $DIRECTUS_TOKEN" \
             -H "Accept: application/json" \
             "$DIRECTUS_URL/schema/snapshot" -o /tmp/schema-raw.json
-          # Normalize to match the committed format: data wrapper preserved,
-          # 2-space indent, no trailing newline (see directus-cms/schema.json).
-          node -e "const fs=require('fs');const s=JSON.parse(fs.readFileSync('/tmp/schema-raw.json','utf8'));fs.writeFileSync('directus-cms/schema.json', JSON.stringify(s, null, 2))"
+          # Unwrap the API response's "data" envelope so the file is a top-level
+          # snapshot that "directus schema apply ./schema.json" accepts directly.
+          # The CLI expects collections/fields/relations at the root; the REST
+          # endpoint wraps them in { "data": ... }. 2-space indent, trailing newline.
+          node -e "const fs=require('fs');const s=JSON.parse(fs.readFileSync('/tmp/schema-raw.json','utf8'));const snapshot=s.data??s;fs.writeFileSync('directus-cms/schema.json', JSON.stringify(snapshot, null, 2)+'\n')"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
