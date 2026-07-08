@@ -130,6 +130,11 @@
                 "source": "src/cascade-publish/index.ts"
             },
             {
+                "type": "hook",
+                "name": "create-news",
+                "source": "src/create-news/index.ts"
+            },
+            {
                 "type": "endpoint",
                 "name": "ticket-wallet",
                 "source": "src/ticket-wallet/index.ts"
