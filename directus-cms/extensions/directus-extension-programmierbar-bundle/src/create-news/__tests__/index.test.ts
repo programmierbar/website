@@ -152,6 +152,17 @@ describe('create-news hook', () => {
         expect(logger.error).toHaveBeenCalled()
     })
 
+    test('create: rolls back the news item when junction creation fails', async () => {
+        const { handlers, deleteOneCalls } = setup({ createOneErrorCollection: 'news_target', newNewsId: 'news-9' })
+        const handler = handlers.get('news_links.items.create')!
+
+        await invoke(handler, { key: 'link-9', payload: { status: 'draft' } })
+
+        // The orphaned news row must be deleted so a retry doesn't accumulate orphans.
+        expect(deleteOneCalls).toEqual([{ collection: 'news', id: 'news-9' }])
+        expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+    })
+
     test('delete: removes junction rows and their news items, skipping null news_id', async () => {
         const { handlers, deleteOneCalls } = setup({
             junctionRows: [

@@ -80,7 +80,23 @@ export default defineHook(({ action }, hookContext) => {
                 }
 
                 const newsId = (await newsService.createOne({ status })) as string
-                await junctionService.createOne(buildJunctionPayload(newsId, newsLinkId))
+
+                // Roll back the just-created news row if wiring up the junction
+                // fails — otherwise it is left orphaned and, since the idempotency
+                // guard only checks news_target, a retry would create yet another
+                // orphan for the same link.
+                try {
+                    await junctionService.createOne(buildJunctionPayload(newsId, newsLinkId))
+                } catch (junctionError: any) {
+                    try {
+                        await newsService.deleteOne(newsId)
+                    } catch (cleanupError: any) {
+                        logger.error(
+                            `${HOOK_NAME}: Failed to roll back orphaned news ${newsId} for ${SOURCE_COLLECTION} ${newsLinkId}: ${cleanupError.message}`
+                        )
+                    }
+                    throw junctionError
+                }
 
                 logger.info(`${HOOK_NAME}: Created news ${newsId} for ${SOURCE_COLLECTION} ${newsLinkId} (status: ${status})`)
             } catch (error: any) {

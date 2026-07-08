@@ -17,12 +17,20 @@ jest.mock('./../../shared/postSlackMessage.ts', () => ({
     postSlackMessage: jest.fn(),
 }))
 
+// Mock the SSRF guard so unit tests don't perform real DNS lookups; its own
+// behaviour is covered in util/__tests__/urlSafety.test.ts.
+jest.mock('./../util/urlSafety.ts', () => ({
+    assertPublicUrl: jest.fn(),
+}))
+
 import { default as axios } from 'axios'
 import { postSlackMessage } from './../../shared/postSlackMessage.ts'
+import { assertPublicUrl } from './../util/urlSafety.ts'
 import registerHook from './../index.ts'
 
 const axiosGet = (axios as any).get as jest.Mock
 const postSlackMessageMock = jest.mocked(postSlackMessage)
+const assertPublicUrlMock = jest.mocked(assertPublicUrl)
 
 // safeAction detaches the work into its own promise chain and returns void.
 // Flushing the microtask queue lets that detached work settle before we assert.
@@ -75,6 +83,8 @@ describe('fetch-open-graph hook', () => {
     beforeEach(() => {
         axiosGet.mockReset()
         postSlackMessageMock.mockClear()
+        assertPublicUrlMock.mockReset()
+        assertPublicUrlMock.mockResolvedValue(undefined)
     })
 
     test('registers create and update actions for news_links', () => {
@@ -106,13 +116,14 @@ describe('fetch-open-graph hook', () => {
         expect(updateOneCalls).toEqual([])
     })
 
-    test('notifies Slack with an admin link when the fetch fails', async () => {
+    test('notifies Slack and clears open_graph when the fetch fails', async () => {
         axiosGet.mockRejectedValue(new Error('ECONNREFUSED'))
         const { handlers, updateOneCalls, logger } = setup()
 
         await invoke(handlers.get('news_links.items.create')!, { key: 'link-3', payload: { link: 'https://bad.example' } })
 
-        expect(updateOneCalls).toEqual([])
+        // Still writes an empty object so stale data isn't retained for the new link.
+        expect(updateOneCalls).toEqual([{ id: 'link-3', data: { open_graph: {} } }])
         expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
         expect(postSlackMessageMock).toHaveBeenCalledWith(
             expect.stringContaining('https://cms.example.com/admin/content/news_links/link-3')
@@ -120,24 +131,50 @@ describe('fetch-open-graph hook', () => {
         expect(logger.error).toHaveBeenCalled()
     })
 
-    test('notifies Slack when the response is an HTTP error status', async () => {
+    test('notifies Slack and clears open_graph on an HTTP error status', async () => {
         axiosGet.mockResolvedValue({ status: 404, headers: { 'content-type': 'text/html' }, data: '' })
         const { handlers, updateOneCalls } = setup()
 
         await invoke(handlers.get('news_links.items.create')!, { key: 'link-4', payload: { link: 'https://example.com/missing' } })
 
-        expect(updateOneCalls).toEqual([])
+        expect(updateOneCalls).toEqual([{ id: 'link-4', data: { open_graph: {} } }])
         expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
     })
 
-    test('skips non-HTML responses without writing or notifying', async () => {
+    test('clears open_graph (empty object) for non-HTML responses without notifying', async () => {
         axiosGet.mockResolvedValue({ status: 200, headers: { 'content-type': 'application/pdf' }, data: '%PDF' })
         const { handlers, updateOneCalls } = setup()
 
         await invoke(handlers.get('news_links.items.create')!, { key: 'link-5', payload: { link: 'https://example.com/file.pdf' } })
 
-        expect(updateOneCalls).toEqual([])
+        // Not an error, so no Slack — but still write {} to avoid stale data.
+        expect(updateOneCalls).toEqual([{ id: 'link-5', data: { open_graph: {} } }])
         expect(postSlackMessageMock).not.toHaveBeenCalled()
+    })
+
+    test('blocks unsafe URLs (SSRF guard) without fetching', async () => {
+        assertPublicUrlMock.mockRejectedValue(new Error('Refusing to fetch internal host: localhost'))
+        const { handlers, updateOneCalls } = setup()
+
+        await invoke(handlers.get('news_links.items.create')!, { key: 'link-6', payload: { link: 'http://localhost/admin' } })
+
+        expect(axiosGet).not.toHaveBeenCalled()
+        expect(updateOneCalls).toEqual([{ id: 'link-6', data: { open_graph: {} } }])
+        expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+    })
+
+    test('resolves relative og:image against the final redirected URL', async () => {
+        axiosGet.mockResolvedValue({
+            status: 200,
+            headers: { 'content-type': 'text/html' },
+            data: '<meta property="og:image" content="/img/pic.jpg">',
+            request: { res: { responseUrl: 'https://redirected.example.com/final' } },
+        })
+        const { handlers, updateOneCalls } = setup()
+
+        await invoke(handlers.get('news_links.items.create')!, { key: 'link-7', payload: { link: 'https://example.com/start' } })
+
+        expect(updateOneCalls[0].data.open_graph.image).toBe('https://redirected.example.com/img/pic.jpg')
     })
 
     test('writes to every key of a batched update', async () => {

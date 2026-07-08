@@ -3,9 +3,14 @@ import { default as axios } from 'axios'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
 import { safeAction } from '../shared/safeHook.ts'
 import { buildOpenGraph } from './util/openGraph.ts'
+import { assertPublicUrl } from './util/urlSafety.ts'
 
 const HOOK_NAME = 'fetch-open-graph'
 const COLLECTION = 'news_links'
+
+// Cap the downloaded HTML so a huge (or malicious) response cannot exhaust
+// memory. Open Graph tags live in <head>, so a few MB is more than enough.
+const MAX_RESPONSE_BYTES = 5 * 1024 * 1024
 
 // A real browser User-Agent — many sites return 403/empty bodies to the default
 // axios agent, which would leave us with no Open Graph data to extract.
@@ -52,12 +57,20 @@ export default defineHook(({ action }, hookContext) => {
             return
         }
 
-        let openGraph
+        // Default to an empty object. When the fetch is skipped or fails we still
+        // write this back, both to signal that processing ran without a usable
+        // result and to clear any stale Open Graph data cached for a previous link.
+        let openGraph: Record<string, any> = {}
         try {
+            // SSRF guard: only fetch public http(s) URLs, never internal hosts.
+            await assertPublicUrl(url)
+
             logger.info(`${HOOK_NAME}: Fetching Open Graph data for ${url}`)
             const response = await axios.get(url, {
                 timeout: 10_000,
                 maxRedirects: 5,
+                maxContentLength: MAX_RESPONSE_BYTES,
+                maxBodyLength: MAX_RESPONSE_BYTES,
                 responseType: 'text',
                 // Never throw on 4xx/5xx — handle status explicitly below.
                 validateStatus: () => true,
@@ -73,11 +86,14 @@ export default defineHook(({ action }, hookContext) => {
 
             const contentType = String(response.headers?.['content-type'] ?? '')
             if (contentType && !contentType.includes('html')) {
+                // Not an error — just nothing to parse. openGraph stays {}.
                 logger.info(`${HOOK_NAME}: Skipping non-HTML response (${contentType}) for ${url}`)
-                return
+            } else {
+                // Resolve relative URLs (notably og:image) against the FINAL URL
+                // after any redirects, not the originally requested one.
+                const finalUrl = response.request?.res?.responseUrl || response.request?.responseURL || url
+                openGraph = buildOpenGraph(String(response.data), finalUrl)
             }
-
-            openGraph = buildOpenGraph(String(response.data), url)
         } catch (error: any) {
             logger.error(`${HOOK_NAME}: Failed to fetch Open Graph data for ${url}: ${error.message}`)
             await notifySlack(
@@ -85,7 +101,7 @@ export default defineHook(({ action }, hookContext) => {
                     `Fehler: ${error.message}\n` +
                     `${env.PUBLIC_URL}admin/content/${COLLECTION}/${keys[0]}`
             )
-            return
+            // openGraph stays {} and is still written below.
         }
 
         // The payload's `link` is shared across a batched update, so we fetch
