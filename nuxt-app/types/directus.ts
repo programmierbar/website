@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 
-import type { TalkItem, PartnerItem, FileItem } from '~/types/items';
+import type { FileItem, PartnerItem, TalkItem } from '~/types/items'
 
 export interface DirectusFileItem extends FileItem {
     id: string
@@ -63,8 +63,8 @@ export interface DirectusMeetupItem {
     meetup_url: string
     youtube_url: string | null
     talks: {
-      talk: TalkItem
-      sort: number
+        talk: TalkItem
+        sort: number
     }[]
     gallery_images: {
         id: number
@@ -105,8 +105,8 @@ export interface DirectusConferenceItem {
     headline_1: string
     text_1: string
     talks: {
-      talk: TalkItem
-      sort: number
+        talk: TalkItem
+        sort: number
     }[]
     gallery_images: {
         directus_files_id: DirectusFileItem
@@ -125,34 +125,34 @@ export interface DirectusConferenceItem {
         sort: number
     }[]
     agenda: {
-      start: string
-      end: string
-      title: string
-      subtitle: string
-      track: string
-      talk_identifier: string
+        start: string
+        end: string
+        title: string
+        subtitle: string
+        track: string
+        talk_identifier: string
     }[]
     faqs: {
-      question: string
-      answer: string
-    }[],
-    tickets_text: string,
-    ticketing_enabled: boolean,
-    ticket_early_bird_price_cents: number | null,
-    ticket_regular_price_cents: number | null,
-    ticket_early_bird_deadline: string | null,
-    ticket_max_quantity: number | null,
+        question: string
+        answer: string
+    }[]
+    tickets_text: string
+    ticketing_enabled: boolean
+    ticket_early_bird_price_cents: number | null
+    ticket_regular_price_cents: number | null
+    ticket_early_bird_deadline: string | null
+    ticket_max_quantity: number | null
     partners: {
-      partner: PartnerItem
-      sort: number
+        partner: PartnerItem
+        sort: number
     }[]
 }
 
 export interface DirectusTestimonialItem {
-  id: string
-  text: string
-  subtitle: string
-  weight: number
+    id: string
+    text: string
+    subtitle: string
+    weight: number
 }
 
 export interface DirectusMemberItem {
@@ -245,7 +245,7 @@ export interface DirectusSpeakerItem {
         speaker: DirectusSpeakerItem
         tag: DirectusTagItem
         sort: number
-    }[],
+    }[]
     listed_hof: boolean
 }
 
@@ -269,16 +269,16 @@ export interface DirectusPickOfTheDayItem {
 }
 
 export interface DirectusRatingItem {
-  id: string
-  target: {
-    target_collection: string,
-    target: string
-  }[],
-  up_or_down: 'up' | 'down'
-  comment?: string
-  ip?: string
-  user_agent?: string
-  referer_url?: string
+    id: string
+    target: {
+        target_collection: string
+        target: string
+    }[]
+    up_or_down: 'up' | 'down'
+    comment?: string
+    ip?: string
+    user_agent?: string
+    referer_url?: string
 }
 
 export interface DirectusTagItem {
@@ -322,13 +322,61 @@ export interface DirectusTagItem {
     )[]
 }
 
+// Curated Open Graph metadata stored on a news link, mirroring the shape the
+// `fetch-open-graph` Directus extension writes (see openGraph.ts in the CMS
+// bundle). `raw` holds every meta tag that was extracted.
+export interface OpenGraphMetadata {
+    title?: string
+    description?: string
+    image?: string
+    url?: string
+    site_name?: string
+    type?: string
+    raw?: Record<string, string>
+}
+
+// A curated link that is the source content behind a news item.
+export interface DirectusNewsLinkItem {
+    id: string
+    status: string
+    sort: number | null
+    title: string
+    link: string
+    comment: string | null
+    open_graph: OpenGraphMetadata | null
+    slug: string
+    member: string | DirectusMemberItem | null
+    podcast: string | DirectusPodcastItem | null
+    podcast_seconds_from: number | null
+    podcast_seconds_to: number | null
+    date_created: string
+    date_updated: string | null
+}
+
+// `news` is a meta collection that references every kind of news source through
+// the `news_target` many-to-any junction (currently only `news_links`). Each
+// junction row carries the source `collection` name and the resolved `target`
+// item.
+export interface DirectusNewsItem {
+    id: string
+    status: string
+    sort: number | null
+    date_created: string
+    date_updated: string | null
+    target: {
+        id: number
+        collection: string
+        target: DirectusNewsLinkItem | string
+    }[]
+}
+
 export interface DirectusHomePage {
     meta_title: string
     meta_description: string
     intro_heading: string
     highlights_heading: string
     meetup_heading: string
-    highlights: { id: number; collection: string; item: any }[],
+    highlights: { id: number; collection: string; item: any }[]
     video: DirectusFileItem
     news: { text: string }[]
     podcast_heading: string
@@ -360,19 +408,19 @@ export interface DirectusMeetupPage {
 }
 
 export interface DirectusConferencePage {
-  meta_title: string
-  meta_description: string
-  cover_image: DirectusFileItem
-  video: DirectusFileItem | null
-  conference_heading: string
-  intro_heading: string
-  intro_text_1: string
-  faqs_heading: string
-  faqs_text_1: string
-  faqs: {
-    question: string
-    answer: string
-  }[]
+    meta_title: string
+    meta_description: string
+    cover_image: DirectusFileItem
+    video: DirectusFileItem | null
+    conference_heading: string
+    intro_heading: string
+    intro_text_1: string
+    faqs_heading: string
+    faqs_text_1: string
+    faqs: {
+        question: string
+        answer: string
+    }[]
 }
 
 export interface DirectusHallOfFamePage {
@@ -418,8 +466,8 @@ export interface DirectusRafflePage {
 }
 
 export interface DirectusCocktailMenu {
-  status: string
-  menu: string
+    status: string
+    menu: string
 }
 
 export interface DirectusLoginPage {
@@ -445,9 +493,9 @@ export interface DirectusCocPage {
 }
 
 export interface DirectusRecordingsPage {
-  status: string
-  heading: string
-  text: string
+    status: string
+    heading: string
+    text: string
 }
 
 export interface DirectusPrivacyPage {
@@ -456,9 +504,9 @@ export interface DirectusPrivacyPage {
 }
 
 export interface DirectusAgbPage {
-  status: string
-  heading: string
-  text: string
+    status: string
+    heading: string
+    text: string
 }
 
 // Ticket system types

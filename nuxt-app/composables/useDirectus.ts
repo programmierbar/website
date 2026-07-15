@@ -11,6 +11,7 @@ import {
 import type {
   ConferenceItem,
   DirectusMemberItem,
+  DirectusNewsItem,
   DirectusPickOfTheDayItem, DirectusPodcastItem,
   DirectusProfileItem,
   DirectusRatingItem,
@@ -947,6 +948,20 @@ export function useDirectus() {
     return await directus.request(updateItem('ratings', rating.id, { comment }));
   }
 
+    // `news` is a meta collection whose content lives on the m2a `target`
+    // (currently only `news_links`), so the source item is expanded alongside
+    // each entry. Published news is public, so this uses the regular client.
+    async function getPublishedNews(limit: number = 50) {
+        return (await directus.request(
+            readItems('news', {
+                filter: { status: { _eq: 'published' } },
+                fields: ['id', 'date_created', 'target.id', 'target.collection', 'target.target.*'],
+                sort: ['-date_created'],
+                limit: limit,
+            })
+        )) as DirectusNewsItem[]
+    }
+
     return {
         getHomepage,
         getPodcastPage,
@@ -968,6 +983,7 @@ export function useDirectus() {
         getMembers,
         getLatestPodcasts,
         getPodcasts,
+        getPublishedNews,
         getMeetups,
         getConferences,
         getSpeakers,

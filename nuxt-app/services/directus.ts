@@ -1,38 +1,40 @@
 import { authentication, createDirectus, rest } from '@directus/sdk'
 import { DIRECTUS_CMS_URL } from '../config'
 import type {
-  DirectusAboutPage,
-  DirectusCocPage,
-  DirectusConferencePage,
-  DirectusContactPage,
-  DirectusHallOfFamePage,
-  DirectusHomePage,
-  DirectusImprintPage,
-  DirectusLoginPage,
-  DirectusMeetupItem,
-  DirectusConferenceItem,
-  DirectusMeetupPage,
-  DirectusMemberItem,
-  DirectusPickOfTheDayItem,
-  DirectusPickOfTheDayPage,
-  DirectusPodcastItem,
-  DirectusPodcastPage,
-  DirectusPrivacyPage,
-  DirectusProfileCreationPage,
-  DirectusRafflePage,
-  DirectusRecordingsPage,
-  DirectusSpeakerItem,
-  DirectusTagItem,
-  DirectusProfileItem,
-  DirectusTranscriptItem,
-  DirectusTestimonialItem,
-  DirectusCocktailMenu,
-  DirectusRatingItem,
-  DirectusTicketOrderItem,
-  DirectusTicketItem,
-  DirectusTicketDiscountCodeItem,
-  DirectusAgbPage,
-} from '../types';
+    DirectusAboutPage,
+    DirectusAgbPage,
+    DirectusCocktailMenu,
+    DirectusCocPage,
+    DirectusConferenceItem,
+    DirectusConferencePage,
+    DirectusContactPage,
+    DirectusHallOfFamePage,
+    DirectusHomePage,
+    DirectusImprintPage,
+    DirectusLoginPage,
+    DirectusMeetupItem,
+    DirectusMeetupPage,
+    DirectusMemberItem,
+    DirectusNewsItem,
+    DirectusNewsLinkItem,
+    DirectusPickOfTheDayItem,
+    DirectusPickOfTheDayPage,
+    DirectusPodcastItem,
+    DirectusPodcastPage,
+    DirectusPrivacyPage,
+    DirectusProfileCreationPage,
+    DirectusProfileItem,
+    DirectusRafflePage,
+    DirectusRatingItem,
+    DirectusRecordingsPage,
+    DirectusSpeakerItem,
+    DirectusTagItem,
+    DirectusTestimonialItem,
+    DirectusTicketDiscountCodeItem,
+    DirectusTicketItem,
+    DirectusTicketOrderItem,
+    DirectusTranscriptItem,
+} from '../types'
 
 export type Collections = {
     home_page: DirectusHomePage
@@ -53,6 +55,8 @@ export type Collections = {
     recordings_page: DirectusRecordingsPage
     cocktail_menu: DirectusCocktailMenu
     podcasts: DirectusPodcastItem[]
+    news: DirectusNewsItem[]
+    news_links: DirectusNewsLinkItem[]
     meetups: DirectusMeetupItem[]
     conferences: DirectusConferenceItem[]
     members: DirectusMemberItem[]
