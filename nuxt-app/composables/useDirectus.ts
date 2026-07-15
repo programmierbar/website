@@ -962,6 +962,37 @@ export function useDirectus() {
         )) as DirectusNewsItem[]
     }
 
+    // A single published news entry for the `/news/[slug]` detail page, resolved
+    // by the slug of its source item. We always query the `news` meta collection
+    // — never a source collection like `news_links` directly — because `news` is
+    // the join point for every source type (today only `news_links`, in future
+    // e.g. `news_event`), which keeps routing forward-compatible. Note the m2a
+    // asymmetry: *filtering* the nested target needs the collection-scoped
+    // `target:news_links` key, while *reading* it uses plain `target.target.*`.
+    async function getPublishedNewsBySlug(slug: string) {
+        const news = (await directus.request(
+            readItems('news', {
+                filter: {
+                    status: { _eq: 'published' },
+                    target: {
+                        ['target:news_links']: { slug: { _eq: slug } },
+                    },
+                } as any,
+                fields: [
+                    'id',
+                    'date_created',
+                    'target.id',
+                    'target.collection',
+                    'target.target.*',
+                    'target.target.member.*',
+                ],
+                limit: 1,
+            })
+        )) as DirectusNewsItem[]
+
+        return news?.[0] ?? null
+    }
+
     return {
         getHomepage,
         getPodcastPage,
@@ -984,6 +1015,7 @@ export function useDirectus() {
         getLatestPodcasts,
         getPodcasts,
         getPublishedNews,
+        getPublishedNewsBySlug,
         getMeetups,
         getConferences,
         getSpeakers,
