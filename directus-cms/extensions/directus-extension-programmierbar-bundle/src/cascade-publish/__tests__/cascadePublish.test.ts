@@ -78,6 +78,11 @@ describe('buildRelationFields', () => {
         expect(buildRelationFields([M2A_RELATION])).toEqual(['target.collection', 'target.target.*'])
     })
 
+    test('should throw for an m2a relation missing childField', () => {
+        const invalid: CascadeRelation = { relationField: 'target', collectionField: 'collection', targetCollection: 'news_links' }
+        expect(() => buildRelationFields([invalid])).toThrow(/requires a "childField"/)
+    })
+
     test('should return an empty array for no relations', () => {
         expect(buildRelationFields([])).toEqual([])
     })
@@ -176,5 +181,11 @@ describe('extractDraftIds', () => {
         }
 
         expect(extractDraftIds(parentItem, M2A_RELATION)).toEqual(['n1'])
+    })
+
+    test('should throw for an m2a relation missing childField', () => {
+        const invalid: CascadeRelation = { relationField: 'target', collectionField: 'collection', targetCollection: 'news_links' }
+        const parentItem = { target: [{ collection: 'news_links', target: { id: 'n1', status: 'draft' } }] }
+        expect(() => extractDraftIds(parentItem, invalid)).toThrow(/requires a "childField"/)
     })
 })
