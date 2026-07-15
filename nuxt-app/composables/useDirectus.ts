@@ -985,6 +985,7 @@ export function useDirectus() {
                     'target.collection',
                     'target.target.*',
                     'target.target.member.*',
+                    'target.target.member.normal_image.*',
                 ],
                 limit: 1,
             })

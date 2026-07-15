@@ -33,9 +33,17 @@
 
       <div class='flex items-center gap-2.5'>
         <div
-          class='flex h-12 w-12 flex-none items-center justify-center rounded-full border-3 border-lime bg-black text-base font-black text-lime'
+          class='flex h-12 w-12 flex-none items-center justify-center overflow-hidden rounded-full border-3 border-lime bg-black text-base font-black text-lime'
         >
-          {{ initials }}
+          <DirectusImage
+            v-if='memberImage'
+            class='h-full w-full object-cover'
+            :image='memberImage'
+            :alt='authorName'
+            sizes='48px'
+            loading='lazy'
+          />
+          <template v-else>{{ initials }}</template>
         </div>
         <div class='flex flex-col'>
           <span class='text-base font-black leading-tight text-white'>{{ authorName }}</span>
@@ -65,7 +73,8 @@
 <script setup lang='ts'>
 import { computed, toRefs } from 'vue';
 import BrandLogo from '~/assets/images/brand-logo.svg';
-import type { DirectusMemberItem, DirectusNewsLinkItem } from '~/types/directus';
+import type { DirectusFileItem, DirectusMemberItem, DirectusNewsLinkItem } from '~/types/directus';
+import DirectusImage from './DirectusImage.vue';
 import InnerHtml from './InnerHtml.vue';
 import LinkButton from './LinkButton.vue';
 
@@ -88,6 +97,13 @@ const member = computed<DirectusMemberItem | null>(() =>
     ? (newsLink.value.member as DirectusMemberItem)
     : null,
 );
+
+// The author's profile image, only when it was expanded (an object, not an id).
+// Falls back to initials in the template when absent.
+const memberImage = computed<DirectusFileItem | null>(() => {
+  const image = member.value?.normal_image;
+  return image && typeof image === 'object' ? image : null;
+});
 
 // Only render the opinion block when there is both a comment and an author.
 const hasOpinion = computed(() => Boolean(newsLink.value.comment && member.value));
