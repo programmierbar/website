@@ -6,7 +6,7 @@ import type { DirectusNewsLinkItem } from '~/types/directus'
 import { useDirectus } from '~/composables/useDirectus'
 import RSS from 'rss'
 
-const FEED_PATH = '/news/feed.xml'
+const FEED_PATH = '/feed/news.xml'
 
 // Resolve the `news_links` source that backs a news item. `news` is a meta
 // collection referencing its content through the m2a `target`; today the only
