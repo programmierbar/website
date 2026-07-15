@@ -32,6 +32,18 @@ const MEETUP_RELATIONS: CascadeRelation[] = [
     },
 ]
 
+// `news` references its source items through the `news_target` many-to-any
+// junction. The o2m alias on `news` is `target`; each junction row carries the
+// related collection in `collection` and the item itself in `target`.
+const NEWS_RELATIONS: CascadeRelation[] = [
+    {
+        relationField: 'target',
+        childField: 'target',
+        collectionField: 'collection',
+        targetCollection: 'news_links',
+    },
+]
+
 interface SkippedItem {
     collection: string
     id: string | number
@@ -73,6 +85,20 @@ export default defineHook(({ action }, hookContext) => {
         'meetups.items.update',
         safeAction(HOOK_NAME, logger, (metadata, eventContext) =>
             handlePublishAction('meetups', metadata, MEETUP_RELATIONS, eventContext)
+        )
+    )
+
+    action(
+        'news.items.create',
+        safeAction(HOOK_NAME, logger, (metadata, eventContext) =>
+            handlePublishAction('news', metadata, NEWS_RELATIONS, eventContext)
+        )
+    )
+
+    action(
+        'news.items.update',
+        safeAction(HOOK_NAME, logger, (metadata, eventContext) =>
+            handlePublishAction('news', metadata, NEWS_RELATIONS, eventContext)
         )
     )
 

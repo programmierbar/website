@@ -55,6 +55,15 @@ export async function getPayloadWithSlug(
         }
     }
 
+    // If collection name is "news_links" and "title" is set,
+    // return payload with news link slug
+    if (metadata.collection === 'news_links' && futureItem.title) {
+        return {
+            ...payload,
+            slug: getUrlSlug(futureItem.title),
+        }
+    }
+
     // If collection name is "profiles" and "first_name" and "last_name" are set,
     //  return payload with profile slug
     if (metadata.collection === 'profiles' && futureItem.first_name && futureItem.last_name) {
