@@ -1,8 +1,15 @@
 export interface CascadeRelation {
     /** The relation field name on the parent item (e.g. 'speakers', 'picks_of_the_day') */
     relationField: string
-    /** For m2m: the field on the junction record that holds the child item (e.g. 'speaker', 'talk') */
+    /** For m2m/m2a: the field on the junction record that holds the child item (e.g. 'speaker', 'talk', 'target') */
     childField?: string
+    /**
+     * For many-to-any (m2a): the junction field holding the related collection
+     * name (e.g. 'collection'). Its presence marks the relation as m2a, which is
+     * read and unwrapped differently from a plain m2m — see `buildRelationFields`
+     * and `extractDraftIds`.
+     */
+    collectionField?: string
     /** The Directus collection of the related items */
     targetCollection: string
 }
@@ -37,7 +44,15 @@ export function buildRelationFields(relations: CascadeRelation[]): string[] {
     const fields: string[] = []
 
     for (const relation of relations) {
-        if (relation.childField) {
+        if (relation.collectionField) {
+            // Many-to-any: fetch the collection discriminator so we can filter the
+            // junction rows to `targetCollection`, and pull the polymorphic target
+            // with a wildcard. A wildcard is required because Directus does not
+            // resolve a specific subfield (e.g. `.status`) across an m2a relation
+            // without collection scoping.
+            fields.push(`${relation.relationField}.${relation.collectionField}`)
+            fields.push(`${relation.relationField}.${relation.childField}.*`)
+        } else if (relation.childField) {
             fields.push(`${relation.relationField}.${relation.childField}.id`)
             fields.push(`${relation.relationField}.${relation.childField}.status`)
         } else {
@@ -64,10 +79,16 @@ export function extractDraftIds(parentItem: Record<string, any>, relation: Casca
         return []
     }
 
-    // Extract child items: for m2m, unwrap from junction records; for o2m, use directly
-    const childItems: any[] = relation.childField
-        ? relatedItems.map((junctionRecord: any) => junctionRecord[relation.childField!]).filter(Boolean)
+    // For m2a, keep only the junction rows pointing at this relation's target
+    // collection before unwrapping; other allowed collections are irrelevant here.
+    const junctionItems: any[] = relation.collectionField
+        ? relatedItems.filter((record: any) => record?.[relation.collectionField!] === relation.targetCollection)
         : relatedItems
+
+    // Extract child items: for m2m/m2a, unwrap from junction records; for o2m, use directly
+    const childItems: any[] = relation.childField
+        ? junctionItems.map((junctionRecord: any) => junctionRecord[relation.childField!]).filter(Boolean)
+        : junctionItems
 
     // Filter for draft items only and collect their ids
     return childItems

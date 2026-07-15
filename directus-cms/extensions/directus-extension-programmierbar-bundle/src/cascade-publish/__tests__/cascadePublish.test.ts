@@ -13,6 +13,13 @@ const O2M_RELATION: CascadeRelation = {
     targetCollection: 'picks_of_the_day',
 }
 
+const M2A_RELATION: CascadeRelation = {
+    relationField: 'target',
+    childField: 'target',
+    collectionField: 'collection',
+    targetCollection: 'news_links',
+}
+
 describe('isPublishPayload', () => {
     test('should return true when status is published', () => {
         expect(isPublishPayload({ status: 'published' })).toBe(true)
@@ -65,6 +72,10 @@ describe('buildRelationFields', () => {
             'picks_of_the_day.id',
             'picks_of_the_day.status',
         ])
+    })
+
+    test('should build the collection discriminator and a wildcard target for m2a relations', () => {
+        expect(buildRelationFields([M2A_RELATION])).toEqual(['target.collection', 'target.target.*'])
     })
 
     test('should return an empty array for no relations', () => {
@@ -142,5 +153,28 @@ describe('extractDraftIds', () => {
 
     test('should not treat a non-array relation value as related items', () => {
         expect(extractDraftIds({ speakers: 'unexpected' }, M2M_RELATION)).toEqual([])
+    })
+
+    test('should unwrap m2a junction records and return only draft target ids', () => {
+        const parentItem = {
+            target: [
+                { collection: 'news_links', target: { id: 'n1', status: 'draft' } },
+                { collection: 'news_links', target: { id: 'n2', status: 'published' } },
+                { collection: 'news_links', target: { id: 'n3', status: 'draft' } },
+            ],
+        }
+
+        expect(extractDraftIds(parentItem, M2A_RELATION)).toEqual(['n1', 'n3'])
+    })
+
+    test('should ignore m2a junction rows pointing at other collections', () => {
+        const parentItem = {
+            target: [
+                { collection: 'news_links', target: { id: 'n1', status: 'draft' } },
+                { collection: 'some_other_source', target: { id: 'x1', status: 'draft' } },
+            ],
+        }
+
+        expect(extractDraftIds(parentItem, M2A_RELATION)).toEqual(['n1'])
     })
 })
