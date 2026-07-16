@@ -1,17 +1,4 @@
 <template>
-  <div
-    class='relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-6 py-32'
-  >
-    <!-- Decorative spotlights -->
-    <div v-if='showSpotlights' class='pointer-events-none absolute inset-0' aria-hidden='true'>
-      <div
-        class='absolute -left-20 -top-32 h-[520px] w-[520px] rounded-full bg-blue opacity-30 blur-[140px]'
-      />
-      <div
-        class='absolute -bottom-36 -right-16 h-[460px] w-[460px] rounded-full bg-pink opacity-30 blur-[150px]'
-      />
-    </div>
-
     <article
       class='relative flex w-[640px] max-w-full flex-col gap-5 rounded-2xl border border-[#3a3d3f] bg-gray-900 px-9 pb-7 pt-8 shadow-[0_24px_60px_rgba(0,0,0,0.6)]'
     >
@@ -29,7 +16,6 @@
       <h1 class='m-0 text-[28px] font-black leading-tight text-white [text-wrap:pretty]'>
         {{ newsLink.title }}
       </h1>
-
 
       <div class='flex items-center gap-2.5'>
         <div
@@ -67,7 +53,6 @@
         <BrandLogo v-if='showBrandMark' class='h-5 opacity-85' alt='programmier.bar' />
       </footer>
     </article>
-  </div>
 </template>
 
 <script setup lang='ts'>
@@ -81,12 +66,10 @@ import LinkButton from './LinkButton.vue';
 const props = withDefaults(
   defineProps<{
     newsLink: DirectusNewsLinkItem
-    showSpotlights?: boolean
     showBrandMark?: boolean
   }>(),
   {
-    showSpotlights: true,
-    showBrandMark: true,
+    showBrandMark: false,
   },
 );
 const { newsLink } = toRefs(props);
