@@ -8,6 +8,7 @@
                 :href="NEWS_FEED_PATH"
                 target="_blank"
                 rel="noreferrer"
+                aria-label="RSS Feed - News"
                 class="inline-flex items-center gap-2.5 text-sm font-bold uppercase tracking-widest text-white transition-colors hover:text-blue"
                 data-cursor-hover
             >
@@ -24,7 +25,7 @@
                 <NewsItem
                     class="h-full"
                     :news-link="card.link"
-                    :to="`/news/${card.link.slug}`"
+                    :to="card.link.slug ? `/news/${card.link.slug}` : undefined"
                     heading-level="h2"
                 />
             </li>
@@ -41,7 +42,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import RssFeedIcon from '~/assets/logos/rss-feed-color.svg'
 import NewsItem from '~/components/NewsItem.vue'
 import { useIntersectionObserver, useLoadingScreen } from '~/composables'
@@ -49,6 +49,7 @@ import { useDirectus } from '~/composables/useDirectus'
 import { NEWS_FEED_PATH, NEWS_FEED_TITLE, WEBSITE_URL } from '~/config'
 import { getMetaInfo, resolveNewsLink } from '~/helpers'
 import type { DirectusNewsItem, DirectusNewsLinkItem } from '~/types/directus'
+import { computed, ref } from 'vue'
 
 const PAGE_SIZE = 12
 

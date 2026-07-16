@@ -1,25 +1,11 @@
-import { NEWS_FEED_PATH, NEWS_FEED_TITLE, WEBSITE_NAME, WEBSITE_URL } from '~/config'
-import type { DirectusNewsLinkItem } from '~/types/directus'
 // Imported explicitly because composables/ is auto-imported into the Vue app,
 // not the Nitro server; nuxt.config.ts imports it the same way for build-time
-// data fetching.
+// data fetching. resolveNewsLink is imported directly (not via the ~/helpers
+// barrel) to keep client-only helpers out of the server bundle.
 import { useDirectus } from '~/composables/useDirectus'
+import { NEWS_FEED_PATH, NEWS_FEED_TITLE, WEBSITE_NAME, WEBSITE_URL } from '~/config'
+import { resolveNewsLink } from '~/helpers/resolveNewsLink'
 import RSS from 'rss'
-
-// Resolve the `news_links` source that backs a news item. `news` is a meta
-// collection referencing its content through the m2a `target`; today the only
-// source type is `news_links`, and each news item wraps exactly one link.
-function resolveNewsLink(
-    target: {
-        collection: string
-        target: DirectusNewsLinkItem | string
-    }[]
-): DirectusNewsLinkItem | null {
-    const entry = target?.find(
-        (row) => row.collection === 'news_links' && typeof row.target === 'object' && row.target !== null
-    )
-    return (entry?.target as DirectusNewsLinkItem) ?? null
-}
 
 const IMAGE_MIME_TYPES: Record<string, string> = {
     jpg: 'image/jpeg',
@@ -62,7 +48,7 @@ export default defineEventHandler(async (event) => {
     })
 
     for (const item of news) {
-        const link = resolveNewsLink(item.target)
+        const link = resolveNewsLink(item)
         if (!link || !link.link) {
             // Skip entries without a usable source link (e.g. a meta item whose
             // junction row lost its target); there is nothing to point readers to.
