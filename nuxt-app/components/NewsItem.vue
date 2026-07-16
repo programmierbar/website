@@ -58,9 +58,7 @@
 
         <!-- Footer: article link + brand mark -->
         <footer class="flex flex-wrap items-center justify-between gap-4 border-t border-[#3a3d3f] pt-5">
-            <LinkButton class="relative z-10" :href="newsLink.link" target="_blank" rel="noreferrer"
-                >Zum Artikel</LinkButton
-            >
+            <LinkButton class="relative z-10" :href="newsLink.link" target="_blank" rel="noopener noreferrer">Zum Artikel</LinkButton>
             <BrandLogo v-if="showBrandMark" class="h-5 opacity-85" alt="programmier.bar" />
         </footer>
     </article>
@@ -117,9 +115,9 @@ const initials = computed(() =>
 
 const formattedDate = computed(() =>
     new Date(newsLink.value.date_created).toLocaleDateString('de-DE', {
+        timeZone: 'Europe/Berlin',
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
     })
 )
-</script>

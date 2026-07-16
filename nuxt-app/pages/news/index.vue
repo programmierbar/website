@@ -7,7 +7,7 @@
             <a
                 :href="NEWS_FEED_PATH"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 aria-label="RSS Feed - News"
                 class="inline-flex items-center gap-2.5 text-sm font-bold uppercase tracking-widest text-white transition-colors hover:text-blue"
                 data-cursor-hover
