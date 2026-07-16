@@ -2,7 +2,20 @@
     <div class="container px-6 pb-24 pt-32 md:pt-40 lg:pt-48">
         <SectionHeading element="h1">News</SectionHeading>
 
-        <ul v-if="cards.length" class="mt-12 flex flex-wrap justify-center gap-6 md:mt-16">
+        <!-- RSS feed link -->
+        <div class="mt-8 flex justify-end md:mt-10">
+            <a
+                :href="NEWS_FEED_PATH"
+                target="_blank"
+                rel="noreferrer"
+                class="inline-flex items-center gap-2.5 text-sm font-bold uppercase tracking-widest text-white transition-colors hover:text-blue"
+                data-cursor-hover
+            >
+                <RssFeedIcon class="h-12 w-12" aria-hidden="true" />
+            </a>
+        </div>
+
+        <ul v-if="cards.length" class="mt-4 flex flex-wrap justify-center gap-6 md:mt-6">
             <li
                 v-for="card in cards"
                 :key="card.news.id"
@@ -29,9 +42,11 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import RssFeedIcon from '~/assets/logos/rss-feed-color.svg'
 import NewsItem from '~/components/NewsItem.vue'
 import { useIntersectionObserver, useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
+import { NEWS_FEED_PATH, NEWS_FEED_TITLE, WEBSITE_URL } from '~/config'
 import { getMetaInfo, resolveNewsLink } from '~/helpers'
 import type { DirectusNewsItem, DirectusNewsLinkItem } from '~/types/directus'
 
@@ -88,13 +103,24 @@ useIntersectionObserver(sentinel, (entries) => {
 // Set loading screen
 useLoadingScreen(firstPage)
 
-// Set page meta data
-useHead(
-    getMetaInfo({
-        type: 'website',
-        path: route.path,
-        title: 'News',
-        description: 'Kuratierte News rund um App- und Webentwicklung von der programmier.bar.',
-    })
-)
+// Set page meta data, including a feed discovery link so browsers and readers
+// can auto-detect the news RSS feed.
+const metaInfo = getMetaInfo({
+    type: 'website',
+    path: route.path,
+    title: 'News',
+    description: 'Kuratierte News rund um App- und Webentwicklung von der programmier.bar.',
+})
+useHead({
+    ...metaInfo,
+    link: [
+        ...(metaInfo.link ?? []),
+        {
+            rel: 'alternate',
+            type: 'application/rss+xml',
+            href: `${WEBSITE_URL}${NEWS_FEED_PATH}`,
+            title: NEWS_FEED_TITLE,
+        },
+    ],
+})
 </script>
