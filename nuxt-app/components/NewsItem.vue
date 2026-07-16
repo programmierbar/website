@@ -121,3 +121,4 @@ const formattedDate = computed(() =>
         year: 'numeric',
     })
 )
+</script>
