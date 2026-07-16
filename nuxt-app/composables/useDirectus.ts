@@ -950,16 +950,61 @@ export function useDirectus() {
 
     // `news` is a meta collection whose content lives on the m2a `target`
     // (currently only `news_links`), so the source item is expanded alongside
-    // each entry. Published news is public, so this uses the regular client.
-    async function getPublishedNews(limit: number = 50) {
+    // each entry. `page` drives the list view's infinite scroll. The author
+    // (with image) is only expanded when `withAuthor` is set — the list cards
+    // need it, the RSS feed does not, so the feed stays lean. Published news is
+    // public, so this uses the regular client.
+    async function getPublishedNews(
+        limit: number = 50,
+        page: number = 1,
+        { withAuthor = false }: { withAuthor?: boolean } = {}
+    ) {
+        const fields = ['id', 'date_created', 'target.id', 'target.collection', 'target.target.*']
+        if (withAuthor) {
+            fields.push('target.target.member.*', 'target.target.member.normal_image.*')
+        }
+
         return (await directus.request(
             readItems('news', {
                 filter: { status: { _eq: 'published' } },
-                fields: ['id', 'date_created', 'target.id', 'target.collection', 'target.target.*'],
+                fields: fields,
                 sort: ['-date_created'],
                 limit: limit,
+                page: page,
             })
         )) as DirectusNewsItem[]
+    }
+
+    // A single published news entry for the `/news/[slug]` detail page, resolved
+    // by the slug of its source item. We always query the `news` meta collection
+    // — never a source collection like `news_links` directly — because `news` is
+    // the join point for every source type (today only `news_links`, in future
+    // e.g. `news_event`), which keeps routing forward-compatible. Note the m2a
+    // asymmetry: *filtering* the nested target needs the collection-scoped
+    // `target:news_links` key, while *reading* it uses plain `target.target.*`.
+    async function getPublishedNewsBySlug(slug: string) {
+        const news = (await directus.request(
+            readItems('news', {
+                filter: {
+                    status: { _eq: 'published' },
+                    target: {
+                        ['target:news_links']: { slug: { _eq: slug } },
+                    },
+                } as any,
+                fields: [
+                    'id',
+                    'date_created',
+                    'target.id',
+                    'target.collection',
+                    'target.target.*',
+                    'target.target.member.*',
+                    'target.target.member.normal_image.*',
+                ],
+                limit: 1,
+            })
+        )) as DirectusNewsItem[]
+
+        return news?.[0] ?? null
     }
 
     return {
@@ -984,6 +1029,7 @@ export function useDirectus() {
         getLatestPodcasts,
         getPodcasts,
         getPublishedNews,
+        getPublishedNewsBySlug,
         getMeetups,
         getConferences,
         getSpeakers,

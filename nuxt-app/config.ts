@@ -17,6 +17,11 @@ export const WEBSITE_URL = process.env.WEBSITE_URL || 'https://www.programmier.b
 export const WEBSITE_NAME = 'programmier.bar'
 export const TWITTER_HANDLE = '@programmierbar'
 
+// News RSS feed (served by server/routes/feed/news.xml.get.ts, linked from the
+// news page). Single source of truth for the path and title used by both.
+export const NEWS_FEED_PATH = '/feed/news.xml'
+export const NEWS_FEED_TITLE = `${WEBSITE_NAME} – News`
+
 // External URLs
 export const APPLE_PODCASTS_URL =
     'https://podcasts.apple.com/us/podcast/programmier-bar-der-podcast-f%C3%BCr-app-und-webentwicklung/id1371409964'
