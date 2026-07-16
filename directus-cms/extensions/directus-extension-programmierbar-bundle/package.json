@@ -81,11 +81,6 @@
             },
             {
                 "type": "hook",
-                "name": "content-generation",
-                "source": "src/content-generation/index.ts"
-            },
-            {
-                "type": "hook",
                 "name": "content-approval",
                 "source": "src/content-approval/index.ts"
             },
