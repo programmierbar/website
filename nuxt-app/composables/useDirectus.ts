@@ -950,14 +950,27 @@ export function useDirectus() {
 
     // `news` is a meta collection whose content lives on the m2a `target`
     // (currently only `news_links`), so the source item is expanded alongside
-    // each entry. Published news is public, so this uses the regular client.
-    async function getPublishedNews(limit: number = 50) {
+    // each entry. `page` drives the list view's infinite scroll. The author
+    // (with image) is only expanded when `withAuthor` is set — the list cards
+    // need it, the RSS feed does not, so the feed stays lean. Published news is
+    // public, so this uses the regular client.
+    async function getPublishedNews(
+        limit: number = 50,
+        page: number = 1,
+        { withAuthor = false }: { withAuthor?: boolean } = {}
+    ) {
+        const fields = ['id', 'date_created', 'target.id', 'target.collection', 'target.target.*']
+        if (withAuthor) {
+            fields.push('target.target.member.*', 'target.target.member.normal_image.*')
+        }
+
         return (await directus.request(
             readItems('news', {
                 filter: { status: { _eq: 'published' } },
-                fields: ['id', 'date_created', 'target.id', 'target.collection', 'target.target.*'],
+                fields: fields,
                 sort: ['-date_created'],
                 limit: limit,
+                page: page,
             })
         )) as DirectusNewsItem[]
     }

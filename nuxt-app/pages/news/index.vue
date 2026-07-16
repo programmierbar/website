@@ -1,0 +1,100 @@
+<template>
+    <div class="container px-6 pb-24 pt-32 md:pt-40 lg:pt-48">
+        <SectionHeading element="h1">News</SectionHeading>
+
+        <ul v-if="cards.length" class="mt-12 flex flex-wrap justify-center gap-6 md:mt-16">
+            <li
+                v-for="card in cards"
+                :key="card.news.id"
+                class="flex w-full md:w-[calc(50%-12px)] xl:w-[calc(33.333%-16px)]"
+            >
+                <NewsItem
+                    class="h-full"
+                    :news-link="card.link"
+                    :to="`/news/${card.link.slug}`"
+                    heading-level="h2"
+                />
+            </li>
+        </ul>
+
+        <p v-else class="mt-12 text-center text-lg font-light text-white">Zurzeit gibt es keine News.</p>
+
+        <!-- Infinite-scroll sentinel: fetches the next page when it scrolls into view -->
+        <div v-if="hasMore" ref="sentinel" class="h-px w-full" aria-hidden="true" />
+        <p v-if="loadingMore" class="mt-10 text-center text-sm font-light italic text-[#abb2b5]">
+            Weitere News werden geladen …
+        </p>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import NewsItem from '~/components/NewsItem.vue'
+import { useIntersectionObserver, useLoadingScreen } from '~/composables'
+import { useDirectus } from '~/composables/useDirectus'
+import { getMetaInfo, resolveNewsLink } from '~/helpers'
+import type { DirectusNewsItem, DirectusNewsLinkItem } from '~/types/directus'
+
+const PAGE_SIZE = 12
+
+const route = useRoute()
+const directus = useDirectus()
+
+// First page is fetched on the server for SSR/SEO; further pages are appended
+// client-side as the user scrolls (see loadMore below).
+const { data: firstPage } = await useAsyncData('news-list', () =>
+    directus.getPublishedNews(PAGE_SIZE, 1, { withAuthor: true })
+)
+
+const items = ref<DirectusNewsItem[]>([...(firstPage.value ?? [])])
+const page = ref(1)
+const loadingMore = ref(false)
+// A short final page means we've reached the end.
+const hasMore = ref((firstPage.value?.length ?? 0) === PAGE_SIZE)
+
+// Resolve each news entry to its renderable source item, dropping any that
+// don't resolve (e.g. a future source type this view doesn't render yet).
+const cards = computed<{ news: DirectusNewsItem; link: DirectusNewsLinkItem }[]>(() =>
+    items.value
+        .map((news) => ({ news, link: resolveNewsLink(news) }))
+        .filter((card): card is { news: DirectusNewsItem; link: DirectusNewsLinkItem } => card.link !== null)
+)
+
+async function loadMore() {
+    if (!hasMore.value || loadingMore.value) {
+        return
+    }
+
+    loadingMore.value = true
+    try {
+        const next = await directus.getPublishedNews(PAGE_SIZE, page.value + 1, { withAuthor: true })
+        page.value += 1
+        items.value.push(...next)
+        if (next.length < PAGE_SIZE) {
+            hasMore.value = false
+        }
+    } finally {
+        loadingMore.value = false
+    }
+}
+
+const sentinel = ref<HTMLElement | null>(null)
+useIntersectionObserver(sentinel, (entries) => {
+    if (entries[0]?.isIntersecting) {
+        loadMore()
+    }
+})
+
+// Set loading screen
+useLoadingScreen(firstPage)
+
+// Set page meta data
+useHead(
+    getMetaInfo({
+        type: 'website',
+        path: route.path,
+        title: 'News',
+        description: 'Kuratierte News rund um App- und Webentwicklung von der programmier.bar.',
+    })
+)
+</script>

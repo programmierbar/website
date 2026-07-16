@@ -22,8 +22,7 @@ import { computed } from 'vue'
 import NewsItem from '~/components/NewsItem.vue'
 import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
-import { getMetaInfo } from '~/helpers'
-import type { DirectusNewsLinkItem } from '~/types/directus'
+import { getMetaInfo, resolveNewsLink } from '~/helpers'
 
 const route = useRoute()
 const directus = useDirectus()
@@ -39,15 +38,8 @@ const { data: news } = useAsyncData(route.fullPath, async () => {
     return item
 })
 
-// Resolve the source item behind the news entry. Today the only source type is
-// `news_links`; when others (e.g. `news_event`) are added, this is where they
-// get mapped to a renderable shape.
-const newsLink = computed<DirectusNewsLinkItem | null>(() => {
-    const entry = news.value?.target?.find(
-        (row) => row.collection === 'news_links' && typeof row.target === 'object' && row.target !== null
-    )
-    return (entry?.target as DirectusNewsLinkItem) ?? null
-})
+// Resolve the source item behind the news entry (shared with the list view).
+const newsLink = computed(() => resolveNewsLink(news.value))
 
 // Set loading screen
 useLoadingScreen(news)

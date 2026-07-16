@@ -2,6 +2,17 @@
     <article
       class='relative flex w-[640px] max-w-full flex-col gap-5 rounded-2xl border border-[#3a3d3f] bg-gray-900 px-9 pb-7 pt-8 shadow-[0_24px_60px_rgba(0,0,0,0.6)]'
     >
+      <!-- Stretched link: makes the whole card navigate to the detail page in
+           the list view. Rendered as a sibling overlay (not a wrapping anchor)
+           so the "Zum Artikel" link below can sit above it and stay external. -->
+      <NuxtLink
+        v-if='to'
+        :to='to'
+        class='absolute inset-0 z-0 rounded-2xl'
+        :aria-label='newsLink.title'
+        data-cursor-hover
+      />
+
       <!-- Header: date + source tag -->
       <header class='flex items-center justify-between gap-3.5'>
         <span class='text-[13px] font-light italic text-[#abb2b5]'>{{ formattedDate }}</span>
@@ -13,9 +24,12 @@
       </header>
 
       <!-- Title -->
-      <h1 class='m-0 text-[28px] font-black leading-tight text-white [text-wrap:pretty]'>
+      <component
+        :is='headingLevel'
+        class='m-0 text-[28px] font-black leading-tight text-white [text-wrap:pretty]'
+      >
         {{ newsLink.title }}
-      </h1>
+      </component>
 
       <div class='flex items-center gap-2.5'>
         <div
@@ -49,7 +63,7 @@
       <footer
         class='flex flex-wrap items-center justify-between gap-4 border-t border-[#3a3d3f] pt-5'
       >
-        <LinkButton :href='newsLink.link' target='_blank' rel='noreferrer'>Zum Artikel</LinkButton>
+        <LinkButton class='relative z-10' :href='newsLink.link' target='_blank' rel='noreferrer'>Zum Artikel</LinkButton>
         <BrandLogo v-if='showBrandMark' class='h-5 opacity-85' alt='programmier.bar' />
       </footer>
     </article>
@@ -67,9 +81,16 @@ const props = withDefaults(
   defineProps<{
     newsLink: DirectusNewsLinkItem
     showBrandMark?: boolean
+    // When set, the whole card links here (used by the list view). Omit on the
+    // detail page so the card is not a self-link.
+    to?: string
+    // The detail page is the single <h1>; the list renders cards as <h2>.
+    headingLevel?: 'h1' | 'h2'
   }>(),
   {
     showBrandMark: false,
+    to: undefined,
+    headingLevel: 'h1',
   },
 );
 const { newsLink } = toRefs(props);
