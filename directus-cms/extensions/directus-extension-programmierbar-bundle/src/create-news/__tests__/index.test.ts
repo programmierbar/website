@@ -61,6 +61,8 @@ interface SetupOptions {
     sourceLinks?: Array<Record<string, any>>
     /** Item returned by the `news_links` readOne (title fallback on create). */
     sourceItem?: Record<string, any>
+    /** Current slug returned by the `news` readOne (publish self-heal). */
+    currentNewsSlug?: string | null
     /** Field definitions returned by FieldsService.readAll. */
     fields?: any[]
     newNewsId?: string
@@ -68,8 +70,15 @@ interface SetupOptions {
 }
 
 function setup(options: SetupOptions = {}) {
-    const { junctionRows = [], existingNews = [], sourceLinks = [], sourceItem = {}, fields = [], newNewsId = 'news-new' } =
-        options
+    const {
+        junctionRows = [],
+        existingNews = [],
+        sourceLinks = [],
+        sourceItem = {},
+        currentNewsSlug = null,
+        fields = [],
+        newNewsId = 'news-new',
+    } = options
 
     const recorded: Recorded = { createOne: [], updateOne: [], deleteOne: [] }
     const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
@@ -80,7 +89,7 @@ function setup(options: SetupOptions = {}) {
             if (collection === 'news_links') return sourceLinks
             return junctionRows
         }),
-        readOne: jest.fn(async () => sourceItem),
+        readOne: jest.fn(async () => (collection === 'news' ? { slug: currentNewsSlug } : sourceItem)),
         createOne: jest.fn(async (data: Record<string, any>) => {
             if (options.createOneErrorCollection === collection) {
                 throw new Error(`boom in ${collection}`)
@@ -298,6 +307,41 @@ describe('create-news hook', () => {
             })
             const handler = filters.get('news.items.update')!
             await expect(handler({ status: 'published' }, { keys: ['news1'] }, filterContext)).rejects.toThrow()
+        })
+
+        test('backfills a missing slug from the link title at publish time', async () => {
+            const { filters } = setup({
+                junctionRows: [{ target: 'nl1' }],
+                sourceLinks: [{ id: 'nl1', title: 'React 19 Released' }],
+                currentNewsSlug: null,
+            })
+            const handler = filters.get('news.items.update')!
+            await expect(handler({ status: 'published' }, { keys: ['news1'] }, filterContext)).resolves.toEqual({
+                status: 'published',
+                slug: 'react-19-released',
+            })
+        })
+
+        test('leaves an existing slug untouched at publish time', async () => {
+            const { filters } = setup({
+                junctionRows: [{ target: 'nl1' }],
+                sourceLinks: [{ id: 'nl1', title: 'React 19 Released' }],
+                currentNewsSlug: 'already-set',
+            })
+            const handler = filters.get('news.items.update')!
+            const payload = { status: 'published' }
+            await expect(handler(payload, { keys: ['news1'] }, filterContext)).resolves.toBe(payload)
+        })
+
+        test('does not backfill a slug on a batch publish (shared payload)', async () => {
+            const { filters } = setup({
+                junctionRows: [{ target: 'nl1' }],
+                sourceLinks: [{ id: 'nl1', title: 'React 19 Released' }],
+                currentNewsSlug: null,
+            })
+            const handler = filters.get('news.items.update')!
+            const payload = { status: 'published' }
+            await expect(handler(payload, { keys: ['news1', 'news2'] }, filterContext)).resolves.toBe(payload)
         })
     })
 

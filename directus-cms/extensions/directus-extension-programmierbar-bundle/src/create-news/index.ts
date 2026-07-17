@@ -280,10 +280,15 @@ export default defineHook(({ action, filter }, hookContext) => {
     }
 
     /**
-     * Prevent publishing a `news` item whose source link is incomplete. Runs the
-     * same `isPublishable` guard the scheduled-publication flow uses. Infra
-     * failures fail open (log + notify) so a transient glitch can't block every
-     * publish; only a genuinely incomplete link throws.
+     * Runs when a `news` item is published. Two jobs:
+     *   1. Guard — block the publish if the source link is incomplete (same
+     *      `isPublishable` check the scheduled-publication flow uses). Infra
+     *      failures fail open (log + notify) so a transient glitch can't block
+     *      every publish; only a genuinely incomplete link throws.
+     *   2. Self-heal — if the item is being published without a slug (e.g. a
+     *      pre-migration item, or one whose title never produced one), derive it
+     *      from the link title and inject it into the same update, so it is
+     *      reachable at `/news/<slug>` without a manual backfill.
      */
     async function guardNewsPublish(payload: any, metadata: any, context: any) {
         if (payload?.status !== 'published') {
@@ -295,17 +300,22 @@ export default defineHook(({ action, filter }, hookContext) => {
             return payload
         }
 
+        const newsService = new ItemsService(NEWS_COLLECTION, {
+            schema: context.schema,
+            accountability: context.accountability,
+        })
+        const junctionService = new ItemsService(JUNCTION_COLLECTION, {
+            schema: context.schema,
+            accountability: context.accountability,
+        })
+        const sourceService = new ItemsService(SOURCE_COLLECTION, {
+            schema: context.schema,
+            accountability: context.accountability,
+        })
+
         const pairs: Array<{ newsId: string | number; link: Record<string, any> }> = []
         let fields: any[]
         try {
-            const junctionService = new ItemsService(JUNCTION_COLLECTION, {
-                schema: context.schema,
-                accountability: context.accountability,
-            })
-            const sourceService = new ItemsService(SOURCE_COLLECTION, {
-                schema: context.schema,
-                accountability: context.accountability,
-            })
             const fieldsService = new FieldsService({ schema: context.schema })
             fields = await fieldsService.readAll(SOURCE_COLLECTION)
 
@@ -336,6 +346,27 @@ export default defineHook(({ action, filter }, hookContext) => {
                     `News ${newsId} kann nicht veröffentlicht werden: Der verknüpfte News-Link ${link.id} hat nicht alle Pflichtfelder ausgefüllt.`
                 )
                 throw new hookError()
+            }
+        }
+
+        // Self-heal a missing slug. A filter shares one payload across all keys,
+        // so a slug can only be injected for a single-key update; batch publishes
+        // fall back to the create/title-update paths (or a manual backfill).
+        if (keys.length === 1 && !payload.slug) {
+            try {
+                const newsId = keys[0]
+                const current = await newsService.readOne(newsId, { fields: ['slug'] })
+                if (!current?.slug) {
+                    const link = pairs.find((pair) => String(pair.newsId) === String(newsId))?.link
+                    const slug = await buildUniqueNewsSlug(newsService, link?.title, newsId)
+                    if (slug) {
+                        logger.info(`${HOOK_NAME}: Backfilled slug "${slug}" on news ${newsId} at publish time`)
+                        return { ...payload, slug }
+                    }
+                }
+            } catch (error: any) {
+                // A failed backfill must never block the publish itself.
+                logger.warn(`${HOOK_NAME}: Could not backfill slug on publish: ${error.message}`)
             }
         }
 
