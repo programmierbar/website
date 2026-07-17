@@ -180,39 +180,6 @@ describe('getPayloadWithSlug', () => {
         });
     });
 
-    test('should generate slug for news_links', async () => {
-        // Arrange
-        const futureItem = {
-            title: 'React 19 Released',
-        };
-        const payload = { title: 'React 19 Released' };
-        const metadata = { collection: 'news_links', keys: ['505'] };
-
-        // Act
-        const result = await getPayloadWithSlug(futureItem, { payload, metadata });
-
-        // Assert
-        expect(result).toEqual({
-            ...payload,
-            slug: 'react-19-released',
-        });
-    });
-
-    test('should not generate slug for news_links without a title', async () => {
-        // Arrange
-        const futureItem = {
-            link: 'https://example.com/article',
-        };
-        const payload = { link: 'https://example.com/article' };
-        const metadata = { collection: 'news_links', keys: ['506'] };
-
-        // Act
-        const result = await getPayloadWithSlug(futureItem, { payload, metadata });
-
-        // Assert
-        expect(result).toEqual(payload);
-    });
-
     test('should generate slug for profiles with first_name and last_name', async () => {
         // Arrange
         const futureItem = {

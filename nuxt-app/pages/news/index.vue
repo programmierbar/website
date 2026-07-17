@@ -25,7 +25,7 @@
                 <NewsItem
                     class="h-full"
                     :news-link="card.link"
-                    :to="card.link.slug ? `/news/${card.link.slug}` : undefined"
+                    :to="card.news.slug ? `/news/${card.news.slug}` : undefined"
                     heading-level="h2"
                 />
             </li>

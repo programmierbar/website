@@ -115,14 +115,12 @@ describe('cascade-publish hook', () => {
         postSlackMessageMock.mockClear()
     })
 
-    test('registers create and update actions for podcasts, meetups and news', () => {
+    test('registers create and update actions for podcasts and meetups', () => {
         const { handlers } = setup()
 
         expect([...handlers.keys()].sort()).toEqual([
             'meetups.items.create',
             'meetups.items.update',
-            'news.items.create',
-            'news.items.update',
             'podcasts.items.create',
             'podcasts.items.update',
         ])
@@ -162,22 +160,6 @@ describe('cascade-publish hook', () => {
             { collection: 'speakers', id: 'sp1', data: { status: 'published' } },
             { collection: 'talks', id: 't1', data: { status: 'published' } },
         ])
-    })
-
-    test('publishes the draft news_links target when a news item is published', async () => {
-        const { handlers, updateOneCalls } = setup({
-            parentItem: {
-                target: [
-                    { collection: 'news_links', target: { id: 'nl1', status: 'draft' } },
-                    { collection: 'news_links', target: { id: 'nl2', status: 'published' } },
-                ],
-            },
-        })
-
-        await invoke(handlers.get('news.items.update')!, { keys: ['news1'], payload: { status: 'published' } })
-
-        expect(updateOneCalls).toEqual([{ collection: 'news_links', id: 'nl1', data: { status: 'published' } }])
-        expect(postSlackMessageMock).not.toHaveBeenCalled()
     })
 
     test('publishes each child individually so downstream hooks see every key', async () => {

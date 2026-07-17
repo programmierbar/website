@@ -959,7 +959,7 @@ export function useDirectus() {
         page: number = 1,
         { withAuthor = false }: { withAuthor?: boolean } = {}
     ) {
-        const fields = ['id', 'date_created', 'target.id', 'target.collection', 'target.target.*']
+        const fields = ['id', 'slug', 'date_created', 'target.id', 'target.collection', 'target.target.*']
         if (withAuthor) {
             fields.push('target.target.member.*', 'target.target.member.normal_image.*')
         }
@@ -975,22 +975,20 @@ export function useDirectus() {
         )) as DirectusNewsItem[]
     }
 
-    // A single published news entry for the `/news/[slug]` detail page, resolved
-    // by the slug of its source item. We always query the `news` meta collection
-    // — never a source collection like `news_links` directly — because `news` is
-    // the join point for every source type (today only `news_links`, in future
-    // e.g. `news_event`), which keeps routing forward-compatible. Note the m2a
-    // asymmetry: *filtering* the nested target needs the collection-scoped
-    // `target:news_links` key, while *reading* it uses plain `target.target.*`.
+    // A single published news entry for the `/news/[slug]` detail page. The slug
+    // lives on the `news` meta collection itself (it is the addressable URL, kept
+    // in sync from the source title by the CMS `create-news` hook), so this is a
+    // plain top-level filter — no m2a nested filter needed. We always query
+    // `news` — never a source collection like `news_links` directly — because
+    // `news` is the join point for every source type (today only `news_links`, in
+    // future e.g. `news_event`), which keeps routing forward-compatible.
     async function getPublishedNewsBySlug(slug: string) {
         const news = (await directus.request(
             readItems('news', {
                 filter: {
                     status: { _eq: 'published' },
-                    target: {
-                        ['target:news_links']: { slug: { _eq: slug } },
-                    },
-                } as any,
+                    slug: { _eq: slug },
+                },
                 fields: [
                     'id',
                     'date_created',

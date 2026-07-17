@@ -18328,7 +18328,7 @@
         "translations": null,
         "validation": null,
         "validation_message": null,
-        "width": "full"
+        "width": "half"
       },
       "schema": {
         "name": "status",
@@ -18367,7 +18367,7 @@
         "readonly": false,
         "required": false,
         "searchable": true,
-        "sort": 3,
+        "sort": 4,
         "special": null,
         "translations": null,
         "validation": null,
@@ -18413,7 +18413,7 @@
         "readonly": true,
         "required": false,
         "searchable": true,
-        "sort": 4,
+        "sort": 5,
         "special": [
           "user-created"
         ],
@@ -18461,7 +18461,7 @@
         "readonly": true,
         "required": false,
         "searchable": true,
-        "sort": 5,
+        "sort": 6,
         "special": [
           "date-created"
         ],
@@ -18509,7 +18509,7 @@
         "readonly": true,
         "required": false,
         "searchable": true,
-        "sort": 6,
+        "sort": 7,
         "special": [
           "user-updated"
         ],
@@ -18557,7 +18557,7 @@
         "readonly": true,
         "required": false,
         "searchable": true,
-        "sort": 7,
+        "sort": 8,
         "special": [
           "date-updated"
         ],
@@ -18592,8 +18592,10 @@
       "meta": {
         "collection": "news",
         "conditions": null,
-        "display": null,
-        "display_options": null,
+        "display": "related-values",
+        "display_options": {
+          "template": "{{target:news_links.title}} - {{target:news_links.link}}"
+        },
         "field": "target",
         "group": null,
         "hidden": false,
@@ -18605,7 +18607,7 @@
         "readonly": false,
         "required": true,
         "searchable": true,
-        "sort": 8,
+        "sort": 10,
         "special": [
           "m2a"
         ],
@@ -18613,6 +18615,94 @@
         "validation": null,
         "validation_message": null,
         "width": "full"
+      }
+    },
+    {
+      "collection": "news",
+      "field": "published_on",
+      "type": "dateTime",
+      "meta": {
+        "collection": "news",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "published_on",
+        "group": null,
+        "hidden": false,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 3,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "published_on",
+        "table": "news",
+        "data_type": "timestamp without time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "news",
+      "field": "slug",
+      "type": "string",
+      "meta": {
+        "collection": "news",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "slug",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 9,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "slug",
+        "table": "news",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": true,
+        "is_indexed": true,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
       }
     },
     {
@@ -18663,93 +18753,6 @@
     },
     {
       "collection": "news_links",
-      "field": "status",
-      "type": "string",
-      "meta": {
-        "collection": "news_links",
-        "conditions": null,
-        "display": "labels",
-        "display_options": {
-          "choices": [
-            {
-              "background": "var(--theme--primary-background)",
-              "color": "var(--theme--primary)",
-              "foreground": "var(--theme--primary)",
-              "text": "$t:published",
-              "value": "published"
-            },
-            {
-              "background": "var(--theme--background-normal)",
-              "color": "var(--theme--foreground)",
-              "foreground": "var(--theme--foreground)",
-              "text": "$t:draft",
-              "value": "draft"
-            },
-            {
-              "background": "var(--theme--warning-background)",
-              "color": "var(--theme--warning)",
-              "foreground": "var(--theme--warning)",
-              "text": "$t:archived",
-              "value": "archived"
-            }
-          ],
-          "showAsDot": true
-        },
-        "field": "status",
-        "group": null,
-        "hidden": false,
-        "interface": "select-dropdown",
-        "note": null,
-        "options": {
-          "choices": [
-            {
-              "color": "var(--theme--primary)",
-              "text": "$t:published",
-              "value": "published"
-            },
-            {
-              "color": "var(--theme--foreground)",
-              "text": "$t:draft",
-              "value": "draft"
-            },
-            {
-              "color": "var(--theme--warning)",
-              "text": "$t:archived",
-              "value": "archived"
-            }
-          ]
-        },
-        "readonly": false,
-        "required": false,
-        "searchable": true,
-        "sort": 2,
-        "special": null,
-        "translations": null,
-        "validation": null,
-        "validation_message": null,
-        "width": "full"
-      },
-      "schema": {
-        "name": "status",
-        "table": "news_links",
-        "data_type": "character varying",
-        "default_value": "draft",
-        "max_length": 255,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": false,
-        "is_unique": false,
-        "is_indexed": false,
-        "is_primary_key": false,
-        "is_generated": false,
-        "generation_expression": null,
-        "has_auto_increment": false,
-        "foreign_key_table": null,
-        "foreign_key_column": null
-      }
-    },
-    {
-      "collection": "news_links",
       "field": "sort",
       "type": "integer",
       "meta": {
@@ -18766,7 +18769,7 @@
         "readonly": false,
         "required": false,
         "searchable": true,
-        "sort": 3,
+        "sort": 2,
         "special": null,
         "translations": null,
         "validation": null,
@@ -19046,7 +19049,7 @@
         "readonly": false,
         "required": true,
         "searchable": true,
-        "sort": 10,
+        "sort": 9,
         "special": null,
         "translations": null,
         "validation": null,
@@ -19090,7 +19093,7 @@
         "readonly": false,
         "required": false,
         "searchable": true,
-        "sort": 18,
+        "sort": 17,
         "special": [
           "cast-json"
         ],
@@ -19149,7 +19152,7 @@
         "readonly": false,
         "required": true,
         "searchable": true,
-        "sort": 11,
+        "sort": 10,
         "special": null,
         "translations": null,
         "validation": null,
@@ -19196,7 +19199,7 @@
         "readonly": false,
         "required": true,
         "searchable": true,
-        "sort": 12,
+        "sort": 11,
         "special": [
           "m2o"
         ],
@@ -19245,7 +19248,7 @@
         "readonly": false,
         "required": false,
         "searchable": true,
-        "sort": 14,
+        "sort": 13,
         "special": [
           "m2o"
         ],
@@ -19295,7 +19298,7 @@
         "readonly": false,
         "required": false,
         "searchable": true,
-        "sort": 15,
+        "sort": 14,
         "special": null,
         "translations": null,
         "validation": null,
@@ -19343,7 +19346,7 @@
         "readonly": false,
         "required": false,
         "searchable": true,
-        "sort": 16,
+        "sort": 15,
         "special": null,
         "translations": null,
         "validation": null,
@@ -19390,7 +19393,7 @@
         "readonly": false,
         "required": false,
         "searchable": true,
-        "sort": 13,
+        "sort": 12,
         "special": [
           "alias",
           "no-data"
@@ -19399,50 +19402,6 @@
         "validation": null,
         "validation_message": null,
         "width": "full"
-      }
-    },
-    {
-      "collection": "news_links",
-      "field": "slug",
-      "type": "string",
-      "meta": {
-        "collection": "news_links",
-        "conditions": null,
-        "display": null,
-        "display_options": null,
-        "field": "slug",
-        "group": null,
-        "hidden": false,
-        "interface": "input",
-        "note": null,
-        "options": null,
-        "readonly": false,
-        "required": false,
-        "searchable": true,
-        "sort": 9,
-        "special": null,
-        "translations": null,
-        "validation": null,
-        "validation_message": null,
-        "width": "full"
-      },
-      "schema": {
-        "name": "slug",
-        "table": "news_links",
-        "data_type": "character varying",
-        "default_value": null,
-        "max_length": 255,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_unique": false,
-        "is_indexed": false,
-        "is_primary_key": false,
-        "is_generated": false,
-        "generation_expression": null,
-        "has_auto_increment": false,
-        "foreign_key_table": null,
-        "foreign_key_column": null
       }
     },
     {
@@ -19465,7 +19424,7 @@
         "readonly": false,
         "required": false,
         "searchable": true,
-        "sort": 17,
+        "sort": 16,
         "special": [
           "alias",
           "no-data"
@@ -19474,6 +19433,65 @@
         "validation": null,
         "validation_message": null,
         "width": "full"
+      }
+    },
+    {
+      "collection": "news_links",
+      "field": "status",
+      "type": "string",
+      "meta": {
+        "collection": "news_links",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "status",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": null,
+        "options": {
+          "choices": [
+            {
+              "text": "Draft",
+              "value": "draft"
+            },
+            {
+              "text": "Published",
+              "value": "published"
+            },
+            {
+              "text": "Archived",
+              "value": "archived"
+            }
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 3,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "status",
+        "table": "news_links",
+        "data_type": "character varying",
+        "default_value": "draft",
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
       }
     },
     {
