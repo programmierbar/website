@@ -1,5 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
-import { sendTemplatedEmail, getSetting, type EmailServiceContext } from '../shared/email-service.js'
+import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
+import { getSetting } from '../shared/settings.js'
 import { generateQRCodeBuffer } from '../shared/ticket-utils.js'
 import {
     generateAppleWalletPass,

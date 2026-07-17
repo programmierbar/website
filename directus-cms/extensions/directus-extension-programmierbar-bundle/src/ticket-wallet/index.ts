@@ -1,7 +1,7 @@
 /// <reference types="@directus/extensions/api.d.ts" />
 import { defineEndpoint } from '@directus/extensions-sdk'
 import { generateAppleWalletPass, type WalletPassInput } from '../shared/wallet-pass-generator.js'
-import { getSetting } from '../shared/email-service.js'
+import { getRequiredSetting } from '../shared/settings.js'
 
 import type { SandboxEndpointRouter } from 'directus:api'
 
@@ -84,10 +84,11 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                 getSchema: context.getSchema,
                 accountability: { admin: true },
             }
-            const websiteUrl = await getSetting('website_url', emailServiceContext)
-
-            if (!websiteUrl) {
-                logger.error('ticket-wallet: website_url setting is not configured')
+            let websiteUrl: string
+            try {
+                websiteUrl = await getRequiredSetting('website_url', emailServiceContext)
+            } catch (settingError: any) {
+                logger.error(`ticket-wallet: ${settingError?.message ?? String(settingError)}`)
                 res.status(503).send({ error: 'Website URL not configured' })
                 return
             }

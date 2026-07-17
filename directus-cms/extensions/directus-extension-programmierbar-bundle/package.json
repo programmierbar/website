@@ -131,6 +131,11 @@
             },
             {
                 "type": "hook",
+                "name": "post-to-discord",
+                "source": "src/post-to-discord/index.ts"
+            },
+            {
+                "type": "hook",
                 "name": "fetch-open-graph",
                 "source": "src/fetch-open-graph/index.ts"
             },
