@@ -87,8 +87,12 @@ function decodeEntities(value: string): string {
                 entity[1] === 'x' || entity[1] === 'X'
                     ? Number.parseInt(entity.slice(2), 16)
                     : Number.parseInt(entity.slice(1), 10)
-            return Number.isFinite(code) ? String.fromCodePoint(code) : match
-        }
+
+            if (Number.isFinite(code) && code >= 0 && code <= 0x10ffff) {
+                return String.fromCodePoint(code)
+            }
+
+            return match
         // Unknown named entities are left untouched rather than dropped.
         return Object.prototype.hasOwnProperty.call(NAMED_ENTITIES, entity) ? NAMED_ENTITIES[entity] : match
     })
