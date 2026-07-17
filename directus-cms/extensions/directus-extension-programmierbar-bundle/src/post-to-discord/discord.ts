@@ -214,6 +214,7 @@ export async function postToDiscord(
         await axios({
             method: 'POST',
             url: webhookUrl,
+            timeout: 10_000,
             headers: { 'Content-Type': 'application/json' },
             data: { ...payload, allowed_mentions: { parse: [] } },
         })
