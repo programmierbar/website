@@ -100,7 +100,7 @@ describe('buildNewsEmbed', () => {
             memberName: 'Jane Doe',
         })
 
-        expect(payload.embeds[0].description).toBe('Great read\n\n*Meinung von Jane Doe*')
+        expect(payload.embeds[0].description).toBe('Great read\n\n_Meinung von Jane Doe_')
     })
 
     test('shows the attribution even when there is no comment', () => {
@@ -111,7 +111,7 @@ describe('buildNewsEmbed', () => {
             memberName: 'Jane Doe',
         })
 
-        expect(payload.embeds[0].description).toBe('*Meinung von Jane Doe*')
+        expect(payload.embeds[0].description).toBe('_Meinung von Jane Doe_')
     })
 
     test('ignores a blank member name', () => {
