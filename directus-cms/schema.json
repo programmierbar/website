@@ -18677,7 +18677,7 @@
         "note": null,
         "options": null,
         "readonly": false,
-        "required": true,
+        "required": false,
         "searchable": true,
         "sort": 9,
         "special": null,
