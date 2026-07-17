@@ -53,8 +53,12 @@ interface Recorded {
 }
 
 interface SetupOptions {
-    /** Rows returned by `news_target` readByQuery. */
+    /** Rows returned by `news_target` readByQuery (when not keyed by news id). */
     junctionRows?: Array<Record<string, any>>
+    /** Junction rows keyed by the `news_id` the query filters on (batch cases). */
+    junctionRowsByNewsId?: Record<string, Array<Record<string, any>>>
+    /** When set, updateOne rejects for this target id (to test batch resilience). */
+    updateOneErrorId?: string
     /** Rows returned by a `news` readByQuery (slug-collision lookup). */
     existingNews?: Array<Record<string, any>>
     /** Rows returned by a `news_links` readByQuery (publish guard). */
@@ -84,9 +88,13 @@ function setup(options: SetupOptions = {}) {
     const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
 
     const ItemsService = jest.fn().mockImplementation((collection: string) => ({
-        readByQuery: jest.fn(async () => {
+        readByQuery: jest.fn(async (query: Record<string, any> = {}) => {
             if (collection === 'news') return existingNews
             if (collection === 'news_links') return sourceLinks
+            const newsIdEq = query.filter?.news_id?._eq
+            if (newsIdEq !== undefined && options.junctionRowsByNewsId) {
+                return options.junctionRowsByNewsId[String(newsIdEq)] ?? []
+            }
             return junctionRows
         }),
         readOne: jest.fn(async () => (collection === 'news' ? { slug: currentNewsSlug } : sourceItem)),
@@ -98,6 +106,9 @@ function setup(options: SetupOptions = {}) {
             return collection === 'news' ? newNewsId : 'junction-new'
         }),
         updateOne: jest.fn(async (id: string | number, data: Record<string, any>) => {
+            if (options.updateOneErrorId !== undefined && String(id) === String(options.updateOneErrorId)) {
+                throw new Error(`update failed for ${id}`)
+            }
             recorded.updateOne.push({ collection, id, data })
             return id
         }),
@@ -354,5 +365,24 @@ describe('create-news hook', () => {
         expect(recorded.updateOne).toEqual([{ collection: 'news_links', id: 'nl1', data: { status: 'archived' } }])
         expect(recorded.deleteOne).toEqual([{ collection: 'news_target', id: 10 }])
         expect(result).toEqual(['news1'])
+    })
+
+    test('news delete: one failing item does not stop the batch from archiving the rest', async () => {
+        const { filters, recorded } = setup({
+            junctionRowsByNewsId: {
+                'news-1': [{ id: 11, target: 'nl1' }],
+                'news-2': [{ id: 12, target: 'nl2' }],
+            },
+            updateOneErrorId: 'nl1', // archiving the first item's link fails
+        })
+        const handler = filters.get('news.items.delete')!
+
+        const result = await handler(['news-1', 'news-2'], {}, filterContext)
+
+        // news-1 failed mid-archive, but news-2 was still archived and its junction dropped.
+        expect(recorded.updateOne).toEqual([{ collection: 'news_links', id: 'nl2', data: { status: 'archived' } }])
+        expect(recorded.deleteOne).toEqual([{ collection: 'news_target', id: 12 }])
+        expect(result).toEqual(['news-1', 'news-2'])
+        expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
     })
 })

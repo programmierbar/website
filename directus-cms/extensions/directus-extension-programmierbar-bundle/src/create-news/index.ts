@@ -435,17 +435,21 @@ export default defineHook(({ action, filter }, hookContext) => {
             return keys
         }
 
-        try {
-            const junctionService = new ItemsService(JUNCTION_COLLECTION, {
-                schema: context.schema,
-                accountability: context.accountability,
-            })
-            const sourceService = new ItemsService(SOURCE_COLLECTION, {
-                schema: context.schema,
-                accountability: context.accountability,
-            })
+        const junctionService = new ItemsService(JUNCTION_COLLECTION, {
+            schema: context.schema,
+            accountability: context.accountability,
+        })
+        const sourceService = new ItemsService(SOURCE_COLLECTION, {
+            schema: context.schema,
+            accountability: context.accountability,
+        })
 
-            for (const newsId of ids) {
+        // Catch per news id so that, in a batch delete, one failing item does not
+        // abort the rest — otherwise the remaining links would stay published and
+        // publicly readable. Never block the deletion itself; a leftover archived
+        // link / junction row is recoverable, a blocked delete is worse.
+        for (const newsId of ids) {
+            try {
                 const rows = await readJunctionRowsByNewsId(junctionService, newsId, ['id', 'target'])
                 for (const row of rows) {
                     if (row.target) {
@@ -456,15 +460,13 @@ export default defineHook(({ action, filter }, hookContext) => {
                 if (rows.length > 0) {
                     logger.info(`${HOOK_NAME}: Archived ${rows.length} link(s) and dropped junction row(s) for deleted news ${newsId}`)
                 }
+            } catch (error: any) {
+                logger.error(`${HOOK_NAME}: Failed to archive source links for deleted news ${newsId}: ${error.message}`)
+                await notifySlack(
+                    `:warning: *${HOOK_NAME}*: Beim Löschen des News-Eintrags ${newsId} konnte der verknüpfte News-Link nicht archiviert werden. Bitte manuell prüfen.\n` +
+                        `Fehler: ${error.message}`
+                )
             }
-        } catch (error: any) {
-            // Never block the deletion itself; a leftover archived link / junction
-            // row is recoverable, a blocked delete is worse.
-            logger.error(`${HOOK_NAME}: Failed to archive source links for deleted news: ${error.message}`)
-            await notifySlack(
-                `:warning: *${HOOK_NAME}*: Beim Löschen eines News-Eintrags konnte der verknüpfte News-Link nicht archiviert werden. Bitte manuell prüfen.\n` +
-                    `Fehler: ${error.message}`
-            )
         }
 
         return keys
