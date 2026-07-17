@@ -88,7 +88,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             try {
                 websiteUrl = await getRequiredSetting('website_url', emailServiceContext)
             } catch (settingError: any) {
-                logger.error(`ticket-wallet: ${settingError.message}`)
+                logger.error(`ticket-wallet: ${settingError?.message ?? String(settingError)}`)
                 res.status(503).send({ error: 'Website URL not configured' })
                 return
             }
