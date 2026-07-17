@@ -361,6 +361,7 @@ export interface DirectusNewsItem {
     status: string
     slug: string | null
     sort: number | null
+    published_on: string | null
     date_created: string
     date_updated: string | null
     target: {

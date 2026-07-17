@@ -7,7 +7,7 @@
             />
         </div>
 
-        <NewsItem v-if="newsLink" :news-link="newsLink" :show-brand-mark="true" />
+        <NewsItem v-if="newsLink" :news-link="newsLink" :published-on="news?.published_on" :show-brand-mark="true" />
     </div>
 </template>
 
@@ -46,7 +46,9 @@ useHead(() =>
               path: route.path,
               title: newsLink.value.title,
               description: newsLink.value.comment || newsLink.value.open_graph?.description || '',
-              publishedAt: newsLink.value.date_created.split('T')[0],
+              // Omit the published time entirely when published_on is missing
+              // (a broken state) rather than substituting a different date.
+              publishedAt: news.value?.published_on ? news.value.published_on.split('T')[0] : undefined,
           })
         : {}
 )

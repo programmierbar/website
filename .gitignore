@@ -88,3 +88,4 @@ logs/security/
 /.agents/skills/plannotator*
 /.claude/skills/plannotator*
 /skills-lock.json
+/.junie/*

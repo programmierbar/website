@@ -146,10 +146,12 @@ import { trackGoal } from '../helpers'
 import SocialNetworks from './SocialNetworks.vue'
 
 const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
+const FLAG_SHOW_NEWS = useRuntimeConfig().public.FLAG_SHOW_NEWS
 
 const mainMenuItems = [
     { label: 'Home', href: '/' },
     { label: 'Podcast', href: '/podcast' },
+    ...(FLAG_SHOW_NEWS ? [{ label: 'News', href: '/news' }] : []),
     { label: 'Meetup', href: '/meetup' },
     { label: 'Konferenzen', href: '/konferenz' },
     { label: 'Hall of Fame', href: '/hall-of-fame' },

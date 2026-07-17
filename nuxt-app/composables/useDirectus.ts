@@ -959,7 +959,7 @@ export function useDirectus() {
         page: number = 1,
         { withAuthor = false }: { withAuthor?: boolean } = {}
     ) {
-        const fields = ['id', 'slug', 'date_created', 'target.id', 'target.collection', 'target.target.*']
+        const fields = ['id', 'slug', 'published_on', 'target.id', 'target.collection', 'target.target.*']
         if (withAuthor) {
             fields.push('target.target.member.*', 'target.target.member.normal_image.*')
         }
@@ -968,7 +968,7 @@ export function useDirectus() {
             readItems('news', {
                 filter: { status: { _eq: 'published' } },
                 fields: fields,
-                sort: ['-date_created'],
+                sort: ['-published_on'],
                 limit: limit,
                 page: page,
             })
@@ -991,7 +991,7 @@ export function useDirectus() {
                 },
                 fields: [
                     'id',
-                    'date_created',
+                    'published_on',
                     'target.id',
                     'target.collection',
                     'target.target.*',

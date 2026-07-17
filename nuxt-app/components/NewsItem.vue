@@ -13,7 +13,8 @@
             data-cursor-hover
         />
 
-        <!-- Header: date + source tag -->
+        <!-- Header: date + source tag. The date slot stays rendered even when
+           empty so the source tag keeps its right-aligned position. -->
         <header class="flex items-center justify-between gap-3.5">
             <span class="text-[13px] font-light italic text-[#abb2b5]">{{ formattedDate }}</span>
             <span
@@ -75,6 +76,10 @@ import LinkButton from './LinkButton.vue'
 const props = withDefaults(
     defineProps<{
         newsLink: DirectusNewsLinkItem
+        // The publication date, from the parent `news` meta item's `published_on`.
+        // Null/undefined for an item in a broken state (published without a date),
+        // in which case no date is shown.
+        publishedOn?: string | null
         showBrandMark?: boolean
         // When set, the whole card links here (used by the list view). Omit on the
         // detail page so the card is not a self-link.
@@ -83,12 +88,13 @@ const props = withDefaults(
         headingLevel?: 'h1' | 'h2'
     }>(),
     {
+        publishedOn: undefined,
         showBrandMark: false,
         to: undefined,
         headingLevel: 'h1',
     }
 )
-const { newsLink } = toRefs(props)
+const { newsLink, publishedOn } = toRefs(props)
 
 // The member is only usable when it was expanded (an object, not an id/null).
 const member = computed<DirectusMemberItem | null>(() =>
@@ -113,12 +119,16 @@ const initials = computed(() =>
     member.value ? `${member.value.first_name.charAt(0)}${member.value.last_name.charAt(0)}`.toUpperCase() : ''
 )
 
+// Empty when the item has no publication date (a broken state); the template
+// then renders no date rather than substituting a different one.
 const formattedDate = computed(() =>
-    new Date(newsLink.value.date_created).toLocaleDateString('de-DE', {
-        timeZone: 'Europe/Berlin',
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-    })
+    publishedOn.value
+        ? new Date(publishedOn.value).toLocaleDateString('de-DE', {
+              timeZone: 'Europe/Berlin',
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+          })
+        : ''
 )
 </script>

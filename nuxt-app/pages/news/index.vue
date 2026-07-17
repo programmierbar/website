@@ -1,5 +1,5 @@
 <template>
-    <div class="container px-6 pb-24 pt-32 md:pt-40 lg:pt-48">
+    <div class="container px-6 pb-24 pt-32 md:pt-40 lg:pt-48 md:pl-24 3xl:pl-0">
         <SectionHeading element="h1">News</SectionHeading>
 
         <!-- RSS feed link -->
@@ -25,6 +25,7 @@
                 <NewsItem
                     class="h-full"
                     :news-link="card.link"
+                    :published-on="card.news.published_on"
                     :to="card.news.slug ? `/news/${card.news.slug}` : undefined"
                     heading-level="h2"
                 />

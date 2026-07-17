@@ -4,7 +4,7 @@ import svgLoader from 'vite-svg-loader'
 // so that it can be resolved during the nuxt build process
 import { useDirectus } from './composables/useDirectus'
 import { enableDirectusRetries } from './services'
-import { DEV, DEVTOOLS, DIRECTUS_CMS_URL, FLAG_SHOW_LOGIN, DISCORD_INVITE_LINK } from './config'
+import { DEV, DEVTOOLS, DIRECTUS_CMS_URL, FLAG_SHOW_LOGIN, FLAG_SHOW_NEWS, DISCORD_INVITE_LINK } from './config'
 
 const directus = useDirectus()
 
@@ -52,6 +52,7 @@ export default defineNuxtConfig({
         stripeWebhookSecret: '', // Set via NUXT_STRIPE_WEBHOOK_SECRET env var
         public: {
             FLAG_SHOW_LOGIN: FLAG_SHOW_LOGIN,
+            FLAG_SHOW_NEWS: FLAG_SHOW_NEWS,
             DISCORD_INVITE_LINK: DISCORD_INVITE_LINK,
             directusCmsUrl: DIRECTUS_CMS_URL,
             stripePublishableKey: '', // Set via NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY env var
