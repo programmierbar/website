@@ -210,7 +210,7 @@ export async function postToDiscord(
             method: 'POST',
             url: webhookUrl,
             headers: { 'Content-Type': 'application/json' },
-            data: payload,
+            data: { ...payload, allowed_mentions: { parse: [] } },
         })
     } catch (error: any) {
         // Surface Discord's response body (rate limits, validation errors) so the
