@@ -1,7 +1,7 @@
 /// <reference types="@directus/extensions/api.d.ts" />
 import { defineEndpoint } from '@directus/extensions-sdk'
 import { generateAppleWalletPass, type WalletPassInput } from '../shared/wallet-pass-generator.js'
-import { getRequiredSetting } from '../shared/email-service.js'
+import { getRequiredSetting } from '../shared/settings.js'
 
 import type { SandboxEndpointRouter } from 'directus:api'
 

@@ -6,7 +6,7 @@ import {
     readJunctionRowsByNewsId,
     SOURCE_COLLECTION,
 } from '../create-news/util/newsTarget.ts'
-import { getRequiredSetting } from '../shared/email-service.js'
+import { getRequiredSetting } from '../shared/settings.js'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
 import { safeAction } from '../shared/safeHook.ts'
 import { buildNewsEmbed, postToDiscord } from './discord.ts'

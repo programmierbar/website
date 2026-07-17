@@ -1,8 +1,8 @@
 import { describe, expect, jest, test } from '@jest/globals'
-import { getRequiredSetting } from '../email-service.ts'
+import { getRequiredSetting } from '../settings.ts'
 
 /**
- * Build a minimal EmailServiceContext whose `automation_settings` service
+ * Build a minimal SettingsContext whose `automation_settings` service
  * returns the given rows from readByQuery.
  */
 function buildContext(rows: Array<{ value: any }>) {
@@ -13,8 +13,8 @@ function buildContext(rows: Array<{ value: any }>) {
     }
 
     return {
-        logger: { warn: jest.fn(), error: jest.fn(), info: jest.fn() },
-        services: { ItemsService, MailService: class {} },
+        logger: { warn: jest.fn() },
+        services: { ItemsService },
         getSchema: async () => ({}),
     } as any
 }

@@ -1,11 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
-import {
-    sendTemplatedEmail,
-    getSetting,
-    getSettings,
-    formatDateGerman,
-    type EmailServiceContext,
-} from '../shared/email-service.js'
+import { sendTemplatedEmail, formatDateGerman, type EmailServiceContext } from '../shared/email-service.js'
+import { getSetting, getSettings } from '../shared/settings.js'
 import { postSlackMessage } from '../shared/postSlackMessage.js'
 import { safeAction } from '../shared/safeHook.ts'
 
