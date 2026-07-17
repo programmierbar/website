@@ -93,6 +93,7 @@ function decodeEntities(value: string): string {
             }
 
             return match
+        }
         // Unknown named entities are left untouched rather than dropped.
         return Object.prototype.hasOwnProperty.call(NAMED_ENTITIES, entity) ? NAMED_ENTITIES[entity] : match
     })

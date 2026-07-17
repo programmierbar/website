@@ -194,6 +194,10 @@ describe('htmlToDiscordText', () => {
         expect(htmlToDiscordText('<p>M&#228;dchen f&#xFC;r</p>')).toBe('Mädchen für')
     })
 
+    test('leaves an out-of-range numeric entity untouched instead of throwing', () => {
+        expect(htmlToDiscordText('<p>&#9999999999;</p>')).toBe('&#9999999999;')
+    })
+
     test('does not double-decode a literal escaped entity', () => {
         expect(htmlToDiscordText('<p>&amp;auml;</p>')).toBe('&auml;')
     })
