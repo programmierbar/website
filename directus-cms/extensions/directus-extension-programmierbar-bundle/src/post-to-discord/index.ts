@@ -6,15 +6,12 @@ import {
     readJunctionRowsByNewsId,
     SOURCE_COLLECTION,
 } from '../create-news/util/newsTarget.ts'
-import { getSetting } from '../shared/email-service.js'
+import { getRequiredSetting } from '../shared/email-service.js'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
 import { safeAction } from '../shared/safeHook.ts'
 import { buildNewsEmbed, postToDiscord } from './discord.ts'
 
 const HOOK_NAME = 'post-to-discord'
-
-/** Fallback website URL when the `website_url` setting is not configured. */
-const DEFAULT_WEBSITE_URL = 'https://www.programmier.bar'
 
 /**
  * Posts a `news` item to Discord (via an incoming webhook) when it is published.
@@ -71,13 +68,16 @@ export default defineHook(({ action }, hookContext) => {
             accountability: eventContext.accountability,
         })
 
-        const websiteUrl = (await getSetting('website_url', hookContext)) || DEFAULT_WEBSITE_URL
-
         // Per-item try/catch so that, in a batch publish, one failure neither
         // aborts the rest nor blocks the publish itself — the item is already
         // published; a missed Discord post is recoverable via the Slack alert.
         for (const newsId of keys) {
             try {
+                // Fail closed rather than defaulting to a production URL: a wrong
+                // public Discord link is hard to retract, so if `website_url` is
+                // not configured we skip the post and alert via Slack (below).
+                const websiteUrl = await getRequiredSetting('website_url', hookContext)
+
                 const news = await newsService.readOne(newsId, { fields: ['slug'] })
 
                 const rows = await readJunctionRowsByNewsId(junctionService, newsId, ['target'])
