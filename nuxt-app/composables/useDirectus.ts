@@ -462,7 +462,9 @@ export function useDirectus() {
       .then((result) => {
         const singleResult = result.pop() as unknown as ConferenceItem | undefined
         if (!singleResult) {
-          throw new Error(`Conference with slug "${slug}" not found in Directus.`)
+          // Unknown slug — return null so the caller can render a 404 instead
+          // of treating a missing conference as a fatal fetch failure.
+          return null
         }
         const speakersPrepared = singleResult.speakers.map((speaker: any) => {
               return {
