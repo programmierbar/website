@@ -261,15 +261,14 @@ const { data: pageData, error } = await useAsyncData(route.fullPath, async () =>
             directus.getTestimonials(),
         ])
 
-        if (!conference) {
-            throw new Error(`Conference with slug "${slug}" not found in Directus.`)
-        }
-
         if (!conferencePage) {
           throw new Error('Could not load the conference singleton page from Directus.')
         }
 
-        return { conference, conferencePage, testimonials }
+        // A missing conference is a normal 404 (handled below), not a fetch
+        // failure — so don't throw here. Only genuine transport failures or a
+        // missing singleton page should become a fatal 500.
+        return { conference: conference ?? null, conferencePage, testimonials }
     } catch (err) {
         // Surface the underlying error in prerender/runtime logs so transient
         // Directus failures can be told apart from real data issues. The
@@ -279,7 +278,8 @@ const { data: pageData, error } = await useAsyncData(route.fullPath, async () =>
     }
 })
 
-// Re-throw as a fatal error so prerender (with failOnError) aborts the build
+// Genuine fetch failure (Directus unreachable, missing singleton page):
+// re-throw as a fatal error so prerender (with failOnError) aborts the build
 // instead of baking the failure into a cached blank page via ISR.
 if (error.value) {
     throw createError({
@@ -290,8 +290,17 @@ if (error.value) {
     })
 }
 
+// Unknown slug: the conference simply doesn't exist. Return a normal 404
+// instead of crashing the serverless function with a fatal 500.
+if (!pageData.value?.conference) {
+    throw createError({
+        statusCode: 404,
+        statusMessage: `Konferenz "${route.params.slug}" nicht gefunden.`,
+    })
+}
+
 // Extract conference and page from page data
-const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageData.value?.conference)
+const conference: ComputedRef<ConferenceItem | undefined> = computed(() => pageData.value?.conference ?? undefined)
 const conferencePage: ComputedRef<DirectusConferencePage | undefined> = computed(() => pageData.value?.conferencePage)
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
