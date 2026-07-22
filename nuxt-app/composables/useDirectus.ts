@@ -952,18 +952,24 @@ export function useDirectus() {
 
     // `news` is a meta collection whose content lives on the m2a `target`
     // (currently only `news_links`), so the source item is expanded alongside
-    // each entry. `page` drives the list view's infinite scroll. The author
-    // (with image) is only expanded when `withAuthor` is set — the list cards
-    // need it, the RSS feed does not, so the feed stays lean. Published news is
-    // public, so this uses the regular client.
+    // each entry. `page` drives the list view's infinite scroll. The card
+    // relations (author with image, referenced podcast with cover) are only
+    // expanded when `withCardRelations` is set — the list cards need them, the
+    // RSS feed does not, so the feed stays lean. Published news is public, so
+    // this uses the regular client.
     async function getPublishedNews(
         limit: number = 50,
         page: number = 1,
-        { withAuthor = false }: { withAuthor?: boolean } = {}
+        { withCardRelations = false }: { withCardRelations?: boolean } = {}
     ) {
         const fields = ['id', 'slug', 'published_on', 'target.id', 'target.collection', 'target.target.*']
-        if (withAuthor) {
-            fields.push('target.target.member.*', 'target.target.member.normal_image.*')
+        if (withCardRelations) {
+            fields.push(
+                'target.target.member.*',
+                'target.target.member.normal_image.*',
+                'target.target.podcast.*',
+                'target.target.podcast.cover_image.*'
+            )
         }
 
         return (await directus.request(
@@ -999,6 +1005,8 @@ export function useDirectus() {
                     'target.target.*',
                     'target.target.member.*',
                     'target.target.member.normal_image.*',
+                    'target.target.podcast.*',
+                    'target.target.podcast.cover_image.*',
                 ],
                 limit: 1,
             })
