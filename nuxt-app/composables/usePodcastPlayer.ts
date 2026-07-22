@@ -114,6 +114,15 @@ export function usePodcastPlayer() {
         isScrubbing = true
     }
 
+    /**
+     * Returns whether the given podcast is the one currently loaded in the
+     * player and actively playing (i.e. not paused). Matches by id, so any
+     * object carrying the podcast id works. Useful for toggling a play/pause
+     * affordance on episode cards and reference blocks.
+     */
+    const isPlaying = (podcastToCheck: Pick<PodcastItem, 'id'>) =>
+        !audioState.paused && podcast.value?.id === podcastToCheck.id
+
     const backward = () => setCurrentTime(Math.max(audioState.currentTime - 15, 0))
 
     const forward = () => setCurrentTime(Math.min(audioState.currentTime + 15, audioState.duration))
@@ -226,6 +235,7 @@ export function usePodcastPlayer() {
         pause,
         setCurrentTime,
         beginScrubbing,
+        isPlaying,
         backward,
         forward,
         setPodcast,

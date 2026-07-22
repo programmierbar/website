@@ -57,21 +57,27 @@
             />
         </div>
 
-        <!-- Footer: article link + brand mark -->
-        <footer class="flex flex-wrap items-center justify-between gap-4 border-t border-[#3a3d3f] pt-5">
-            <LinkButton class="relative z-10" :href="newsLink.link" target="_blank" rel="noopener noreferrer">Zum Artikel</LinkButton>
-            <BrandLogo v-if="showBrandMark" class="h-5 opacity-85" alt="programmier.bar" />
+        <!-- Footer: optional podcast reference, then article link + brand mark -->
+        <footer class="flex flex-col gap-5 border-t border-[#3a3d3f] pt-5">
+            <NewsPodcastReference v-if="podcast" :podcast="podcast" :seconds-from="newsLink.podcast_seconds_from" />
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <LinkButton class="relative z-10" :href="newsLink.link" target="_blank" rel="noopener noreferrer"
+                    >Zum Artikel</LinkButton
+                >
+                <BrandLogo v-if="showBrandMark" class="h-5 opacity-85" alt="programmier.bar" />
+            </div>
         </footer>
     </article>
 </template>
 
 <script setup lang="ts">
 import BrandLogo from '~/assets/images/brand-logo.svg'
-import type { DirectusFileItem, DirectusMemberItem, DirectusNewsLinkItem } from '~/types/directus'
+import type { DirectusFileItem, DirectusMemberItem, DirectusNewsLinkItem, DirectusPodcastItem } from '~/types/directus'
 import { computed, toRefs } from 'vue'
 import DirectusImage from './DirectusImage.vue'
 import InnerHtml from './InnerHtml.vue'
 import LinkButton from './LinkButton.vue'
+import NewsPodcastReference from './NewsPodcastReference.vue'
 
 const props = withDefaults(
     defineProps<{
@@ -109,6 +115,15 @@ const memberImage = computed<DirectusFileItem | null>(() => {
     const image = member.value?.normal_image
     return image && typeof image === 'object' ? image : null
 })
+
+// The referenced podcast episode, only when it was expanded (an object, not an
+// id/null). The list query leaves it as an id, so the reference block renders on
+// the detail page only.
+const podcast = computed<DirectusPodcastItem | null>(() =>
+    newsLink.value.podcast && typeof newsLink.value.podcast === 'object'
+        ? (newsLink.value.podcast as DirectusPodcastItem)
+        : null
+)
 
 // Only render the opinion block when there is both a comment and an author.
 const hasOpinion = computed(() => Boolean(newsLink.value.comment && member.value))
