@@ -57,7 +57,7 @@
         </section>
 
         <!-- Podcasts -->
-        <section v-if="latestPodcasts.length" class="relative py-16 md:my-10 md:py-14 lg:my-24 lg:py-24">
+        <section v-if="latestPodcasts.length" class="relative py-8 md:my-5 md:py-14 lg:my-12 lg:py-12">
             <SectionHeading class="px-6 md:px-0" element="h2">
                 {{ homePage.podcast_heading }}
             </SectionHeading>
@@ -77,7 +77,15 @@
         />
 
         <section class="relative">
-          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
+          <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
+            <BackgroundSpotlights :position='"-top-130 fixed right-[-38vw] -translate-x-1/2 transform"' :index='"-10"' />
+            <BackgroundSpotlights :position='"-top-130 fixed left-[-2vw] -translate-x-1/2 transform"' :index='"-10"' />
+            <NewsletterBand :expanded='true' />
+          </div>
+        </section>
+
+        <section class="relative">
+          <div class="container mt-8 px-6 md:mt-14 md:pl-48 lg:mt-16 lg:pr-8 3xl:px-8 md:mb-8 lg:mb-24">
             <SectionHeading element="h2">
               Community
             </SectionHeading>

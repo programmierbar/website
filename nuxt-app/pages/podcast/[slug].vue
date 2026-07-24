@@ -116,7 +116,13 @@
             <PodcastSlider class="mt-12 md:mt-0" :podcasts="relatedPodcasts" />
         </section>
 
-        <FeedbackSection class="mb-20 mt-16 md:mb-32 md:mt-24 md:pl-40 lg:mb-40 lg:mt-32 3xl:px-0" />
+        <section class="relative mb-10 mt-8 md:mb-16 md:mt-12 md:pl-40 lg:mb-20 lg:mt-16 3xl:px-0">
+          <BackgroundSpotlights :position='"-top-96 fixed right-[-40vw] -translate-x-1/2 transform"' :index='"-10"' />
+          <BackgroundSpotlights :position='"-top-96 fixed left-[-12vw] -translate-x-1/2 transform"' :index='"-10"' />
+          <NewsletterBand :expanded='false' />
+        </section>
+
+        <FeedbackSection class="mb-10 mt-8 md:mb-16 md:mt-12 md:pl-40 lg:mb-20 lg:mt-16 3xl:px-0" />
     </div>
 </template>
 
