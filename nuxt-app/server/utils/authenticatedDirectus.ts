@@ -265,7 +265,7 @@ export function useAuthenticatedDirectus() {
     }
 
     async function createNewsletterSubscriber(data: Partial<DirectusNewsletterSubscriberItem>) {
-        return await client.request(createItem('newsletter_subscribers', data as any))
+        return await client.request(createItem('newsletter_subscribers', data))
     }
 
     return {
