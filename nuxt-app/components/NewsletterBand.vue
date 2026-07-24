@@ -142,7 +142,7 @@ function onReset() {
 
                     <p :id="hintId" class="mt-1 text-xs font-light text-shade-400">
                         Abmeldung jederzeit möglich.
-                        <NuxtLink class="font-bold text-lime" data-cursor-hover :href="privacyUrl">
+                        <NuxtLink class="font-bold text-lime" data-cursor-hover :to="privacyUrl">
                             Datenschutzbestimmungen
                         </NuxtLink>
                         gelten.
