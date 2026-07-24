@@ -26,6 +26,10 @@ withDefaults(
     }
 )
 
+// Feature flag: the newsletter is only shown while FLAG_SHOW_NEWSLETTER is on.
+// Gated inside the component so callers can drop it in unconditionally.
+const showNewsletter = useRuntimeConfig().public.FLAG_SHOW_NEWSLETTER
+
 const email = ref('')
 const signup = useNewsletterSignup()
 
@@ -54,6 +58,7 @@ function onReset() {
 
 <template>
     <div
+        v-if="showNewsletter"
         class="newsletter-band relative overflow-hidden rounded-2xl border border-gray-700 bg-black"
         :class="expanded ? 'px-6 py-12 md:px-16 md:py-20' : 'px-6 py-10 md:px-14 md:py-12'"
     >
