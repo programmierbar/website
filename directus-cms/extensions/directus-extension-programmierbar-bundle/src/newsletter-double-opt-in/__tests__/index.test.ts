@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
 import { sendTemplatedEmail } from './../../shared/email-service.ts'
 import { postSlackMessage } from './../../shared/postSlackMessage.ts'
-import { getSetting } from './../../shared/settings.ts'
+import { getRequiredSetting } from './../../shared/settings.ts'
 import registerHook from './../index.ts'
 
 // The extensions SDK ships as ESM and is not transformed under Jest's CJS mode,
@@ -26,14 +26,14 @@ jest.mock('./../../shared/email-service.ts', () => ({
     sendTemplatedEmail: jest.fn(),
 }))
 jest.mock('./../../shared/settings.ts', () => ({
-    getSetting: jest.fn(),
+    getRequiredSetting: jest.fn(),
 }))
 jest.mock('./../../shared/postSlackMessage.ts', () => ({
     postSlackMessage: jest.fn(),
 }))
 
 const sendTemplatedEmailMock = jest.mocked(sendTemplatedEmail)
-const getSettingMock = jest.mocked(getSetting)
+const getRequiredSettingMock = jest.mocked(getRequiredSetting)
 const postSlackMessageMock = jest.mocked(postSlackMessage)
 
 // safeAction detaches the work into its own promise chain and returns void.
@@ -77,7 +77,7 @@ const invokeAction = async (handler: ActionHandler, meta: any) => {
 describe('newsletter-double-opt-in hook', () => {
     beforeEach(() => {
         sendTemplatedEmailMock.mockReset()
-        getSettingMock.mockReset()
+        getRequiredSettingMock.mockReset()
         postSlackMessageMock.mockReset()
     })
 
@@ -110,7 +110,7 @@ describe('newsletter-double-opt-in hook', () => {
 
     describe('action: double-opt-in mail', () => {
         test('sends the ad-free template with a confirm link for a pending subscriber', async () => {
-            getSettingMock.mockResolvedValue('https://www.programmier.bar')
+            getRequiredSettingMock.mockResolvedValue('https://www.programmier.bar')
             sendTemplatedEmailMock.mockResolvedValue(true)
             const { actions } = setup({
                 id: 'sub_1',
@@ -129,9 +129,8 @@ describe('newsletter-double-opt-in hook', () => {
             expect(postSlackMessageMock).not.toHaveBeenCalled()
         })
 
-        test('falls back to the default website URL when the setting is missing', async () => {
-            getSettingMock.mockResolvedValue(null)
-            sendTemplatedEmailMock.mockResolvedValue(true)
+        test('does not send (and warns Slack) when website_url is not configured', async () => {
+            getRequiredSettingMock.mockRejectedValue(new Error("Required setting 'website_url' is not configured"))
             const { actions } = setup({
                 id: 'sub_1',
                 email: 'me@example.de',
@@ -141,8 +140,10 @@ describe('newsletter-double-opt-in hook', () => {
 
             await invokeAction(actions.get(CREATE)!, { key: 'sub_1' })
 
-            const [options] = sendTemplatedEmailMock.mock.calls[0] as [any, any]
-            expect(options.data.confirm_url).toBe('https://www.programmier.bar/newsletter/confirm?token=tok-123')
+            // No guessed-host link is baked into a sent mail; a human is alerted.
+            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+            expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+            expect(postSlackMessageMock.mock.calls[0]?.[0]).toContain('website_url')
         })
 
         test('does not send for a non-pending subscriber', async () => {
@@ -160,7 +161,7 @@ describe('newsletter-double-opt-in hook', () => {
         })
 
         test('posts a Slack warning when the mail cannot be sent', async () => {
-            getSettingMock.mockResolvedValue('https://www.programmier.bar')
+            getRequiredSettingMock.mockResolvedValue('https://www.programmier.bar')
             sendTemplatedEmailMock.mockResolvedValue(false)
             const { actions } = setup({
                 id: 'sub_1',

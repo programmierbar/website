@@ -3,7 +3,7 @@ import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-se
 import { createHookErrorConstructor } from '../shared/errors.ts'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
 import { safeAction } from '../shared/safeHook.ts'
-import { getSetting } from '../shared/settings.ts'
+import { getRequiredSetting } from '../shared/settings.ts'
 
 const HOOK_NAME = 'newsletter-double-opt-in'
 const COLLECTION = 'newsletter_subscribers'
@@ -14,7 +14,6 @@ const COLLECTION = 'newsletter_subscribers'
 const CONFIRM_TOKEN_TTL_MS = 24 * 60 * 60 * 1000
 
 const TEMPLATE_KEY = 'newsletter_double_opt_in'
-const FALLBACK_WEBSITE_URL = 'https://www.programmier.bar'
 
 /**
  * Double-opt-in flow for newsletter subscribers.
@@ -101,7 +100,31 @@ export default defineHook(({ filter, action }, hookContext) => {
                 return
             }
 
-            const websiteUrl = (await getSetting('website_url', context)) || FALLBACK_WEBSITE_URL
+            // Whenever the confirmation mail cannot be sent, the subscriber is
+            // stuck in 'pending' with no way to confirm. Logs alone live only in
+            // the hosting dashboard, so alert a human via Slack.
+            const notifyFailure = async (reason: string) => {
+                const message =
+                    `:warning: *Newsletter*: Double-Opt-in-Mail an ${subscriber.email} nicht gesendet ` +
+                    `(${reason}). Der Subscriber bleibt 'pending'.`
+                try {
+                    await postSlackMessage(message)
+                } catch (slackError: any) {
+                    logger.error(`${HOOK_NAME}: Slack notification failed: ${slackError?.message ?? slackError}`)
+                }
+            }
+
+            // `website_url` is baked into the confirmation link inside a mail we
+            // then send — a wrong or guessed host silently breaks confirmation.
+            // Require it explicitly rather than falling back to a default.
+            let websiteUrl: string
+            try {
+                websiteUrl = await getRequiredSetting('website_url', context)
+            } catch {
+                await notifyFailure("Setting 'website_url' ist nicht konfiguriert")
+                return
+            }
+
             const confirmUrl = `${websiteUrl}/newsletter/confirm?token=${encodeURIComponent(subscriber.confirm_token)}`
 
             const sent = await sendTemplatedEmail(
@@ -113,19 +136,8 @@ export default defineHook(({ filter, action }, hookContext) => {
                 context
             )
 
-            // A failed send (missing template or transport error) needs a human:
-            // the subscriber is stuck in 'pending' with no way to confirm. Logs
-            // alone live only in the hosting dashboard, so notify Slack.
             if (!sent) {
-                const message =
-                    `:warning: *Newsletter*: Double-Opt-in-Mail an ${subscriber.email} konnte nicht ` +
-                    `gesendet werden (Template '${TEMPLATE_KEY}' fehlt oder der Mailversand schlug fehl). ` +
-                    `Der Subscriber bleibt 'pending'.`
-                try {
-                    await postSlackMessage(message)
-                } catch (slackError: any) {
-                    logger.error(`${HOOK_NAME}: Slack notification failed: ${slackError?.message ?? slackError}`)
-                }
+                await notifyFailure(`Template '${TEMPLATE_KEY}' fehlt oder der Mailversand schlug fehl`)
                 return
             }
 
