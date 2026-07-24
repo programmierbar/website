@@ -7,6 +7,10 @@ export class PodcastHandler extends AbstractItemHandler {
         return 'podcasts';
     }
 
+    get type(): string {
+        return 'podcast';
+    }
+
     // Every field read by updateRequired() and buildAttributes(). `status` is added by the hook.
     get indexFields(): string[] {
         return ['id', 'title', 'slug', 'description', 'number', 'type', 'published_on', 'cover_image'];
@@ -38,7 +42,7 @@ export class PodcastHandler extends AbstractItemHandler {
         }
 
         return [{
-            _type : 'podcast',
+            _type : this.type,
             title: item.title,
             number: item.number,
             description: description,

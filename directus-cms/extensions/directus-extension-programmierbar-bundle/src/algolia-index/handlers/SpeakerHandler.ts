@@ -6,6 +6,10 @@ export class SpeakerHandler extends AbstractItemHandler {
         return 'speakers';
     }
 
+    get type(): string {
+        return 'speaker';
+    }
+
     // Every field read by updateRequired() and buildAttributes(). `status` is added by the hook.
     get indexFields(): string[] {
         return ['id', 'first_name', 'last_name', 'academic_title', 'description', 'published_on', 'slug', 'profile_image'];
@@ -25,7 +29,7 @@ export class SpeakerHandler extends AbstractItemHandler {
 
     buildAttributes(item: any): Record<string, any>[] {
         return [{
-            _type : 'speaker',
+            _type : this.type,
             first_name: item.first_name,
             last_name: item.last_name,
             academic_title: item.academic_title,
