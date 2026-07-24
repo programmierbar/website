@@ -268,6 +268,32 @@ export function useAuthenticatedDirectus() {
         return await client.request(createItem('newsletter_subscribers', data))
     }
 
+    // Looks a subscriber up by its confirm token alone. Status and expiry are
+    // evaluated by the caller so it can distinguish confirmed / expired /
+    // invalid — a status+expiry-filtered query could not tell those apart.
+    async function readNewsletterSubscriberByToken(token: string) {
+        const subscribers = await client.request(
+            readItems('newsletter_subscribers', {
+                filter: { confirm_token: { _eq: token } },
+                fields: ['id', 'status', 'confirm_token_expires_at', 'confirmed_at'],
+                limit: 1,
+            })
+        )
+
+        return subscribers?.[0] ?? null
+    }
+
+    // Marks a pending subscriber confirmed. `confirm_token` is intentionally not
+    // cleared (it is NOT NULL); the link is neutralised via status + expiry.
+    async function confirmNewsletterSubscriber(id: string) {
+        return await client.request(
+            updateItem('newsletter_subscribers', id, {
+                status: 'confirmed',
+                confirmed_at: new Date().toISOString(),
+            })
+        )
+    }
+
     return {
         getSpeakerByPortalToken,
         updateSpeaker,
@@ -288,5 +314,7 @@ export function useAuthenticatedDirectus() {
         countCheckedInTicketsForConference,
         getLatestConferenceWithTicketing,
         createNewsletterSubscriber,
+        readNewsletterSubscriberByToken,
+        confirmNewsletterSubscriber,
     }
 }
