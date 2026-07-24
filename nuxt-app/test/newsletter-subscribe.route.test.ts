@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import handler, { isDuplicateError } from '../server/api/newsletter/subscribe.post'
 
 // The handler's Nuxt/Nitro auto-imports must exist BEFORE the module is
@@ -22,6 +22,12 @@ const recordNotUnique = { errors: [{ extensions: { code: 'RECORD_NOT_UNIQUE' } }
 
 beforeEach(() => {
     createNewsletterSubscriber.mockReset()
+})
+
+// Restore any spies (e.g. the console.error stub below) so they don't leak
+// into later tests and swallow real output.
+afterEach(() => {
+    vi.restoreAllMocks()
 })
 
 describe('POST /api/newsletter/subscribe', () => {

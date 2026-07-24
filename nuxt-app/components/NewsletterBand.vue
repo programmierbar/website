@@ -39,6 +39,9 @@ function onInput() {
 }
 
 function onSubmit() {
+    // Trim the field itself so the success state (which renders `email`) shows
+    // the same normalised address the composable submits — no stray whitespace.
+    email.value = email.value.trim()
     signup.subscribe(email.value, honeypot.value)
 }
 
