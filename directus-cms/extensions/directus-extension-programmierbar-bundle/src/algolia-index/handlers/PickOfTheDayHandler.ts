@@ -25,6 +25,9 @@ export class PickOfTheDayHandler extends AbstractItemHandler {
         return [{
             _type : 'pick_of_the_day',
             name: item.name,
+            // Mirror the title under `title` so picks use the same searchable attribute as every
+            // other content type. `name` is kept for the frontend card heading (SearchResultCard.vue).
+            title: item.name,
             description: item.description,
             website_url: item.website_url,
             published_on: item.published_on,
