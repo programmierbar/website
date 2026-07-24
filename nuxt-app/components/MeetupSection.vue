@@ -1,5 +1,5 @@
 <template>
-  <section class="relative mb-14 mt-12 md:mb-32 md:mt-28 lg:mb-52 lg:mt-40">
+  <section class="relative mb-7 mt-12 md:mb-16 md:mt-28 lg:mb-24 lg:mt-40">
     <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
       <SectionHeading element="h2">
         {{ heading }}

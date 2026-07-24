@@ -6,21 +6,21 @@
 
             <div class="relative mt-8 md:mt-14">
                 <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
-                  <div class="flex items-center justify-between space-x-4">
-                      <Breadcrumbs :breadcrumbs="breadcrumbs" />
-                  </div>
+                    <div class="flex items-center justify-between space-x-4">
+                        <Breadcrumbs :breadcrumbs="breadcrumbs" />
+                    </div>
 
-                  <EmbeddedVideoPlayer
-                      v-if="podcast.youtube_url"
-                      :url="podcast.youtube_url"
-                      :sync-with-podcast-player="podcast"
-                      :spotlights='true'
-                      class="mt-8 md:mt-14"
-                  />
+                    <EmbeddedVideoPlayer
+                        v-if="podcast.youtube_url"
+                        :url="podcast.youtube_url"
+                        :sync-with-podcast-player="podcast"
+                        :spotlights="true"
+                        class="mt-8 md:mt-14"
+                    />
 
-                  <PodcastRating :podcast='podcast' />
+                    <PodcastRating :podcast="podcast" />
 
-                  <SectionHeading class="mt-8 md:mt-0" element="h2"> Shownotes </SectionHeading>
+                    <SectionHeading class="mt-8 md:mt-0" element="h2"> Shownotes </SectionHeading>
 
                     <!-- Description -->
                     <InnerHtml
@@ -116,7 +116,13 @@
             <PodcastSlider class="mt-12 md:mt-0" :podcasts="relatedPodcasts" />
         </section>
 
-        <FeedbackSection class="mb-20 mt-16 md:mb-32 md:mt-24 md:pl-40 lg:mb-40 lg:mt-32 3xl:px-0" />
+        <section class="relative mb-10 mt-8 md:mb-16 md:mt-12 md:pl-40 lg:mb-20 lg:mt-16 3xl:px-0">
+            <BackgroundSpotlights position="-top-96 fixed right-[-40vw] -translate-x-1/2 transform" index="-10" />
+            <BackgroundSpotlights position="-top-96 fixed left-[-12vw] -translate-x-1/2 transform" index="-10" />
+            <NewsletterBand :expanded="false" />
+        </section>
+
+        <FeedbackSection class="mb-10 mt-8 md:mb-16 md:mt-12 md:pl-40 lg:mb-20 lg:mt-16 3xl:px-0" />
     </div>
 </template>
 

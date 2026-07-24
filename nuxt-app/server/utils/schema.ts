@@ -181,6 +181,16 @@ export const CheckinScanSchema = z.object({
     ticketCode: z.string().min(1),
 })
 
+// Newsletter signup
+
+export const NewsletterSignupSchema = z.object({
+    email: z
+        .string()
+        .trim()
+        .email('Deine E-Mail-Adresse scheint ungültig zu sein.')
+        .max(200, 'Deine E-Mail-Adresse darf nicht länger als 200 Zeichen lang sein.'),
+})
+
 export type CreateCheckoutInput = z.infer<typeof CreateCheckoutSchema>
 export type TicketAttendeeInput = z.infer<typeof TicketAttendeeSchema>
 export type TicketProfileInput = z.infer<typeof TicketProfileSchema>

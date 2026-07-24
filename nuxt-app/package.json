@@ -12,7 +12,9 @@
         "preview": "nuxt preview",
         "postinstall": "nuxt prepare",
         "eslint": "eslint --fix .",
-        "prettier": "prettier . --write"
+        "prettier": "prettier . --write",
+        "test": "vitest run",
+        "test:watch": "vitest"
     },
     "dependencies": {
         "@directus/sdk": "^21.3.0",
@@ -52,7 +54,8 @@
         "nuxt": "^3.15.2",
         "postcss": "^8.4.35",
         "prettier": "^3.2.5",
-        "prettier-plugin-tailwindcss": "^0.5.11"
+        "prettier-plugin-tailwindcss": "^0.5.11",
+        "vitest": "^4.1.10"
     },
     "overrides": {
         "vue": "latest",

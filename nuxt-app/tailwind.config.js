@@ -56,6 +56,21 @@ module.exports = {
                 800: '#6E0B38',
                 900: '#3F0720',
             },
+            // Neutral text/border shades on dark surfaces (from the Figma
+            // "Shades" scale). The gray scale above is near-black surfaces;
+            // these are the lighter greys used for muted text and dividers.
+            shade: {
+                50: '#F5F6F6',
+                100: '#E5E7E8',
+                200: '#CED2D3',
+                300: '#ABB2B5',
+                400: '#828A8E',
+                500: '#666F74',
+                600: '#585E62',
+                700: '#4B4F53',
+                800: '#424648',
+                900: '#3A3D3F',
+            },
         },
         container: {
             center: true,

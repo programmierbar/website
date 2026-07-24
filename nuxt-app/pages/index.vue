@@ -57,7 +57,7 @@
         </section>
 
         <!-- Podcasts -->
-        <section v-if="latestPodcasts.length" class="relative py-16 md:my-10 md:py-14 lg:my-24 lg:py-24">
+        <section v-if="latestPodcasts.length" class="relative py-8 md:my-5 md:py-14 lg:my-12 lg:py-12">
             <SectionHeading class="px-6 md:px-0" element="h2">
                 {{ homePage.podcast_heading }}
             </SectionHeading>
@@ -77,12 +77,18 @@
         />
 
         <section class="relative">
-          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
-            <SectionHeading element="h2">
-              Community
-            </SectionHeading>
-            <TestimonialSlider :testimonials='testimonials' />
-          </div>
+            <div class="container px-6 md:pl-48 lg:pr-8 3xl:px-8">
+                <BackgroundSpotlights position="-top-130 fixed right-[-38vw] -translate-x-1/2 transform" index="-10" />
+                <BackgroundSpotlights position="-top-130 fixed left-[-2vw] -translate-x-1/2 transform" index="-10" />
+                <NewsletterBand :expanded="true" />
+            </div>
+        </section>
+
+        <section class="relative">
+            <div class="container mt-8 px-6 md:mb-8 md:mt-14 md:pl-48 lg:mb-24 lg:mt-16 lg:pr-8 3xl:px-8">
+                <SectionHeading element="h2"> Community </SectionHeading>
+                <TestimonialSlider :testimonials="testimonials" />
+            </div>
         </section>
     </div>
 </template>
@@ -90,13 +96,13 @@
 <script setup lang="ts">
 import BrandLogoIcon from '~/assets/images/brand-logo.svg'
 import PrimaryPbButton from '~/components/PrimaryPbButton.vue'
+import TestimonialSlider from '~/components/TestimonialSlider.vue'
 import { useDirectus } from '~/composables/useDirectus'
+import { getAssetUrl } from '~/helpers/getAssetUrl'
 import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'
-import { useLoadingScreen, usePageMeta, usePodcastPlayer } from '../composables';
-import type { ConferenceItem, DirectusHomePage, DirectusTestimonialItem, LatestPodcastItem, MeetupItem } from '../types';
-import TestimonialSlider from '~/components/TestimonialSlider.vue';
-import { getAssetUrl } from '~/helpers/getAssetUrl';
+import { useLoadingScreen, usePageMeta, usePodcastPlayer } from '../composables'
+import type { ConferenceItem, DirectusHomePage, DirectusTestimonialItem, LatestPodcastItem, MeetupItem } from '../types'
 
 const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
 
@@ -111,7 +117,7 @@ const { data: pageData } = useAsyncData(async () => {
         directus.getLatestPodcasts(),
         directus.getPodcastCount(),
         directus.getMeetups(),
-        directus.getTestimonials()
+        directus.getTestimonials(),
     ])
 
     const upcomingMeetups = meetups.filter((meetup) => {
@@ -125,23 +131,22 @@ const { data: pageData } = useAsyncData(async () => {
 // Extract home page, latest podcasts and podcast count from page data
 const homePage: ComputedRef<DirectusHomePage | undefined> = computed(() => pageData.value?.homePage)
 const latestPodcasts: ComputedRef<LatestPodcastItem[] | undefined> = computed(() => {
+    if (!podcastPlayer.podcast?.id && pageData.value?.latestPodcasts && pageData.value?.latestPodcasts.length > 0) {
+        podcastPlayer.setPodcast(pageData.value?.latestPodcasts[0])
+    }
 
-  if (!podcastPlayer.podcast?.id && pageData.value?.latestPodcasts && pageData.value?.latestPodcasts.length > 0) {
-    podcastPlayer.setPodcast(pageData.value?.latestPodcasts[0])
-  }
-
-  return pageData.value?.latestPodcasts
+    return pageData.value?.latestPodcasts
 })
 
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
 const highlightItem: ComputedRef<MeetupItem | ConferenceItem | undefined> = computed(() => {
     if (!pageData.value) {
-        return
+        return undefined
     }
 
     if (pageData.value.homePage.highlights.length === 0) {
-        return
+        return undefined
     }
 
     const highlightItem = pageData.value.homePage.highlights[0]
@@ -149,7 +154,7 @@ const highlightItem: ComputedRef<MeetupItem | ConferenceItem | undefined> = comp
         return highlightItem.item
     }
 
-    return
+    return undefined
 })
 const highlightItemType: ComputedRef<string | undefined> = computed(() => {
     if (!pageData.value || pageData.value.homePage.highlights.length === 0) return

@@ -3,8 +3,16 @@ import svgLoader from 'vite-svg-loader'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { useDirectus } from './composables/useDirectus'
+import {
+    DEV,
+    DEVTOOLS,
+    DIRECTUS_CMS_URL,
+    DISCORD_INVITE_LINK,
+    FLAG_SHOW_LOGIN,
+    FLAG_SHOW_NEWS,
+    FLAG_SHOW_NEWSLETTER,
+} from './config'
 import { enableDirectusRetries } from './services'
-import { DEV, DEVTOOLS, DIRECTUS_CMS_URL, FLAG_SHOW_LOGIN, FLAG_SHOW_NEWS, DISCORD_INVITE_LINK } from './config'
 
 const directus = useDirectus()
 
@@ -35,9 +43,7 @@ export default defineNuxtConfig({
     },
 
     // Global CSS: https://go.nuxtjs.dev/config-css
-    css: [
-      'vue-json-pretty/lib/styles.css',
-    ],
+    css: ['vue-json-pretty/lib/styles.css'],
 
     runtimeConfig: {
         // Email (SMTP)
@@ -53,6 +59,7 @@ export default defineNuxtConfig({
         public: {
             FLAG_SHOW_LOGIN: FLAG_SHOW_LOGIN,
             FLAG_SHOW_NEWS: FLAG_SHOW_NEWS,
+            FLAG_SHOW_NEWSLETTER: FLAG_SHOW_NEWSLETTER,
             DISCORD_INVITE_LINK: DISCORD_INVITE_LINK,
             directusCmsUrl: DIRECTUS_CMS_URL,
             stripePublishableKey: '', // Set via NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY env var
@@ -99,18 +106,18 @@ export default defineNuxtConfig({
             enableDirectusRetries()
 
             const routes: string[] = [
-              '/',
-              '/podcast',
-              '/meetup',
-              '/konferenz',
-              '/hall-of-fame',
-              '/ueber-uns',
-              '/impressum',
-              '/datenschutz',
-              '/kontakt',
-              '/verhaltensregeln',
-              '/aufnahmen',
-              '/pick-of-the-day',
+                '/',
+                '/podcast',
+                '/meetup',
+                '/konferenz',
+                '/hall-of-fame',
+                '/ueber-uns',
+                '/impressum',
+                '/datenschutz',
+                '/kontakt',
+                '/verhaltensregeln',
+                '/aufnahmen',
+                '/pick-of-the-day',
             ]
 
             const podcasts = await directus.getPodcasts(10)
