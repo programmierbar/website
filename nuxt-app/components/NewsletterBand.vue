@@ -8,13 +8,15 @@ const props = withDefaults(
     }>(),
     {
         expanded: false,
-
     }
 )
 
 const showNewsletter = useRuntimeConfig().public.FLAG_SHOW_NEWSLETTER
 
 const email = ref('')
+// Honeypot: kept empty by humans, filled by naive bots. Submitted to the
+// server route, which silently drops any request where it's set.
+const honeypot = ref('')
 const signup = useNewsletterSignup()
 
 // Unique per instance so the label/hint stay valid when rendered often
@@ -22,10 +24,12 @@ const uid = useId()
 const emailId = `${uid}-email`
 const hintId = `${uid}-hint`
 
-const title = '// Newsletter';
-const headline = props.expanded ? 'Nichts mehr verpassen' : 'Regelmäßige Dev-News';
-const subheadline = props.expanded ? 'Neue Folgen, Meetups und Konferenzen — einmal pro Woche direkt in dein Postfach. Kein Spam, versprochen.' : 'Eine E-Mail. Alles Wichtige. Kein Spam.';
-const privacyUrl = '/datenschutz';
+const title = '// Newsletter'
+const headline = props.expanded ? 'Nichts mehr verpassen' : 'Regelmäßige Dev-News'
+const subheadline = props.expanded
+    ? 'Neue Folgen, Meetups und Konferenzen — einmal pro Woche direkt in dein Postfach. Kein Spam, versprochen.'
+    : 'Eine E-Mail. Alles Wichtige. Kein Spam.'
+const privacyUrl = '/datenschutz'
 
 // Clear a previous validation error as soon as the user edits the field again.
 function onInput() {
@@ -35,11 +39,12 @@ function onInput() {
 }
 
 function onSubmit() {
-    signup.subscribe(email.value)
+    signup.subscribe(email.value, honeypot.value)
 }
 
 function onReset() {
     email.value = ''
+    honeypot.value = ''
     signup.reset()
 }
 </script>
@@ -80,6 +85,17 @@ function onReset() {
                     novalidate
                     @submit.prevent="onSubmit"
                 >
+                    <!-- Honeypot: off-screen, hidden from AT and keyboard; bots that fill it are dropped server-side. -->
+                    <input
+                        v-model="honeypot"
+                        class="sr-only"
+                        type="text"
+                        name="website"
+                        tabindex="-1"
+                        autocomplete="off"
+                        aria-hidden="true"
+                    />
+
                     <div class="flex flex-wrap items-end gap-3.5">
                         <label class="sr-only" :for="emailId">E-Mail-Adresse</label>
                         <input
@@ -121,14 +137,15 @@ function onReset() {
                         >
                             <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2zm0-4h-2V7h2z" />
                         </svg>
-                        <span>Bitte gib eine gültige E-Mail-Adresse ein.</span>
+                        <span>{{ signup.message || 'Bitte gib eine gültige E-Mail-Adresse ein.' }}</span>
                     </p>
 
                     <p :id="hintId" class="mt-1 text-xs font-light text-shade-400">
-                      Abmeldung jederzeit möglich.
-                      <NuxtLink class="text-lime font-bold" data-cursor-hover :href='privacyUrl'>
-                      Datenschutzbestimmungen
-                      </NuxtLink> gelten.
+                        Abmeldung jederzeit möglich.
+                        <NuxtLink class="font-bold text-lime" data-cursor-hover :href="privacyUrl">
+                            Datenschutzbestimmungen
+                        </NuxtLink>
+                        gelten.
                     </p>
                 </form>
 
@@ -163,14 +180,6 @@ function onReset() {
                             </button>
                         </p>
                     </div>
-                </div>
-
-                <!-- Already subscribed -->
-                <div v-else-if="signup.status === 'exists'" class="text-left" role="status">
-                    <div class="text-lg font-bold text-white">Schon dabei!</div>
-                    <p class="mt-0.5 text-sm font-light text-shade-300">
-                        Diese Adresse ist bereits angemeldet.
-                    </p>
                 </div>
             </div>
         </div>

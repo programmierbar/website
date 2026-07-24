@@ -1,17 +1,22 @@
 import {
+    aggregate,
     createDirectus,
-    rest,
-    staticToken,
+    createItem,
+    deleteItem,
     readItem,
     readItems,
-    aggregate,
-    createItem,
+    rest,
+    staticToken,
     updateItem,
-    deleteItem,
     uploadFiles,
 } from '@directus/sdk'
 import type { Collections } from '~/services/directus'
-import type { DirectusTicketOrderItem, DirectusTicketItem, DirectusTicketDiscountCodeItem } from '~/types/directus'
+import type {
+    DirectusNewsletterSubscriberItem,
+    DirectusTicketDiscountCodeItem,
+    DirectusTicketItem,
+    DirectusTicketOrderItem,
+} from '~/types/directus'
 
 export function useAuthenticatedDirectus() {
     const config = useRuntimeConfig()
@@ -95,9 +100,7 @@ export function useAuthenticatedDirectus() {
             })
         )
         const upperCode = code.toUpperCase()
-        const match = (codes as DirectusTicketDiscountCodeItem[])?.find(
-            (c) => c.code.toUpperCase() === upperCode
-        )
+        const match = (codes as DirectusTicketDiscountCodeItem[])?.find((c) => c.code.toUpperCase() === upperCode)
         return match ?? null
     }
 
@@ -261,6 +264,10 @@ export function useAuthenticatedDirectus() {
         return conferences?.[0] ?? null
     }
 
+    async function createNewsletterSubscriber(data: Partial<DirectusNewsletterSubscriberItem>) {
+        return await client.request(createItem('newsletter_subscribers', data as any))
+    }
+
     return {
         getSpeakerByPortalToken,
         updateSpeaker,
@@ -280,5 +287,6 @@ export function useAuthenticatedDirectus() {
         getTicketByCode,
         countCheckedInTicketsForConference,
         getLatestConferenceWithTicketing,
+        createNewsletterSubscriber,
     }
 }

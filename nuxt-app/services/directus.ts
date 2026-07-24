@@ -16,6 +16,7 @@ import type {
     DirectusMeetupPage,
     DirectusMemberItem,
     DirectusNewsItem,
+    DirectusNewsletterSubscriberItem,
     DirectusNewsLinkItem,
     DirectusPickOfTheDayItem,
     DirectusPickOfTheDayPage,
@@ -70,6 +71,7 @@ export type Collections = {
     ticket_orders: DirectusTicketOrderItem[]
     tickets: DirectusTicketItem[]
     ticket_discount_codes: DirectusTicketDiscountCodeItem[]
+    newsletter_subscribers: DirectusNewsletterSubscriberItem[]
 }
 
 export const directus = createDirectus<Collections>(DIRECTUS_CMS_URL)

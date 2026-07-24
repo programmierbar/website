@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'directus-cms/extensions/directus-extension-programmierbar-bundle/**'
+      - 'nuxt-app/**'
 
 jobs:
   test:
@@ -25,6 +26,26 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+  nuxt-app-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nuxt-app
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Run tests
         run: npm test
