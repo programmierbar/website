@@ -29,6 +29,10 @@ export class PickOfTheDayHandler extends AbstractItemHandler {
         return [{
             _type : this.type,
             name: item.name,
+            // Also expose the title under `title`, the searchable attribute the other title-bearing
+            // types (podcasts, meetups, transcripts) use, so picks become searchable. `name` is kept
+            // for the frontend card heading (SearchResultCard.vue).
+            title: item.name,
             description: item.description,
             website_url: item.website_url,
             published_on: item.published_on,
