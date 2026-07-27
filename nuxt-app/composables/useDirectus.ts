@@ -1007,9 +1007,17 @@ export function useDirectus() {
                 fields: [
                     'id',
                     'published_on',
-                    // The podcast reference lives on the `news` item itself.
+                    // The podcast reference lives on the `news` item itself. Only
+                    // the fields the card and player need (kept lean, like the list
+                    // query above).
                     'podcast_seconds_from',
-                    'podcast.*',
+                    'podcast.id',
+                    'podcast.slug',
+                    'podcast.published_on',
+                    'podcast.type',
+                    'podcast.number',
+                    'podcast.title',
+                    'podcast.audio_url',
                     'podcast.cover_image.*',
                     'target.id',
                     'target.collection',
