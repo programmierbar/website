@@ -8,6 +8,7 @@ import {
     DEVTOOLS,
     DIRECTUS_CMS_URL,
     DISCORD_INVITE_LINK,
+    FLAG_ENABLE_UI_PREVIEWS,
     FLAG_SHOW_LOGIN,
     FLAG_SHOW_NEWS,
     FLAG_SHOW_NEWSLETTER,
@@ -60,6 +61,7 @@ export default defineNuxtConfig({
             FLAG_SHOW_LOGIN: FLAG_SHOW_LOGIN,
             FLAG_SHOW_NEWS: FLAG_SHOW_NEWS,
             FLAG_SHOW_NEWSLETTER: FLAG_SHOW_NEWSLETTER,
+            FLAG_ENABLE_UI_PREVIEWS: FLAG_ENABLE_UI_PREVIEWS,
             DISCORD_INVITE_LINK: DISCORD_INVITE_LINK,
             directusCmsUrl: DIRECTUS_CMS_URL,
             stripePublishableKey: '', // Set via NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY env var

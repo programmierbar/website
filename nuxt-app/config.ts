@@ -3,6 +3,10 @@ export const FLAG_SHOW_LOGIN = Boolean(process.env.FLAG_SHOW_LOGIN?.toLowerCase(
 export const FLAG_SHOW_NEWS = Boolean(process.env.FLAG_SHOW_NEWS?.toLowerCase() == 'true')
 export const FLAG_SHOW_NEWSLETTER = Boolean(process.env.FLAG_SHOW_NEWSLETTER?.toLowerCase() == 'true')
 
+// Enables non-prod UI preview helpers (e.g. jumping straight to a page's view
+// states via a `?preview=` param). Keep OFF in production.
+export const FLAG_ENABLE_UI_PREVIEWS = Boolean(process.env.FLAG_ENABLE_UI_PREVIEWS?.toLowerCase() == 'true')
+
 // Website config
 export const DEVTOOLS = Boolean(process.env.DEVTOOLS?.toLowerCase() == 'true')
 export const DEV = Boolean(process.env.NUXT_ENV === 'development')
@@ -35,8 +39,11 @@ export const GOOGLE_MAPS_URL = 'https://goo.gl/maps/7h8a14WPPQkQL4LB8'
 export const DISCORD_INVITE_LINK = process.env.DISCORD_INVITE_LINK || 'https://discord.gg'
 
 // programmier.con Apps
-export const PROGRAMMIER_CON_APP_IOS = process.env.PROGRAMMIER_CON_APP_IOS || 'https://apps.apple.com/de/app/programmier-con/id6752691193'
-export const PROGRAMMIER_CON_APP_ANDROID = process.env.PROGRAMMIER_CON_APP_ANDROID || 'https://play.google.com/store/apps/details?id=de.programmierbar.conference&hl=de'
+export const PROGRAMMIER_CON_APP_IOS =
+    process.env.PROGRAMMIER_CON_APP_IOS || 'https://apps.apple.com/de/app/programmier-con/id6752691193'
+export const PROGRAMMIER_CON_APP_ANDROID =
+    process.env.PROGRAMMIER_CON_APP_ANDROID ||
+    'https://play.google.com/store/apps/details?id=de.programmierbar.conference&hl=de'
 
 export const ALGOLIA_INDEX = process.env.ALGOLIA_INDEX || 'programmierbar_website_prod'
 
