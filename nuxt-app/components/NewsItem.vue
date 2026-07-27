@@ -89,7 +89,6 @@ const props = withDefaults(
         // The referenced podcast episode and the discussion's start offset, both
         // from the parent `news` item (the editor curates them while publishing).
         // Only an expanded object renders the reference block; an id or null hides
-        // it (e.g. the RSS feed / list without card relations).
         podcast?: string | DirectusPodcastItem | null
         podcastSecondsFrom?: number | null
         showBrandMark?: boolean
@@ -124,9 +123,7 @@ const memberImage = computed<DirectusFileItem | null>(() => {
     return image && typeof image === 'object' ? image : null
 })
 
-// The referenced podcast episode, only when it was expanded (an object, not an
-// id/null). Queries without card relations leave it as an id, which hides the
-// reference block.
+// The referenced podcast episode, only when it was expanded (an object, not an id/null)
 const podcastEpisode = computed<DirectusPodcastItem | null>(() =>
     podcast.value && typeof podcast.value === 'object' ? (podcast.value as DirectusPodcastItem) : null
 )
