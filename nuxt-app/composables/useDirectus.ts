@@ -967,8 +967,9 @@ export function useDirectus() {
             fields.push(
                 'target.target.member.*',
                 'target.target.member.normal_image.*',
-                'target.target.podcast.*',
-                'target.target.podcast.cover_image.*'
+                'podcast_seconds_from',
+                'podcast.*',
+                'podcast.cover_image.*'
             )
         }
 
@@ -1000,13 +1001,15 @@ export function useDirectus() {
                 fields: [
                     'id',
                     'published_on',
+                    // The podcast reference lives on the `news` item itself.
+                    'podcast_seconds_from',
+                    'podcast.*',
+                    'podcast.cover_image.*',
                     'target.id',
                     'target.collection',
                     'target.target.*',
                     'target.target.member.*',
                     'target.target.member.normal_image.*',
-                    'target.target.podcast.*',
-                    'target.target.podcast.cover_image.*',
                 ],
                 limit: 1,
             })

@@ -59,7 +59,7 @@
 
         <!-- Footer: optional podcast reference, then article link + brand mark -->
         <footer class="flex flex-col gap-5 border-t border-[#3a3d3f] pt-5">
-            <NewsPodcastReference v-if="podcast" :podcast="podcast" :seconds-from="newsLink.podcast_seconds_from" />
+            <NewsPodcastReference v-if="podcastEpisode" :podcast="podcastEpisode" :seconds-from="podcastSecondsFrom" />
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <LinkButton class="relative z-10" :href="newsLink.link" target="_blank" rel="noopener noreferrer"
                     >Zum Artikel</LinkButton
@@ -86,6 +86,12 @@ const props = withDefaults(
         // Null/undefined for an item in a broken state (published without a date),
         // in which case no date is shown.
         publishedOn?: string | null
+        // The referenced podcast episode and the discussion's start offset, both
+        // from the parent `news` item (the editor curates them while publishing).
+        // Only an expanded object renders the reference block; an id or null hides
+        // it (e.g. the RSS feed / list without card relations).
+        podcast?: string | DirectusPodcastItem | null
+        podcastSecondsFrom?: number | null
         showBrandMark?: boolean
         // When set, the whole card links here (used by the list view). Omit on the
         // detail page so the card is not a self-link.
@@ -95,12 +101,14 @@ const props = withDefaults(
     }>(),
     {
         publishedOn: undefined,
+        podcast: undefined,
+        podcastSecondsFrom: undefined,
         showBrandMark: false,
         to: undefined,
         headingLevel: 'h1',
     }
 )
-const { newsLink, publishedOn } = toRefs(props)
+const { newsLink, publishedOn, podcast } = toRefs(props)
 
 // The member is only usable when it was expanded (an object, not an id/null).
 const member = computed<DirectusMemberItem | null>(() =>
@@ -117,12 +125,10 @@ const memberImage = computed<DirectusFileItem | null>(() => {
 })
 
 // The referenced podcast episode, only when it was expanded (an object, not an
-// id/null). The list query leaves it as an id, so the reference block renders on
-// the detail page only.
-const podcast = computed<DirectusPodcastItem | null>(() =>
-    newsLink.value.podcast && typeof newsLink.value.podcast === 'object'
-        ? (newsLink.value.podcast as DirectusPodcastItem)
-        : null
+// id/null). Queries without card relations leave it as an id, which hides the
+// reference block.
+const podcastEpisode = computed<DirectusPodcastItem | null>(() =>
+    podcast.value && typeof podcast.value === 'object' ? (podcast.value as DirectusPodcastItem) : null
 )
 
 // Only render the opinion block when there is both a comment and an author.

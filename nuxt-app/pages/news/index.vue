@@ -26,6 +26,8 @@
                     class="h-full"
                     :news-link="card.link"
                     :published-on="card.news.published_on"
+                    :podcast="card.news.podcast"
+                    :podcast-seconds-from="card.news.podcast_seconds_from"
                     :to="card.news.slug ? `/news/${card.news.slug}` : undefined"
                     heading-level="h2"
                 />
