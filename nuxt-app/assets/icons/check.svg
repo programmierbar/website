@@ -1,4 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
   <title>Check</title>
-  <path d="M20 6L9 17l-5-5" />
+  <path
+    d="M9.55 18.2a1.5 1.5 0 0 1-1.06-.44l-4.5-4.5a1.5 1.5 0 0 1 2.12-2.12l3.44 3.44 8.79-8.79a1.5 1.5 0 0 1 2.12 2.12l-9.85 9.85a1.5 1.5 0 0 1-1.06.44z"
+    fill="currentColor"
+  />
 </svg>
