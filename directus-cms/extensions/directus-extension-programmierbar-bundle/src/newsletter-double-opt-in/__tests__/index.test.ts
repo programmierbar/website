@@ -82,14 +82,24 @@ describe('newsletter-double-opt-in hook', () => {
         postSlackMessageMock.mockReset()
     })
 
-    test('registers a create filter and create + update actions', () => {
+    test('registers create + update filters and create + update actions', () => {
         const { filters, actions } = setup(null)
         expect(filters.has(CREATE)).toBe(true)
+        expect(filters.has(UPDATE)).toBe(true)
         expect(actions.has(CREATE)).toBe(true)
         expect(actions.has(UPDATE)).toBe(true)
     })
 
-    describe('filter: confirm_token_expires_at', () => {
+    // Asserts the stamped window is ~24h out, without restating the TTL as a
+    // second literal: the hook is the single source of truth for the value.
+    const expectRoughly24hFrom = (isoDate: string, before: number, after: number) => {
+        const TTL_MS = 24 * 60 * 60 * 1000
+        const expiresAt = new Date(isoDate).getTime()
+        expect(expiresAt).toBeGreaterThanOrEqual(before + TTL_MS)
+        expect(expiresAt).toBeLessThanOrEqual(after + TTL_MS)
+    }
+
+    describe('create filter: confirm_token_expires_at', () => {
         test('sets it ~24h in the future when omitted', () => {
             const { filters } = setup(null)
             const before = Date.now()
@@ -97,15 +107,43 @@ describe('newsletter-double-opt-in hook', () => {
             const after = Date.now()
 
             expect(result.email).toBe('me@example.de')
-            const expiresAt = new Date(result.confirm_token_expires_at).getTime()
-            expect(expiresAt).toBeGreaterThanOrEqual(before + 24 * 60 * 60 * 1000)
-            expect(expiresAt).toBeLessThanOrEqual(after + 24 * 60 * 60 * 1000)
+            expectRoughly24hFrom(result.confirm_token_expires_at, before, after)
         })
 
         test('respects an explicitly supplied value', () => {
             const { filters } = setup(null)
             const explicit = '2030-01-01T00:00:00.000Z'
             const result = filters.get(CREATE)!({ email: 'me@example.de', confirm_token_expires_at: explicit })
+            expect(result.confirm_token_expires_at).toBe(explicit)
+        })
+    })
+
+    // The website's expired-link recovery rotates the token only; the TTL for the
+    // new window is owned by the CMS, so create and refresh cannot drift apart.
+    describe('update filter: confirm_token_expires_at', () => {
+        test('stamps a fresh ~24h window when a new confirm_token is issued', () => {
+            const { filters } = setup(null)
+            const before = Date.now()
+            const result = filters.get(UPDATE)!({ confirm_token: 'tok-new' })
+            const after = Date.now()
+
+            expect(result.confirm_token).toBe('tok-new')
+            expectRoughly24hFrom(result.confirm_token_expires_at, before, after)
+        })
+
+        test('leaves updates that do not rotate the token untouched', () => {
+            const { filters } = setup(null)
+            const payload = { status: 'confirmed', confirmed_at: '2026-01-01T00:00:00.000Z' }
+            const result = filters.get(UPDATE)!({ ...payload })
+
+            expect(result).toEqual(payload)
+            expect(result.confirm_token_expires_at).toBeUndefined()
+        })
+
+        test('respects an explicitly supplied window alongside a new token', () => {
+            const { filters } = setup(null)
+            const explicit = '2030-01-01T00:00:00.000Z'
+            const result = filters.get(UPDATE)!({ confirm_token: 'tok-new', confirm_token_expires_at: explicit })
             expect(result.confirm_token_expires_at).toBe(explicit)
         })
     })
@@ -188,8 +226,8 @@ describe('newsletter-double-opt-in hook', () => {
         })
     })
 
-    describe('action: resend on refreshed confirmation window', () => {
-        test('resends when a pending row has its confirmation window refreshed', async () => {
+    describe('action: resend on a new confirmation link', () => {
+        test('resends when a pending row gets a rotated confirm_token', async () => {
             getRequiredSettingMock.mockResolvedValue('https://www.programmier.bar')
             sendTemplatedEmailMock.mockResolvedValue(true)
             const { actions } = setup({
@@ -199,9 +237,10 @@ describe('newsletter-double-opt-in hook', () => {
                 confirm_token: 'tok-new',
             })
 
+            // What the website's refreshNewsletterConfirmation actually writes.
             await invokeAction(actions.get(UPDATE)!, {
                 keys: ['sub_1'],
-                payload: { confirm_token_expires_at: '2030-01-01T00:00:00.000Z' },
+                payload: { confirm_token: 'tok-new' },
             })
 
             expect(sendTemplatedEmailMock).toHaveBeenCalledTimes(1)
@@ -209,7 +248,25 @@ describe('newsletter-double-opt-in hook', () => {
             expect(options.data.confirm_url).toBe('https://www.programmier.bar/newsletter/confirm?token=tok-new')
         })
 
-        test('does not resend when the update does not touch the confirmation window', async () => {
+        test('resends when only the confirmation window is extended (e.g. a manual fix)', async () => {
+            getRequiredSettingMock.mockResolvedValue('https://www.programmier.bar')
+            sendTemplatedEmailMock.mockResolvedValue(true)
+            const { actions } = setup({
+                id: 'sub_1',
+                email: 'me@example.de',
+                status: 'pending',
+                confirm_token: 'tok-123',
+            })
+
+            await invokeAction(actions.get(UPDATE)!, {
+                keys: ['sub_1'],
+                payload: { confirm_token_expires_at: '2030-01-01T00:00:00.000Z' },
+            })
+
+            expect(sendTemplatedEmailMock).toHaveBeenCalledTimes(1)
+        })
+
+        test('does not resend when the update touches neither token nor window', async () => {
             const { actions, readOne } = setup({ id: 'sub_1', email: 'me@example.de', status: 'confirmed' })
 
             // e.g. the confirm flip: sets status/confirmed_at, not the expiry.

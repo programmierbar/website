@@ -295,16 +295,18 @@ export function useAuthenticatedDirectus() {
         )
     }
 
-    // Refreshes an expired pending subscriber's confirmation: a NEW token (so the
-    // just-clicked, expired link can't later confirm on a page refresh) and a
-    // fresh 24h window. Setting `confirm_token_expires_at` is the signal the CMS
-    // `update` hook keys off to resend the confirmation mail with the new link.
+    // Refreshes an expired pending subscriber's confirmation by issuing a NEW
+    // token, so the just-clicked expired link can't later confirm on a page
+    // refresh. The token rotation is also the signal the CMS `newsletter-double-
+    // opt-in` hook keys off: its update filter stamps the matching
+    // `confirm_token_expires_at`, and its update action mails the new link.
+    //
+    // The expiry is deliberately NOT set here — the confirmation TTL is defined
+    // once, in the CMS hook, so the create and refresh paths can't drift apart.
     async function refreshNewsletterConfirmation(id: string) {
-        const CONFIRM_TOKEN_TTL_MS = 24 * 60 * 60 * 1000
         return await client.request(
             updateItem('newsletter_subscribers', id, {
                 confirm_token: randomUUID(),
-                confirm_token_expires_at: new Date(Date.now() + CONFIRM_TOKEN_TTL_MS).toISOString(),
             })
         )
     }

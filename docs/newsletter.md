@@ -14,13 +14,19 @@ Sign-up with a confirmed (double opt-in) subscription flow.
    `confirm_token` / `unsubscribe_token` (uuid special flags), `signed_up_at`
    (date-created) and defaults `status` to `pending`. The
    `newsletter-double-opt-in` hook adds the one field Directus cannot derive:
-   - **`filter` (before write)** sets `confirm_token_expires_at` to `now + 24h`.
-     This column is NOT NULL with no DB default, so without the filter every
-     signup would fail the insert.
+   - **`filter` (create + update)** sets `confirm_token_expires_at` to
+     `now + 24h`. On create this is mandatory: the column is NOT NULL with no DB
+     default, so without the filter every signup would fail the insert. On update
+     it fires when a fresh `confirm_token` is issued (the expired-link recovery in
+     step 3), which makes the hook the **single source of truth for the 24h TTL** —
+     callers rotate the token and never compute an expiry of their own, so the
+     create and refresh paths cannot drift apart.
    - **`action` (create + update)** reads the row back to get `confirm_token`,
      then sends the `newsletter_double_opt_in` email with a confirmation link.
-     It fires on create and again on any update that (re)sets
-     `confirm_token_expires_at` — the resend path for expired links (see step 3).
+     It fires on create and again on any update that brings a new link into
+     existence — a rotated `confirm_token` or an explicitly extended window (see
+     step 3). Updates that touch neither (the confirm flip, unsubscribe) don't
+     resend.
      If the link cannot be built or sent — `website_url` unset (required, no
      fallback), template missing, or transport error — it sends **no** mail and
      posts a Slack warning, because the subscriber is otherwise stuck in
@@ -40,17 +46,17 @@ Sign-up with a confirmed (double opt-in) subscription flow.
    | --------------------------------------------- | ------------------------------------------------------------- | ------------------- |
    | `pending` and not expired                     | flips to `confirmed`, sets `confirmed_at`                     | `confirmed`         |
    | already `confirmed`                           | no-op (idempotent)                                            | `already_confirmed` |
-   | `pending` but past `confirm_token_expires_at` | new `confirm_token` + fresh 24h window → CMS resends the mail | `resent`            |
+   | `pending` but past `confirm_token_expires_at` | new `confirm_token` → CMS stamps a fresh window and resends   | `resent`            |
    | unknown token / other status                  | no-op                                                         | `invalid`           |
    | Directus down / token misconfigured (500)     | no-op                                                         | `error` (retry)     |
 
    **Expired links are recoverable.** An expired token can't be re-sent via
    re-signup (that hits the duplicate branch, which is a no-op for privacy), so
-   recovery happens here: the confirm route calls `refreshNewsletterConfirmation`
-   (new token + fresh window), and the CMS `update` hook — which fires whenever a
-   pending row's `confirm_token_expires_at` is (re)set — sends a fresh mail. The
-   just-clicked expired link is invalidated by the new token, so a page refresh
-   can't silently confirm.
+   recovery happens here: the confirm route calls `refreshNewsletterConfirmation`,
+   which writes **only** a new `confirm_token`. The CMS hook does the rest — its
+   update filter stamps the new 24h window (the TTL lives there, not in the
+   website) and its update action mails the fresh link. The just-clicked expired
+   link is invalidated by the new token, so a page refresh can't silently confirm.
 
    **Previewing the states without the flow:** when `FLAG_ENABLE_UI_PREVIEWS` is
    set (non-prod only — off in production), the confirm page accepts
