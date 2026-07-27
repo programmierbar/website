@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import handler from '../server/api/newsletter/confirm.get'
+import handler from '../server/api/newsletter/confirm.post'
 
 // The handler's Nuxt/Nitro auto-imports must exist BEFORE the module is
 // imported (the `export default defineEventHandler(...)` runs at load time).
@@ -12,7 +12,7 @@ const { readNewsletterSubscriberByToken, confirmNewsletterSubscriber, refreshNew
         const refreshNewsletterConfirmation = vi.fn()
         const g = globalThis as any
         g.defineEventHandler = (fn: any) => fn
-        g.getQuery = (event: any) => event.query ?? {}
+        g.readBody = async (event: any) => event.body ?? {}
         g.createError = (input: any) => Object.assign(new Error(input.message), input)
         g.useAuthenticatedDirectus = () => ({
             readNewsletterSubscriberByToken,
@@ -23,8 +23,8 @@ const { readNewsletterSubscriberByToken, confirmNewsletterSubscriber, refreshNew
     }
 )
 
-// Invoke the real handler with a mock H3 event (getQuery reads event.query).
-const invoke = (query: Record<string, unknown>) => (handler as any)({ query })
+// Invoke the real handler with a mock H3 event (readBody reads event.body).
+const invoke = (body: Record<string, unknown>) => (handler as any)({ body })
 
 // Fixed clock so expiry comparisons are deterministic.
 const NOW = 1_700_000_000_000

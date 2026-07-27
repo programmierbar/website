@@ -87,8 +87,8 @@ import AlertIcon from '~/assets/icons/alert.svg'
 import CheckIcon from '~/assets/icons/check.svg'
 import InfoCircleIcon from '~/assets/icons/info-circle.svg'
 import { getMetaInfo } from '~/helpers'
-import type { NewsletterConfirmResult } from '~/server/api/newsletter/confirm.get'
-import { computed, onMounted, ref } from 'vue'
+import type { NewsletterConfirmResult } from '~/server/api/newsletter/confirm.post'
+import { computed, onMounted, ref, watch } from 'vue'
 
 // UI states: the API results plus two view-only states.
 type ViewStatus = NewsletterConfirmResult | 'loading' | 'error'
@@ -111,6 +111,13 @@ const previewState = computed<ViewStatus | null>(() => {
 // 'loading' until the client-side confirmation resolves.
 const status = ref<ViewStatus>(previewState.value ?? 'loading')
 
+// The page stays mounted when the preview switcher changes `?preview=`, so
+// re-derive the view from previewState on query changes (preview-only; in prod
+// previewState is always null and this never fires).
+watch(previewState, (s) => {
+    if (s) status.value = s
+})
+
 // Confirmation is a state-changing call, so it must NOT run during SSR — an
 // email scanner or link prefetcher requesting the URL would confirm without the
 // recipient acting, defeating double opt-in. Running it only on the client (like
@@ -125,7 +132,8 @@ async function runConfirm() {
     status.value = 'loading'
     try {
         const result = await $fetch<{ status: NewsletterConfirmResult }>('/api/newsletter/confirm', {
-            query: { token },
+            method: 'POST',
+            body: { token },
         })
         status.value = result.status
     } catch {

@@ -1,10 +1,12 @@
-// Confirms a double-opt-in newsletter subscription from the link in the
-// confirmation email. Idempotent: re-clicking a confirmed link is a no-op, and
+// Confirms a double-opt-in newsletter subscription. POST (not GET) because it
+// changes state — the confirm page reads the token from the email link and
+// calls this client-side. Idempotent: re-confirming is a no-op, and
 // unknown / expired / non-pending tokens get neutral results (no enumeration).
 export type NewsletterConfirmResult = 'confirmed' | 'already_confirmed' | 'resent' | 'invalid'
 
 export default defineEventHandler(async (event): Promise<{ status: NewsletterConfirmResult }> => {
-    const token = getQuery(event).token
+    const body = await readBody(event)
+    const token = body?.token
 
     if (typeof token !== 'string' || token.length === 0) {
         return { status: 'invalid' }

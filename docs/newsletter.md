@@ -14,7 +14,6 @@ Sign-up with a confirmed (double opt-in) subscription flow.
    `confirm_token` / `unsubscribe_token` (uuid special flags), `signed_up_at`
    (date-created) and defaults `status` to `pending`. The
    `newsletter-double-opt-in` hook adds the one field Directus cannot derive:
-
    - **`filter` (before write)** sets `confirm_token_expires_at` to `now + 24h`.
      This column is NOT NULL with no DB default, so without the filter every
      signup would fail the insert.
@@ -33,8 +32,9 @@ Sign-up with a confirmed (double opt-in) subscription flow.
    so the page runs it **client-side** (`onMounted`), never during SSR — email
    scanners, link-expanders and prefetchers don't run JS, so they can't confirm
    a subscription on the recipient's behalf (same approach as `PodcastRating`).
-   The client calls `GET /api/newsletter/confirm`, which looks the subscriber up
-   by `confirm_token` and:
+   The client calls `POST /api/newsletter/confirm` (a state change, so POST not
+   GET — consistent with the ticket/speaker submit routes), which looks the
+   subscriber up by `confirm_token` and:
 
    | Situation                                     | Result                                                        | Page state          |
    | --------------------------------------------- | ------------------------------------------------------------- | ------------------- |
