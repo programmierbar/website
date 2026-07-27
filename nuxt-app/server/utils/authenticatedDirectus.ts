@@ -9,6 +9,7 @@ import {
     rest,
     staticToken,
     updateItem,
+    updateItems,
     uploadFiles,
 } from '@directus/sdk'
 import type { Collections } from '~/services/directus'
@@ -286,13 +287,38 @@ export function useAuthenticatedDirectus() {
 
     // Marks a pending subscriber confirmed. `confirm_token` is intentionally not
     // cleared (it is NOT NULL); the link is neutralised via status + expiry.
-    async function confirmNewsletterSubscriber(id: string) {
-        return await client.request(
-            updateItem('newsletter_subscribers', id, {
-                status: 'confirmed',
-                confirmed_at: new Date().toISOString(),
-            })
+    //
+    // The write is guarded by the state we read a moment ago (`status` still
+    // pending, `confirm_token` still the one from the link) rather than writing
+    // blindly by id, so a change that landed in between — an unsubscribe, or a
+    // concurrent confirm — is not clobbered. Returns whether a row was actually
+    // written, letting the caller answer from what happened instead of from its
+    // own possibly-stale read.
+    //
+    // NB: this narrows the read-to-write window, it does not eliminate it.
+    // Directus resolves a filtered update to keys first and then updates by
+    // primary key (`ItemsService.updateByQuery`), so it is not a single atomic
+    // compare-and-swap. A true CAS needs one `UPDATE … WHERE …` statement,
+    // which is only reachable with direct DB access (i.e. inside the CMS).
+    async function confirmNewsletterSubscriber(id: string, expectedToken: string) {
+        const updated = await client.request(
+            updateItems(
+                'newsletter_subscribers',
+                {
+                    filter: {
+                        id: { _eq: id },
+                        status: { _eq: 'pending' },
+                        confirm_token: { _eq: expectedToken },
+                    },
+                },
+                {
+                    status: 'confirmed',
+                    confirmed_at: new Date().toISOString(),
+                }
+            )
         )
+
+        return (updated?.length ?? 0) > 0
     }
 
     // Refreshes an expired pending subscriber's confirmation by issuing a NEW
@@ -303,12 +329,30 @@ export function useAuthenticatedDirectus() {
     //
     // The expiry is deliberately NOT set here — the confirmation TTL is defined
     // once, in the CMS hook, so the create and refresh paths can't drift apart.
-    async function refreshNewsletterConfirmation(id: string) {
-        return await client.request(
-            updateItem('newsletter_subscribers', id, {
-                confirm_token: randomUUID(),
-            })
+    //
+    // Guarded like `confirmNewsletterSubscriber` above, and for a sharper reason:
+    // every rotation triggers a mail, and only the newest token still works. Two
+    // concurrent requests writing blindly would send two mails of which the
+    // first contains a dead link. With the guard the loser writes nothing, so
+    // exactly one mail goes out. Same caveat about the residual window applies.
+    async function refreshNewsletterConfirmation(id: string, expectedToken: string) {
+        const updated = await client.request(
+            updateItems(
+                'newsletter_subscribers',
+                {
+                    filter: {
+                        id: { _eq: id },
+                        status: { _eq: 'pending' },
+                        confirm_token: { _eq: expectedToken },
+                        // Don't shorten a window someone else just refreshed.
+                        confirm_token_expires_at: { _lte: new Date().toISOString() },
+                    },
+                },
+                { confirm_token: randomUUID() }
+            )
         )
+
+        return (updated?.length ?? 0) > 0
     }
 
     return {

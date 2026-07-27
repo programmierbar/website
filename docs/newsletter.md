@@ -58,6 +58,23 @@ Sign-up with a confirmed (double opt-in) subscription flow.
    website) and its update action mails the fresh link. The just-clicked expired
    link is invalidated by the new token, so a page refresh can't silently confirm.
 
+   **Concurrent clicks.** The route reads by token and then writes, so both
+   mutations are **conditional on the state that was read** — the update filters
+   on `status = pending` and the token from the link (the refresh additionally on
+   an already-expired window). If a concurrent request (a double-clicked link, a
+   retry, two tabs) got there first, the write reports no change and the handler
+   answers from the row's current state instead of its own stale read. That
+   matters most for the refresh path: every rotation triggers a mail and only the
+   newest token works, so two blind writes would send two mails of which the
+   first one's link is already dead.
+
+   This **narrows** the read-to-write window; it does not close it. Directus
+   resolves a filtered update to keys first and then updates by primary key
+   (`ItemsService.updateByQuery`), so it is not a single atomic compare-and-swap.
+   A true CAS needs one `UPDATE … WHERE …` statement, which requires direct DB
+   access — i.e. it would have to live in the CMS (see
+   [#215](https://github.com/programmierbar/website/issues/215)).
+
    **Previewing the states without the flow:** when `FLAG_ENABLE_UI_PREVIEWS` is
    set (non-prod only — off in production), the confirm page accepts
    `?preview=<confirmed|already_confirmed|resent|invalid|error>` to render any

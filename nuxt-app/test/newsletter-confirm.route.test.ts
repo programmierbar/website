@@ -32,8 +32,10 @@ const iso = (ms: number) => new Date(ms).toISOString()
 
 beforeEach(() => {
     readNewsletterSubscriberByToken.mockReset()
-    confirmNewsletterSubscriber.mockReset()
-    refreshNewsletterConfirmation.mockReset()
+    // The guarded writes report whether a row actually changed; default to "won
+    // the race", so only the concurrency cases below opt into `false`.
+    confirmNewsletterSubscriber.mockReset().mockResolvedValue(true)
+    refreshNewsletterConfirmation.mockReset().mockResolvedValue(true)
     vi.spyOn(Date, 'now').mockReturnValue(NOW)
 })
 
@@ -70,7 +72,8 @@ describe('POST /api/newsletter/confirm', () => {
         const result = await invoke({ token: 'good' })
         expect(result).toEqual({ status: 'confirmed' })
         expect(confirmNewsletterSubscriber).toHaveBeenCalledTimes(1)
-        expect(confirmNewsletterSubscriber).toHaveBeenCalledWith('sub_1')
+        // The token is passed along so the write can be guarded on it.
+        expect(confirmNewsletterSubscriber).toHaveBeenCalledWith('sub_1', 'good')
     })
 
     it('is idempotent: an already-confirmed subscriber returns already_confirmed and is not re-written', async () => {
@@ -93,8 +96,67 @@ describe('POST /api/newsletter/confirm', () => {
         const result = await invoke({ token: 'stale' })
         expect(result).toEqual({ status: 'resent' })
         expect(refreshNewsletterConfirmation).toHaveBeenCalledTimes(1)
-        expect(refreshNewsletterConfirmation).toHaveBeenCalledWith('sub_1')
+        expect(refreshNewsletterConfirmation).toHaveBeenCalledWith('sub_1', 'stale')
         expect(confirmNewsletterSubscriber).not.toHaveBeenCalled()
+    })
+
+    // The guarded writes report "nothing changed" when a concurrent request got
+    // there first (double-clicked link, retry). The handler must then answer from
+    // the row's current state, not from its own now-stale read.
+    describe('concurrent requests (guarded writes report no change)', () => {
+        it('reports already_confirmed when a concurrent request confirmed first', async () => {
+            readNewsletterSubscriberByToken
+                .mockResolvedValueOnce({
+                    id: 'sub_1',
+                    status: 'pending',
+                    confirm_token_expires_at: iso(NOW + 60_000),
+                })
+                .mockResolvedValueOnce({
+                    id: 'sub_1',
+                    status: 'confirmed',
+                    confirm_token_expires_at: iso(NOW + 60_000),
+                })
+            confirmNewsletterSubscriber.mockResolvedValue(false)
+
+            const result = await invoke({ token: 'good' })
+            expect(result).toEqual({ status: 'already_confirmed' })
+        })
+
+        it('reports invalid when the status changed to unsubscribed mid-flight', async () => {
+            // The guard is what prevents an unsubscribe from being overwritten
+            // back to 'confirmed'.
+            readNewsletterSubscriberByToken
+                .mockResolvedValueOnce({
+                    id: 'sub_1',
+                    status: 'pending',
+                    confirm_token_expires_at: iso(NOW + 60_000),
+                })
+                .mockResolvedValueOnce({
+                    id: 'sub_1',
+                    status: 'unsubscribed',
+                    confirm_token_expires_at: iso(NOW + 60_000),
+                })
+            confirmNewsletterSubscriber.mockResolvedValue(false)
+
+            const result = await invoke({ token: 'good' })
+            expect(result).toEqual({ status: 'invalid' })
+        })
+
+        it('still reports resent — without a second mail — when another request rotated the token first', async () => {
+            readNewsletterSubscriberByToken
+                .mockResolvedValueOnce({
+                    id: 'sub_1',
+                    status: 'pending',
+                    confirm_token_expires_at: iso(NOW - 1),
+                })
+                // The winner rotated the token, so ours no longer resolves.
+                .mockResolvedValueOnce(null)
+            refreshNewsletterConfirmation.mockResolvedValue(false)
+
+            const result = await invoke({ token: 'stale' })
+            expect(result).toEqual({ status: 'resent' })
+            expect(refreshNewsletterConfirmation).toHaveBeenCalledTimes(1)
+        })
     })
 
     it('treats a non-pending, non-confirmed status (e.g. unsubscribed) as invalid', async () => {
