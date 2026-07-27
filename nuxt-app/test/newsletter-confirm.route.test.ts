@@ -5,16 +5,23 @@ import handler from '../server/api/newsletter/confirm.get'
 // imported (the `export default defineEventHandler(...)` runs at load time).
 // vitest hoists this vi.hoisted() block above all imports (including the
 // handler import above), so these globals are set when that module evaluates.
-const { readNewsletterSubscriberByToken, confirmNewsletterSubscriber } = vi.hoisted(() => {
-    const readNewsletterSubscriberByToken = vi.fn()
-    const confirmNewsletterSubscriber = vi.fn()
-    const g = globalThis as any
-    g.defineEventHandler = (fn: any) => fn
-    g.getQuery = (event: any) => event.query ?? {}
-    g.createError = (input: any) => Object.assign(new Error(input.message), input)
-    g.useAuthenticatedDirectus = () => ({ readNewsletterSubscriberByToken, confirmNewsletterSubscriber })
-    return { readNewsletterSubscriberByToken, confirmNewsletterSubscriber }
-})
+const { readNewsletterSubscriberByToken, confirmNewsletterSubscriber, refreshNewsletterConfirmation } = vi.hoisted(
+    () => {
+        const readNewsletterSubscriberByToken = vi.fn()
+        const confirmNewsletterSubscriber = vi.fn()
+        const refreshNewsletterConfirmation = vi.fn()
+        const g = globalThis as any
+        g.defineEventHandler = (fn: any) => fn
+        g.getQuery = (event: any) => event.query ?? {}
+        g.createError = (input: any) => Object.assign(new Error(input.message), input)
+        g.useAuthenticatedDirectus = () => ({
+            readNewsletterSubscriberByToken,
+            confirmNewsletterSubscriber,
+            refreshNewsletterConfirmation,
+        })
+        return { readNewsletterSubscriberByToken, confirmNewsletterSubscriber, refreshNewsletterConfirmation }
+    }
+)
 
 // Invoke the real handler with a mock H3 event (getQuery reads event.query).
 const invoke = (query: Record<string, unknown>) => (handler as any)({ query })
@@ -26,6 +33,7 @@ const iso = (ms: number) => new Date(ms).toISOString()
 beforeEach(() => {
     readNewsletterSubscriberByToken.mockReset()
     confirmNewsletterSubscriber.mockReset()
+    refreshNewsletterConfirmation.mockReset()
     vi.spyOn(Date, 'now').mockReturnValue(NOW)
 })
 
@@ -76,14 +84,16 @@ describe('GET /api/newsletter/confirm', () => {
         expect(confirmNewsletterSubscriber).not.toHaveBeenCalled()
     })
 
-    it('returns expired for a pending subscriber past the confirmation window', async () => {
+    it('refreshes and resends (not confirms) for a pending subscriber past the window', async () => {
         readNewsletterSubscriberByToken.mockResolvedValue({
             id: 'sub_1',
             status: 'pending',
             confirm_token_expires_at: iso(NOW - 1),
         })
         const result = await invoke({ token: 'stale' })
-        expect(result).toEqual({ status: 'expired' })
+        expect(result).toEqual({ status: 'resent' })
+        expect(refreshNewsletterConfirmation).toHaveBeenCalledTimes(1)
+        expect(refreshNewsletterConfirmation).toHaveBeenCalledWith('sub_1')
         expect(confirmNewsletterSubscriber).not.toHaveBeenCalled()
     })
 

@@ -68,6 +68,7 @@ function setup(subscriber: Record<string, any> | null) {
 }
 
 const CREATE = 'newsletter_subscribers.items.create'
+const UPDATE = 'newsletter_subscribers.items.update'
 
 const invokeAction = async (handler: ActionHandler, meta: any) => {
     handler(meta, { accountability: {} })
@@ -81,10 +82,11 @@ describe('newsletter-double-opt-in hook', () => {
         postSlackMessageMock.mockReset()
     })
 
-    test('registers a create filter and a create action', () => {
+    test('registers a create filter and create + update actions', () => {
         const { filters, actions } = setup(null)
         expect(filters.has(CREATE)).toBe(true)
         expect(actions.has(CREATE)).toBe(true)
+        expect(actions.has(UPDATE)).toBe(true)
     })
 
     describe('filter: confirm_token_expires_at', () => {
@@ -180,6 +182,41 @@ describe('newsletter-double-opt-in hook', () => {
             const { actions, readOne } = setup(null)
 
             await invokeAction(actions.get(CREATE)!, {})
+
+            expect(readOne).not.toHaveBeenCalled()
+            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('action: resend on refreshed confirmation window', () => {
+        test('resends when a pending row has its confirmation window refreshed', async () => {
+            getRequiredSettingMock.mockResolvedValue('https://www.programmier.bar')
+            sendTemplatedEmailMock.mockResolvedValue(true)
+            const { actions } = setup({
+                id: 'sub_1',
+                email: 'me@example.de',
+                status: 'pending',
+                confirm_token: 'tok-new',
+            })
+
+            await invokeAction(actions.get(UPDATE)!, {
+                keys: ['sub_1'],
+                payload: { confirm_token_expires_at: '2030-01-01T00:00:00.000Z' },
+            })
+
+            expect(sendTemplatedEmailMock).toHaveBeenCalledTimes(1)
+            const [options] = sendTemplatedEmailMock.mock.calls[0] as [any, any]
+            expect(options.data.confirm_url).toBe('https://www.programmier.bar/newsletter/confirm?token=tok-new')
+        })
+
+        test('does not resend when the update does not touch the confirmation window', async () => {
+            const { actions, readOne } = setup({ id: 'sub_1', email: 'me@example.de', status: 'confirmed' })
+
+            // e.g. the confirm flip: sets status/confirmed_at, not the expiry.
+            await invokeAction(actions.get(UPDATE)!, {
+                keys: ['sub_1'],
+                payload: { status: 'confirmed', confirmed_at: '2026-01-01T00:00:00.000Z' },
+            })
 
             expect(readOne).not.toHaveBeenCalled()
             expect(sendTemplatedEmailMock).not.toHaveBeenCalled()

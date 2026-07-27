@@ -1,13 +1,14 @@
 <template>
     <section class="relative overflow-hidden">
+        <!-- Ambient brand spotlights behind the content (see index.vue) -->
         <BackgroundSpotlights position="-top-40 fixed right-[-34vw] -translate-x-1/2 transform" index="-10" />
         <BackgroundSpotlights position="-top-40 fixed left-[-6vw] -translate-x-1/2 transform" index="-10" />
 
         <div class="relative z-10 flex min-h-[80vh] items-center justify-center px-6 py-24 md:py-32">
-            <!-- Loading (SSR resolves before paint; visible only on client navigation) -->
-            <!-- Distinct keys: without them Vue reuses this <div> across the v-if/v-else
-                 branches and keeps the first branch's static class/role, leaving the icon left-aligned. -->
-            <div v-if="pending" key="loading" class="text-center">
+            <!-- Loading: the SSR/initial render. Confirmation runs client-side (see
+                 script) so crawlers, scanners and prefetchers — which don't run JS —
+                 never trigger the state change. -->
+            <div v-if="status === 'loading'" key="loading" class="text-center">
                 <p class="text-xl font-light text-shade-200">Anmeldung wird bestätigt…</p>
             </div>
 
@@ -40,7 +41,17 @@
 
                 <!-- CTA -->
                 <div class="mt-10">
+                    <button
+                        v-if="status === 'error'"
+                        type="button"
+                        class="inline-flex h-[58px] items-center rounded-full bg-lime px-8 text-sm font-black uppercase tracking-widest text-black transition-colors hover:bg-blue hover:text-white"
+                        data-cursor-hover
+                        @click="runConfirm"
+                    >
+                        Erneut versuchen
+                    </button>
                     <NuxtLink
+                        v-else
                         :to="view.cta.to"
                         class="inline-flex h-[58px] items-center rounded-full bg-lime px-8 text-sm font-black uppercase tracking-widest text-black transition-colors hover:bg-blue hover:text-white"
                         data-cursor-hover
@@ -74,49 +85,65 @@
 <script setup lang="ts">
 import AlertIcon from '~/assets/icons/alert.svg'
 import CheckIcon from '~/assets/icons/check.svg'
+import InfoCircleIcon from '~/assets/icons/info-circle.svg'
 import { getMetaInfo } from '~/helpers'
 import type { NewsletterConfirmResult } from '~/server/api/newsletter/confirm.get'
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+
+// UI states: the API results plus two view-only states.
+type ViewStatus = NewsletterConfirmResult | 'loading' | 'error'
 
 const route = useRoute()
 
-const PREVIEW_STATES: NewsletterConfirmResult[] = ['confirmed', 'already_confirmed', 'expired', 'invalid']
+const PREVIEW_STATES: ViewStatus[] = ['confirmed', 'already_confirmed', 'resent', 'invalid', 'error']
 
 // Non-prod only (env-gated, off in production): jump straight to any view state
 // via `?preview=<state>` so the design can be reviewed without walking the whole
 // double-opt-in flow. In production the flag is false, so this is inert.
 const previewEnabled = Boolean(useRuntimeConfig().public.FLAG_ENABLE_UI_PREVIEWS)
-const previewState = computed<NewsletterConfirmResult | null>(() => {
+const previewState = computed<ViewStatus | null>(() => {
     if (!previewEnabled) return null
     const p = route.query.preview
-    return typeof p === 'string' && (PREVIEW_STATES as string[]).includes(p) ? (p as NewsletterConfirmResult) : null
+    return typeof p === 'string' && (PREVIEW_STATES as string[]).includes(p) ? (p as ViewStatus) : null
 })
 
-// The confirmation (a status flip) runs server-side during SSR, so it happens
-// exactly once per page load and the token never re-fetches on hydration. In
-// preview mode there's no token, so the route returns `invalid` without touching
-// Directus (no backend needed) and `previewState` overrides the result below.
-// Kept `immediate` (the default) so `pending` agrees on server and client —
-// disabling it made SSR render the loading branch and the client reuse that
-// element, stripping the result branch's classes.
-const { data, pending, error } = await useFetch('/api/newsletter/confirm', {
-    query: { token: route.query.token },
+// Start on the preview state when previewing (so SSR and client agree), otherwise
+// 'loading' until the client-side confirmation resolves.
+const status = ref<ViewStatus>(previewState.value ?? 'loading')
+
+// Confirmation is a state-changing call, so it must NOT run during SSR — an
+// email scanner or link prefetcher requesting the URL would confirm without the
+// recipient acting, defeating double opt-in. Running it only on the client (like
+// PodcastRating's vote) keeps non-JS agents from ever triggering it.
+async function runConfirm() {
+    const token = route.query.token
+    if (typeof token !== 'string' || token.length === 0) {
+        status.value = 'invalid'
+        return
+    }
+
+    status.value = 'loading'
+    try {
+        const result = await $fetch<{ status: NewsletterConfirmResult }>('/api/newsletter/confirm', {
+            query: { token },
+        })
+        status.value = result.status
+    } catch {
+        // A technical failure (Directus down, token misconfigured) is distinct
+        // from a bad link — offer a retry rather than "Link ungültig".
+        status.value = 'error'
+    }
+}
+
+onMounted(() => {
+    if (previewState.value) return
+    runConfirm()
 })
 
-// Preview override wins; otherwise a 500 (error) collapses to the neutral
-// 'invalid' branch rather than crashing.
-const status = computed<NewsletterConfirmResult>(
-    () => previewState.value ?? (error.value ? 'invalid' : (data.value?.status ?? 'invalid'))
-)
-
-// One descriptor per state. The design specifies the 'confirmed' state (lime
-// accent + check); expired/invalid reuse the same layout with the pink accent
-// and an alert mark. Class strings are spelled out in full so Tailwind keeps them.
 type View = {
     circleClass: string
     underlineClass: string
-    // svg imports are typed as their module default (see other icon usages that
-    // feed `<component :is>`); both icons share this type.
+    // svg imports are typed as their module default; all icons share this type.
     icon: typeof CheckIcon
     eyebrow: string
     headline: string
@@ -124,7 +151,7 @@ type View = {
     cta: { label: string; to: string }
 }
 
-const VIEWS: Record<NewsletterConfirmResult, View> = {
+const VIEWS: Record<Exclude<ViewStatus, 'loading'>, View> = {
     confirmed: {
         circleClass: 'bg-lime',
         underlineClass: 'border-lime',
@@ -143,14 +170,14 @@ const VIEWS: Record<NewsletterConfirmResult, View> = {
         text: 'Diese E-Mail-Adresse ist bereits für den Newsletter bestätigt. Du musst nichts weiter tun.',
         cta: { label: 'Zur programmier.bar', to: '/' },
     },
-    expired: {
-        circleClass: 'bg-pink',
-        underlineClass: 'border-pink',
-        icon: AlertIcon,
-        eyebrow: '// Link abgelaufen',
-        headline: 'Link abgelaufen',
-        text: 'Dieser Bestätigungslink ist nicht mehr gültig. Melde dich einfach erneut an, dann schicken wir dir einen frischen Link.',
-        cta: { label: 'Erneut anmelden', to: '/' },
+    resent: {
+        circleClass: 'bg-lime',
+        underlineClass: 'border-lime',
+        icon: InfoCircleIcon,
+        eyebrow: '// Neuer Link unterwegs',
+        headline: 'Link war abgelaufen',
+        text: 'Dein Bestätigungslink war nicht mehr gültig — wir haben dir gerade einen frischen Link geschickt. Bitte prüfe dein Postfach.',
+        cta: { label: 'Zur Startseite', to: '/' },
     },
     invalid: {
         circleClass: 'bg-pink',
@@ -161,9 +188,19 @@ const VIEWS: Record<NewsletterConfirmResult, View> = {
         text: 'Dieser Bestätigungslink konnte nicht verarbeitet werden. Bitte nutze den aktuellsten Link aus deiner E-Mail oder melde dich erneut an.',
         cta: { label: 'Zur Startseite', to: '/' },
     },
+    error: {
+        circleClass: 'bg-pink',
+        underlineClass: 'border-pink',
+        icon: AlertIcon,
+        eyebrow: '// Technischer Fehler',
+        headline: 'Etwas ist schiefgelaufen',
+        text: 'Deine Anmeldung konnte gerade nicht bestätigt werden. Das liegt an einem vorübergehenden technischen Problem — bitte versuche es in ein paar Minuten erneut.',
+        cta: { label: 'Erneut versuchen', to: '/' },
+    },
 }
 
-const view = computed<View>(() => VIEWS[status.value])
+// `status` is only ever a VIEWS key here (the loading branch renders separately).
+const view = computed<View>(() => VIEWS[status.value as Exclude<ViewStatus, 'loading'>])
 
 useHead(
     getMetaInfo({

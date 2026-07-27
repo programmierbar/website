@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import {
     aggregate,
     createDirectus,
@@ -294,6 +295,20 @@ export function useAuthenticatedDirectus() {
         )
     }
 
+    // Refreshes an expired pending subscriber's confirmation: a NEW token (so the
+    // just-clicked, expired link can't later confirm on a page refresh) and a
+    // fresh 24h window. Setting `confirm_token_expires_at` is the signal the CMS
+    // `update` hook keys off to resend the confirmation mail with the new link.
+    async function refreshNewsletterConfirmation(id: string) {
+        const CONFIRM_TOKEN_TTL_MS = 24 * 60 * 60 * 1000
+        return await client.request(
+            updateItem('newsletter_subscribers', id, {
+                confirm_token: randomUUID(),
+                confirm_token_expires_at: new Date(Date.now() + CONFIRM_TOKEN_TTL_MS).toISOString(),
+            })
+        )
+    }
+
     return {
         getSpeakerByPortalToken,
         updateSpeaker,
@@ -316,5 +331,6 @@ export function useAuthenticatedDirectus() {
         createNewsletterSubscriber,
         readNewsletterSubscriberByToken,
         confirmNewsletterSubscriber,
+        refreshNewsletterConfirmation,
     }
 }

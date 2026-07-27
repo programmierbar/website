@@ -1,7 +1,7 @@
 // Confirms a double-opt-in newsletter subscription from the link in the
 // confirmation email. Idempotent: re-clicking a confirmed link is a no-op, and
 // unknown / expired / non-pending tokens get neutral results (no enumeration).
-export type NewsletterConfirmResult = 'confirmed' | 'already_confirmed' | 'expired' | 'invalid'
+export type NewsletterConfirmResult = 'confirmed' | 'already_confirmed' | 'resent' | 'invalid'
 
 export default defineEventHandler(async (event): Promise<{ status: NewsletterConfirmResult }> => {
     const token = getQuery(event).token
@@ -30,10 +30,14 @@ export default defineEventHandler(async (event): Promise<{ status: NewsletterCon
             return { status: 'invalid' }
         }
 
-        // Pending but past the confirmation window → offer a fresh signup.
+        // Pending but past the confirmation window → don't leave the address
+        // stuck. Extend the window in place; the CMS update hook resends a fresh
+        // confirmation mail. (Re-signup hits the duplicate branch and can't
+        // resend, so recovery has to happen here.)
         const expiresAt = new Date(subscriber.confirm_token_expires_at).getTime()
         if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
-            return { status: 'expired' }
+            await directus.refreshNewsletterConfirmation(subscriber.id)
+            return { status: 'resent' }
         }
 
         await directus.confirmNewsletterSubscriber(subscriber.id)

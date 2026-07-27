@@ -18,43 +18,57 @@ Sign-up with a confirmed (double opt-in) subscription flow.
    - **`filter` (before write)** sets `confirm_token_expires_at` to `now + 24h`.
      This column is NOT NULL with no DB default, so without the filter every
      signup would fail the insert.
-   - **`action` (after write)** reads the row back to get `confirm_token`, then
-     sends the `newsletter_double_opt_in` email with a confirmation link. If the
-     link cannot be built or sent — `website_url` unset (required, no fallback),
-     template missing, or transport error — it sends **no** mail and posts a
-     Slack warning, because the subscriber is otherwise stuck in `pending` with
-     no way to confirm.
+   - **`action` (create + update)** reads the row back to get `confirm_token`,
+     then sends the `newsletter_double_opt_in` email with a confirmation link.
+     It fires on create and again on any update that (re)sets
+     `confirm_token_expires_at` — the resend path for expired links (see step 3).
+     If the link cannot be built or sent — `website_url` unset (required, no
+     fallback), template missing, or transport error — it sends **no** mail and
+     posts a Slack warning, because the subscriber is otherwise stuck in
+     `pending` with no way to confirm.
 
 3. **Confirmation** — the email links to
    `{website_url}/newsletter/confirm?token={confirm_token}` (page
-   `pages/newsletter/confirm.vue`). The page calls
-   `GET /api/newsletter/confirm`, which looks the subscriber up by
-   `confirm_token` and:
+   `pages/newsletter/confirm.vue`). The confirmation is a state-changing call,
+   so the page runs it **client-side** (`onMounted`), never during SSR — email
+   scanners, link-expanders and prefetchers don't run JS, so they can't confirm
+   a subscription on the recipient's behalf (same approach as `PodcastRating`).
+   The client calls `GET /api/newsletter/confirm`, which looks the subscriber up
+   by `confirm_token` and:
 
-   | Situation                                     | Result                                    | Page                             |
-   | --------------------------------------------- | ----------------------------------------- | -------------------------------- |
-   | `pending` and not expired                     | flips to `confirmed`, sets `confirmed_at` | success                          |
-   | already `confirmed`                           | no-op (idempotent)                        | "schon bestätigt"                |
-   | `pending` but past `confirm_token_expires_at` | no-op                                     | "Link abgelaufen" + neu anmelden |
-   | unknown token / other status                  | no-op                                     | neutral error                    |
+   | Situation                                     | Result                                                        | Page state          |
+   | --------------------------------------------- | ------------------------------------------------------------- | ------------------- |
+   | `pending` and not expired                     | flips to `confirmed`, sets `confirmed_at`                     | `confirmed`         |
+   | already `confirmed`                           | no-op (idempotent)                                            | `already_confirmed` |
+   | `pending` but past `confirm_token_expires_at` | new `confirm_token` + fresh 24h window → CMS resends the mail | `resent`            |
+   | unknown token / other status                  | no-op                                                         | `invalid`           |
+   | Directus down / token misconfigured (500)     | no-op                                                         | `error` (retry)     |
+
+   **Expired links are recoverable.** An expired token can't be re-sent via
+   re-signup (that hits the duplicate branch, which is a no-op for privacy), so
+   recovery happens here: the confirm route calls `refreshNewsletterConfirmation`
+   (new token + fresh window), and the CMS `update` hook — which fires whenever a
+   pending row's `confirm_token_expires_at` is (re)set — sends a fresh mail. The
+   just-clicked expired link is invalidated by the new token, so a page refresh
+   can't silently confirm.
 
    **Previewing the states without the flow:** when `FLAG_ENABLE_UI_PREVIEWS` is
    set (non-prod only — off in production), the confirm page accepts
-   `?preview=<confirmed|already_confirmed|expired|invalid>` to render any state
-   directly (no API call), and shows a small state-switcher toolbar. This
+   `?preview=<confirmed|already_confirmed|resent|invalid|error>` to render any
+   state directly (no API call), and shows a small state-switcher toolbar. This
    previews the real page, so there's no separate mock to drift from.
 
-   `confirm_token` is **not** nulled on confirmation (it is NOT NULL). A used or
-   expired link is neutralised by the `status` + expiry checks instead.
+   `confirm_token` is **not** nulled on confirmation (it is NOT NULL). A used
+   link is neutralised by the `status` + expiry checks instead.
 
 ## `email_templates`
 
 Create one row in the `email_templates` collection. Handlebars syntax
 (`{{variable}}`, `{{{raw_html}}}`).
 
-| Template Key               | Trigger                          | Available Variables |
-| -------------------------- | -------------------------------- | ------------------- |
-| `newsletter_double_opt_in` | New `pending` subscriber created | `confirm_url`       |
+| Template Key               | Trigger                                                | Available Variables |
+| -------------------------- | ------------------------------------------------------ | ------------------- |
+| `newsletter_double_opt_in` | New `pending` subscriber, or an expired link refreshed | `confirm_url`       |
 
 **Legal note:** this confirmation email must be **advertising-free** — greeting,
 confirmation link and sender/imprint only. No offers, no CTAs beyond confirming.
