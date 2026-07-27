@@ -8,6 +8,7 @@ import {
     DEVTOOLS,
     DIRECTUS_CMS_URL,
     DISCORD_INVITE_LINK,
+    FLAG_ENABLE_UI_PREVIEWS,
     FLAG_SHOW_LOGIN,
     FLAG_SHOW_NEWS,
     FLAG_SHOW_NEWSLETTER,
@@ -60,6 +61,7 @@ export default defineNuxtConfig({
             FLAG_SHOW_LOGIN: FLAG_SHOW_LOGIN,
             FLAG_SHOW_NEWS: FLAG_SHOW_NEWS,
             FLAG_SHOW_NEWSLETTER: FLAG_SHOW_NEWSLETTER,
+            FLAG_ENABLE_UI_PREVIEWS: FLAG_ENABLE_UI_PREVIEWS,
             DISCORD_INVITE_LINK: DISCORD_INVITE_LINK,
             directusCmsUrl: DIRECTUS_CMS_URL,
             stripePublishableKey: '', // Set via NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY env var
@@ -193,6 +195,11 @@ export default defineNuxtConfig({
         '/speaker-portal': { isr: false },
         '/suche': { isr: false },
         '/api/**': { isr: false },
+
+        // Renders per-request from the `?token=` (and `?preview=`) query. Under
+        // ISR the first query-less render (invalid) would be cached and served
+        // for every token, breaking confirmation — same reason as the portals.
+        '/newsletter/confirm': { isr: false },
 
         // /app UA-branches between iOS/Android store URLs on conference hosts;
         // a cached response would pin the first-seen platform for everyone.

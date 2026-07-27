@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import CheckIcon from '~/assets/icons/check.svg'
+import InfoCircleIcon from '~/assets/icons/info-circle.svg'
 import { useNewsletterSignup } from '~/composables'
 import { ref } from 'vue'
 
@@ -130,16 +132,7 @@ function onReset() {
                         class="flex items-center gap-2 text-sm font-bold text-pink"
                         role="alert"
                     >
-                        <svg
-                            class="shrink-0"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            aria-hidden="true"
-                        >
-                            <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2zm0-4h-2V7h2z" />
-                        </svg>
+                        <InfoCircleIcon class="h-4 w-4 shrink-0" aria-hidden="true" />
                         <span>{{ signup.message || 'Bitte gib eine gültige E-Mail-Adresse ein.' }}</span>
                     </p>
 
@@ -155,19 +148,7 @@ function onReset() {
                 <!-- Success: double-opt-in mail sent -->
                 <div v-else-if="signup.status === 'success'" class="flex items-center gap-4 text-left" role="status">
                     <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-lime">
-                        <svg
-                            width="26"
-                            height="26"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#000"
-                            stroke-width="3"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                        >
-                            <path d="M20 6L9 17l-5-5" />
-                        </svg>
+                        <CheckIcon class="h-[26px] w-[26px] text-black" aria-hidden="true" />
                     </div>
                     <div>
                         <div class="text-lg font-bold text-white">Fast geschafft!</div>

@@ -140,6 +140,11 @@
                 "source": "src/fetch-open-graph/index.ts"
             },
             {
+                "type": "hook",
+                "name": "newsletter-double-opt-in",
+                "source": "src/newsletter-double-opt-in/index.ts"
+            },
+            {
                 "type": "endpoint",
                 "name": "ticket-wallet",
                 "source": "src/ticket-wallet/index.ts"
