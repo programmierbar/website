@@ -132,10 +132,16 @@ export function usePodcastPlayer() {
      * global HTMLAudioElement and streams `audio_url`. A `sourceFactory` may be
      * passed to bind the bar to a different playback backend (e.g. a YouTube
      * IFrame player) — in that case the audio element is not used.
+     *
+     * `startAt` (seconds) begins the episode at an offset — e.g. jumping to the
+     * point a news item is discussed. For the audio element the seek is applied
+     * once metadata is available (setting `currentTime` before then is reset to
+     * 0 by the browser), guarded so a quick episode switch doesn't seek the
+     * wrong source.
      */
     const setPodcast = (
         nextPodcast: PodcastBasics,
-        options?: { sourceFactory?: PodcastPlayerSourceFactory }
+        options?: { sourceFactory?: PodcastPlayerSourceFactory; startAt?: number }
     ) => {
         if (!audioElement.value) return
 
@@ -146,11 +152,42 @@ export function usePodcastPlayer() {
         audioState.duration = 1
         audioState.paused = true
 
+        const startAt = options?.startAt && options.startAt > 0 ? options.startAt : 0
+
         if (options?.sourceFactory) {
-            activeSource.value = options.sourceFactory(callbacks)
+            const source = options.sourceFactory(callbacks)
+            activeSource.value = source
+            if (startAt) {
+                // Non-audio-element backends (e.g. YouTube) accept a seek before
+                // playback, so apply it directly.
+                source.seek(startAt)
+                audioState.currentTime = startAt
+            }
         } else {
-            audioElement.value.src = nextPodcast.audio_url
-            activeSource.value = createAudioElementSource(audioElement.value, callbacks)
+            const audio = audioElement.value
+            audio.src = nextPodcast.audio_url
+            const source = createAudioElementSource(audio, callbacks)
+            activeSource.value = source
+
+            if (startAt) {
+                const applySeek = () => {
+                    // Bail if the user switched episodes before metadata loaded,
+                    // so we don't seek the wrong source.
+                    if (activeSource.value !== source) return
+                    try {
+                        audio.currentTime = startAt
+                    } catch {
+                        /* duration may not be known yet on some browsers; ignore */
+                    }
+                    audioState.currentTime = startAt
+                }
+
+                if (audio.readyState >= 1 /* HAVE_METADATA */) {
+                    applySeek()
+                } else {
+                    audio.addEventListener('loadedmetadata', applySeek, { once: true })
+                }
+            }
         }
 
         activeSource.value.setVolume(audioState.volume)

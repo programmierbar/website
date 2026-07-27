@@ -45,8 +45,16 @@ import { getFullPodcastTitle, getPodcastTitleDivider, getPodcastTypeAndNumber } 
 import { computed, toRefs } from 'vue'
 import DirectusImage from './DirectusImage.vue'
 
+// The subset of podcast fields this block and its play action need — matching
+// the lean field list fetched for news cards (see useDirectus). Narrowed from
+// the full item so we can't accidentally rely on fields the payload omits.
+type ReferencedPodcast = Pick<
+    DirectusPodcastItem,
+    'id' | 'slug' | 'type' | 'number' | 'title' | 'audio_url' | 'published_on' | 'cover_image'
+>
+
 const props = defineProps<{
-    podcast: DirectusPodcastItem
+    podcast: ReferencedPodcast
     // Start offset of the discussion within the episode, in seconds. When set,
     // an "ab mm:ss" timestamp is shown next to the play button.
     secondsFrom?: number | null
@@ -68,8 +76,7 @@ function togglePlayReference() {
     if (podcastPlayer.isPlaying(podcast.value)) {
         podcastPlayer.pause()
     } else {
-        podcastPlayer.setPodcast(podcast.value)
-        podcastPlayer.setCurrentTime(secondsFrom.value || 0)
+        podcastPlayer.setPodcast(podcast.value, { startAt: secondsFrom.value || 0 })
         podcastPlayer.play()
     }
 }
