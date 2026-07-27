@@ -41,7 +41,7 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-describe('GET /api/newsletter/confirm', () => {
+describe('POST /api/newsletter/confirm', () => {
     it('returns invalid for a missing token, without touching Directus', async () => {
         const result = await invoke({})
         expect(result).toEqual({ status: 'invalid' })
