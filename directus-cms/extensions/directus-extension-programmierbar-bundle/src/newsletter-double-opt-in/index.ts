@@ -59,7 +59,7 @@ export default defineHook(({ filter, action }, hookContext) => {
         })
 
         const subscriber = await subscribersService.readOne(key, {
-            fields: ['id', 'email', 'status', 'confirm_token'],
+            fields: ['id', 'email', 'status', 'confirm_token', 'unsubscribe_token'],
         })
 
         if (!subscriber) {
@@ -97,11 +97,17 @@ export default defineHook(({ filter, action }, hookContext) => {
 
         const confirmUrl = `${websiteUrl}/newsletter/confirm?token=${encodeURIComponent(subscriber.confirm_token)}`
 
+        // The unsubscribe token is permanent and works from any state, so the
+        // same link is valid in this mail and in every later newsletter issue.
+        const unsubscribeUrl = `${websiteUrl}/newsletter/unsubscribe?token=${encodeURIComponent(
+            subscriber.unsubscribe_token
+        )}`
+
         const sent = await sendTemplatedEmail(
             {
                 templateKey: TEMPLATE_KEY,
                 to: subscriber.email,
-                data: { confirm_url: confirmUrl },
+                data: { confirm_url: confirmUrl, unsubscribe_url: unsubscribeUrl },
             },
             context
         )

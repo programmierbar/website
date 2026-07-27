@@ -51,6 +51,21 @@ export default defineEventHandler(async (event) => {
         // subscribed (email enumeration). No duplicate row is created, so no
         // second confirmation mail goes out.
         if (isDuplicateError(err)) {
+            // One exception: a previously unsubscribed address must be able to
+            // come back. Without this, opting out is a one-way door — the row
+            // exists, so every later signup lands here and silently does
+            // nothing. The reactivation is guarded on `status = unsubscribed`,
+            // so a pending or confirmed address stays a no-op and the response
+            // is identical either way.
+            try {
+                await directus.resubscribeNewsletterSubscriber(email)
+            } catch (reactivateError: any) {
+                // Swallowed on purpose: a 500 here would only ever fire for
+                // addresses that already exist, which would turn this branch
+                // into the enumeration oracle the shared response avoids.
+                console.error('Newsletter reactivation error:', reactivateError)
+            }
+
             return { status: 'success' as const }
         }
         if (err.statusCode) {

@@ -157,6 +157,7 @@ describe('newsletter-double-opt-in hook', () => {
                 email: 'me@example.de',
                 status: 'pending',
                 confirm_token: 'tok-123',
+                unsubscribe_token: 'unsub-456',
             })
 
             await invokeAction(actions.get(CREATE)!, { key: 'sub_1' })
@@ -166,6 +167,10 @@ describe('newsletter-double-opt-in hook', () => {
             expect(options.templateKey).toBe('newsletter_double_opt_in')
             expect(options.to).toBe('me@example.de')
             expect(options.data.confirm_url).toBe('https://www.programmier.bar/newsletter/confirm?token=tok-123')
+            // Permanent token, so the same link stays valid in later issues.
+            expect(options.data.unsubscribe_url).toBe(
+                'https://www.programmier.bar/newsletter/unsubscribe?token=unsub-456'
+            )
             expect(postSlackMessageMock).not.toHaveBeenCalled()
         })
 
