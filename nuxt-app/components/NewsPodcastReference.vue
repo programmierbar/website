@@ -23,7 +23,7 @@
         <button type="button"
             v-on:click="togglePlayReference"
             class="relative z-10 flex flex-none flex-col items-center gap-1.25 text-lime no-underline transition-colors hover:text-blue"
-            :aria-label="`Zur Podcast-Folge: ${fullTitle}`"
+            :aria-label="isReferencePlaying ? `Pause: ${fullTitle}` : `Abspielen: ${fullTitle}`"
             data-cursor-hover
         >
             <play_circle v-if='!isReferencePlaying' />
