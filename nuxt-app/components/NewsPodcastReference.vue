@@ -20,7 +20,7 @@
             <span v-if="formattedDate" class="text-[13px] font-light italic text-[#abb2b5]">{{ formattedDate }}</span>
         </div>
 
-        <button
+        <button type="button"
             v-on:click="togglePlayReference"
             class="relative z-10 flex flex-none flex-col items-center gap-1.25 text-lime no-underline transition-colors hover:text-blue"
             :aria-label="`Zur Podcast-Folge: ${fullTitle}`"
