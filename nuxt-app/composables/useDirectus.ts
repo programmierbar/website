@@ -968,7 +968,13 @@ export function useDirectus() {
                 'target.target.member.*',
                 'target.target.member.normal_image.*',
                 'podcast_seconds_from',
-                'podcast.*',
+                'podcast.id',
+                'podcast.slug',
+                'podcast.published_on',
+                'podcast.type',
+                'podcast.number',
+                'podcast.title',
+                'podcast.audio_url',
                 'podcast.cover_image.*'
             )
         }
