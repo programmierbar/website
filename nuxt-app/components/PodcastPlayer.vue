@@ -207,7 +207,7 @@ import { getFullPodcastTitle, getPodcastTypeAndNumber } from 'shared-code'
 import { computed, ref, watch } from 'vue'
 import { useClipboard, usePodcastPlayer, useShare } from '../composables'
 import { BUZZSPROUT_TRACKING_URL, DOWNLOAD_PODCAST_EVENT_ID } from '../config'
-import { trackGoal } from '../helpers'
+import { formatAudioTimestamp, trackGoal } from '../helpers'
 
 // Use podcast player, clipboard and share
 const podcastPlayer = usePodcastPlayer()
@@ -234,23 +234,11 @@ const downloadUrl = computed(
     () => podcastPlayer.podcast && `${BUZZSPROUT_TRACKING_URL}/${podcastPlayer.podcast.audio_url}?download=true`
 )
 
-/**
- * It returns an audio timestamp based on a time value in seconds.
- *
- * @param time The time in seconds.
- *
- * @returns A audio timestamp.
- */
-const getAudioTimestamp = (time: number) => {
-    const isoString = new Date(time * 1000).toISOString()
-    return time < 3600 ? isoString.substr(14, 5) : isoString.substr(11, 8)
-}
-
 // Create current time string
-const currentTimeString = computed(() => getAudioTimestamp(podcastPlayer.currentTime))
+const currentTimeString = computed(() => formatAudioTimestamp(podcastPlayer.currentTime))
 
 // Create duration string
-const durationString = computed(() => getAudioTimestamp(podcastPlayer.duration))
+const durationString = computed(() => formatAudioTimestamp(podcastPlayer.duration))
 
 // Create progress string
 const progressString = computed(() => `${(podcastPlayer.currentTime / podcastPlayer.duration) * 100}%`)

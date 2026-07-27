@@ -1,5 +1,5 @@
 <template>
-    <div class="container px-6 pb-24 pt-32 md:pt-40 lg:pt-48 md:pl-24 3xl:pl-0">
+    <div class="container px-6 pb-24 pt-32 md:pl-24 md:pt-40 lg:pt-48 3xl:pl-0">
         <SectionHeading element="h1">News</SectionHeading>
 
         <!-- RSS feed link -->
@@ -26,6 +26,8 @@
                     class="h-full"
                     :news-link="card.link"
                     :published-on="card.news.published_on"
+                    :podcast="card.news.podcast"
+                    :podcast-seconds-from="card.news.podcast_seconds_from"
                     :to="card.news.slug ? `/news/${card.news.slug}` : undefined"
                     heading-level="h2"
                 />
@@ -60,7 +62,7 @@ const directus = useDirectus()
 // First page is fetched on the server for SSR/SEO; further pages are appended
 // client-side as the user scrolls (see loadMore below).
 const { data: firstPage } = await useAsyncData('news-list', () =>
-    directus.getPublishedNews(PAGE_SIZE, 1, { withAuthor: true })
+    directus.getPublishedNews(PAGE_SIZE, 1, { withCardRelations: true })
 )
 
 const items = ref<DirectusNewsItem[]>([...(firstPage.value ?? [])])
@@ -84,7 +86,7 @@ async function loadMore() {
 
     loadingMore.value = true
     try {
-        const next = await directus.getPublishedNews(PAGE_SIZE, page.value + 1, { withAuthor: true })
+        const next = await directus.getPublishedNews(PAGE_SIZE, page.value + 1, { withCardRelations: true })
         page.value += 1
         items.value.push(...next)
         if (next.length < PAGE_SIZE) {
