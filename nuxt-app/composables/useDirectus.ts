@@ -952,18 +952,31 @@ export function useDirectus() {
 
     // `news` is a meta collection whose content lives on the m2a `target`
     // (currently only `news_links`), so the source item is expanded alongside
-    // each entry. `page` drives the list view's infinite scroll. The author
-    // (with image) is only expanded when `withAuthor` is set — the list cards
-    // need it, the RSS feed does not, so the feed stays lean. Published news is
-    // public, so this uses the regular client.
+    // each entry. `page` drives the list view's infinite scroll. The card
+    // relations (author with image, referenced podcast with cover) are only
+    // expanded when `withCardRelations` is set — the list cards need them, the
+    // RSS feed does not, so the feed stays lean. Published news is public, so
+    // this uses the regular client.
     async function getPublishedNews(
         limit: number = 50,
         page: number = 1,
-        { withAuthor = false }: { withAuthor?: boolean } = {}
+        { withCardRelations = false }: { withCardRelations?: boolean } = {}
     ) {
         const fields = ['id', 'slug', 'published_on', 'target.id', 'target.collection', 'target.target.*']
-        if (withAuthor) {
-            fields.push('target.target.member.*', 'target.target.member.normal_image.*')
+        if (withCardRelations) {
+            fields.push(
+                'target.target.member.*',
+                'target.target.member.normal_image.*',
+                'podcast_seconds_from',
+                'podcast.id',
+                'podcast.slug',
+                'podcast.published_on',
+                'podcast.type',
+                'podcast.number',
+                'podcast.title',
+                'podcast.audio_url',
+                'podcast.cover_image.*'
+            )
         }
 
         return (await directus.request(
@@ -994,6 +1007,18 @@ export function useDirectus() {
                 fields: [
                     'id',
                     'published_on',
+                    // The podcast reference lives on the `news` item itself. Only
+                    // the fields the card and player need (kept lean, like the list
+                    // query above).
+                    'podcast_seconds_from',
+                    'podcast.id',
+                    'podcast.slug',
+                    'podcast.published_on',
+                    'podcast.type',
+                    'podcast.number',
+                    'podcast.title',
+                    'podcast.audio_url',
+                    'podcast.cover_image.*',
                     'target.id',
                     'target.collection',
                     'target.target.*',

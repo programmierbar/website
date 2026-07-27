@@ -345,9 +345,6 @@ export interface DirectusNewsLinkItem {
     comment: string | null
     open_graph: OpenGraphMetadata | null
     member: string | DirectusMemberItem | null
-    podcast: string | DirectusPodcastItem | null
-    podcast_seconds_from: number | null
-    podcast_seconds_to: number | null
     date_created: string
     date_updated: string | null
 }
@@ -362,6 +359,9 @@ export interface DirectusNewsItem {
     slug: string | null
     sort: number | null
     published_on: string | null
+    podcast: string | DirectusPodcastItem | null
+    podcast_seconds_from: number | null
+    podcast_seconds_to: number | null
     date_created: string
     date_updated: string | null
     target: {

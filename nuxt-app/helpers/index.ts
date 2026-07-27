@@ -1,4 +1,5 @@
 export * from './detectOS'
+export * from './formatAudioTimestamp'
 export * from './getCookie'
 export * from './getHashCode'
 export * from './getMetaInfo'

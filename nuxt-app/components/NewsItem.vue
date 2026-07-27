@@ -57,21 +57,27 @@
             />
         </div>
 
-        <!-- Footer: article link + brand mark -->
-        <footer class="flex flex-wrap items-center justify-between gap-4 border-t border-[#3a3d3f] pt-5">
-            <LinkButton class="relative z-10" :href="newsLink.link" target="_blank" rel="noopener noreferrer">Zum Artikel</LinkButton>
-            <BrandLogo v-if="showBrandMark" class="h-5 opacity-85" alt="programmier.bar" />
+        <!-- Footer: optional podcast reference, then article link + brand mark -->
+        <footer class="flex flex-col gap-5 border-t border-[#3a3d3f] pt-5">
+            <NewsPodcastReference v-if="podcastEpisode" :podcast="podcastEpisode" :seconds-from="podcastSecondsFrom" />
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <LinkButton class="relative z-10" :href="newsLink.link" target="_blank" rel="noopener noreferrer"
+                    >Zum Artikel</LinkButton
+                >
+                <BrandLogo v-if="showBrandMark" class="h-5 opacity-85" alt="programmier.bar" />
+            </div>
         </footer>
     </article>
 </template>
 
 <script setup lang="ts">
 import BrandLogo from '~/assets/images/brand-logo.svg'
-import type { DirectusFileItem, DirectusMemberItem, DirectusNewsLinkItem } from '~/types/directus'
+import type { DirectusFileItem, DirectusMemberItem, DirectusNewsLinkItem, DirectusPodcastItem } from '~/types/directus'
 import { computed, toRefs } from 'vue'
 import DirectusImage from './DirectusImage.vue'
 import InnerHtml from './InnerHtml.vue'
 import LinkButton from './LinkButton.vue'
+import NewsPodcastReference from './NewsPodcastReference.vue'
 
 const props = withDefaults(
     defineProps<{
@@ -80,6 +86,11 @@ const props = withDefaults(
         // Null/undefined for an item in a broken state (published without a date),
         // in which case no date is shown.
         publishedOn?: string | null
+        // The referenced podcast episode and the discussion's start offset, both
+        // from the parent `news` item (the editor curates them while publishing).
+        // Only an expanded object renders the reference block; an id or null hides
+        podcast?: string | DirectusPodcastItem | null
+        podcastSecondsFrom?: number | null
         showBrandMark?: boolean
         // When set, the whole card links here (used by the list view). Omit on the
         // detail page so the card is not a self-link.
@@ -89,12 +100,14 @@ const props = withDefaults(
     }>(),
     {
         publishedOn: undefined,
+        podcast: undefined,
+        podcastSecondsFrom: undefined,
         showBrandMark: false,
         to: undefined,
         headingLevel: 'h1',
     }
 )
-const { newsLink, publishedOn } = toRefs(props)
+const { newsLink, publishedOn, podcast } = toRefs(props)
 
 // The member is only usable when it was expanded (an object, not an id/null).
 const member = computed<DirectusMemberItem | null>(() =>
@@ -109,6 +122,11 @@ const memberImage = computed<DirectusFileItem | null>(() => {
     const image = member.value?.normal_image
     return image && typeof image === 'object' ? image : null
 })
+
+// The referenced podcast episode, only when it was expanded (an object, not an id/null)
+const podcastEpisode = computed<DirectusPodcastItem | null>(() =>
+    podcast.value && typeof podcast.value === 'object' ? (podcast.value as DirectusPodcastItem) : null
+)
 
 // Only render the opinion block when there is both a comment and an author.
 const hasOpinion = computed(() => Boolean(newsLink.value.comment && member.value))

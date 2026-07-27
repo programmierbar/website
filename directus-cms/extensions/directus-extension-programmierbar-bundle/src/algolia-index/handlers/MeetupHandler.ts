@@ -24,6 +24,10 @@ export class MeetupHandler extends AbstractItemHandler{
         return 'meetups';
     }
 
+    get type(): string {
+        return 'meetup';
+    }
+
     // Every field read by updateRequired() and buildAttributes(). `status` is added by the hook.
     //
     // NOTE: `intro` is required by buildAttributes() but was historically missing from the CLI field
@@ -79,7 +83,7 @@ export class MeetupHandler extends AbstractItemHandler{
         talks = truncateToByteLimit(talks, MAX_TALK_TEXT_BYTES);
 
         const payload = {
-            _type : 'meetup',
+            _type : this.type,
             title: item.title,
             // Always send a string (empty when there's no content), never `undefined`. The hook and
             // rebuild push via partialUpdateObject, which drops `undefined` properties from the

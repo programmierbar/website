@@ -7,7 +7,14 @@
             />
         </div>
 
-        <NewsItem v-if="newsLink" :news-link="newsLink" :published-on="news?.published_on" :show-brand-mark="true" />
+        <NewsItem
+            v-if="newsLink"
+            :news-link="newsLink"
+            :published-on="news?.published_on"
+            :podcast="news?.podcast"
+            :podcast-seconds-from="news?.podcast_seconds_from"
+            :show-brand-mark="true"
+        />
     </div>
 </template>
 
