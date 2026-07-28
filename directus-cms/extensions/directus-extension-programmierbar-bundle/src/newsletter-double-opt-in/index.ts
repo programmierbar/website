@@ -209,8 +209,25 @@ export default defineHook(({ filter, action }, hookContext) => {
         `${COLLECTION}.items.update`,
         safeAction(HOOK_NAME, logger, async (metadata: any, eventContext: any) => {
             const payload = metadata?.payload ?? {}
-            if (payload.confirm_token === undefined && payload.confirm_token_expires_at === undefined) {
+            const changedWindow = payload.confirm_token_expires_at !== undefined
+            if (payload.confirm_token === undefined && !changedWindow) {
                 return
+            }
+
+            // A window supplied by the caller can point into the past:
+            // backdating it is how a link gets *invalidated* by hand, not how
+            // one is reissued, so mailing here would deliver an already-dead
+            // link. A rotation that leaves the expiry to us needs no check —
+            // the update filter above stamps a fresh window.
+            if (changedWindow) {
+                const expiresAt = new Date(payload.confirm_token_expires_at).getTime()
+                if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+                    logger.info(
+                        `${HOOK_NAME}: confirmation window is not in the future ` +
+                            `(${payload.confirm_token_expires_at}); no mail sent`
+                    )
+                    return
+                }
             }
 
             const keys: Array<string | number> = Array.isArray(metadata?.keys)

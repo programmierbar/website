@@ -2,6 +2,11 @@
 
 This file provides context for AI assistants working with the programmier.bar website codebase.
 
+## Behaviour
+
+Do not automatically commit code changes, unless you were tasked with doing so.
+Do not automatically push code changes, unless you were tasked with doing so.
+
 ## Project Overview
 
 A podcast/conference/meetup platform for the German developer community. Built with Nuxt 3 (Vue 3) frontend and Directus 11 headless CMS.

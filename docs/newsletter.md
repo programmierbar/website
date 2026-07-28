@@ -37,7 +37,11 @@ Sign-up with a confirmed (double opt-in) subscription flow.
      It fires on create and again on any update that brings a new link into
      existence — a rotated `confirm_token` or an explicitly extended window (see
      step 3). Updates that touch neither (the confirm flip, unsubscribe) don't
-     resend.
+     resend. An explicitly supplied window must lie in the **future**: moving it
+     into the past by hand is how a link gets invalidated, not reissued, so that
+     sends nothing (it would deliver an already-dead link). A rotation that
+     leaves the expiry to the hook is always fine — the filter stamps a fresh
+     window.
      If the link cannot be built or sent — `website_url` unset (required, no
      fallback), template missing, or transport error — it sends **no** mail and
      posts a Slack warning, because the subscriber is otherwise stuck in
