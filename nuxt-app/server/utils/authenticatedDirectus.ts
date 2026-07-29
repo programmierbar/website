@@ -329,6 +329,10 @@ export function useAuthenticatedDirectus() {
     //
     // The expiry is deliberately NOT set here — the confirmation TTL is defined
     // once, in the CMS hook, so the create and refresh paths can't drift apart.
+    // That does NOT remove the permission requirement: the hook's filter adds
+    // `confirm_token_expires_at` to this very payload, and Directus validates the
+    // post-hook payload against the *caller's* policy. The API token therefore
+    // needs update permission on that field too (see docs/newsletter.md).
     //
     // Guarded like `confirmNewsletterSubscriber` above, and for a sharper reason:
     // every rotation triggers a mail, and only the newest token still works. Two
@@ -343,9 +347,13 @@ export function useAuthenticatedDirectus() {
                     filter: {
                         id: { _eq: id },
                         status: { _eq: 'pending' },
+                        // The token IS the compare-and-swap witness here: a
+                        // competing refresh rotates it, so this filter stops
+                        // matching. An extra `confirm_token_expires_at` clause
+                        // would add nothing — the only way the window moves
+                        // without the token changing is a manual CMS edit — and
+                        // the caller already decided the window was over.
                         confirm_token: { _eq: expectedToken },
-                        // Don't shorten a window someone else just refreshed.
-                        confirm_token_expires_at: { _lte: new Date().toISOString() },
                     },
                 },
                 { confirm_token: randomUUID() }

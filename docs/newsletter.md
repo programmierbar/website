@@ -75,8 +75,9 @@ Sign-up with a confirmed (double opt-in) subscription flow.
 
    **Concurrent clicks.** The route reads by token and then writes, so both
    mutations are **conditional on the state that was read** — the update filters
-   on `status = pending` and the token from the link (the refresh additionally on
-   an already-expired window). If a concurrent request (a double-clicked link, a
+   on `status = pending` and the token from the link. The token is what makes this
+   work: a competing refresh rotates it, so the loser's filter stops matching. If
+   a concurrent request (a double-clicked link, a
    retry, two tabs) got there first, the write reports no change and the handler
    answers from the row's current state instead of its own stale read. That
    matters most for the refresh path: every rotation triggers a mail and only the
@@ -135,6 +136,39 @@ This previews the real page, so there's no separate mock to drift from.
 Both routes are excluded from ISR in `nuxt.config.ts` — they render per request
 from the query, and a cached query-less render would otherwise be served for
 every token.
+
+## Permissions for the API token
+
+The website talks to Directus with `NUXT_DIRECTUS_API_TOKEN`; its policy needs
+these fields on `newsletter_subscribers`. Field lists matter here — a missing
+field is a **403**, which the routes surface as a technical error (500), not as
+an invalid link.
+
+| Action | Fields                                                                                                              | Why                                                    |
+| ------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Create | `email`, `confirm_token_expires_at`                                                                                 | signup writes the email; the hook adds the window      |
+| Read   | `id`, `status`, `confirm_token`, `confirm_token_expires_at`, `confirmed_at`, `unsubscribe_token`, `unsubscribed_at` | token lookups filter on the tokens and evaluate expiry |
+| Update | `status`, `confirmed_at`, `confirm_token`, `confirm_token_expires_at`, `unsubscribed_at`                            | confirm, refresh, unsubscribe, reactivate              |
+
+**`confirm_token_expires_at` needs create _and_ update permission even though
+the website never sets it.** Filter hooks mutate the payload inside the caller's
+request, and Directus validates the payload _after_ hooks against the caller's
+policy (`ItemsService.updateMany` → `emitFilter` → `validateItemAccess({ action:
+'update', fields: Object.keys(payloadAfterHooks) })`). So the field the CMS adds
+is checked against the website's permissions. Moving the TTL into the CMS moved
+the _value_, not the permission requirement.
+
+Filters in a query-based update (`refreshNewsletterConfirmation` and friends) are
+**not** permission-checked — `getKeysByQuery` resolves them through an
+`ItemsService` constructed without accountability. Only payload fields are.
+
+**Read permission is also what makes the guarded writes work.** They infer "did I
+win the race?" from the number of rows the PATCH returns, and Directus produces
+those by reading the updated rows back — a read whose `Forbidden` the controller
+**swallows** (`controllers/items.js`: `catch → if Forbidden return next()`). Without
+read permission the response carries no `data`, so a _successful_ write looks like
+a lost race and confirm answers `already_confirmed` / `invalid` with nothing in the
+logs. Update permission alone is not enough.
 
 ## `email_templates`
 
