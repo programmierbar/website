@@ -8,8 +8,22 @@
             <!-- Loading: the SSR/initial render. The state-changing call runs
                  client-side (see useNewsletterTokenAction) so crawlers, scanners
                  and prefetchers — which don't run JS — never trigger it. -->
-            <div v-if="status === 'loading'" key="loading" class="text-center">
+            <div v-if="status === 'loading'" key="loading" class="max-w-[600px] text-center">
                 <p class="text-xl font-light text-shade-200">{{ loadingText }}</p>
+
+                <!-- Works entirely without JavaScript: when it is disabled,
+                     blocked, or hydration failed, the client-side call never
+                     runs and this is the only way to act. Rendered as part of
+                     the loading state on purpose — it is also the escape hatch
+                     if that call hangs. A POST (never a GET) keeps the scanner
+                     protection intact. -->
+                <form v-if="fallback" :action="fallback.action" method="post" class="mt-10">
+                    <input type="hidden" name="token" :value="fallback.token" />
+                    <p class="text-base font-light leading-normal text-shade-400">{{ fallback.hint }}</p>
+                    <button type="submit" :class="CTA_CLASS" class="mt-6" data-cursor-hover>
+                        {{ fallback.label }}
+                    </button>
+                </form>
             </div>
 
             <div v-else key="result" class="flex max-w-[600px] flex-col items-center text-center" role="status">
@@ -41,21 +55,26 @@
 
                 <!-- CTA -->
                 <div class="mt-10">
+                    <!-- Retrying must survive a missing client too: with a
+                         fallback the retry is a real form submit, so it works
+                         with and without JavaScript (this is the state a no-JS
+                         visitor lands on when the form POST hit a failure). -->
+                    <form v-if="view.retry && fallback" :action="fallback.action" method="post">
+                        <input type="hidden" name="token" :value="fallback.token" />
+                        <button type="submit" :class="CTA_CLASS" data-cursor-hover>
+                            {{ view.cta.label }}
+                        </button>
+                    </form>
                     <button
-                        v-if="view.retry"
+                        v-else-if="view.retry"
                         type="button"
-                        class="inline-flex h-[58px] items-center rounded-full bg-lime px-8 text-sm font-black uppercase tracking-widest text-black transition-colors hover:bg-blue hover:text-white"
+                        :class="CTA_CLASS"
                         data-cursor-hover
                         @click="emit('retry')"
                     >
                         {{ view.cta.label }}
                     </button>
-                    <NuxtLink
-                        v-else
-                        :to="view.cta.to"
-                        class="inline-flex h-[58px] items-center rounded-full bg-lime px-8 text-sm font-black uppercase tracking-widest text-black transition-colors hover:bg-blue hover:text-white"
-                        data-cursor-hover
-                    >
+                    <NuxtLink v-else :to="view.cta.to" :class="CTA_CLASS" data-cursor-hover>
                         {{ view.cta.label }}
                     </NuxtLink>
                 </div>
@@ -102,13 +121,26 @@ const props = withDefaults(
         previewStates?: readonly string[]
         previewEnabled?: boolean
         loadingText?: string
+        /**
+         * Makes the action available without JavaScript, as a form POST to
+         * `action` carrying `token`. Set it for flows that must never depend on
+         * a working client (unsubscribe); omit it and the panel behaves as
+         * before.
+         */
+        fallback?: { action: string; token: string; label: string; hint: string }
     }>(),
     {
         previewStates: () => [],
         previewEnabled: false,
         loadingText: 'Einen Moment…',
+        fallback: undefined,
     }
 )
+
+// One pill for every CTA shape the panel renders (link, retry button, form
+// submit), so they cannot drift apart visually.
+const CTA_CLASS =
+    'inline-flex h-[58px] items-center rounded-full bg-lime px-8 text-sm font-black uppercase tracking-widest text-black transition-colors hover:bg-blue hover:text-white'
 
 const emit = defineEmits<{ retry: [] }>()
 

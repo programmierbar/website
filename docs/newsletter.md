@@ -94,6 +94,14 @@ Sign-up with a confirmed (double opt-in) subscription flow.
    `confirm_token` is **not** nulled on confirmation (it is NOT NULL). A used
    link is neutralised by the `status` + expiry checks instead.
 
+   **Confirming works without JavaScript**, via the same form-POST fallback as the
+   opt-out (see step 4 for how it works and why a POST keeps scanners out).
+   Strictly speaking this one fails safe — no confirmation just means no
+   subscription — but a visitor whose client can't run the call would otherwise be
+   stuck on the spinner and could never subscribe at all. The 303 matters here in
+   particular: a reload that repeated the POST on an expired link would rotate the
+   token again and send a second mail.
+
 4. **Unsubscribe** — the mail links to
    `{website_url}/newsletter/unsubscribe?token={unsubscribe_token}` (page
    `pages/newsletter/unsubscribe.vue`, route `POST /api/newsletter/unsubscribe`).
@@ -116,6 +124,27 @@ Sign-up with a confirmed (double opt-in) subscription flow.
    opt-out rather than being pushed forward by every re-click. Coming back is
    possible via a normal signup, see step 1.
 
+   **Opting out never depends on JavaScript.** The page also renders a plain form
+   that POSTs to `server/routes/newsletter/unsubscribe.post.ts` (a Nitro route
+   sharing the page's URL, POST only, so the page's GET is untouched). It covers
+   JavaScript disabled or blocked by CSP, a hydration that failed, and a
+   client-side call that hangs. Being a form POST, it keeps the protection the
+   client-side call existed for: scanners and link-expanders follow links, they
+   don't submit forms. Confirmation has the same fallback (step 3).
+
+   The form route answers **POST → 303 → GET** on `?status=<result>`, which the
+   page renders server-side, so a reload can't repeat the submission. A crafted
+   `?status=` therefore changes only what is displayed — nothing is written on that
+   path — and unknown values fall back to the loading state. In the `error` state
+   the retry CTA becomes a second form submit, so recovering doesn't need a client
+   either. Both routes share `server/utils/newsletterUnsubscribe.ts`, so "what
+   counts as an unusable link" is defined once.
+
+   The form is rendered inside the loading state, which means visitors with working
+   JavaScript may see it for the moment before the call resolves. That's deliberate:
+   hiding it until a timeout would make the guarantee depend on the very client
+   that might be broken.
+
 ## Shared page pieces
 
 Both token pages are thin: they supply their own copy map and nothing else.
@@ -123,10 +152,17 @@ Both token pages are thin: they supply their own copy map and nothing else.
 - `composables/useNewsletterTokenAction.ts` — the flow: reads `?token=`, posts it
   to the given route on the **client only** (`onMounted`, never during SSR — that
   is what keeps scanners and prefetchers from confirming or unsubscribing), maps
-  the result onto a status, and handles the `?preview=` override.
+  the result onto a status, and handles the `?preview=` and `?status=` overrides
+  (the latter is how the no-JS form redirect hands its outcome back).
 - `components/NewsletterStatusPanel.vue` — the result page: spotlights, status
   icon, eyebrow, headline, copy, CTA (a retry button when the view sets `retry`)
-  and the non-prod state switcher.
+  and the non-prod state switcher. An optional `fallback` prop adds the no-JS form
+  described in step 4; both pages set it. When a view asks for a `retry` CTA and a
+  fallback exists, the retry is rendered as a form submit rather than a JS button,
+  so recovering from the `error` state doesn't need a client either.
+- `server/utils/newsletterConfirm.ts` / `newsletterUnsubscribe.ts` — the actual
+  decisions (what is an unusable link, how a lost race is answered), shared by each
+  flow's JSON route and its form route so the two cannot diverge.
 
 **Previewing the states without the flow:** when `FLAG_ENABLE_UI_PREVIEWS` is set
 (non-prod only — off in production), both pages accept `?preview=<state>` to

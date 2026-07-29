@@ -53,9 +53,23 @@ export function useNewsletterTokenAction<TResult extends string>(
             : null
     })
 
-    // Start on the preview state when previewing (so SSR and client agree),
-    // otherwise 'loading' until the client-side call resolves.
-    const status = ref<NewsletterTokenActionStatus<TResult>>(previewState.value ?? 'loading')
+    // A no-JS form submission is answered with a redirect that carries the
+    // outcome (POST → 303 → GET), so the result has to be renderable from the
+    // query alone, during SSR, without any client-side call. Only states this
+    // page actually knows are accepted; a hand-crafted value changes what is
+    // displayed and nothing else, since no state is written on this path.
+    const queryStatus = computed<NewsletterTokenActionStatus<TResult> | null>(() => {
+        const status = route.query.status
+        if (typeof status !== 'string') return null
+        return (previewStates as readonly string[]).includes(status)
+            ? (status as NewsletterTokenActionStatus<TResult>)
+            : null
+    })
+
+    // Start on the preview state when previewing, or on a state handed back by
+    // the form redirect (so SSR and client agree either way), otherwise
+    // 'loading' until the client-side call resolves.
+    const status = ref<NewsletterTokenActionStatus<TResult>>(previewState.value ?? queryStatus.value ?? 'loading')
 
     // The page stays mounted when the preview switcher changes `?preview=`, so
     // re-derive the view on query changes (preview-only; in production
@@ -88,6 +102,10 @@ export function useNewsletterTokenAction<TResult extends string>(
 
     onMounted(() => {
         if (previewState.value) return
+        // The form route already performed the action and told us the outcome;
+        // re-posting on mount would repeat it (and overwrite an 'error' the user
+        // is looking at with a second failure).
+        if (queryStatus.value) return
         run()
     })
 

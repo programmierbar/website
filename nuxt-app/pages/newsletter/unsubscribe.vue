@@ -4,6 +4,7 @@
         :views="VIEWS"
         :preview-states="previewStates"
         :preview-enabled="previewEnabled"
+        :fallback="FALLBACK"
         loading-text="Abmeldung wird verarbeitet…"
         @retry="run"
     />
@@ -14,7 +15,7 @@ import AlertIcon from '~/assets/icons/alert.svg'
 import CheckIcon from '~/assets/icons/check.svg'
 import type { NewsletterStatusView } from '~/composables/useNewsletterTokenAction'
 import { getMetaInfo } from '~/helpers'
-import type { NewsletterUnsubscribeResult } from '~/server/api/newsletter/unsubscribe.post'
+import type { NewsletterUnsubscribeResult } from '~/server/utils/newsletterUnsubscribe'
 
 // The API results plus the view-only technical-failure state.
 type ViewStatus = NewsletterUnsubscribeResult | 'error'
@@ -67,6 +68,17 @@ const VIEWS: Record<ViewStatus, NewsletterStatusView> = {
 }
 
 const route = useRoute()
+
+// Opting out is the one action a recipient is always entitled to, so it must not
+// depend on JavaScript being available. The panel renders this as a plain form
+// POST to the Nitro route that shares this URL; it is a POST, so link scanners
+// still cannot trigger it.
+const FALLBACK = computed(() => ({
+    action: '/newsletter/unsubscribe',
+    token: typeof route.query.token === 'string' ? route.query.token : '',
+    label: 'Jetzt abmelden',
+    hint: 'Passiert nichts? Dann schließe die Abmeldung hier ab:',
+}))
 
 useHead(
     getMetaInfo({

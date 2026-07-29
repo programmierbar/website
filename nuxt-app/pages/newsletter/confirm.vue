@@ -4,6 +4,7 @@
         :views="VIEWS"
         :preview-states="previewStates"
         :preview-enabled="previewEnabled"
+        :fallback="FALLBACK"
         loading-text="Anmeldung wird bestätigt…"
         @retry="run"
     />
@@ -15,7 +16,7 @@ import CheckIcon from '~/assets/icons/check.svg'
 import InfoCircleIcon from '~/assets/icons/info-circle.svg'
 import type { NewsletterStatusView } from '~/composables/useNewsletterTokenAction'
 import { getMetaInfo } from '~/helpers'
-import type { NewsletterConfirmResult } from '~/server/api/newsletter/confirm.post'
+import type { NewsletterConfirmResult } from '~/server/utils/newsletterConfirm'
 
 // The API results plus the view-only technical-failure state.
 type ViewStatus = NewsletterConfirmResult | 'error'
@@ -77,6 +78,17 @@ const VIEWS: Record<ViewStatus, NewsletterStatusView> = {
 }
 
 const route = useRoute()
+
+// Confirming must not depend on JavaScript either: without this, a visitor whose
+// client can't run the call is stuck on the spinner and can never subscribe. The
+// panel renders it as a plain form POST to the Nitro route that shares this URL;
+// it is a POST, so link scanners still cannot trigger it.
+const FALLBACK = computed(() => ({
+    action: '/newsletter/confirm',
+    token: typeof route.query.token === 'string' ? route.query.token : '',
+    label: 'Anmeldung bestätigen',
+    hint: 'Passiert nichts? Dann bestätige deine Anmeldung hier:',
+}))
 
 useHead(
     getMetaInfo({
