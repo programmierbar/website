@@ -1,4 +1,4 @@
-import { onMounted, reactive, ref, toRefs, watch } from 'vue'
+import { onMounted, reactive, ref, shallowRef, toRefs, watch } from 'vue'
 import { PAUSE_PODCAST_EVENT_ID, PLAY_PODCAST_EVENT_ID } from '../config'
 import { trackGoal } from '../helpers'
 import type { PodcastItem } from '../types'
@@ -14,7 +14,12 @@ export type PodcastPlayerSourceFactory = (callbacks: SourceCallbacks) => MediaSo
 
 const podcast = ref<PodcastBasics>()
 const audioElement = ref<HTMLAudioElement>()
-const activeSource = ref<MediaSource | null>(null)
+// shallowRef, not ref: a deep ref stores objects as a reactive proxy, so
+// `activeSource.value === source` would never hold for the raw source we just
+// assigned — silently breaking the "did the user switch episodes while the
+// audio element was still loading?" guards below. The source is a bag of
+// methods with no state of its own, so there is nothing to make reactive.
+const activeSource = shallowRef<MediaSource | null>(null)
 const audioState = reactive({
     volume: 1,
     currentTime: 0,
@@ -225,6 +230,10 @@ export function usePodcastPlayer() {
         source.setVolume(audioState.volume)
 
         const applySeek = () => {
+            // Bail if something re-bound the bar (another episode, or the video
+            // player re-attaching) before metadata loaded, so we don't seek or
+            // report a position that belongs to the previous source.
+            if (activeSource.value !== source) return
             try {
                 audio.currentTime = options.seekTime
             } catch {
@@ -240,7 +249,10 @@ export function usePodcastPlayer() {
         }
 
         if (options.autoplay) {
-            const startPlayback = () => source.play()
+            const startPlayback = () => {
+                if (activeSource.value !== source) return
+                source.play()
+            }
             if (audio.readyState >= 3 /* HAVE_FUTURE_DATA */) {
                 startPlayback()
             } else {
