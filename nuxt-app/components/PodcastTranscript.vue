@@ -61,9 +61,13 @@ export default defineComponent({
 
     function playPodcastAtTimestamp(timestamp: number) {
       if (podcastPlayer.podcast?.id !== props.podcast.id) {
-        podcastPlayer.setPodcast(props.podcast);
+        // Loading a new episode: hand the offset to `setPodcast`, which applies
+        // it once metadata is available. Seeking right after the src is set
+        // would be reset to 0 by the browser.
+        podcastPlayer.setPodcast(props.podcast, { startAt: timestamp });
+      } else {
+        podcastPlayer.setCurrentTime(timestamp);
       }
-      podcastPlayer.setCurrentTime(timestamp);
       podcastPlayer.play();
     }
 
