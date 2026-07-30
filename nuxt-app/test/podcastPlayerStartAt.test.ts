@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRenderer, defineComponent, h } from 'vue'
 import type { usePodcastPlayer } from '../composables/usePodcastPlayer'
 
@@ -107,6 +107,13 @@ beforeEach(async () => {
     vi.resetModules()
     const { usePodcastPlayer } = await import('../composables/usePodcastPlayer')
     player = mountWithPlayer(usePodcastPlayer)
+})
+
+afterEach(() => {
+    // These tests run in the suite's `node` environment, where there is no
+    // `document`. Drop the stub again so we don't leave a browser-looking global
+    // behind for anything that checks `typeof document`.
+    vi.unstubAllGlobals()
 })
 
 describe('usePodcastPlayer startAt', () => {
