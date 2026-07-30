@@ -1,6 +1,8 @@
 <template>
     <div class="container px-6 pb-24 pt-32 md:pl-24 md:pt-40 lg:pt-48 3xl:pl-0">
-        <SectionHeading element="h1">News</SectionHeading>
+        <Breadcrumbs :breadcrumbs="breadcrumbs" />
+
+        <SectionHeading class="mt-8 md:mt-0" element="h1">News</SectionHeading>
 
         <!-- RSS feed link -->
         <div class="mt-8 flex justify-end md:mt-10">
@@ -46,6 +48,7 @@
 
 <script setup lang="ts">
 import RssFeedIcon from '~/assets/logos/rss-feed-color.svg'
+import Breadcrumbs from '~/components/Breadcrumbs.vue'
 import NewsItem from '~/components/NewsItem.vue'
 import { useIntersectionObserver, useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
@@ -96,6 +99,9 @@ async function loadMore() {
         loadingMore.value = false
     }
 }
+
+// Create breadcrumb list
+const breadcrumbs = [{ label: 'News' }]
 
 const sentinel = ref<HTMLElement | null>(null)
 useIntersectionObserver(sentinel, (entries) => {

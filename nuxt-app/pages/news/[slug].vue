@@ -1,5 +1,5 @@
 <template>
-    <div class="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-6 py-32">
+    <div class="relative flex min-h-screen flex-col overflow-hidden bg-black pb-24 pt-32 md:pt-40 lg:pt-48">
         <div class="pointer-events-none absolute inset-0" aria-hidden="true">
             <div class="absolute -left-20 -top-32 h-[520px] w-[520px] rounded-full bg-blue opacity-30 blur-[140px]" />
             <div
@@ -7,18 +7,27 @@
             />
         </div>
 
-        <NewsItem
-            v-if="newsLink"
-            :news-link="newsLink"
-            :published-on="news?.published_on"
-            :podcast="news?.podcast"
-            :podcast-seconds-from="news?.podcast_seconds_from"
-            :show-brand-mark="true"
-        />
+        <!-- Padding mirrors the news list view so the breadcrumbs sit in the same
+           spot on both pages. z-10 keeps them above the blurred spotlights. -->
+        <div class="container relative z-10 px-6 md:pl-24 3xl:pl-0">
+            <Breadcrumbs :breadcrumbs="breadcrumbs" />
+        </div>
+
+        <div class="flex flex-1 items-center justify-center px-6 pt-12">
+            <NewsItem
+                v-if="newsLink"
+                :news-link="newsLink"
+                :published-on="news?.published_on"
+                :podcast="news?.podcast"
+                :podcast-seconds-from="news?.podcast_seconds_from"
+                :show-brand-mark="true"
+            />
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import Breadcrumbs from '~/components/Breadcrumbs.vue'
 import NewsItem from '~/components/NewsItem.vue'
 import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
@@ -41,6 +50,10 @@ if (!news.value) {
 
 // Resolve the source item behind the news entry (shared with the list view).
 const newsLink = computed(() => resolveNewsLink(news.value))
+
+// Create breadcrumb list. A link (not history.back()) because this page is
+// mostly entered directly from the RSS feed, the newsletter or a shared link.
+const breadcrumbs = computed(() => [{ label: 'News', href: '/news' }, { label: newsLink.value?.title ?? '' }])
 
 // Set loading screen
 useLoadingScreen(news)
