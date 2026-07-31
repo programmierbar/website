@@ -10,6 +10,17 @@ Sign-up with a confirmed (double opt-in) subscription flow.
    Duplicate emails return the same success response as new ones (no
    enumeration). The admin token never reaches the browser.
 
+   A repeat signup for an address that previously **unsubscribed** reactivates it
+   (`resubscribeNewsletterSubscriber`): back to `pending` with a fresh
+   `confirm_token`, which makes the CMS send a new confirmation mail — consent is
+   re-obtained, never inherited from the old signup. Without this, opting out
+   would be a one-way door, because the row still exists and every later signup
+   lands in the duplicate branch. The reactivation is guarded on
+   `status = unsubscribed`, so a pending or confirmed address stays a no-op and
+   the response is identical either way; a failure there is logged and swallowed,
+   since a 500 that only fires for existing addresses would be an enumeration
+   oracle.
+
 2. **Directus fills the technical fields** — on insert Directus generates
    `confirm_token` / `unsubscribe_token` (uuid special flags), `signed_up_at`
    (date-created) and defaults `status` to `pending`. The
@@ -26,7 +37,11 @@ Sign-up with a confirmed (double opt-in) subscription flow.
      It fires on create and again on any update that brings a new link into
      existence — a rotated `confirm_token` or an explicitly extended window (see
      step 3). Updates that touch neither (the confirm flip, unsubscribe) don't
-     resend.
+     resend. An explicitly supplied window must lie in the **future**: moving it
+     into the past by hand is how a link gets invalidated, not reissued, so that
+     sends nothing (it would deliver an already-dead link). A rotation that
+     leaves the expiry to the hook is always fine — the filter stamps a fresh
+     window.
      If the link cannot be built or sent — `website_url` unset (required, no
      fallback), template missing, or transport error — it sends **no** mail and
      posts a Slack warning, because the subscriber is otherwise stuck in
@@ -42,13 +57,13 @@ Sign-up with a confirmed (double opt-in) subscription flow.
    GET — consistent with the ticket/speaker submit routes), which looks the
    subscriber up by `confirm_token` and:
 
-   | Situation                                     | Result                                                        | Page state          |
-   | --------------------------------------------- | ------------------------------------------------------------- | ------------------- |
-   | `pending` and not expired                     | flips to `confirmed`, sets `confirmed_at`                     | `confirmed`         |
-   | already `confirmed`                           | no-op (idempotent)                                            | `already_confirmed` |
-   | `pending` but past `confirm_token_expires_at` | new `confirm_token` → CMS stamps a fresh window and resends   | `resent`            |
-   | unknown token / other status                  | no-op                                                         | `invalid`           |
-   | Directus down / token misconfigured (500)     | no-op                                                         | `error` (retry)     |
+   | Situation                                     | Result                                                      | Page state          |
+   | --------------------------------------------- | ----------------------------------------------------------- | ------------------- |
+   | `pending` and not expired                     | flips to `confirmed`, sets `confirmed_at`                   | `confirmed`         |
+   | already `confirmed`                           | no-op (idempotent)                                          | `already_confirmed` |
+   | `pending` but past `confirm_token_expires_at` | new `confirm_token` → CMS stamps a fresh window and resends | `resent`            |
+   | unknown token / other status                  | no-op                                                       | `invalid`           |
+   | Directus down / token misconfigured (500)     | no-op                                                       | `error` (retry)     |
 
    **Expired links are recoverable.** An expired token can't be re-sent via
    re-signup (that hits the duplicate branch, which is a no-op for privacy), so
@@ -60,8 +75,9 @@ Sign-up with a confirmed (double opt-in) subscription flow.
 
    **Concurrent clicks.** The route reads by token and then writes, so both
    mutations are **conditional on the state that was read** — the update filters
-   on `status = pending` and the token from the link (the refresh additionally on
-   an already-expired window). If a concurrent request (a double-clicked link, a
+   on `status = pending` and the token from the link. The token is what makes this
+   work: a competing refresh rotates it, so the loser's filter stops matching. If
+   a concurrent request (a double-clicked link, a
    retry, two tabs) got there first, the write reports no change and the handler
    answers from the row's current state instead of its own stale read. That
    matters most for the refresh path: every rotation triggers a mail and only the
@@ -75,23 +91,134 @@ Sign-up with a confirmed (double opt-in) subscription flow.
    access — i.e. it would have to live in the CMS (see
    [#215](https://github.com/programmierbar/website/issues/215)).
 
-   **Previewing the states without the flow:** when `FLAG_ENABLE_UI_PREVIEWS` is
-   set (non-prod only — off in production), the confirm page accepts
-   `?preview=<confirmed|already_confirmed|resent|invalid|error>` to render any
-   state directly (no API call), and shows a small state-switcher toolbar. This
-   previews the real page, so there's no separate mock to drift from.
-
    `confirm_token` is **not** nulled on confirmation (it is NOT NULL). A used
    link is neutralised by the `status` + expiry checks instead.
+
+   **Confirming works without JavaScript**, via the same form-POST fallback as the
+   opt-out (see step 4 for how it works and why a POST keeps scanners out).
+   Strictly speaking this one fails safe — no confirmation just means no
+   subscription — but a visitor whose client can't run the call would otherwise be
+   stuck on the spinner and could never subscribe at all. The 303 matters here in
+   particular: a reload that repeated the POST on an expired link would rotate the
+   token again and send a second mail.
+
+4. **Unsubscribe** — the mail links to
+   `{website_url}/newsletter/unsubscribe?token={unsubscribe_token}` (page
+   `pages/newsletter/unsubscribe.vue`, route `POST /api/newsletter/unsubscribe`).
+
+   The token here is the **`unsubscribe_token`, not the confirm token**: it never
+   expires and stays valid after confirmation, because an unsubscribe link has to
+   keep working for the life of the subscription. Like confirmation, the call runs
+   client-side only, so a mail scanner can't opt someone out on their behalf.
+
+   | Situation                                 | Result                                     | Page state             |
+   | ----------------------------------------- | ------------------------------------------ | ---------------------- |
+   | any status except `unsubscribed`          | `status = unsubscribed`, `unsubscribed_at` | `unsubscribed`         |
+   | already `unsubscribed`                    | no-op (idempotent)                         | `already_unsubscribed` |
+   | unknown token                             | no-op                                      | `invalid`              |
+   | Directus down / token misconfigured (500) | no-op                                      | `error` (retry)        |
+
+   Opting out works from `pending` too — someone who never confirmed can still
+   say no, and it stops the confirmation resends. The write is guarded on
+   not-already-unsubscribed, so `unsubscribed_at` keeps the timestamp of the first
+   opt-out rather than being pushed forward by every re-click. Coming back is
+   possible via a normal signup, see step 1.
+
+   **Opting out never depends on JavaScript.** The page also renders a plain form
+   that POSTs to `server/routes/newsletter/unsubscribe.post.ts` (a Nitro route
+   sharing the page's URL, POST only, so the page's GET is untouched). It covers
+   JavaScript disabled or blocked by CSP, a hydration that failed, and a
+   client-side call that hangs. Being a form POST, it keeps the protection the
+   client-side call existed for: scanners and link-expanders follow links, they
+   don't submit forms. Confirmation has the same fallback (step 3).
+
+   The form route answers **POST → 303 → GET** on `?status=<result>`, which the
+   page renders server-side, so a reload can't repeat the submission. A crafted
+   `?status=` therefore changes only what is displayed — nothing is written on that
+   path — and unknown values fall back to the loading state. In the `error` state
+   the retry CTA becomes a second form submit, so recovering doesn't need a client
+   either. Both routes share `server/utils/newsletterUnsubscribe.ts`, so "what
+   counts as an unusable link" is defined once.
+
+   The form is rendered inside the loading state, which means visitors with working
+   JavaScript may see it for the moment before the call resolves. That's deliberate:
+   hiding it until a timeout would make the guarantee depend on the very client
+   that might be broken.
+
+## Shared page pieces
+
+Both token pages are thin: they supply their own copy map and nothing else.
+
+- `composables/useNewsletterTokenAction.ts` — the flow: reads `?token=`, posts it
+  to the given route on the **client only** (`onMounted`, never during SSR — that
+  is what keeps scanners and prefetchers from confirming or unsubscribing), maps
+  the result onto a status, and handles the `?preview=` and `?status=` overrides
+  (the latter is how the no-JS form redirect hands its outcome back).
+- `components/NewsletterStatusPanel.vue` — the result page: spotlights, status
+  icon, eyebrow, headline, copy, CTA (a retry button when the view sets `retry`)
+  and the non-prod state switcher. An optional `fallback` prop adds the no-JS form
+  described in step 4; both pages set it. When a view asks for a `retry` CTA and a
+  fallback exists, the retry is rendered as a form submit rather than a JS button,
+  so recovering from the `error` state doesn't need a client either.
+- `server/utils/newsletterConfirm.ts` / `newsletterUnsubscribe.ts` — the actual
+  decisions (what is an unusable link, how a lost race is answered), shared by each
+  flow's JSON route and its form route so the two cannot diverge.
+
+**Previewing the states without the flow:** when `FLAG_ENABLE_UI_PREVIEWS` is set
+(non-prod only — off in production), both pages accept `?preview=<state>` to
+render any state directly (no API call) and show a small state-switcher toolbar.
+This previews the real page, so there's no separate mock to drift from.
+
+Both routes are excluded from ISR in `nuxt.config.ts` — they render per request
+from the query, and a cached query-less render would otherwise be served for
+every token.
+
+## Permissions for the API token
+
+The website talks to Directus with `NUXT_DIRECTUS_API_TOKEN`; its policy needs
+these fields on `newsletter_subscribers`. Field lists matter here — a missing
+field is a **403**, which the routes surface as a technical error (500), not as
+an invalid link.
+
+| Action | Fields                                                                                                              | Why                                                    |
+| ------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Create | `email`, `confirm_token_expires_at`                                                                                 | signup writes the email; the hook adds the window      |
+| Read   | `id`, `status`, `confirm_token`, `confirm_token_expires_at`, `confirmed_at`, `unsubscribe_token`, `unsubscribed_at` | token lookups filter on the tokens and evaluate expiry |
+| Update | `status`, `confirmed_at`, `confirm_token`, `confirm_token_expires_at`, `unsubscribed_at`                            | confirm, refresh, unsubscribe, reactivate              |
+
+**`confirm_token_expires_at` needs create _and_ update permission even though
+the website never sets it.** Filter hooks mutate the payload inside the caller's
+request, and Directus validates the payload _after_ hooks against the caller's
+policy (`ItemsService.updateMany` → `emitFilter` → `validateItemAccess({ action:
+'update', fields: Object.keys(payloadAfterHooks) })`). So the field the CMS adds
+is checked against the website's permissions. Moving the TTL into the CMS moved
+the _value_, not the permission requirement.
+
+Filters in a query-based update (`refreshNewsletterConfirmation` and friends) are
+**not** permission-checked — `getKeysByQuery` resolves them through an
+`ItemsService` constructed without accountability. Only payload fields are.
+
+**Read permission is also what makes the guarded writes work.** They infer "did I
+win the race?" from the number of rows the PATCH returns, and Directus produces
+those by reading the updated rows back — a read whose `Forbidden` the controller
+**swallows** (`controllers/items.js`: `catch → if Forbidden return next()`). Without
+read permission the response carries no `data`, so a _successful_ write looks like
+a lost race and confirm answers `already_confirmed` / `invalid` with nothing in the
+logs. Update permission alone is not enough.
 
 ## `email_templates`
 
 Create one row in the `email_templates` collection. Handlebars syntax
 (`{{variable}}`, `{{{raw_html}}}`).
 
-| Template Key               | Trigger                                                | Available Variables |
-| -------------------------- | ------------------------------------------------------ | ------------------- |
-| `newsletter_double_opt_in` | New `pending` subscriber, or an expired link refreshed | `confirm_url`       |
+| Template Key               | Trigger                                                | Available Variables              |
+| -------------------------- | ------------------------------------------------------ | -------------------------------- |
+| `newsletter_double_opt_in` | New `pending` subscriber, or an expired link refreshed | `confirm_url`, `unsubscribe_url` |
+
+`unsubscribe_url` is optional in this template — nothing is subscribed yet until
+the address confirms. It is available because the token is permanent, so the same
+link can be reused verbatim in later newsletter issues, where an unsubscribe link
+is mandatory.
 
 **Legal note:** this confirmation email must be **advertising-free** — greeting,
 confirmation link and sender/imprint only. No offers, no CTAs beyond confirming.

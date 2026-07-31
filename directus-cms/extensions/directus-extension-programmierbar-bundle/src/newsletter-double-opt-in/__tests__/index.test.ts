@@ -70,6 +70,12 @@ function setup(subscriber: Record<string, any> | null) {
 const CREATE = 'newsletter_subscribers.items.create'
 const UPDATE = 'newsletter_subscribers.items.update'
 
+// The resend guard compares the window against "now", so these are relative
+// rather than fixed dates — a literal would flip meaning once it passes.
+const HOUR_MS = 60 * 60 * 1000
+const inOneHour = new Date(Date.now() + HOUR_MS).toISOString()
+const anHourAgo = new Date(Date.now() - HOUR_MS).toISOString()
+
 const invokeAction = async (handler: ActionHandler, meta: any) => {
     handler(meta, { accountability: {} })
     await flush()
@@ -157,6 +163,7 @@ describe('newsletter-double-opt-in hook', () => {
                 email: 'me@example.de',
                 status: 'pending',
                 confirm_token: 'tok-123',
+                unsubscribe_token: 'unsub-456',
             })
 
             await invokeAction(actions.get(CREATE)!, { key: 'sub_1' })
@@ -166,6 +173,10 @@ describe('newsletter-double-opt-in hook', () => {
             expect(options.templateKey).toBe('newsletter_double_opt_in')
             expect(options.to).toBe('me@example.de')
             expect(options.data.confirm_url).toBe('https://www.programmier.bar/newsletter/confirm?token=tok-123')
+            // Permanent token, so the same link stays valid in later issues.
+            expect(options.data.unsubscribe_url).toBe(
+                'https://www.programmier.bar/newsletter/unsubscribe?token=unsub-456'
+            )
             expect(postSlackMessageMock).not.toHaveBeenCalled()
         })
 
@@ -260,10 +271,65 @@ describe('newsletter-double-opt-in hook', () => {
 
             await invokeAction(actions.get(UPDATE)!, {
                 keys: ['sub_1'],
-                payload: { confirm_token_expires_at: '2030-01-01T00:00:00.000Z' },
+                payload: { confirm_token_expires_at: inOneHour },
             })
 
             expect(sendTemplatedEmailMock).toHaveBeenCalledTimes(1)
+        })
+
+        // Backdating the window by hand is how a link gets invalidated, not
+        // reissued — a mail sent here would carry an already-expired link.
+        test('does not resend when the window is moved into the past', async () => {
+            const { actions, readOne } = setup({
+                id: 'sub_1',
+                email: 'me@example.de',
+                status: 'pending',
+                confirm_token: 'tok-123',
+            })
+
+            await invokeAction(actions.get(UPDATE)!, {
+                keys: ['sub_1'],
+                payload: { confirm_token_expires_at: anHourAgo },
+            })
+
+            expect(readOne).not.toHaveBeenCalled()
+            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+        })
+
+        test('does not resend when a rotation carries an explicitly backdated window', async () => {
+            const { actions, readOne } = setup({
+                id: 'sub_1',
+                email: 'me@example.de',
+                status: 'pending',
+                confirm_token: 'tok-new',
+            })
+
+            // The create/update filters let an explicit expiry win, so a token
+            // rotation can arrive with a dead window attached.
+            await invokeAction(actions.get(UPDATE)!, {
+                keys: ['sub_1'],
+                payload: { confirm_token: 'tok-new', confirm_token_expires_at: anHourAgo },
+            })
+
+            expect(readOne).not.toHaveBeenCalled()
+            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+        })
+
+        test('does not resend for an unparseable window', async () => {
+            const { actions, readOne } = setup({
+                id: 'sub_1',
+                email: 'me@example.de',
+                status: 'pending',
+                confirm_token: 'tok-123',
+            })
+
+            await invokeAction(actions.get(UPDATE)!, {
+                keys: ['sub_1'],
+                payload: { confirm_token_expires_at: 'not-a-date' },
+            })
+
+            expect(readOne).not.toHaveBeenCalled()
+            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
         })
 
         test('does not resend when the update touches neither token nor window', async () => {

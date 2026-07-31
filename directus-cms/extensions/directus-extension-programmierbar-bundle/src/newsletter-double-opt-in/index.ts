@@ -59,7 +59,7 @@ export default defineHook(({ filter, action }, hookContext) => {
         })
 
         const subscriber = await subscribersService.readOne(key, {
-            fields: ['id', 'email', 'status', 'confirm_token'],
+            fields: ['id', 'email', 'status', 'confirm_token', 'unsubscribe_token'],
         })
 
         if (!subscriber) {
@@ -97,11 +97,17 @@ export default defineHook(({ filter, action }, hookContext) => {
 
         const confirmUrl = `${websiteUrl}/newsletter/confirm?token=${encodeURIComponent(subscriber.confirm_token)}`
 
+        // The unsubscribe token is permanent and works from any state, so the
+        // same link is valid in this mail and in every later newsletter issue.
+        const unsubscribeUrl = `${websiteUrl}/newsletter/unsubscribe?token=${encodeURIComponent(
+            subscriber.unsubscribe_token
+        )}`
+
         const sent = await sendTemplatedEmail(
             {
                 templateKey: TEMPLATE_KEY,
                 to: subscriber.email,
-                data: { confirm_url: confirmUrl },
+                data: { confirm_url: confirmUrl, unsubscribe_url: unsubscribeUrl },
             },
             context
         )
@@ -203,8 +209,25 @@ export default defineHook(({ filter, action }, hookContext) => {
         `${COLLECTION}.items.update`,
         safeAction(HOOK_NAME, logger, async (metadata: any, eventContext: any) => {
             const payload = metadata?.payload ?? {}
-            if (payload.confirm_token === undefined && payload.confirm_token_expires_at === undefined) {
+            const changedWindow = payload.confirm_token_expires_at !== undefined
+            if (payload.confirm_token === undefined && !changedWindow) {
                 return
+            }
+
+            // A window supplied by the caller can point into the past:
+            // backdating it is how a link gets *invalidated* by hand, not how
+            // one is reissued, so mailing here would deliver an already-dead
+            // link. A rotation that leaves the expiry to us needs no check —
+            // the update filter above stamps a fresh window.
+            if (changedWindow) {
+                const expiresAt = new Date(payload.confirm_token_expires_at).getTime()
+                if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+                    logger.info(
+                        `${HOOK_NAME}: confirmation window is not in the future ` +
+                            `(${payload.confirm_token_expires_at}); no mail sent`
+                    )
+                    return
+                }
             }
 
             const keys: Array<string | number> = Array.isArray(metadata?.keys)

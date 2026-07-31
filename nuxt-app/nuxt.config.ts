@@ -196,10 +196,11 @@ export default defineNuxtConfig({
         '/suche': { isr: false },
         '/api/**': { isr: false },
 
-        // Renders per-request from the `?token=` (and `?preview=`) query. Under
+        // Render per-request from the `?token=` (and `?preview=`) query. Under
         // ISR the first query-less render (invalid) would be cached and served
         // for every token, breaking confirmation — same reason as the portals.
         '/newsletter/confirm': { isr: false },
+        '/newsletter/unsubscribe': { isr: false },
 
         // /app UA-branches between iOS/Android store URLs on conference hosts;
         // a cached response would pin the first-seen platform for everyone.

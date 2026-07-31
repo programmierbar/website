@@ -329,6 +329,10 @@ export function useAuthenticatedDirectus() {
     //
     // The expiry is deliberately NOT set here — the confirmation TTL is defined
     // once, in the CMS hook, so the create and refresh paths can't drift apart.
+    // That does NOT remove the permission requirement: the hook's filter adds
+    // `confirm_token_expires_at` to this very payload, and Directus validates the
+    // post-hook payload against the *caller's* policy. The API token therefore
+    // needs update permission on that field too (see docs/newsletter.md).
     //
     // Guarded like `confirmNewsletterSubscriber` above, and for a sharper reason:
     // every rotation triggers a mail, and only the newest token still works. Two
@@ -343,12 +347,90 @@ export function useAuthenticatedDirectus() {
                     filter: {
                         id: { _eq: id },
                         status: { _eq: 'pending' },
+                        // The token IS the compare-and-swap witness here: a
+                        // competing refresh rotates it, so this filter stops
+                        // matching. An extra `confirm_token_expires_at` clause
+                        // would add nothing — the only way the window moves
+                        // without the token changing is a manual CMS edit — and
+                        // the caller already decided the window was over.
                         confirm_token: { _eq: expectedToken },
-                        // Don't shorten a window someone else just refreshed.
-                        confirm_token_expires_at: { _lte: new Date().toISOString() },
                     },
                 },
                 { confirm_token: randomUUID() }
+            )
+        )
+
+        return (updated?.length ?? 0) > 0
+    }
+
+    // Looks a subscriber up by its (permanent) unsubscribe token. As with the
+    // confirm token, the status is evaluated by the caller so it can tell an
+    // already-unsubscribed address from an unusable link.
+    async function readNewsletterSubscriberByUnsubscribeToken(token: string) {
+        const subscribers = await client.request(
+            readItems('newsletter_subscribers', {
+                filter: { unsubscribe_token: { _eq: token } },
+                fields: ['id', 'status', 'unsubscribed_at'],
+                limit: 1,
+            })
+        )
+
+        return subscribers?.[0] ?? null
+    }
+
+    // Opts a subscriber out, from any state that isn't already 'unsubscribed' —
+    // a `pending` address that never confirmed can opt out too, which also stops
+    // the confirmation resends.
+    //
+    // Guarded on the token and on not-already-unsubscribed like the confirm
+    // writes above, so `unsubscribed_at` keeps the timestamp of the first opt-out
+    // instead of being pushed forward by every re-click. Same caveat about the
+    // residual read-to-write window applies.
+    async function unsubscribeNewsletterSubscriber(id: string, expectedToken: string) {
+        const updated = await client.request(
+            updateItems(
+                'newsletter_subscribers',
+                {
+                    filter: {
+                        id: { _eq: id },
+                        unsubscribe_token: { _eq: expectedToken },
+                        status: { _neq: 'unsubscribed' },
+                    },
+                },
+                {
+                    status: 'unsubscribed',
+                    unsubscribed_at: new Date().toISOString(),
+                }
+            )
+        )
+
+        return (updated?.length ?? 0) > 0
+    }
+
+    // Puts a previously unsubscribed address back into the double-opt-in flow:
+    // status back to 'pending' and a fresh `confirm_token`, which makes the CMS
+    // hook stamp a new window and send a confirmation mail. Consent is therefore
+    // re-obtained rather than assumed from the earlier signup.
+    //
+    // Guarded on `status = unsubscribed` so this can never reset a live
+    // subscription (and so a repeat signup for a pending/confirmed address stays
+    // the no-op that keeps the endpoint free of email enumeration).
+    async function resubscribeNewsletterSubscriber(email: string) {
+        const updated = await client.request(
+            updateItems(
+                'newsletter_subscribers',
+                {
+                    filter: {
+                        email: { _eq: email },
+                        status: { _eq: 'unsubscribed' },
+                    },
+                },
+                {
+                    status: 'pending',
+                    confirm_token: randomUUID(),
+                    confirmed_at: null,
+                    unsubscribed_at: null,
+                }
             )
         )
 
@@ -378,5 +460,8 @@ export function useAuthenticatedDirectus() {
         readNewsletterSubscriberByToken,
         confirmNewsletterSubscriber,
         refreshNewsletterConfirmation,
+        readNewsletterSubscriberByUnsubscribeToken,
+        unsubscribeNewsletterSubscriber,
+        resubscribeNewsletterSubscriber,
     }
 }
