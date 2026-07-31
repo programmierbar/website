@@ -2,7 +2,7 @@
     <NewsletterStatusPanel
         :status="status"
         :views="VIEWS"
-        :preview-states="previewStates"
+        :preview-states="states"
         :preview-enabled="previewEnabled"
         :fallback="FALLBACK"
         loading-text="Abmeldung wird verarbeitet…"
@@ -17,14 +17,16 @@ import type { NewsletterStatusView } from '~/composables/useNewsletterTokenActio
 import { getMetaInfo } from '~/helpers'
 import type { NewsletterUnsubscribeResult } from '~/server/utils/newsletterUnsubscribe'
 
-// The API results plus the view-only technical-failure state.
+// The API results plus the view-only technical-failure state. Only used to key
+// the view map below — the composable is given `NewsletterUnsubscribeResult`, so
+// the posted response stays typed to what the route can actually return.
 type ViewStatus = NewsletterUnsubscribeResult | 'error'
 
-const PREVIEW_STATES: ViewStatus[] = ['unsubscribed', 'already_unsubscribed', 'invalid', 'error']
+const STATES: ViewStatus[] = ['unsubscribed', 'already_unsubscribed', 'invalid', 'error']
 
-const { status, previewEnabled, previewStates, run } = useNewsletterTokenAction<ViewStatus>(
+const { status, previewEnabled, states, run } = useNewsletterTokenAction<NewsletterUnsubscribeResult>(
     '/api/newsletter/unsubscribe',
-    PREVIEW_STATES
+    STATES
 )
 
 const VIEWS: Record<ViewStatus, NewsletterStatusView> = {
