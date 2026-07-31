@@ -44,7 +44,7 @@
     "devDependencies": {
         "@ianvs/prettier-plugin-sort-imports": "^4.1.1",
         "@nuxt/eslint-config": "^0.2.0",
-        "@nuxt/image-edge": "^1.3.0-28468005.8ad772e",
+        "@nuxt/image": "^2.1.0",
         "@nuxtjs/algolia": "^1.11.2",
         "@playwright/test": "^1.62.1",
         "@types/nodemailer": "^6.4.14",

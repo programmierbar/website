@@ -87,8 +87,8 @@ export default defineNuxtConfig({
 
         //  https://go.nuxtjs.dev/tailwindcss
         '@nuxtjs/tailwindcss',
-        // https://v1.image.nuxtjs.org/get-started/
-        '@nuxt/image-edge',
+        // https://image.nuxt.com/get-started/installation
+        '@nuxt/image',
         // // Sitemap Module for Nuxt
         // '@nuxtjs/sitemap',
         'nuxt-jsonld',
@@ -170,12 +170,20 @@ export default defineNuxtConfig({
     //   exclude: ['/impressum', '/datenschutz'],
     // },
 
-    // https://image.nuxtjs.org/
+    // https://image.nuxt.com/get-started/configuration
+    //
+    // No `alias` entry on purpose. There used to be `alias: { cms: '<cms>/assets' }`, intended so
+    // that `src="/cms/<file-id>"` would expand to the Directus asset URL. It never worked, for
+    // three independent reasons, and was removed rather than fixed because nothing needs it:
+    //   1. Nothing referenced it — image URLs come from `helpers/getAssetUrl.ts`, which already
+    //      builds absolute Directus URLs, and Algolia results carry absolute URLs too.
+    //   2. Alias keys must start with `/`. The resolver normalises a relative src with
+    //      `withLeadingSlash` before matching, so `input.startsWith('cms')` could never be true.
+    //   3. Decisively: alias resolution is guarded by `if (!provider.supportsAlias)`, and both ipx
+    //      providers set `supportsAlias: true`. This app uses ipx, so that branch never ran.
+    // If a shorthand is ever wanted, the working form is `alias: { '/cms': '<cms>/assets' }`.
     image: {
         domains: [DIRECTUS_CMS_URL.replace(/^https?:\/\//, '')],
-        alias: {
-            cms: `${DIRECTUS_CMS_URL}/assets`,
-        },
         screens: {
             xs: 520,
             sm: 640,

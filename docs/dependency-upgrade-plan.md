@@ -33,7 +33,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | 1 | Delete dead dependencies | ✅ Done (2026-07-31) |
 | 2 | Security patches + minors, no majors | ✅ Done (2026-07-31) |
 | — | TypeScript 5.9 → 6.0.3 (interstitial, own PR) | ✅ Done (2026-07-31) |
-| 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ⬜ Not started |
+| 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ✅ Done (2026-07-31) |
 | 4 | **Nuxt 3 → Nuxt 4** | ⬜ Not started |
 | 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | ⬜ Not started |
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
@@ -122,14 +122,17 @@ site explaining why.
 cleanup pass, but not a blocker:
 
 - [ ] Clear the 29 remaining ESLint warnings, then consider `--max-warnings 0`
-- [ ] **Investigate intermittent flake in the podcast-detail smoke test.** Observed once locally
-      during the TypeScript 6 step: it failed in a full parallel run, then passed in isolation and
-      in two consecutive full re-runs. Likely cause is two sequential SSR navigations
-      (`/podcast` → `/podcast/:slug`) against live Directus under six parallel workers exceeding
-      the 10s expect timeout. **CI exposure is contained** — `playwright.config.ts` sets
-      `retries: 1` under CI (0 locally, which is why it surfaced here), and all CI runs to date
-      have been 18/18 with no retries. Worth hardening rather than leaving to retries: a flaky
-      safety net is the failure mode Phase 0 was written to avoid.
+- [x] **Smoke-test flakiness under parallel load — fixed in Phase 3.** First seen as a single
+      flake during the TypeScript 6 step, then reproduced hard in Phase 3: six workers gave **six**
+      spurious failures, including blank pages and a "Hydration completed but contains mismatches"
+      console error, while the same pages were perfect in isolation. Root cause was local resource
+      contention, not the app — a single `nuxt preview` process cannot serve SSR *and* resize 99
+      images through sharp/libvips while six Chromium workers hammer it. Confirmed by worker count:
+      6 → 6 failures, 2 → 1-in-3 flake, 1 → 18/18. Fixed by running **serial locally and parallel
+      in CI** (`workers: process.env.CI ? undefined : 1`), since in CI the target is the Vercel
+      preview, which scales horizontally, plus raising the expect timeout 10s → 15s and the test
+      timeout 30s → 45s to suit pages that legitimately fetch live CMS data. Four consecutive
+      serial runs then gave 18/18.
 
 ### Why the smoke tests do not run on pull requests
 
@@ -346,12 +349,83 @@ The app depends on `@nuxt/image-edge@1.3.0-28468005.8ad772e` — a **nightly bui
 and it is the *only* advisory in the audit flagged `isSemVerMajor`, i.e. the only one
 `npm audit fix` cannot resolve on its own.
 
-- [ ] Swap the package: `@nuxt/image-edge` → `@nuxt/image@^2`
-- [ ] Update the module name in `nuxt.config.ts` (`modules: ['@nuxt/image-edge']` → `'@nuxt/image'`)
-- [ ] Confirm the `image.domains` and `image.alias.cms` config still applies in v2
-- [ ] Verify Directus-hosted images actually render — cover images on `/podcast`, speaker
-      portraits on `/hall-of-fame`, conference gallery
-- [ ] Note `@nuxt/image@2` requires Node `^20.19.0 || >=22.3.0` — satisfied
+- [x] Swap the package: `@nuxt/image-edge` → `@nuxt/image@^2` (resolved 2.1.0)
+- [x] Update the module name in `nuxt.config.ts`
+- [x] Confirm `image.domains` / `image.screens` still apply in v2 — both remain valid options and
+      are demonstrably in effect. `image.alias` was removed: it never worked (see below).
+- [x] Verify Directus-hosted images actually render
+- [x] Node `^20.19.0 || >=22.3.0` — satisfied
+
+**Advisories: 3 → 2.** The `sharp` chain is cleared. Only `brace-expansion` and `nodemailer`
+remain, both awaiting Phase 5.
+
+### Only v2 clears `sharp` — 1.x cannot
+
+Worth recording, because "move to the latest stable 1.x instead" looks like the safer option and
+is not:
+
+| Package | ipx | sharp | Advisory (`sharp <0.35.0`) |
+| --- | --- | --- | --- |
+| `@nuxt/image-edge` (Feb 2024 nightly) | 2.1.1 | 0.32.6 | vulnerable |
+| `@nuxt/image@1.11.0` (latest 1.x) | `^2.1.1` | 0.32.6 | **still vulnerable** |
+| — | 3.1.1 | 0.34.3 | still vulnerable |
+| `@nuxt/image@2.1.0` | 4.0.0-beta.1 | **0.35.3** | **fixed** |
+
+So v2 is the only route to a patched `sharp`. Note `ipx@4.0.0-beta.1` is a **prerelease**, pinned
+exactly as an `optionalDependency` by `@nuxt/image` itself — upstream's choice, not a resolution
+accident. It is dev-flagged and only backs the local ipx provider.
+
+`@nuxt/image@2.1.0` declares `compatibility: { nuxt: ">=3.1.0" }` and depends on `@nuxt/kit ^4.5.1`
+while the app is on Nuxt 3.21.10; npm nests kit 4.5.1 for the module. That combination builds and
+runs correctly — verified, not assumed.
+
+### Images verified directly, because the smoke tests cannot see them
+
+The smoke suite asserts page *structure*; a page whose images all 404 would still pass all 18
+checks. So image resolution was checked explicitly across `/`, `/podcast`, `/hall-of-fame`,
+`/ueber-uns` and `/pick-of-the-day`:
+
+- **99 `<img>` elements** rendered, 30 sampled and fetched, **zero failures** (all HTTP 200 with an
+  `image/*` content type)
+- every URL served through `/_ipx/…` with format conversion and sizing applied
+  (`f_jpeg`/`f_png`, `q_80`, `fit_cover`), at widths matching the custom `image.screens`
+  breakpoints — so `domains` and `screens` are both demonstrably in effect
+
+### `image.alias.cms` removed — it never worked
+
+The config carried `alias: { cms: '<cms>/assets' }`, intended so `src="/cms/<file-id>"` would
+expand to the Directus asset URL. It was **non-functional**, for three independent reasons:
+
+1. **Nothing referenced it.** The only occurrence of `cms:` in the whole source was the
+   declaration itself. Image URLs come from `helpers/getAssetUrl.ts`, which already builds absolute
+   Directus URLs, and Algolia results carry absolute URLs too.
+2. **The key was missing its leading slash, so it could not match.** v2 resolves with
+   `input = hasProtocol(input) ? input : withLeadingSlash(input)` and then
+   `input.startsWith(base)`. Because a relative src is always given a leading `/`,
+   `startsWith('cms')` is never true. Verified against the real `ufo` helpers:
+
+   | `src` | key `cms` (as configured) | key `/cms` (documented) |
+   | --- | --- | --- |
+   | `/cms/abc123` | `/cms/abc123` — unchanged | `https://…/assets/abc123` ✓ |
+   | `cms:abc123` | `https://…/assets/:abc123` — stray colon | `cms:abc123` |
+
+3. **Decisively, the branch never executed.** Alias resolution is guarded by
+   `if (!provider.supportsAlias)`, and both ipx providers declare `supportsAlias: true`. This app
+   uses ipx, so client-side alias resolution was skipped regardless of spelling.
+
+Removed rather than fixed, because nothing needs it. This was initially logged as a harmless
+follow-up; that was wrong. A config line that looks like a working shorthand but silently is not
+is a **trap** — the next person to write `src="/cms/<id>"` would get a 404 and go debugging Directus
+or `domains` instead of suspecting config that never functioned. The `nuxt.config.ts` comment
+records the working form (`alias: { '/cms': … }`) should anyone want it later.
+
+Verified as a no-op by re-running the image check after removal.
+
+### Image usage is well centralised
+
+Only two components call the image component directly: `components/DirectusImage.vue` (fronting
+**18** consumers) and `components/SearchResultCard.vue`. That is why a module swap of this size
+needed no component changes at all.
 
 ---
 
@@ -502,6 +576,8 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-07-31 | CI's build step sets `SKIP_PRERENDER_ROUTE_DISCOVERY=true` so a compile check does not depend on production Directus being reachable. |
 | 2026-07-31 | ESLint gates on **errors only**; the 29 pre-existing warnings are left ungated rather than blocking Phase 0 on an unrelated cleanup. |
 | 2026-07-31 | The three files touched for lint fixes were already Prettier-non-conforming, and Prettier is not in CI. Left unformatted deliberately — reformatting would bury a 2-line fix in a 200-line diff. |
+| 2026-07-31 | Phase 3 takes `@nuxt/image@2` even though it depends on `@nuxt/kit ^4` while the app is on Nuxt 3. It declares `nuxt: ">=3.1.0"`, builds, and serves images correctly. **Only v2 reaches a patched `sharp`** — `@nuxt/image@1.11.0` still pulls `sharp 0.32.6`, so staying on 1.x would not have cleared the advisory. |
+| 2026-07-31 | Smoke tests run **serial locally, parallel in CI**. The local target is one Node process doing SSR *and* image resizing, so parallelism measures the harness rather than the app; the CI target is a horizontally-scaled Vercel deployment where parallelism is safe and faster. |
 | 2026-07-31 | TypeScript taken to **6.0.3** as its own PR straight after Phase 2, rather than folded into it. 5.9 → 6.0 is a major and Phase 2's contract was patches-and-minors; a separate PR keeps that honest and gives TypeScript an independent revert point. Verified as a measurable no-op (identical 210-error count, all gates green, zero deprecation warnings). |
 | 2026-07-31 | Phase 2 pins `typescript` to `^5.9.3` via `overrides`. `npm update` resolved TS 7.0.2 through wide-open transitive ranges and broke `npm run lint` outright. TS 7 is the native rewrite and needs its own evaluation (Phase 6), not a drive-by in a patch phase. |
 | 2026-07-31 | Phase 2 accepts `vite@8.2.0` in the tree. It serves **vitest** only; `@nuxt/vite-builder` gets a nested `vite@7.3.6` per its own dependency, so the Nuxt build moved 7.3.2 → 7.3.6, a patch. |
