@@ -87,8 +87,8 @@ export default defineNuxtConfig({
 
         //  https://go.nuxtjs.dev/tailwindcss
         '@nuxtjs/tailwindcss',
-        // https://v1.image.nuxtjs.org/get-started/
-        '@nuxt/image-edge',
+        // https://image.nuxt.com/get-started/installation
+        '@nuxt/image',
         // // Sitemap Module for Nuxt
         // '@nuxtjs/sitemap',
         'nuxt-jsonld',
