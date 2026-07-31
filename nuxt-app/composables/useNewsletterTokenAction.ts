@@ -32,11 +32,20 @@ export type NewsletterTokenActionStatus<TResult extends string> = TResult | 'loa
  * unsubscribing on the recipient's behalf.
  *
  * @param endpoint Server route to post the token to.
- * @param previewStates States selectable via `?preview=` (non-prod only).
+ * @param states Every state this page can render. This is an allow-list, not
+ *   just switcher fodder: it gates the `?preview=` override (non-prod only) and
+ *   the `?status=` the no-JS form redirect hands back — which is a production
+ *   path. A state missing here silently renders as 'loading', so it has to list
+ *   everything the page's view map knows.
+ *
+ * @param TResult The result type of `endpoint`. The UI-only 'loading' and
+ *   'error' states are added here, so pages pass the API type, not their view
+ *   union — that keeps the posted response typed to what the route can actually
+ *   return.
  */
 export function useNewsletterTokenAction<TResult extends string>(
     endpoint: string,
-    previewStates: readonly NewsletterTokenActionStatus<TResult>[]
+    states: readonly NewsletterTokenActionStatus<TResult>[]
 ) {
     const route = useRoute()
 
@@ -48,7 +57,7 @@ export function useNewsletterTokenAction<TResult extends string>(
         if (!previewEnabled) return null
         const preview = route.query.preview
         if (typeof preview !== 'string') return null
-        return (previewStates as readonly string[]).includes(preview)
+        return (states as readonly string[]).includes(preview)
             ? (preview as NewsletterTokenActionStatus<TResult>)
             : null
     })
@@ -61,9 +70,7 @@ export function useNewsletterTokenAction<TResult extends string>(
     const queryStatus = computed<NewsletterTokenActionStatus<TResult> | null>(() => {
         const status = route.query.status
         if (typeof status !== 'string') return null
-        return (previewStates as readonly string[]).includes(status)
-            ? (status as NewsletterTokenActionStatus<TResult>)
-            : null
+        return (states as readonly string[]).includes(status) ? (status as NewsletterTokenActionStatus<TResult>) : null
     })
 
     // Start on the preview state when previewing, or on a state handed back by
@@ -109,5 +116,5 @@ export function useNewsletterTokenAction<TResult extends string>(
         run()
     })
 
-    return { status, previewEnabled, previewStates, run }
+    return { status, previewEnabled, states, run }
 }

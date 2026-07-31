@@ -2,7 +2,7 @@
     <NewsletterStatusPanel
         :status="status"
         :views="VIEWS"
-        :preview-states="previewStates"
+        :preview-states="states"
         :preview-enabled="previewEnabled"
         :fallback="FALLBACK"
         loading-text="Anmeldung wird bestätigt…"
@@ -18,14 +18,16 @@ import type { NewsletterStatusView } from '~/composables/useNewsletterTokenActio
 import { getMetaInfo } from '~/helpers'
 import type { NewsletterConfirmResult } from '~/server/utils/newsletterConfirm'
 
-// The API results plus the view-only technical-failure state.
+// The API results plus the view-only technical-failure state. Only used to key
+// the view map below — the composable is given `NewsletterConfirmResult`, so the
+// posted response stays typed to what the route can actually return.
 type ViewStatus = NewsletterConfirmResult | 'error'
 
-const PREVIEW_STATES: ViewStatus[] = ['confirmed', 'already_confirmed', 'resent', 'invalid', 'error']
+const STATES: ViewStatus[] = ['confirmed', 'already_confirmed', 'resent', 'invalid', 'error']
 
-const { status, previewEnabled, previewStates, run } = useNewsletterTokenAction<ViewStatus>(
+const { status, previewEnabled, states, run } = useNewsletterTokenAction<NewsletterConfirmResult>(
     '/api/newsletter/confirm',
-    PREVIEW_STATES
+    STATES
 )
 
 const VIEWS: Record<ViewStatus, NewsletterStatusView> = {

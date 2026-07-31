@@ -123,9 +123,11 @@ const props = withDefaults(
         loadingText?: string
         /**
          * Makes the action available without JavaScript, as a form POST to
-         * `action` carrying `token`. Set it for flows that must never depend on
-         * a working client (unsubscribe); omit it and the panel behaves as
-         * before.
+         * `action` carrying `token`. Both token flows set it — the action has to
+         * stay reachable when the client-side call can't run at all. Setting it
+         * also turns a `retry` CTA into a form submit, so recovering from the
+         * error state needs no client either. Omit it and the panel behaves as
+         * it did before the fallback existed.
          */
         fallback?: { action: string; token: string; label: string; hint: string }
     }>(),
