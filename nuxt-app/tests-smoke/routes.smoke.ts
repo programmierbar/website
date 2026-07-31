@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 /**
  * Route smoke tests — the check the Vitest suite cannot make: does the page actually render?
@@ -8,6 +8,19 @@ import { expect, test } from '@playwright/test'
  * changes a headline. What these catch is the failure mode that matters during a dependency
  * upgrade: a route that 500s, renders the error page, or comes back blank.
  */
+
+/**
+ * The blank-page check: a route can return 200 and still render nothing if the page component
+ * throws or resolves to empty data. Note this must assert on `<main>` specifically — the app
+ * shell (header, footer, podcast player) lives outside `<nuxt-page />` in app.vue and renders
+ * even when the page itself does not.
+ */
+async function expectPageRendered(page: Page, label: string) {
+    await expect(page.locator('h1', { hasText: /^Error \d{3}$/ }), `${label} rendered the error page`).toHaveCount(0)
+    await expect(page.locator('main')).toBeVisible()
+    const text = await page.locator('main').innerText()
+    expect(text.trim().length, `${label} rendered an empty <main>`).toBeGreaterThan(0)
+}
 
 /** Static routes that must render for anonymous visitors. */
 const PUBLIC_ROUTES = [
@@ -32,14 +45,7 @@ for (const route of PUBLIC_ROUTES) {
         const response = await page.goto(route)
 
         expect(response?.status(), `${route} should return 200`).toBe(200)
-
-        // error.vue renders "Error 404" in an h1 — catches a route that resolves but errors.
-        await expect(page.locator('h1', { hasText: /^Error \d{3}$/ })).toHaveCount(0)
-
-        // A blank body is the other silent failure: 200 with a hydration/render crash.
-        await expect(page.locator('main')).toBeVisible()
-        const text = await page.locator('main').innerText()
-        expect(text.trim().length, `${route} rendered an empty <main>`).toBeGreaterThan(0)
+        await expectPageRendered(page, route)
     })
 }
 
@@ -54,10 +60,11 @@ test('renders a podcast detail page', async ({ page }) => {
 
     const response = await page.goto(href!)
     expect(response?.status(), `${href} should return 200`).toBe(200)
-    await expect(page.locator('h1', { hasText: /^Error \d{3}$/ })).toHaveCount(0)
-    // The player mounts from app.vue on every page and is the component most likely to break on a
-    // Vue or Pinia upgrade. It is invisible until a podcast is selected, so assert attachment
-    // rather than visibility.
+    await expectPageRendered(page, href!)
+
+    // Separate signal from the render check above: the player mounts from app.vue on *every* page,
+    // outside <nuxt-page />, so this proves the shell hydrated — not that this page rendered. It is
+    // invisible until a podcast is selected, hence attachment rather than visibility.
     await expect(page.getByTestId('podcast-player')).toBeAttached()
 })
 
@@ -69,7 +76,7 @@ test('renders a speaker detail page', async ({ page }) => {
     const href = await firstSpeaker.getAttribute('href')
     const response = await page.goto(href!)
     expect(response?.status(), `${href} should return 200`).toBe(200)
-    await expect(page.locator('h1', { hasText: /^Error \d{3}$/ })).toHaveCount(0)
+    await expectPageRendered(page, href!)
 })
 
 test('serves the news RSS feed as valid XML', async ({ request }) => {
