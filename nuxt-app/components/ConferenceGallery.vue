@@ -105,7 +105,6 @@
 <script setup lang="ts">
 import { CLICK_SCROLL_LEFT_ARROW_EVENT_ID, CLICK_SCROLL_RIGHT_ARROW_EVENT_ID } from '~/config'
 import { trackGoal } from '~/helpers'
-import smoothscroll from 'smoothscroll-polyfill'
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import FadeAnimation from './FadeAnimation.vue'
 import GenericLazyList from './GenericLazyList.vue'
@@ -123,9 +122,6 @@ const scrollBoxElement = ref<HTMLDivElement>()
 // Create scroll start and end reached reference
 const scrollStartReached = ref(true)
 const scrollEndReached = ref(true)
-
-// Add smooth scroll polyfill
-onMounted(smoothscroll.polyfill)
 
 /**
  * It detects whether the start or the end of the scrolling area

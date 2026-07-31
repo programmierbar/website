@@ -30,7 +30,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | Phase | Goal | Status |
 | ----- | ---- | ------ |
 | 0 | Build a safety net so upgrades are *detectable* | ✅ Done (2026-07-31) |
-| 1 | Delete dead dependencies | ⬜ Not started |
+| 1 | Delete dead dependencies | ✅ Done (2026-07-31) |
 | 2 | Security patches + minors, no majors | ⬜ Not started |
 | 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ⬜ Not started |
 | 4 | **Nuxt 3 → Nuxt 4** | ⬜ Not started |
@@ -183,15 +183,39 @@ number instead of a surprise.
 
 **Goal:** shrink the surface that every later phase has to carry. No behaviour change.
 
-- [ ] Remove `core-js` — **zero imports anywhere in the codebase**
-- [ ] Remove `@vue/compiler-sfc` from `dependencies` — Vue ships it; listing it directly risks
-      version skew against the `vue` the framework resolves
-- [ ] Remove `smoothscroll-polyfill` + `@types/smoothscroll-polyfill` — polyfills
-      `scroll-behavior`, supported by every browser the site targets. **5 call sites** need
-      updating, so this one is a real (if small) change rather than a pure deletion.
+- [x] Remove `core-js` — **zero imports anywhere in the codebase**, only a `package.json` entry
+- [x] Remove `@vue/compiler-sfc` from `dependencies` — Vue ships it; listing it directly risks
+      version skew against the `vue` the framework resolves. Confirmed it remains available as a
+      transitive of `vue` at 3.5.33, so nothing loses the capability.
+- [x] Remove `smoothscroll-polyfill` + `@types/smoothscroll-polyfill` — **5 call sites**, so a
+      real (if small) change rather than a pure deletion.
 
-Verify: build succeeds, smoke tests pass, scroll behaviour still works on the podcast and
-conference pages.
+### On dropping the smooth-scroll polyfill
+
+Every call site followed the same shape — an `import smoothscroll from 'smoothscroll-polyfill'`
+plus `onMounted(smoothscroll.polyfill)` — in `PodcastSlider`, `ConferenceSpeakersSlider`,
+`TestimonialSlider`, `ConferenceGallery` and `ScrollDownMouse`. Only `ScrollDownMouse` used
+`onMounted` *solely* for the polyfill, so it also lost that import.
+
+What the polyfill provided was `behavior: 'smooth'` for `scrollTo` / `scrollIntoView`. That is
+native everywhere now — Chrome since 61, Firefox since 36, and **Safari since 15.4 (March 2022)**,
+which was the last holdout. There is no `browserslist` config pinning anything older.
+
+The strongest argument for removing it was already in the codebase: `ConferenceAgenda.vue:80`
+calls `scrollIntoView({ behavior: 'smooth' })` and **never imported the polyfill**, so the app
+already depended on native support in one place.
+
+**Explicitly accepted:** this drops smooth-scroll animation for Safari < 15.4. Those browsers
+still scroll, just instantly — the call is a no-op fallback, not an error.
+
+### Verification
+
+- `npm run lint` → 0 errors · `npm test` → 52/52 · ratchet → steady at 212 · build → exit 0
+- Smoke suite → 18/18
+- **Scroll behaviour verified directly**, since the smoke tests only check rendering: clicking
+  "Scroll right" on both home-page sliders moved `scrollLeft` 0 → 560, which is exactly the
+  `innerWidth * 0.4` the component computes. Native smooth scrolling confirmed active in the
+  engine under test.
 
 ---
 
@@ -319,7 +343,7 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | `h3-zod` | Jan 2024 | Phase 5 removes it |
 | `eslint-plugin-nuxt` | Aug 2023 | Phase 5 removes it |
 | `@ubclaunchpad/vue-fathom` | Apr 2022 | 1 usage. Fathom's own snippet is a few lines — consider inlining and dropping the dependency. |
-| `smoothscroll-polyfill` | Aug 2022 | Phase 1 removes it |
+| `smoothscroll-polyfill` | Aug 2022 | ✅ removed in Phase 1 |
 | `rss` | Sep 2023 | Still works, no replacement needed. Watch it. |
 | `@nuxtjs/algolia` | Nov 2025 | Fine, but it is the module most likely to need attention at Nuxt 5. |
 
@@ -344,4 +368,5 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-07-31 | CI's build step sets `SKIP_PRERENDER_ROUTE_DISCOVERY=true` so a compile check does not depend on production Directus being reachable. |
 | 2026-07-31 | ESLint gates on **errors only**; the 29 pre-existing warnings are left ungated rather than blocking Phase 0 on an unrelated cleanup. |
 | 2026-07-31 | The three files touched for lint fixes were already Prettier-non-conforming, and Prettier is not in CI. Left unformatted deliberately — reformatting would bury a 2-line fix in a 200-line diff. |
+| 2026-07-31 | Phase 1 drops smooth-scroll animation for Safari < 15.4. Accepted: those browsers still scroll, just instantly, and `ConferenceAgenda.vue` already relied on native support without the polyfill. |
 | 2026-07-31 | `directus-cms/` upgrades **blocked** pending legal clarification of the Directus licence. Nuxt work continues independently. `@directus/sdk` (MIT) is unaffected by the block, but Phase 5's SDK jump is constrained by the server staying on 11.x. |
