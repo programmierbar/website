@@ -472,8 +472,13 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 - `DIRECTUS_CMS_URL` falls back to `https://admin.programmier.bar` (production) when unset.
 - `overrides` in `nuxt-app/package.json` now holds three deliberate pins, each with a reason:
   `vue: ^3.5.0` (was the non-reproducible `"latest"`), `minimatch: ^9.0.7` (pre-existing), and
-  `typescript: ^5.9.3` (holds back the TS 7 native rewrite — see Phase 6). Removing any of them
+  `typescript: ^6.0.3` (holds back the TS 7 native rewrite — see Phase 6). Removing any of them
   without reading the relevant phase will reintroduce a known problem.
+
+  **`package.json` is the authority on these values, not this document.** Where a phase write-up
+  quotes an older number (Phase 2 records `typescript: ^5.9.3`, for instance) that is a dated
+  record of what the phase did, not current state. Check the manifest before acting on any version
+  in here.
 - **`typescript` is also declared as a direct `devDependency`**, not only pinned in `overrides`.
   The distinction matters: an override forces a version but declares no intent, and **Renovate
   only manages packages that appear in `package.json`** — so an override-only pin is invisible to
