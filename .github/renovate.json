@@ -1,0 +1,69 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommitTypeAll(chore)"],
+    "description": "Automated dependency updates. Scoped to nuxt-app. directus-cms is deliberately excluded and BLOCKED as of 2026-07-31 pending a legal clarification of the Directus licence — do not add directus-cms to includePaths until that resolves. See docs/dependency-upgrade-plan.md.",
+    "includePaths": ["nuxt-app/**"],
+    "timezone": "Europe/Berlin",
+    "schedule": ["before 07:00 on monday"],
+    "prConcurrentLimit": 5,
+    "prHourlyLimit": 2,
+    "labels": ["🤖 automated", "dependencies"],
+    "postUpdateOptions": ["npmDedupe"],
+    "rebaseWhen": "conflicted",
+
+    "major": {
+        "description": "Majors never open a PR on their own. They appear on the dependency dashboard and are created only when someone ticks the box — which is how the upgrade plan's phases stay one-per-PR.",
+        "dependencyDashboardApproval": true,
+        "labels": ["🤖 automated", "dependencies", "major"]
+    },
+
+    "vulnerabilityAlerts": {
+        "description": "Security fixes bypass the schedule and the dashboard-approval gate entirely.",
+        "enabled": true,
+        "schedule": ["at any time"],
+        "prPriority": 10,
+        "labels": ["🤖 automated", "dependencies", "security"]
+    },
+
+    "lockFileMaintenance": {
+        "description": "Refresh transitive dependencies monthly so the lockfile does not silently rot between direct-dependency bumps.",
+        "enabled": true,
+        "schedule": ["before 07:00 on the first monday of the month"]
+    },
+
+    "packageRules": [
+        {
+            "description": "Nuxt framework and first-party modules move together — bumping them piecemeal is how peer-dependency mismatches happen.",
+            "matchFileNames": ["nuxt-app/**"],
+            "matchPackageNames": ["nuxt", "@nuxt/**", "@nuxtjs/**", "nitropack", "h3", "vue", "vue-router", "@vue/**"],
+            "matchUpdateTypes": ["minor", "patch"],
+            "groupName": "nuxt framework"
+        },
+        {
+            "description": "Lint and format tooling. Non-runtime, so grouping them keeps the PR count down.",
+            "matchFileNames": ["nuxt-app/**"],
+            "matchPackageNames": ["eslint", "eslint-**", "@nuxt/eslint-config", "prettier", "prettier-**", "@ianvs/**"],
+            "matchUpdateTypes": ["minor", "patch"],
+            "groupName": "linting and formatting"
+        },
+        {
+            "description": "Type definitions only — never affects runtime behaviour.",
+            "matchFileNames": ["nuxt-app/**"],
+            "matchPackageNames": ["@types/**"],
+            "groupName": "type definitions"
+        },
+        {
+            "description": "@nuxt/image-edge is an abandoned nightly channel; chasing its tags produces pure noise. Phase 3 of the upgrade plan removes the package — delete this rule then.",
+            "matchFileNames": ["nuxt-app/**"],
+            "matchPackageNames": ["@nuxt/image-edge"],
+            "enabled": false
+        },
+        {
+            "description": "Tailwind is deliberately held at v3. Moving to v4 is a config-format rewrite tracked as Phase 6, not a routine bump.",
+            "matchFileNames": ["nuxt-app/**"],
+            "matchPackageNames": ["tailwindcss", "@tailwindcss/**", "@nuxtjs/tailwindcss"],
+            "matchUpdateTypes": ["major"],
+            "enabled": false
+        }
+    ]
+}

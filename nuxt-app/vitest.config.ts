@@ -7,6 +7,8 @@ export default defineConfig({
     test: {
         environment: 'node',
         include: ['**/*.{test,spec}.ts'],
-        exclude: ['node_modules', '.nuxt', '.output', 'dist'],
+        // `tests-smoke` holds Playwright route smoke tests (see playwright.config.ts). They need
+        // a real browser and a running server, so Vitest must not pick them up.
+        exclude: ['node_modules', '.nuxt', '.output', 'dist', 'tests-smoke'],
     },
 })

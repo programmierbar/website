@@ -8,3 +8,8 @@ node_modules
 .cache
 .output
 dist
+
+# Playwright smoke-test artefacts
+playwright-report
+test-results
+.playwright

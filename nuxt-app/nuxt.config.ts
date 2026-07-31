@@ -103,6 +103,15 @@ export default defineNuxtConfig({
                 return
             }
 
+            // CI builds the app to prove a dependency change still compiles; that check must not
+            // depend on the production CMS being reachable, or an unrelated Directus blip turns
+            // every PR red. Setting this opts out of route discovery only — the bundle is still
+            // built in full. Deploys never set it, so prerendering is unaffected.
+            if (process.env.SKIP_PRERENDER_ROUTE_DISCOVERY === 'true') {
+                console.info('[nitro:config] SKIP_PRERENDER_ROUTE_DISCOVERY set — skipping CMS route discovery')
+                return
+            }
+
             // The route-discovery fetches below are read-only and run before
             // prerendering, so transient Directus failures may retry safely.
             enableDirectusRetries()
