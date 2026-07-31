@@ -34,7 +34,7 @@ export default defineConfig({
     // spurious failures, and even 2 workers flaked 1-in-3. In CI the target is the Vercel preview
     // deployment, which scales functions horizontally and serves ISR from cache, so parallelism is
     // both safe and faster there. Serial costs ~8s locally and buys a signal you can trust.
-    workers: process.env.CI ? undefined : 1,
+    workers: process.env.CI || process.env.SMOKE_BASE_URL ? undefined : 1,
     forbidOnly: !!process.env.CI,
     // The CMS is a live dependency; one retry absorbs a transient blip without hiding a real
     // regression, which would fail both attempts.
