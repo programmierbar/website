@@ -62,6 +62,7 @@
     },
     "overrides": {
         "vue": "^3.5.0",
-        "minimatch": "^9.0.7"
+        "minimatch": "^9.0.7",
+        "typescript": "^5.9.3"
     }
 }

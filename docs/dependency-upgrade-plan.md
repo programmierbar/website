@@ -31,7 +31,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | ----- | ---- | ------ |
 | 0 | Build a safety net so upgrades are *detectable* | ✅ Done (2026-07-31) |
 | 1 | Delete dead dependencies | ✅ Done (2026-07-31) |
-| 2 | Security patches + minors, no majors | ⬜ Not started |
+| 2 | Security patches + minors, no majors | ✅ Done (2026-07-31) |
 | 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ⬜ Not started |
 | 4 | **Nuxt 3 → Nuxt 4** | ⬜ Not started |
 | 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | ⬜ Not started |
@@ -223,14 +223,72 @@ still scroll, just instantly — the call is a no-op fallback, not an error.
 
 **Goal:** clear the audit backlog without a single major bump.
 
-- [ ] `npm update` (moves everything to the `wanted` column)
-- [ ] `npm audit fix` (non-`--force` only)
-- [ ] Nuxt `3.21.4` → `3.21.10` — the final 3.x, includes the `__nuxt_island` route-middleware
+- [x] `npm update` (moves everything to the `wanted` column)
+- [x] `npm audit fix` (non-`--force` only) — only restructured `commander`; every remaining fix is
+      semver-major, so there was nothing else for it to do
+- [x] Nuxt `3.21.4` → `3.21.10` — the final 3.x, includes the `__nuxt_island` route-middleware
       bypass and shared-cache-poisoning fixes
-- [ ] Nodemailer `8.0.7` → `8.0.11` — CRLF injection in `List-*` header comments
-- [ ] Record the post-fix `npm audit` count here: `___`
+- [x] Nodemailer `8.0.7` → `8.0.11` — clears both *moderate* advisories, but see the caveat below
+- [x] TypeScript pinned to `^5.9.3` in `overrides` — see below
 
-Everything except the `sharp`/`ipx` chain is fixable at this phase. That one is Phase 3.
+### Read the audit result correctly: 49 → 3, not 23 → 33
+
+`npm audit`'s headline total counts **affected packages**, not distinct problems, so it is
+actively misleading here:
+
+| | Before | After |
+| --- | --- | --- |
+| Reported total | 23 | **33** |
+| Critical / high / moderate / low | 2 / 14 / 5 / 2 | 0 / 33 / 0 / 0 |
+| **Distinct root advisories** | **49** | **3** |
+| …of which critical | 2 | **0** |
+
+Forty-nine distinct advisories became three. The reported total *rose* only because the surviving
+`brace-expansion` advisory is counted once per dependent package, and the tree has many.
+
+Both criticals are gone (`tar`, `shell-quote`), along with every moderate and low. Notable
+version moves: `tar` 7.5.14 → 7.5.22, `ws` 8.20.0 → 8.21.1, `dompurify` 3.4.2 → 3.4.12,
+`postcss` 8.5.14 → 8.5.25, `vue` 3.5.33 → 3.5.40, plus `axios`, `form-data`, `js-yaml`, `devalue`,
+`svgo`, `qs` and `launch-editor`.
+
+**The three survivors, and why each has to wait:**
+
+1. `brace-expansion <=5.0.7` (high, ~29 of the 33 entries). We are on 2.1.4, already the tip of
+   the `maintenance-v2` line. Escaping needs brace-expansion 5, which needs `minimatch` to depend
+   on `^5` — a three-major transitive jump. Not a Phase 2 move. May resolve on its own in Phase 5
+   when ESLint 9 brings a newer `minimatch`.
+2. `nodemailer <=9.0.0` (high). **Requires the v9 major, so 8.0.11 does not fully clear it.** This
+   is the one with genuine production exposure — `nodemailer` is production-flagged and used to
+   send mail. Moved to Phase 5.
+3. `sharp <0.35.0` (high). Phase 3 removes `@nuxt/image-edge`. Note `sharp` resolves as
+   **dev-only** in the lockfile, which lowers its practical severity.
+
+### Two majors tried to sneak in
+
+This phase is the first real test of the Phase 0 gates, and they caught something.
+
+**TypeScript 5.9.3 → 7.0.2 — blocked.** `npm update` pulled the TypeScript *native rewrite* in as
+a transitive, because several packages declare wide-open ranges (`vue: *`,
+`vite-plugin-checker: *`, `vue-tsc: >=5.0.0`) — even though `@nuxt/eslint-config` explicitly asks
+for `^5.2.2`. It broke immediately and loudly: `ts-api-utils` reads `ts.TypeFlags.Intrinsic` off
+the default export, TS 7 changed the module shape, and **`npm run lint` died with exit 2**. Pinned
+back with `"typescript": "^5.9.3"` in `overrides`. TypeScript 7 deserves its own evaluation, not a
+drive-by inside a patch phase — added to Phase 6.
+
+**Vite 7.3.2 → 8.2.0 — accepted, and not what it looks like.** `@nuxt/vite-builder@3.21.10`
+declares `vite: ^7.3.6` as a real dependency, so npm nested `vite@7.3.6` for it. The hoisted
+`vite@8.2.0` belongs to **vitest**, whose peer range allows `^8`. So the Nuxt build moved 7.3.2 →
+7.3.6 (a patch) and vite 8 is confined to the test toolchain. Verified via the install topology,
+not assumed.
+
+### Verification
+
+- `npm run lint` → 0 errors (after the TypeScript pin; **exit 2 before it**)
+- `npm test` → 52/52
+- Ratchet → **210 errors, down from 212.** Baseline lowered to 210 in this phase, as the ratchet
+  instructs. First time it has tightened.
+- Build → exit 0
+- Smoke suite → 18/18
 
 ---
 
@@ -311,6 +369,10 @@ order, or in parallel by different people.
       Three majors of a REST/GraphQL client can drop support for older server APIs. Confirm SDK 24
       still targets Directus 11 before starting; if it does not, hold at the highest SDK major
       that does and note it here. This is the one phase whose scope depends on the legal outcome.
+- [ ] **`nodemailer` 8.0.11 → 9.0.3.** Added in Phase 2: the remaining *high* advisory
+      (`nodemailer <=9.0.0`) needs the v9 major. This is the highest-priority item in this phase —
+      nodemailer is production-flagged and on the mail-sending path, so it is the one surviving
+      advisory with real runtime exposure. 1 file.
 - [ ] **`stripe` 20.4.1 → 22.4.0** — 7 files. Check the pinned API version and the webhook
       signature-verification API.
 - [ ] **`isomorphic-dompurify` 2.20.0 → 3.x** — 2 files. Note it is currently pinned with `~`,
@@ -328,6 +390,12 @@ Not blocked by EOL. Do **not** fold these into the phases above.
       seven custom breakpoints). Its own project.
 - [ ] **Node 22 → 24.** Verify Vercel's supported runtimes first. Update `engines.node`, `.nvmrc`,
       and the `node-version` in every workflow together.
+- [ ] **TypeScript 5.9 → 7.x.** Held back by `overrides.typescript: ^5.9.3`, added in Phase 2
+      after `npm update` pulled TS 7.0.2 in transitively and broke ESLint outright (`ts-api-utils`
+      reads `ts.TypeFlags.Intrinsic` off the default export; TS 7 changed the module shape). TS 7
+      is the native rewrite — a real evaluation, including whether `vue-tsc` and
+      `@typescript-eslint` support it. Drop the override when tackling it, and expect the ratchet
+      baseline to move.
 - [ ] **Nuxt 4 `app/` directory migration.** Cosmetic; do it when the team wants it, not as part
       of the framework upgrade.
 
@@ -356,6 +424,10 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
   `nitro.prerender.failOnError: true`. A CMS outage therefore fails the build. Acceptable for
   deploys; the reason CI's build step is run with route discovery disabled.
 - `DIRECTUS_CMS_URL` falls back to `https://admin.programmier.bar` (production) when unset.
+- `overrides` in `nuxt-app/package.json` now holds three deliberate pins, each with a reason:
+  `vue: ^3.5.0` (was the non-reproducible `"latest"`), `minimatch: ^9.0.7` (pre-existing), and
+  `typescript: ^5.9.3` (holds back the TS 7 native rewrite — see Phase 6). Removing any of them
+  without reading the relevant phase will reintroduce a known problem.
 
 ## Appendix C — Decision log
 
@@ -368,5 +440,8 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-07-31 | CI's build step sets `SKIP_PRERENDER_ROUTE_DISCOVERY=true` so a compile check does not depend on production Directus being reachable. |
 | 2026-07-31 | ESLint gates on **errors only**; the 29 pre-existing warnings are left ungated rather than blocking Phase 0 on an unrelated cleanup. |
 | 2026-07-31 | The three files touched for lint fixes were already Prettier-non-conforming, and Prettier is not in CI. Left unformatted deliberately — reformatting would bury a 2-line fix in a 200-line diff. |
+| 2026-07-31 | Phase 2 pins `typescript` to `^5.9.3` via `overrides`. `npm update` resolved TS 7.0.2 through wide-open transitive ranges and broke `npm run lint` outright. TS 7 is the native rewrite and needs its own evaluation (Phase 6), not a drive-by in a patch phase. |
+| 2026-07-31 | Phase 2 accepts `vite@8.2.0` in the tree. It serves **vitest** only; `@nuxt/vite-builder` gets a nested `vite@7.3.6` per its own dependency, so the Nuxt build moved 7.3.2 → 7.3.6, a patch. |
+| 2026-07-31 | Judge audit progress by **distinct root advisories**, not npm's headline total. Phase 2 went 49 → 3 advisories while the reported total rose 23 → 33, because one surviving advisory is counted once per dependent package. |
 | 2026-07-31 | Phase 1 drops smooth-scroll animation for Safari < 15.4. Accepted: those browsers still scroll, just instantly, and `ConferenceAgenda.vue` already relied on native support without the polyfill. |
 | 2026-07-31 | `directus-cms/` upgrades **blocked** pending legal clarification of the Directus licence. Nuxt work continues independently. `@directus/sdk` (MIT) is unaffected by the block, but Phase 5's SDK jump is constrained by the server staying on 11.x. |
