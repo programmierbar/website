@@ -32,6 +32,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | 0 | Build a safety net so upgrades are *detectable* | ✅ Done (2026-07-31) |
 | 1 | Delete dead dependencies | ✅ Done (2026-07-31) |
 | 2 | Security patches + minors, no majors | ✅ Done (2026-07-31) |
+| — | TypeScript 5.9 → 6.0.3 (interstitial, own PR) | ✅ Done (2026-07-31) |
 | 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ⬜ Not started |
 | 4 | **Nuxt 3 → Nuxt 4** | ⬜ Not started |
 | 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | ⬜ Not started |
@@ -121,6 +122,14 @@ site explaining why.
 cleanup pass, but not a blocker:
 
 - [ ] Clear the 29 remaining ESLint warnings, then consider `--max-warnings 0`
+- [ ] **Investigate intermittent flake in the podcast-detail smoke test.** Observed once locally
+      during the TypeScript 6 step: it failed in a full parallel run, then passed in isolation and
+      in two consecutive full re-runs. Likely cause is two sequential SSR navigations
+      (`/podcast` → `/podcast/:slug`) against live Directus under six parallel workers exceeding
+      the 10s expect timeout. **CI exposure is contained** — `playwright.config.ts` sets
+      `retries: 1` under CI (0 locally, which is why it surfaced here), and all CI runs to date
+      have been 18/18 with no retries. Worth hardening rather than leaving to retries: a flaky
+      safety net is the failure mode Phase 0 was written to avoid.
 
 ### Why the smoke tests do not run on pull requests
 
@@ -292,6 +301,42 @@ not assumed.
 
 ---
 
+## Interstitial — TypeScript 5.9.3 → 6.0.3
+
+Not a numbered phase. Phase 2 pinned TypeScript to `^5.9.3` to stop `npm update` dragging in the
+7.x native rewrite, and `^5.9.3` was a conservative default rather than a considered choice — 6.x
+is the release actually designed as the stepping stone.
+
+**Why 6.x is the right rung.** TypeScript 6 is the last release built on the classic JavaScript
+compiler; 7.x is the Go-based native rewrite. 6.0 exists to align behaviour with 7 and surface its
+deprecations *while still on the old compiler*. Taking it now shrinks the eventual 7.x jump to a
+tooling question rather than a code question.
+
+**Measured as a complete no-op on this codebase:**
+
+| Gate | TS 5.9.3 | TS 6.0.3 |
+| --- | --- | --- |
+| `npm run lint` | 0 errors, 29 warnings | 0 errors, 29 warnings |
+| `npm test` | 52/52 | 52/52 |
+| Typecheck ratchet | 210 | **210 — identical** |
+| Build | exit 0, 30.8 MB | exit 0, 30.8 MB |
+| Smoke | 18/18 | 18/18 |
+
+The error count not moving by even one is the strongest evidence. `ts-api-utils@1.4.3` works fine
+against 6.x, so the thing that broke on 7.x does not break here — `@nuxt/eslint-config`'s
+`^5.2.2` peer is simply over-tight, not a real constraint.
+
+**Zero deprecation warnings.** Checked explicitly, since flagging TS 7 deprecations is 6.0's whole
+job. The single grep hit was a pre-existing error whose *type name* contains "Deprecated"
+(`DeprecatedResolvesDuplicates`, from unhead), not a compiler warning.
+
+**Deliberately kept out of Phase 2.** 5.9 → 6.0 is a major, and Phase 2's contract was patches and
+minors. Shipping it separately keeps that contract honest and gives TypeScript its own revert point
+if deprecation noise appears later. Both the `devDependencies` entry and the `overrides` pin moved
+together.
+
+---
+
 ## Phase 3 — `@nuxt/image-edge` → `@nuxt/image@2`
 
 **Goal:** get off an abandoned nightly and clear the remaining critical/high advisories.
@@ -390,12 +435,13 @@ Not blocked by EOL. Do **not** fold these into the phases above.
       seven custom breakpoints). Its own project.
 - [ ] **Node 22 → 24.** Verify Vercel's supported runtimes first. Update `engines.node`, `.nvmrc`,
       and the `node-version` in every workflow together.
-- [ ] **TypeScript 5.9 → 7.x.** Held back by `overrides.typescript: ^5.9.3`, added in Phase 2
-      after `npm update` pulled TS 7.0.2 in transitively and broke ESLint outright (`ts-api-utils`
-      reads `ts.TypeFlags.Intrinsic` off the default export; TS 7 changed the module shape). TS 7
-      is the native rewrite — a real evaluation, including whether `vue-tsc` and
-      `@typescript-eslint` support it. Drop the override when tackling it, and expect the ratchet
-      baseline to move.
+- [ ] **TypeScript 6.0.3 → 7.x.** Only the 7.x jump remains — **6.0.3 landed separately after
+      Phase 2** (see below). TS 7 is the Go-based native rewrite, and the open question is no
+      longer "will our code cope" but "do the tools support it": TS 7 broke `ts-api-utils` (it
+      reads `ts.TypeFlags.Intrinsic` off the default export, and TS 7 changed the module shape),
+      which means `@typescript-eslint` and therefore `npm run lint`. Evaluate `vue-tsc` and
+      `@typescript-eslint` support first; the code itself is already clean. Drop the override when
+      tackling it, and expect the ratchet baseline to move.
 - [ ] **Nuxt 4 `app/` directory migration.** Cosmetic; do it when the team wants it, not as part
       of the framework upgrade.
 
@@ -426,8 +472,13 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 - `DIRECTUS_CMS_URL` falls back to `https://admin.programmier.bar` (production) when unset.
 - `overrides` in `nuxt-app/package.json` now holds three deliberate pins, each with a reason:
   `vue: ^3.5.0` (was the non-reproducible `"latest"`), `minimatch: ^9.0.7` (pre-existing), and
-  `typescript: ^5.9.3` (holds back the TS 7 native rewrite — see Phase 6). Removing any of them
+  `typescript: ^6.0.3` (holds back the TS 7 native rewrite — see Phase 6). Removing any of them
   without reading the relevant phase will reintroduce a known problem.
+
+  **`package.json` is the authority on these values, not this document.** Where a phase write-up
+  quotes an older number (Phase 2 records `typescript: ^5.9.3`, for instance) that is a dated
+  record of what the phase did, not current state. Check the manifest before acting on any version
+  in here.
 - **`typescript` is also declared as a direct `devDependency`**, not only pinned in `overrides`.
   The distinction matters: an override forces a version but declares no intent, and **Renovate
   only manages packages that appear in `package.json`** — so an override-only pin is invisible to
@@ -451,6 +502,7 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-07-31 | CI's build step sets `SKIP_PRERENDER_ROUTE_DISCOVERY=true` so a compile check does not depend on production Directus being reachable. |
 | 2026-07-31 | ESLint gates on **errors only**; the 29 pre-existing warnings are left ungated rather than blocking Phase 0 on an unrelated cleanup. |
 | 2026-07-31 | The three files touched for lint fixes were already Prettier-non-conforming, and Prettier is not in CI. Left unformatted deliberately — reformatting would bury a 2-line fix in a 200-line diff. |
+| 2026-07-31 | TypeScript taken to **6.0.3** as its own PR straight after Phase 2, rather than folded into it. 5.9 → 6.0 is a major and Phase 2's contract was patches-and-minors; a separate PR keeps that honest and gives TypeScript an independent revert point. Verified as a measurable no-op (identical 210-error count, all gates green, zero deprecation warnings). |
 | 2026-07-31 | Phase 2 pins `typescript` to `^5.9.3` via `overrides`. `npm update` resolved TS 7.0.2 through wide-open transitive ranges and broke `npm run lint` outright. TS 7 is the native rewrite and needs its own evaluation (Phase 6), not a drive-by in a patch phase. |
 | 2026-07-31 | Phase 2 accepts `vite@8.2.0` in the tree. It serves **vitest** only; `@nuxt/vite-builder` gets a nested `vite@7.3.6` per its own dependency, so the Nuxt build moved 7.3.2 → 7.3.6, a patch. |
 | 2026-07-31 | Judge audit progress by **distinct root advisories**, not npm's headline total. Phase 2 went 49 → 3 advisories while the reported total rose 23 → 33, because one surviving advisory is counted once per dependent package. |
