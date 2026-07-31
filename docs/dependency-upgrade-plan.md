@@ -351,8 +351,8 @@ and it is the *only* advisory in the audit flagged `isSemVerMajor`, i.e. the onl
 
 - [x] Swap the package: `@nuxt/image-edge` → `@nuxt/image@^2` (resolved 2.1.0)
 - [x] Update the module name in `nuxt.config.ts`
-- [x] Confirm `image.domains` / `image.alias` / `image.screens` still apply in v2 — all three
-      remain valid options, config unchanged
+- [x] Confirm `image.domains` / `image.screens` still apply in v2 — both remain valid options and
+      are demonstrably in effect. `image.alias` was removed: it never worked (see below).
 - [x] Verify Directus-hosted images actually render
 - [x] Node `^20.19.0 || >=22.3.0` — satisfied
 
@@ -391,13 +391,35 @@ checks. So image resolution was checked explicitly across `/`, `/podcast`, `/hal
   (`f_jpeg`/`f_png`, `q_80`, `fit_cover`), at widths matching the custom `image.screens`
   breakpoints — so `domains` and `screens` are both demonstrably in effect
 
-### `image.alias.cms` is dead configuration
+### `image.alias.cms` removed — it never worked
 
-`getAssetUrl` builds absolute Directus URLs and `SearchResultCard` passes absolute URLs from
-Algolia. **Nothing anywhere uses a `cms:` prefix.** The option is still valid in v2 so it does no
-harm, and it was left in place rather than folded into this PR:
+The config carried `alias: { cms: '<cms>/assets' }`, intended so `src="/cms/<file-id>"` would
+expand to the Directus asset URL. It was **non-functional**, for three independent reasons:
 
-- [ ] Remove the unused `image.alias.cms` entry from `nuxt.config.ts`
+1. **Nothing referenced it.** The only occurrence of `cms:` in the whole source was the
+   declaration itself. Image URLs come from `helpers/getAssetUrl.ts`, which already builds absolute
+   Directus URLs, and Algolia results carry absolute URLs too.
+2. **The key was missing its leading slash, so it could not match.** v2 resolves with
+   `input = hasProtocol(input) ? input : withLeadingSlash(input)` and then
+   `input.startsWith(base)`. Because a relative src is always given a leading `/`,
+   `startsWith('cms')` is never true. Verified against the real `ufo` helpers:
+
+   | `src` | key `cms` (as configured) | key `/cms` (documented) |
+   | --- | --- | --- |
+   | `/cms/abc123` | `/cms/abc123` — unchanged | `https://…/assets/abc123` ✓ |
+   | `cms:abc123` | `https://…/assets/:abc123` — stray colon | `cms:abc123` |
+
+3. **Decisively, the branch never executed.** Alias resolution is guarded by
+   `if (!provider.supportsAlias)`, and both ipx providers declare `supportsAlias: true`. This app
+   uses ipx, so client-side alias resolution was skipped regardless of spelling.
+
+Removed rather than fixed, because nothing needs it. This was initially logged as a harmless
+follow-up; that was wrong. A config line that looks like a working shorthand but silently is not
+is a **trap** — the next person to write `src="/cms/<id>"` would get a 404 and go debugging Directus
+or `domains` instead of suspecting config that never functioned. The `nuxt.config.ts` comment
+records the working form (`alias: { '/cms': … }`) should anyone want it later.
+
+Verified as a no-op by re-running the image check after removal.
 
 ### Image usage is well centralised
 
