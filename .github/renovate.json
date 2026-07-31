@@ -1,7 +1,7 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommitTypeAll(chore)"],
-    "description": "Automated dependency updates. Scoped to nuxt-app for now; see docs/dependency-upgrade-plan.md. Add directus-cms to includePaths once the nuxt-app phases are done.",
+    "description": "Automated dependency updates. Scoped to nuxt-app. directus-cms is deliberately excluded and BLOCKED as of 2026-07-31 pending a legal clarification of the Directus licence — do not add directus-cms to includePaths until that resolves. See docs/dependency-upgrade-plan.md.",
     "includePaths": ["nuxt-app/**"],
     "timezone": "Europe/Berlin",
     "schedule": ["before 07:00 on monday"],

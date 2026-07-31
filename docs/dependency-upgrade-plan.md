@@ -3,8 +3,22 @@
 - **Started:** 2026-07-31
 - **Driver:** Nuxt 3 reached **end-of-life on 2026-07-31**. No further security or bugfix
   releases after `3.21.10`.
-- **Scope:** `nuxt-app/` only. `directus-cms/` has its own dependency tree and is not covered
-  here.
+- **Scope:** `nuxt-app/` only.
+
+`directus-cms/` is **out of scope and blocked** as of 2026-07-31, pending a legal clarification of
+our Directus license. The `directus` server package is not under an OSI licence (`"SEE LICENSE IN
+license"`), so upgrading it is a licensing question before it is a technical one. Do not add
+`directus-cms/**` to Renovate's `includePaths`, and do not open Directus server upgrade PRs, until
+that clarification lands.
+
+This matters more than a scoping note usually would: GitHub currently reports **172
+vulnerabilities on `main`** (4 critical, 57 high) against the 23 measured in `nuxt-app`, so the
+large majority sit in the blocked tree. That is a known, accepted exposure for the duration —
+worth re-raising if the legal answer takes a long time.
+
+**The `@directus/sdk` client in `nuxt-app` is not affected.** It is MIT-licensed at both 21.3.0
+and 24.0.0 — a different package from the `directus` server. Phase 5 can proceed on licensing
+grounds; see that phase for the compatibility constraint that does apply.
 
 Work through the phases in order, **one PR per phase**. The whole point of the ordering is that
 each phase leaves the app in a shippable state and can be reverted on its own.
@@ -266,6 +280,13 @@ order, or in parallel by different people.
 - [ ] **`@directus/sdk` 21.3.0 → 24.0.0.** Largest blast radius of this phase — 4 files, but one
       of them is the 884-line `useDirectus.ts`. Check the v22/23/24 changelogs for query-builder
       and type-inference changes. Requires Node `>=22` — satisfied.
+
+      **Constraint from the Directus licence block.** The SDK is MIT, so licensing does not stop
+      this. But the *server* is frozen at `directus@^11.17.4` until legal clarifies, so a three-
+      major SDK jump has to be verified against **that** server version rather than the latest.
+      Three majors of a REST/GraphQL client can drop support for older server APIs. Confirm SDK 24
+      still targets Directus 11 before starting; if it does not, hold at the highest SDK major
+      that does and note it here. This is the one phase whose scope depends on the legal outcome.
 - [ ] **`stripe` 20.4.1 → 22.4.0** — 7 files. Check the pinned API version and the webhook
       signature-verification API.
 - [ ] **`isomorphic-dompurify` 2.20.0 → 3.x** — 2 files. Note it is currently pinned with `~`,
@@ -323,3 +344,4 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-07-31 | CI's build step sets `SKIP_PRERENDER_ROUTE_DISCOVERY=true` so a compile check does not depend on production Directus being reachable. |
 | 2026-07-31 | ESLint gates on **errors only**; the 29 pre-existing warnings are left ungated rather than blocking Phase 0 on an unrelated cleanup. |
 | 2026-07-31 | The three files touched for lint fixes were already Prettier-non-conforming, and Prettier is not in CI. Left unformatted deliberately — reformatting would bury a 2-line fix in a 200-line diff. |
+| 2026-07-31 | `directus-cms/` upgrades **blocked** pending legal clarification of the Directus licence. Nuxt work continues independently. `@directus/sdk` (MIT) is unaffected by the block, but Phase 5's SDK jump is constrained by the server staying on 11.x. |
