@@ -428,6 +428,17 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
   `vue: ^3.5.0` (was the non-reproducible `"latest"`), `minimatch: ^9.0.7` (pre-existing), and
   `typescript: ^5.9.3` (holds back the TS 7 native rewrite — see Phase 6). Removing any of them
   without reading the relevant phase will reintroduce a known problem.
+- **`typescript` is also declared as a direct `devDependency`**, not only pinned in `overrides`.
+  The distinction matters: an override forces a version but declares no intent, and **Renovate
+  only manages packages that appear in `package.json`** — so an override-only pin is invisible to
+  it and would never be proposed for upgrade. Being undeclared is also what caused the TS 7
+  incident in the first place: with nothing declaring TypeScript, npm resolved it from a soup of
+  loose transitive ranges and picked the newest. The devDependency states that this project uses
+  TypeScript directly (`npm run typecheck`, `tsconfig.json`); the override remains as the guard
+  against a transitive pulling something newer.
+- `vue` is still override-only, deliberately. Unlike TypeScript, Nuxt owns `vue` as its own
+  dependency, and declaring it directly in a Nuxt app invites duplicate-Vue resolution problems.
+  The trade-off is accepted: it stays invisible to Renovate, and Nuxt upgrades carry it.
 
 ## Appendix C — Decision log
 
