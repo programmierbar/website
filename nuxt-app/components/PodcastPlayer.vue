@@ -1,5 +1,12 @@
 <template>
-    <div class="transition-all" :class="podcastPlayer.podcast ? 'h-16 xl:h-20' : 'invisible h-0'">
+    <!-- data-testid is a stable hook for the route smoke tests (nuxt-app/tests-smoke). The player
+         is always mounted from app.vue but stays invisible until a podcast is selected, so there
+         is no other markup a smoke test can reliably anchor to. -->
+    <div
+        data-testid="podcast-player"
+        class="transition-all"
+        :class="podcastPlayer.podcast ? 'h-16 xl:h-20' : 'invisible h-0'"
+    >
         <div
             class="fixed bottom-0 left-0 z-40 flex w-full flex-col bg-lime transition-transform duration-300 xl:h-20 xl:flex-row xl:space-x-16 xl:px-8"
             :class="

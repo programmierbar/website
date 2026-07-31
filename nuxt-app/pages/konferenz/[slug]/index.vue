@@ -238,7 +238,7 @@
 import { useLoadingScreen, useNow } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo, parseCmsDate, trackGoal } from '~/helpers';
-import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem, TalkItem } from '~/types';
+import type { ConferenceItem, DirectusConferencePage, DirectusTestimonialItem, DirectusFileItem, TalkItem as TalkItemType } from '~/types';
 import { computed, type ComputedRef } from 'vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue';
 import ConferenceGallery from '~/components/ConferenceGallery.vue';
@@ -349,7 +349,7 @@ type preparedAgendaItem = {
   subtitle: string
   track: string
   talk_identifier: string
-  _object: undefined | TalkItem
+  _object: undefined | TalkItemType
 };
 
 const preparedAgenda: ComputedRef<preparedAgendaItem[]> = computed(() => {

@@ -15,11 +15,12 @@
         class='whitespace-pre-line px-8 pb-32 pt-8 font-mono text-sm text-white md:px-16 md:text-base lg:text-lg'
       >
         <dl>
-          <template v-for='paragraph in paragraphs'>
+          <template v-for='(paragraph, paragraphIndex) in paragraphs' :key='paragraphIndex'>
             <dt class='font-bold'>{{ paragraph.speaker }}</dt>
             <dd class='mb-2.5'>
               <span
-v-for='wordListEntry in paragraph.wordlist'
+                    v-for='(wordListEntry, wordIndex) in paragraph.wordlist'
+                    :key='wordIndex'
                     class='transition-colors'
                     style='transition-duration: 350ms;'
                     :class="[(wordListEntry.time < podcastPlayer.currentTime) ? 'text-lime' : '']"

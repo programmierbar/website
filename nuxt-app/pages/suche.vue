@@ -12,7 +12,7 @@
         :items="searchResults"
         direction="vertical"
       >
-        <template #default="{ item, index, viewportItems, addViewportItem }">
+        <template #default="{ item, viewportItems, addViewportItem }">
           <GenericListItem
             :key="item.objectID"
             class="border-b-1 border-white/70 pb-9 last:border-b-0 last:pb-0 lg:pb-24 [&>:not(first-child)]:mt-10 [&>:not(first-child)]:lg:mt-24"
