@@ -25,7 +25,7 @@ type Ticket = {
 
 const props = defineProps<{
   tickets: Ticket[],
-  ticketsOnSale: Boolean,
+  ticketsOnSale: boolean,
   ticketsUrl: string | null
 }>();
 

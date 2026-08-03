@@ -12,13 +12,7 @@ export function getAssetUrl(file?: { id: string } | string | null, options?: {qu
 
   if (!file) return '';
 
-  let id = '';
-
-  if (typeof file === 'string') {
-    id = file;
-  } else {
-    id = file.id;
-  }
+  const id = typeof file === 'string' ? file : file.id;
 
   let url = `${DIRECTUS_CMS_URL}/assets/${id}`;
 

@@ -35,7 +35,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | TypeScript 5.9 → 6.0.3 (interstitial, own PR) | ✅ Done (2026-07-31) |
 | 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ✅ Done (2026-07-31) |
 | 4 | **Nuxt 3 → Nuxt 4** | ✅ Done (2026-08-03) |
-| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 2 of 7 (`nodemailer`, Pinia; **audit at zero**) |
+| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 3 of 7 (`nodemailer`, Pinia, ESLint; **audit at zero**) |
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
@@ -672,12 +672,15 @@ order, or in parallel by different people.
 - [x] **Pinia 2.3.1 → 4.0.2** (+ `@pinia/nuxt` 0.5.5 → 1.0.1) — ✅ done 2026-08-03. Required a
       documented one-line nitro workaround for an **upstream Pinia 4 packaging bug that breaks SSR
       in production only**. Details below.
-- [ ] **ESLint 8.57.1 → 9.x** with flat config. This retires two stale packages at once:
-      `eslint-plugin-nuxt` (last published **August 2023**, eslintrc-only) and
-      `@nuxt/eslint-config@0.2`. Replace with the `@nuxt/eslint` module (1.16.0), which generates
-      the flat config from `nuxt.config.ts`. Note `@nuxt/eslint-config@1` peers `eslint
-      ^9.0.0 || ^10.0.0` — target **9**, not 10, until the Nuxt module ecosystem catches up.
-      Delete `.eslintrc.js`, add `eslint.config.mjs`.
+- [x] **ESLint 8.57.1 → 10.8.0** with flat config — ✅ done 2026-08-03. Retired
+      `eslint-plugin-nuxt` (last published **August 2023**) and `@nuxt/eslint-config@0.2`, plus the
+      direct `eslint-plugin-vue` pin. `.eslintrc.js` → `eslint.config.mjs`.
+
+      **Went to 10, not 9.** This phase's original note said "target **9**, not 10, until the Nuxt
+      module ecosystem catches up" — that was written 2026-07-31 and is **stale**. It has caught up:
+      `@nuxt/eslint-config@1.16.0` *depends* on `@eslint/js ^10.0.1`, so 10 is its primary target,
+      and `@nuxt/eslint`, `@typescript-eslint` 8.65 and `eslint-plugin-vue` 10.10 all peer
+      `^9 || ^10`. Choosing 9 would now be the *less* aligned option. Details below.
 - [ ] **Zod 3.25.76 → 4.x** and **drop `h3-zod`**. `h3-zod` is unmaintained (last publish January
       2024) and expects Zod 3, so it blocks the upgrade. Only **1 usage** — replace with direct
       `zod` parsing. Zod is imported in 4 files total.
@@ -701,13 +704,13 @@ order, or in parallel by different people.
       current**: Phase 2 moved `dompurify` 3.4.2 → 3.4.12 transitively and those advisories are
       gone, so this is now a staleness item rather than a security one. Reprioritise accordingly.
 
-### Progress: 2 of 7 done
+### Progress: 3 of 7 done
 
 | item | status |
 | --- | --- |
 | `nodemailer` → 9.0.3 | ✅ done 2026-08-03 — audit reached zero |
 | Pinia → 4.0.2 | ✅ done 2026-08-03 — needed a nitro workaround |
-| ESLint → 9 + flat config | ⬜ |
+| ESLint → **10** + flat config | ✅ done 2026-08-03 — see the version note below |
 | Zod → 4, drop `h3-zod` | ⬜ |
 | `@directus/sdk` → 24 | ⬜ blocked on verifying against Directus 11.x |
 | `stripe` → 22.4.0 | ⬜ |
@@ -860,6 +863,123 @@ exercised in a real browser against the production-mode server:
 | smoke | 18/18 | 18/18 (×2) |
 | `NODE_ENV=production` SSR | **500 on every route** | 200 on 7 routes, 0 errors |
 
+### ESLint 8.57.1 → 10.8.0, `.eslintrc.js` → flat config
+
+Zero runtime blast radius, which is why it was taken directly after two upgrades that broke runtime
+behaviour: the worst case is that linting breaks, not the site. Confirmed — build output is
+byte-identical at 30.9 MB and **no eslint package appears in `.output/server`**, since `@nuxt/eslint`
+is dev-time only.
+
+Retired three packages: `eslint-plugin-nuxt` (last publish August 2023), `@nuxt/eslint-config@0.2`,
+and the direct `eslint-plugin-vue` pin. That last one is why the first install attempt hit
+`ERESOLVE`: `eslint-plugin-vue@9.33.0` peers `eslint ^6.2 || ^7 || ^8 || ^9` — no 10 — and it was
+declared directly even though `@nuxt/eslint-config` owns it. Dropping the direct pin resolved it, the
+same "stop declaring what the framework owns" cleanup as `@vue/compiler-sfc` in Phase 1.
+
+#### The new config is far stricter — 0 errors became 121
+
+`@nuxt/eslint-config@1` reports much more than `0.2` did. Straight swap, no rule changes:
+
+| | before | after swap |
+| --- | --- | --- |
+| errors | 0 | **121** |
+| warnings | 29 | 19 |
+
+Decomposed rather than bulk-suppressed:
+
+| rule | count | what changed |
+| --- | --- | --- |
+| `@typescript-eslint/no-explicit-any` | 103 | **newly enabled** — not in the `0.2` rule set at all |
+| `@typescript-eslint/no-unused-vars` | 15 | already reported, but as a **warning** under `0.2` |
+| `no-useless-assignment` | 1 | newly enabled |
+| `@typescript-eslint/no-wrapper-object-types` | 1 | newly enabled |
+| `@typescript-eslint/no-empty-object-type` | 1 | newly enabled |
+
+**The three singletons were fixed, not suppressed** — each was a real, small defect:
+
+- `helpers/getAssetUrl.ts` — `let id = ''` was dead, immediately reassigned in both branches of the
+  following `if`/`else`. Now a single `const` ternary. Provably equivalent: the function returns early
+  on any falsy `file`, so both branches always ran.
+- `components/ConferenceTickets.vue` — `ticketsOnSale: Boolean` used the wrapper object type instead
+  of `boolean`. Safe to change because **that component is never rendered anywhere**, and the prop is
+  never passed and never read. Worth knowing before touching it: in `defineProps<T>()` Vue derives
+  the *runtime* prop type from the TS type, so `Boolean` vs `boolean` is not purely cosmetic.
+- `composables/useFlashMessage.ts` — `payload: { }` accepts any non-nullish value including `0` and
+  `""`. Now `Record<string, unknown>`.
+
+**The two bulk rules were demoted to warnings**, deliberately, to keep this a tooling change. Fixing
+103 `any`s is a typing project that belongs with the `vue-tsc` burn-down — same class of problem,
+overlapping files — and it would have buried a config swap in a few hundred lines of unrelated diff.
+Demoting preserves the gate Phase 0 chose on purpose: fail on errors, leave pre-existing warnings
+ungated rather than block on unrelated cleanup. For `no-unused-vars` that is *literally* its previous
+behaviour.
+
+Final: **0 errors, 134 warnings** (103 `no-explicit-any`, 15 `no-unused-vars`, 19 `vue/*`).
+
+Also removed three `eslint-disable` directives that this change made dead — `no-redeclare` in
+`composables/useEventListener.ts`, `no-use-before-define` in `types/directus.ts` and
+`types/items.ts`. The new config uses the `@typescript-eslint` variants of those rules, which
+understand TS overloads and interdependent type declarations, so the base rules no longer fire and the
+directives were being reported as unused. Removing them is in scope precisely because this change
+created the problem.
+
+#### A new dependency: linting now needs `nuxt prepare`
+
+`eslint.config.mjs` extends `.nuxt/eslint.config.mjs`, which the module generates from
+`nuxt.config.ts`. If `nuxt prepare` has not run, linting fails with:
+
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '.../.nuxt/eslint.config.mjs'
+    imported from .../eslint.config.mjs
+```
+
+Verified by moving `.nuxt` aside. This is fine in CI — `npm ci` runs the `postinstall` script, which
+is `nuxt prepare`, before the lint step — but it is a new coupling, and it would break under
+`npm ci --ignore-scripts`. The error message names the missing file, so it should not cost anyone
+much time.
+
+#### `--fix` is safe again
+
+`npm run eslint` runs `eslint --fix`, and Phase 0 recorded that it must never be run on
+`pages/konferenz/[slug]/index.vue`, where it converted a `TalkItem` type import into a value import
+and broke the conference page. **That hazard is gone**: checked with `--fix-dry-run`, which now
+reports no rewrite for that file, because the Phase 0 fix (`TalkItem as TalkItemType`) made the import
+unambiguous. `--fix` would still reformat two files for `vue/first-attribute-linebreak` and
+`vue/attributes-order`; both are pre-existing warnings and were left alone, since those two rules are
+formatting concerns Prettier does not disable and applying them invites churn.
+
+#### Smoke timeout raised, on measurement
+
+One podcast-detail-page failure appeared during verification and was **not** a regression — SSR was
+verified complete (84k characters in `<main>`, HTTP 200, no server error) and the page rendered fine
+on direct navigation. It also was not the Phase 4 non-retrying-assertion bug: the poll waited its full
+15s.
+
+A first hypothesis — that polling `innerText` forces layout and is expensive on a large DOM — was
+measured and **wrong**: 1.2ms versus 0.4ms for `textContent` across 13,795 nodes. The real cause is
+plain contention headroom:
+
+| load | time until `<main>` reports visible text |
+| --- | --- |
+| page loading alone | 1.3–1.6s |
+| six pages loading concurrently | 2.8–**8.7s** |
+
+Against a 15s assertion timeout that is under 2x headroom, and it always rendered eventually — zero
+timeouts across 12 measured concurrent loads. So `expect.timeout` went to 30s, which costs nothing
+when things are fast (web-first assertions resolve as soon as the condition holds) and masks nothing
+(a page that never renders still fails). 18/18 four times after the change, still 12–13.5s per run.
+Local is the worst case: `_ipx` resizes through sharp on first request, while CI hits the Vercel
+preview where images are cached.
+
+| gate | before | after |
+| --- | --- | --- |
+| `lint` | 0 errors, 29 warnings | **0 errors**, 134 warnings |
+| `test` | 52/52 | 52/52 |
+| ratchet | 263 | 263 |
+| `build` | exit 0, 30.9 MB | exit 0, 30.9 MB |
+| smoke | 18/18 | 18/18 (x4) |
+| `npm audit` | 0 | 0 |
+
 ---
 
 ## Phase 6 — Deliberately deferred
@@ -952,7 +1072,15 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
       at which point this breaks. Prefer **renaming to `vitest.config.mts`** over adding
       `"type": "module"` to `package.json` — the latter would reinterpret every `.js` file in the
       package, including `tailwind.config.js`, which uses `require()`.
-- [ ] **Clear the 29 ESLint warnings, then consider `--max-warnings 0`** (carried from Phase 0).
+- [ ] **Clear the ESLint warnings, then consider `--max-warnings 0`.** Now **134**, not the 29 Phase 0
+      recorded — Phase 5's ESLint 10 swap surfaced far more. Two of the three groups are demoted
+      rules that should go back to `'error'` once their count is zero (see `eslint.config.mjs`):
+
+      | rule | count | note |
+      | --- | --- | --- |
+      | `@typescript-eslint/no-explicit-any` | 103 | Do this **with** the `vue-tsc` burn-down above — same class of problem, overlapping files. |
+      | `@typescript-eslint/no-unused-vars` | 15 | Dead code; was a warning before ESLint 10 too. |
+      | `vue/*` | 16 | 9 `no-v-html`, 4 `require-default-prop`, plus 3 singletons. `no-v-html` deserves its own look: each site is a real XSS surface fed by CMS content. |
 
 ### 4. Decide a browser-target policy, then revisit the CSS minifier
 
@@ -973,6 +1101,15 @@ browser-support decision nobody made.
 
 ### 5. Small, verified, uncontroversial
 
+- [ ] ⚠️ **`components/ConferenceTickets.vue` appears to be entirely unused.** Nothing renders it,
+      and none of its three props is read inside it — `ticketsOnSale` is neither passed by any caller
+      nor referenced in the component. Found while fixing a lint error in it. Either wire it up or
+      delete it; a component nothing renders is a component nobody notices is broken.
+- [ ] ⚠️ **The podcast rating flash-message payload is always empty.** `components/PodcastRating.vue`
+      reads `message.value?.payload?.id` into `ratingId`, but both `setMessage(...)` call sites in that
+      same file pass `{}`. So `payload.id` is always `undefined` and `ratingId` is always `''`. Either
+      the id should be passed or the read should go, but as written one of the two is dead. Found while
+      fixing the `{}` type on `setMessage` in Phase 5.
 - [ ] ⚠️ **The local `.env` sets an email variable that nothing reads.** `nuxt-app/.env` provides
       exactly one email var, `NUXT_EMAIL_PASSWORD`, and **no code reads it** — `runtimeConfig`
       declares `emailSmtpPass`, which Nuxt populates from `NUXT_EMAIL_SMTP_PASS`. So locally
@@ -1108,7 +1245,7 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | --- | --- | --- |
 | `@nuxt/image-edge` | Feb 2024 (nightly) | Phase 3 removes it |
 | `h3-zod` | Jan 2024 | Phase 5 removes it |
-| `eslint-plugin-nuxt` | Aug 2023 | Phase 5 removes it |
+| `eslint-plugin-nuxt` | Aug 2023 | ✅ removed in Phase 5 (ESLint 10) |
 | `@ubclaunchpad/vue-fathom` | Apr 2022 | 1 usage. Fathom's own snippet is a few lines — consider inlining and dropping the dependency. |
 | `smoothscroll-polyfill` | Aug 2022 | ✅ removed in Phase 1 |
 | `rss` | Sep 2023 | Still works, no replacement needed. Watch it. |
@@ -1186,3 +1323,6 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | Recorded that GHSA-p6gq-j5cr-w38f was **not reachable** in this codebase — it needs the `raw` message option, which `sendEmail` never uses. The upgrade still stands, but the "high severity" label overstated real exposure, and the plan should not imply a reachable high sat open. |
 | 2026-08-03 | Pinia 4 shipped with `nitro.externals.inline: ['pinia']` rather than holding Pinia back. Pinia 4 exports only its bundler build, so externalising it throws `__VUE_PROD_DEVTOOLS__ is not defined` in production only. Inlining is a workaround for an upstream packaging bug, accepted because it is one line, verified (zero unreplaced flags, exactly one `createPinia`), and the alternative left `@pinia/nuxt@0.5.5` declaring `@nuxt/kit ^3` on a Nuxt 4 app. Logged for removal. |
 | 2026-08-03 | Rejected the community fix for the Pinia SSR crash — pinning `@pinia/nuxt` back to 0.11.0. The `$pinia is undefined` error at `app:rendered` is a *symptom*: the plugin's `setup()` had already thrown and the error was swallowed. Instrumenting the built bundle found the real `ReferenceError` inside `createPinia`, which pinning would have hidden rather than fixed. |
+| 2026-08-03 | ESLint taken to **10**, not the 9 this phase originally specified. That note predated `@nuxt/eslint-config@1.16.0`, which *depends* on `@eslint/js ^10.0.1` — 10 is its primary target, and `@typescript-eslint` 8.65 and `eslint-plugin-vue` 10.10 both peer `^9 || ^10`. Picking 9 would now be the less aligned choice. TypeScript 6.0.3 sits inside `@typescript-eslint`'s `>=4.8.4 <6.1.0`. |
+| 2026-08-03 | `no-explicit-any` (103) and `no-unused-vars` (15) demoted to warnings in `eslint.config.mjs` rather than fixed or disabled. `@nuxt/eslint-config@1` is much stricter than `0.2`, and enabling it as-is turned 0 errors into 121. Fixing 103 `any`s is a typing project belonging with the vue-tsc burn-down, not a lint upgrade; demoting keeps the signal while preserving Phase 0's gate-on-errors choice. The three singleton errors were fixed rather than suppressed. |
+| 2026-08-03 | Smoke `expect.timeout` raised 15s → 30s, sized from measurement: the heaviest page reports visible text in 1.3–1.6s alone but 2.8–8.7s with six loading concurrently, and never failed to render in 12 concurrent loads. A first hypothesis (polling `innerText` forces expensive layout) was measured and disproved at 1.2ms. Raising the budget masks nothing — a page that never renders still fails. |
