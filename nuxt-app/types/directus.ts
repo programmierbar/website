@@ -1,5 +1,3 @@
-/* eslint-disable no-use-before-define */
-
 import type { FileItem, PartnerItem, TalkItem } from '~/types/items'
 
 export interface DirectusFileItem extends FileItem {

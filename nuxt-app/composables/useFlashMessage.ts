@@ -15,7 +15,9 @@ export const useFlashMessage = () => {
     return cookieValue;
   });
 
-  const setMessage = (text: string, type: "rating", payload: { } ) => {
+  // `Record<string, unknown>`, not `{}` — the latter accepts any non-nullish value, including `0`
+  // and `""`, which is not what "payload" means here.
+  const setMessage = (text: string, type: "rating", payload: Record<string, unknown>) => {
     message.value = {
       text,
       type,

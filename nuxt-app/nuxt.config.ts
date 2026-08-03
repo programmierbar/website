@@ -107,6 +107,10 @@ export default defineNuxtConfig({
         'nuxt-jsonld',
         '@pinia/nuxt',
         '@nuxtjs/algolia',
+        // Generates the ESLint flat config from this file (dirs, globals, generated files) into
+        // .nuxt/eslint.config.mjs, which eslint.config.mjs then extends. Replaces the hand-written
+        // .eslintrc.js plus @nuxt/eslint-config@0.2 and the unmaintained eslint-plugin-nuxt.
+        '@nuxt/eslint',
     ],
 
     // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router

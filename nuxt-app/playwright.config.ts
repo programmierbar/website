@@ -43,7 +43,19 @@ export default defineConfig({
     // Generous on purpose: these pages server-render from live Directus content and the image
     // pipeline resizes on first request, so a cold `/podcast` legitimately takes several seconds.
     timeout: 45_000,
-    expect: { timeout: 15_000 },
+    // 30s, not 15s, sized from measurement rather than taste. The heaviest page — a podcast detail
+    // page, ~1.15 MB of HTML and ~13.8k DOM nodes — first reports visible text in `<main>` after
+    // 1.3–1.6s when it is the only page loading, but 2.8–8.7s with six loading concurrently, which
+    // is what `workers: undefined` produces here. At 15s that left under 2x headroom and the page
+    // intermittently failed; it always rendered eventually (0 timeouts in 12 measured concurrent
+    // loads), so this was budget, not breakage.
+    //
+    // Raising it costs nothing when things are fast, because web-first assertions resolve as soon as
+    // the condition holds. It also does not mask a real failure: a page that never renders still
+    // fails, just 15s later. Locally this is the worst case, since `_ipx` resizes images through
+    // sharp on first request; CI runs against the Vercel preview, where images come from
+    // `_vercel/image` with caching.
+    expect: { timeout: 30_000 },
     use: {
         baseURL,
         trace: 'retain-on-failure',
