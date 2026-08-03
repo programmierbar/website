@@ -26086,7 +26086,7 @@
         "display_options": null,
         "field": "transcript",
         "group": null,
-        "hidden": false,
+        "hidden": true,
         "interface": "input-multiline",
         "note": null,
         "options": {
@@ -26638,7 +26638,7 @@
         "display_options": null,
         "field": "notes",
         "group": null,
-        "hidden": false,
+        "hidden": true,
         "interface": "input-multiline",
         "note": null,
         "options": {
