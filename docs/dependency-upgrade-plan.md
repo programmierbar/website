@@ -37,6 +37,13 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | 4 | **Nuxt 3 → Nuxt 4** | ✅ Done (2026-08-03) |
 | 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | ⬜ Not started |
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
+| — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
+
+Each phase's own write-up ends with what it deliberately left behind. Those are also gathered into
+the **follow-up backlog** above, which is the list to read if you are looking for work rather than
+history. Two things in it are worth knowing about even if you never pick them up: the Renovate app
+was configured in Phase 0 and **still is not installed**, and `tailwind.config.js` has content globs
+that match almost nothing, which becomes dangerous at Tailwind 4.
 
 ---
 
@@ -188,6 +195,10 @@ number instead of a surprise.
 
 - [ ] Burn down the 212 `vue-tsc` errors, starting with `composables/useDirectus.ts` (149 of
       them — almost certainly one or two bad generic signatures rather than 149 real problems)
+
+> The count above is what Phase 0 measured; it is **263** as of Phase 4, and the errors are now two
+> distinct groups. See [the follow-up backlog](#after-the-plan--follow-up-backlog), which is the
+> live version of this item.
 
 ---
 
@@ -636,6 +647,9 @@ should upgrade.
 
 ### Follow-up captured, not done here
 
+All four are carried into [the follow-up backlog](#after-the-plan--follow-up-backlog) with the
+detail needed to act on them; kept here as the record of what this phase chose not to do.
+
 - [ ] Burn down the 263 `vue-tsc` errors. Now two distinct groups: ~208 pre-existing (149 in
       `composables/useDirectus.ts`) and **55 newly surfaced `noUncheckedIndexedAccess` violations**,
       which are the more interesting set — each is a real unchecked index.
@@ -706,6 +720,126 @@ Not blocked by EOL. Do **not** fold these into the phases above.
       tackling it, and expect the ratchet baseline to move.
 - [ ] **Nuxt 4 `app/` directory migration.** Cosmetic; do it when the team wants it, not as part
       of the framework upgrade.
+
+---
+
+## After the plan — follow-up backlog
+
+Collected here so the phase write-ups stay a record of what each phase *did*, while the work each
+one deliberately left behind stays findable in one place. **Nothing here blocks the EOL work**, and
+nothing here needs doing before Phase 6 lands. Items marked ⚠️ were found by accident and would not
+be caught by any current gate, which is the argument for writing them down rather than trusting
+someone to rediscover them.
+
+### 1. Install the Renovate GitHub App — highest value item here
+
+`.github/renovate.json` was added in Phase 0 and **has never run.** Verified 2026-08-03: the repo has
+no Dependency Dashboard issue and no Renovate PRs, so the config is inert.
+
+This is first on the list because it is the only item that changes the *trajectory* rather than the
+current state. Phases 0–6 pay off a backlog once; Renovate is what stops it re-accumulating, and
+every phase so far has been manual work that Renovate would have surfaced as it happened. The config
+is already written and already scoped (`includePaths: ["nuxt-app/**"]`, majors behind
+`dependencyDashboardApproval`, `directus-cms/**` deliberately excluded for the licence block).
+
+### 2. The 263 `vue-tsc` errors, which are two unrelated problems
+
+Phase 4 moved the ratchet 209 → 263 and the two halves want different treatment:
+
+| group | count | character |
+| --- | --- | --- |
+| Pre-existing | ~208 | **149 in `composables/useDirectus.ts` alone** — almost certainly a couple of bad generic signatures rather than 149 distinct problems, so likely a small fix with a large number attached. |
+| `noUncheckedIndexedAccess` | 55 | Newly surfaced by Nuxt 4's default. **Each one is a real unchecked index**, not a typing artefact. |
+
+The 55 are the more interesting set and the better starting point — they are individually small,
+individually real, and concentrated: `helpers/parseCmsDate.ts` (12, indexing
+`Intl.DateTimeFormat().formatToParts()` results), `components/MemberCard.vue` (8),
+`helpers/ipProcessing.ts` (5, splitting an address and indexing), `components/PodcastRating.vue` (5),
+`components/Pagination.vue`, `composables/useTagFilter*.ts`.
+
+Two of the *original* 212 are worth fixing early, because both are imports of things that **do not
+exist** — verified 2026-08-03:
+
+- `helpers/getMetaInfo.ts:1` imports `MetaInfo` from `vue-meta/types/vue-meta`. `vue-meta` is a
+  Nuxt 2 package and is **not a dependency and not installed at all**.
+- `pages/podcast/index.vue:77` imports a `LatestPodcasts` type from `~/composables/useDirectus`,
+  which never declares or exports it (only the `getLatestPodcasts` function exists).
+
+Neither has broken anything because both are `import type`, so they are erased before runtime. The
+cost is silent: an unresolvable type behaves like `any`, so the return type of `getMetaInfo` — the
+helper every page's `useHead` call goes through — is effectively unchecked, as is the `podcasts`
+computed on the podcast index. Fixing two lines restores type checking to a lot of call sites.
+
+### 3. Build and tooling correctness
+
+- [ ] **Make a full local `npm run build` work again.** Currently fails, and fails identically on
+      `main` — the prerender crawler walks ~1500 `/_ipx/` image URLs and exhausts connections to the
+      CMS. One line: `nitro: { prerender: { ignore: ['/_ipx'] } }`. Invisible in CI (which sets
+      `SKIP_PRERENDER_ROUTE_DISCOVERY=true`) and on Vercel (which does not prerender at all), so the
+      only person it hurts is a developer running a real build locally.
+- [ ] ⚠️ **`tailwind.config.js` `content` globs do not include `.vue`.** They are
+      `'./pages/**/*.{html,js}'` and `'./components/**/*.{html,js}'`, so they match essentially
+      nothing; styling works only because `@nuxtjs/tailwindcss` injects its own defaults on top.
+      **Fix this before Tailwind 4** (Phase 6), which changes content detection — a latent
+      misconfiguration plus a detection rewrite is how you get a site that loses half its CSS with
+      no error.
+- [ ] **`vitest.config.ts` is loaded as CommonJS while using ESM syntax.** `npm test` warns that
+      `configLoader: 'native'` "is planned to become the default in a future major version of Vite",
+      at which point this breaks. Prefer **renaming to `vitest.config.mts`** over adding
+      `"type": "module"` to `package.json` — the latter would reinterpret every `.js` file in the
+      package, including `tailwind.config.js`, which uses `require()`.
+- [ ] **Clear the 29 ESLint warnings, then consider `--max-warnings 0`** (carried from Phase 0).
+
+### 4. Decide a browser-target policy, then revisit the CSS minifier
+
+Phase 4 pinned `vite.build.cssMinify: 'esbuild'` because Vite 8's lightningcss default silently
+rewrote every media query to Level 4 range syntax (`(width>=1024px)`), which needs Safari 16.4+.
+
+The underlying gap is that **the repo has no `browserslist` and no explicit CSS target at all**, so
+every tool guesses — and they guess differently. That is what made a minifier swap a
+browser-support decision nobody made.
+
+- [ ] Agree the actual support floor (Phase 1 already accepted dropping smooth-scroll animation
+      below Safari 15.4, so a floor exists in practice — it is just unwritten).
+- [ ] Record it once as `browserslist`, and derive the minifier target from it rather than
+      hardcoding either choice.
+- [ ] Then adopt lightningcss deliberately with explicit `css.lightningcss.targets`, ideally
+      **alongside Tailwind 4** since that phase is already a CSS-pipeline project. lightningcss is
+      faster and its output is valid; the problem was inheriting it as a side effect.
+
+### 5. Small, verified, uncontroversial
+
+- [ ] ⚠️ **Auth-path `console.log`s leak into the browser console.**
+      `composables/useDirectus.ts:897` logs `await directus.refresh()` — i.e. the **token refresh
+      response** — plus the full user object at `:900`, and `pages/login-callback.vue:46` logs the
+      user again. `getCurrentUser()` is called from `onMounted`, so this is client-side console
+      output. Not currently reachable in production (login is behind `FLAG_SHOW_LOGIN`), which is
+      exactly why it should be cleaned up *before* that flag is ever turned on.
+- [ ] **`error.vue` ships an empty meta description** — `{ name: 'description', content: '' }`.
+      Either give the 404 page a real description or drop the tag; an empty one is worse than
+      absent. (Phase 4 removed the dead `hid` key from this same entry but deliberately left the
+      empty `content` alone as out of scope.)
+- [ ] **Drop `@ubclaunchpad/vue-fathom`** (last publish April 2022, 1 usage). Fathom's own snippet
+      is a few lines — inlining it removes a dependency entirely. See Appendix A.
+- [ ] **Re-check the `brace-expansion` advisory.** It stopped being reported during Phase 4, but
+      the package is **still 2.1.4, unchanged** — the advisory data moved, not our tree. Treat it as
+      unresolved rather than fixed.
+- [ ] **Add a `.nvmrc`.** None exists, and Phase 4 raised `engines.node` to
+      `^22.19.0 || ^24.11.0 || >=26.0.0` — ahead of at least one developer's local Node. Pairs
+      naturally with Phase 6's Node 24 item, which already says to move `engines`, `.nvmrc` and
+      every workflow's `node-version` together.
+- [ ] **Remove or justify `nuxt-app/.npmrc`.** `shamefully-hoist` and `strict-peer-dependencies`
+      are pnpm options and no-ops under npm (Appendix B) — they read as protection that is not
+      there.
+
+### 6. Standing items, not one-off tasks
+
+- **Re-raise the Directus licence block if it persists.** It is the gate on `directus-cms/`, and
+  the majority of the repo's reported vulnerabilities sit in that blocked tree. A block that is
+  accepted for a quarter is very different from one accepted for a week.
+- **`@nuxtjs/algolia` is the module most likely to need attention at Nuxt 5** (Appendix A). Nothing
+  to do now; worth remembering when Nuxt 5 appears, since Nuxt 3's EOL is the precedent for how
+  quickly that becomes urgent.
 
 ---
 
