@@ -1162,7 +1162,7 @@ changed that endpoint to return 404 for unauthenticated requests.
 | `test` | 52/52 | 52/52 |
 | ratchet | 263 | 263 |
 | `build` | exit 0 | exit 0 |
-| smoke (Vercel preview) | 18/18 | 18/18 |
+| smoke (Vercel preview) | 18/18 | 18/18, then 17 + 1 flaky — see below |
 | `npm audit` | 0 | 0 |
 
 `npm install` reported `changed 1 package` — the SDK has no dependencies of its own, so the tree moved
@@ -1171,6 +1171,14 @@ by exactly one entry and the lockfile diff is 4 lines.
 Smoke matters more than usual here: its 18 routes are server-rendered from live Directus content, so a
 green run is 18 real SDK-24-against-11.17.4 reads executing inside the Vercel runtime — the same
 environment that exposed the Pinia 4 and `isomorphic-dompurify` failures every local gate had passed.
+
+It ran twice. The first deployment was a clean **18/18 in 21.0s**. The second — a docs-only commit, so
+byte-identical application code — reported **17 passed, 1 flaky**: `/verhaltensregeln` failed
+`page.goto` with `net::ERR_TIMED_OUT` and passed on retry. Not the SDK, and the distinction is visible
+in the failure mode: a broken client surfaces as a 500 or an empty `<main>`, not a navigation timeout
+that never reaches the server. Checked directly afterwards, that page returned **200 with 5641
+characters** of real `coc_page` content in 0.17–0.38s on three consecutive requests. The whole run also
+took 41.3s against the first run's 21.0s, which points at a cold deployment.
 Two further checks against the preview covered paths smoke does not reach: `GET /feed/news.xml` returned
 **200** with 9 KB of real content (an SDK read outside the page renderer), and `POST /api/vote` with `{}`
 returned **400** with the expected validation message.
