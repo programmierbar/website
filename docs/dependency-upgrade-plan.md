@@ -35,7 +35,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | TypeScript 5.9 → 6.0.3 (interstitial, own PR) | ✅ Done (2026-07-31) |
 | 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ✅ Done (2026-07-31) |
 | 4 | **Nuxt 3 → Nuxt 4** | ✅ Done (2026-08-03) |
-| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 4 of 7 (`nodemailer`, Pinia, ESLint, Zod; **audit at zero**) |
+| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 4 of 7 done, 1 **blocked upstream**; **audit at zero** |
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
@@ -697,12 +697,11 @@ order, or in parallel by different people.
       Details below.
 - [ ] **`stripe` 20.4.1 → 22.4.0** — 7 files. Check the pinned API version and the webhook
       signature-verification API.
-- [ ] **`isomorphic-dompurify` 2.20.0 → 3.x** — 2 files. Note it is currently pinned with `~`.
-      The note that this "has been holding back the DOMPurify XSS advisories" is **no longer
-      current**: Phase 2 moved `dompurify` 3.4.2 → 3.4.12 transitively and those advisories are
-      gone, so this is now a staleness item rather than a security one. Reprioritise accordingly.
+- [ ] 🚫 **`isomorphic-dompurify` 2.20.0 → 3.21.0 — attempted 2026-08-03 and reverted.** It breaks
+      the Vercel function runtime, and it has no security upside to justify a workaround. **Stays at
+      `~2.20.0`.** Full diagnosis below; re-attempt only when the upstream chain is fixed.
 
-### Progress: 4 of 7 done
+### Progress: 4 of 7 done, 1 blocked
 
 | item | status |
 | --- | --- |
@@ -712,7 +711,7 @@ order, or in parallel by different people.
 | Zod → 4, drop `h3-zod` | ✅ done 2026-08-03 |
 | `@directus/sdk` → 24 | ⬜ blocked on verifying against Directus 11.x |
 | `stripe` → 22.4.0 | ⬜ **deliberately last** — see sequencing note |
-| `isomorphic-dompurify` → 3.x | ⬜ no longer security-driven, see above |
+| `isomorphic-dompurify` → 3.x | 🚫 **attempted and reverted 2026-08-03** — breaks the Vercel runtime |
 
 **Sequencing: `stripe` goes last.** Requested 2026-08-03. Everything else in this phase is
 time-unconstrained, but Stripe touches the payment path and may want a second pair of eyes from a
@@ -1077,7 +1076,108 @@ Platform failed to forward this request". Corroborated independently: a plain he
 `admin.programmier.bar` returned `HTTP 000` in the same window. The feed route surfaces a CMS outage as
 a 500, which is exactly why smoke does not gate pull requests.
 
----
+### 🚫 `isomorphic-dompurify` 2.20.0 → 3.21.0 — attempted and reverted
+
+**Stays at `~2.20.0`.** The upgrade breaks the Vercel function runtime, and there is no security
+upside that would justify working around it.
+
+Taken before `@directus/sdk` to clear the small items first — two call sites, `InnerHtml.vue` and
+`NewsTicker.vue`, neither of which needed changing. It looked like the easiest item in the phase and
+turned out to be the only one that could not ship.
+
+#### Why it was never worth much
+
+`dompurify` was already at **3.4.12** from Phase 2's transitive update, and 3.21.0 requires only
+`^3.4.12` — **the sanitiser itself does not move**. So this was pure staleness, correcting what this
+phase originally claimed about held-back XSS advisories.
+
+The sanitiser was verified equivalent before the runtime problem surfaced: both call shapes
+(`sanitize(html)` and `sanitize(news, { FORBID_TAGS: ['p'] })`) against 32 payloads on each version,
+**all 64 outputs identical** — benign markup unchanged, and every vector still neutralised including
+`<script>`, `onerror`, `javascript:`/`vbscript:`/`data:text/html` hrefs, `<iframe>`/`<object>`/
+`<embed>`/`<style>`, `<svg/onload>`, and the mXSS `<math><mtext><script>` case. So the revert is not
+about sanitising behaviour.
+
+#### What actually breaks
+
+`isomorphic-dompurify` 3.x pulls `jsdom` 26.1.0 → **30.0.1**, and jsdom 30 replaced
+`html-encoding-sniffer` 4.0.0 with **6.0.0**, which does:
+
+```js
+const { getBOMEncoding, labelToName } = require("@exodus/bytes/encoding-lite.js")
+```
+
+`html-encoding-sniffer@6` is CommonJS; `@exodus/bytes@1.15.1` is `"type": "module"`. On the Vercel
+function runtime that is fatal:
+
+```
+Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/@exodus/bytes/encoding-lite.js
+from /var/task/node_modules/html-encoding-sniffer/lib/html-encoding-sniffer.js not supported.
+```
+
+**Every local gate passed**, which is the part worth remembering. Node ≥22.12 supports `require()` of
+ESM natively, so `npm run build`, `nuxt preview`, and all 18 smoke tests were green on a developer
+machine. Vercel's function loader (`/opt/rust/nodejs.js`) does **not** support it. The failure only
+exists on the deployed artifact.
+
+**It is not the Node version — checked, because that is the obvious first guess.** The Vercel project
+setting reads `nodeVersion: "20.x"`, which looks like the culprit and is not. `engines.node` overrides
+it, and the build log of the failing deployment says so explicitly:
+
+```
+Warning: Due to "engines": { "node": "^22.22.2 || ^24.15.0 || >=26.0.0" } in your `package.json` file,
+the Node.js Version defined in your Project Settings ("20.x") will not apply,
+Node.js Version "24.x" will be used instead.
+```
+
+So the function that threw `ERR_REQUIRE_ESM` was running **Node 24.x**, which supports `require(esm)`
+natively. Raising the project's Node version would not have helped. Do not spend time on it.
+
+It was caught by the smoke suite running against the Vercel preview — the second time that gate has
+paid for itself on a defect no local check could see (the first being Pinia 4's production-only SSR
+crash).
+
+**Blast radius was wider than the failing test suggested.** The visible failures were
+`/login/_payload.json` and `/news/_payload.json`, but the runtime logs also show `/[...]-isr` 500ing —
+the ISR catch-all that serves most routes. `/impressum` and `/datenschutz` returned 200 only because
+they were served from cache. This would have taken down the site.
+
+Confirmed introduced by the upgrade, not pre-existing: on `main`, `@exodus/bytes` is **not installed at
+all** — the single mention in that lockfile is a deprecation notice on `whatwg-encoding` recommending
+it.
+
+#### It also cost +6.4 MB
+
+Worth recording even though it is moot now: build output went 31.3 MB → **37.7 MB** (11.5 → 12.3 MB
+gzip), because jsdom 30 is 10 MB vendored and adds `undici`, `css-tree`, `lru-cache`, `@exodus/bytes`,
+`@bramus/specificity`, `@asamuzakjp/css-color`, `@asamuzakjp/dom-selector` and
+`@csstools/css-syntax-patches-for-csstree`. Reverting returns it to 31.3 MB, confirmed.
+
+One thing v3 does get right, for whenever it becomes viable: its conditional exports split `browser`
+from `node`, and the client bundle contained zero jsdom references.
+
+#### A revert is not simply `npm install <old-version>`
+
+`npm install isomorphic-dompurify@~2.20.0` downgraded the direct dependency but **left jsdom 30
+hoisted** and nested jsdom 26 beneath it, leaving 34 extra packages in the lockfile including the
+ESM-only one. `npm ci` then faithfully reproduced that mess, because it was in the lockfile.
+Restoring `package.json` **and** `package-lock.json` from `main` and reinstalling was the only way to
+get a tree that actually matches. Worth knowing before trusting a downgrade.
+
+#### Re-attempt conditions
+
+Wait for any one of these, then retry — and **verify on a Vercel preview, not locally**, because
+local Node hides it:
+
+1. `html-encoding-sniffer` switches to a dynamic `import()` or `@exodus/bytes` ships a CJS entry.
+2. jsdom drops or replaces that dependency.
+3. Vercel's function loader gains `require(esm)` support — a loader change, **not** a Node version
+   bump; the failing deployment was already on Node 24.
+
+If it becomes genuinely necessary sooner — v3's `clearWindow()` is the only real draw — the cheapest
+workaround to try is `nitro.externals.inline: ['html-encoding-sniffer']`, so rollup resolves the ESM
+import at build time. Not attempted here: an unnecessary upgrade did not justify a second inline
+workaround, and the better answer is the follow-up asking whether the server needs jsdom at all.
 
 ## Phase 6 — Deliberately deferred
 
@@ -1198,6 +1298,64 @@ browser-support decision nobody made.
 
 ### 5. Small, verified, uncontroversial
 
+- [ ] ⚠️⚠️ **Audit the `v-html` sites. Two of eleven sanitise; several strip tags with a regex and
+      the strip is bypassable.** This supersedes the "do we need jsdom" question below, and it is the
+      genuinely important one.
+
+      Eleven `v-html` bindings exist. `InnerHtml.vue` and `NewsTicker.vue` use DOMPurify. `PodcastPlayer.vue`
+      inlines a build-time SVG twice, which is fine. The remaining **seven** render CMS- or
+      Algolia-sourced values, and the ones that defend themselves do it like this:
+
+      ```js
+      props.pickOfTheDay.description.replace(/<[^<>]+>/g, '')   // PickOfTheDayListItem.vue:52
+      props.item.description?.replace(/<[^<>]+>/g, '')          // SearchResultCard.vue:89,103,110
+      ```
+
+      That pattern cannot match a tag containing `<` or `>`, so a nested tag reassembles into a live
+      one. Verified:
+
+      | input | after strip, into `v-html` | |
+      | --- | --- | --- |
+      | `<img<a> src=x onerror=alert(1)>` | `<img src=x onerror=alert(1)>` | **executes** |
+      | `<svg<a> onload=alert(1)>` | `<svg onload=alert(1)>` | **executes** |
+      | `<script>alert(1)</script>` | `alert(1)` | inert — `innerHTML` never runs injected `<script>` |
+      | `<p>Ein <strong>Text</strong> mit <a href="/x">Link</a></p>` | `Ein Text mit Link` | all markup destroyed |
+
+      **Reachability:** the input is CMS-authored, so this needs Directus write access (or a tampered
+      Algolia index) — defence in depth, not an open door. Not a reason to leave it.
+
+      **The fix is smaller than the problem.** That last row is the tell: these components strip *every*
+      tag, so they render plain text through an HTML sink. `{{ }}` interpolation is both safer and
+      simpler, needs no sanitiser, and removes the sink outright. Only components that genuinely render
+      rich HTML need DOMPurify — currently two.
+- [ ] **Does the server need `jsdom`? Probably yes, and it is not urgent** — correcting an earlier
+      overstatement in this document, which called this "the blocking question". It is not blocking:
+
+      | concern | reality while pinned at `~2.20.0` |
+      | --- | --- |
+      | dompurify patches | **still arrive** — 2.20.0 declares `dompurify: ^3.2.3`, so 3.x patches float in |
+      | drifting into the ESM break | **cannot** — it declares `jsdom: ^26.0.0`, so jsdom stays on 26.x |
+      | open advisories | none against `dompurify` 3.4.x |
+
+      So the pin costs a theoretical memory leak (v3's `clearWindow()`) and ~4 MB, not security.
+
+      On the substance: **keep jsdom for whatever still needs DOMPurify.** DOMPurify parses in a real DOM
+      and walks it, which is how it catches mutation XSS — verified here when
+      `<math><mtext><script>alert(1)</script></mtext></math>` reduced to `<math><mtext></mtext></math>`.
+      Swapping to a parser-based sanitiser like `sanitize-html` is a change in security properties, not
+      a size optimisation. If the weight ever matters, the better move is a lighter DOM — `linkedom`
+      with DOMPurify directly — which keeps the guarantees and is verifiable with the same 64-case
+      harness used for the 3.x attempt.
+
+      **Retracting the "sanitise at ingest in Directus" suggestion made earlier in this document.** It is
+      the weakest option, not the neatest: `directus-cms/` is out of scope under the licence block, it is
+      destructive with no way back to the original, and it is bypassed by any direct API or database
+      write.
+- [ ] **`clearWindow()` is unavailable while 3.x is blocked.** v3 added it specifically to fix
+      unbounded memory growth in long-running Node processes, where the internal jsdom window
+      accumulates DOM state. Our SSR runs on Vercel functions reused while warm, so the pattern
+      applies — not observed here, but it is the one concrete reason to want 3.x. Blocked by the same
+      ESM issue, and moot if jsdom goes entirely.
 - [ ] **Give Zod German default messages.** Every field with a custom message is already German, but
       fields without one fall back to Zod's English defaults on a German-language site — a pre-existing
       wart, though Zod 4 reworded them (`Required` → `Invalid input: expected string, received
@@ -1237,6 +1395,15 @@ browser-support decision nobody made.
 - [ ] **Re-check the `brace-expansion` advisory.** It stopped being reported during Phase 4, but
       the package is **still 2.1.4, unchanged** — the advisory data moved, not our tree. Treat it as
       unresolved rather than fixed.
+- [ ] ⚠️ **The Vercel project's `nodeVersion` says `20.x` but is silently overridden to `24.x`.**
+      `engines.node` in `nuxt-app/package.json` wins, and every build log carries a warning saying so.
+      Two reasons to align the setting anyway: the dashboard currently tells anyone who looks the wrong
+      answer, and it is a **latent trap** — if `engines.node` were ever simplified or dropped, the
+      project would silently fall back to Node 20, below the `^22.19.0` floor Nuxt 4.5.1 declares.
+      Changing it is a no-op today, which is exactly why it is safe to do. Note that 24.x is already
+      what runs, so this does **not** pre-empt Phase 6's "Node 22 → 24" item — that one is about
+      `engines`, `.nvmrc` and the workflows agreeing, and should be told that production is already
+      on 24.
 - [ ] **Add a `.nvmrc`.** None exists, and Phase 4 raised `engines.node` to
       `^22.19.0 || ^24.11.0 || >=26.0.0` — ahead of at least one developer's local Node. Pairs
       naturally with Phase 6's Node 24 item, which already says to move `engines`, `.nvmrc` and
@@ -1480,3 +1647,10 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | Zod 4 taken with `h3-zod` removed rather than replaced. `h3-zod` existed for one call site, was last published January 2024, pinned `zod ^3`, and peers `h3 ^1` while Nuxt 4 resolves `h3 2.x`. The six sibling routes already used `safeParse` + `createError`, so the replacement is the existing house pattern, not a new one. |
 | 2026-08-03 | Zod 4's reworded **default** messages accepted as-is. Custom German messages are unchanged; the defaults were English before and after, so this is a wording change rather than a regression. Adopting `z.locales.de()` is logged separately because it rewrites many user-facing strings. |
 | 2026-08-03 | Code comments across the series to be audited in their own PR once Phase 5 completes, against one test: *would someone who has never heard of the pull request still need this sentence?* Changelog and measurement narrative move to this document; standing constraints keep a one-line reason and a removal condition in the file. Not a push for fewer comments — the longest blocks sit on config a tidy-minded reader would delete. |
+| 2026-08-03 | `isomorphic-dompurify` reordered ahead of `@directus/sdk` at the maintainer's suggestion, to clear the small items before the one likely to hit a real constraint. |
+| 2026-08-03 | `isomorphic-dompurify` 3.x **reverted, staying at `~2.20.0`**. jsdom 30 pulls `html-encoding-sniffer@6`, which `require()`s the ESM-only `@exodus/bytes`; Vercel's function loader cannot do `require(esm)`, so the ISR catch-all 500s. Every local gate passed because Node ≥22.12 supports `require(esm)` natively — caught only by smoke against the Vercel preview. No security upside (dompurify already 3.4.12) and +6.4 MB of cost, so a workaround was not justified. |
+| 2026-08-03 | Reverting a dependency needs `package.json` **and** `package-lock.json` restored from `main`. `npm install <old-version>` downgraded the direct dependency but left jsdom 30 hoisted with 26 nested beneath, keeping 34 stale packages — including the ESM-only one — which `npm ci` then faithfully reproduced. |
+| 2026-08-03 | Ruled out the Node version as the cause of the `isomorphic-dompurify` failure. The project setting reads `20.x`, which looks decisive and is not — `engines.node` overrides it and the failing build log states that **Node 24.x** was used. Recorded in the plan because it is the obvious first hypothesis; it also revealed that the project setting is stale and a latent trap if `engines.node` is ever simplified. |
+| 2026-08-03 | **Retracted** this document's claim that "does the server need jsdom" had become the blocking question. It had not: `isomorphic-dompurify@2.20.0` declares `dompurify: ^3.2.3`, so sanitiser patches still arrive, and `jsdom: ^26.0.0`, so the tree cannot drift into the ESM break. The pin costs ~4 MB and v3's `clearWindow()`, not security. |
+| 2026-08-03 | Keep jsdom for anything still using DOMPurify. Its mXSS handling depends on parsing in a real DOM — verified when `<math><mtext><script>` reduced to `<math><mtext></mtext></math>` — so swapping to a parser-based sanitiser would trade security properties for install size. If weight ever matters, try `linkedom` + DOMPurify and re-run the 64-case harness. |
+| 2026-08-03 | The `v-html` audit supersedes the jsdom question. 2 of 11 bindings sanitise; several regex-strip tags and the strip is bypassable by nested-tag reconstruction (`<img<a> src=x onerror=…>` reassembles). Since those components strip *all* markup, `{{ }}` is both safer and simpler and removes the sink — a smaller fix than the dependency debate it was hiding behind. |
