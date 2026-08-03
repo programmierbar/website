@@ -35,7 +35,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | TypeScript 5.9 → 6.0.3 (interstitial, own PR) | ✅ Done (2026-07-31) |
 | 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ✅ Done (2026-07-31) |
 | 4 | **Nuxt 3 → Nuxt 4** | ✅ Done (2026-08-03) |
-| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | ⬜ Not started |
+| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 1 of 7 (`nodemailer` done; **audit at zero**) |
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
@@ -690,14 +690,85 @@ order, or in parallel by different people.
       Three majors of a REST/GraphQL client can drop support for older server APIs. Confirm SDK 24
       still targets Directus 11 before starting; if it does not, hold at the highest SDK major
       that does and note it here. This is the one phase whose scope depends on the legal outcome.
-- [ ] **`nodemailer` 8.0.11 → 9.0.3.** Added in Phase 2: the remaining *high* advisory
-      (`nodemailer <=9.0.0`) needs the v9 major. This is the highest-priority item in this phase —
-      nodemailer is production-flagged and on the mail-sending path, so it is the one surviving
-      advisory with real runtime exposure. 1 file.
+- [x] **`nodemailer` 8.0.11 → 9.0.3** — ✅ done 2026-08-03. **`npm audit` now reports
+      `found 0 vulnerabilities`**, closing the backlog that started at 49 distinct advisories.
+      Details below.
 - [ ] **`stripe` 20.4.1 → 22.4.0** — 7 files. Check the pinned API version and the webhook
       signature-verification API.
-- [ ] **`isomorphic-dompurify` 2.20.0 → 3.x** — 2 files. Note it is currently pinned with `~`,
-      which is what has been holding back the DOMPurify XSS advisories.
+- [ ] **`isomorphic-dompurify` 2.20.0 → 3.x** — 2 files. Note it is currently pinned with `~`.
+      The note that this "has been holding back the DOMPurify XSS advisories" is **no longer
+      current**: Phase 2 moved `dompurify` 3.4.2 → 3.4.12 transitively and those advisories are
+      gone, so this is now a staleness item rather than a security one. Reprioritise accordingly.
+
+### Progress: 1 of 7 done
+
+| item | status |
+| --- | --- |
+| `nodemailer` → 9.0.3 | ✅ done 2026-08-03 — audit reached zero |
+| Pinia → 4.0.2 | ⬜ |
+| ESLint → 9 + flat config | ⬜ |
+| Zod → 4, drop `h3-zod` | ⬜ |
+| `@directus/sdk` → 24 | ⬜ blocked on verifying against Directus 11.x |
+| `stripe` → 22.4.0 | ⬜ |
+| `isomorphic-dompurify` → 3.x | ⬜ no longer security-driven, see above |
+
+### `nodemailer` 8.0.11 → 9.0.3
+
+**The audit backlog is now empty:** `found 0 vulnerabilities`, down from 49 distinct root advisories
+at the start of this work. One file changed (`server/utils/sendEmail.ts` was not even edited — only
+the manifest), plus `@types/nodemailer` 6.4.24 → 8.0.1.
+
+**The advisory that drove this was not actually reachable here.** GHSA-p6gq-j5cr-w38f is about the
+message-level `raw` option bypassing `disableFileAccess`/`disableUrlAccess`. This codebase never
+passes `raw` and never sets either flag — `sendEmail` sends `from`/`to`/`subject`/`html`/
+`attachments` and nothing else. Worth recording plainly: the upgrade was still right (it clears the
+advisory and takes four releases of SMTP hardening) but the "high severity" label overstated the
+real exposure, and nobody should conclude from this phase that a *reachable* high was outstanding
+for a week.
+
+**The real breaking change is TLS, and it was verified against the actual host.** v9.0.0 validates
+TLS certificates by default when fetching remote content, and 9.0.2/9.0.3 hardened STARTTLS and
+secure-socket handling. Our transport targets `smtp.gmail.com:465` with `secure: true`, so the
+question was whether the handshake still succeeds. Tested with `transporter.verify()` using
+deliberately fake credentials, because `verify()` completes the TCP connect and TLS handshake
+*before* authenticating — so the failure stage is the answer:
+
+```
+code   : EAUTH
+stage  : AUTH PLAIN
+RESULT : TLS handshake OK — failure is at authentication, which is expected
+```
+
+Failing at `AUTH PLAIN` rather than with a certificate error proves the v9 TLS change does not affect
+this host. **The one residual risk** is a deployed environment that overrides
+`NUXT_EMAIL_SMTP_HOST` to a server with a self-signed or expired certificate — that would now fail
+where it previously worked, and the opt-out is `tls.rejectUnauthorized: false`. Nothing in the repo
+sets that override.
+
+**Types.** nodemailer still ships no bundled typings, and DefinitelyTyped has no `@types/nodemailer@9`
+— the newest major is 8. Moved 6.4.24 → 8.0.1 anyway: three majors behind a v9 library is worse than
+one, and it is the types package *for* the package being upgraded rather than unrelated scope.
+Confirmed the types are actually enforced rather than silently degrading to `any`, by checking that a
+deliberately wrong `port: 'not-a-number'` and `filename: 123` are both rejected (`TS2769`) — the same
+trap that makes `getMetaInfo`'s unresolvable import invisible.
+
+**Verified the deployed artifact, not just the source.** Nitro treats nodemailer as external and
+vendors it into `.output/server/node_modules/nodemailer` at **9.0.3**; importing *that* copy yields a
+working default export and constructs a `Mail` transporter. This is the check that catches a major
+whose ESM/CJS shape breaks only once bundled.
+
+**Not exercised:** an end-to-end send. `/api/email` runs the Gemini spam filter and then mails
+`podcast@programmier.bar`, so triggering it would send real mail to a real inbox. The TLS probe and
+the vendored-module check cover the upgrade surface without that.
+
+| gate | before | after |
+| --- | --- | --- |
+| `npm audit` | 1 high (nodemailer) | **0 vulnerabilities** |
+| `lint` | 0 errors, 29 warnings | 0 errors, 29 warnings |
+| `test` | 52/52 | 52/52 |
+| ratchet | 263 | 263 |
+| `build` | exit 0, 30.9 MB | exit 0, 30.9 MB |
+| smoke | 18/18 | 18/18 |
 
 ---
 
@@ -809,6 +880,15 @@ browser-support decision nobody made.
 
 ### 5. Small, verified, uncontroversial
 
+- [ ] ⚠️ **The local `.env` sets an email variable that nothing reads.** `nuxt-app/.env` provides
+      exactly one email var, `NUXT_EMAIL_PASSWORD`, and **no code reads it** — `runtimeConfig`
+      declares `emailSmtpPass`, which Nuxt populates from `NUXT_EMAIL_SMTP_PASS`. So locally
+      `emailSmtpPass` is empty and `sendEmail` throws "SMTP host, user, or password not configured"
+      before it ever reaches SMTP; the contact form cannot work on a dev machine. Found while
+      verifying the nodemailer 9 upgrade. **This says nothing about production** — the deployed
+      environment variables are not readable from the repo, and it may well set the correct names.
+      Worth checking that it does, and either renaming the local var or deleting it, because a
+      credential-shaped variable that is silently ignored is how a real outage gets misdiagnosed.
 - [ ] ⚠️ **Auth-path `console.log`s leak into the browser console.**
       `composables/useDirectus.ts:897` logs `await directus.refresh()` — i.e. the **token refresh
       response** — plus the full user object at `:900`, and `pages/login-callback.vue:46` logs the
@@ -925,3 +1005,5 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | Pinned `vite.build.cssMinify: 'esbuild'`. Vite 8's lightningcss default rewrote every media query to Level 4 range syntax (`(width>=1024px)`), which needs Safari 16.4+ and would drop the *entire* responsive layout at once on 16.0–16.3 — there is no browserslist to constrain it. Every gate passed either way; found only by diffing deployed CSS against production. lightningcss should be adopted deliberately with explicit targets in Phase 6, not inherited as a side effect. |
 | 2026-08-03 | The blank-render smoke assertion now uses `expect.poll`. The Phase 3 "CPU contention" diagnosis found the trigger but not the defect: `innerText()` was read once with no retry. Fixing it let the local worker cap be removed (6 workers pass, ~14s vs ~23s) and retires the `SMOKE_BASE_URL` special case from #227. |
 | 2026-08-03 | The pre-existing `/_ipx` prerender-crawl failure is left **unfixed** in Phase 4 and logged as a follow-up. It is identical on Nuxt 3, affects only full local builds, and fixing it would mean shipping an unrelated nitro config change inside a framework major. |
+| 2026-08-03 | Phase 5 starts with `nodemailer`, per its own priority note, and takes `@types/nodemailer` 6.4.24 → 8.0.1 with it. DefinitelyTyped has no `@types/nodemailer@9`, so a mismatch is unavoidable; one major behind beats three, and the types belong to the package being upgraded rather than being unrelated scope. Verified the types are enforced rather than degrading to `any`. |
+| 2026-08-03 | Recorded that GHSA-p6gq-j5cr-w38f was **not reachable** in this codebase — it needs the `raw` message option, which `sendEmail` never uses. The upgrade still stands, but the "high severity" label overstated real exposure, and the plan should not imply a reachable high sat open. |
