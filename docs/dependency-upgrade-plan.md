@@ -17,8 +17,10 @@ large majority sit in the blocked tree. That is a known, accepted exposure for t
 worth re-raising if the legal answer takes a long time.
 
 **The `@directus/sdk` client in `nuxt-app` is not affected.** It is MIT-licensed at both 21.3.0
-and 24.0.0 — a different package from the `directus` server. Phase 5 can proceed on licensing
-grounds; see that phase for the compatibility constraint that does apply.
+and 24.0.0 — a different package from the `directus` server, so licensing does not gate it. The
+constraint that *does* apply is a compatibility one: the block freezes the server at 11.17.4, so any
+SDK past 21.3.0 pairs a Directus 12-era client with an 11.x server. See Phase 5 for how that was
+verified, and for status.
 
 Work through the phases in order, **one PR per phase**. The whole point of the ordering is that
 each phase leaves the app in a shippable state and can be reverted on its own.
@@ -35,7 +37,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | TypeScript 5.9 → 6.0.3 (interstitial, own PR) | ✅ Done (2026-07-31) |
 | 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ✅ Done (2026-07-31) |
 | 4 | **Nuxt 3 → Nuxt 4** | ✅ Done (2026-08-03) |
-| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 4 of 7 done, 1 **blocked upstream**; **audit at zero** |
+| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 5 of 7 done, 1 **reverted upstream**; only `stripe` left; **audit at zero** |
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
@@ -682,16 +684,9 @@ order, or in parallel by different people.
       and `@nuxt/eslint`, `@typescript-eslint` 8.65 and `eslint-plugin-vue` 10.10 all peer
       `^9 || ^10`. Choosing 9 would now be the *less* aligned option. Details below.
 - [x] **Zod 3.25.76 → 4.4.3** and **dropped `h3-zod`** — ✅ done 2026-08-03. Details below.
-- [ ] **`@directus/sdk` 21.3.0 → 24.0.0.** Largest blast radius of this phase — 4 files, but one
-      of them is the 884-line `useDirectus.ts`. Check the v22/23/24 changelogs for query-builder
-      and type-inference changes. Requires Node `>=22` — satisfied.
-
-      **Constraint from the Directus licence block.** The SDK is MIT, so licensing does not stop
-      this. But the *server* is frozen at `directus@^11.17.4` until legal clarifies, so a three-
-      major SDK jump has to be verified against **that** server version rather than the latest.
-      Three majors of a REST/GraphQL client can drop support for older server APIs. Confirm SDK 24
-      still targets Directus 11 before starting; if it does not, hold at the highest SDK major
-      that does and note it here. This is the one phase whose scope depends on the legal outcome.
+- [x] **`@directus/sdk` 21.3.0 → 24.0.0** — ✅ done 2026-08-03. The feared blast radius did not
+      materialise: **no application code changed at all.** The licence-block constraint was checked
+      first and cleared empirically against the live 11.x server. Details below.
 - [x] **`nodemailer` 8.0.11 → 9.0.3** — ✅ done 2026-08-03. **`npm audit` now reports
       `found 0 vulnerabilities`**, closing the backlog that started at 49 distinct advisories.
       Details below.
@@ -701,7 +696,7 @@ order, or in parallel by different people.
       the Vercel function runtime, and it has no security upside to justify a workaround. **Stays at
       `~2.20.0`.** Full diagnosis below; re-attempt only when the upstream chain is fixed.
 
-### Progress: 4 of 7 done, 1 blocked
+### Progress: 5 of 7 done, 1 reverted
 
 | item | status |
 | --- | --- |
@@ -709,14 +704,13 @@ order, or in parallel by different people.
 | Pinia → 4.0.2 | ✅ done 2026-08-03 — needed a nitro workaround |
 | ESLint → **10** + flat config | ✅ done 2026-08-03 — see the version note below |
 | Zod → 4, drop `h3-zod` | ✅ done 2026-08-03 |
-| `@directus/sdk` → 24 | ⬜ blocked on verifying against Directus 11.x |
+| `@directus/sdk` → 24 | ✅ done 2026-08-03 — verified against the live 11.x server |
 | `stripe` → 22.4.0 | ⬜ **deliberately last** — see sequencing note |
 | `isomorphic-dompurify` → 3.x | 🚫 **attempted and reverted 2026-08-03** — breaks the Vercel runtime |
 
 **Sequencing: `stripe` goes last.** Requested 2026-08-03. Everything else in this phase is
 time-unconstrained, but Stripe touches the payment path and may want a second pair of eyes from a
-colleague, so it should not be the thing blocking the rest. Remaining order: `@directus/sdk`,
-`isomorphic-dompurify`, then `stripe`.
+colleague, so it should not be the thing blocking the rest. **`stripe` is now the only item left.**
 
 When the last of those lands, do the
 [comment audit](#comment-audit-across-the-upgrade-series--do-this-when-phase-5-completes) before
@@ -1075,6 +1069,129 @@ contention; the other was `/feed/news.xml` returning 500 because the **CMS retur
 Platform failed to forward this request". Corroborated independently: a plain health check against
 `admin.programmier.bar` returned `HTTP 000` in the same window. The feed route surfaces a CMS outage as
 a 500, which is exactly why smoke does not gate pull requests.
+
+### `@directus/sdk` 21.3.0 → 24.0.0
+
+**One line of `package.json`, four lines of lockfile, and no application code.** This was expected to
+be the largest item of the phase and turned out to be the smallest. Worth recording *why*, because the
+reasoning is what makes the three-major jump defensible rather than lucky.
+
+#### The SDK major tracks the monorepo, not a server API contract
+
+This is the fact the whole item rests on. Reading `sdk/package.json` at each server tag:
+
+| Directus server | `@directus/sdk` |
+| --- | --- |
+| 11.16.0 | 21.2.0 |
+| 11.17.0 | 21.2.1 |
+| **11.17.4** ← the server we run | **21.3.0** ← the version we were pinned to |
+| 12.0.0 | 22.0.0 |
+| 12.1.0 | 23.0.0 |
+| 12.2.0 | 24.0.0 |
+
+Directus releases every package in the monorepo on one version line, so the SDK gets a major bump
+whenever the *server* does, whether or not the SDK itself changed incompatibly. "Three majors ahead"
+therefore means "the client that ships with Directus 12.2", not "three rounds of client breakage".
+
+That also sharpens what the plan was right to worry about: **the server is frozen at `^11.17.4` by the
+licence block, and Directus 12 released 2026-06-10.** So this pairs a 12.2-era client with an 11.17.4
+server on purpose, and that pairing is what had to be verified.
+
+#### The four breaking changes, and our exposure to each
+
+| SDK | breaking change | our exposure |
+| --- | --- | --- |
+| 22 | `updateExtension` takes `id` instead of `bundle` + `name` | **none** — no extension commands used |
+| 22 | failed requests **throw a `RequestError`** instead of rejecting with a plain `{ errors, response }` object | **one site** — see below |
+| 23 | `/utils/hash/generate` and `/utils/hash/verify` commands removed | **none** — never used |
+| 24 | schema-diff gained a `mode` parameter; nested relational filters are now actually type-checked | **none** — no schema commands; the stricter filter types produced no new errors |
+
+The stricter filter typing was the one that could have moved the ratchet, since `useDirectus.ts` builds
+`QueryFilter`s. It did not: the ratchet stayed at 263.
+
+#### The `RequestError` change was the only real risk, and it was a quiet one
+
+`isTransientError()` in `services/directus.ts` reads `error.response.status` to decide whether to retry.
+It feeds the prerender retry loop, which runs under `prerender.failOnError` — so if that check started
+returning `false` for every API error, retries would stop silently and a single flaky Directus response
+would abort a whole deploy. Nothing in `lint`, `test`, `typecheck` or `build` looks at this; the cast to
+`{ response?: { status?: number } }` means even the typechecker would stay quiet.
+
+The source settles it — `RequestError` assigns `this.response` in its constructor, and `extract-data.js`
+and `is-directus-error.js` are byte-identical between the two versions — but the shape was confirmed by
+running the real client against a real server across all 13 relevant cases:
+
+- the 7 transient codes (408, 425, 429, 500, 502, 503, 504) → `RequestError` with `.response.status`
+  set, classified transient;
+- 5 permanent codes (400, 401, 403, 404, 422) → classified non-transient;
+- connection refused → still a raw `TypeError` (`fetch` rejects before the SDK wraps anything), so the
+  `instanceof TypeError` fallback branch still catches network failures.
+
+`isTransientError()` needed no change.
+
+#### Wire compatibility, checked twice
+
+**By source.** Of the SDK's 151 dist modules, 14 changed, 3 were added and 1 removed. Only three
+changed files are ones this app loads, and none alters the request:
+
+- `is-system-collection.js` — *added* four `directus_oauth_*` names to the system list. Every collection
+  here is custom, so no path changes.
+- `create/items.js` — refactored to shared `throwIfEmpty` / `throwIfCoreCollection` guards; emits the
+  same `POST /items/${collection}` with the same params and body.
+- `read/aggregate.js` — import order only.
+
+`read/items`, `update/items`, `delete/items`, `read/singleton`, `readMe`, `readProviders`, `createUser`,
+`uploadFiles`, `staticToken` and the auth composable are all **byte-identical**.
+
+**Against the live server.** Source review does not prove the server accepts the traffic, and the local
+build cannot help — CI builds with `SKIP_PRERENDER_ROUTE_DISCOVERY=true`, so it never contacts the CMS.
+Both clients were therefore pointed at `admin.programmier.bar` and their responses diffed. Eight cases,
+copied from the real call sites and covering every command shape the app uses — deep relational field
+selection, a nested relational filter, two singleton reads, a plain item read, a bare aggregate, a
+grouped aggregate, and `readProviders()` — came back **byte-identical, 8 of 8**.
+
+That the target really is an 11.x server was confirmed independently rather than assumed: `/server/info`
+does not expose `version` unauthenticated, but `/server/health` returns **200**, and Directus 12.0
+changed that endpoint to return 404 for unauthenticated requests.
+
+#### Verification
+
+| gate | before | after |
+| --- | --- | --- |
+| `lint` | 0 errors, 134 warnings | 0 errors, 134 warnings |
+| `test` | 52/52 | 52/52 |
+| ratchet | 263 | 263 |
+| `build` | exit 0 | exit 0 |
+| smoke (Vercel preview) | 18/18 | 18/18, then 17 + 1 flaky — see below |
+| `npm audit` | 0 | 0 |
+
+`npm install` reported `changed 1 package` — the SDK has no dependencies of its own, so the tree moved
+by exactly one entry and the lockfile diff is 4 lines.
+
+Smoke matters more than usual here: its 18 routes are server-rendered from live Directus content, so a
+green run is 18 real SDK-24-against-11.17.4 reads executing inside the Vercel runtime — the same
+environment that exposed the Pinia 4 and `isomorphic-dompurify` failures every local gate had passed.
+
+It ran twice. The first deployment was a clean **18/18 in 21.0s**. The second — a docs-only commit, so
+byte-identical application code — reported **17 passed, 1 flaky**: `/verhaltensregeln` failed
+`page.goto` with `net::ERR_TIMED_OUT` and passed on retry. Not the SDK, and the distinction is visible
+in the failure mode: a broken client surfaces as a 500 or an empty `<main>`, not a navigation timeout
+that never reaches the server. Checked directly afterwards, that page returned **200 with 5641
+characters** of real `coc_page` content in 0.17–0.38s on three consecutive requests. The whole run also
+took 41.3s against the first run's 21.0s, which points at a cold deployment.
+Two further checks against the preview covered paths smoke does not reach: `GET /feed/news.xml` returned
+**200** with 9 KB of real content (an SDK read outside the page renderer), and `POST /api/vote` with `{}`
+returned **400** with the expected validation message.
+
+The write and authenticated commands could not be exercised without creating real records, so they rest
+on module identity instead: `read/items`, `update/items`, `delete/items`, `create/files` (`uploadFiles`),
+`read/users` (`readMe`), `auth/providers` (`readProviders`), `auth/static` (`staticToken`) and the auth
+composable are all byte-identical between 21.3.0 and 24.0.0. `create/items` is the only one that changed,
+and its emitted request was read directly and is unchanged.
+
+**One stale note corrected:** this item was described above as touching "the 884-line `useDirectus.ts`".
+That file is now 1082 lines. The count was right when written and is not load-bearing either way —
+the file needed no edits.
 
 ### 🚫 `isomorphic-dompurify` 2.20.0 → 3.21.0 — attempted and reverted
 
@@ -1654,3 +1771,6 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | **Retracted** this document's claim that "does the server need jsdom" had become the blocking question. It had not: `isomorphic-dompurify@2.20.0` declares `dompurify: ^3.2.3`, so sanitiser patches still arrive, and `jsdom: ^26.0.0`, so the tree cannot drift into the ESM break. The pin costs ~4 MB and v3's `clearWindow()`, not security. |
 | 2026-08-03 | Keep jsdom for anything still using DOMPurify. Its mXSS handling depends on parsing in a real DOM — verified when `<math><mtext><script>` reduced to `<math><mtext></mtext></math>` — so swapping to a parser-based sanitiser would trade security properties for install size. If weight ever matters, try `linkedom` + DOMPurify and re-run the 64-case harness. |
 | 2026-08-03 | The `v-html` audit supersedes the jsdom question. 2 of 11 bindings sanitise; several regex-strip tags and the strip is bypassable by nested-tag reconstruction (`<img<a> src=x onerror=…>` reassembles). Since those components strip *all* markup, `{{ }}` is both safer and simpler and removes the sink — a smaller fix than the dependency debate it was hiding behind. |
+| 2026-08-03 | `@directus/sdk` taken to **24.0.0** despite the server being frozen at 11.17.4, because the SDK major tracks the Directus monorepo rather than a server API contract: 21.3.0 is simply the SDK that shipped *with* 11.17.4, and 22/23/24 shipped with 12.0/12.1/12.2. Of the four breaking changes, three touch commands this app never calls. Holding at 21 would have deferred nothing real. |
+| 2026-08-03 | Verified the 12.2-era client against the **live 11.x server** rather than reasoning from the changelog alone. Eight queries copied from the real call sites returned byte-identical responses on both SDKs. Necessary because CI builds with `SKIP_PRERENDER_ROUTE_DISCOVERY=true` and so never contact the CMS — no gate in this repo would have caught a wire-level break. That the server is still 11.x was itself confirmed from `/server/health` returning 200, which Directus 12.0 changed to 404 unauthenticated. |
+| 2026-08-03 | SDK 22's `RequestError` refactor was treated as the one real risk and checked at runtime, not by reading. `isTransientError()` casts to `{ response?: { status?: number } }`, so a shape change would compile, pass every gate, and silently stop prerender retries under `prerender.failOnError` — one flaky CMS response would then abort a deploy. `RequestError` preserves `.response`; confirmed across 7 transient codes, 5 permanent codes and a connection refusal. |

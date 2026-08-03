@@ -22,7 +22,7 @@
         "test:smoke:install": "playwright install --with-deps chromium"
     },
     "dependencies": {
-        "@directus/sdk": "^21.3.0",
+        "@directus/sdk": "^24.0.0",
         "@google/generative-ai": "^0.24.1",
         "@nuxtjs/tailwindcss": "^6.11.4",
         "@pinia/nuxt": "^1.0.1",
