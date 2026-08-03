@@ -1368,10 +1368,16 @@ Unit tests cover the bypass payloads, so the regex cannot come back unnoticed: `
 mXSS vector.
 
 Rendered output needed a browser, because `SpeakerList`, `PickOfTheDayList` and `SearchResultCard` are
-client-rendered — SSR HTML shows nothing for them. Five pages checked, **30 descriptions rendered, zero
-HTML entities in the rendered text, zero child elements inside any description, zero hydration
-warnings.** That last one matters: `getPlainText` runs under jsdom on the server and the real DOM on
-the client, so a parsing difference would surface as a hydration mismatch.
+client-rendered — SSR HTML shows nothing for them. Five pages checked locally, **30 descriptions
+rendered, zero HTML entities in the rendered text, zero child elements inside any description, zero
+hydration warnings.** That last one matters: `getPlainText` runs under jsdom on the server and the real
+DOM on the client, so a parsing difference would surface as a hydration mismatch.
+
+Repeated against the **Vercel preview**, because the local run used `node .output/server` rather than
+the runtime where `isomorphic-dompurify` broke in Phase 5. Same result on three of four pages. The
+podcast detail page logged one `Hydration completed but contains mismatches.` — **not this change**:
+production, which does not have it, logs the identical warning on the same page. Logged as its own
+follow-up under "Build and tooling correctness", with the detail that makes it findable.
 
 Two of my own checks failed before the code did, and both were the check's fault:
 
@@ -1476,6 +1482,22 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
 
 ### 3. Build and tooling correctness
 
+- [ ] **Pre-existing hydration mismatch on podcast detail pages, on deployed environments only.**
+      Found while verifying the `v-html` audit, and **confirmed not caused by it**: production, which
+      does not have that change, logs the identical warning on the same page.
+
+      ```
+      https://www.programmier.bar/podcast/deep-dive-24-typescript-mit-stefan-baumgartner
+      → console: "Hydration completed but contains mismatches."
+      ```
+
+      The signal worth keeping is the pattern, because it says where to look: a **local** `node
+      .output/server` build of the same commit logs **zero** warnings, while both the Vercel preview
+      and production log one. So it correlates with the deployment environment, not with the code —
+      most likely time- or cache-dependent rendering, where ISR serves HTML generated at one moment
+      and the client re-renders at another. `useNow.ts` and the `toLocaleDateString` calls on that
+      page are the first places to check. Reproduce in dev mode to get Vue to name the element;
+      production builds only emit the terse message.
 - [ ] ⚠️ **Remove `nitro.externals.inline: ['pinia']`.** Waiting on an upstream Pinia fix — see
       [Waiting on upstream: the Pinia 4 export map](#waiting-on-upstream-the-pinia-4-export-map)
       below for exactly what to watch for and how to check.
