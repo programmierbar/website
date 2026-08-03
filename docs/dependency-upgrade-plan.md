@@ -1298,15 +1298,59 @@ browser-support decision nobody made.
 
 ### 5. Small, verified, uncontroversial
 
-- [ ] ⚠️ **Ask whether the server needs `jsdom` at all — this is now the blocking question, not a
-      nicety.** `isomorphic-dompurify` exists only to give DOMPurify a DOM during SSR, and jsdom is
-      what makes its 3.x line unshippable: jsdom 30 drags in an ESM-only package that a CommonJS
-      dependency `require()`s, which the Vercel runtime cannot load. So `isomorphic-dompurify` is now
-      pinned at `~2.20.0` indefinitely, and that pin will not age well. Only two components sanitise —
-      `InnerHtml.vue` and `NewsTicker.vue`, both on CMS-authored HTML. Weigh sanitising once at ingest
-      in Directus instead of on every render, or a sanitiser that needs no DOM: either removes ~4 MB
-      from the install, ~10 MB from the build output at 3.x, and the whole blocked-upgrade problem.
-      A design question, not an upgrade — which is why it was not folded into Phase 5.
+- [ ] ⚠️⚠️ **Audit the `v-html` sites. Two of eleven sanitise; several strip tags with a regex and
+      the strip is bypassable.** This supersedes the "do we need jsdom" question below, and it is the
+      genuinely important one.
+
+      Eleven `v-html` bindings exist. `InnerHtml.vue` and `NewsTicker.vue` use DOMPurify. `PodcastPlayer.vue`
+      inlines a build-time SVG twice, which is fine. The remaining **seven** render CMS- or
+      Algolia-sourced values, and the ones that defend themselves do it like this:
+
+      ```js
+      props.pickOfTheDay.description.replace(/<[^<>]+>/g, '')   // PickOfTheDayListItem.vue:52
+      props.item.description?.replace(/<[^<>]+>/g, '')          // SearchResultCard.vue:89,103,110
+      ```
+
+      That pattern cannot match a tag containing `<` or `>`, so a nested tag reassembles into a live
+      one. Verified:
+
+      | input | after strip, into `v-html` | |
+      | --- | --- | --- |
+      | `<img<a> src=x onerror=alert(1)>` | `<img src=x onerror=alert(1)>` | **executes** |
+      | `<svg<a> onload=alert(1)>` | `<svg onload=alert(1)>` | **executes** |
+      | `<script>alert(1)</script>` | `alert(1)` | inert — `innerHTML` never runs injected `<script>` |
+      | `<p>Ein <strong>Text</strong> mit <a href="/x">Link</a></p>` | `Ein Text mit Link` | all markup destroyed |
+
+      **Reachability:** the input is CMS-authored, so this needs Directus write access (or a tampered
+      Algolia index) — defence in depth, not an open door. Not a reason to leave it.
+
+      **The fix is smaller than the problem.** That last row is the tell: these components strip *every*
+      tag, so they render plain text through an HTML sink. `{{ }}` interpolation is both safer and
+      simpler, needs no sanitiser, and removes the sink outright. Only components that genuinely render
+      rich HTML need DOMPurify — currently two.
+- [ ] **Does the server need `jsdom`? Probably yes, and it is not urgent** — correcting an earlier
+      overstatement in this document, which called this "the blocking question". It is not blocking:
+
+      | concern | reality while pinned at `~2.20.0` |
+      | --- | --- |
+      | dompurify patches | **still arrive** — 2.20.0 declares `dompurify: ^3.2.3`, so 3.x patches float in |
+      | drifting into the ESM break | **cannot** — it declares `jsdom: ^26.0.0`, so jsdom stays on 26.x |
+      | open advisories | none against `dompurify` 3.4.x |
+
+      So the pin costs a theoretical memory leak (v3's `clearWindow()`) and ~4 MB, not security.
+
+      On the substance: **keep jsdom for whatever still needs DOMPurify.** DOMPurify parses in a real DOM
+      and walks it, which is how it catches mutation XSS — verified here when
+      `<math><mtext><script>alert(1)</script></mtext></math>` reduced to `<math><mtext></mtext></math>`.
+      Swapping to a parser-based sanitiser like `sanitize-html` is a change in security properties, not
+      a size optimisation. If the weight ever matters, the better move is a lighter DOM — `linkedom`
+      with DOMPurify directly — which keeps the guarantees and is verifiable with the same 64-case
+      harness used for the 3.x attempt.
+
+      **Retracting the "sanitise at ingest in Directus" suggestion made earlier in this document.** It is
+      the weakest option, not the neatest: `directus-cms/` is out of scope under the licence block, it is
+      destructive with no way back to the original, and it is bypassed by any direct API or database
+      write.
 - [ ] **`clearWindow()` is unavailable while 3.x is blocked.** v3 added it specifically to fix
       unbounded memory growth in long-running Node processes, where the internal jsdom window
       accumulates DOM state. Our SSR runs on Vercel functions reused while warm, so the pattern
@@ -1607,3 +1651,6 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | `isomorphic-dompurify` 3.x **reverted, staying at `~2.20.0`**. jsdom 30 pulls `html-encoding-sniffer@6`, which `require()`s the ESM-only `@exodus/bytes`; Vercel's function loader cannot do `require(esm)`, so the ISR catch-all 500s. Every local gate passed because Node ≥22.12 supports `require(esm)` natively — caught only by smoke against the Vercel preview. No security upside (dompurify already 3.4.12) and +6.4 MB of cost, so a workaround was not justified. |
 | 2026-08-03 | Reverting a dependency needs `package.json` **and** `package-lock.json` restored from `main`. `npm install <old-version>` downgraded the direct dependency but left jsdom 30 hoisted with 26 nested beneath, keeping 34 stale packages — including the ESM-only one — which `npm ci` then faithfully reproduced. |
 | 2026-08-03 | Ruled out the Node version as the cause of the `isomorphic-dompurify` failure. The project setting reads `20.x`, which looks decisive and is not — `engines.node` overrides it and the failing build log states that **Node 24.x** was used. Recorded in the plan because it is the obvious first hypothesis; it also revealed that the project setting is stale and a latent trap if `engines.node` is ever simplified. |
+| 2026-08-03 | **Retracted** this document's claim that "does the server need jsdom" had become the blocking question. It had not: `isomorphic-dompurify@2.20.0` declares `dompurify: ^3.2.3`, so sanitiser patches still arrive, and `jsdom: ^26.0.0`, so the tree cannot drift into the ESM break. The pin costs ~4 MB and v3's `clearWindow()`, not security. |
+| 2026-08-03 | Keep jsdom for anything still using DOMPurify. Its mXSS handling depends on parsing in a real DOM — verified when `<math><mtext><script>` reduced to `<math><mtext></mtext></math>` — so swapping to a parser-based sanitiser would trade security properties for install size. If weight ever matters, try `linkedom` + DOMPurify and re-run the 64-case harness. |
+| 2026-08-03 | The `v-html` audit supersedes the jsdom question. 2 of 11 bindings sanitise; several regex-strip tags and the strip is bypassable by nested-tag reconstruction (`<img<a> src=x onerror=…>` reassembles). Since those components strip *all* markup, `{{ }}` is both safer and simpler and removes the sink — a smaller fix than the dependency debate it was hiding behind. |
