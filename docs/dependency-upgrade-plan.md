@@ -1162,10 +1162,24 @@ changed that endpoint to return 404 for unauthenticated requests.
 | `test` | 52/52 | 52/52 |
 | ratchet | 263 | 263 |
 | `build` | exit 0 | exit 0 |
+| smoke (Vercel preview) | 18/18 | 18/18 |
 | `npm audit` | 0 | 0 |
 
 `npm install` reported `changed 1 package` — the SDK has no dependencies of its own, so the tree moved
 by exactly one entry and the lockfile diff is 4 lines.
+
+Smoke matters more than usual here: its 18 routes are server-rendered from live Directus content, so a
+green run is 18 real SDK-24-against-11.17.4 reads executing inside the Vercel runtime — the same
+environment that exposed the Pinia 4 and `isomorphic-dompurify` failures every local gate had passed.
+Two further checks against the preview covered paths smoke does not reach: `GET /feed/news.xml` returned
+**200** with 9 KB of real content (an SDK read outside the page renderer), and `POST /api/vote` with `{}`
+returned **400** with the expected validation message.
+
+The write and authenticated commands could not be exercised without creating real records, so they rest
+on module identity instead: `read/items`, `update/items`, `delete/items`, `create/files` (`uploadFiles`),
+`read/users` (`readMe`), `auth/providers` (`readProviders`), `auth/static` (`staticToken`) and the auth
+composable are all byte-identical between 21.3.0 and 24.0.0. `create/items` is the only one that changed,
+and its emitted request was read directly and is unchanged.
 
 **One stale note corrected:** this item was described above as touching "the 884-line `useDirectus.ts`".
 That file is now 1082 lines. The count was right when written and is not load-bearing either way —
