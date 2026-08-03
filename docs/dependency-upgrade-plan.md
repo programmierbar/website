@@ -17,10 +17,10 @@ large majority sit in the blocked tree. That is a known, accepted exposure for t
 worth re-raising if the legal answer takes a long time.
 
 **The `@directus/sdk` client in `nuxt-app` is not affected.** It is MIT-licensed at both 21.3.0
-and 24.0.0 — a different package from the `directus` server. Phase 5 proceeded on that basis and
-**shipped SDK 24 on 2026-08-03**; the compatibility constraint that did apply — a 12.2-era client
-against the 11.17.4 server the block freezes — was verified against the live server rather than
-assumed. See that phase.
+and 24.0.0 — a different package from the `directus` server, so licensing does not gate it. The
+constraint that *does* apply is a compatibility one: the block freezes the server at 11.17.4, so any
+SDK past 21.3.0 pairs a Directus 12-era client with an 11.x server. See Phase 5 for how that was
+verified, and for status.
 
 Work through the phases in order, **one PR per phase**. The whole point of the ordering is that
 each phase leaves the app in a shippable state and can be reverted on its own.
