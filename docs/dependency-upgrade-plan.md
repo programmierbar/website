@@ -712,9 +712,9 @@ order, or in parallel by different people.
 time-unconstrained, but Stripe touches the payment path and may want a second pair of eyes from a
 colleague, so it should not be the thing blocking the rest. **`stripe` is now the only item left.**
 
-When the last of those lands, do the
-[comment audit](#comment-audit-across-the-upgrade-series--do-this-when-phase-5-completes) before
-starting Phase 6.
+The [comment audit](#-comment-audit-across-the-upgrade-series--done-2026-08-03) was originally
+scheduled for after this phase, but ran early while `stripe` waits on a colleague — it was independent
+of the remaining item, so waiting would only have meant idling.
 
 ### `nodemailer` 8.0.11 → 9.0.3
 
@@ -1538,12 +1538,55 @@ browser-support decision nobody made.
   to do now; worth remembering when Nuxt 5 appears, since Nuxt 3's EOL is the precedent for how
   quickly that becomes urgent.
 
-### Comment audit across the upgrade series — do this when Phase 5 completes
+### ✅ Comment audit across the upgrade series — done 2026-08-03
 
-**Scheduled deliberately: after Phase 5, before Phase 6.** Agreed with the maintainer 2026-08-03,
-prompted by a review comment on #233 that flagged a code comment as pull-request rationale. It was
-right, and the same habit runs through the whole series, so this is a series-wide pass rather than a
-one-file fix.
+**Done ahead of schedule.** It was planned for after Phase 5, but `stripe` — the last Phase 5 item —
+is waiting on a colleague who knows the payment path, and this audit is independent of it, so it ran
+during that wait rather than idling. Agreed with the maintainer 2026-08-03, prompted by a review
+comment on #233 that flagged a code comment as pull-request rationale. It was right, and the same
+habit runs through the whole series, so this was a series-wide pass rather than a one-file fix.
+
+**Result: the 250 comment lines this series added across 9 files are now 129.** Everything cut is
+still in this document — that was checked item by item, not assumed.
+
+| file | added by the series | after the audit |
+| --- | --- | --- |
+| `nuxt.config.ts` | 70 | **18** |
+| `eslint.config.mjs` | 50 | **21** |
+| `playwright.config.ts` | 44 | **27** |
+| `scripts/typecheck-ratchet.mjs` | 38 | **28** |
+| `tests-smoke/routes.smoke.ts` | 31 | **26** |
+| `tailwind.config.js` | 11 | **3** |
+| `vitest.config.ts`, `login-callback.vue`, `useFlashMessage.ts` | 6 | **6** — kept as-is |
+
+The three smallest were left untouched on purpose. Each explains a non-obvious *type* choice that a
+tidy-minded reader would otherwise simplify back (`Record<string, unknown>` rather than `{}`; a ref
+typed off `getCurrentUser` rather than `ref(null)`), which is the keep case, not the cut case.
+
+**The load-bearing config blocks kept a reason and a removal condition, and lost the forensics:**
+
+| block | was | now |
+| --- | --- | --- |
+| `nitro.externals.inline: ['pinia']` | 42 | 8 — what breaks, why no gate sees it, the `npm view pinia exports` check, pointer here |
+| `vite.build.cssMinify: 'esbuild'` | 10 | 3 — opens with "Do not remove without setting `css.lightningcss.targets`" |
+| `tailwind.config.js` `container.screens` | 11 | 3 — reframed as a rule about future entries, not a story about past ones |
+| `image` alias absence | 11 | 2 — kept only the two facts someone adding an alias would need |
+
+The `image` one is the clearest case of the whole audit. Eleven lines of forensics about a config
+entry that **is not there** is exactly the artefact the maintainer objected to: a reader opening
+`nuxt.config.ts` to understand image handling met three numbered reasons about something absent. What
+survives is the actionable part — ipx sets `supportsAlias: true`, so alias resolution never runs, and
+keys must start with `/`.
+
+**One non-comment change**, called out because it does not belong to a comment audit on its face:
+`workers: undefined` was deleted from `playwright.config.ts`. Passing `undefined` is identical to
+omitting the key, so the line existed only to host the 8-line justification for removing an earlier
+cap. Verified rather than assumed — Playwright reports `Running 18 tests using 6 workers` both with
+and without it. The standing constraint it protected (do not re-add a cap; the blank-`<main>` failures
+it appeared to fix were a non-retrying assertion) is kept as two lines.
+
+Apart from that one line, **every changed line in the audit diff is a comment line** — checked
+mechanically across the whole diff, not by eye.
 
 **The test a comment has to pass:** *would someone who has never heard of the pull request still need
 this sentence?*
@@ -1773,4 +1816,8 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | The `v-html` audit supersedes the jsdom question. 2 of 11 bindings sanitise; several regex-strip tags and the strip is bypassable by nested-tag reconstruction (`<img<a> src=x onerror=…>` reassembles). Since those components strip *all* markup, `{{ }}` is both safer and simpler and removes the sink — a smaller fix than the dependency debate it was hiding behind. |
 | 2026-08-03 | `@directus/sdk` taken to **24.0.0** despite the server being frozen at 11.17.4, because the SDK major tracks the Directus monorepo rather than a server API contract: 21.3.0 is simply the SDK that shipped *with* 11.17.4, and 22/23/24 shipped with 12.0/12.1/12.2. Of the four breaking changes, three touch commands this app never calls. Holding at 21 would have deferred nothing real. |
 | 2026-08-03 | Verified the 12.2-era client against the **live 11.x server** rather than reasoning from the changelog alone. Eight queries copied from the real call sites returned byte-identical responses on both SDKs. Necessary because CI builds with `SKIP_PRERENDER_ROUTE_DISCOVERY=true` and so never contact the CMS — no gate in this repo would have caught a wire-level break. That the server is still 11.x was itself confirmed from `/server/health` returning 200, which Directus 12.0 changed to 404 unauthenticated. |
+| 2026-08-03 | The comment audit ran **before** the last Phase 5 item rather than after the phase, because `stripe` is blocked on a colleague's review of the payment path and the audit is independent of it. Sequencing the plan around a human dependency beat holding to the original order. |
+| 2026-08-03 | The audit cut the series' 250 added comment lines to 129, and every cut line was confirmed present in this document first — the point was to move the narrative, not delete it. Load-bearing config kept a one-line reason plus a removal condition; the mechanism, the measurements and the "my first attempt was wrong" notes moved here. |
+| 2026-08-03 | Deleted `workers: undefined` from `playwright.config.ts` during the audit, the one non-comment change in it. Passing `undefined` is identical to omitting the key, so the line existed only to host an 8-line justification for removing an earlier cap. Verified rather than assumed: Playwright reports 6 workers either way. The standing constraint — do not re-add a cap, since the failures it appeared to fix were a non-retrying assertion — is kept in two lines. |
+| 2026-08-03 | The 11-line block documenting the *absence* of an `image.alias` entry was cut to 2. Forensics about config that is not there is the clearest form of the artefact this audit set out to remove: a reader opening `nuxt.config.ts` to understand image handling met three numbered reasons about something absent. Kept only what someone adding an alias would need. |
 | 2026-08-03 | SDK 22's `RequestError` refactor was treated as the one real risk and checked at runtime, not by reading. `isTransientError()` casts to `{ response?: { status?: number } }`, so a shape change would compile, pass every gate, and silently stop prerender retries under `prerender.failOnError` — one flaky CMS response would then abort a deploy. `RequestError` preserves `.response`; confirmed across 7 transient codes, 5 permanent codes and a connection refusal. |

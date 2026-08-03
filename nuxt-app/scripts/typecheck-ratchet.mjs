@@ -3,15 +3,10 @@
  * Typecheck ratchet.
  *
  * The app has a backlog of pre-existing `vue-tsc` errors, so a blocking typecheck gate is not
- * achievable today. A purely informational check would be ignored. So instead we ratchet:
- * the build fails only when the error count *increases* above the committed baseline in
- * `.typecheck-baseline`.
+ * achievable today and a purely informational one would be ignored. Instead the build fails only
+ * when the error count *increases* above the committed baseline in `.typecheck-baseline`.
  *
  * Existing debt is tolerated. New debt is not.
- *
- * This matters most during the dependency upgrade phases (see docs/dependency-upgrade-plan.md):
- * a framework major is exactly the kind of change that quietly introduces type errors, and this
- * turns that into a number instead of a surprise.
  *
  * When errors are fixed, lower the baseline in the same PR — the script prints the new value.
  */
@@ -32,11 +27,9 @@ function fail(message) {
 /**
  * Run a command and return its combined output.
  *
- * `toleratesDiagnosticExit` marks the vue-tsc call, which legitimately exits non-zero when it
- * finds type errors. Every other kind of failure — a missing binary, a process killed by a
- * signal, a failing `nuxt prepare` — is operational and must be fatal. Swallowing those would
- * yield an empty output, which parses as zero type errors, which reads as "improved" and exits
- * the ratchet green while the checker is in fact broken.
+ * `toleratesDiagnosticExit` marks the vue-tsc call, which legitimately exits non-zero when it finds
+ * type errors. Every other failure must stay fatal: swallowing one yields empty output, which parses
+ * as zero errors and reports the ratchet green while the checker is in fact broken.
  */
 function run(command, args, { toleratesDiagnosticExit = false } = {}) {
     const label = `${command} ${args.join(' ')}`
@@ -64,12 +57,10 @@ const { output, status } = run('npx', ['vue-tsc', '--noEmit', '-p', '.nuxt/tscon
 })
 const lines = output.split('\n')
 
-// A genuine source diagnostic is anchored to a file and position:
-//     components/Foo.vue(17,10): error TS2440: ...
-// A configuration or CLI failure is emitted bare, with no file prefix:
-//     error TS5058: The specified path does not exist: '.nuxt/tsconfig.json'.
-// Both match a naive /error TS\d+:/, which is how a broken invocation can masquerade as a
-// dramatically improved error count.
+// Two patterns, because both match a naive /error TS\d+:/ and conflating them lets a broken
+// invocation masquerade as a dramatically improved error count. A source diagnostic is anchored to a
+// file and position (`components/Foo.vue(17,10): error TS2440:`); a config or CLI failure is emitted
+// bare (`error TS5058: The specified path does not exist`).
 const errors = lines.filter((line) => /^.+\(\d+,\d+\): error TS\d+:/.test(line))
 const configErrors = lines.filter((line) => /^error TS\d+:/.test(line))
 const count = errors.length
@@ -78,9 +69,8 @@ if (configErrors.length > 0) {
     fail(`vue-tsc reported a configuration error rather than type diagnostics:\n${configErrors.join('\n')}`)
 }
 
-// vue-tsc exits non-zero *because* it found type errors. A non-zero exit with nothing parseable
-// means it crashed instead — counting that as zero errors is exactly how a dead gate reports
-// success.
+// A non-zero exit with nothing parseable means vue-tsc crashed rather than found errors. Counting
+// that as zero is how a dead gate reports success.
 if (status !== 0 && count === 0) {
     fail(`vue-tsc exited ${status} but reported no diagnostics — treating this as a broken typecheck:\n${output}`)
 }
