@@ -125,8 +125,6 @@ export const CompanyBillingSchema = z.object({
 export const CreateCheckoutSchema = z
     .object({
         conferenceId: z.string().uuid('Ungültige Konferenz-ID.'),
-        // `error`, not `errorMap` — Zod 4 replaced the latter. Verified to produce the identical
-        // message, and `message:` is itself deprecated in Zod 4, so this is the current form.
         purchaseType: z.enum(['personal', 'company'], {
             error: 'Bitte wähle zwischen Privat oder Firma.',
         }),
