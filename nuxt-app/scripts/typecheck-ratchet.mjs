@@ -4,9 +4,8 @@
  *
  * The app has a backlog of pre-existing `vue-tsc` errors, so a blocking typecheck gate is not
  * achievable today and a purely informational one would be ignored. Instead the build fails only
- * when the error count *increases* above the committed baseline in `.typecheck-baseline`.
- *
- * Existing debt is tolerated. New debt is not.
+ * when the error count *increases* above the committed baseline in `.typecheck-baseline`: existing
+ * debt is tolerated, new debt is not.
  *
  * When errors are fixed, lower the baseline in the same PR — the script prints the new value.
  */

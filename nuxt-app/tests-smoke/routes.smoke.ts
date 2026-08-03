@@ -3,9 +3,8 @@ import { expect, test, type Page } from '@playwright/test'
 /**
  * Route smoke tests — the check the Vitest suite cannot make: does the page actually render?
  *
- * Assertions are structural rather than content-specific on purpose. These pages are driven by live
- * Directus content, so asserting on copy would break whenever an editor changes a headline. What
- * they catch is a route that 500s, renders the error page, or comes back blank.
+ * Keep assertions structural, never content-specific: these pages are driven by live Directus
+ * content, so asserting on copy breaks whenever an editor changes a headline.
  */
 
 /**
@@ -19,10 +18,9 @@ async function expectPageRendered(page: Page, label: string) {
     const main = page.locator('main')
     await expect(main).toBeVisible()
 
-    // Must poll rather than assert on a single awaited `innerText()`: `<main>` becomes visible before
-    // the page component has necessarily painted, so reading once is a race with no retry. Polling
-    // keeps the visible-text semantics — hidden content still counts as blank, which is the failure
-    // this check exists to catch.
+    // Must poll, not assert on a single awaited `innerText()`: `<main>` becomes visible before the
+    // page has necessarily painted, so reading once is a race with no retry. `innerText` over
+    // `textContent` on purpose — hidden content should still count as blank.
     await expect
         .poll(async () => (await main.innerText()).trim().length, {
             message: `${label} rendered an empty <main>`,

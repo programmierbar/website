@@ -1,7 +1,6 @@
 <template>
-    <!-- data-testid is a stable hook for the route smoke tests (nuxt-app/tests-smoke). The player
-         is always mounted from app.vue but stays invisible until a podcast is selected, so there
-         is no other markup a smoke test can reliably anchor to. -->
+    <!-- Keep data-testid: the route smoke tests anchor on it, and this element stays invisible
+         until a podcast is selected, so there is no other reliable hook. -->
     <div
         data-testid="podcast-player"
         class="transition-all"

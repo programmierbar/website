@@ -1546,18 +1546,43 @@ during that wait rather than idling. Agreed with the maintainer 2026-08-03, prom
 comment on #233 that flagged a code comment as pull-request rationale. It was right, and the same
 habit runs through the whole series, so this was a series-wide pass rather than a one-file fix.
 
-**Result: the 250 comment lines this series added across 9 files are now 129.** Everything cut is
-still in this document — that was checked item by item, not assumed.
+**Result: the 271 comment lines this series added are now 138.** Everything cut is still in this
+document — that was checked item by item, not assumed.
+
+**The first pass got the scope wrong, and the maintainer caught it.** It filtered to `nuxt-app/**`
+and matched only line-leading `//`, `*` and `/*`, which meant:
+
+- **the two workflow files were never audited at all** (17 lines), along with one line each in
+  `.gitignore` and `PodcastPlayer.vue`;
+- YAML `#`, Vue `<!-- -->` and every inline trailing comment were invisible to the measurement;
+- so the "250 lines" baseline was itself understated. The real figure was **271**.
+
+The re-scan added a check for inline trailing comments specifically, and found **zero** — that hole
+was theoretical. The workflow one was not.
 
 | file | added by the series | after the audit |
 | --- | --- | --- |
-| `nuxt.config.ts` | 70 | **18** |
+| `nuxt.config.ts` | 72 | **20** |
 | `eslint.config.mjs` | 50 | **21** |
 | `playwright.config.ts` | 44 | **27** |
-| `scripts/typecheck-ratchet.mjs` | 38 | **28** |
-| `tests-smoke/routes.smoke.ts` | 31 | **26** |
+| `scripts/typecheck-ratchet.mjs` | 38 | **27** |
+| `tests-smoke/routes.smoke.ts` | 31 | **24** |
 | `tailwind.config.js` | 11 | **3** |
-| `vitest.config.ts`, `login-callback.vue`, `useFlashMessage.ts` | 6 | **6** — kept as-is |
+| `.github/workflows/smoke_tests.yml` | 9 | **5** — missed by the first pass |
+| `.github/workflows/run_tests.yml` | 8 | **3** — missed by the first pass |
+| `PodcastPlayer.vue` | 1 | **1** — missed by the first pass |
+| `vitest.config.ts`, `login-callback.vue`, `useFlashMessage.ts`, `.gitignore` | 7 | **7** — kept as-is |
+
+**Two dead config entries came out of the re-scan**, both left behind by this series' own work:
+
+- The Renovate rule disabling `@nuxt/image-edge` updates. Phase 3 removed that package, so the rule
+  matched nothing — and its own description said "Phase 3 of the upgrade plan removes the package —
+  delete this rule then". Deleted. A comment that instructs its own removal and is then not removed is
+  the failure mode this audit exists to catch.
+- The lint group still matched `@nuxt/eslint-config`, dropped in Phase 5. Replaced with `@nuxt/eslint`,
+  which otherwise falls into the `@nuxt/**` framework group rather than being grouped with lint tooling.
+
+Both are config rather than comment changes, and both are recorded here rather than folded in quietly.
 
 The three smallest were left untouched on purpose. Each explains a non-obvious *type* choice that a
 tidy-minded reader would otherwise simplify back (`Record<string, unknown>` rather than `{}`; a ref
@@ -1817,7 +1842,9 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | `@directus/sdk` taken to **24.0.0** despite the server being frozen at 11.17.4, because the SDK major tracks the Directus monorepo rather than a server API contract: 21.3.0 is simply the SDK that shipped *with* 11.17.4, and 22/23/24 shipped with 12.0/12.1/12.2. Of the four breaking changes, three touch commands this app never calls. Holding at 21 would have deferred nothing real. |
 | 2026-08-03 | Verified the 12.2-era client against the **live 11.x server** rather than reasoning from the changelog alone. Eight queries copied from the real call sites returned byte-identical responses on both SDKs. Necessary because CI builds with `SKIP_PRERENDER_ROUTE_DISCOVERY=true` and so never contact the CMS — no gate in this repo would have caught a wire-level break. That the server is still 11.x was itself confirmed from `/server/health` returning 200, which Directus 12.0 changed to 404 unauthenticated. |
 | 2026-08-03 | The comment audit ran **before** the last Phase 5 item rather than after the phase, because `stripe` is blocked on a colleague's review of the payment path and the audit is independent of it. Sequencing the plan around a human dependency beat holding to the original order. |
-| 2026-08-03 | The audit cut the series' 250 added comment lines to 129, and every cut line was confirmed present in this document first — the point was to move the narrative, not delete it. Load-bearing config kept a one-line reason plus a removal condition; the mechanism, the measurements and the "my first attempt was wrong" notes moved here. |
+| 2026-08-03 | The audit cut the series' 271 added comment lines to 138, and every cut line was confirmed present in this document first — the point was to move the narrative, not delete it. Load-bearing config kept a one-line reason plus a removal condition; the mechanism, the measurements and the "my first attempt was wrong" notes moved here. |
+| 2026-08-03 | **The audit's first pass under-scoped itself and the maintainer caught it.** Filtering to `nuxt-app/**` skipped both GitHub workflow files entirely, and matching only line-leading `//`, `*`, `/*` made YAML `#`, Vue `<!-- -->` and all inline comments invisible — so even the "250 lines" baseline was wrong (271). Lesson: when auditing a *category* of thing, verify the detector finds all of it before trusting the count. The re-scan checked for inline comments explicitly and found none, so that gap was theoretical; the workflow gap was not. |
+| 2026-08-03 | Deleted the Renovate rule disabling `@nuxt/image-edge` updates. Phase 3 removed the package, so the rule matched nothing, and its own description read "Phase 3 of the upgrade plan removes the package — delete this rule then". A comment that instructs its own removal and then survives is precisely what this audit was for. Also replaced `@nuxt/eslint-config` (dropped in Phase 5) with `@nuxt/eslint` in the lint group, which otherwise grouped with the framework instead. |
 | 2026-08-03 | Deleted `workers: undefined` from `playwright.config.ts` during the audit, the one non-comment change in it. Passing `undefined` is identical to omitting the key, so the line existed only to host an 8-line justification for removing an earlier cap. Verified rather than assumed: Playwright reports 6 workers either way. The standing constraint — do not re-add a cap, since the failures it appeared to fix were a non-retrying assertion — is kept in two lines. |
 | 2026-08-03 | The 11-line block documenting the *absence* of an `image.alias` entry was cut to 2. Forensics about config that is not there is the clearest form of the artefact this audit set out to remove: a reader opening `nuxt.config.ts` to understand image handling met three numbered reasons about something absent. Kept only what someone adding an alias would need. |
 | 2026-08-03 | SDK 22's `RequestError` refactor was treated as the one real risk and checked at runtime, not by reading. `isTransientError()` casts to `{ response?: { status?: number } }`, so a shape change would compile, pass every gate, and silently stop prerender retries under `prerender.failOnError` — one flaky CMS response would then abort a deploy. `RequestError` preserves `.response`; confirmed across 7 transient codes, 5 permanent codes and a connection refusal. |
