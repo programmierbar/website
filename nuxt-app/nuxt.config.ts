@@ -76,6 +76,19 @@ export default defineNuxtConfig({
             svgLoader(), // https://github.com/jpkleemans/vite-svg-loader#readme
             './plugins/vue-json-pretty.js',
         ],
+        build: {
+            // Vite 8 defaults CSS minification to lightningcss, which rewrites every media query
+            // to Level 4 range syntax — `@media (width>=1024px)` instead of `@media
+            // (min-width:1024px)`. That is shorter but needs Safari 16.4+ (March 2023), and there
+            // is no browserslist here to constrain it, so lightningcss assumes modern targets.
+            // On Safari 16.0–16.3 the whole responsive layout would be dropped rather than
+            // degrading, since every breakpoint stops matching at once.
+            //
+            // Pinning esbuild keeps the `min-width` output the app shipped on Nuxt 3. Revisit
+            // alongside Tailwind 4 (Phase 6), where lightningcss can be adopted deliberately with
+            // explicit `css.lightningcss.targets` rather than as a silent default.
+            cssMinify: 'esbuild',
+        },
     },
 
     // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules

@@ -34,9 +34,16 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | 2 | Security patches + minors, no majors | ✅ Done (2026-07-31) |
 | — | TypeScript 5.9 → 6.0.3 (interstitial, own PR) | ✅ Done (2026-07-31) |
 | 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ✅ Done (2026-07-31) |
-| 4 | **Nuxt 3 → Nuxt 4** | ⬜ Not started |
+| 4 | **Nuxt 3 → Nuxt 4** | ✅ Done (2026-08-03) |
 | 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | ⬜ Not started |
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
+| — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
+
+Each phase's own write-up ends with what it deliberately left behind. Those are also gathered into
+the **follow-up backlog** above, which is the list to read if you are looking for work rather than
+history. Two things in it are worth knowing about even if you never pick them up: the Renovate app
+was configured in Phase 0 and **still is not installed**, and `tailwind.config.js` has content globs
+that match almost nothing, which becomes dangerous at Tailwind 4.
 
 ---
 
@@ -188,6 +195,10 @@ number instead of a surprise.
 
 - [ ] Burn down the 212 `vue-tsc` errors, starting with `composables/useDirectus.ts` (149 of
       them — almost certainly one or two bad generic signatures rather than 149 real problems)
+
+> The count above is what Phase 0 measured; it is **263** as of Phase 4, and the errors are now two
+> distinct groups. See [the follow-up backlog](#after-the-plan--follow-up-backlog), which is the
+> live version of this item.
 
 ---
 
@@ -431,34 +442,225 @@ needed no component changes at all.
 
 ## Phase 4 — Nuxt 3 → Nuxt 4
 
-**Goal:** get onto a supported framework. Do this **alone**, with no other version changes in the
-PR.
+**Goal:** get onto a supported framework. Done **alone**, with no other version changes in the PR.
 
-```bash
-npx codemod@latest nuxt/4/migration-recipe
-```
+`nuxt 3.21.10 → 4.5.1`. Two source files changed, plus one Tailwind config fix and one test-harness
+fix. No directory move, no codemod output.
 
-Measured migration surface — smaller than it looks:
+### The codemod does nothing here — verified, not assumed
 
-| Nuxt 4 breaking change | Exposure in this codebase |
+The command in the original plan was stale: the CLI now needs `codemod run <package>`, and the
+`migration-recipe` bundles `nuxt/4/file-structure`, which performs the `app/` directory move we
+explicitly do *not* want. Its deselect prompt is interactive, so the five relevant codemods were run
+individually. All five reported **"No changes were made"**.
+
+That silence is not evidence on its own — [nuxt#32627][codemod-issue] records these codemods
+no-opping spuriously. A manual sweep was run first and independently reached the same answer:
+
+[codemod-issue]: https://github.com/nuxt/nuxt/issues/32627
+
+| Nuxt 4 breaking change | Measured exposure |
 | --- | --- |
-| `app/` becomes default `srcDir` | **None required** — Nuxt auto-detects the v3 layout. Do *not* move directories in this PR. |
-| Shared refs for identical `useAsyncData` keys | **Low** — 27 call sites, but only **one** (`'news-list'`) uses an explicit key. Conflicts only arise between identical explicit keys. |
-| `data`/`error` default to `undefined`, not `null` | **Low** — no `=== null` / `!== null` comparisons found against fetch results. |
+| `app/` becomes default `srcDir` | **None required.** Nuxt 4 auto-detects the v3 layout — confirmed empirically, not from docs: after `nuxt prepare`, `.nuxt/types/components.d.ts` resolves components to `../../components/…`, i.e. the project root. |
+| `noUncheckedIndexedAccess` now defaults to `true` | **The whole ratchet delta.** See below. |
+| Shared refs for identical `useAsyncData` keys | **None.** The earlier claim of "only one explicit key" was wrong — there are **10**: `'news-list'` plus nine `route.fullPath`. Harmless, because a collision needs two *live* calls sharing a key, and one page component renders per route. |
+| `data`/`error` default to `undefined`, not `null` | **None.** No `=== null`/`!== null` compares a fetch result; the nine hits are interval handles, store fields and `resolveNewsLink`. |
+| `data` is now a `shallowRef` | **One site, safe.** `pages/api/cocktails.vue:23` mutates `cocktails.value.menu`, but synchronously in setup, before first paint — nothing re-renders afterward, so no notification is needed. Verified: that route is byte-identical on 3 and 4. |
+| `builder:watch` relative paths | **None** — no references. |
+| `dedupe: boolean` → `'cancel'`/`'defer'` | **None** — the only `dedupe` in the tree is a comment about a DB unique constraint. |
 | `window.__NUXT__` removed | **None** — no references. |
-| `dedupe: boolean` → `'cancel'`/`'defer'` | Check `refresh()` call sites. |
-| Top-level `generate` config removed | **None** — already using `nitro.prerender`. |
-| `.server.vue` islands | **None** — no island components. |
+| Top-level `generate` config removed | **None** — already `nitro.prerender`. |
+| Page component names now match route names | **None** — no `<KeepAlive>`, no `route.meta.name`. |
+| Removed `experimental.*` flags | **None** — no `experimental` block at all. |
+| `.server.vue` islands, EJS templates | **None** — and no `modules/`, `layouts/` or `middleware/` directory. |
 
-- [ ] Run the codemod, review every hunk
-- [ ] Module compatibility — all three still declare `@nuxt/kit ^3`, so verify each boots:
-  - [ ] `@nuxtjs/tailwindcss` (6.14.0)
-  - [ ] `@nuxtjs/algolia` (1.11.2)
-  - [ ] `nuxt-jsonld` (2.2.1)
-- [ ] Typecheck ratchet: record the new error count and consciously accept or fix the delta
-- [ ] Verify the `nitro:config` prerender hook still discovers routes
-- [ ] Full smoke pass on the Vercel preview
-- [ ] Leave the `app/` directory migration for a **separate** later PR
+### Module compatibility was a smaller risk than it looked
+
+The concern was that three modules still declare `@nuxt/kit ^3`. Two things defused it. First, the
+premise was partly wrong: `nuxt-jsonld` declares **no** `@nuxt/kit` dependency at all (only `pathe`
+and `schema-dts`) and resolves it by hoisting. Second, kit 3 and kit 4 were *already* coexisting on
+Nuxt 3 — `@nuxt/image@2`, `@nuxt/devtools` and `@dxup/nuxt` all pulled kit 4.5.1.
+
+Static analysis of what each module actually imports found only long-stable kit APIs
+(`defineNuxtModule`, `addPlugin`, `addImports`, `addImportsDir`, `createResolver`, `addTemplate`,
+`addTypeTemplate`, `installModule`, `addServerHandler`, `useNuxt`). Two apparent red flags —
+`@nuxtjs/tailwindcss` touching `nuxt.options.serverMiddleware` and `@nuxtjs/algolia` touching
+`publicRuntimeConfig` — are both inside Nuxt **2** branches (`!isNuxtMajorVersion(2)` and
+`isNuxt2()`). No module declares a `nuxt` peer range, so there was no `ERESOLVE` to resolve either.
+
+Each was then verified *functionally*, since booting is not working:
+
+- **`@nuxtjs/tailwindcss` 6.14.0** — our config is genuinely consumed: the custom `3xl: 2000px`
+  breakpoint appears in the emitted CSS, and all three brand colours (`#CFFF00`, `#00A1FF`,
+  `#E92980`) compute on real elements.
+- **`@nuxtjs/algolia` 1.11.2** — a live query for "typescript" returned **20 hits** and 11 result
+  links, with the URL and title updating.
+- **`nuxt-jsonld` 2.2.1** — emits a valid `PodcastSeries` block on the home page.
+- **`@pinia/nuxt` 0.5.5 / Pinia 2.3.1** — the `ticketCheckout` store hydrates into the payload.
+  (The "Preise konnten nicht geladen werden" message on that page is pre-existing — a past
+  conference — and identical on Nuxt 3.)
+
+### The typecheck ratchet: 209 → 263, and why that is fine
+
+`noUncheckedIndexedAccess` is `true` by default in Nuxt 4. The delta was decomposed rather than
+accepted wholesale, by re-running with only that flag flipped off:
+
+| | errors |
+| --- | --- |
+| Nuxt 3 baseline | 209 |
+| Nuxt 4, `noUncheckedIndexedAccess: false` | 212 |
+| Nuxt 4, as shipped | 267 → **263** after fixes |
+
+So **+55 come purely from the new flag** and only **+3 net from Nuxt 4 itself**. Diffing the two
+error sets showed most apparent changes were TypeScript reordering union members inside its own
+messages; the genuine delta was 4 new errors and 1 subsumed, in two files, both fixed here:
+
+- **`error.vue:87`** — dropped `hid: 'description'`. `hid` is a vue-meta/Nuxt 2 key that has done
+  nothing since Nuxt 3 (unhead dedupes by `name`), and the new unhead typing turned it from one
+  error into two.
+- **`pages/login-callback.vue:28`** — `ref(null)` infers `Ref<null>`, so the assignment was
+  unassignable and `clientSideUser.id` narrowed to `never` in the template. Now typed off
+  `getCurrentUser`'s return.
+
+**`noUncheckedIndexedAccess` was deliberately left on.** Turning it off in the root `tsconfig.json`
+would have held the baseline near 209, but those 55 errors are real latent null-safety gaps that the
+flag *reveals* rather than causes — unchecked indexing in `helpers/parseCmsDate.ts` (12),
+`helpers/ipProcessing.ts` (5), `components/Pagination.vue`, and others. Suppressing the framework
+default to keep a number small would discard genuine signal and contradicts "use the framework's
+configuration system". They are logged as a follow-up instead.
+
+### Two real defects found, neither of them Nuxt 4's fault
+
+**1. `tailwind.config.js` emitted invalid CSS — this one blocked the build.**
+
+`theme.container.screens` entries are used as *both* the media condition and the max-width, so
+`sm: '100%'` produced `@media (min-width: 100%)`. A percentage is not a valid media-query length, so
+per spec every browser has been evaluating it as `not all` and discarding the block — and its only
+declaration, `max-width: 100%`, was a no-op anyway against the `width: 100%` the container already
+has. Five such entries collapsed into one dead rule.
+
+It surfaced now because **Vite 8 minifies the *server* build with lightningcss** — its config
+resolution reads `cssMinify: merged.cssMinify ?? (consumer === "server" ? "lightningcss" : …)` — and
+lightningcss errors where the previous esbuild-based minifier passed the bad query through. Nuxt 3
+built fine.
+
+Listing only `'2xl': '1536px'` was verified behaviour-neutral by generating the container CSS both
+ways through postcss and diffing: the output is identical minus the dead block. Worth noting the
+first candidate fix (keeping `DEFAULT: '100%'`) produced *byte-identical* CSS to the original and
+would not have fixed anything — Tailwind dedupes the five `100%` entries, and `DEFAULT` is not
+special-cased.
+
+**1b. …and lightningcss then quietly narrowed browser support.** Found only by diffing the deployed
+CSS against production, because every gate passed either way.
+
+With the container fixed, the Vite 8 → lightningcss default rewrote **every** media query to Media
+Queries Level 4 range syntax:
+
+| | Nuxt 3 (production) | Nuxt 4 (before this fix) |
+| --- | --- | --- |
+| syntax | `@media(min-width:1024px)` | `@media (width>=1024px)` |
+| breakpoints emitted | 520/640/768/1024/1280/1536/2000 | same — all intact |
+| invalid `min-width:100%` | **1 (live today)** | 0 |
+
+The breakpoints were all correct, so nothing looked wrong. But range syntax requires **Safari 16.4+
+(March 2023)** where `min-width` is universal, and with no `browserslist` in the repo lightningcss
+assumes modern targets and picks the shorter form. On Safari 16.0–16.3 every breakpoint stops
+matching *at once*, so the entire responsive layout would be dropped rather than degrading.
+
+Fixed by pinning `vite.build.cssMinify: 'esbuild'`, which restores the exact `@media(min-width:…)`
+output the app shipped on Nuxt 3. Verified: classic syntax for all seven breakpoints, container down
+to its two effective rules, zero invalid queries, and measured live — at a 1700px viewport
+`.container` caps at 1536px and centres; at 1100px it is full width.
+
+Note this is *not* an argument that lightningcss is wrong — it is faster and its output is valid. It
+should be adopted deliberately, with explicit `css.lightningcss.targets`, alongside Tailwind 4 in
+Phase 6. Taking it as a silent side effect of a framework bump is what made it a problem.
+
+**2. The blank-render smoke assertion never retried.**
+
+`expectPageRendered` awaited `innerText()` once and asserted on the resulting number, so it could not
+poll. `<main>` becomes visible before the page component has necessarily painted, so this raced. It
+failed on a podcast detail page whose SSR response was then verified complete (1.09 MB in `<main>`,
+HTTP 200, no server error, and the page rendering fine on direct navigation).
+
+This is the same failure Phase 3 attributed to local CPU contention. That identified the *trigger*
+but not the defect, and capping workers to 1 masked it. With the assertion switched to
+`expect.poll`, **6 workers pass repeatedly** — and finish in ~14s against ~23s serial — so the
+worker cap was removed and the misleading comment corrected. This also retires the
+`|| process.env.SMOKE_BASE_URL` special case added by a Copilot Autofix commit in #227.
+
+### Pre-existing: a full local build with route discovery is broken on `main`
+
+`npm run build` *without* `SKIP_PRERENDER_ROUTE_DISCOVERY` fails, and **it fails identically before
+this phase**:
+
+| | Nuxt 3 (`main`) | Nuxt 4 |
+| --- | --- | --- |
+| `_ipx` prerender entries | 1515 | 1521 |
+| `_ipx` 500s | 150 | 162 |
+| non-`_ipx` failures | **0** | **0** |
+| exit code | **1** | **1** |
+
+The prerender crawler follows `<img src="/_ipx/…">` — those URLs end in a bare asset UUID, so nitro's
+"no extension" rule admits them — and tries to prerender ~1500 image transforms, exhausting
+connections to the CMS (`fetch failed`, plus some upstream 503s). Every one of the 87 pages and
+their payloads prerender fine on both versions.
+
+This is invisible in normal operation: CI sets `SKIP_PRERENDER_ROUTE_DISCOVERY=true`, and the Vercel
+build does not prerender either — it completes in ~58s and emits a `__fallback.func`, because the
+ISR `routeRules` make routes on-demand functions. Left alone deliberately, as out of scope for a
+framework upgrade. See the follow-up.
+
+### Verification
+
+Both sides of every comparison were built the same way (`SKIP_PRERENDER_ROUTE_DISCOVERY=true`), from
+a `git worktree` at `main` with its own `npm ci`.
+
+| gate | Nuxt 3.21.10 | Nuxt 4.5.1 |
+| --- | --- | --- |
+| `lint` | 0 errors, 29 warnings | 0 errors, 29 warnings |
+| `test` | 52/52 | 52/52 |
+| ratchet | 209 | 263 (accepted — see above) |
+| `build` | exit 0, 30.8 MB | exit 0, 30.9 MB, zero warnings |
+| smoke | 18/18 | 18/18 (×5 runs, serial and at 6 workers) |
+
+Beyond the gates, **10 routes the smoke suite does not cover were A/B'd against a Nuxt 3 server
+running side by side** — `/api/cocktails`, the conference tickets page, both portals, `/news`,
+`/feed/news.xml`, `/pick-of-the-day`, `/gewinnspiel`, `/agb`, `/app`. Every one returned the **same
+status and the same `<main>` text length on both**, down to the byte. `/app`'s 404 is pre-existing.
+Images: 11/11 still served via `/_ipx/`, zero broken.
+
+One small improvement: on the conference tickets page Nuxt 3 logs a client-side 500 fetching
+`/konferenz/…/_payload.json`; Nuxt 4 does not.
+
+**Advisories: 2 → 1** (headline total 33 → 1), leaving only `nodemailer`, which Phase 5 owns.
+Do not credit this phase with the `brace-expansion` half: that package is **still 2.1.4**, exactly
+as before, and is simply no longer being flagged — the advisory data changed, not our tree. Worth
+re-checking rather than assuming it is settled.
+
+### Node floor moved
+
+Nuxt 4.5.1 requires `node ^22.19.0 || ^24.11.0 || >=26.0.0`, so `engines.node` went from `^22.12.0`
+to match. CI (`node-version: 22`) resolves to a satisfying 22.x. **Local development on Node 22.17.1
+is now below the floor** — it works, but it is unsupported and warns on install; anyone on 22.1x
+should upgrade.
+
+### Follow-up captured, not done here
+
+All four are carried into [the follow-up backlog](#after-the-plan--follow-up-backlog) with the
+detail needed to act on them; kept here as the record of what this phase chose not to do.
+
+- [ ] Burn down the 263 `vue-tsc` errors. Now two distinct groups: ~208 pre-existing (149 in
+      `composables/useDirectus.ts`) and **55 newly surfaced `noUncheckedIndexedAccess` violations**,
+      which are the more interesting set — each is a real unchecked index.
+- [ ] Stop the prerender crawler walking image URLs, so a full local build works:
+      `nitro: { prerender: { ignore: ['/_ipx'] } }`. Pre-existing on `main`; affects only local
+      full builds, since CI skips discovery and Vercel does not prerender.
+- [ ] `tailwind.config.js` `content` globs are `'./pages/**/*.{html,js}'` and
+      `'./components/**/*.{html,js}'` — **no `.vue`**. The site is styled only because
+      `@nuxtjs/tailwindcss` injects its own defaults over the top. Worth fixing before Tailwind 4
+      (Phase 6), which changes content detection.
+- [ ] The `app/` directory migration remains a **separate** later PR (Phase 6).
 
 ---
 
@@ -521,6 +723,126 @@ Not blocked by EOL. Do **not** fold these into the phases above.
 
 ---
 
+## After the plan — follow-up backlog
+
+Collected here so the phase write-ups stay a record of what each phase *did*, while the work each
+one deliberately left behind stays findable in one place. **Nothing here blocks the EOL work**, and
+nothing here needs doing before Phase 6 lands. Items marked ⚠️ were found by accident and would not
+be caught by any current gate, which is the argument for writing them down rather than trusting
+someone to rediscover them.
+
+### 1. Install the Renovate GitHub App — highest value item here
+
+`.github/renovate.json` was added in Phase 0 and **has never run.** Verified 2026-08-03: the repo has
+no Dependency Dashboard issue and no Renovate PRs, so the config is inert.
+
+This is first on the list because it is the only item that changes the *trajectory* rather than the
+current state. Phases 0–6 pay off a backlog once; Renovate is what stops it re-accumulating, and
+every phase so far has been manual work that Renovate would have surfaced as it happened. The config
+is already written and already scoped (`includePaths: ["nuxt-app/**"]`, majors behind
+`dependencyDashboardApproval`, `directus-cms/**` deliberately excluded for the licence block).
+
+### 2. The 263 `vue-tsc` errors, which are two unrelated problems
+
+Phase 4 moved the ratchet 209 → 263 and the two halves want different treatment:
+
+| group | count | character |
+| --- | --- | --- |
+| Pre-existing | ~208 | **149 in `composables/useDirectus.ts` alone** — almost certainly a couple of bad generic signatures rather than 149 distinct problems, so likely a small fix with a large number attached. |
+| `noUncheckedIndexedAccess` | 55 | Newly surfaced by Nuxt 4's default. **Each one is a real unchecked index**, not a typing artefact. |
+
+The 55 are the more interesting set and the better starting point — they are individually small,
+individually real, and concentrated: `helpers/parseCmsDate.ts` (12, indexing
+`Intl.DateTimeFormat().formatToParts()` results), `components/MemberCard.vue` (8),
+`helpers/ipProcessing.ts` (5, splitting an address and indexing), `components/PodcastRating.vue` (5),
+`components/Pagination.vue`, `composables/useTagFilter*.ts`.
+
+Two of the *original* 212 are worth fixing early, because both are imports of things that **do not
+exist** — verified 2026-08-03:
+
+- `helpers/getMetaInfo.ts:1` imports `MetaInfo` from `vue-meta/types/vue-meta`. `vue-meta` is a
+  Nuxt 2 package and is **not a dependency and not installed at all**.
+- `pages/podcast/index.vue:77` imports a `LatestPodcasts` type from `~/composables/useDirectus`,
+  which never declares or exports it (only the `getLatestPodcasts` function exists).
+
+Neither has broken anything because both are `import type`, so they are erased before runtime. The
+cost is silent: an unresolvable type behaves like `any`, so the return type of `getMetaInfo` — the
+helper every page's `useHead` call goes through — is effectively unchecked, as is the `podcasts`
+computed on the podcast index. Fixing two lines restores type checking to a lot of call sites.
+
+### 3. Build and tooling correctness
+
+- [ ] **Make a full local `npm run build` work again.** Currently fails, and fails identically on
+      `main` — the prerender crawler walks ~1500 `/_ipx/` image URLs and exhausts connections to the
+      CMS. One line: `nitro: { prerender: { ignore: ['/_ipx'] } }`. Invisible in CI (which sets
+      `SKIP_PRERENDER_ROUTE_DISCOVERY=true`) and on Vercel (which does not prerender at all), so the
+      only person it hurts is a developer running a real build locally.
+- [ ] ⚠️ **`tailwind.config.js` `content` globs do not include `.vue`.** They are
+      `'./pages/**/*.{html,js}'` and `'./components/**/*.{html,js}'`, so they match essentially
+      nothing; styling works only because `@nuxtjs/tailwindcss` injects its own defaults on top.
+      **Fix this before Tailwind 4** (Phase 6), which changes content detection — a latent
+      misconfiguration plus a detection rewrite is how you get a site that loses half its CSS with
+      no error.
+- [ ] **`vitest.config.ts` is loaded as CommonJS while using ESM syntax.** `npm test` warns that
+      `configLoader: 'native'` "is planned to become the default in a future major version of Vite",
+      at which point this breaks. Prefer **renaming to `vitest.config.mts`** over adding
+      `"type": "module"` to `package.json` — the latter would reinterpret every `.js` file in the
+      package, including `tailwind.config.js`, which uses `require()`.
+- [ ] **Clear the 29 ESLint warnings, then consider `--max-warnings 0`** (carried from Phase 0).
+
+### 4. Decide a browser-target policy, then revisit the CSS minifier
+
+Phase 4 pinned `vite.build.cssMinify: 'esbuild'` because Vite 8's lightningcss default silently
+rewrote every media query to Level 4 range syntax (`(width>=1024px)`), which needs Safari 16.4+.
+
+The underlying gap is that **the repo has no `browserslist` and no explicit CSS target at all**, so
+every tool guesses — and they guess differently. That is what made a minifier swap a
+browser-support decision nobody made.
+
+- [ ] Agree the actual support floor (Phase 1 already accepted dropping smooth-scroll animation
+      below Safari 15.4, so a floor exists in practice — it is just unwritten).
+- [ ] Record it once as `browserslist`, and derive the minifier target from it rather than
+      hardcoding either choice.
+- [ ] Then adopt lightningcss deliberately with explicit `css.lightningcss.targets`, ideally
+      **alongside Tailwind 4** since that phase is already a CSS-pipeline project. lightningcss is
+      faster and its output is valid; the problem was inheriting it as a side effect.
+
+### 5. Small, verified, uncontroversial
+
+- [ ] ⚠️ **Auth-path `console.log`s leak into the browser console.**
+      `composables/useDirectus.ts:897` logs `await directus.refresh()` — i.e. the **token refresh
+      response** — plus the full user object at `:900`, and `pages/login-callback.vue:46` logs the
+      user again. `getCurrentUser()` is called from `onMounted`, so this is client-side console
+      output. Not currently reachable in production (login is behind `FLAG_SHOW_LOGIN`), which is
+      exactly why it should be cleaned up *before* that flag is ever turned on.
+- [ ] **`error.vue` ships an empty meta description** — `{ name: 'description', content: '' }`.
+      Either give the 404 page a real description or drop the tag; an empty one is worse than
+      absent. (Phase 4 removed the dead `hid` key from this same entry but deliberately left the
+      empty `content` alone as out of scope.)
+- [ ] **Drop `@ubclaunchpad/vue-fathom`** (last publish April 2022, 1 usage). Fathom's own snippet
+      is a few lines — inlining it removes a dependency entirely. See Appendix A.
+- [ ] **Re-check the `brace-expansion` advisory.** It stopped being reported during Phase 4, but
+      the package is **still 2.1.4, unchanged** — the advisory data moved, not our tree. Treat it as
+      unresolved rather than fixed.
+- [ ] **Add a `.nvmrc`.** None exists, and Phase 4 raised `engines.node` to
+      `^22.19.0 || ^24.11.0 || >=26.0.0` — ahead of at least one developer's local Node. Pairs
+      naturally with Phase 6's Node 24 item, which already says to move `engines`, `.nvmrc` and
+      every workflow's `node-version` together.
+- [ ] **Remove or justify `nuxt-app/.npmrc`.** `shamefully-hoist` and `strict-peer-dependencies`
+      are pnpm options and no-ops under npm (Appendix B) — they read as protection that is not
+      there.
+
+### 6. Standing items, not one-off tasks
+
+- **Re-raise the Directus licence block if it persists.** It is the gate on `directus-cms/`, and
+  the majority of the repo's reported vulnerabilities sit in that blocked tree. A block that is
+  accepted for a quarter is very different from one accepted for a week.
+- **`@nuxtjs/algolia` is the module most likely to need attention at Nuxt 5** (Appendix A). Nothing
+  to do now; worth remembering when Nuxt 5 appears, since Nuxt 3's EOL is the precedent for how
+  quickly that becomes urgent.
+
+---
+
 ## Appendix A — Unmaintained or stale dependencies
 
 Tracked so nobody has to rediscover them. None are urgent on their own.
@@ -543,6 +865,18 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 - The `nitro:config` hook fetches live Directus data during build with
   `nitro.prerender.failOnError: true`. A CMS outage therefore fails the build. Acceptable for
   deploys; the reason CI's build step is run with route discovery disabled.
+- **A full local `npm run build` (route discovery enabled) currently fails, and has done since
+  before Phase 4.** The prerender crawler follows `/_ipx/…` image URLs and tries to prerender ~1500
+  image transforms, which exhausts connections to the CMS. Measured identically on Nuxt 3 and Nuxt
+  4; no page or payload fails, only image transforms. Neither CI nor Vercel is affected — CI skips
+  discovery, and the Vercel build does not prerender at all (ISR `routeRules` make routes on-demand
+  functions, and the build emits a `__fallback.func` in ~58s). To build fully offline-safe locally,
+  either set `SKIP_PRERENDER_ROUTE_DISCOVERY=true` or add `nitro.prerender.ignore: ['/_ipx']`.
+- **`tailwind.config.js` `content` globs do not include `.vue`** — they are
+  `'./pages/**/*.{html,js}'` and `'./components/**/*.{html,js}'`. Nothing is broken today only
+  because `@nuxtjs/tailwindcss` supplies its own default globs on top. A consequence worth knowing
+  while debugging: a class that exists in no source file will not be generated, so probing Tailwind
+  by injecting a class at runtime always reports "not applied" regardless of configuration.
 - `DIRECTUS_CMS_URL` falls back to `https://admin.programmier.bar` (production) when unset.
 - `overrides` in `nuxt-app/package.json` now holds three deliberate pins, each with a reason:
   `vue: ^3.5.0` (was the non-reproducible `"latest"`), `minimatch: ^9.0.7` (pre-existing), and
@@ -577,10 +911,17 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-07-31 | ESLint gates on **errors only**; the 29 pre-existing warnings are left ungated rather than blocking Phase 0 on an unrelated cleanup. |
 | 2026-07-31 | The three files touched for lint fixes were already Prettier-non-conforming, and Prettier is not in CI. Left unformatted deliberately — reformatting would bury a 2-line fix in a 200-line diff. |
 | 2026-07-31 | Phase 3 takes `@nuxt/image@2` even though it depends on `@nuxt/kit ^4` while the app is on Nuxt 3. It declares `nuxt: ">=3.1.0"`, builds, and serves images correctly. **Only v2 reaches a patched `sharp`** — `@nuxt/image@1.11.0` still pulls `sharp 0.32.6`, so staying on 1.x would not have cleared the advisory. |
-| 2026-07-31 | Smoke tests run **serial locally, parallel in CI**. The local target is one Node process doing SSR *and* image resizing, so parallelism measures the harness rather than the app; the CI target is a horizontally-scaled Vercel deployment where parallelism is safe and faster. |
+| 2026-07-31 | ~~Smoke tests run **serial locally, parallel in CI**. The local target is one Node process doing SSR *and* image resizing, so parallelism measures the harness rather than the app.~~ **Superseded 2026-08-03** — the real cause was a non-retrying assertion, not saturation. Now parallel everywhere. |
 | 2026-07-31 | TypeScript taken to **6.0.3** as its own PR straight after Phase 2, rather than folded into it. 5.9 → 6.0 is a major and Phase 2's contract was patches-and-minors; a separate PR keeps that honest and gives TypeScript an independent revert point. Verified as a measurable no-op (identical 210-error count, all gates green, zero deprecation warnings). |
 | 2026-07-31 | Phase 2 pins `typescript` to `^5.9.3` via `overrides`. `npm update` resolved TS 7.0.2 through wide-open transitive ranges and broke `npm run lint` outright. TS 7 is the native rewrite and needs its own evaluation (Phase 6), not a drive-by in a patch phase. |
 | 2026-07-31 | Phase 2 accepts `vite@8.2.0` in the tree. It serves **vitest** only; `@nuxt/vite-builder` gets a nested `vite@7.3.6` per its own dependency, so the Nuxt build moved 7.3.2 → 7.3.6, a patch. |
 | 2026-07-31 | Judge audit progress by **distinct root advisories**, not npm's headline total. Phase 2 went 49 → 3 advisories while the reported total rose 23 → 33, because one surviving advisory is counted once per dependent package. |
 | 2026-07-31 | Phase 1 drops smooth-scroll animation for Safari < 15.4. Accepted: those browsers still scroll, just instantly, and `ConferenceAgenda.vue` already relied on native support without the polyfill. |
 | 2026-07-31 | `directus-cms/` upgrades **blocked** pending legal clarification of the Directus licence. Nuxt work continues independently. `@directus/sdk` (MIT) is unaffected by the block, but Phase 5's SDK jump is constrained by the server staying on 11.x. |
+| 2026-08-03 | Phase 4 keeps `noUncheckedIndexedAccess` at Nuxt 4's new default of `true` and moves the ratchet 209 → 263, rather than disabling the flag to hold the number down. The +55 are latent unchecked-index bugs the flag *reveals*; suppressing a framework default to protect a metric would discard real signal. |
+| 2026-08-03 | Phase 4 does **not** move to the `app/` directory. Nuxt 4 auto-detects the v3 layout (verified via generated types), so the move is optional, mechanical, and touches every source path — it belongs in its own PR where the diff is reviewable. |
+| 2026-08-03 | Phase 4 runs the Nuxt 4 codemods **individually rather than via `migration-recipe`**, because the recipe bundles `file-structure` (the `app/` move) and its opt-out is interactive. A manual breaking-change sweep was done first and treated as the real evidence, since the codemods are known to no-op spuriously. |
+| 2026-08-03 | Fixed `theme.container.screens` in `tailwind.config.js`, which emitted the invalid `@media (min-width: 100%)`. Required, not opportunistic: Vite 8 minifies the server build with lightningcss, which rejects it and fails the build. Verified behaviour-neutral by diffing generated CSS — browsers were already discarding the rule as `not all`. |
+| 2026-08-03 | Pinned `vite.build.cssMinify: 'esbuild'`. Vite 8's lightningcss default rewrote every media query to Level 4 range syntax (`(width>=1024px)`), which needs Safari 16.4+ and would drop the *entire* responsive layout at once on 16.0–16.3 — there is no browserslist to constrain it. Every gate passed either way; found only by diffing deployed CSS against production. lightningcss should be adopted deliberately with explicit targets in Phase 6, not inherited as a side effect. |
+| 2026-08-03 | The blank-render smoke assertion now uses `expect.poll`. The Phase 3 "CPU contention" diagnosis found the trigger but not the defect: `innerText()` was read once with no retry. Fixing it let the local worker cap be removed (6 workers pass, ~14s vs ~23s) and retires the `SMOKE_BASE_URL` special case from #227. |
+| 2026-08-03 | The pre-existing `/_ipx` prerender-crawl failure is left **unfixed** in Phase 4 and logged as a follow-up. It is identical on Nuxt 3, affects only full local builds, and fixing it would mean shipping an unrelated nitro config change inside a framework major. |

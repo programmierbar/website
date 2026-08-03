@@ -17,9 +17,22 @@ import { expect, test, type Page } from '@playwright/test'
  */
 async function expectPageRendered(page: Page, label: string) {
     await expect(page.locator('h1', { hasText: /^Error \d{3}$/ }), `${label} rendered the error page`).toHaveCount(0)
-    await expect(page.locator('main')).toBeVisible()
-    const text = await page.locator('main').innerText()
-    expect(text.trim().length, `${label} rendered an empty <main>`).toBeGreaterThan(0)
+
+    // One locator for both assertions, so it is explicit that they check the same element.
+    const main = page.locator('main')
+    await expect(main).toBeVisible()
+
+    // `expect.poll`, not a bare `expect` over an awaited `innerText()`. `<main>` becomes visible
+    // before the page component has necessarily painted its content, so reading the text once and
+    // asserting on that number is a race with no retry — it reported "empty <main>" on pages whose
+    // SSR response was verified complete. Polling keeps the visible-text semantics (hidden content
+    // still counts as blank, which is the failure this check exists to catch) and simply waits for
+    // it, up to the `expect` timeout.
+    await expect
+        .poll(async () => (await main.innerText()).trim().length, {
+            message: `${label} rendered an empty <main>`,
+        })
+        .toBeGreaterThan(0)
 }
 
 /** Static routes that must render for anonymous visitors. */
