@@ -35,7 +35,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | TypeScript 5.9 → 6.0.3 (interstitial, own PR) | ✅ Done (2026-07-31) |
 | 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ✅ Done (2026-07-31) |
 | 4 | **Nuxt 3 → Nuxt 4** | ✅ Done (2026-08-03) |
-| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 4 of 7 (`nodemailer`, Pinia, ESLint, Zod; **audit at zero**) |
+| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 5 of 7 (`nodemailer`, Pinia, ESLint, Zod, DOMPurify; **audit at zero**) |
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
@@ -697,12 +697,12 @@ order, or in parallel by different people.
       Details below.
 - [ ] **`stripe` 20.4.1 → 22.4.0** — 7 files. Check the pinned API version and the webhook
       signature-verification API.
-- [ ] **`isomorphic-dompurify` 2.20.0 → 3.x** — 2 files. Note it is currently pinned with `~`.
-      The note that this "has been holding back the DOMPurify XSS advisories" is **no longer
-      current**: Phase 2 moved `dompurify` 3.4.2 → 3.4.12 transitively and those advisories are
-      gone, so this is now a staleness item rather than a security one. Reprioritise accordingly.
+- [x] **`isomorphic-dompurify` 2.20.0 → 3.21.0** — ✅ done 2026-08-03. Confirmed to be a staleness
+      item, not a security one: `dompurify` was already at 3.4.12 from Phase 2, and 3.21.0 only
+      requires `^3.4.12`, so **the sanitiser itself does not move**. The `~` pin became `^`. Details
+      below, including a size cost worth knowing about.
 
-### Progress: 4 of 7 done
+### Progress: 5 of 7 done
 
 | item | status |
 | --- | --- |
@@ -712,7 +712,7 @@ order, or in parallel by different people.
 | Zod → 4, drop `h3-zod` | ✅ done 2026-08-03 |
 | `@directus/sdk` → 24 | ⬜ blocked on verifying against Directus 11.x |
 | `stripe` → 22.4.0 | ⬜ **deliberately last** — see sequencing note |
-| `isomorphic-dompurify` → 3.x | ⬜ no longer security-driven, see above |
+| `isomorphic-dompurify` → 3.x | ✅ done 2026-08-03 — but it costs **+6.4 MB** of build output |
 
 **Sequencing: `stripe` goes last.** Requested 2026-08-03. Everything else in this phase is
 time-unconstrained, but Stripe touches the payment path and may want a second pair of eyes from a
@@ -1077,6 +1077,71 @@ Platform failed to forward this request". Corroborated independently: a plain he
 `admin.programmier.bar` returned `HTTP 000` in the same window. The feed route surfaces a CMS outage as
 a 500, which is exactly why smoke does not gate pull requests.
 
+### `isomorphic-dompurify` 2.20.0 → 3.21.0
+
+Taken before `@directus/sdk` to clear the small items first. It was smaller than the others in code
+terms — two call sites, `components/InnerHtml.vue` and `components/NewsTicker.vue`, neither changed —
+but it is the one item in this phase that costs something, so it was not free.
+
+**Confirmed as staleness, not security.** `dompurify` was already at **3.4.12** from Phase 2's
+transitive update, and 3.21.0 requires only `^3.4.12`, so **the sanitiser itself does not move**. The
+`~2.20.0` pin became `^3.21.0`; nothing in the repo or its history justified the tilde.
+
+#### Sanitiser output is byte-identical — 64 cases
+
+A sanitiser is security-critical, so "it builds" is not evidence. Both call shapes the app actually
+uses — `sanitize(html)` from `InnerHtml.vue` and `sanitize(news, { FORBID_TAGS: ['p'] })` from
+`NewsTicker.vue` — were run against 32 payloads on 2.20.0 and again on 3.21.0, and the outputs diffed:
+
+> **identical, all 64.** Benign CMS markup passes through unchanged; every vector is still neutralised
+> — `<script>` → `""`, `onerror` stripped, `javascript:`/`vbscript:`/`data:text/html` hrefs dropped,
+> `<iframe>`/`<object>`/`<embed>`/`<style>` removed, `<svg/onload>` emptied, and the mXSS
+> `<math><mtext><script>` case reduced to `<math><mtext></mtext></math>`.
+
+#### ⚠️ It costs +6.4 MB of build output
+
+| | before | after |
+| --- | --- | --- |
+| build output | 31.3 MB (11.5 MB gzip) | **37.7 MB** (12.3 MB gzip) |
+
+The cause is `jsdom`, which `isomorphic-dompurify` uses to give DOMPurify a DOM on the server: 26.1.0
+→ 30.0.1, now **10 MB** vendored. jsdom 30 added `undici`, `css-tree`, `lru-cache`,
+`@exodus/bytes`, `@bramus/specificity`, `@asamuzakjp/css-color`, `@asamuzakjp/dom-selector` and
+`@csstools/css-syntax-patches-for-csstree` (dropping `ws`, `nwsapi`, `cssstyle`, `rrweb-cssom`,
+`whatwg-encoding` and the two proxy agents).
+
+Accepted, with the number recorded rather than buried: still far under Vercel's 250 MB function limit,
+no behaviour change, and holding at 2.20.0 would only defer it. But it reframes the item — this was
+picked as low-hanging fruit and turned out to be the only one in the phase with a real cost and no
+security upside. **The better question is whether the server needs jsdom at all**, logged as a
+follow-up.
+
+One genuine gain: the v3 conditional exports split `browser` from `node`, and the client bundle now
+contains **zero** references to jsdom.
+
+#### Node floor raised again
+
+`isomorphic-dompurify@3.20.0` moved to `node ^22.22.2 || ^24.15.0 || >=26.0.0`, above the
+`^22.19.0 || ^24.11.0` Phase 4 set, so `engines.node` follows it. CI's `node-version: 22` resolves to
+22.23.2 and is fine. Local Node 22.17.1 is now two floors behind.
+
+#### Verification
+
+| gate | before | after |
+| --- | --- | --- |
+| `lint` | 0 errors, 134 warnings | 0 errors, 134 warnings |
+| `test` | 52/52 | 52/52 |
+| ratchet | 263 | 263 |
+| `build` | exit 0, 31.3 MB | exit 0, **37.7 MB** |
+| smoke | 18/18 | 18/18 (x2) |
+| `npm audit` | 0 | 0 |
+
+Beyond the gates, all **eight routes that sanitise server-side** were checked to render real content
+(`/impressum`, `/datenschutz`, `/verhaltensregeln`, `/ueber-uns`, `/aufnahmen`, `/kontakt`,
+`/pick-of-the-day`, `/gewinnspiel`) — 14 `inner-html` blocks on `/ueber-uns` alone — with **zero
+`<script>` tags and zero `on*=` handlers inside any sanitised block**. Every script tag on those pages
+is Nuxt's own.
+
 ---
 
 ## Phase 6 — Deliberately deferred
@@ -1198,6 +1263,19 @@ browser-support decision nobody made.
 
 ### 5. Small, verified, uncontroversial
 
+- [ ] ⚠️ **Ask whether the server needs `jsdom` at all — it is now 10 MB of the build output.**
+      `isomorphic-dompurify` exists to give DOMPurify a DOM during SSR, and after the 3.x upgrade jsdom
+      is 26.1.0 → 30.0.1 and accounts for most of a **+6.4 MB** jump (31.3 → 37.7 MB). Only two
+      components sanitise: `InnerHtml.vue` and `NewsTicker.vue`, both on CMS-authored HTML. Options
+      worth weighing: sanitise once at ingest in Directus rather than on every render, or use a
+      sanitiser that does not need a DOM. This is a design question, not an upgrade, which is why it
+      was not folded into Phase 5.
+- [ ] **Consider `clearWindow()` from `isomorphic-dompurify` 3.x.** v3 added it specifically to fix
+      unbounded memory growth in long-running Node processes, where the internal jsdom window
+      accumulates DOM state. Our SSR runs on Vercel functions that are reused while warm, so the
+      pattern applies — though it has not been observed here, and calling it needs a Nitro hook, so it
+      is a deliberate change rather than a drive-by. Pairs naturally with the jsdom question above: if
+      jsdom goes, this becomes moot.
 - [ ] **Give Zod German default messages.** Every field with a custom message is already German, but
       fields without one fall back to Zod's English defaults on a German-language site — a pre-existing
       wart, though Zod 4 reworded them (`Required` → `Invalid input: expected string, received
@@ -1480,3 +1558,5 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | Zod 4 taken with `h3-zod` removed rather than replaced. `h3-zod` existed for one call site, was last published January 2024, pinned `zod ^3`, and peers `h3 ^1` while Nuxt 4 resolves `h3 2.x`. The six sibling routes already used `safeParse` + `createError`, so the replacement is the existing house pattern, not a new one. |
 | 2026-08-03 | Zod 4's reworded **default** messages accepted as-is. Custom German messages are unchanged; the defaults were English before and after, so this is a wording change rather than a regression. Adopting `z.locales.de()` is logged separately because it rewrites many user-facing strings. |
 | 2026-08-03 | Code comments across the series to be audited in their own PR once Phase 5 completes, against one test: *would someone who has never heard of the pull request still need this sentence?* Changelog and measurement narrative move to this document; standing constraints keep a one-line reason and a removal condition in the file. Not a push for fewer comments — the longest blocks sit on config a tidy-minded reader would delete. |
+| 2026-08-03 | `isomorphic-dompurify` reordered ahead of `@directus/sdk` at the maintainer's suggestion, to clear the small items before the one likely to hit a real constraint. |
+| 2026-08-03 | Accepted **+6.4 MB** of build output (31.3 → 37.7 MB) for `isomorphic-dompurify` 3.x, caused by jsdom 26 → 30. No security upside, since `dompurify` was already 3.4.12. Accepted because it is far under Vercel's 250 MB limit, changes no behaviour, and holding at 2.20.0 only defers it — but it prompted the follow-up asking whether the server needs jsdom at all. |
