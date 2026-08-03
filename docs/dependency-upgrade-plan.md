@@ -539,6 +539,32 @@ first candidate fix (keeping `DEFAULT: '100%'`) produced *byte-identical* CSS to
 would not have fixed anything — Tailwind dedupes the five `100%` entries, and `DEFAULT` is not
 special-cased.
 
+**1b. …and lightningcss then quietly narrowed browser support.** Found only by diffing the deployed
+CSS against production, because every gate passed either way.
+
+With the container fixed, the Vite 8 → lightningcss default rewrote **every** media query to Media
+Queries Level 4 range syntax:
+
+| | Nuxt 3 (production) | Nuxt 4 (before this fix) |
+| --- | --- | --- |
+| syntax | `@media(min-width:1024px)` | `@media (width>=1024px)` |
+| breakpoints emitted | 520/640/768/1024/1280/1536/2000 | same — all intact |
+| invalid `min-width:100%` | **1 (live today)** | 0 |
+
+The breakpoints were all correct, so nothing looked wrong. But range syntax requires **Safari 16.4+
+(March 2023)** where `min-width` is universal, and with no `browserslist` in the repo lightningcss
+assumes modern targets and picks the shorter form. On Safari 16.0–16.3 every breakpoint stops
+matching *at once*, so the entire responsive layout would be dropped rather than degrading.
+
+Fixed by pinning `vite.build.cssMinify: 'esbuild'`, which restores the exact `@media(min-width:…)`
+output the app shipped on Nuxt 3. Verified: classic syntax for all seven breakpoints, container down
+to its two effective rules, zero invalid queries, and measured live — at a 1700px viewport
+`.container` caps at 1536px and centres; at 1100px it is full width.
+
+Note this is *not* an argument that lightningcss is wrong — it is faster and its output is valid. It
+should be adopted deliberately, with explicit `css.lightningcss.targets`, alongside Tailwind 4 in
+Phase 6. Taking it as a silent side effect of a framework bump is what made it a problem.
+
 **2. The blank-render smoke assertion never retried.**
 
 `expectPageRendered` awaited `innerText()` once and asserted on the resulting number, so it could not
@@ -762,5 +788,6 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | Phase 4 does **not** move to the `app/` directory. Nuxt 4 auto-detects the v3 layout (verified via generated types), so the move is optional, mechanical, and touches every source path — it belongs in its own PR where the diff is reviewable. |
 | 2026-08-03 | Phase 4 runs the Nuxt 4 codemods **individually rather than via `migration-recipe`**, because the recipe bundles `file-structure` (the `app/` move) and its opt-out is interactive. A manual breaking-change sweep was done first and treated as the real evidence, since the codemods are known to no-op spuriously. |
 | 2026-08-03 | Fixed `theme.container.screens` in `tailwind.config.js`, which emitted the invalid `@media (min-width: 100%)`. Required, not opportunistic: Vite 8 minifies the server build with lightningcss, which rejects it and fails the build. Verified behaviour-neutral by diffing generated CSS — browsers were already discarding the rule as `not all`. |
+| 2026-08-03 | Pinned `vite.build.cssMinify: 'esbuild'`. Vite 8's lightningcss default rewrote every media query to Level 4 range syntax (`(width>=1024px)`), which needs Safari 16.4+ and would drop the *entire* responsive layout at once on 16.0–16.3 — there is no browserslist to constrain it. Every gate passed either way; found only by diffing deployed CSS against production. lightningcss should be adopted deliberately with explicit targets in Phase 6, not inherited as a side effect. |
 | 2026-08-03 | The blank-render smoke assertion now uses `expect.poll`. The Phase 3 "CPU contention" diagnosis found the trigger but not the defect: `innerText()` was read once with no retry. Fixing it let the local worker cap be removed (6 workers pass, ~14s vs ~23s) and retires the `SMOKE_BASE_URL` special case from #227. |
 | 2026-08-03 | The pre-existing `/_ipx` prerender-crawl failure is left **unfixed** in Phase 4 and logged as a follow-up. It is identical on Nuxt 3, affects only full local builds, and fixing it would mean shipping an unrelated nitro config change inside a framework major. |
