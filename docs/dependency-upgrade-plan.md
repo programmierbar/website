@@ -1120,6 +1120,19 @@ ESM natively, so `npm run build`, `nuxt preview`, and all 18 smoke tests were gr
 machine. Vercel's function loader (`/opt/rust/nodejs.js`) does **not** support it. The failure only
 exists on the deployed artifact.
 
+**It is not the Node version — checked, because that is the obvious first guess.** The Vercel project
+setting reads `nodeVersion: "20.x"`, which looks like the culprit and is not. `engines.node` overrides
+it, and the build log of the failing deployment says so explicitly:
+
+```
+Warning: Due to "engines": { "node": "^22.22.2 || ^24.15.0 || >=26.0.0" } in your `package.json` file,
+the Node.js Version defined in your Project Settings ("20.x") will not apply,
+Node.js Version "24.x" will be used instead.
+```
+
+So the function that threw `ERR_REQUIRE_ESM` was running **Node 24.x**, which supports `require(esm)`
+natively. Raising the project's Node version would not have helped. Do not spend time on it.
+
 It was caught by the smoke suite running against the Vercel preview — the second time that gate has
 paid for itself on a defect no local check could see (the first being Pinia 4's production-only SSR
 crash).
@@ -1158,7 +1171,8 @@ local Node hides it:
 
 1. `html-encoding-sniffer` switches to a dynamic `import()` or `@exodus/bytes` ships a CJS entry.
 2. jsdom drops or replaces that dependency.
-3. Vercel's function loader gains `require(esm)` support.
+3. Vercel's function loader gains `require(esm)` support — a loader change, **not** a Node version
+   bump; the failing deployment was already on Node 24.
 
 If it becomes genuinely necessary sooner — v3's `clearWindow()` is the only real draw — the cheapest
 workaround to try is `nitro.externals.inline: ['html-encoding-sniffer']`, so rollup resolves the ESM
@@ -1337,6 +1351,15 @@ browser-support decision nobody made.
 - [ ] **Re-check the `brace-expansion` advisory.** It stopped being reported during Phase 4, but
       the package is **still 2.1.4, unchanged** — the advisory data moved, not our tree. Treat it as
       unresolved rather than fixed.
+- [ ] ⚠️ **The Vercel project's `nodeVersion` says `20.x` but is silently overridden to `24.x`.**
+      `engines.node` in `nuxt-app/package.json` wins, and every build log carries a warning saying so.
+      Two reasons to align the setting anyway: the dashboard currently tells anyone who looks the wrong
+      answer, and it is a **latent trap** — if `engines.node` were ever simplified or dropped, the
+      project would silently fall back to Node 20, below the `^22.19.0` floor Nuxt 4.5.1 declares.
+      Changing it is a no-op today, which is exactly why it is safe to do. Note that 24.x is already
+      what runs, so this does **not** pre-empt Phase 6's "Node 22 → 24" item — that one is about
+      `engines`, `.nvmrc` and the workflows agreeing, and should be told that production is already
+      on 24.
 - [ ] **Add a `.nvmrc`.** None exists, and Phase 4 raised `engines.node` to
       `^22.19.0 || ^24.11.0 || >=26.0.0` — ahead of at least one developer's local Node. Pairs
       naturally with Phase 6's Node 24 item, which already says to move `engines`, `.nvmrc` and
@@ -1583,3 +1606,4 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | `isomorphic-dompurify` reordered ahead of `@directus/sdk` at the maintainer's suggestion, to clear the small items before the one likely to hit a real constraint. |
 | 2026-08-03 | `isomorphic-dompurify` 3.x **reverted, staying at `~2.20.0`**. jsdom 30 pulls `html-encoding-sniffer@6`, which `require()`s the ESM-only `@exodus/bytes`; Vercel's function loader cannot do `require(esm)`, so the ISR catch-all 500s. Every local gate passed because Node ≥22.12 supports `require(esm)` natively — caught only by smoke against the Vercel preview. No security upside (dompurify already 3.4.12) and +6.4 MB of cost, so a workaround was not justified. |
 | 2026-08-03 | Reverting a dependency needs `package.json` **and** `package-lock.json` restored from `main`. `npm install <old-version>` downgraded the direct dependency but left jsdom 30 hoisted with 26 nested beneath, keeping 34 stale packages — including the ESM-only one — which `npm ci` then faithfully reproduced. |
+| 2026-08-03 | Ruled out the Node version as the cause of the `isomorphic-dompurify` failure. The project setting reads `20.x`, which looks decisive and is not — `engines.node` overrides it and the failing build log states that **Node 24.x** was used. Recorded in the plan because it is the obvious first hypothesis; it also revealed that the project setting is stale and a latent trap if `engines.node` is ever simplified. |
