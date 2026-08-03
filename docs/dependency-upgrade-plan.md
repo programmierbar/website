@@ -712,7 +712,7 @@ order, or in parallel by different people.
 time-unconstrained, but Stripe touches the payment path and may want a second pair of eyes from a
 colleague, so it should not be the thing blocking the rest. **`stripe` is now the only item left.**
 
-The [comment audit](#-comment-audit-across-the-upgrade-series--done-2026-08-03) was originally
+The [comment audit](#comment-audit-across-the-upgrade-series--done-2026-08-03) was originally
 scheduled for after this phase, but ran early while `stripe` waits on a colleague — it was independent
 of the remaining item, so waiting would only have meant idling.
 
@@ -1538,7 +1538,7 @@ browser-support decision nobody made.
   to do now; worth remembering when Nuxt 5 appears, since Nuxt 3's EOL is the precedent for how
   quickly that becomes urgent.
 
-### ✅ Comment audit across the upgrade series — done 2026-08-03
+### Comment audit across the upgrade series — done 2026-08-03
 
 **Done ahead of schedule.** It was planned for after Phase 5, but `stripe` — the last Phase 5 item —
 is waiting on a colleague who knows the payment path, and this audit is independent of it, so it ran
