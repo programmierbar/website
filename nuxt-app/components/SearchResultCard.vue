@@ -28,8 +28,9 @@
               <!-- Description -->
               <p
                 class="mt-4 line-clamp-4 text-sm font-light leading-normal text-white md:text-lg lg:mt-8 lg:text-xl lg:leading-relaxed"
-                v-html="viewModel.description"
-              />
+              >
+                {{ viewModel.description }}
+              </p>
             </div>
         </nuxt-link>
     </div>
@@ -37,6 +38,7 @@
 
 <script setup lang="ts">
 import LeaveSiteIcon from '~/assets/icons/leave-site.svg'
+import { getPlainText } from '~/helpers/getPlainText'
 import { getFullPodcastTitle, getFullSpeakerName } from 'shared-code'
 import { computed } from 'vue'
 
@@ -86,35 +88,35 @@ const viewModel = computed(() => {
         `/podcast/${props.item.slug}`,
         getFullPodcastTitle(props.item) || "",
         "Podcast // " + publishDate,
-        props.item.description?.replace(/<[^<>]+>/g, "") || "",
+        getPlainText(props.item.description),
       )
     case "transcript":
       return new ViewModel(
         `/podcast/${props.item.slug}`,
         getFullPodcastTitle(props.item) || "",
         "Podcast // " + publishDate,
-        props.item.transcript?.replace(/<[^<>]+>/g, "") || "",
+        getPlainText(props.item.transcript),
       )
     case "meetup":
       return new ViewModel(
         `/meetup/${props.item.slug}`,
         props.item.title || "",
         "Meetup // " + publishDate,
-        props.item.description?.replace(/<[^<>]+>/g, "") || "",
+        getPlainText(props.item.description),
       )
     case "speaker":
       return new ViewModel(
         `/hall-of-fame/${props.item.slug}`,
         getFullSpeakerName(props.item) || "",
         "Speaker // " + publishDate,
-        props.item.description?.replace(/<[^<>]+>/g, "") || "",
+        getPlainText(props.item.description),
       )
     case "pick_of_the_day":
       return new ViewModel(
         props.item.website_url,
         props.item.name || "",
         "Pick of the Day // " + publishDate,
-        props.item.description?.replace(/<[^<>]+>/g, "") || "",
+        getPlainText(props.item.description),
         true,
       )
     default:

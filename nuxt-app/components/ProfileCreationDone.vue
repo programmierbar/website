@@ -1,7 +1,13 @@
 <script setup lang="ts">
-defineProps<{
+import DOMPurify from 'isomorphic-dompurify'
+import { computed } from 'vue'
+
+const props = defineProps<{
     mainText: string
 }>()
+
+// CMS rich text, so it keeps its markup — but it must be sanitised before reaching v-html.
+const sanitizedMainText = computed(() => DOMPurify.sanitize(props.mainText))
 </script>
 
 <template>
@@ -9,7 +15,7 @@ defineProps<{
         <div class="flex-col items-center justify-center md:flex">
             <div
                 class="mb-2 mt-5 text-3xl font-semibold italic leading-[3rem] text-white md:text-4xl"
-                v-html="mainText"
+                v-html="sanitizedMainText"
             />
         </div>
 

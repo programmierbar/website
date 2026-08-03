@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import ProfilePicture from '~/components/ProfilePicture.vue'
 import { useProfileCreationStore } from '~/composables/useProfileCreationStore'
+import DOMPurify from 'isomorphic-dompurify'
 import { computed, ref, watch } from 'vue'
 
-defineProps<{
+const props = defineProps<{
     heading: string
     introText: string
 }>()
+
+// CMS rich text, so it keeps its markup — but it must be sanitised before reaching v-html.
+const sanitizedIntroText = computed(() => DOMPurify.sanitize(props.introText))
 
 const emit = defineEmits(['validityChange'])
 const store = useProfileCreationStore()
@@ -40,7 +44,7 @@ function updateLastName(value: string) {
             </div>
         </div>
 
-        <div class="intro-text mb-2 mt-5 text-base font-light text-white md:text-4xl" v-html="introText"></div>
+        <div class="intro-text mb-2 mt-5 text-base font-light text-white md:text-4xl" v-html="sanitizedIntroText"></div>
         <ProfilePicture class="mb-10" />
         <div class="flex w-full flex-col items-center justify-center">
             <InputFieldWithHeadline
