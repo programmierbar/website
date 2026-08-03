@@ -12,7 +12,7 @@
     "rebaseWhen": "conflicted",
 
     "major": {
-        "description": "Majors never open a PR on their own. They appear on the dependency dashboard and are created only when someone ticks the box — which is how the upgrade plan's phases stay one-per-PR.",
+        "description": "Majors never open a PR on their own — they appear on the dependency dashboard and are created only when someone ticks the box.",
         "dependencyDashboardApproval": true,
         "labels": ["🤖 automated", "dependencies", "major"]
     },
@@ -42,7 +42,7 @@
         {
             "description": "Lint and format tooling. Non-runtime, so grouping them keeps the PR count down.",
             "matchFileNames": ["nuxt-app/**"],
-            "matchPackageNames": ["eslint", "eslint-**", "@nuxt/eslint-config", "prettier", "prettier-**", "@ianvs/**"],
+            "matchPackageNames": ["eslint", "eslint-**", "@nuxt/eslint", "prettier", "prettier-**", "@ianvs/**"],
             "matchUpdateTypes": ["minor", "patch"],
             "groupName": "linting and formatting"
         },
@@ -53,13 +53,7 @@
             "groupName": "type definitions"
         },
         {
-            "description": "@nuxt/image-edge is an abandoned nightly channel; chasing its tags produces pure noise. Phase 3 of the upgrade plan removes the package — delete this rule then.",
-            "matchFileNames": ["nuxt-app/**"],
-            "matchPackageNames": ["@nuxt/image-edge"],
-            "enabled": false
-        },
-        {
-            "description": "Tailwind is deliberately held at v3. Moving to v4 is a config-format rewrite tracked as Phase 6, not a routine bump.",
+            "description": "Tailwind is deliberately held at v3. Moving to v4 is a config-format rewrite, not a routine bump.",
             "matchFileNames": ["nuxt-app/**"],
             "matchPackageNames": ["tailwindcss", "@tailwindcss/**", "@nuxtjs/tailwindcss"],
             "matchUpdateTypes": ["major"],

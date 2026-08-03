@@ -24,8 +24,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'directus-cms/extensions/directus-extension-programmierbar-bundle/package-lock.json'
 
-      # `npm ci` (not `npm install`) so the lockfile is authoritative — otherwise CI can silently
-      # resolve different versions than a developer, which defeats the point of testing the diff.
+      # Keep `npm ci`, not `npm install`, so the lockfile stays authoritative.
       - name: Install dependencies
         run: npm ci
 
@@ -54,21 +53,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # `lint`, not `eslint` — the latter runs with --fix, so it mutates instead of failing and
-      # can never gate anything.
+      # Keep `lint`, not `eslint` — the latter runs with --fix, so it mutates instead of failing.
       - name: Run ESLint
         run: npm run lint
 
       - name: Run tests
         run: npm test
 
-      # Fails only if the type-error count rises above .typecheck-baseline. See
-      # scripts/typecheck-ratchet.mjs for why this is a ratchet and not a hard gate.
+      # Fails only if the error count rises above .typecheck-baseline; see the script for why.
       - name: Typecheck (ratchet)
         run: npm run typecheck:ratchet
 
-      # The highest-signal check for a dependency change: does the app still compile and bundle?
-      # Route discovery is skipped so the build does not depend on the production CMS.
       - name: Build
         env:
           SKIP_PRERENDER_ROUTE_DISCOVERY: 'true'

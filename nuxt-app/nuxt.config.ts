@@ -77,16 +77,9 @@ export default defineNuxtConfig({
             './plugins/vue-json-pretty.js',
         ],
         build: {
-            // Vite 8 defaults CSS minification to lightningcss, which rewrites every media query
-            // to Level 4 range syntax — `@media (width>=1024px)` instead of `@media
-            // (min-width:1024px)`. That is shorter but needs Safari 16.4+ (March 2023), and there
-            // is no browserslist here to constrain it, so lightningcss assumes modern targets.
-            // On Safari 16.0–16.3 the whole responsive layout would be dropped rather than
-            // degrading, since every breakpoint stops matching at once.
-            //
-            // Pinning esbuild keeps the `min-width` output the app shipped on Nuxt 3. Revisit
-            // alongside Tailwind 4 (Phase 6), where lightningcss can be adopted deliberately with
-            // explicit `css.lightningcss.targets` rather than as a silent default.
+            // Do not remove without setting `css.lightningcss.targets`: Vite's lightningcss default
+            // rewrites media queries to Level 4 range syntax, which needs Safari 16.4+ and drops
+            // every breakpoint at once on older versions rather than degrading.
             cssMinify: 'esbuild',
         },
     },
@@ -107,9 +100,8 @@ export default defineNuxtConfig({
         'nuxt-jsonld',
         '@pinia/nuxt',
         '@nuxtjs/algolia',
-        // Generates the ESLint flat config from this file (dirs, globals, generated files) into
-        // .nuxt/eslint.config.mjs, which eslint.config.mjs then extends. Replaces the hand-written
-        // .eslintrc.js plus @nuxt/eslint-config@0.2 and the unmaintained eslint-plugin-nuxt.
+        // Generates .nuxt/eslint.config.mjs, which eslint.config.mjs extends — so linting
+        // requires `nuxt prepare` to have run.
         '@nuxt/eslint',
     ],
 
@@ -120,10 +112,8 @@ export default defineNuxtConfig({
                 return
             }
 
-            // CI builds the app to prove a dependency change still compiles; that check must not
-            // depend on the production CMS being reachable, or an unrelated Directus blip turns
-            // every PR red. Setting this opts out of route discovery only — the bundle is still
-            // built in full. Deploys never set it, so prerendering is unaffected.
+            // Lets CI build without the CMS being reachable. Skips route discovery only — the
+            // bundle is still built in full, and deploys never set it.
             if (process.env.SKIP_PRERENDER_ROUTE_DISCOVERY === 'true') {
                 console.info('[nitro:config] SKIP_PRERENDER_ROUTE_DISCOVERY set — skipping CMS route discovery')
                 return
@@ -189,16 +179,8 @@ export default defineNuxtConfig({
 
     // https://image.nuxt.com/get-started/configuration
     //
-    // No `alias` entry on purpose. There used to be `alias: { cms: '<cms>/assets' }`, intended so
-    // that `src="/cms/<file-id>"` would expand to the Directus asset URL. It never worked, for
-    // three independent reasons, and was removed rather than fixed because nothing needs it:
-    //   1. Nothing referenced it — image URLs come from `helpers/getAssetUrl.ts`, which already
-    //      builds absolute Directus URLs, and Algolia results carry absolute URLs too.
-    //   2. Alias keys must start with `/`. The resolver normalises a relative src with
-    //      `withLeadingSlash` before matching, so `input.startsWith('cms')` could never be true.
-    //   3. Decisively: alias resolution is guarded by `if (!provider.supportsAlias)`, and both ipx
-    //      providers set `supportsAlias: true`. This app uses ipx, so that branch never ran.
-    // If a shorthand is ever wanted, the working form is `alias: { '/cms': '<cms>/assets' }`.
+    // An `alias` entry would not work here: this app uses ipx, and alias resolution is skipped when
+    // the provider sets `supportsAlias: true`, as both ipx providers do. Keys must also start with `/`.
     image: {
         domains: [DIRECTUS_CMS_URL.replace(/^https?:\/\//, '')],
         screens: {
@@ -219,47 +201,13 @@ export default defineNuxtConfig({
             failOnError: true,
         },
         externals: {
-            // Bundle pinia into the server output instead of leaving it external.
+            // Do not remove: Pinia 4 ships only its bundler build, so externalising it leaves Vue's
+            // compile-time flags as undefined globals and every SSR route 500s. Inlining puts it
+            // through rollup, which substitutes them. Only reproducible under NODE_ENV=production,
+            // so no gate here catches it — retest with a real request, not `npm run build`.
             //
-            // Without this, every SSR request 500s in production and only in production. The real
-            // cause is:
-            //   ReferenceError: __VUE_PROD_DEVTOOLS__ is not defined
-            //     at createPinia (.output/server/node_modules/pinia/dist/pinia.js)
-            // but that is thrown inside the Pinia plugin's setup() and swallowed. What actually
-            // reaches the log is a misleading downstream symptom — `Cannot read properties of
-            // undefined (reading 'state')` at `app:rendered`, i.e. nuxtApp.$pinia missing because
-            // setup already died. Do not chase that message; it is why the community answer blames
-            // @pinia/nuxt and suggests downgrading it.
-            //
-            // Pinia 4 exports a single unconditional entry, `./dist/pinia.js`, which is the
-            // bundler build — it references Vue's compile-time feature flags raw, expecting a
-            // bundler to substitute them (its esm-browser and iife builds have them pre-baked;
-            // this one has five). Nitro externalises dependencies into
-            // `.output/server/node_modules`, so nothing substitutes anything and the flag is just
-            // an undefined global at runtime. Vue itself avoids this by shipping a `node`
-            // conditional export to a CJS build that branches on `process.env.NODE_ENV`; Pinia 4
-            // has no such condition.
-            //
-            // It is production-only because the guard reads
-            // `process.env.NODE_ENV !== 'production' || __VUE_PROD_DEVTOOLS__` — in development the
-            // first clause short-circuits and the flag is never evaluated. So `nuxt dev` and a bare
-            // `node .output/server/index.mjs` both look fine; `nuxt preview` and any real deploy
-            // set NODE_ENV=production and every route 500s.
-            //
-            // Inlining puts pinia through rollup, which substitutes the flags (verified: zero
-            // unreplaced references, and exactly one `createPinia` in the output, so there is no
-            // second module instance splitting the store registry).
-            //
-            // THIS IS TEMPORARY. Pinia 2 and 3 both shipped a conditional export resolving Node +
-            // production to a pre-built `dist/pinia.prod.cjs` with the flags already substituted;
-            // 4.0.0 deleted the condition. Remove this line when upstream restores a `node`
-            // condition in `exports["."]` or guards the flag reads with `typeof`. Check cheaply with
-            // `npm view pinia exports --json` — if `"."` is still a bare string, nothing has changed.
-            //
-            // Retest with NODE_ENV=production and a real request. `npm run build`, `lint`, `test`
-            // and the typecheck ratchet all pass whether or not this is broken.
-            //
-            // Full context, including what to file upstream: docs/dependency-upgrade-plan.md,
+            // Temporary. Remove once `npm view pinia exports --json` shows a `node` or `production`
+            // condition on `"."` again. Full diagnosis: docs/dependency-upgrade-plan.md,
             // "Waiting on upstream: the Pinia 4 export map".
             inline: ['pinia'],
         },

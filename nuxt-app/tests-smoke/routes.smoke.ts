@@ -3,31 +3,24 @@ import { expect, test, type Page } from '@playwright/test'
 /**
  * Route smoke tests — the check the Vitest suite cannot make: does the page actually render?
  *
- * Assertions are deliberately structural rather than content-specific. The pages are driven by
- * live Directus content, so anything that asserts on copy would break every time an editor
- * changes a headline. What these catch is the failure mode that matters during a dependency
- * upgrade: a route that 500s, renders the error page, or comes back blank.
+ * Keep assertions structural, never content-specific: these pages are driven by live Directus
+ * content, so asserting on copy breaks whenever an editor changes a headline.
  */
 
 /**
- * The blank-page check: a route can return 200 and still render nothing if the page component
- * throws or resolves to empty data. Note this must assert on `<main>` specifically — the app
- * shell (header, footer, podcast player) lives outside `<nuxt-page />` in app.vue and renders
- * even when the page itself does not.
+ * The blank-page check: a route can return 200 and still render nothing if the page component throws
+ * or resolves to empty data. Must assert on `<main>` specifically — the app shell (header, footer,
+ * podcast player) lives outside `<nuxt-page />` and renders even when the page does not.
  */
 async function expectPageRendered(page: Page, label: string) {
     await expect(page.locator('h1', { hasText: /^Error \d{3}$/ }), `${label} rendered the error page`).toHaveCount(0)
 
-    // One locator for both assertions, so it is explicit that they check the same element.
     const main = page.locator('main')
     await expect(main).toBeVisible()
 
-    // `expect.poll`, not a bare `expect` over an awaited `innerText()`. `<main>` becomes visible
-    // before the page component has necessarily painted its content, so reading the text once and
-    // asserting on that number is a race with no retry — it reported "empty <main>" on pages whose
-    // SSR response was verified complete. Polling keeps the visible-text semantics (hidden content
-    // still counts as blank, which is the failure this check exists to catch) and simply waits for
-    // it, up to the `expect` timeout.
+    // Must poll, not assert on a single awaited `innerText()`: `<main>` becomes visible before the
+    // page has necessarily painted, so reading once is a race with no retry. `innerText` over
+    // `textContent` on purpose — hidden content should still count as blank.
     await expect
         .poll(async () => (await main.innerText()).trim().length, {
             message: `${label} rendered an empty <main>`,
@@ -75,9 +68,9 @@ test('renders a podcast detail page', async ({ page }) => {
     expect(response?.status(), `${href} should return 200`).toBe(200)
     await expectPageRendered(page, href!)
 
-    // Separate signal from the render check above: the player mounts from app.vue on *every* page,
-    // outside <nuxt-page />, so this proves the shell hydrated — not that this page rendered. It is
-    // invisible until a podcast is selected, hence attachment rather than visibility.
+    // A separate signal from the render check above: the player mounts from app.vue on *every* page,
+    // so this proves the shell hydrated, not that this page rendered. Invisible until a podcast is
+    // selected, hence attachment rather than visibility.
     await expect(page.getByTestId('podcast-player')).toBeAttached()
 })
 
