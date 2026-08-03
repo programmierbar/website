@@ -1,6 +1,8 @@
 // @ts-check
+import { existsSync } from 'node:fs'
 import prettier from 'eslint-config-prettier'
-import withNuxt from './.nuxt/eslint.config.mjs'
+
+const GENERATED_CONFIG = './.nuxt/eslint.config.mjs'
 
 /**
  * ESLint flat config. Replaces `.eslintrc.js`, which extended `@nuxt/eslint-config@0.2`,
@@ -10,7 +12,30 @@ import withNuxt from './.nuxt/eslint.config.mjs'
  * `nuxt.config.ts`, so it already knows this app's directory layout, auto-imported globals and
  * generated files. That means **`nuxt prepare` must have run before linting** — it does, via the
  * `postinstall` script, which `npm ci` triggers in CI.
+ *
+ * Imported dynamically only so that the "you haven't generated it yet" case — a fresh clone, a
+ * deleted `.nuxt`, `npm ci --ignore-scripts` — reports something actionable instead of a bare
+ * `ERR_MODULE_NOT_FOUND`. The scaffolded config from `@nuxt/eslint` uses a static import; this is
+ * the one deliberate deviation from it.
  */
+const { default: withNuxt } = await import(GENERATED_CONFIG).catch((error) => {
+    // Translate ONLY "the generated file itself is absent". Anything else — a syntax error inside
+    // the generated config, or a module *it* imports being missing — has to surface as itself; a
+    // handler that blames `nuxt prepare` for unrelated breakage is worse than the raw error it
+    // replaces.
+    //
+    // Decided on the filesystem rather than by matching the error message. Node phrases this as
+    // `Cannot find module 'X' imported from Y`, so a missing *transitive* import still names this
+    // file as Y — a message check keys off the importer and mistakes a broken dependency for a
+    // missing config. Verified: that exact case was misreported before this was changed.
+    if (existsSync(new URL(GENERATED_CONFIG, import.meta.url))) throw error
+
+    throw new Error(
+        `ESLint cannot run: ${GENERATED_CONFIG} has not been generated.\n` +
+            `It is written by the @nuxt/eslint module, so run \`npm run postinstall\` (nuxt prepare) first.\n` +
+            `A plain \`npm install\`/\`npm ci\` does this automatically unless scripts are skipped.`
+    )
+})
 export default withNuxt(
     {
         name: 'programmierbar/vue',

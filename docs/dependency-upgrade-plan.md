@@ -935,8 +935,24 @@ Error [ERR_MODULE_NOT_FOUND]: Cannot find module '.../.nuxt/eslint.config.mjs'
 
 Verified by moving `.nuxt` aside. This is fine in CI — `npm ci` runs the `postinstall` script, which
 is `nuxt prepare`, before the lint step — but it is a new coupling, and it would break under
-`npm ci --ignore-scripts`. The error message names the missing file, so it should not cost anyone
-much time.
+`npm ci --ignore-scripts`.
+
+Addressing review, the import is now dynamic so this case reports something actionable instead of a
+bare `ERR_MODULE_NOT_FOUND`. The translation is deliberately narrow, and **decided on the filesystem
+rather than by matching the error message**: Node phrases the failure as
+`Cannot find module 'X' imported from Y`, so a missing *transitive* import still names the generated
+config as `Y`. A message check therefore keys off the importer and mistakes a broken dependency for a
+missing config — which the first attempt at this did, caught by testing it. Four paths are covered:
+
+| situation | what you get |
+| --- | --- |
+| generated config present | normal lint run |
+| `.nuxt` absent | "run `npm run postinstall` (nuxt prepare)" |
+| syntax error *inside* the generated config | the `SyntaxError` itself |
+| module the generated config imports is missing | `ERR_MODULE_NOT_FOUND` naming *that* module |
+
+This is the one deliberate deviation from the config `@nuxt/eslint` scaffolds, which uses a static
+import.
 
 #### `--fix` is safe again
 
