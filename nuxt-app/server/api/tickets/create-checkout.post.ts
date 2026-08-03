@@ -154,7 +154,7 @@ export default defineEventHandler(async (event) => {
     const parseResult = CreateCheckoutSchema.safeParse(rawBody)
     if (!parseResult.success) {
         const issue = parseResult.error.issues[0]
-        const key = issue?.path?.[0] ?? 'input'
+        const key = String(issue?.path?.[0] ?? 'input')
         const message = issue?.message ?? 'Validierungsfehler'
         throw createError({ statusCode: 400, message: `${key}: ${message}` })
     }

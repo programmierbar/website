@@ -35,7 +35,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | TypeScript 5.9 → 6.0.3 (interstitial, own PR) | ✅ Done (2026-07-31) |
 | 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ✅ Done (2026-07-31) |
 | 4 | **Nuxt 3 → Nuxt 4** | ✅ Done (2026-08-03) |
-| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 3 of 7 (`nodemailer`, Pinia, ESLint; **audit at zero**) |
+| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 4 of 7 (`nodemailer`, Pinia, ESLint, Zod; **audit at zero**) |
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
@@ -681,9 +681,7 @@ order, or in parallel by different people.
       `@nuxt/eslint-config@1.16.0` *depends* on `@eslint/js ^10.0.1`, so 10 is its primary target,
       and `@nuxt/eslint`, `@typescript-eslint` 8.65 and `eslint-plugin-vue` 10.10 all peer
       `^9 || ^10`. Choosing 9 would now be the *less* aligned option. Details below.
-- [ ] **Zod 3.25.76 → 4.x** and **drop `h3-zod`**. `h3-zod` is unmaintained (last publish January
-      2024) and expects Zod 3, so it blocks the upgrade. Only **1 usage** — replace with direct
-      `zod` parsing. Zod is imported in 4 files total.
+- [x] **Zod 3.25.76 → 4.4.3** and **dropped `h3-zod`** — ✅ done 2026-08-03. Details below.
 - [ ] **`@directus/sdk` 21.3.0 → 24.0.0.** Largest blast radius of this phase — 4 files, but one
       of them is the 884-line `useDirectus.ts`. Check the v22/23/24 changelogs for query-builder
       and type-inference changes. Requires Node `>=22` — satisfied.
@@ -704,17 +702,26 @@ order, or in parallel by different people.
       current**: Phase 2 moved `dompurify` 3.4.2 → 3.4.12 transitively and those advisories are
       gone, so this is now a staleness item rather than a security one. Reprioritise accordingly.
 
-### Progress: 3 of 7 done
+### Progress: 4 of 7 done
 
 | item | status |
 | --- | --- |
 | `nodemailer` → 9.0.3 | ✅ done 2026-08-03 — audit reached zero |
 | Pinia → 4.0.2 | ✅ done 2026-08-03 — needed a nitro workaround |
 | ESLint → **10** + flat config | ✅ done 2026-08-03 — see the version note below |
-| Zod → 4, drop `h3-zod` | ⬜ |
+| Zod → 4, drop `h3-zod` | ✅ done 2026-08-03 |
 | `@directus/sdk` → 24 | ⬜ blocked on verifying against Directus 11.x |
-| `stripe` → 22.4.0 | ⬜ |
+| `stripe` → 22.4.0 | ⬜ **deliberately last** — see sequencing note |
 | `isomorphic-dompurify` → 3.x | ⬜ no longer security-driven, see above |
+
+**Sequencing: `stripe` goes last.** Requested 2026-08-03. Everything else in this phase is
+time-unconstrained, but Stripe touches the payment path and may want a second pair of eyes from a
+colleague, so it should not be the thing blocking the rest. Remaining order: `@directus/sdk`,
+`isomorphic-dompurify`, then `stripe`.
+
+When the last of those lands, do the
+[comment audit](#comment-audit-across-the-upgrade-series--do-this-when-phase-5-completes) before
+starting Phase 6.
 
 ### `nodemailer` 8.0.11 → 9.0.3
 
@@ -996,6 +1003,80 @@ preview where images are cached.
 | smoke | 18/18 | 18/18 (x4) |
 | `npm audit` | 0 | 0 |
 
+### Zod 3.25.76 → 4.4.3, and `h3-zod` dropped
+
+`h3-zod` existed for **one call site** and pinned `zod ^3`, so a package last published in
+**January 2024** was holding back a major. It also peers `h3 ^1.6.0` while Nuxt 4 resolves `h3 2.x`
+for the server — already a mismatch before Zod entered the picture.
+
+That one site, `server/api/checkin/scan.post.ts`, now validates the way **its six sibling routes
+already did** — `Schema.safeParse(await readBody(event))` plus `createError({ statusCode: 400 })`. So
+this removes a dependency *and* the odd one out. Checked the client first: `pages/admin/checkin.vue`
+reads `err?.data?.message || err?.message`, which the repo pattern populates, whereas `h3-zod` put the
+whole `ZodError` in `data`.
+
+#### Validation behaviour is unchanged — measured, not assumed
+
+Zod 4 rewrote its string-format validators, and this app validates emails on the newsletter and
+contact paths, so "does it compile" was not the question. The real schemas were run against a fixed
+set of **50 inputs** on Zod 3, then again on Zod 4, and the accept/reject outcomes diffed:
+
+> **identical** — every email (including `plus+tag@`, IDN `münchen.de`, quoted local parts,
+> double-dots, `ip@[127.0.0.1]`), every URL, every UUID, plus `z.preprocess` and `.refine`.
+
+#### Five type errors, both causes real
+
+The ratchet caught 263 → 268. Both underlying changes are genuine, and both were fixed rather than
+absorbed into the baseline:
+
+- **`issue.path` is now `PropertyKey[]`** (was `(string | number)[]`), so `` `${key}` `` on a path
+  segment became `TS2731` in four routes. Zod is flagging a real hazard: converting a symbol in a
+  template literal throws at runtime. Now `String(...)`. Our schemas have no symbol keys, so this was
+  never reachable in practice — but the type is honest and the fix is free.
+- **`errorMap` was replaced by `error`** on `z.enum`, one site. Confirmed empirically that `error:`,
+  `error: () => …` and the deprecated `message:` all yield the identical string; took `error:` as the
+  current form.
+
+#### Default messages changed wording — worth knowing
+
+Custom German messages are preserved exactly. But Zod's *defaults* were reworded, and those reach
+users on fields that carry no custom message:
+
+| case | Zod 3 | Zod 4 |
+| --- | --- | --- |
+| missing required string | `Required` | `Invalid input: expected string, received undefined` |
+| `.min(1)` on `''` | `String must contain at least 1 character(s)` | `Too small: expected string to have >=1 characters` |
+| bad email | `Invalid email` | `Invalid email address` |
+| bad URL | `Invalid url` | `Invalid URL` |
+| bad enum | `Invalid enum value. Expected 'a' \| 'b', received 'z'` | `Invalid option: expected one of "a"\|"b"` |
+
+Both sets are English on a German-language site — a pre-existing wart, not a regression. Zod 4 does
+now ship locales, and `z.config(z.locales.de())` was verified to produce
+`Ungültige Eingabe: erwartet string, erhalten undefined`. That is a genuine improvement the upgrade
+unlocks, logged as a follow-up rather than taken here, since it rewrites many user-facing strings and
+deserves its own review.
+
+#### Verification
+
+Endpoints exercised against the built server, not just unit-tested: `POST /api/vote` with `{}`
+returns **400** (Zod ran), and the rewritten `POST /api/checkin/scan` returns **401** (auth correctly
+precedes validation).
+
+| gate | before | after |
+| --- | --- | --- |
+| `lint` | 0 errors, 134 warnings | 0 errors, 134 warnings |
+| `test` | 52/52 | 52/52 |
+| ratchet | 263 | 263 (268 before the two fixes) |
+| `build` | exit 0, 30.9 MB | exit 0, 31.3 MB |
+| smoke | 18/18 | 18/18 (x3) |
+| `npm audit` | 0 | 0 |
+
+Two smoke runs failed mid-verification and **neither was this change**. One was the podcast page under
+contention; the other was `/feed/news.xml` returning 500 because the **CMS returned 503** — "App
+Platform failed to forward this request". Corroborated independently: a plain health check against
+`admin.programmier.bar` returned `HTTP 000` in the same window. The feed route surfaces a CMS outage as
+a 500, which is exactly why smoke does not gate pull requests.
+
 ---
 
 ## Phase 6 — Deliberately deferred
@@ -1117,6 +1198,12 @@ browser-support decision nobody made.
 
 ### 5. Small, verified, uncontroversial
 
+- [ ] **Give Zod German default messages.** Every field with a custom message is already German, but
+      fields without one fall back to Zod's English defaults on a German-language site — a pre-existing
+      wart, though Zod 4 reworded them (`Required` → `Invalid input: expected string, received
+      undefined`). Zod 4 ships locales, and `z.config(z.locales.de())` was verified to produce
+      `Ungültige Eingabe: erwartet string, erhalten undefined`. One line, but it rewrites many
+      user-facing strings, so it wants its own review rather than riding along with an upgrade.
 - [ ] ⚠️ **`components/ConferenceTickets.vue` appears to be entirely unused.** Nothing renders it,
       and none of its three props is read inside it — `ticketsOnSale` is neither passed by any caller
       nor referenced in the component. Found while fixing a lint error in it. Either wire it up or
@@ -1166,6 +1253,53 @@ browser-support decision nobody made.
 - **`@nuxtjs/algolia` is the module most likely to need attention at Nuxt 5** (Appendix A). Nothing
   to do now; worth remembering when Nuxt 5 appears, since Nuxt 3's EOL is the precedent for how
   quickly that becomes urgent.
+
+### Comment audit across the upgrade series — do this when Phase 5 completes
+
+**Scheduled deliberately: after Phase 5, before Phase 6.** Agreed with the maintainer 2026-08-03,
+prompted by a review comment on #233 that flagged a code comment as pull-request rationale. It was
+right, and the same habit runs through the whole series, so this is a series-wide pass rather than a
+one-file fix.
+
+**The test a comment has to pass:** *would someone who has never heard of the pull request still need
+this sentence?*
+
+That splits cleanly:
+
+| verdict | what it looks like | where it belongs |
+| --- | --- | --- |
+| **Keep** | A standing constraint someone would otherwise violate — "this looks removable but is not, because X" | In the file. The failure mode is a future reader deleting it, so it has to be where they are. |
+| **Cut** | Changelog — "X replaced Y", "package Z was unmaintained", "verified identical to before" | The PR and commit message. Written for an audience that reads the file once and never returns. |
+| **Cut** | Measurement narrative — "6 workers produced 6 failures", "1.3–1.6s versus 2.8–8.7s", "my first attempt was wrong" | **This document.** It is genuinely worth keeping; it is just not worth keeping *there*. |
+
+**The honest diagnosis**, in the maintainer's framing: these comments were treating code as a place to
+prove the work was done, which is the wrong audience.
+
+**Explicit non-goal: this is not "fewer comments everywhere".** Some of the longest blocks are
+load-bearing *precisely because* they sit on unusual-looking config that a tidy-minded reader would
+delete. Those keep **a one-line reason plus a removal condition** in the file, with the full reasoning
+moved here:
+
+- `nitro.externals.inline: ['pinia']` — delete it and production 500s on every route, but only under
+  `NODE_ENV=production`, so nothing in the PR gate catches it.
+- `vite.build.cssMinify: 'esbuild'` — delete it and lightningcss silently narrows browser support to
+  Safari 16.4+.
+- `tailwind.config.js` `container.screens` listing only `2xl` — re-add the `100%` entries and the
+  build fails on invalid CSS.
+
+Measured scope as of 2026-08-03 — **255 lines** in blocks of three or more comment lines:
+
+| file | blocks | lines | largest |
+| --- | --- | --- | --- |
+| `nuxt.config.ts` | 10 | **99** | 42 |
+| `eslint.config.mjs` | 5 | 45 | 14 |
+| `playwright.config.ts` | 3 | 37 | 18 |
+| `scripts/typecheck-ratchet.mjs` | 4 | 34 | 16 |
+| `tests-smoke/routes.smoke.ts` | 5 | 26 | 8 |
+| `tailwind.config.js` | 2 | 14 | 11 |
+
+Do it as **its own PR**. It touches files from five merged phases, and folding it into a dependency
+upgrade would mean a reviewer cannot tell the upgrade from the prose edit.
 
 ### Waiting on upstream: the Pinia 4 export map
 
@@ -1260,7 +1394,7 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | Package | Last publish | Note |
 | --- | --- | --- |
 | `@nuxt/image-edge` | Feb 2024 (nightly) | Phase 3 removes it |
-| `h3-zod` | Jan 2024 | Phase 5 removes it |
+| `h3-zod` | Jan 2024 | ✅ removed in Phase 5 (Zod 4) |
 | `eslint-plugin-nuxt` | Aug 2023 | ✅ removed in Phase 5 (ESLint 10) |
 | `@ubclaunchpad/vue-fathom` | Apr 2022 | 1 usage. Fathom's own snippet is a few lines — consider inlining and dropping the dependency. |
 | `smoothscroll-polyfill` | Aug 2022 | ✅ removed in Phase 1 |
@@ -1342,3 +1476,7 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | ESLint taken to **10**, not the 9 this phase originally specified. That note predated `@nuxt/eslint-config@1.16.0`, which *depends* on `@eslint/js ^10.0.1` — 10 is its primary target, and `@typescript-eslint` 8.65 and `eslint-plugin-vue` 10.10 both peer `^9 || ^10`. Picking 9 would now be the less aligned choice. TypeScript 6.0.3 sits inside `@typescript-eslint`'s `>=4.8.4 <6.1.0`. |
 | 2026-08-03 | `no-explicit-any` (103) and `no-unused-vars` (15) demoted to warnings in `eslint.config.mjs` rather than fixed or disabled. `@nuxt/eslint-config@1` is much stricter than `0.2`, and enabling it as-is turned 0 errors into 121. Fixing 103 `any`s is a typing project belonging with the vue-tsc burn-down, not a lint upgrade; demoting keeps the signal while preserving Phase 0's gate-on-errors choice. The three singleton errors were fixed rather than suppressed. |
 | 2026-08-03 | Smoke `expect.timeout` raised 15s → 30s, sized from measurement: the heaviest page reports visible text in 1.3–1.6s alone but 2.8–8.7s with six loading concurrently, and never failed to render in 12 concurrent loads. A first hypothesis (polling `innerText` forces expensive layout) was measured and disproved at 1.2ms. Raising the budget masks nothing — a page that never renders still fails. |
+| 2026-08-03 | `stripe` moved to the **end** of Phase 5 at the maintainer's request. It touches the payment path and may want a colleague's review, so it should not block the items that are genuinely time-unconstrained. |
+| 2026-08-03 | Zod 4 taken with `h3-zod` removed rather than replaced. `h3-zod` existed for one call site, was last published January 2024, pinned `zod ^3`, and peers `h3 ^1` while Nuxt 4 resolves `h3 2.x`. The six sibling routes already used `safeParse` + `createError`, so the replacement is the existing house pattern, not a new one. |
+| 2026-08-03 | Zod 4's reworded **default** messages accepted as-is. Custom German messages are unchanged; the defaults were English before and after, so this is a wording change rather than a regression. Adopting `z.locales.de()` is logged separately because it rewrites many user-facing strings. |
+| 2026-08-03 | Code comments across the series to be audited in their own PR once Phase 5 completes, against one test: *would someone who has never heard of the pull request still need this sentence?* Changelog and measurement narrative move to this document; standing constraints keep a one-line reason and a removal condition in the file. Not a push for fewer comments — the longest blocks sit on config a tidy-minded reader would delete. |

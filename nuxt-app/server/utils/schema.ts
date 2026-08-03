@@ -126,7 +126,7 @@ export const CreateCheckoutSchema = z
     .object({
         conferenceId: z.string().uuid('Ungültige Konferenz-ID.'),
         purchaseType: z.enum(['personal', 'company'], {
-            errorMap: () => ({ message: 'Bitte wähle zwischen Privat oder Firma.' }),
+            error: 'Bitte wähle zwischen Privat oder Firma.',
         }),
         purchaser: PurchaserSchema,
         company: CompanyBillingSchema.optional(),
