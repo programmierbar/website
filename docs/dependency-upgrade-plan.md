@@ -933,12 +933,9 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
 
 ### 3. Build and tooling correctness
 
-- [ ] ⚠️ **Remove `nitro.externals.inline: ['pinia']` once Pinia ships a node-safe build.** Added in
-      Phase 5 to work around Pinia 4 exporting only its bundler build, which references Vue's
-      compile-time feature flags raw and therefore throws `__VUE_PROD_DEVTOOLS__ is not defined` when
-      externalised — in production only. Watch for a `node` conditional export or a guarded
-      `typeof` check upstream, then drop the line. **Re-test by setting `NODE_ENV=production` and
-      hitting any route**, not by running `npm run build`, which passes either way.
+- [ ] ⚠️ **Remove `nitro.externals.inline: ['pinia']`.** Waiting on an upstream Pinia fix — see
+      [Waiting on upstream: the Pinia 4 export map](#waiting-on-upstream-the-pinia-4-export-map)
+      below for exactly what to watch for and how to check.
 - [ ] **Make a full local `npm run build` work again.** Currently fails, and fails identically on
       `main` — the prerender crawler walks ~1500 `/_ipx/` image URLs and exhausts connections to the
       CMS. One line: `nitro: { prerender: { ignore: ['/_ipx'] } }`. Invisible in CI (which sets
@@ -1016,6 +1013,90 @@ browser-support decision nobody made.
 - **`@nuxtjs/algolia` is the module most likely to need attention at Nuxt 5** (Appendix A). Nothing
   to do now; worth remembering when Nuxt 5 appears, since Nuxt 3's EOL is the precedent for how
   quickly that becomes urgent.
+
+### Waiting on upstream: the Pinia 4 export map
+
+**Status as of 2026-08-03: not fixed, and no upstream issue exists.** `pinia@4.0.2` is the newest
+release (only 4.0.0, 4.0.1 and 4.0.2 have been published) and still carries the defect.
+
+This section exists because `nitro.externals.inline: ['pinia']` in `nuxt.config.ts` is a workaround
+for someone else's packaging bug, and workarounds with nothing concrete to watch for are how
+temporary config becomes permanent. Phases 3 and 4 each spent time deleting exactly that kind of
+fossil — `image.alias.cms`, `theme.container.screens` — so this one gets an explicit exit condition.
+
+#### What regressed
+
+Pinia 2 and 3 shipped a conditional export that resolved Node + production to a **pre-built CJS
+file** with the Vue feature flags already substituted. Pinia 4 deleted the whole condition:
+
+| version | `exports["."]` |
+| --- | --- |
+| `2.3.1` | conditional — `node` → `production` → `./dist/pinia.prod.cjs` |
+| `3.0.4` | conditional — same `node` / `production` condition |
+| **`4.0.0`** | `"./dist/pinia.mjs"` — **unconditional** |
+| **`4.0.2`** | `"./dist/pinia.js"` — **unconditional** |
+
+`dist/pinia.js` is the bundler build. It contains **five raw `__VUE_*` references**; the
+`esm-browser` and `iife` builds Pinia also ships contain zero. So any consumer that does not put
+pinia through a bundler — i.e. anything that externalises it, which is Nitro's default — gets an
+undefined global and throws in `createPinia`, but only when `NODE_ENV=production`.
+
+#### The fix we are waiting for
+
+Either of these upstream changes is sufficient:
+
+1. **Restore a `node` (or `production`) condition** in `exports["."]` pointing at a build with the
+   flags already substituted — i.e. what 2.x and 3.x did. This is the more likely fix, since it is a
+   reversion rather than new work.
+2. **Guard the flag reads**, e.g. `typeof __VUE_PROD_DEVTOOLS__ !== 'undefined' && __VUE_PROD_DEVTOOLS__`,
+   which is what makes Vue's own builds safe outside a bundler.
+
+#### How to check, without a full upgrade cycle
+
+```bash
+npm view pinia exports --json
+```
+
+If `"."` is still a bare string, nothing has changed — stop there. If it has become an object with a
+`node` condition, it is worth trying: drop the `inline` line, rebuild, and run the retest below.
+
+#### How to retest — this is the part that matters
+
+**`npm run build` passes either way, and so do `lint`, `test` and the typecheck ratchet.** Do not
+treat a green build as evidence. The only checks that see this defect are the smoke suite and a
+production-mode server:
+
+```bash
+SKIP_PRERENDER_ROUTE_DISCOVERY=true npm run build
+cd .output && NODE_ENV=production node server/index.mjs   # NODE_ENV is the whole point
+curl -o /dev/null -w '%{http_code}\n' http://localhost:3000/
+```
+
+`200` means fixed. `500` means put the line back.
+
+**Do not go looking for `__VUE_PROD_DEVTOOLS__` in the server log — it is not there.** The
+`ReferenceError` is thrown inside the Pinia plugin's `setup()` and swallowed; the only thing logged is
+a misleading downstream symptom:
+
+```
+TypeError: Cannot read properties of undefined (reading 'state')
+  at app:rendered (.output/server/chunks/virtual/entry.mjs)
+```
+
+That message is a red herring — it is `nuxtApp.$pinia` being undefined *because* setup already died.
+Verified by re-running this exact procedure with the workaround removed. It is also why the community
+answer blames `@pinia/nuxt` and recommends a downgrade. If you need to see the real error, instrument
+the built `entry.mjs` and wrap the Pinia plugin's `setup` body in a `try/catch` that logs.
+
+#### If it stays unfixed
+
+No upstream issue tracks this. [vuejs/pinia#3067][pinia-3067] describes the *symptom*
+(`$pinia` undefined at `app:rendered`) and its accepted answer — pin `@pinia/nuxt` back to `0.11.0` —
+treats the symptom rather than the cause, so it is unlikely to lead to a real fix on its own.
+**Someone should file the packaging regression upstream**, quoting the export-map table above, the
+five raw flag references in `dist/pinia.js`, and the `NODE_ENV=production` reproduction. Until that
+happens the workaround has no exit condition, and this note is the only thing standing between it and
+permanence.
 
 ---
 
