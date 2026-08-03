@@ -1491,13 +1491,38 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
       → console: "Hydration completed but contains mismatches."
       ```
 
-      The signal worth keeping is the pattern, because it says where to look: a **local** `node
-      .output/server` build of the same commit logs **zero** warnings, while both the Vercel preview
-      and production log one. So it correlates with the deployment environment, not with the code —
-      most likely time- or cache-dependent rendering, where ISR serves HTML generated at one moment
-      and the client re-renders at another. `useNow.ts` and the `toLocaleDateString` calls on that
-      page are the first places to check. Reproduce in dev mode to get Vue to name the element;
-      production builds only emit the terse message.
+      A **local** `node .output/server` build of the same commit logs **zero** warnings, while both
+      the Vercel preview and production log one, so it tracks the deployment environment rather than
+      the code.
+
+      **Ruled out, so nobody repeats the work:**
+
+      - **ISR staleness.** The obvious theory, and wrong: the ISR-cached HTML and a freshly rendered
+        one (via a cache-busting query) are **byte-identical**, so SSR output is stable over time.
+      - **`useNow.ts`.** Not used on this page at all — only `pages/konferenz/[slug]/index.vue` — and
+        it exists specifically to avoid this, by serialising the SSR timestamp into the payload.
+      - **`useWeightedRandomSelection` / `TestimonialSlider`.** Not on this page either. **But it is a
+        genuine latent instance of this bug elsewhere** — it seeds off `Math.floor(Date.now() /
+        3600000)`, an hour bucket, and renders on `/`, `/meetup`, `/konferenz` and
+        `/konferenz/[slug]`. With `isr: 3600`, HTML cached in one hour bucket can be hydrated by a
+        client in the next, selecting different testimonials. Those pages showed no warning when
+        checked, which only means the check did not straddle a boundary.
+      - **The `<template><!----></template>` that SSR emits as the first child of `<main>`.** It looked
+        conclusive — it is absent from the hydrated DOM — but it appears on *every* page, including
+        the three that produce no warning. It is an artefact of comparing `innerHTML`: browsers put
+        `<template>` content in `.content`, so it reads as empty.
+
+      **Dev mode did not give a clean reproduction.** It failed with `H3Error: Failed to fetch
+      dynamically imported module: pages/podcast/[slug].vue`, so the client rendered the error page
+      against a server-rendered real page and produced a cascade of mismatch warnings that are
+      artefacts of that failure. Retry from a clean `.nuxt` before trusting anything it reports.
+
+      **The most promising lead is a real bug in its own right:** `composables/useLoadingScreen.ts`
+      holds `isLoading` in a **module-scope `ref`**. On the server that module is instantiated once per
+      worker, so the flag is shared across concurrent requests — one visitor's navigation can change
+      what another's SSR renders. `<LoadingScreen />` is the first child of `<main>`, exactly where the
+      divergence appears. Fix that regardless of whether it turns out to be this mismatch: SSR state
+      belongs in `useState`, not a module-level `ref`.
 - [ ] ⚠️ **Remove `nitro.externals.inline: ['pinia']`.** Waiting on an upstream Pinia fix — see
       [Waiting on upstream: the Pinia 4 export map](#waiting-on-upstream-the-pinia-4-export-map)
       below for exactly what to watch for and how to check.
