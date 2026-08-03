@@ -1,10 +1,20 @@
-import { useValidatedBody } from 'h3-zod'
 import { CheckinScanSchema } from '~/server/utils/schema'
 
 export default defineEventHandler(async (event) => {
     await requireDirectusUser(event)
 
-    const { ticketCode } = await useValidatedBody(event, CheckinScanSchema)
+    // Validated the same way as every other route here, rather than via `h3-zod`'s
+    // `useValidatedBody`. That package was last published in January 2024, pins `zod ^3`, and so
+    // blocked Zod 4 for the sake of one call site — this one. The six sibling routes already used
+    // `safeParse` + `createError`, so dropping it also removes the odd one out.
+    const parseResult = CheckinScanSchema.safeParse(await readBody(event))
+    if (!parseResult.success) {
+        throw createError({
+            statusCode: 400,
+            message: parseResult.error.issues[0]?.message ?? 'Ungültiger Ticket-Code',
+        })
+    }
+    const { ticketCode } = parseResult.data
 
     const directus = useAuthenticatedDirectus()
 

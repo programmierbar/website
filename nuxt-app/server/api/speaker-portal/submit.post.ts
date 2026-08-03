@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
     // Validate form data with Zod
     const parseResult = SpeakerSubmissionSchema.safeParse(rawData)
     if (!parseResult.success) {
-        const firstError = parseResult.error.errors[0]
+        const firstError = parseResult.error.issues[0]
         throw createError({
             statusCode: 400,
             message: firstError?.message || 'Ungültige Formulardaten',
