@@ -35,7 +35,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | TypeScript 5.9 → 6.0.3 (interstitial, own PR) | ✅ Done (2026-07-31) |
 | 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ✅ Done (2026-07-31) |
 | 4 | **Nuxt 3 → Nuxt 4** | ✅ Done (2026-08-03) |
-| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 1 of 7 (`nodemailer` done; **audit at zero**) |
+| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 2 of 7 (`nodemailer`, Pinia; **audit at zero**) |
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
@@ -669,8 +669,9 @@ detail needed to act on them; kept here as the record of what this phase chose n
 **Goal:** catch the rest up. One PR each — they are independent, so they can be done in any
 order, or in parallel by different people.
 
-- [ ] **Pinia 2.3.1 → 4.0.2** (+ `@pinia/nuxt` 0.5.5 → 1.0.1, which peer-requires `pinia ^4`).
-      Only **2 stores**: `useProfileCreationStore.ts`, `useTicketCheckoutStore.ts`.
+- [x] **Pinia 2.3.1 → 4.0.2** (+ `@pinia/nuxt` 0.5.5 → 1.0.1) — ✅ done 2026-08-03. Required a
+      documented one-line nitro workaround for an **upstream Pinia 4 packaging bug that breaks SSR
+      in production only**. Details below.
 - [ ] **ESLint 8.57.1 → 9.x** with flat config. This retires two stale packages at once:
       `eslint-plugin-nuxt` (last published **August 2023**, eslintrc-only) and
       `@nuxt/eslint-config@0.2`. Replace with the `@nuxt/eslint` module (1.16.0), which generates
@@ -700,12 +701,12 @@ order, or in parallel by different people.
       current**: Phase 2 moved `dompurify` 3.4.2 → 3.4.12 transitively and those advisories are
       gone, so this is now a staleness item rather than a security one. Reprioritise accordingly.
 
-### Progress: 1 of 7 done
+### Progress: 2 of 7 done
 
 | item | status |
 | --- | --- |
 | `nodemailer` → 9.0.3 | ✅ done 2026-08-03 — audit reached zero |
-| Pinia → 4.0.2 | ⬜ |
+| Pinia → 4.0.2 | ✅ done 2026-08-03 — needed a nitro workaround |
 | ESLint → 9 + flat config | ⬜ |
 | Zod → 4, drop `h3-zod` | ⬜ |
 | `@directus/sdk` → 24 | ⬜ blocked on verifying against Directus 11.x |
@@ -769,6 +770,95 @@ the vendored-module check cover the upgrade surface without that.
 | ratchet | 263 | 263 |
 | `build` | exit 0, 30.9 MB | exit 0, 30.9 MB |
 | smoke | 18/18 | 18/18 |
+
+### Pinia 2.3.1 → 4.0.2 (+ `@pinia/nuxt` 0.5.5 → 1.0.1)
+
+Two majors of Pinia at once, taken as the natural follow-on to Phase 4: `@pinia/nuxt@0.5.5` still
+declared `@nuxt/kit ^3` on a Nuxt 4 app, and `1.x` is the kit-4 line. No store code changed.
+
+**Migration surface was nil.** Both stores are options-style with string ids, so Pinia 3's removal of
+the `defineStore({ id })` object form does not apply. The whole API surface is `defineStore` (×4),
+`storeToRefs` (×6), `$state` (×1) and `$reset()` (×2) — and `$reset` is the *options*-store API,
+which still exists; it is setup stores that lost it. Nothing used `PiniaStorePlugin`, `mapState`,
+`mapActions`, `setActivePinia` or `createPinia` directly.
+
+**A tidiness win:** this collapses a duplicate. `vue-router@5` (nested under Nuxt 4) declares
+`pinia ^3.0.4 || ^4.0.2` as an *optional* peer, so npm had installed a second copy at
+`node_modules/nuxt/node_modules/pinia@4.0.2` alongside our 2.3.1. It was inert — vue-router does not
+import pinia in its `dist` — but after this upgrade there is exactly one `node_modules/pinia`.
+
+#### The upstream bug: Pinia 4 breaks SSR in production, and only in production
+
+Every route returned **HTTP 500**:
+
+```
+ReferenceError: __VUE_PROD_DEVTOOLS__ is not defined
+  at createPinia (.output/server/node_modules/pinia/dist/pinia.js:847)
+```
+
+Pinia 4 exports a single **unconditional** entry, `"." : "./dist/pinia.js"`. That file is the
+*bundler* build and references Vue's compile-time feature flags raw, expecting a bundler to
+substitute them — it contains five such references, while the `esm-browser` and `iife` builds it also
+ships contain zero. Nitro externalises dependencies into `.output/server/node_modules`, so nothing
+substitutes anything and the flag is simply an undefined global at runtime. Vue itself avoids this by
+shipping a `node` conditional export to a CJS build that branches on `process.env.NODE_ENV`; Pinia 4
+has no such condition.
+
+It is production-only because the guard reads
+`process.env.NODE_ENV !== 'production' || __VUE_PROD_DEVTOOLS__`. In development the first clause
+short-circuits and the flag is never evaluated. **This is why it is dangerous:**
+
+| how you run it | result |
+| --- | --- |
+| `nuxt dev` | fine |
+| `node .output/server/index.mjs` (no `NODE_ENV`) | fine — **200** |
+| `NODE_ENV=production node .output/server/index.mjs` | **500 on every route** |
+| `nuxt preview`, and any real deploy | **500 on every route** |
+
+`npm run build` exits 0. `lint`, `test` and the typecheck ratchet all pass. Nothing in the PR gate
+sees it. **The smoke suite caught it** — which is precisely the failure mode Phase 0 was built for,
+and the first time it has earned its keep on a defect rather than on its own flakiness.
+
+Diagnosis was worth the detour: the first symptom pointed at the wrong place. The stack trace blamed
+`@pinia/nuxt`'s `app:rendered` hook reading `nuxtApp.$pinia.state.value`, and [a Pinia
+discussion][pinia-3067] recommends pinning back to `@pinia/nuxt@0.11.0`. That is treating the
+symptom: `$pinia` was undefined only because the plugin's `setup()` had already thrown, and the
+plugin error was being swallowed. Instrumenting the built bundle step by step found the real
+`ReferenceError` inside `createPinia`.
+
+[pinia-3067]: https://github.com/vuejs/pinia/discussions/3067
+
+**Fix:** `nitro.externals.inline: ['pinia']`, which routes pinia through rollup so the flags are
+substituted. Verified rather than assumed — zero unreplaced flag references in the output, and
+exactly **one** `createPinia` definition, so inlining a state library has not created a second module
+instance with its own store registry.
+
+This is a workaround for someone else's packaging bug and should be removed when Pinia ships a
+node-safe build. Logged in the follow-up backlog so it does not become permanent dead config of the
+kind Phases 3 and 4 spent time deleting.
+
+#### Verified functionally, under `NODE_ENV=production`
+
+A state library that renders is not a state library that works, so the ticket checkout store was
+exercised in a real browser against the production-mode server:
+
+| behaviour | result |
+| --- | --- |
+| reactivity — two `+` clicks | `ticketCount` 3 → 5 |
+| action side effect | `attendees` array synced 3 → 5 |
+| `localStorage` persistence | `ticket-checkout-<slug>` written with `ticketCount: 5` |
+| `$reset()` via the store's `reset()` action | 5 → 1, and storage cleared |
+| SSR payload + hydration | `payload.pinia` present server-side, `$pinia` present client-side |
+
+| gate | before | after |
+| --- | --- | --- |
+| `npm audit` | 0 | 0 |
+| `lint` | 0 errors, 29 warnings | 0 errors, 29 warnings |
+| `test` | 52/52 | 52/52 |
+| ratchet | 263 | 263 |
+| `build` | exit 0, 30.9 MB | exit 0, 30.9 MB |
+| smoke | 18/18 | 18/18 (×2) |
+| `NODE_ENV=production` SSR | **500 on every route** | 200 on 7 routes, 0 errors |
 
 ---
 
@@ -843,6 +933,12 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
 
 ### 3. Build and tooling correctness
 
+- [ ] ⚠️ **Remove `nitro.externals.inline: ['pinia']` once Pinia ships a node-safe build.** Added in
+      Phase 5 to work around Pinia 4 exporting only its bundler build, which references Vue's
+      compile-time feature flags raw and therefore throws `__VUE_PROD_DEVTOOLS__ is not defined` when
+      externalised — in production only. Watch for a `node` conditional export or a guarded
+      `typeof` check upstream, then drop the line. **Re-test by setting `NODE_ENV=production` and
+      hitting any route**, not by running `npm run build`, which passes either way.
 - [ ] **Make a full local `npm run build` work again.** Currently fails, and fails identically on
       `main` — the prerender crawler walks ~1500 `/_ipx/` image URLs and exhausts connections to the
       CMS. One line: `nitro: { prerender: { ignore: ['/_ipx'] } }`. Invisible in CI (which sets
@@ -1007,3 +1103,5 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | The pre-existing `/_ipx` prerender-crawl failure is left **unfixed** in Phase 4 and logged as a follow-up. It is identical on Nuxt 3, affects only full local builds, and fixing it would mean shipping an unrelated nitro config change inside a framework major. |
 | 2026-08-03 | Phase 5 starts with `nodemailer`, per its own priority note, and takes `@types/nodemailer` 6.4.24 → 8.0.1 with it. DefinitelyTyped has no `@types/nodemailer@9`, so a mismatch is unavoidable; one major behind beats three, and the types belong to the package being upgraded rather than being unrelated scope. Verified the types are enforced rather than degrading to `any`. |
 | 2026-08-03 | Recorded that GHSA-p6gq-j5cr-w38f was **not reachable** in this codebase — it needs the `raw` message option, which `sendEmail` never uses. The upgrade still stands, but the "high severity" label overstated real exposure, and the plan should not imply a reachable high sat open. |
+| 2026-08-03 | Pinia 4 shipped with `nitro.externals.inline: ['pinia']` rather than holding Pinia back. Pinia 4 exports only its bundler build, so externalising it throws `__VUE_PROD_DEVTOOLS__ is not defined` in production only. Inlining is a workaround for an upstream packaging bug, accepted because it is one line, verified (zero unreplaced flags, exactly one `createPinia`), and the alternative left `@pinia/nuxt@0.5.5` declaring `@nuxt/kit ^3` on a Nuxt 4 app. Logged for removal. |
+| 2026-08-03 | Rejected the community fix for the Pinia SSR crash — pinning `@pinia/nuxt` back to 0.11.0. The `$pinia is undefined` error at `app:rendered` is a *symptom*: the plugin's `setup()` had already thrown and the error was swallowed. Instrumenting the built bundle found the real `ReferenceError` inside `createPinia`, which pinning would have hidden rather than fixed. |

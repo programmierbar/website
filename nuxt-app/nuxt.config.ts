@@ -214,6 +214,35 @@ export default defineNuxtConfig({
         prerender: {
             failOnError: true,
         },
+        externals: {
+            // Bundle pinia into the server output instead of leaving it external.
+            //
+            // Without this, every SSR request throws in production and only in production:
+            //   ReferenceError: __VUE_PROD_DEVTOOLS__ is not defined
+            //     at createPinia (.output/server/node_modules/pinia/dist/pinia.js)
+            //
+            // Pinia 4 exports a single unconditional entry, `./dist/pinia.js`, which is the
+            // bundler build — it references Vue's compile-time feature flags raw, expecting a
+            // bundler to substitute them (its esm-browser and iife builds have them pre-baked;
+            // this one has five). Nitro externalises dependencies into
+            // `.output/server/node_modules`, so nothing substitutes anything and the flag is just
+            // an undefined global at runtime. Vue itself avoids this by shipping a `node`
+            // conditional export to a CJS build that branches on `process.env.NODE_ENV`; Pinia 4
+            // has no such condition.
+            //
+            // It is production-only because the guard reads
+            // `process.env.NODE_ENV !== 'production' || __VUE_PROD_DEVTOOLS__` — in development the
+            // first clause short-circuits and the flag is never evaluated. So `nuxt dev` and a bare
+            // `node .output/server/index.mjs` both look fine; `nuxt preview` and any real deploy
+            // set NODE_ENV=production and every route 500s.
+            //
+            // Inlining puts pinia through rollup, which substitutes the flags (verified: zero
+            // unreplaced references, and exactly one `createPinia` in the output, so there is no
+            // second module instance splitting the store registry).
+            //
+            // Remove this when Pinia ships a node-safe build. See the follow-up backlog.
+            inline: ['pinia'],
+        },
     },
 
     routeRules: {
