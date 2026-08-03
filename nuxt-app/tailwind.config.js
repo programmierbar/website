@@ -74,12 +74,18 @@ module.exports = {
         },
         container: {
             center: true,
+            // Each entry here becomes *both* the media condition and the max-width, so a `100%`
+            // value emitted `@media (min-width: 100%)` — malformed, and therefore treated as
+            // `not all` by every browser. Its only declaration (`max-width: 100%`) was a no-op
+            // anyway against the `width: 100%` the container already gets, so all five `100%`
+            // entries were dead weight. Tailwind deduped them into a single invalid block, which
+            // Vite 8 then rejects: it minifies the *server* build with lightningcss (see
+            // `cssMinify` in Vite's config resolution), and lightningcss errors where the previous
+            // esbuild-based minifier passed the bad query straight through.
+            //
+            // Listing only `2xl` yields byte-identical CSS to what browsers actually applied
+            // before: `.container` stays full-width and centred until 1536px, then caps there.
             screens: {
-                DEFAULT: '100%',
-                sm: '100%',
-                md: '100%',
-                lg: '100%',
-                xl: '100%',
                 '2xl': '1536px',
             },
         },

@@ -25,7 +25,9 @@ import { getMetaInfo } from '../helpers'
 const directus = useDirectus()
 const breadcrumbs = [{ label: 'Login' }]
 
-const clientSideUser = ref(null)
+// Typed off getCurrentUser rather than `ref(null)`, which infers `Ref<null>` and makes both the
+// assignment below and `clientSideUser.id` in the template unassignable/`never`.
+const clientSideUser = ref<Awaited<ReturnType<typeof directus.getCurrentUser>> | null>(null)
 
 // Query login page
 // We tie the login to this page, so that we can easily en/disable logging in via the UI.
