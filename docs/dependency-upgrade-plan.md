@@ -719,6 +719,10 @@ time-unconstrained, but Stripe touches the payment path and may want a second pa
 colleague, so it should not be the thing blocking the rest. Remaining order: `@directus/sdk`,
 `isomorphic-dompurify`, then `stripe`.
 
+When the last of those lands, do the
+[comment audit](#comment-audit-across-the-upgrade-series--do-this-when-phase-5-completes) before
+starting Phase 6.
+
 ### `nodemailer` 8.0.11 → 9.0.3
 
 **The audit backlog is now empty:** `found 0 vulnerabilities`, down from 49 distinct root advisories
@@ -1250,6 +1254,53 @@ browser-support decision nobody made.
   to do now; worth remembering when Nuxt 5 appears, since Nuxt 3's EOL is the precedent for how
   quickly that becomes urgent.
 
+### Comment audit across the upgrade series — do this when Phase 5 completes
+
+**Scheduled deliberately: after Phase 5, before Phase 6.** Agreed with the maintainer 2026-08-03,
+prompted by a review comment on #233 that flagged a code comment as pull-request rationale. It was
+right, and the same habit runs through the whole series, so this is a series-wide pass rather than a
+one-file fix.
+
+**The test a comment has to pass:** *would someone who has never heard of the pull request still need
+this sentence?*
+
+That splits cleanly:
+
+| verdict | what it looks like | where it belongs |
+| --- | --- | --- |
+| **Keep** | A standing constraint someone would otherwise violate — "this looks removable but is not, because X" | In the file. The failure mode is a future reader deleting it, so it has to be where they are. |
+| **Cut** | Changelog — "X replaced Y", "package Z was unmaintained", "verified identical to before" | The PR and commit message. Written for an audience that reads the file once and never returns. |
+| **Cut** | Measurement narrative — "6 workers produced 6 failures", "1.3–1.6s versus 2.8–8.7s", "my first attempt was wrong" | **This document.** It is genuinely worth keeping; it is just not worth keeping *there*. |
+
+**The honest diagnosis**, in the maintainer's framing: these comments were treating code as a place to
+prove the work was done, which is the wrong audience.
+
+**Explicit non-goal: this is not "fewer comments everywhere".** Some of the longest blocks are
+load-bearing *precisely because* they sit on unusual-looking config that a tidy-minded reader would
+delete. Those keep **a one-line reason plus a removal condition** in the file, with the full reasoning
+moved here:
+
+- `nitro.externals.inline: ['pinia']` — delete it and production 500s on every route, but only under
+  `NODE_ENV=production`, so nothing in the PR gate catches it.
+- `vite.build.cssMinify: 'esbuild'` — delete it and lightningcss silently narrows browser support to
+  Safari 16.4+.
+- `tailwind.config.js` `container.screens` listing only `2xl` — re-add the `100%` entries and the
+  build fails on invalid CSS.
+
+Measured scope as of 2026-08-03 — **255 lines** in blocks of three or more comment lines:
+
+| file | blocks | lines | largest |
+| --- | --- | --- | --- |
+| `nuxt.config.ts` | 10 | **99** | 42 |
+| `eslint.config.mjs` | 5 | 45 | 14 |
+| `playwright.config.ts` | 3 | 37 | 18 |
+| `scripts/typecheck-ratchet.mjs` | 4 | 34 | 16 |
+| `tests-smoke/routes.smoke.ts` | 5 | 26 | 8 |
+| `tailwind.config.js` | 2 | 14 | 11 |
+
+Do it as **its own PR**. It touches files from five merged phases, and folding it into a dependency
+upgrade would mean a reviewer cannot tell the upgrade from the prose edit.
+
 ### Waiting on upstream: the Pinia 4 export map
 
 **Status as of 2026-08-03: not fixed, and no upstream issue exists.** `pinia@4.0.2` is the newest
@@ -1428,3 +1479,4 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | `stripe` moved to the **end** of Phase 5 at the maintainer's request. It touches the payment path and may want a colleague's review, so it should not block the items that are genuinely time-unconstrained. |
 | 2026-08-03 | Zod 4 taken with `h3-zod` removed rather than replaced. `h3-zod` existed for one call site, was last published January 2024, pinned `zod ^3`, and peers `h3 ^1` while Nuxt 4 resolves `h3 2.x`. The six sibling routes already used `safeParse` + `createError`, so the replacement is the existing house pattern, not a new one. |
 | 2026-08-03 | Zod 4's reworded **default** messages accepted as-is. Custom German messages are unchanged; the defaults were English before and after, so this is a wording change rather than a regression. Adopting `z.locales.de()` is logged separately because it rewrites many user-facing strings. |
+| 2026-08-03 | Code comments across the series to be audited in their own PR once Phase 5 completes, against one test: *would someone who has never heard of the pull request still need this sentence?* Changelog and measurement narrative move to this document; standing constraints keep a one-line reason and a removal condition in the file. Not a push for fewer comments — the longest blocks sit on config a tidy-minded reader would delete. |
