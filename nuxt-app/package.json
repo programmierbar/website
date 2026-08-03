@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "engines": {
-        "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+        "node": "^22.19.0 || ^24.11.0 || >=26.0.0"
     },
     "scripts": {
         "build": "nuxt build",
@@ -29,7 +29,7 @@
         "@types/google.maps": "^3.55.3",
         "@ubclaunchpad/vue-fathom": "^2.0.0",
         "html5-qrcode": "^2.3.8",
-        "isomorphic-dompurify": "^3.21.0",
+        "isomorphic-dompurify": "~2.20.0",
         "nodemailer": "^9.0.3",
         "nuxt-jsonld": "^2.0.8",
         "pinia": "^4.0.2",
