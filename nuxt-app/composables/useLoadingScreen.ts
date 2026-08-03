@@ -1,8 +1,5 @@
 import type { Ref } from 'vue'
-import { reactive, ref, watch } from 'vue'
-
-// Global is loading state
-const isLoading = ref(false)
+import { reactive, watch } from 'vue'
 
 /**
  * Composable to set and get the global state of the loading screen.
@@ -12,6 +9,11 @@ const isLoading = ref(false)
  * @returns The state of the loading screen.
  */
 export function useLoadingScreen(...dataList: Ref<unknown>[]) {
+    // `useState`, not a module-scope `ref`: a module-scope ref is created once per server worker and
+    // shared by every concurrent request, so one visitor's navigation can change what another
+    // visitor's page renders. `useState` is per-request on the server.
+    const isLoading = useState<boolean>('loading-screen', () => false)
+
     // Set initial state
     isLoading.value = dataList.some((data) => !data.value)
 
