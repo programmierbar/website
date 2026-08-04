@@ -17,6 +17,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Deliberately still 22 while nuxt-app moves to 24: this tree has its own lockfile, its own
+      # Jest setup, and is frozen pending the Directus licence clarification. Moving its runtime
+      # would be an untested change to a tree nobody is allowed to upgrade.
       - name: Use Node.js 22.x
         uses: actions/setup-node@v4
         with:
@@ -43,10 +46,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js 22.x
+      # Reads nuxt-app/.nvmrc rather than naming a version here, so CI and local development cannot
+      # drift apart again — there is one file to change, not three.
+      - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: nuxt-app/.nvmrc
           cache: 'npm'
           cache-dependency-path: 'nuxt-app/package-lock.json'
 

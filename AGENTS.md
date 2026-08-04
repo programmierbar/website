@@ -18,7 +18,8 @@ A podcast/conference/meetup platform for the German developer community. Built w
 - **Server**: Nitro (Nuxt's server engine)
 - **Search**: Algolia
 - **AI**: Google Gemini (spam filtering)
-- **Node**: v19+ (v22 in CI)
+- **Node**: 24 for `nuxt-app` — see `nuxt-app/.nvmrc`, which CI reads too. The Directus extension
+  still builds on 22.
 
 ## Directory Structure
 
