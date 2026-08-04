@@ -1340,11 +1340,26 @@ So the swap needed real text, not tag-stripped HTML:
 | regex + `{{ }}` (the naive fix) | ❌ shows `f&uuml;r` | ❌ | ✅ inert |
 | `getPlainText` + `{{ }}` (shipped) | ✅ `für` | ✅ `&` | ✅ inert |
 
-`helpers/getPlainText.ts` sanitises with `ALLOWED_TAGS: []` and `RETURN_DOM_FRAGMENT`, then reads
-`textContent`. That returns genuine text with every entity decoded, which is safe for `{{ }}` and must
-never be handed to `v-html`. It parses instead of pattern-matching, which is the whole point: a regex
-cannot match a tag containing `<` or `>`, so `<img<a> src=x onerror=alert(1)>` survived
-`/<[^<>]+>/g` as a working tag.
+`getPlainText` sanitises with `ALLOWED_TAGS: []` and `RETURN_DOM_FRAGMENT`, then reads `textContent`.
+That returns genuine text with every entity decoded, which is safe for `{{ }}` and must never be handed
+to `v-html`. It parses instead of pattern-matching, which is the whole point: a regex cannot match a tag
+containing `<` or `>`, so `<img<a> src=x onerror=alert(1)>` survived `/<[^<>]+>/g` as a working tag.
+
+**`helpers/sanitize.ts` is the only module that touches DOMPurify**, after a review comment on #237
+pointed out that the two ProfileCreation components had each grown their own
+`computed(() => DOMPurify.sanitize(...))`, duplicating `InnerHtml.vue`. It cited this repo's own rule
+in `AGENTS.md` — never duplicate logic across modules — and was right. Three exports:
+
+| export | for |
+| --- | --- |
+| `sanitizeHtml` | default policy, anything bound to `v-html` |
+| `sanitizeInlineHtml` | as above but forbids `<p>`, for the news ticker's single scrolling line |
+| `getPlainText` | real plain text, for `{{ }}` |
+
+`InnerHtml.vue` and `NewsTicker.vue` were routed through it too, rather than fixing only the two new
+duplicates — otherwise two of four policies would still have been inline, which is the appearance of
+the rule rather than the rule. `NewsTicker`'s `{ FORBID_TAGS: ['p'] }` became a named export rather
+than a config parameter, so DOMPurify options do not leak back out to callers.
 
 It is deliberately **not** re-exported from `helpers/index.ts`. That barrel is imported by server
 routes, and pulling `isomorphic-dompurify` through it would instantiate jsdom for consumers that only
@@ -1501,12 +1516,19 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
         one (via a cache-busting query) are **byte-identical**, so SSR output is stable over time.
       - **`useNow.ts`.** Not used on this page at all — only `pages/konferenz/[slug]/index.vue` — and
         it exists specifically to avoid this, by serialising the SSR timestamp into the payload.
-      - **`useWeightedRandomSelection` / `TestimonialSlider`.** Not on this page either. **But it is a
-        genuine latent instance of this bug elsewhere** — it seeds off `Math.floor(Date.now() /
-        3600000)`, an hour bucket, and renders on `/`, `/meetup`, `/konferenz` and
-        `/konferenz/[slug]`. With `isr: 3600`, HTML cached in one hour bucket can be hydrated by a
-        client in the next, selecting different testimonials. Those pages showed no warning when
-        checked, which only means the check did not straddle a boundary.
+      - **`useWeightedRandomSelection` / `TestimonialSlider`.** This document previously called it "a
+        genuine latent instance of this bug elsewhere", on the grounds that it seeds off
+        `Math.floor(Date.now() / 3600000)` and renders on four `isr: 3600` pages. **That was wrong, and
+        the correction is worth keeping**, because the reasoning looked sound: `TestimonialSlider.vue`
+        wraps its entire list in **`<ClientOnly>`**, so testimonials are never server-rendered —
+        confirmed against production, whose SSR HTML contains no testimonial text, only the
+        component's stylesheet link. There is nothing for hydration to compare, however far the clocks
+        diverge.
+
+        A fix was written and then reverted (2026-08-04). What settled it was a negative control: a
+        browser test shifted the client clock 61 minutes before any page JS ran, and **the unfixed
+        build produced zero warnings too**, so the test proved nothing. Pinning the seed would also
+        have tied rotation to when the page was *cached* rather than when it is viewed.
       - **The `<template><!----></template>` that SSR emits as the first child of `<main>`.** It looked
         conclusive — it is absent from the hydrated DOM — but it appears on *every* page, including
         the three that produce no warning. It is an artefact of comparing `innerHTML`: browsers put
@@ -1517,12 +1539,17 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
       against a server-rendered real page and produced a cascade of mismatch warnings that are
       artefacts of that failure. Retry from a clean `.nuxt` before trusting anything it reports.
 
-      **The most promising lead is a real bug in its own right:** `composables/useLoadingScreen.ts`
-      holds `isLoading` in a **module-scope `ref`**. On the server that module is instantiated once per
-      worker, so the flag is shared across concurrent requests — one visitor's navigation can change
-      what another's SSR renders. `<LoadingScreen />` is the first child of `<main>`, exactly where the
-      divergence appears. Fix that regardless of whether it turns out to be this mismatch: SSR state
-      belongs in `useState`, not a module-level `ref`.
+      **`useLoadingScreen` was fixed anyway** (#238, 2026-08-04) — it held `isLoading` in a
+      module-scope `ref`, created once per server worker and shared by every concurrent request, which
+      is the footgun Nuxt documents. `useAsyncData` awaits during SSR, so requests interleave and one
+      can resume rendering with another's flag. Now `useState`, which is per-request.
+
+      **It is probably not this mismatch**, and was not shipped as though it were: `isLoading` is
+      `false` on both sides in normal operation, and hammering six pages concurrently never reproduced
+      a leak. That fix rests on the documented anti-pattern, not on a reproduction.
+
+      So **both leads are now eliminated and this remains open.** The next thing to try is the dev-mode
+      reproduction from a clean `.nuxt`, since that is the only tool that names the offending element.
 - [ ] ⚠️ **Remove `nitro.externals.inline: ['pinia']`.** Waiting on an upstream Pinia fix — see
       [Waiting on upstream: the Pinia 4 export map](#waiting-on-upstream-the-pinia-4-export-map)
       below for exactly what to watch for and how to check.
@@ -1969,6 +1996,9 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | Keep jsdom for anything still using DOMPurify. Its mXSS handling depends on parsing in a real DOM — verified when `<math><mtext><script>` reduced to `<math><mtext></mtext></math>` — so swapping to a parser-based sanitiser would trade security properties for install size. If weight ever matters, try `linkedom` + DOMPurify and re-run the 64-case harness. |
 | 2026-08-03 | The `v-html` audit shipped: 9 live bindings became 4, all sanitising. Five excerpt sites moved to a parsing text-extractor plus `{{ }}`, removing the sink; the two unfiltered ProfileCreation sites gained DOMPurify because they genuinely render rich HTML. Two commented-out dead bindings deleted. |
 | 2026-08-03 | **Corrected this document twice in the process.** It claimed eleven bindings and described the two in `PodcastPlayer.vue` as fine build-time SVG inlining — they were commented-out dead code calling `require()`. And "the fix is `{{ }}`" would have shipped a visible bug: the fields carry HTML entities that the old regex never decoded, relying on the browser to do it via `v-html`, so plain interpolation would have printed `f&uuml;r` on every umlaut. The shipped helper parses and returns real text instead. |
+| 2026-08-04 | Centralised the DOMPurify policy into `helpers/sanitize.ts` after a review comment on #237. Two components had each grown their own `computed(() => DOMPurify.sanitize(...))`, duplicating `InnerHtml.vue` — three places to edit for one policy change, against this repo's own `AGENTS.md` rule. `InnerHtml` and `NewsTicker` were folded in too, so `DOMPurify` now appears in exactly one file; fixing only the two new duplicates would have been the appearance of the rule rather than the rule. |
+| 2026-08-04 | **Retracted this document's claim that `useWeightedRandomSelection` was a latent hydration-mismatch source.** `TestimonialSlider` wraps its list in `<ClientOnly>`, so testimonials are never server-rendered and the hourly seed cannot participate in hydration — confirmed against production, whose SSR HTML contains no testimonial text. A fix was written and reverted. What settled it was a negative control: with the client clock shifted past an hour boundary, the *unfixed* build produced zero warnings too, so the test proved nothing. |
+| 2026-08-04 | `useLoadingScreen` moved from a module-scope `ref` to `useState` (#238). A module-scope ref is created once per server worker and shared across concurrent requests, and `useAsyncData` awaits during SSR so requests interleave. Shipped on the documented anti-pattern, explicitly **not** as a fix for the podcast hydration mismatch — that was never reproduced. Declined the reviewer's suggestion to split read from write: 8 of 34 pages never call the composable, so the no-argument reset is what clears the overlay, and removing it would strand a full-screen overlay on those routes. |
 | 2026-08-03 | Left `helpers/getMetaInfo.ts` on the same vulnerable regex on purpose: it writes to a `<meta content>` attribute, not innerHTML. Verified Nuxt escapes attribute values by finding a CMS description containing a raw `"` and confirming production renders `&quot;`. Changing it would pull `isomorphic-dompurify` into the `helpers` barrel for no security gain. |
 | 2026-08-03 | The `v-html` audit supersedes the jsdom question. 2 of 11 bindings sanitise; several regex-strip tags and the strip is bypassable by nested-tag reconstruction (`<img<a> src=x onerror=…>` reassembles). Since those components strip *all* markup, `{{ }}` is both safer and simpler and removes the sink — a smaller fix than the dependency debate it was hiding behind. |
 | 2026-08-03 | `@directus/sdk` taken to **24.0.0** despite the server being frozen at 11.17.4, because the SDK major tracks the Directus monorepo rather than a server API contract: 21.3.0 is simply the SDK that shipped *with* 11.17.4, and 22/23/24 shipped with 12.0/12.1/12.2. Of the four breaking changes, three touch commands this app never calls. Holding at 21 would have deferred nothing real. |
