@@ -1433,7 +1433,8 @@ pushing plain text through an HTML sink for no reason.
 ## Registry sweep and the formatter bump — done 2026-08-04
 
 Asked whether anything besides `stripe` was still behind, and answered against the npm registry
-rather than against this document. **Four things were, and one of them appeared in no phase at all.**
+rather than against this document. **Six were: four needing a decision, and two that were only
+lockfile drift.** One of the four appeared in no phase at all.
 
 | package | installed | latest | status |
 | --- | --- | --- | --- |
@@ -1710,6 +1711,17 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
       [installing Renovate](#1-install-the-renovate-github-app--highest-value-item-here), which is
       also gated on the same person: bot-authored dependency PRs are precisely the case where nobody
       is watching the checks.
+- [ ] **`types/items.ts` types Deepgram's arrays as single-element tuples.**
+      `DeepgramTranscriptResponse.results.utterances`, the nested `words`, and
+      `DirectusTranscriptItem.speakers` are all written `[{ … }]` rather than `{ … }[]`, so the type
+      claims exactly one element where the API returns many. Found by a reviewer on #242; pre-existing,
+      and untouched by the reformat.
+
+      **Currently harmless, which is why it is here and not in that PR.** The only consumer is
+      `helpers/prepareTranscript.ts:32`, which calls `.forEach` — that compiles against a tuple and
+      iterates all N elements at runtime. It would bite the first person to index past `[0]` or read
+      `.length`, which TypeScript narrows to the literal `1`. Fix is `{ … }[]` in three places; worth
+      re-running the typecheck ratchet with it, since it touches types feeding the transcript path.
 - [ ] ⚠️ **`components/TalkItem.vue` has HTML comments inside a `class` attribute**, so the browser
       receives `<!--`, `Mobile`, `order`, `Reset`, `for`, `grid` and `-->` as class names on two
       `<div>`s. Found via the formatter bump, which deduplicated the resulting `grid grid`.
