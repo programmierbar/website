@@ -116,9 +116,10 @@ export default defineNuxtConfig({
             // every `<nuxt-img>` variant it finds — 1476 files and ~100 MB from 44 routes — and
             // exhaust connections to the CMS, which fails the build via `failOnError`.
             //
-            // Only where a server serves `/_ipx` at runtime. `nuxt generate` sets `nitro.static`
-            // and produces no server, so there the crawler's output *is* what serves those URLs and
-            // skipping it would 404 every optimised image on the site.
+            // Keep the `static` guard even though there is no `generate` script any more: `npx nuxi
+            // generate` still works, sets `nitro.static`, and produces no server. There the crawler's
+            // output *is* what serves these URLs, so skipping it would silently 404 every optimised
+            // image instead of failing loudly.
             if (!nitroConfig.static) {
                 nitroConfig.prerender ??= {}
                 nitroConfig.prerender.ignore ??= []

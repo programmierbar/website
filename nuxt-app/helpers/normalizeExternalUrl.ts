@@ -62,8 +62,8 @@ const PLATFORMS: Record<ExternalUrlKind, PlatformRules> = {
  *
  * Editors leave the scheme off — `www.linkedin.com/in/someone` rather than
  * `https://www.linkedin.com/in/someone`. A browser resolves that against the current page, so the link
- * lands on `/hall-of-fame/www.linkedin.com/in/someone` and 404s on our own domain. The prerender
- * crawler follows it too, which fails `npm run generate`.
+ * lands on `/hall-of-fame/www.linkedin.com/in/someone` and shows the visitor a 404 on our own domain
+ * instead of taking them to the profile.
  *
  * They also paste bare handles into social fields. With `kind` set, those become real profile URLs;
  * with `kind` left at `web`, a value that cannot be a host is dropped rather than guessed at.

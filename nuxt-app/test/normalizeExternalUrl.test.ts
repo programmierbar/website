@@ -3,8 +3,7 @@ import { normalizeExternalUrl, type ExternalUrlKind } from '../helpers/normalize
 
 // The cases named after real CMS records are the reason this exists. A schemeless value in an `href`
 // is resolved against the current page, so `www.linkedin.com/in/x` became
-// `/hall-of-fame/www.linkedin.com/in/x` — a 404 on our own domain for the visitor, and a build failure
-// for `npm run generate`, whose crawler follows it.
+// `/hall-of-fame/www.linkedin.com/in/x` — a 404 on our own domain instead of the profile.
 
 const ALL_KINDS: ExternalUrlKind[] = [
     'web',
