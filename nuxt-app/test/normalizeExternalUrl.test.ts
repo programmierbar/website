@@ -29,6 +29,14 @@ describe('normalizeExternalUrl', () => {
             }
         })
 
+        it('drops dangerous schemes even when they are absolute', () => {
+            for (const kind of ALL_KINDS) {
+                expect(normalizeExternalUrl('javascript:alert(1)', kind)).toBeUndefined()
+                expect(normalizeExternalUrl('JaVaScRiPt:alert(1)', kind)).toBeUndefined()
+                expect(normalizeExternalUrl('vbscript:msgbox(1)', kind)).toBeUndefined()
+            }
+        })
+
         it('adds the missing scheme to a schemeless URL', () => {
             // Both were live in the CMS and 404'd on our own domain.
             expect(normalizeExternalUrl('www.linkedin.com/in/mariekilg/', 'linkedin')).toBe(
