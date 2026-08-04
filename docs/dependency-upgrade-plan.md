@@ -655,9 +655,9 @@ detail needed to act on them; kept here as the record of what this phase chose n
 - [ ] Burn down the 263 `vue-tsc` errors. Now two distinct groups: ~208 pre-existing (149 in
       `composables/useDirectus.ts`) and **55 newly surfaced `noUncheckedIndexedAccess` violations**,
       which are the more interesting set — each is a real unchecked index.
-- [ ] Stop the prerender crawler walking image URLs, so a full local build works:
-      `nitro: { prerender: { ignore: ['/_ipx'] } }`. Pre-existing on `main`; affects only local
-      full builds, since CI skips discovery and Vercel does not prerender.
+- [x] Stop the prerender crawler walking image URLs, so a full local build works — done 2026-08-04
+      (#240): 193s and intermittently failing became 29s. Scoped to non-static builds; see the
+      follow-up backlog for why that guard matters.
 - [ ] `tailwind.config.js` `content` globs are `'./pages/**/*.{html,js}'` and
       `'./components/**/*.{html,js}'` — **no `.vue`**. The site is styled only because
       `@nuxtjs/tailwindcss` injects its own defaults over the top. Worth fixing before Tailwind 4
@@ -1378,9 +1378,11 @@ classes. So these two were inconsistent outliers rather than a deliberate choice
 
 ### Verification
 
-Unit tests cover the bypass payloads, so the regex cannot come back unnoticed: `test/getPlainText.test.ts`,
-5 cases, including `<img<a> src=x onerror=alert(1)>`, `<svg<a> onload=…>` and the `<math><mtext><script>`
-mXSS vector.
+Unit tests cover the bypass payloads, so the regex cannot come back unnoticed: **`test/sanitize.test.ts`**,
+18 cases across `sanitizeHtml`, `sanitizeInlineHtml` and `getPlainText`, including
+`<img<a> src=x onerror=alert(1)>`, `<svg<a> onload=…>` and the `<math><mtext><script>` mXSS vector. The
+danger check the assertions use is itself tested against unsanitised input, so it cannot pass vacuously —
+the first version did exactly that, matching `onerror` in text where it was inert content.
 
 Rendered output needed a browser, because `SpeakerList`, `PickOfTheDayList` and `SearchResultCard` are
 client-rendered — SSR HTML shows nothing for them. Five pages checked locally, **30 descriptions
@@ -1553,11 +1555,37 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
 - [ ] ⚠️ **Remove `nitro.externals.inline: ['pinia']`.** Waiting on an upstream Pinia fix — see
       [Waiting on upstream: the Pinia 4 export map](#waiting-on-upstream-the-pinia-4-export-map)
       below for exactly what to watch for and how to check.
-- [ ] **Make a full local `npm run build` work again.** Currently fails, and fails identically on
-      `main` — the prerender crawler walks ~1500 `/_ipx/` image URLs and exhausts connections to the
-      CMS. One line: `nitro: { prerender: { ignore: ['/_ipx'] } }`. Invisible in CI (which sets
-      `SKIP_PRERENDER_ROUTE_DISCOVERY=true`) and on Vercel (which does not prerender at all), so the
-      only person it hurts is a developer running a real build locally.
+- [x] ✅ **A full local `npm run build` works again** — done 2026-08-04 (#240), via
+      `nitro.prerender.ignore: ['/_ipx']` applied only when a server will serve those URLs.
+
+      **This document described the failure wrongly.** It said the build "currently fails". It fails
+      *intermittently*: the first attempt at reproducing it passed in 193s, the second failed with
+      `ERROR terminated` from undici. The retry wrapper added in Phase 0 is what lets it sometimes
+      survive. Measured on the same commit:
+
+      | | without the ignore | with it |
+      | --- | --- | --- |
+      | result | **exit 1** (an earlier run passed) | exit 0 |
+      | duration | 193s | **29s** |
+      | `_ipx` files | 1475 (~100 MB) | **0** |
+      | prerendered HTML routes | 44 | **44** |
+      | `[directus]` retry warnings | up to 4 | **0** |
+
+      **The guard on `nitro.static` is load-bearing** — a review comment caught that the first version
+      ignored `/_ipx` unconditionally, which would have shipped a static build whose every optimised
+      image 404s, because there the crawler's output *is* the image pipeline. The prerendered HTML
+      carries hundreds of those references (73 in `index.html`, 253 in `podcast/index.html`). Keep the
+      guard even now that the `generate` script is gone: `npx nuxi generate` still works and still sets
+      `nitro.static`.
+- [x] ✅ **Static generation dropped** — done 2026-08-04 (#240). `npm run generate` could not finish
+      against this CMS: a static build must prerender every `<nuxt-img>` variant, **6183** downloads
+      and resizes, and the CMS degrades until ipx returns 500 and `failOnError` ends the build. Response
+      times late in a run: 169s, 194s, 210s, 245s, 292s.
+
+      Three full runs, each clearing one blocker and exposing the next — crawled 404s from schemeless
+      CMS links (twice, on different surfaces), then the ipx capacity wall. Nothing depended on the
+      script: no workflow or Vercel config invoked it, and Vercel serves images through `_vercel/image`.
+      `AGENTS.md` records the absence so it is not reinstated as an oversight.
 - [ ] ⚠️ **`tailwind.config.js` `content` globs do not include `.vue`.** They are
       `'./pages/**/*.{html,js}'` and `'./components/**/*.{html,js}'`, so they match essentially
       nothing; styling works only because `@nuxtjs/tailwindcss` injects its own defaults on top.
@@ -1917,13 +1945,15 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 - The `nitro:config` hook fetches live Directus data during build with
   `nitro.prerender.failOnError: true`. A CMS outage therefore fails the build. Acceptable for
   deploys; the reason CI's build step is run with route discovery disabled.
-- **A full local `npm run build` (route discovery enabled) currently fails, and has done since
-  before Phase 4.** The prerender crawler follows `/_ipx/…` image URLs and tries to prerender ~1500
-  image transforms, which exhausts connections to the CMS. Measured identically on Nuxt 3 and Nuxt
-  4; no page or payload fails, only image transforms. Neither CI nor Vercel is affected — CI skips
-  discovery, and the Vercel build does not prerender at all (ISR `routeRules` make routes on-demand
-  functions, and the build emits a `__fallback.func` in ~58s). To build fully offline-safe locally,
-  either set `SKIP_PRERENDER_ROUTE_DISCOVERY=true` or add `nitro.prerender.ignore: ['/_ipx']`.
+- **A full local `npm run build` used to fail intermittently and no longer does** — fixed 2026-08-04
+  (#240) with `nitro.prerender.ignore: ['/_ipx']`, guarded on `nitro.static`. The crawler was
+  following `/_ipx/…` URLs and resizing ~1500 image transforms, which exhausted connections to the
+  CMS; no page or payload ever failed, only image transforms. Neither CI nor Vercel was affected — CI
+  skips discovery, and the Vercel build does not prerender at all (ISR `routeRules` make routes
+  on-demand functions, and the build emits a `__fallback.func` in ~58s).
+- **There is no static-generation path**, deliberately. See the follow-up backlog: prerendering every
+  image variant is ~6200 CMS fetches and does not complete. `npx nuxi generate` still exists as a CLI
+  command, which is why the `nitro.static` guard on the ignore rule has to stay.
 - **`tailwind.config.js` `content` globs do not include `.vue`** — they are
   `'./pages/**/*.{html,js}'` and `'./components/**/*.{html,js}'`. Nothing is broken today only
   because `@nuxtjs/tailwindcss` supplies its own default globs on top. A consequence worth knowing
@@ -1996,6 +2026,11 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | Keep jsdom for anything still using DOMPurify. Its mXSS handling depends on parsing in a real DOM — verified when `<math><mtext><script>` reduced to `<math><mtext></mtext></math>` — so swapping to a parser-based sanitiser would trade security properties for install size. If weight ever matters, try `linkedom` + DOMPurify and re-run the 64-case harness. |
 | 2026-08-03 | The `v-html` audit shipped: 9 live bindings became 4, all sanitising. Five excerpt sites moved to a parsing text-extractor plus `{{ }}`, removing the sink; the two unfiltered ProfileCreation sites gained DOMPurify because they genuinely render rich HTML. Two commented-out dead bindings deleted. |
 | 2026-08-03 | **Corrected this document twice in the process.** It claimed eleven bindings and described the two in `PodcastPlayer.vue` as fine build-time SVG inlining — they were commented-out dead code calling `require()`. And "the fix is `{{ }}`" would have shipped a visible bug: the fields carry HTML entities that the old regex never decoded, relying on the browser to do it via `v-html`, so plain interpolation would have printed `f&uuml;r` on every umlaut. The shipped helper parses and returns real text instead. |
+| 2026-08-04 | Auth payloads and user objects removed from browser `console.log`s (#240). Stated the exposure precisely rather than dramatically: the user object reaching the console is confirmed, the token fields are **not** — the app uses `authentication('session')`, Directus does not document the session-mode response body, and it cannot be observed without authenticating. The fix stands either way, and that line would print both tokens if the app ever moved to `json` mode. |
+| 2026-08-04 | `nitro.prerender.ignore: ['/_ipx']` added, then **scoped to `!nitroConfig.static`** after review. The first version was verified the wrong way: I confirmed `/_ipx` still resolves at runtime, which is true for `nuxt build` and irrelevant for a static build, where the crawler's output *is* the image pipeline. The prerendered HTML carries hundreds of those references. Lesson: verify the mechanism you changed, not the one you were thinking about. |
+| 2026-08-04 | CMS-entered links normalised at two surfaces, after the prerender crawler turned out to be acting as a link checker. Platform fields go through `normalizeExternalUrl(value, kind)`, where the `kind` is what makes a handle resolvable — `t.muelleer` is a valid Instagram username that reads like a hostname, and Bluesky handles *are* domains. Links inside rich text are fixed in a DOMPurify `afterSanitizeAttributes` hook, which only fills in a *missing* scheme so it cannot second-guess DOMPurify's URI policy and strip inline `data:` images. |
+| 2026-08-04 | Two speaker social links had been resolving to 404s on our own domain for real visitors, because a schemeless `href` resolves against the current page. Found by the prerender crawler, not by anything user-facing — worth remembering as an argument for keeping `failOnError` on. |
+| 2026-08-04 | Kept a reviewer's scheme allowlist (`javascript:` and friends now dropped rather than passed through) and fixed the typecheck regression it caused: `match()[1]` is `string | undefined` under `noUncheckedIndexedAccess`, so the ratchet correctly reported 264 against a baseline of 263. Rewritten as two regex tests. The ratchet earning its keep on someone else's patch is the argument for having it. |
 | 2026-08-04 | Centralised the DOMPurify policy into `helpers/sanitize.ts` after a review comment on #237. Two components had each grown their own `computed(() => DOMPurify.sanitize(...))`, duplicating `InnerHtml.vue` — three places to edit for one policy change, against this repo's own `AGENTS.md` rule. `InnerHtml` and `NewsTicker` were folded in too, so `DOMPurify` now appears in exactly one file; fixing only the two new duplicates would have been the appearance of the rule rather than the rule. |
 | 2026-08-04 | **Retracted this document's claim that `useWeightedRandomSelection` was a latent hydration-mismatch source.** `TestimonialSlider` wraps its list in `<ClientOnly>`, so testimonials are never server-rendered and the hourly seed cannot participate in hydration — confirmed against production, whose SSR HTML contains no testimonial text. A fix was written and reverted. What settled it was a negative control: with the client clock shifted past an hour boundary, the *unfixed* build produced zero warnings too, so the test proved nothing. |
 | 2026-08-04 | `useLoadingScreen` moved from a module-scope `ref` to `useState` (#238). A module-scope ref is created once per server worker and shared across concurrent requests, and `useAsyncData` awaits during SSR so requests interleave. Shipped on the documented anti-pattern, explicitly **not** as a fix for the podcast hydration mismatch — that was never reproduced. Declined the reviewer's suggestion to split read from write: 8 of 34 pages never call the composable, so the no-argument reset is what clears the overlay, and removing it would strand a full-screen overlay on those routes. |
