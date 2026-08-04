@@ -86,8 +86,18 @@ export function normalizeExternalUrl(
         return undefined
     }
 
-    // Already absolute (`https:`, `mailto:`), protocol-relative, or deliberately site-internal.
-    if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed) || trimmed.startsWith('//') || trimmed.startsWith('/')) {
+    // Already absolute (http(s):, mailto:, tel:), protocol-relative, or deliberately site-internal.
+    const schemeMatch = trimmed.match(/^([a-z][a-z0-9+.-]*):/i)
+    if (schemeMatch) {
+        const scheme = schemeMatch[1].toLowerCase()
+        if (scheme === 'http' || scheme === 'https' || scheme === 'mailto' || scheme === 'tel') {
+            return trimmed
+        }
+
+        return undefined
+    }
+
+    if (trimmed.startsWith('//') || trimmed.startsWith('/')) {
         return trimmed
     }
 
