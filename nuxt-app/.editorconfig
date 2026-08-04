@@ -1,9 +1,14 @@
 # editorconfig.org
+#
+# Keep in step with .prettierrc — Prettier is the source of truth and CI runs `npm run
+# prettier:check`. This file exists so an editor indents correctly *before* the formatter runs; where
+# the two disagree, the editor loses and every save produces a diff.
 root = true
 
 [*]
 indent_style = space
-indent_size = 2
+indent_size = 4
+max_line_length = 120
 end_of_line = lf
 charset = utf-8
 trim_trailing_whitespace = true

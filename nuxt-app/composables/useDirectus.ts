@@ -1,35 +1,38 @@
 import {
-  aggregate,
-  createUser,
-  readItems,
-  readMe,
-  readProviders,
-  readSingleton,
-  rest,
-  type QueryFilter, createItem, updateItem,
-} from '@directus/sdk';
+    aggregate,
+    createItem,
+    createUser,
+    readItems,
+    readMe,
+    readProviders,
+    readSingleton,
+    rest,
+    updateItem,
+    type QueryFilter,
+} from '@directus/sdk'
 import type {
-  ConferenceItem,
-  DirectusMemberItem,
-  DirectusNewsItem,
-  DirectusPickOfTheDayItem, DirectusPodcastItem,
-  DirectusProfileItem,
-  DirectusRatingItem,
-  DirectusTagItem,
-  DirectusTranscriptItem,
-  LoginProvider,
-  MeetupItem,
-  PodcastItem,
-  PodcastPreviewItem,
-  SpeakerItem,
-  SpeakerPreviewItem,
-  TagItem,
-} from '~/types';
+    ConferenceItem,
+    DirectusMemberItem,
+    DirectusNewsItem,
+    DirectusPickOfTheDayItem,
+    DirectusPodcastItem,
+    DirectusProfileItem,
+    DirectusRatingItem,
+    DirectusTagItem,
+    DirectusTranscriptItem,
+    LoginProvider,
+    MeetupItem,
+    PodcastItem,
+    PodcastPreviewItem,
+    SpeakerItem,
+    SpeakerPreviewItem,
+    TagItem,
+} from '~/types'
 import { DIRECTUS_CMS_URL, WEBSITE_URL } from './../config'
+import { anonymizeAndHashIP } from './../helpers/'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { directus, type Collections } from './../services'
-import { anonymizeAndHashIP } from './../helpers/'
 
 const collectionWithTagsName = ['members', 'speakers', 'podcasts', 'meetups', 'picks_of_the_day'] as const
 type CollectionWithTagsName = (typeof collectionWithTagsName)[number]
@@ -51,12 +54,12 @@ export function useDirectus() {
         return await directus.request(
             readSingleton('home_page', {
                 fields: [
-                  '*',
-                  'video.*',
-                  'highlights.*',
-                  'highlights.item.*',
-                  'highlights.item.cover_image.*',
-                  'highlights.item.poster.*',
+                    '*',
+                    'video.*',
+                    'highlights.*',
+                    'highlights.item.*',
+                    'highlights.item.cover_image.*',
+                    'highlights.item.poster.*',
                 ],
             })
         )
@@ -78,13 +81,13 @@ export function useDirectus() {
         )
     }
 
-  async function getConferencePage() {
-    return await directus.request(
-      readSingleton('conference_page', {
-        fields: ['*', 'cover_image.*', 'video.*'],
-      })
-    )
-  }
+    async function getConferencePage() {
+        return await directus.request(
+            readSingleton('conference_page', {
+                fields: ['*', 'cover_image.*', 'video.*'],
+            })
+        )
+    }
 
     async function getHallOfFamePage() {
         return await directus.request(
@@ -111,11 +114,11 @@ export function useDirectus() {
     }
 
     async function getAgbPage() {
-      return await directus.request(
-        readSingleton('agb_page', {
-          fields: ['*'],
-        })
-      )
+        return await directus.request(
+            readSingleton('agb_page', {
+                fields: ['*'],
+            })
+        )
     }
 
     async function getImprintPage() {
@@ -159,11 +162,11 @@ export function useDirectus() {
     }
 
     async function getRecordingsPage() {
-      return await directus.request(
-        readSingleton('recordings_page', {
-          fields: ['*'],
-        })
-      )
+        return await directus.request(
+            readSingleton('recordings_page', {
+                fields: ['*'],
+            })
+        )
     }
 
     async function getContactPage() {
@@ -183,11 +186,11 @@ export function useDirectus() {
     }
 
     async function getCocktailMenu() {
-      return await directus.request(
-        readSingleton('cocktail_menu', {
-          fields: ['*'],
-        })
-      )
+        return await directus.request(
+            readSingleton('cocktail_menu', {
+                fields: ['*'],
+            })
+        )
     }
 
     async function getLatestPodcasts(limit: number = 10) {
@@ -393,10 +396,10 @@ export function useDirectus() {
                             ...meetup,
                             tagsPrepared: meetup.tags.map((tag: DirectusTag) => tag.tag) as TagItem[],
                             talksPrepared: meetup.talks
-                              .sort((a, b) => a.sort - b.sort)
-                              .map((talk: any) => {
-                              return talk.talk;
-                            }),
+                                .sort((a, b) => a.sort - b.sort)
+                                .map((talk: any) => {
+                                    return talk.talk
+                                }),
                             speakersPrepared: meetup.speakers.map((speaker: any) => {
                                 return {
                                     first_name: speaker.speaker.first_name,
@@ -413,123 +416,117 @@ export function useDirectus() {
             )
     }
 
-  async function getConferenceBySlug(slug: string) {
-    return await directus
-      .request(
-        readItems('conferences', {
-          fields: [
-            'id',
-            'slug',
-            'published_on',
-            'start_on',
-            'end_on',
-            'title',
-            'headline_1',
-            'text_1',
-            'cover_image.*',
-            'cover_image',
-            'video.*',
-            'video',
-            'poster',
-            'poster.*',
-            'gallery_images',
-            'gallery_images.sort',
-            'gallery_images.directus_files_id.*',
-            'agenda',
-            'talks',
-            'talks.*',
-            'talks.talk.*',
-            'talks.talk.thumbnail.*',
-            'talks.talk.video_url',
-            'talks.talk.speakers.*',
-            'talks.talk.speakers.speaker',
-            'talks.talk.speakers.speaker.*',
-            'talks.talk.members.*',
-            'talks.talk.members.member',
-            'talks.talk.members.member.*',
-            'faqs',
-            'speakers',
-            'speakers.*',
-            'speakers.speakers_id.*',
-            'speakers.speakers_id.profile_image.*',
-            'tickets_text',
-            'ticketing_enabled',
-            'ticket_early_bird_price_cents',
-            'ticket_regular_price_cents',
-            'ticket_early_bird_deadline',
-            'ticket_max_quantity',
-            'partners',
-            'partners.*',
-            'partners.partner.*',
-            'partners.partner.name',
-            'partners.partner.url',
-            'partners.partner.image.*'
-          ],
-          filter: { slug: { _eq: slug } },
-          limit: 1,
-        })
-      )
-      .then((result) => {
-        const singleResult = result.pop() as unknown as ConferenceItem | undefined
-        if (!singleResult) {
-          // Unknown slug — return null so the caller can render a 404 instead
-          // of treating a missing conference as a fatal fetch failure.
-          return null
-        }
-        const speakersPrepared = singleResult.speakers.map((speaker: any) => {
-              return {
-                first_name: speaker.speakers_id.first_name,
-                last_name: speaker.speakers_id.last_name,
-                profile_image: speaker.speakers_id.profile_image,
-                occupation: speaker.speakers_id.occupation,
-                slug: speaker.speakers_id.slug,
-                description: speaker.speakers_id.description,
-                event_image: speaker.speakers_id.event_image,
-                academic_title: speaker.speakers_id.academic_title,
-                website_url: speaker.speakers_id.website_url,
-                twitter_url: speaker.speakers_id.twitter_url,
-                bluesky_url: speaker.speakers_id.bluesky_url,
-                linkedin_url: speaker.speakers_id.linkedin_url,
-                github_url: speaker.speakers_id.github_url,
-                instagram_url: speaker.speakers_id.instagram_url,
-                youtube_url: speaker.speakers_id.youtube_url,
-              } as SpeakerPreviewItem
-          })
+    async function getConferenceBySlug(slug: string) {
+        return await directus
+            .request(
+                readItems('conferences', {
+                    fields: [
+                        'id',
+                        'slug',
+                        'published_on',
+                        'start_on',
+                        'end_on',
+                        'title',
+                        'headline_1',
+                        'text_1',
+                        'cover_image.*',
+                        'cover_image',
+                        'video.*',
+                        'video',
+                        'poster',
+                        'poster.*',
+                        'gallery_images',
+                        'gallery_images.sort',
+                        'gallery_images.directus_files_id.*',
+                        'agenda',
+                        'talks',
+                        'talks.*',
+                        'talks.talk.*',
+                        'talks.talk.thumbnail.*',
+                        'talks.talk.video_url',
+                        'talks.talk.speakers.*',
+                        'talks.talk.speakers.speaker',
+                        'talks.talk.speakers.speaker.*',
+                        'talks.talk.members.*',
+                        'talks.talk.members.member',
+                        'talks.talk.members.member.*',
+                        'faqs',
+                        'speakers',
+                        'speakers.*',
+                        'speakers.speakers_id.*',
+                        'speakers.speakers_id.profile_image.*',
+                        'tickets_text',
+                        'ticketing_enabled',
+                        'ticket_early_bird_price_cents',
+                        'ticket_regular_price_cents',
+                        'ticket_early_bird_deadline',
+                        'ticket_max_quantity',
+                        'partners',
+                        'partners.*',
+                        'partners.partner.*',
+                        'partners.partner.name',
+                        'partners.partner.url',
+                        'partners.partner.image.*',
+                    ],
+                    filter: { slug: { _eq: slug } },
+                    limit: 1,
+                })
+            )
+            .then((result) => {
+                const singleResult = result.pop() as unknown as ConferenceItem | undefined
+                if (!singleResult) {
+                    // Unknown slug — return null so the caller can render a 404 instead
+                    // of treating a missing conference as a fatal fetch failure.
+                    return null
+                }
+                const speakersPrepared = singleResult.speakers.map((speaker: any) => {
+                    return {
+                        first_name: speaker.speakers_id.first_name,
+                        last_name: speaker.speakers_id.last_name,
+                        profile_image: speaker.speakers_id.profile_image,
+                        occupation: speaker.speakers_id.occupation,
+                        slug: speaker.speakers_id.slug,
+                        description: speaker.speakers_id.description,
+                        event_image: speaker.speakers_id.event_image,
+                        academic_title: speaker.speakers_id.academic_title,
+                        website_url: speaker.speakers_id.website_url,
+                        twitter_url: speaker.speakers_id.twitter_url,
+                        bluesky_url: speaker.speakers_id.bluesky_url,
+                        linkedin_url: speaker.speakers_id.linkedin_url,
+                        github_url: speaker.speakers_id.github_url,
+                        instagram_url: speaker.speakers_id.instagram_url,
+                        youtube_url: speaker.speakers_id.youtube_url,
+                    } as SpeakerPreviewItem
+                })
 
-        const talksPrepared = singleResult.talks
-          .sort((a, b) => a.sort - b.sort)
-          .map((talk: any) => {
-          return talk.talk;
-        });
+                const talksPrepared = singleResult.talks
+                    .sort((a, b) => a.sort - b.sort)
+                    .map((talk: any) => {
+                        return talk.talk
+                    })
 
-        const partnersPrepared = singleResult.partners
-          .sort((a, b) => a.sort - b.sort)
-          .map((partner: any) => {
-            return partner.partner;
-          });
+                const partnersPrepared = singleResult.partners
+                    .sort((a, b) => a.sort - b.sort)
+                    .map((partner: any) => {
+                        return partner.partner
+                    })
 
-        return {
-          ...singleResult,
-          speakersPrepared,
-          talksPrepared,
-          partnersPrepared,
-        };
-      })
+                return {
+                    ...singleResult,
+                    speakersPrepared,
+                    talksPrepared,
+                    partnersPrepared,
+                }
+            })
     }
 
-  async function getTestimonials() {
-    return await directus
-      .request(
-        readItems('testimonials', {
-          fields: [
-            'id',
-            'weight',
-            'text',
-            'subtitle',
-          ],
-          limit: -1,
-        })
-      )
+    async function getTestimonials() {
+        return await directus.request(
+            readItems('testimonials', {
+                fields: ['id', 'weight', 'text', 'subtitle'],
+                limit: -1,
+            })
+        )
     }
 
     async function getSpeakerBySlug(slug: string) {
@@ -614,9 +611,9 @@ export function useDirectus() {
             aggregate('speakers', {
                 aggregate: { count: '*' },
                 query: {
-                  filter: {'listed_hof': {'_eq': true}},
-                }
-            }),
+                    filter: { listed_hof: { _eq: true } },
+                },
+            })
         )
 
         return Number(result.pop()?.count)
@@ -644,22 +641,13 @@ export function useDirectus() {
     }
 
     async function getConferences() {
-      return await directus.request(
-        readItems('conferences', {
-          fields: [
-            'id',
-            'published_on',
-            'slug',
-            'start_on',
-            'end_on',
-            'title',
-            'text_1',
-            'poster.*',
-          ],
-          sort: ['-start_on'],
-          limit: -1,
-        })
-      )
+        return await directus.request(
+            readItems('conferences', {
+                fields: ['id', 'published_on', 'slug', 'start_on', 'end_on', 'title', 'text_1', 'poster.*'],
+                sort: ['-start_on'],
+                limit: -1,
+            })
+        )
     }
 
     async function getSpeakers(limit: number = -1) {
@@ -681,65 +669,64 @@ export function useDirectus() {
                 ],
                 limit: limit,
                 sort: ['podcasts.podcast.type', 'sort', '-published_on'],
-                filter: {'listed_hof': {'_eq': true}},
+                filter: { listed_hof: { _eq: true } },
             })
         )
     }
 
-  async function getSpeakersForBuild(limit: number) {
+    async function getSpeakersForBuild(limit: number) {
+        const ctos = await directus.request(
+            readItems('speakers', {
+                fields: [
+                    'id',
+                    'slug',
+                    'published_on',
+                    'academic_title',
+                    'first_name',
+                    'last_name',
+                    'occupation',
+                    'description',
+                    'profile_image.*',
+                    'tags.tag.id',
+                    'tags.tag.name',
+                    'podcasts.podcast.type',
+                ],
+                limit: Math.round(limit / 2),
+                sort: ['sort', '-published_on'],
+                filter: {
+                    listed_hof: { _eq: true },
+                    podcasts: { podcast: { type: { _eq: 'cto_special' } } },
+                },
+            })
+        )
 
-      const ctos =  await directus.request(
-        readItems('speakers', {
-          fields: [
-            'id',
-            'slug',
-            'published_on',
-            'academic_title',
-            'first_name',
-            'last_name',
-            'occupation',
-            'description',
-            'profile_image.*',
-            'tags.tag.id',
-            'tags.tag.name',
-            'podcasts.podcast.type',
-          ],
-          limit: Math.round(limit/2),
-          sort: ['sort', '-published_on'],
-          filter: {
-            listed_hof: { _eq: true },
-            podcasts: { podcast: { type: { _eq: 'cto_special' } } },
-          },
-        })
-      )
+        const others = await directus.request(
+            readItems('speakers', {
+                fields: [
+                    'id',
+                    'slug',
+                    'published_on',
+                    'academic_title',
+                    'first_name',
+                    'last_name',
+                    'occupation',
+                    'description',
+                    'profile_image.*',
+                    'tags.tag.id',
+                    'tags.tag.name',
+                    'podcasts.podcast.type',
+                ],
+                limit: Math.round(limit / 2),
+                sort: ['sort', '-published_on'],
+                filter: {
+                    listed_hof: { _eq: true },
+                    podcasts: { podcast: { type: { _neq: 'cto_special' } } },
+                },
+            })
+        )
 
-    const others =  await directus.request(
-      readItems('speakers', {
-        fields: [
-          'id',
-          'slug',
-          'published_on',
-          'academic_title',
-          'first_name',
-          'last_name',
-          'occupation',
-          'description',
-          'profile_image.*',
-          'tags.tag.id',
-          'tags.tag.name',
-          'podcasts.podcast.type',
-        ],
-        limit: Math.round(limit/2),
-        sort: ['sort', '-published_on'],
-        filter: {
-          listed_hof: { _eq: true },
-          podcasts: { podcast: { type: { _neq: 'cto_special' } } },
-        },
-      })
-    )
-
-    return [...ctos, ...others]
-  }
+        return [...ctos, ...others]
+    }
 
     async function getAllTopTags() {
         const allTags: Tag[] = []
@@ -807,7 +794,7 @@ export function useDirectus() {
                     'website_url',
                 ],
                 filter,
-                sort: ['sort']
+                sort: ['sort'],
             })
         )
     }
@@ -844,46 +831,42 @@ export function useDirectus() {
             )
     }
 
-  async function getProfileById(id: string) {
-    return (await directus
-      .request(
-        readItems('profiles', {
-          fields: [
-            'id',
-            'first_name',
-            'last_name',
-            'display_name',
-            'description',
-            'job_role',
-            'job_employer',
-            'profile_image.*'
-          ],
-          limit: 1,
-          filter: { id: { _eq: id } },
-        })
-      ))?.pop() as unknown as DirectusProfileItem
-  }
+    async function getProfileById(id: string) {
+        return (
+            await directus.request(
+                readItems('profiles', {
+                    fields: [
+                        'id',
+                        'first_name',
+                        'last_name',
+                        'display_name',
+                        'description',
+                        'job_role',
+                        'job_employer',
+                        'profile_image.*',
+                    ],
+                    limit: 1,
+                    filter: { id: { _eq: id } },
+                })
+            )
+        )?.pop() as unknown as DirectusProfileItem
+    }
 
-  async function getTranscriptForPodcast(podcast: PodcastItem) {
-    return (await directus
-      .request(
-        readItems('transcripts', {
-          fields: [
-            'id',
-            'service',
-            'supported_features',
-            'speakers',
-            'raw_response',
-          ],
-          filter: {
-            podcast : { id: { _eq: podcast.id} }
-          },
-          sort: ['-date_updated']
-        })
-      ))?.pop() as unknown as DirectusTranscriptItem
-  }
+    async function getTranscriptForPodcast(podcast: PodcastItem) {
+        return (
+            await directus.request(
+                readItems('transcripts', {
+                    fields: ['id', 'service', 'supported_features', 'speakers', 'raw_response'],
+                    filter: {
+                        podcast: { id: { _eq: podcast.id } },
+                    },
+                    sort: ['-date_updated'],
+                })
+            )
+        )?.pop() as unknown as DirectusTranscriptItem
+    }
 
-  async function getSingleSignOnProviders() {
+    async function getSingleSignOnProviders() {
         const directusProviders = await directus.request(readProviders())
 
         const providers = directusProviders.map((directusProvider): LoginProvider => {
@@ -924,39 +907,39 @@ export function useDirectus() {
         }
     }
 
-  async function createRating(vote: "up" | "down", podcast: DirectusPodcastItem, metadata?: Record<string, string>) {
-    const payload: Pick<DirectusRatingItem, "up_or_down" | "target" | "referer_url" | "ip" | "user_agent"> = {
-      up_or_down: vote,
-      target: [
-        {
-          target_collection: 'podcasts',
-          target: podcast.id
+    async function createRating(vote: 'up' | 'down', podcast: DirectusPodcastItem, metadata?: Record<string, string>) {
+        const payload: Pick<DirectusRatingItem, 'up_or_down' | 'target' | 'referer_url' | 'ip' | 'user_agent'> = {
+            up_or_down: vote,
+            target: [
+                {
+                    target_collection: 'podcasts',
+                    target: podcast.id,
+                },
+            ],
         }
-      ],
+
+        if (metadata?.ip) {
+            const hashedIP = await anonymizeAndHashIP(metadata.ip)
+            if (hashedIP) {
+                payload.ip = hashedIP
+            }
+        }
+
+        if (metadata?.user_agent) {
+            // Remove all numbers to anonymize user agent
+            payload.user_agent = metadata.user_agent.replace(/\d+/g, '')
+        }
+
+        if (metadata?.referer_url) {
+            payload.referer_url = metadata.referer_url
+        }
+
+        return await directus.request(createItem('ratings', payload))
     }
 
-    if (metadata?.ip) {
-      const hashedIP = await anonymizeAndHashIP(metadata.ip)
-      if (hashedIP) {
-        payload.ip = hashedIP
-      }
+    async function addCommentToRating(rating: { id: string }, comment: string) {
+        return await directus.request(updateItem('ratings', rating.id, { comment }))
     }
-
-    if (metadata?.user_agent) {
-      // Remove all numbers to anonymize user agent
-      payload.user_agent = metadata.user_agent.replace(/\d+/g, '')
-    }
-
-    if (metadata?.referer_url) {
-      payload.referer_url = metadata.referer_url
-    }
-
-    return await directus.request(createItem('ratings', payload))
-  }
-
-  async function addCommentToRating(rating: {id: string}, comment: string) {
-    return await directus.request(updateItem('ratings', rating.id, { comment }));
-  }
 
     // `news` is a meta collection whose content lives on the m2a `target`
     // (currently only `news_links`), so the source item is expanded alongside

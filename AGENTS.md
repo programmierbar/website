@@ -111,6 +111,22 @@ Additional hints can be found in:
 - **Imports**: Auto-sorted, use `type` keyword for type-only imports
 - **Components**: PascalCase, single-word names allowed
 
+### Formatting is enforced, not requested
+
+CI runs `npm run prettier:check` in `nuxt-app`, so unformatted code fails the build. Nobody should be
+expected to remember the formatter — turn on **format on save** and it never comes up:
+
+- **WebStorm**: Settings → Languages & Frameworks → JavaScript → Prettier → *On save*
+- **VS Code**: the Prettier extension, plus `"editor.formatOnSave": true`
+
+Both read `nuxt-app/.prettierrc` on their own, and `nuxt-app/.editorconfig` covers indentation and line
+endings before that is set up. Keep those two in step — they overlap, and an editor that indents to a
+different width than Prettier produces a diff on every save. If a PR fails the check, `npm run prettier`
+fixes it — never hand-edit to satisfy it.
+
+Note that `npm run lint` (ESLint) needs `nuxt prepare` to have run first, since `eslint.config.mjs`
+extends the generated `.nuxt/eslint.config.mjs`. `npm ci` does this via `postinstall`.
+
 ## Key Patterns
 
 ### Type System

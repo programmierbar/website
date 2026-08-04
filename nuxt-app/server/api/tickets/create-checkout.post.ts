@@ -1,11 +1,11 @@
+import { VAT_RATE, VAT_RATE_PERCENT, WEBSITE_URL } from '~/config'
+import type { DirectusTicketOrderItem, TicketType } from '~/types/directus'
+import type { TicketAttendee } from '~/types/items'
 import type Stripe from 'stripe'
 import { CreateCheckoutSchema } from '../../utils/schema'
+import type { CreateCheckoutInput } from '../../utils/schema'
 import { getStripe } from '../../utils/stripe'
 import { isEarlyBirdPeriod } from '../../utils/ticketSettings'
-import { VAT_RATE, VAT_RATE_PERCENT, WEBSITE_URL } from '~/config'
-import type { TicketType, DirectusTicketOrderItem } from '~/types/directus'
-import type { TicketAttendee } from '~/types/items'
-import type { CreateCheckoutInput } from '../../utils/schema'
 
 function generateOrderNumber(): string {
     const year = new Date().getFullYear()
@@ -19,16 +19,12 @@ interface ConferencePricing {
     ticket_early_bird_deadline: string | null
 }
 
-function calculatePricing(
-    conference: ConferencePricing,
-    ticketCount: number,
-    discountPriceCents: number | null
-) {
+function calculatePricing(conference: ConferencePricing, ticketCount: number, discountPriceCents: number | null) {
     const isEarlyBird = isEarlyBirdPeriod(conference.ticket_early_bird_deadline)
     const basePriceCents =
         isEarlyBird && conference.ticket_early_bird_price_cents
             ? conference.ticket_early_bird_price_cents
-            : conference.ticket_regular_price_cents ?? 0
+            : (conference.ticket_regular_price_cents ?? 0)
 
     let unitPriceNetCents: number
     let ticketType: TicketType
@@ -44,14 +40,9 @@ function calculatePricing(
         ticketType = 'regular'
     }
 
-    const discountAmountCents =
-        discountPriceCents !== null
-            ? ticketCount * (basePriceCents - discountPriceCents)
-            : 0
+    const discountAmountCents = discountPriceCents !== null ? ticketCount * (basePriceCents - discountPriceCents) : 0
     const subtotalNetCents =
-        discountPriceCents !== null
-            ? ticketCount * basePriceCents
-            : ticketCount * unitPriceNetCents
+        discountPriceCents !== null ? ticketCount * basePriceCents : ticketCount * unitPriceNetCents
     const totalNetCents = subtotalNetCents - discountAmountCents
 
     // Calculate gross unit price for Stripe line items (round per-ticket for consistency)

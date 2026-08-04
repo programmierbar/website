@@ -40,6 +40,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 5 of 7 done, 1 **reverted upstream**; only `stripe` left; **audit at zero** |
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
 | — | [Registry sweep and the formatter bump](#registry-sweep-and-the-formatter-bump--done-2026-08-04) | ✅ Done (2026-08-04) |
+| — | [Prettier sweep + format gate](#the-prettier-sweep-and-the-format-gate--done-2026-08-04) | ✅ Done (2026-08-04) |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
 Each phase's own write-up ends with what it deliberately left behind. Those are also gathered into
@@ -1432,7 +1433,8 @@ pushing plain text through an HTML sink for no reason.
 ## Registry sweep and the formatter bump — done 2026-08-04
 
 Asked whether anything besides `stripe` was still behind, and answered against the npm registry
-rather than against this document. **Four things were, and one of them appeared in no phase at all.**
+rather than against this document. **Six were: four needing a decision, and two that were only
+lockfile drift.** One of the four appeared in no phase at all.
 
 | package | installed | latest | status |
 | --- | --- | --- | --- |
@@ -1521,6 +1523,100 @@ Worth stating plainly: **none of those four gates can see a formatter change.** 
 check in CI (see the backlog item below), so what actually verified this upgrade was the tree-diff
 comparison above, not the gate run. The gates were run to prove the two patch bumps changed nothing.
 
+## The Prettier sweep and the format gate — done 2026-08-04
+
+**90 files reformatted, and a CI step so it cannot happen again.** The drift came from Phase 2's
+`prettier` 3.2.5 → 3.9.6: the new version formats slightly differently, nobody ran `--write`, and no
+gate looked. Eight phases later the repo was 90 files from its own committed config.
+
+Both halves matter, and they fix different problems. The sweep fixes today. The gate is what stops
+the next Prettier release re-opening it — without it, formatting is voluntary, and "voluntary" already
+has a track record here.
+
+| change | why |
+| --- | --- |
+| `npm run prettier` across `nuxt-app` | 90 files. Its own commit, no hand edits |
+| `prettier:check` script + CI step | `--check` writes nothing and exits non-zero; `prettier` would pass by mutating |
+| `nuxt-app/.editorconfig` fixed | it said `indent_size = 2` while `.prettierrc` says `tabWidth: 4`. See below — this was a real pre-existing conflict, not a missing file |
+| `AGENTS.md` editor note | format-on-save for WebStorm and VS Code, both of which read `.prettierrc` unaided |
+| dropped `jsxBracketSameLine` | deprecated, and it printed a warning on every run. Verified inert: removing it changed no file |
+
+### The editor config had been telling editors the wrong indent width
+
+`nuxt-app/.editorconfig` set `indent_size = 2`. `.prettierrc` sets `tabWidth: 4`. Both are read by
+WebStorm and VS Code, so an editor indented new lines at 2 and the formatter immediately widened them
+to 4 — which is a small but perfect example of why the drift went unnoticed: the tooling disagreed
+with itself and nothing arbitrated.
+
+Corrected to 4, plus `max_line_length = 120` to match `printWidth`.
+
+**A root `.editorconfig` was written first and then deleted, because it was dead on arrival.** Both
+`nuxt-app/.editorconfig` and
+`directus-cms/extensions/directus-extension-programmierbar-bundle/.editorconfig` declare `root = true`,
+which stops the upward search — so a file at the repo root is never consulted for either tree. The
+claim that this repo had no `.editorconfig` came from checking only the repo root; two existed. Fixing
+the one that was actually being read was the whole job.
+
+**Deliberately no pre-commit hook.** It is the conventional answer and it does not earn its keep here:
+two active humans, essentially everything arrives via PR where CI already runs, and hooks are
+bypassable with `--no-verify` and absent in fresh clones — including the agent-authored commits, which
+are a real share of this repo's history. That means the CI check would still be needed, so a hook buys
+a second mechanism for one guarantee. Revisit if "CI red for a trailing comma" becomes a recurring
+annoyance.
+
+### Verifying a 90-file reformat, when no gate can see one
+
+The four gates pass, and that is nearly meaningless here: a formatter change is invisible to `lint`,
+`test`, `typecheck` and `build` by construction. Prettier is AST-preserving in principle; the question
+is whether *this* run changed anything a visitor receives.
+
+So the actual verification was a **rendered-output comparison**: build before, build after, fetch 11
+routes from a local production server, and diff. Four attempts at a detector were thrown away first,
+which is the part worth recording:
+
+| attempt | result |
+| --- | --- |
+| strip all whitespace, compare | useless — counts quote/semicolon/comma normalisation as "content changed" (63 files) |
+| collapse template whitespace | useless — attribute reflow inside tags reads as a change (46 files) |
+| raw HTML diff | 11/11 differ, all from source-derived hashes: chunk names, `data-v-*` ids, scoped keyframe names, per-build payload uuid |
+| **mask those, sort class tokens** | **10/11 byte-identical; 1 real difference** |
+
+Class *order* is masked on purpose and it is safe to mask: the CSS cascade resolves by stylesheet
+order and specificity, never by the order tokens appear in a `class` attribute. Sorting the tokens
+still catches a class that was **added or removed**, since that changes the multiset rather than its
+order. Most of the reordering noise came from the Tailwind plugin finally running on files it had
+never formatted.
+
+**The one real difference**, on the conference detail page:
+
+```diff
+-<div class="mb-1 text-xs font-bold uppercase tracking-widest text-lime">Regulär</div>
++<div class="mb-1 text-xs font-bold uppercase tracking-widest text-lime"> Regulär </div>
+```
+
+The source line was over 120 characters, so Prettier broke it and `Regulär` landed on its own line;
+Vue condenses that to a single leading and trailing space. This is the one failure mode worth fearing
+in a mass reformat — Prettier decides whitespace significance from a tag's *default* display, so a
+`<div>` made `inline-block` by a Tailwind class is invisible to it, and added whitespace between two
+such siblings is a visible gap.
+
+**Measured rather than reasoned about**, in Chromium against the real compiled stylesheet:
+
+| | geometry |
+| --- | --- |
+| `>Regulär<` | `width 600, height 16` |
+| `> Regulär <` | `width 600, height 16` — identical |
+| **control:** same edit between two `inline-block` siblings | **shifts 4.12px** |
+
+The control is the point. Without it, "identical geometry" could equally mean the measurement cannot
+see whitespace at all. The element in question is a block-level `div` with no inline class, so CSS
+trims the whitespace at its line-box edges.
+
+**Blind spots, stated plainly.** Chunk filenames are pure content hashes, so a *different* chunk being
+loaded is indistinguishable from the same chunk rehashed. Asset filenames keep their logical name, so
+those are still compared. And 11 routes is not every route — the four portal and checkout pages are
+behind flags or payment state and were not exercised.
+
 ## Phase 6 — Deliberately deferred
 
 Not blocked by EOL. Do **not** fold these into the phases above.
@@ -1592,22 +1688,40 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
 
 ### 3. Build and tooling correctness
 
-- [ ] ⚠️ **`nuxt-app` is 89 files away from Prettier-clean, and nothing in CI notices.**
-      `npx prettier . --check` reports `Code style issues found in 89 files` on `main`. Measured to be
-      **entirely from Prettier itself**, not from the Tailwind plugin: re-running the check with the
-      plugin removed reports the same 89 files. Phase 2 took `prettier` 3.2.5 → 3.9.6 and no one ran
-      `--write` afterwards, so eight phases of formatting output drifted unnoticed.
+- [x] ✅ **Swept 90 files back to Prettier-clean and added the CI gate** — done 2026-08-04. See
+      [the write-up](#the-prettier-sweep-and-the-format-gate--done-2026-08-04). The drift was
+      **entirely from Prettier itself**, not from the Tailwind plugin — the check reports the same
+      count with the plugin removed — and dated to Phase 2's `prettier` 3.2.5 → 3.9.6.
 
-      Two separable pieces of work, and the second is what stops it recurring:
+      **Ran before `stripe`, reversing this document's own sequencing note.** That note said to sweep
+      afterwards, to avoid colliding with the one remaining Phase 5 diff. It had the order backwards:
+      `stripe` had not started, so sweeping first is what makes *its* diff clean. The advice would
+      have been right only if the stripe PR were already open.
+- [ ] ⚠️ **`main` has no branch protection, so none of the CI checks actually blocks a merge.**
+      `GET /repos/programmierbar/website/branches/main/protection` returns **404 Branch not
+      protected**. `lint`, `test`, `typecheck:ratchet`, `build` and the new format check all go red
+      and rely on a human noticing before clicking merge.
 
-      1. **One sweep** — `npm run prettier` and commit it alone. Large but mechanical, and it must not
-         ride along with a behavioural change or it will bury it.
-      2. **A gate.** `.github/workflows/run_tests.yml` runs `lint`, `test`, `typecheck:ratchet` and
-         `build` — no format check. Adding `npx prettier . --check` is one step, and without it the
-         sweep starts rotting the day it lands.
+      Worth stating precisely, because it is a gap in Phase 0's premise rather than a missing feature:
+      Phase 0 made upgrades **detectable**, which it achieved. It did not make a broken upgrade
+      **unmergeable**. Eight phases of dependency changes were verified by exactly those checks, so a
+      red ratchet is currently a suggestion.
 
-      Sequencing matters: do the sweep **after** `stripe`, or a 89-file reformat will collide with the
-      one remaining Phase 5 diff.
+      Requires a repo admin — Settings → Branches → require status checks. Pairs with
+      [installing Renovate](#1-install-the-renovate-github-app--highest-value-item-here), which is
+      also gated on the same person: bot-authored dependency PRs are precisely the case where nobody
+      is watching the checks.
+- [ ] **`types/items.ts` types Deepgram's arrays as single-element tuples.**
+      `DeepgramTranscriptResponse.results.utterances`, the nested `words`, and
+      `DirectusTranscriptItem.speakers` are all written `[{ … }]` rather than `{ … }[]`, so the type
+      claims exactly one element where the API returns many. Found by a reviewer on #242; pre-existing,
+      and untouched by the reformat.
+
+      **Currently harmless, which is why it is here and not in that PR.** The only consumer is
+      `helpers/prepareTranscript.ts:32`, which calls `.forEach` — that compiles against a tuple and
+      iterates all N elements at runtime. It would bite the first person to index past `[0]` or read
+      `.length`, which TypeScript narrows to the literal `1`. Fix is `{ … }[]` in three places; worth
+      re-running the typecheck ratchet with it, since it touches types feeding the transcript path.
 - [ ] ⚠️ **`components/TalkItem.vue` has HTML comments inside a `class` attribute**, so the browser
       receives `<!--`, `Mobile`, `order`, `Reset`, `for`, `grid` and `-->` as class names on two
       `<div>`s. Found via the formatter bump, which deduplicated the resulting `grid grid`.
@@ -2177,4 +2291,13 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-04 | Left `TalkItem.vue`'s HTML-comments-inside-`class` bug **unfixed and logged**. The comments' words are being served as class names, and removing them also removes an accidental `display: grid` from two `<div>`s — a layout change needing a browser, not a formatting fix. Fixing it in a dependency PR would have meant an unverified visual change hidden inside a version bump. |
 | 2026-08-04 | Recorded that `nuxt-app` is **89 files from Prettier-clean on `main`** and that no CI step checks formatting. Measured as Prettier-core drift, not plugin drift — the count is identical with the Tailwind plugin removed — dating to Phase 2's `prettier` 3.2.5 → 3.9.6. Deliberately **not** swept here: 89 files of churn alongside a version bump is how a real change gets lost. The sweep needs its own PR plus a `--check` gate, after `stripe`. |
 | 2026-08-04 | Stated plainly that none of the four gates can see a formatter change, so the tree-diff comparison *was* the verification for this item and the gate run only covered the patch bumps. Recorded because "all gates green" on a formatting PR is a claim that sounds like evidence and is not. |
+| 2026-08-04 | Swept 90 files back to Prettier-clean **and** added `prettier:check` to CI in one PR, in separate commits. Either half alone fails: the sweep without the gate starts rotting on the next Prettier release, and the gate without the sweep turns every subsequent PR red. |
+| 2026-08-04 | **Reversed this document's own "sweep after `stripe`" advice** at the maintainer's prompting. The note was written to avoid colliding with an in-flight Phase 5 diff, but `stripe` had not started — so sweeping *first* is what keeps its diff clean. The advice would only have been right with the stripe PR already open. |
+| 2026-08-04 | Chose **no pre-commit hook**, against the conventional answer. Two active humans, everything arrives via PR where CI already runs, and hooks are bypassable and absent from fresh clones — including agent-authored commits, a real share of this repo's history. The CI check would still be needed, so a hook would mean maintaining two mechanisms for one guarantee. |
+| 2026-08-04 | Fixed `nuxt-app/.editorconfig` from `indent_size = 2` to `4`, matching `.prettierrc`'s `tabWidth`. Editors read both, so they had been indenting at 2 while the formatter widened to 4 — the tooling disagreeing with itself, which is a fair summary of how the drift survived eight phases. |
+| 2026-08-04 | **Wrote a root `.editorconfig`, then deleted it as dead code.** Two already existed (`nuxt-app/`, and the Directus extension), both with `root = true`, which stops the upward search — a root-level file is never consulted for either tree. The premise "this repo has no `.editorconfig`" came from checking only the repo root. Checking one directory and generalising to a repo is the same error the comment audit made in Phase 5. |
+| 2026-08-04 | Verified the reformat by **rendered-output comparison**, not by the gates, which cannot see a formatter change at all. 11 routes fetched from local production builds before and after; 10 byte-identical once source-derived hashes were masked and class tokens sorted. Recorded because "all gates green" on a formatting PR sounds like evidence and is not. |
+| 2026-08-04 | **Four detectors were built and discarded** before that comparison worked: whitespace-stripping counted quote normalisation as a content change (63 false positives), template-collapsing counted attribute reflow (46), and the raw diff was drowned in chunk hashes, `data-v-*` ids, keyframe names and a per-build uuid. Each mask narrows sensitivity, so the final script asserts it can still see an added class, a removed class, a changed attribute and inline whitespace. |
+| 2026-08-04 | The sweep's single rendered difference — `>Regulär<` becoming `> Regulär <` where Prettier broke a 120+ character line — was **measured in Chromium rather than reasoned about**, with a positive control. Identical geometry for the real case; the same edit between two `inline-block` siblings shifts 4.12px. Without the control, "identical" would have been indistinguishable from a measurement that cannot see whitespace. Prettier judges whitespace significance from a tag's default display, so a `<div>` made `inline-block` by a Tailwind class is exactly the blind spot to check for. |
+| 2026-08-04 | Recorded that `main` has **no branch protection** (404 from the protection endpoint), so no CI check has ever blocked a merge. Phase 0 made upgrades detectable, not unmergeable — a distinction the plan had been treating as settled. Needs a repo admin, like Renovate. |
 | 2026-08-03 | SDK 22's `RequestError` refactor was treated as the one real risk and checked at runtime, not by reading. `isTransientError()` casts to `{ response?: { status?: number } }`, so a shape change would compile, pass every gate, and silently stop prerender retries under `prerender.failOnError` — one flaky CMS response would then abort a deploy. `RequestError` preserves `.response`; confirmed across 7 transient codes, 5 permanent codes and a connection refusal. |

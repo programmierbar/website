@@ -13,6 +13,7 @@
         "eslint": "eslint --fix .",
         "lint": "eslint .",
         "prettier": "prettier . --write",
+        "prettier:check": "prettier . --check",
         "typecheck": "nuxt prepare && vue-tsc --noEmit -p .nuxt/tsconfig.json",
         "typecheck:ratchet": "node scripts/typecheck-ratchet.mjs",
         "test": "vitest run",

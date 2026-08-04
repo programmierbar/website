@@ -2,7 +2,7 @@
     <li class="flex flex-col md:flex-row-reverse md:items-center">
         <!-- Event image -->
         <NuxtLink
-            v-if='hasImage'
+            v-if="hasImage"
             class="block md:ml-16 md:h-60 md:w-1/2 lg:ml-20 lg:h-80 xl:h-96 2xl:h-112"
             :to="href"
             data-cursor-hover
@@ -17,10 +17,7 @@
             />
         </NuxtLink>
 
-        <div
-class="mt-10 md:mt-0"
-             :class="hasImage ? 'md:w-1/2' : ''"
-        >
+        <div class="mt-10 md:mt-0" :class="hasImage ? 'md:w-1/2' : ''">
             <!-- Name -->
             <h3 class="text-xl font-black text-white md:text-2xl lg:text-3xl">
                 {{ fullName }}
@@ -40,10 +37,10 @@ class="mt-10 md:mt-0"
 </template>
 
 <script lang="ts">
+import { getPlainText } from '~/helpers/sanitize'
 import { getFullSpeakerName } from 'shared-code'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
-import { getPlainText } from '~/helpers/sanitize'
 import type { SpeakerItem } from '../types'
 import DirectusImage from './DirectusImage.vue'
 import LinkButton from './LinkButton.vue'

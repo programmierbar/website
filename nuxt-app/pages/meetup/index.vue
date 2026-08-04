@@ -22,34 +22,36 @@
         </section>
 
         <!-- Meetups -->
-        <MeetupSection v-if='meetups.length > 0' :heading='meetupPage.meetup_heading' :meetups="meetups" />
+        <MeetupSection v-if="meetups.length > 0" :heading="meetupPage.meetup_heading" :meetups="meetups" />
 
         <section class="relative">
-          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
-            <SectionHeading element="h2">
-              Community
-            </SectionHeading>
-            <TestimonialSlider :testimonials='testimonials' />
-          </div>
+            <div class="container mt-16 px-6 md:mb-16 md:mt-28 md:pl-48 lg:mb-48 lg:mt-32 lg:pr-8 3xl:px-8">
+                <SectionHeading element="h2"> Community </SectionHeading>
+                <TestimonialSlider :testimonials="testimonials" />
+            </div>
         </section>
 
-        <MeetupSection :heading='meetupPage.meetup_heading_past' :meetups="pastMeetups" />
+        <MeetupSection :heading="meetupPage.meetup_heading_past" :meetups="pastMeetups" />
     </div>
 </template>
 
 <script setup lang="ts">
+import TestimonialSlider from '~/components/TestimonialSlider.vue'
 import { useLoadingScreen, usePageMeta } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
-import type { DirectusMeetupItem, DirectusMeetupPage, DirectusTestimonialItem } from '~/types';
+import type { DirectusMeetupItem, DirectusMeetupPage, DirectusTestimonialItem } from '~/types'
 import { computed, type ComputedRef } from 'vue'
-import TestimonialSlider from '~/components/TestimonialSlider.vue';
 
 const breadcrumbs = [{ label: 'Meetup' }]
 const directus = useDirectus()
 
 // Query meetup page and meetups
 const { data: pageData } = useAsyncData(async () => {
-    const [meetupPage, meetups, testimonials] = await Promise.all([directus.getMeetupPage(), directus.getMeetups(), directus.getTestimonials()])
+    const [meetupPage, meetups, testimonials] = await Promise.all([
+        directus.getMeetupPage(),
+        directus.getMeetups(),
+        directus.getTestimonials(),
+    ])
 
     const pastMeetups = meetups.filter((meetup) => {
         const now = new Date()
@@ -68,8 +70,12 @@ const { data: pageData } = useAsyncData(async () => {
 
 // Extract about page and members from page data
 const meetupPage: ComputedRef<DirectusMeetupPage | undefined> = computed(() => pageData.value?.meetupPage)
-const meetups: ComputedRef<DirectusMeetupItem[]> = computed(() => pageData.value ? pageData.value.upcomingMeetups : [])
-const pastMeetups: ComputedRef<DirectusMeetupItem[]> = computed(() => pageData.value ? pageData.value.pastMeetups : [])
+const meetups: ComputedRef<DirectusMeetupItem[]> = computed(() =>
+    pageData.value ? pageData.value.upcomingMeetups : []
+)
+const pastMeetups: ComputedRef<DirectusMeetupItem[]> = computed(() =>
+    pageData.value ? pageData.value.pastMeetups : []
+)
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
 // Set loading screen

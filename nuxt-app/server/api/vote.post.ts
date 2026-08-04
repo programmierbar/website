@@ -1,5 +1,5 @@
-import { VoteSchema } from '../utils'
 import { useDirectus } from '~/composables/useDirectus'
+import { VoteSchema } from '../utils'
 
 // The only path that writes a vote. The GET /podcast/[slug]/[up|down] links that
 // ship in RSS show notes no longer write — they redirect to the podcast page,
@@ -28,9 +28,7 @@ export default defineEventHandler(async (event) => {
 
     // Split x-forwarded-for on comma and take the first entry (the client IP)
     const xForwardedFor = event.node.req.headers['x-forwarded-for'] as string | undefined
-    const rawIP = xForwardedFor
-        ? xForwardedFor.split(',')[0].trim()
-        : event.node.req.socket.remoteAddress
+    const rawIP = xForwardedFor ? xForwardedFor.split(',')[0].trim() : event.node.req.socket.remoteAddress
     const userAgent = event.node.req.headers['user-agent']
     const referrer = event.node.req.headers['referer']
 
