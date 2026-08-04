@@ -53,6 +53,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Keep `prettier:check`, not `prettier` — the latter writes, so it would pass by mutating.
+      # Without this step formatting is voluntary, which is how 90 files drifted after the Prettier
+      # 3.2 -> 3.9 bump in Phase 2 with nothing noticing.
+      - name: Check formatting
+        run: npm run prettier:check
+
       # Keep `lint`, not `eslint` — the latter runs with --fix, so it mutates instead of failing.
       - name: Run ESLint
         run: npm run lint
