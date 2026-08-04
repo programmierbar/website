@@ -112,6 +112,19 @@ export default defineNuxtConfig({
                 return
             }
 
+            // Keep image URLs out of the prerender crawl. Following them makes the crawler resize
+            // every `<nuxt-img>` variant it finds — 1476 files and ~100 MB from 44 routes — and
+            // exhaust connections to the CMS, which fails the build via `failOnError`.
+            //
+            // Only where a server serves `/_ipx` at runtime. `nuxt generate` sets `nitro.static`
+            // and produces no server, so there the crawler's output *is* what serves those URLs and
+            // skipping it would 404 every optimised image on the site.
+            if (!nitroConfig.static) {
+                nitroConfig.prerender ??= {}
+                nitroConfig.prerender.ignore ??= []
+                nitroConfig.prerender.ignore.push('/_ipx')
+            }
+
             // Lets CI build without the CMS being reachable. Skips route discovery only — the
             // bundle is still built in full, and deploys never set it.
             if (process.env.SKIP_PRERENDER_ROUTE_DISCOVERY === 'true') {
@@ -199,11 +212,6 @@ export default defineNuxtConfig({
     nitro: {
         prerender: {
             failOnError: true,
-            // Don't follow image URLs. The crawler would otherwise resize every `<nuxt-img>` variant it
-            // finds — 1476 files and ~100 MB from 44 routes — and hammer the CMS while doing it. Nothing
-            // consumes them: Vercel serves images through `_vercel/image` and does not prerender, and
-            // `/_ipx` still works at runtime because the handler stays in the server bundle.
-            ignore: ['/_ipx'],
         },
         externals: {
             // Do not remove: Pinia 4 ships only its bundler build, so externalising it leaves Vue's
