@@ -1,11 +1,11 @@
 import type {
-  DirectusMeetupItem,
-  DirectusPodcastItem,
-  DirectusConferenceItem,
-  DirectusSpeakerItem,
-  DirectusMemberItem,
-  PurchaseType,
-} from '~/types/directus';
+    DirectusConferenceItem,
+    DirectusMeetupItem,
+    DirectusMemberItem,
+    DirectusPodcastItem,
+    DirectusSpeakerItem,
+    PurchaseType,
+} from '~/types/directus'
 
 export type LatestPodcastItem = Pick<
     DirectusPodcastItem,
@@ -29,11 +29,11 @@ interface PreparedSpeakersItem {
 }
 
 interface PreparedTalksItem {
-  talksPrepared: TalkItem[]
+    talksPrepared: TalkItem[]
 }
 
 interface PreparedPartnersItem {
-  partnersPrepared: PartnerItem[]
+    partnersPrepared: PartnerItem[]
 }
 
 interface PreparedPodcastsItems {
@@ -41,8 +41,9 @@ interface PreparedPodcastsItems {
 }
 
 export interface PodcastItem extends DirectusPodcastItem, PreparedTagsItem, PreparedSpeakersItem {}
- export interface MeetupItem extends DirectusMeetupItem, PreparedTagsItem, PreparedSpeakersItem, PreparedTalksItem {}
-export interface ConferenceItem extends DirectusConferenceItem, PreparedSpeakersItem, PreparedTalksItem, PreparedPartnersItem {}
+export interface MeetupItem extends DirectusMeetupItem, PreparedTagsItem, PreparedSpeakersItem, PreparedTalksItem {}
+export interface ConferenceItem
+    extends DirectusConferenceItem, PreparedSpeakersItem, PreparedTalksItem, PreparedPartnersItem {}
 export interface SpeakerItem extends DirectusSpeakerItem, PreparedTagsItem, PreparedPodcastsItems {}
 
 export interface MemberItem {
@@ -69,30 +70,30 @@ export interface MemberItem {
 }
 
 export interface TalkItem {
-  id: string
-  title: string
-  abstract: string
-  thumbnail: FileItem | null
-  video_url: string
-  members: {
-    id: number
-    podcast: DirectusPodcastItem
-    member: DirectusMemberItem
-    sort: number
-  }[]
-  speakers: {
-    id: number
-    podcast: DirectusPodcastItem
-    speaker: DirectusSpeakerItem
-    sort: number
-  }[]
+    id: string
+    title: string
+    abstract: string
+    thumbnail: FileItem | null
+    video_url: string
+    members: {
+        id: number
+        podcast: DirectusPodcastItem
+        member: DirectusMemberItem
+        sort: number
+    }[]
+    speakers: {
+        id: number
+        podcast: DirectusPodcastItem
+        speaker: DirectusSpeakerItem
+        sort: number
+    }[]
 }
 
 export interface PartnerItem {
-  id: string
-  name: string
-  image: FileItem | null
-  url: string
+    id: string
+    name: string
+    image: FileItem | null
+    url: string
 }
 
 export interface SpeakerPreviewItem {
@@ -162,35 +163,37 @@ export interface DirectusProfileItem {
 }
 
 export enum DirectusTranscriptItemServices {
-  Deepgram = 'deepgram',
+    Deepgram = 'deepgram',
 }
 
 interface DeepgramTranscriptResponse {
-  results: {
-    utterances: [{
-      transcript: string,
-      speaker: string,
-      words: [
-        {
-          punctuated_word: string,
-          start: number,
-          speaker: string,
-        }
-      ]
-    }]
-  }
+    results: {
+        utterances: [
+            {
+                transcript: string
+                speaker: string
+                words: [
+                    {
+                        punctuated_word: string
+                        start: number
+                        speaker: string
+                    },
+                ]
+            },
+        ]
+    }
 }
 
 export interface DirectusTranscriptItem {
-  id: string
-  date_updated: string
-  status: string
-  podcast: DirectusPodcastItem
-  podcast_audio_file: FileItem
-  speakers: [{name: string, identifier: string}]
-  service: DirectusTranscriptItemServices,
-  supported_features: string[]
-  raw_response: null | DeepgramTranscriptResponse
+    id: string
+    date_updated: string
+    status: string
+    podcast: DirectusPodcastItem
+    podcast_audio_file: FileItem
+    speakers: [{ name: string; identifier: string }]
+    service: DirectusTranscriptItemServices
+    supported_features: string[]
+    raw_response: null | DeepgramTranscriptResponse
 }
 
 // Ticket checkout types

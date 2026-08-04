@@ -7,7 +7,10 @@ export default defineEventHandler(async (event) => {
     try {
         conference = await directus.getLatestConferenceWithTicketing()
     } catch (err: any) {
-        throw createError({ statusCode: 500, message: `Failed to fetch conference: ${JSON.stringify(err?.errors || err?.message || err)}` })
+        throw createError({
+            statusCode: 500,
+            message: `Failed to fetch conference: ${JSON.stringify(err?.errors || err?.message || err)}`,
+        })
     }
 
     if (!conference) {

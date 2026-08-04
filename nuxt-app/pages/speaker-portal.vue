@@ -24,8 +24,8 @@
             <div v-else-if="submitted" class="mt-16">
                 <SectionHeading element="h1">Vielen Dank!</SectionHeading>
                 <p class="mt-8 text-xl text-white">
-                    Deine Informationen wurden erfolgreich übermittelt.
-                    Wir melden uns bei dir, sobald wir alles geprüft haben.
+                    Deine Informationen wurden erfolgreich übermittelt. Wir melden uns bei dir, sobald wir alles geprüft
+                    haben.
                 </p>
             </div>
 
@@ -34,20 +34,13 @@
                 <SectionHeading class="mt-8 md:mt-0" element="h1">Speaker Portal</SectionHeading>
 
                 <p class="mt-8 text-lg text-white md:text-xl">
-                    Hallo {{ speaker.first_name }}! Bitte fülle die folgenden Informationen aus,
-                    damit wir dich optimal auf unserer Website präsentieren können.
+                    Hallo {{ speaker.first_name }}! Bitte fülle die folgenden Informationen aus, damit wir dich optimal
+                    auf unserer Website präsentieren können.
                 </p>
 
-                <p v-if="deadline" class="mt-4 text-base text-lime">
-                    Bitte bis {{ formatDate(deadline) }} ausfüllen.
-                </p>
+                <p v-if="deadline" class="mt-4 text-base text-lime">Bitte bis {{ formatDate(deadline) }} ausfüllen.</p>
 
-                <form
-                    class="mt-12 space-y-8"
-                    :class="formState"
-                    novalidate
-                    @submit.prevent="submitForm"
-                >
+                <form class="mt-12 space-y-8" :class="formState" novalidate @submit.prevent="submitForm">
                     <!-- Personal Info Section -->
                     <div class="bg-gray-900 p-6 md:p-8 lg:p-12">
                         <h2 class="mb-6 text-xl font-bold text-lime md:text-2xl">Persönliche Informationen</h2>
@@ -125,14 +118,18 @@
                                 required
                                 maxlength="2000"
                             />
-                            <p class="mt-1 text-sm text-white/60">{{ formData.description?.length || 0 }} / 2000 Zeichen</p>
+                            <p class="mt-1 text-sm text-white/60">
+                                {{ formData.description?.length || 0 }} / 2000 Zeichen
+                            </p>
                         </div>
                     </div>
 
                     <!-- Social Links Section -->
                     <div class="bg-gray-900 p-6 md:p-8 lg:p-12">
                         <h2 class="mb-6 text-xl font-bold text-lime md:text-2xl">Social Media & Links</h2>
-                        <p class="mb-6 text-white/60">Alle Felder sind optional. LinkedIn empfehlen wir besonders, da wir dich dort taggen können.</p>
+                        <p class="mb-6 text-white/60">
+                            Alle Felder sind optional. LinkedIn empfehlen wir besonders, da wir dich dort taggen können.
+                        </p>
 
                         <div class="grid gap-6 md:grid-cols-2">
                             <div>
@@ -295,8 +292,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { getMetaInfo } from '~/helpers'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const route = useRoute()
 
@@ -513,10 +510,13 @@ async function submitForm(event: Event) {
         const submitData = new FormData()
 
         submitData.append('token', token)
-        submitData.append('data', JSON.stringify({
-            ...formData.value,
-            occupation: `${formData.value.job_title} at ${formData.value.company}`,
-        }))
+        submitData.append(
+            'data',
+            JSON.stringify({
+                ...formData.value,
+                occupation: `${formData.value.job_title} at ${formData.value.company}`,
+            })
+        )
 
         if (profileImageFile.value) {
             submitData.append('profile_image', profileImageFile.value)

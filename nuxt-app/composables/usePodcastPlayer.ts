@@ -2,11 +2,7 @@ import { onMounted, reactive, ref, shallowRef, toRefs, watch } from 'vue'
 import { PAUSE_PODCAST_EVENT_ID, PLAY_PODCAST_EVENT_ID } from '../config'
 import { trackGoal } from '../helpers'
 import type { PodcastItem } from '../types'
-import {
-    createAudioElementSource,
-    type MediaSource,
-    type SourceCallbacks,
-} from './useMediaSource'
+import { createAudioElementSource, type MediaSource, type SourceCallbacks } from './useMediaSource'
 
 type PodcastBasics = Pick<PodcastItem, 'id' | 'slug' | 'type' | 'number' | 'title' | 'audio_url'>
 

@@ -30,12 +30,12 @@
 </template>
 
 <script lang="ts">
+import { getPlainText } from '~/helpers/sanitize'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
-import { getPlainText } from '~/helpers/sanitize'
 import type { ConferenceItem } from '../types'
-import LinkButton from './LinkButton.vue'
 import ConferenceCover from './ConferenceCover.vue'
+import LinkButton from './LinkButton.vue'
 import MeetupStartAndEnd from './MeetupStartAndEnd.vue'
 
 export default defineComponent({

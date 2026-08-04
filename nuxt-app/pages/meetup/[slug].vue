@@ -44,24 +44,28 @@
                 <!-- Heading and description -->
                 <SectionHeading class="hidden md:block" element="h2"> Meetup Infos </SectionHeading>
                 <InnerHtml
-                  class="mt-8 space-y-8 font-light leading-normal text-white md:mt-14 text-xl"
-                  :html="meetup.intro"
+                    class="mt-8 space-y-8 text-xl font-light leading-normal text-white md:mt-14"
+                    :html="meetup.intro"
                 />
-                <div v-for="talk of meetup.talksPrepared" :key="talk.id" class="mt-8 space-y-8 font-light leading-normal text-white md:mt-14">
-                  <TalkItem :talk='talk' />
+                <div
+                    v-for="talk of meetup.talksPrepared"
+                    :key="talk.id"
+                    class="mt-8 space-y-8 font-light leading-normal text-white md:mt-14"
+                >
+                    <TalkItem :talk="talk" />
                 </div>
                 <InnerHtml
-                    class="mt-8 space-y-8 font-light leading-normal text-white md:mt-14 text-xl"
+                    class="mt-8 space-y-8 text-xl font-light leading-normal text-white md:mt-14"
                     :html="meetup.description"
                 />
-                <p class="font-light leading-normal text-white md:mt-14 text-xl">
+                <p class="text-xl font-light leading-normal text-white md:mt-14">
                     Bitte beachte auch unsere
-                    <NuxtLink class="text-lime font-bold hover:underline" data-cursor-hover :to="'/verhaltensregeln'">
-                      Verhaltensregeln
+                    <NuxtLink class="font-bold text-lime hover:underline" data-cursor-hover :to="'/verhaltensregeln'">
+                        Verhaltensregeln
                     </NuxtLink>
                     und den
-                    <NuxtLink class="text-lime font-bold hover:underline" data-cursor-hover :to="'/aufnahmen'">
-                      Hinweis zu Foto- und Videoaufnahmen.
+                    <NuxtLink class="font-bold text-lime hover:underline" data-cursor-hover :to="'/aufnahmen'">
+                        Hinweis zu Foto- und Videoaufnahmen.
                     </NuxtLink>
                 </p>
 
@@ -96,17 +100,15 @@
             </div>
         </section>
 
-        <section v-if='galleryImages.length > 0' class="relative my-16">
-          <ConferenceGallery :images='galleryImages' />
+        <section v-if="galleryImages.length > 0" class="relative my-16">
+            <ConferenceGallery :images="galleryImages" />
         </section>
 
         <section class="relative">
-          <div class="container mt-16 px-6 md:mt-28 md:pl-48 lg:mt-32 lg:pr-8 3xl:px-8 md:mb-16 lg:mb-48">
-            <SectionHeading element="h2">
-              Community
-            </SectionHeading>
-            <TestimonialSlider :testimonials='testimonials' />
-          </div>
+            <div class="container mt-16 px-6 md:mb-16 md:mt-28 md:pl-48 lg:mb-48 lg:mt-32 lg:pr-8 3xl:px-8">
+                <SectionHeading element="h2"> Community </SectionHeading>
+                <TestimonialSlider :testimonials="testimonials" />
+            </div>
         </section>
 
         <!-- Related podcasts -->
@@ -121,14 +123,14 @@
 
 <script setup lang="ts">
 import PlayCircleFilledIcon from '~/assets/icons/play-circle-filled.svg'
+import ConferenceGallery from '~/components/ConferenceGallery.vue'
+import TestimonialSlider from '~/components/TestimonialSlider.vue'
 import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { OPEN_YOUTUBE_EVENT_ID } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
-import type { DirectusFileItem, DirectusTestimonialItem, MeetupItem, TagItem } from '~/types';
+import type { DirectusFileItem, DirectusTestimonialItem, MeetupItem, TagItem } from '~/types'
 import { computed, type ComputedRef } from 'vue'
-import TestimonialSlider from '~/components/TestimonialSlider.vue';
-import ConferenceGallery from '~/components/ConferenceGallery.vue';
 
 // Add route and router
 const route = useRoute()
@@ -163,15 +165,15 @@ const relatedPodcasts = computed(() => pageData.value?.relatedPodcasts)
 const testimonials: ComputedRef<DirectusTestimonialItem[]> = computed(() => pageData.value?.testimonials || [])
 
 const galleryImages: ComputedRef<DirectusFileItem[]> = computed(() => {
-  let images: DirectusFileItem[] = [];
+    let images: DirectusFileItem[] = []
 
-  if (pageData.value?.meetup?.gallery_images) {
-    images = pageData.value.meetup.gallery_images.map((gallery_image) => {
-      return gallery_image.image;
-    })
-  }
+    if (pageData.value?.meetup?.gallery_images) {
+        images = pageData.value.meetup.gallery_images.map((gallery_image) => {
+            return gallery_image.image
+        })
+    }
 
-  return images;
+    return images
 })
 
 // Convert speaker count to local string

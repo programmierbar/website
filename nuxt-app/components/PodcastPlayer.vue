@@ -259,16 +259,7 @@ const collapsePlayer = () => {
 // `change` event that clears the scrubbing flag). Other keys — Tab, modifiers,
 // etc. — must NOT begin scrubbing, otherwise the flag would never be cleared
 // and time updates would stay suppressed indefinitely.
-const SEEK_KEYS = new Set([
-    'ArrowLeft',
-    'ArrowRight',
-    'ArrowUp',
-    'ArrowDown',
-    'PageUp',
-    'PageDown',
-    'Home',
-    'End',
-])
+const SEEK_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'])
 
 /**
  * It begins scrubbing only when a real seek key is pressed, so that a matching

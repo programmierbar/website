@@ -39,7 +39,12 @@
                         <div class="mt-6 text-base font-bold text-white md:mt-8 md:text-xl lg:text-2xl">
                             {{ speaker.occupation }}
                         </div>
-                        <IndividualPlatforms :platforms='platforms' :scope='"speaker"' :style='"color"' :sizes='"h-7 md:h-8 lg:h-10"' />
+                        <IndividualPlatforms
+                            :platforms="platforms"
+                            :scope="'speaker'"
+                            :style="'color'"
+                            :sizes="'h-7 md:h-8 lg:h-10'"
+                        />
                     </div>
                 </div>
 
@@ -170,14 +175,14 @@ useHead(() =>
 const breadcrumbs = computed(() => [{ label: 'Hall of Fame', href: '/hall-of-fame' }, { label: fullName.value || '' }])
 
 const platforms = computed(() => {
-  return {
-    github_url: speaker.value?.github_url,
-    twitter_url: speaker.value?.twitter_url,
-    bluesky_url: speaker.value?.bluesky_url,
-    linkedin_url: speaker.value?.linkedin_url,
-    instagram_url: speaker.value?.instagram_url,
-    youtube_url: speaker.value?.youtube_url,
-    website_url: speaker.value?.website_url,
-  }
-});
+    return {
+        github_url: speaker.value?.github_url,
+        twitter_url: speaker.value?.twitter_url,
+        bluesky_url: speaker.value?.bluesky_url,
+        linkedin_url: speaker.value?.linkedin_url,
+        instagram_url: speaker.value?.instagram_url,
+        youtube_url: speaker.value?.youtube_url,
+        website_url: speaker.value?.website_url,
+    }
+})
 </script>

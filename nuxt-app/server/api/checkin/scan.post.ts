@@ -23,7 +23,10 @@ export default defineEventHandler(async (event) => {
     try {
         ticket = await directus.getTicketByCode(ticketCode)
     } catch (err: any) {
-        throw createError({ statusCode: 500, message: `Failed to look up ticket: ${JSON.stringify(err?.errors || err?.message || err)}` })
+        throw createError({
+            statusCode: 500,
+            message: `Failed to look up ticket: ${JSON.stringify(err?.errors || err?.message || err)}`,
+        })
     }
 
     if (!ticket) {
@@ -53,7 +56,10 @@ export default defineEventHandler(async (event) => {
             checked_in_at: new Date().toISOString(),
         } as any)
     } catch (err: any) {
-        throw createError({ statusCode: 500, message: `Failed to update ticket: ${JSON.stringify(err?.errors || err?.message || err)}` })
+        throw createError({
+            statusCode: 500,
+            message: `Failed to update ticket: ${JSON.stringify(err?.errors || err?.message || err)}`,
+        })
     }
 
     return {

@@ -69,9 +69,7 @@ const breadcrumbs = computed(() => [
                 class="border-yellow-500/50 bg-yellow-500/10 text-yellow-200 mb-8 rounded-lg border p-4"
             >
                 <p class="font-medium">Zahlung abgebrochen</p>
-                <p class="text-yellow-200/80 mt-1 text-sm">
-                    Die Zahlung wurde abgebrochen. Bitte versuche es erneut.
-                </p>
+                <p class="text-yellow-200/80 mt-1 text-sm">Die Zahlung wurde abgebrochen. Bitte versuche es erneut.</p>
             </div>
 
             <!-- Error state -->
