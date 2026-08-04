@@ -30,6 +30,13 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
             continue
         }
 
+        // Only fill in a *missing* scheme. Anything that already has one has been through DOMPurify's
+        // own URI policy, which allows things a CMS text field should not have to justify — an inline
+        // `data:` image being the obvious one. Second-guessing it here would strip those.
+        if (/^[a-z][a-z0-9+.-]*:/i.test(value)) {
+            continue
+        }
+
         const normalized = normalizeExternalUrl(value)
 
         if (normalized === undefined) {

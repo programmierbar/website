@@ -145,6 +145,14 @@ describe('links inside rich text', () => {
         }
     })
 
+    it('leaves an inline data: image alone, deferring to DOMPurify on existing schemes', () => {
+        // The hook only fills in a missing scheme. DOMPurify permits `data:` images, and vetting
+        // schemes here as well would strip them.
+        const dataUri =
+            '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8AAAwAB/AF+AV0AAAAASUVORK5CYII=">'
+        expect(sanitizeHtml(dataUri)).toContain('data:image/png;base64,')
+    })
+
     it('normalises src as well as href', () => {
         expect(sanitizeHtml('<img src="example.com/a.png">')).toBe('<img src="https://example.com/a.png">')
     })

@@ -37,6 +37,12 @@ describe('normalizeExternalUrl', () => {
             }
         })
 
+        it('drops a host with an explicit port, which cannot be told apart from a scheme', () => {
+            // Documented limitation rather than an accident: dropping is the safe side of the
+            // ambiguity, and no CMS value currently has a port.
+            expect(normalizeExternalUrl('example.com:8080/path')).toBeUndefined()
+        })
+
         it('adds the missing scheme to a schemeless URL', () => {
             // Both were live in the CMS and 404'd on our own domain.
             expect(normalizeExternalUrl('www.linkedin.com/in/mariekilg/', 'linkedin')).toBe(

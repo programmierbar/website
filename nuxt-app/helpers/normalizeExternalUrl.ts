@@ -86,17 +86,21 @@ export function normalizeExternalUrl(
         return undefined
     }
 
-    // Already absolute (http(s):, mailto:, tel:), protocol-relative, or deliberately site-internal.
-    const schemeMatch = trimmed.match(/^([a-z][a-z0-9+.-]*):/i)
-    if (schemeMatch) {
-        const scheme = schemeMatch[1].toLowerCase()
-        if (scheme === 'http' || scheme === 'https' || scheme === 'mailto' || scheme === 'tel') {
-            return trimmed
-        }
+    // The only schemes worth putting in an href from a CMS field.
+    if (/^(https?|mailto|tel):/i.test(trimmed)) {
+        return trimmed
+    }
 
+    // Any other scheme — `javascript:`, `vbscript:`, `data:` — is dropped rather than passed through.
+    // This also drops a host with an explicit port (`example.com:8080/x`), which is indistinguishable
+    // from a scheme here; dropping the link is the safe side of that ambiguity, and no CMS value has
+    // one. Written as two tests rather than a capture group because `match()[1]` is
+    // `string | undefined` under `noUncheckedIndexedAccess`.
+    if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
         return undefined
     }
 
+    // Protocol-relative, or deliberately site-internal.
     if (trimmed.startsWith('//') || trimmed.startsWith('/')) {
         return trimmed
     }
