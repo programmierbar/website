@@ -1,4 +1,5 @@
 import DOMPurify from 'isomorphic-dompurify'
+import { normalizeExternalUrl } from './normalizeExternalUrl'
 
 // The single place that decides how untrusted CMS text is made safe to render. Every `v-html` binding
 // and every plain-text excerpt in the app goes through one of these, so a policy change — tightening
@@ -7,6 +8,39 @@ import DOMPurify from 'isomorphic-dompurify'
 // Deliberately not re-exported from `helpers/index.ts`: that barrel is imported by server routes, and
 // pulling isomorphic-dompurify in through it would instantiate jsdom for consumers that only wanted a
 // date helper. Import this module directly.
+
+// Editors also leave the scheme off links *inside* rich text, not just in the dedicated URL fields:
+// `href="innoq.com/de/staff/stefan-tilkov/"` in a speaker biography resolves against the current page
+// and 404s on our own domain, and the prerender crawler follows it and fails the build.
+//
+// This runs in `afterSanitizeAttributes`, so DOMPurify has already removed anything unsafe — a
+// `javascript:` href is gone before this sees the node, and only values it approved are rewritten.
+// Root-relative links are left alone, so internal links in rich text keep working.
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+    if (typeof (node as Element).getAttribute !== 'function') {
+        return
+    }
+
+    const element = node as Element
+
+    for (const attribute of ['href', 'src']) {
+        const value = element.getAttribute(attribute)
+
+        if (!value) {
+            continue
+        }
+
+        const normalized = normalizeExternalUrl(value)
+
+        if (normalized === undefined) {
+            // Not usable as a URL at all — better a non-clickable link than one that navigates into
+            // our own site and 404s.
+            element.removeAttribute(attribute)
+        } else if (normalized !== value) {
+            element.setAttribute(attribute, normalized)
+        }
+    }
+})
 
 /**
  * Sanitises CMS rich text for rendering as HTML.
