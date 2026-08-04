@@ -1,10 +1,10 @@
 <template>
-    <!-- we can safely disable this eslint rule since we sanitize is with DOMPurify before -->
+    <!-- v-html is intended here: this component exists to render CMS rich text, sanitised first. -->
     <div class="inner-html" :class="variantClass" v-html="sanitizedHtml" />
 </template>
 
 <script lang="ts">
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeHtml } from '~/helpers/sanitize'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
 
@@ -22,7 +22,7 @@ export default defineComponent({
     setup(props) {
         // Convert variant to class string
         const variantClass = computed(() => props.variant.replace(/_/g, '-'))
-        const sanitizedHtml = computed(() => DOMPurify.sanitize(props.html))
+        const sanitizedHtml = computed(() => sanitizeHtml(props.html))
 
         return {
             variantClass,

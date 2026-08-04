@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts">
-import { getPlainText } from '~/helpers/getPlainText'
+import { getPlainText } from '~/helpers/sanitize'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
 import type { MeetupItem } from '../types'

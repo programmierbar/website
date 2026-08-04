@@ -15,7 +15,7 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
-import DOMPurify from 'isomorphic-dompurify';
+import { sanitizeInlineHtml } from '~/helpers/sanitize';
 
 export default defineComponent({
     props: {
@@ -28,7 +28,7 @@ export default defineComponent({
         // Create style with animation duration
         const style = computed(() => `animation-duration: ${props.news.join().length * 0.2}s`)
         const preparedNewsItems = computed(() => {
-          return props.news.map(news => `${DOMPurify.sanitize(news, {FORBID_TAGS: ['p']})} +++ `)
+          return props.news.map(news => `${sanitizeInlineHtml(news)} +++ `)
         })
 
         return {

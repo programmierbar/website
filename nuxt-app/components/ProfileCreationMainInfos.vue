@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ProfilePicture from '~/components/ProfilePicture.vue'
 import { useProfileCreationStore } from '~/composables/useProfileCreationStore'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeHtml } from '~/helpers/sanitize'
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -10,7 +10,7 @@ const props = defineProps<{
 }>()
 
 // CMS rich text, so it keeps its markup — but it must be sanitised before reaching v-html.
-const sanitizedIntroText = computed(() => DOMPurify.sanitize(props.introText))
+const sanitizedIntroText = computed(() => sanitizeHtml(props.introText))
 
 const emit = defineEmits(['validityChange'])
 const store = useProfileCreationStore()

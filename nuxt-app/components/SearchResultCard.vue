@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import LeaveSiteIcon from '~/assets/icons/leave-site.svg'
-import { getPlainText } from '~/helpers/getPlainText'
+import { getPlainText } from '~/helpers/sanitize'
 import { getFullPodcastTitle, getFullSpeakerName } from 'shared-code'
 import { computed } from 'vue'
 

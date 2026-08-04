@@ -32,8 +32,8 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
-import { getPlainText } from '~/helpers/getPlainText'
-import type { ConferenceItem, MeetupItem } from '../types';
+import { getPlainText } from '~/helpers/sanitize'
+import type { ConferenceItem } from '../types'
 import LinkButton from './LinkButton.vue'
 import ConferenceCover from './ConferenceCover.vue'
 import MeetupStartAndEnd from './MeetupStartAndEnd.vue'

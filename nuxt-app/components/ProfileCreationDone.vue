@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeHtml } from '~/helpers/sanitize'
 import { computed } from 'vue'
 
 const props = defineProps<{
@@ -7,7 +7,7 @@ const props = defineProps<{
 }>()
 
 // CMS rich text, so it keeps its markup — but it must be sanitised before reaching v-html.
-const sanitizedMainText = computed(() => DOMPurify.sanitize(props.mainText))
+const sanitizedMainText = computed(() => sanitizeHtml(props.mainText))
 </script>
 
 <template>

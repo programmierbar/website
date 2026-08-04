@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import LeaveSiteIcon from '~/assets/icons/leave-site.svg'
-import { getPlainText } from '~/helpers/getPlainText'
+import { getPlainText } from '~/helpers/sanitize'
 import type { PickOfTheDayItem } from '~/types'
 import { computed } from 'vue'
 import DirectusImage from './DirectusImage.vue'

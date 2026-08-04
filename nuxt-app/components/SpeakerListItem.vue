@@ -43,7 +43,7 @@ class="mt-10 md:mt-0"
 import { getFullSpeakerName } from 'shared-code'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
-import { getPlainText } from '~/helpers/getPlainText'
+import { getPlainText } from '~/helpers/sanitize'
 import type { SpeakerItem } from '../types'
 import DirectusImage from './DirectusImage.vue'
 import LinkButton from './LinkButton.vue'
