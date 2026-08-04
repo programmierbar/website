@@ -58,6 +58,12 @@
             "matchPackageNames": ["tailwindcss", "@tailwindcss/**", "@nuxtjs/tailwindcss"],
             "matchUpdateTypes": ["major"],
             "enabled": false
+        },
+        {
+            "description": "Held below 0.8.0: 0.8.x stops @ianvs/prettier-plugin-sort-imports running on .vue files and leaves imports scrambled (tailwindlabs/prettier-plugin-tailwindcss#465). Without this rule the 'linting and formatting' group above would re-propose it as a routine minor. Remove once that issue is closed and a .vue file still formats with sorted imports.",
+            "matchFileNames": ["nuxt-app/**"],
+            "matchPackageNames": ["prettier-plugin-tailwindcss"],
+            "allowedVersions": "<0.8.0"
         }
     ]
 }
