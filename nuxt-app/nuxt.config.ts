@@ -199,6 +199,11 @@ export default defineNuxtConfig({
     nitro: {
         prerender: {
             failOnError: true,
+            // Don't follow image URLs. The crawler would otherwise resize every `<nuxt-img>` variant it
+            // finds — 1476 files and ~100 MB from 44 routes — and hammer the CMS while doing it. Nothing
+            // consumes them: Vercel serves images through `_vercel/image` and does not prerender, and
+            // `/_ipx` still works at runtime because the handler stays in the server bundle.
+            ignore: ['/_ipx'],
         },
         externals: {
             // Do not remove: Pinia 4 ships only its bundler build, so externalising it leaves Vue's
