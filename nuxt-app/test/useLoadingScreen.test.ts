@@ -5,7 +5,7 @@ import { ref, type Ref } from 'vue'
 // version with the two properties that matter: it returns a Vue `ref` (so `reactive()` unwraps it
 // exactly as in production), and there is one store per "request", so a value created during a
 // request is reused within it and gone in the next.
-let store: Map<string, Ref<unknown>>
+let store = new Map<string, Ref<unknown>>()
 const newRequest = () => {
     store = new Map()
 }

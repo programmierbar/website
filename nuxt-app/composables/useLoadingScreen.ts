@@ -14,7 +14,10 @@ export function useLoadingScreen(...dataList: Ref<unknown>[]) {
     // visitor's page renders. `useState` is per-request on the server.
     const isLoading = useState<boolean>('loading-screen', () => false)
 
-    // Set initial state
+    // Called with no arguments this writes `false` rather than reading, which is how
+    // `LoadingScreen.vue` clears the overlay. Keep that: 8 of 34 pages never call this composable, so
+    // without the reset, navigating to one of them from a page that was still loading would leave a
+    // full-screen overlay stuck. Splitting read from write needs a route-change reset first.
     isLoading.value = dataList.some((data) => !data.value)
 
     // Change state on update
