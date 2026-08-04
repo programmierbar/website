@@ -112,3 +112,48 @@ describe('getPlainText', () => {
         expect(getPlainText('<div onclick=alert(1)>sichtbar</div>')).toBe('sichtbar')
     })
 })
+
+describe('links inside rich text', () => {
+    it('absolutises a schemeless href, which would otherwise 404 on our own domain', () => {
+        // Real CMS value, in speaker stefan-tilkov's biography. As `href="innoq.com/..."` a browser
+        // resolves it against the current page: /hall-of-fame/innoq.com/de/staff/stefan-tilkov/.
+        expect(sanitizeHtml('<p><a href="innoq.com/de/staff/stefan-tilkov/">Profil</a></p>')).toBe(
+            '<p><a href="https://innoq.com/de/staff/stefan-tilkov/">Profil</a></p>'
+        )
+    })
+
+    it('leaves absolute and root-relative links alone', () => {
+        expect(sanitizeHtml('<a href="https://example.com/x">x</a>')).toBe('<a href="https://example.com/x">x</a>')
+        expect(sanitizeHtml('<a href="/podcast/folge">intern</a>')).toBe('<a href="/podcast/folge">intern</a>')
+        expect(sanitizeHtml('<a href="mailto:hallo@programmier.bar">mail</a>')).toBe(
+            '<a href="mailto:hallo@programmier.bar">mail</a>'
+        )
+    })
+
+    it('drops an href that cannot be a URL rather than leaving it relative', () => {
+        expect(sanitizeHtml('<a href="justausername">x</a>')).toBe('<a>x</a>')
+    })
+
+    it('still removes unsafe URLs — the hook must not reintroduce them', () => {
+        for (const payload of [
+            '<a href="javascript:alert(1)">x</a>',
+            '<a href="JaVaScRiPt:alert(1)">x</a>',
+            '<a href=" javascript:alert(1)">x</a>',
+        ]) {
+            expect(dangerousTagsIn(sanitizeHtml(payload))).toEqual([])
+            expect(sanitizeHtml(payload)).not.toMatch(/javascript:/i)
+        }
+    })
+
+    it('leaves an inline data: image alone, deferring to DOMPurify on existing schemes', () => {
+        // The hook only fills in a missing scheme. DOMPurify permits `data:` images, and vetting
+        // schemes here as well would strip them.
+        const dataUri =
+            '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8AAAwAB/AF+AV0AAAAASUVORK5CYII=">'
+        expect(sanitizeHtml(dataUri)).toContain('data:image/png;base64,')
+    })
+
+    it('normalises src as well as href', () => {
+        expect(sanitizeHtml('<img src="example.com/a.png">')).toBe('<img src="https://example.com/a.png">')
+    })
+})

@@ -112,6 +112,20 @@ export default defineNuxtConfig({
                 return
             }
 
+            // Keep image URLs out of the prerender crawl. Following them makes the crawler resize
+            // every `<nuxt-img>` variant it finds — 1476 files and ~100 MB from 44 routes — and
+            // exhaust connections to the CMS, which fails the build via `failOnError`.
+            //
+            // Keep the `static` guard even though there is no `generate` script any more: `npx nuxi
+            // generate` still works, sets `nitro.static`, and produces no server. There the crawler's
+            // output *is* what serves these URLs, so skipping it would silently 404 every optimised
+            // image instead of failing loudly.
+            if (!nitroConfig.static) {
+                nitroConfig.prerender ??= {}
+                nitroConfig.prerender.ignore ??= []
+                nitroConfig.prerender.ignore.push('/_ipx')
+            }
+
             // Lets CI build without the CMS being reachable. Skips route discovery only — the
             // bundle is still built in full, and deploys never set it.
             if (process.env.SKIP_PRERENDER_ROUTE_DISCOVERY === 'true') {

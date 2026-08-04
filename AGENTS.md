@@ -44,10 +44,14 @@ website/
 ```bash
 npm run dev          # Development server
 npm run build        # Production build
-npm run generate     # Static site generation
 npm run eslint       # Lint with auto-fix
 npm run prettier     # Format code
 ```
+
+There is deliberately no static-generation script. See
+[the upgrade plan](docs/dependency-upgrade-plan.md) for why: a static build has to prerender every
+`<nuxt-img>` variant, which is ~6200 downloads and resizes against the CMS, and it does not finish.
+Nothing deployed used it — Vercel runs `nuxt build` and serves images through `_vercel/image`.
 
 ### Directus CMS (run from `directus-cms/`)
 

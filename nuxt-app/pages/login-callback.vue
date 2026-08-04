@@ -42,8 +42,6 @@ const loginPage: ComputedRef<DirectusLoginPage | undefined> = computed(() => pag
 
 onMounted(async () => {
     clientSideUser.value = await directus.getCurrentUser()
-
-    console.log('User', clientSideUser.value)
 })
 
 // Set loading screen

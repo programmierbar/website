@@ -34,6 +34,16 @@ import { anonymizeAndHashIP } from './../helpers/'
 const collectionWithTagsName = ['members', 'speakers', 'podcasts', 'meetups', 'picks_of_the_day'] as const
 type CollectionWithTagsName = (typeof collectionWithTagsName)[number]
 export type Tag = { name: string; count: number }
+
+/**
+ * Reduces an error to the part that is safe to print in a browser console.
+ *
+ * The SDK rejects with a `RequestError` carrying the raw `Response` and the request that produced it,
+ * so logging the object itself can put request details in front of the user.
+ */
+function toLogMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error)
+}
 type DirectusTag = { tag: { id: string; name: string } }
 
 export function useDirectus() {
@@ -894,25 +904,23 @@ export function useDirectus() {
 
     async function getCurrentUser() {
         try {
-            console.log('Refreshing auth', await directus.refresh())
+            // Do not log these. `refresh()` resolves to the SDK's auth payload, whose fields include
+            // `access_token` and `refresh_token`, and `readMe()` to the account's email and role —
+            // and both of these calls run in the browser.
+            await directus.refresh()
 
-            const user = await directus.with(rest({ credentials: 'include' })).request(readMe())
-            console.log('Current user', user)
-
-            // Maybe add some persistence etc. here?
-            return user
-        } catch (e: unknown) {
-            console.log('Error while reading current user', e)
+            return await directus.with(rest({ credentials: 'include' })).request(readMe())
+        } catch (error: unknown) {
+            console.error('Error while reading current user:', toLogMessage(error))
         }
     }
 
     async function registerNewUser(email: string, password: string) {
         try {
-            const result = await directus.request(createUser({ email, password }))
-            console.log(result)
-        } catch (e: unknown) {
-            console.error('Error while registering new user', e)
-            return e
+            await directus.request(createUser({ email, password }))
+        } catch (error: unknown) {
+            console.error('Error while registering new user:', toLogMessage(error))
+            return error
         }
     }
 

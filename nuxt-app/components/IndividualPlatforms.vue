@@ -49,7 +49,7 @@ import {
   OPEN_SPEAKER_LINKEDIN_EVENT_ID,
   OPEN_SPEAKER_BLUESKY_EVENT_ID,
 } from '../config';
-import { trackGoal } from '../helpers'
+import { normalizeExternalUrl, trackGoal } from '../helpers'
 import { computed } from 'vue';
 
 type Scope = 'speaker' | 'member'
@@ -112,49 +112,49 @@ const platformList = computed(() => {
     {
       name: 'Bluesky',
       icon: BLUESKY_ICON,
-      url: props.platforms.bluesky_url,
+      url: normalizeExternalUrl(props.platforms.bluesky_url, 'bluesky'),
       eventId: BLUESKY_EVENT_ID,
     },
     {
       name: 'Mastodon',
       icon: MastodonIcon,
-      url: props.platforms.mastodon_url,
+      url: normalizeExternalUrl(props.platforms.mastodon_url, 'mastodon'),
       eventId: MASTODON_EVENT_ID,
     },
     {
       name: 'LinkedIn',
       icon: LINKEDIN_ICON,
-      url: props.platforms.linkedin_url,
+      url: normalizeExternalUrl(props.platforms.linkedin_url, 'linkedin'),
       eventId: LINKEDIN_EVENT_ID,
     },
     {
       name: 'Instagram',
       icon: INSTAGRAM_ICON,
-      url: props.platforms.instagram_url,
+      url: normalizeExternalUrl(props.platforms.instagram_url, 'instagram'),
       eventId: INSTAGRAM_EVENT_ID,
     },
     {
       name: 'GitHub',
       icon: GITHUB_ICON,
-      url: props.platforms.github_url,
+      url: normalizeExternalUrl(props.platforms.github_url, 'github'),
       eventId: GITHUB_EVENT_ID,
     },
     {
       name: 'YouTube',
       icon: YOUTUBE_ICON,
-      url: props.platforms.youtube_url,
+      url: normalizeExternalUrl(props.platforms.youtube_url, 'youtube'),
       eventId: YOUTUBE_EVENT_ID,
     },
     {
       name: 'Website',
       icon: WEBSITE_ICON,
-      url: props.platforms.website_url,
+      url: normalizeExternalUrl(props.platforms.website_url, 'web'),
       eventId: WEBSITE_EVENT_ID,
     },
     {
       name: 'Twitter',
       icon: TWITTER_ICON,
-      url: props.platforms.twitter_url,
+      url: normalizeExternalUrl(props.platforms.twitter_url, 'twitter'),
       eventId: TWITTER_EVENT_ID,
     },
   ].filter((platform) => platform.url) as {
