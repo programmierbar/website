@@ -39,6 +39,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | 4 | **Nuxt 3 → Nuxt 4** | ✅ Done (2026-08-03) |
 | 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 5 of 7 done, 1 **reverted upstream**; only `stripe` left; **audit at zero** |
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
+| — | [Registry sweep and the formatter bump](#registry-sweep-and-the-formatter-bump--done-2026-08-04) | ✅ Done (2026-08-04) |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
 Each phase's own write-up ends with what it deliberately left behind. Those are also gathered into
@@ -1428,6 +1429,98 @@ needed Directus write access or a tampered Algolia index. This was defence in de
 and the strongest argument for fixing it was never the exploit, it was that four components were
 pushing plain text through an HTML sink for no reason.
 
+## Registry sweep and the formatter bump — done 2026-08-04
+
+Asked whether anything besides `stripe` was still behind, and answered against the npm registry
+rather than against this document. **Four things were, and one of them appeared in no phase at all.**
+
+| package | installed | latest | status |
+| --- | --- | --- | --- |
+| `stripe` | 20.4.1 | 22.4.0 | ⬜ the last Phase 5 item, waiting on a colleague |
+| `isomorphic-dompurify` | 2.20.0 | 3.21.0 | 🚫 deliberate pin, [documented above](#-isomorphic-dompurify-2200--3210--attempted-and-reverted) |
+| `typescript` | 6.0.3 | 7.0.2 | ⬜ deferred to Phase 6 |
+| **`prettier-plugin-tailwindcss`** | **0.5.14** | 0.8.1 | ✅ **taken to 0.7.4** — never tracked anywhere |
+| `@types/google.maps` | 3.65.3 | 3.65.4 | ✅ done |
+| `nodemailer` | 9.0.3 | 9.0.4 | ✅ done |
+
+The other 27 declared packages were already at latest. Two lessons in the shape of that table: a
+plan that lists phases is not the same as a plan that lists *packages* — `prettier-plugin-tailwindcss`
+sat three minors behind through eight phases because no phase's scope named it. And `npm outdated`
+reported nuxt's latest as **4.4.8**, i.e. behind our installed 4.5.1; the `latest` dist-tag is 4.5.1,
+so that column was a stale packument on npm's side, not a downgrade to chase.
+
+### Stopped at 0.7.4, because 0.8.0 corrupts import order in `.vue` files
+
+The obvious move was 0.8.1. It is wrong here. **`prettier-plugin-tailwindcss` 0.8.x silently
+disables `@ianvs/prettier-plugin-sort-imports` on `.vue` files**, and the result is not "unsorted" —
+it is *scrambled*, with blank lines inserted mid-block:
+
+```diff
+-import { computed, ref, watch } from 'vue'
++import { computed, watch, ref } from 'vue'
++
+```
+
+Measured by formatting the same tree with each version and diffing the results:
+
+| version | published | import order | class order |
+| --- | --- | --- | --- |
+| 0.5.14 | 2024-04-15 | ✅ correct | baseline |
+| 0.6.14 | 2025-07-09 | ✅ correct | unchanged |
+| **0.7.4** | 2026-04-27 13:55 | ✅ correct | 2 files, 3 lines |
+| 0.8.0 | 2026-04-27 **13:57** | ❌ scrambled | — |
+| 0.8.1 | 2026-07-15 | ❌ scrambled | — |
+
+Note the two minutes between 0.7.4 and 0.8.0: 0.7.4 is not a maintained branch, it is simply the
+last release before the break. So this is a **hold, not a home** — see the re-attempt condition below.
+
+Upstream has it: [tailwindlabs/prettier-plugin-tailwindcss#465](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/issues/465),
+open since 2026-07-07. The `vue` parser lives under the plugin's `html` transform, whose `compatible`
+list omits `@ianvs/prettier-plugin-sort-imports`; the `js` transform already has it, which is why
+`.ts` files are unaffected and only `.vue` files scramble. `^0.7.4` resolves within 0.7.x, so the
+manifest cannot drift into 0.8 on its own.
+
+**A first measurement of this was untrustworthy and got thrown away.** Comparing versions on a single
+file copied to `/tmp` with `--no-config` let the plugin resolve a *different* Tailwind config than it
+uses in-project, so its class-order output there described nothing real. The numbers above come from
+formatting the actual tree in place with each version installed. The import-order finding survived
+because plugin chaining does not depend on the Tailwind config; the class-order finding did not.
+
+### What 0.7.4 actually changes, and the bug it exposed
+
+Three lines in two files — and both are cosmetic in the browser, which is why **no source file is
+touched in this PR**. `PrimaryPbButton.vue` loses a stray trailing space inside a class string, and
+`TalkItem.vue` collapses a duplicated `grid grid`.
+
+That duplicate is the interesting part. `TalkItem.vue` puts HTML comments **inside** the `class`
+attribute:
+
+```html
+class="
+    order-1 <!-- Mobile order -->
+    lg:order-none <!-- Reset order for grid -->
+"
+```
+
+Attribute values are not parsed for comments, so the browser receives `<!--`, `Mobile`, `order`,
+`Reset`, `for`, `grid` and `-->` as class names. The duplicate `grid` the formatter removes comes
+from the *word* "grid" in two of those comments.
+
+**Deliberately not fixed here**, and the reason is worth recording: the two affected `<div>`s have no
+intentional `grid` class, so removing the comments correctly also removes `display: grid` from both.
+That is a layout change needing visual verification, not a formatting fix, so it is logged in the
+backlog instead. Committing the formatter's sorted-junk output would have been worse than leaving the
+file alone — it would have codified the defect into a reviewed diff.
+
+### Verification
+
+`npm test` 91 passing across 10 files, `npm run lint` 0 errors / 128 warnings (unchanged), the
+typecheck ratchet **steady at 263**, and `SKIP_PRERENDER_ROUTE_DISCOVERY=true npm run build` exit 0.
+
+Worth stating plainly: **none of those four gates can see a formatter change.** There is no format
+check in CI (see the backlog item below), so what actually verified this upgrade was the tree-diff
+comparison above, not the gate run. The gates were run to prove the two patch bumps changed nothing.
+
 ## Phase 6 — Deliberately deferred
 
 Not blocked by EOL. Do **not** fold these into the phases above.
@@ -1499,6 +1592,39 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
 
 ### 3. Build and tooling correctness
 
+- [ ] ⚠️ **`nuxt-app` is 89 files away from Prettier-clean, and nothing in CI notices.**
+      `npx prettier . --check` reports `Code style issues found in 89 files` on `main`. Measured to be
+      **entirely from Prettier itself**, not from the Tailwind plugin: re-running the check with the
+      plugin removed reports the same 89 files. Phase 2 took `prettier` 3.2.5 → 3.9.6 and no one ran
+      `--write` afterwards, so eight phases of formatting output drifted unnoticed.
+
+      Two separable pieces of work, and the second is what stops it recurring:
+
+      1. **One sweep** — `npm run prettier` and commit it alone. Large but mechanical, and it must not
+         ride along with a behavioural change or it will bury it.
+      2. **A gate.** `.github/workflows/run_tests.yml` runs `lint`, `test`, `typecheck:ratchet` and
+         `build` — no format check. Adding `npx prettier . --check` is one step, and without it the
+         sweep starts rotting the day it lands.
+
+      Sequencing matters: do the sweep **after** `stripe`, or a 89-file reformat will collide with the
+      one remaining Phase 5 diff.
+- [ ] ⚠️ **`components/TalkItem.vue` has HTML comments inside a `class` attribute**, so the browser
+      receives `<!--`, `Mobile`, `order`, `Reset`, `for`, `grid` and `-->` as class names on two
+      `<div>`s. Found via the formatter bump, which deduplicated the resulting `grid grid`.
+
+      **This is not a safe tidy-up**, which is why it was left alone: neither `<div>` declares an
+      intentional `grid` class, so deleting the comments also removes `display: grid` from both
+      elements. Whether that changes the rendered layout needs checking in a browser — the file also
+      uses `lg:grid` on its parent and `lg:col-start-*` on the children, so the accidental `grid` may
+      or may not be doing something. Fix the comments and verify the talk layout visually, in the same
+      change.
+- [ ] **Re-attempt `prettier-plugin-tailwindcss` 0.8.x** once
+      [upstream #465](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/issues/465) lands.
+      Held at `^0.7.4` because 0.8.0 scrambles import order in `.vue` files; the detail is in
+      [the sweep write-up](#stopped-at-074-because-080-corrupts-import-order-in-vue-files). To
+      re-check cheaply, format one `.vue` file with both plugins **in-project** and confirm the import
+      block is still sorted — do not test on a copy outside the project, since the plugin then resolves
+      a different Tailwind config.
 - [ ] **Pre-existing hydration mismatch on podcast detail pages, on deployed environments only.**
       Found while verifying the `v-html` audit, and **confirmed not caused by it**: production, which
       does not have that change, logs the identical warning on the same page.
@@ -2044,4 +2170,11 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | Deleted the Renovate rule disabling `@nuxt/image-edge` updates. Phase 3 removed the package, so the rule matched nothing, and its own description read "Phase 3 of the upgrade plan removes the package — delete this rule then". A comment that instructs its own removal and then survives is precisely what this audit was for. Also replaced `@nuxt/eslint-config` (dropped in Phase 5) with `@nuxt/eslint` in the lint group, which otherwise grouped with the framework instead. |
 | 2026-08-03 | Deleted `workers: undefined` from `playwright.config.ts` during the audit, the one non-comment change in it. Passing `undefined` is identical to omitting the key, so the line existed only to host an 8-line justification for removing an earlier cap. Verified rather than assumed: Playwright reports 6 workers either way. The standing constraint — do not re-add a cap, since the failures it appeared to fix were a non-retrying assertion — is kept in two lines. |
 | 2026-08-03 | The 11-line block documenting the *absence* of an `image.alias` entry was cut to 2. Forensics about config that is not there is the clearest form of the artefact this audit set out to remove: a reader opening `nuxt.config.ts` to understand image handling met three numbered reasons about something absent. Kept only what someone adding an alias would need. |
+| 2026-08-04 | Answered "is anything else out of date?" against the **npm registry** rather than against this document, which is how `prettier-plugin-tailwindcss` was found three minors behind after eight phases. A phase plan enumerates *scopes*; nothing had enumerated *packages*. The sweep also caught `npm outdated` reporting nuxt's latest as 4.4.8 — behind our installed 4.5.1 — which is a stale packument, not a downgrade to chase. |
+| 2026-08-04 | `prettier-plugin-tailwindcss` taken to **0.7.4, not the latest 0.8.1**. 0.8.0 silently stops `@ianvs/prettier-plugin-sort-imports` from running on `.vue` files and leaves imports scrambled with blank lines mid-block; `.ts` files are fine because the plugin's `js` transform lists the sort plugin as compatible while its `html` transform does not. Confirmed as [upstream #465](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/issues/465), open. Found by formatting the whole tree under each of 0.5.14 / 0.6.14 / 0.7.4 / 0.8.0 / 0.8.1 and diffing — not by reading changelogs, which do not mention it. |
+| 2026-08-04 | **Discarded the first version of that measurement.** Comparing plugin versions on a single file copied to `/tmp` with `--no-config` let the plugin resolve a different Tailwind config than it uses in-project, so its class-order output described nothing real; an early "byte-identical" claim from it was wrong. Re-measured in place. The import-order result survived because plugin chaining is config-independent — worth separating, because the same flawed run produced one trustworthy finding and one worthless one. |
+| 2026-08-04 | Shipped the formatter bump with **no source file touched**. Its entire effect on this repo is three cosmetic lines in two files (a trailing space, a duplicated `grid`), both no-ops in the browser, so reformatting them would have added review surface for nothing — and one of them sits on a real defect that must not be codified. The two patch bumps (`nodemailer` 9.0.4, `@types/google.maps` 3.65.4) rode along because both were already inside their declared `^` ranges: lockfile-only, no policy decision. |
+| 2026-08-04 | Left `TalkItem.vue`'s HTML-comments-inside-`class` bug **unfixed and logged**. The comments' words are being served as class names, and removing them also removes an accidental `display: grid` from two `<div>`s — a layout change needing a browser, not a formatting fix. Fixing it in a dependency PR would have meant an unverified visual change hidden inside a version bump. |
+| 2026-08-04 | Recorded that `nuxt-app` is **89 files from Prettier-clean on `main`** and that no CI step checks formatting. Measured as Prettier-core drift, not plugin drift — the count is identical with the Tailwind plugin removed — dating to Phase 2's `prettier` 3.2.5 → 3.9.6. Deliberately **not** swept here: 89 files of churn alongside a version bump is how a real change gets lost. The sweep needs its own PR plus a `--check` gate, after `stripe`. |
+| 2026-08-04 | Stated plainly that none of the four gates can see a formatter change, so the tree-diff comparison *was* the verification for this item and the gate run only covered the patch bumps. Recorded because "all gates green" on a formatting PR is a claim that sounds like evidence and is not. |
 | 2026-08-03 | SDK 22's `RequestError` refactor was treated as the one real risk and checked at runtime, not by reading. `isTransientError()` casts to `{ response?: { status?: number } }`, so a shape change would compile, pass every gate, and silently stop prerender retries under `prerender.failOnError` — one flaky CMS response would then abort a deploy. `RequestError` preserves `.response`; confirmed across 7 transient codes, 5 permanent codes and a connection refusal. |
