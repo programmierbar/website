@@ -50,13 +50,6 @@
                         :class="isExpanded ? 'pointer-events-none invisible opacity-0' : 'delay-200 duration-500'"
                         :style="isExpanded ? 'transition: visibility 0s .15s, opacity .15s' : undefined"
                     >
-                        <!-- <button
-              class="h-6 text-pink"
-              type="button"
-              data-cursor-hover
-              @click.stop=""
-              v-html="require('../assets/icons/heart.svg?raw')"
-            /> -->
                         <div class="flex h-full w-8 justify-center">
                             <button
                                 v-if="podcastPlayer.paused"
@@ -168,12 +161,6 @@
                     :class="!isExpanded && 'invisible xl:visible'"
                     :style="!isExpanded ? 'transition: visibility 0s 0.3s' : undefined"
                 >
-                    <!-- <button
-            class="h-6 text-pink"
-            type="button"
-            data-cursor-hover
-            v-html="require('../assets/icons/heart.svg?raw')"
-          /> -->
                     <div class="flex space-x-8">
                         <button
                             v-if="clipboard.isSupported || share.isSupported"

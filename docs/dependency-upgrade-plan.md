@@ -1296,6 +1296,121 @@ workaround to try is `nitro.externals.inline: ['html-encoding-sniffer']`, so rol
 import at build time. Not attempted here: an unnecessary upgrade did not justify a second inline
 workaround, and the better answer is the follow-up asking whether the server needs jsdom at all.
 
+## The `v-html` audit — done 2026-08-03
+
+Not a dependency upgrade, but it came out of one: the `isomorphic-dompurify` revert prompted the
+question "does the server need jsdom at all", and looking at the *sinks* instead of the dependency
+found something worth fixing. Run ahead of `stripe` for the same reason as the comment audit — that
+item waits on a colleague, this one did not.
+
+**Result: nine live bindings became four, and all four sanitise.**
+
+| component | before | after |
+| --- | --- | --- |
+| `InnerHtml.vue` | `DOMPurify.sanitize` | unchanged ✅ |
+| `NewsTicker.vue` | `DOMPurify.sanitize` | unchanged ✅ |
+| `ProfileCreationMainInfos.vue` | **raw prop → `v-html`** | `DOMPurify.sanitize` ✅ |
+| `ProfileCreationDone.vue` | **raw prop → `v-html`** | `DOMPurify.sanitize` ✅ |
+| `MeetupCard.vue` | regex strip → `v-html` | `getPlainText` → `{{ }}` — sink removed |
+| `SpeakerListItem.vue` | regex strip → `v-html` | `getPlainText` → `{{ }}` — sink removed |
+| `ConferenceCard.vue` | regex strip → `v-html` | `getPlainText` → `{{ }}` — sink removed |
+| `PickOfTheDayListItem.vue` | regex strip → `v-html` | `getPlainText` → `{{ }}` — sink removed |
+| `SearchResultCard.vue` (5 branches) | regex strip → `v-html` | `getPlainText` → `{{ }}` — sink removed |
+| `PodcastPlayer.vue` ×2 | commented-out dead code | deleted |
+
+### Two corrections to this document's own earlier notes
+
+**The count was wrong.** This document said "eleven bindings" and described the two in
+`PodcastPlayer.vue` as build-time SVG inlining that was "fine". They are **commented-out dead code**
+calling `require()`, which would not even resolve under Vite's ESM pipeline. Nine bindings were live,
+which is what ESLint's nine `vue/no-v-html` warnings had been saying all along. Deleted rather than
+described.
+
+**"Just use `{{ }}`" was too glib**, and would have shipped a visible bug. These Directus fields are
+WYSIWYG HTML containing entities — `f&uuml;r`, `Bauk&auml;sten`, `&quot;Moin&quot;`. The old regex
+never decoded them; it did not have to, because the value went on to `v-html` and the *browser*
+decoded them. Swapping to `{{ }}` with the same regex would have rendered `f&uuml;r` literally on
+every German umlaut on the site.
+
+So the swap needed real text, not tag-stripped HTML:
+
+| approach | entities | `&amp;` | `<img<a> src=x onerror=…>` |
+| --- | --- | --- | --- |
+| regex + `v-html` (before) | ✅ browser decodes | ✅ | ❌ **live tag** |
+| regex + `{{ }}` (the naive fix) | ❌ shows `f&uuml;r` | ❌ | ✅ inert |
+| `getPlainText` + `{{ }}` (shipped) | ✅ `für` | ✅ `&` | ✅ inert |
+
+`helpers/getPlainText.ts` sanitises with `ALLOWED_TAGS: []` and `RETURN_DOM_FRAGMENT`, then reads
+`textContent`. That returns genuine text with every entity decoded, which is safe for `{{ }}` and must
+never be handed to `v-html`. It parses instead of pattern-matching, which is the whole point: a regex
+cannot match a tag containing `<` or `>`, so `<img<a> src=x onerror=alert(1)>` survived
+`/<[^<>]+>/g` as a working tag.
+
+It is deliberately **not** re-exported from `helpers/index.ts`. That barrel is imported by server
+routes, and pulling `isomorphic-dompurify` through it would instantiate jsdom for consumers that only
+wanted a date helper.
+
+### The two ProfileCreation components were worse than the regex ones
+
+They passed CMS rich text to `v-html` with **no filtering at all** — the regex sites at least tried.
+They also cannot use `{{ }}`: `intro_text` contains `<strong>programmier.<span style="color: #cfff00;">bar</span></strong>`,
+so interpolation would destroy the brand colour. DOMPurify's default profile preserves that markup
+byte-identically, verified before the change and confirmed in the rendered page afterwards.
+
+Three sibling components — `ProfileCreationEmojis`, `ProfileCreationInterests`,
+`ProfileCreationDetails` — already render the same singleton's fields with `{{ }}` and identical CSS
+classes. So these two were inconsistent outliers rather than a deliberate choice.
+
+### Verification
+
+Unit tests cover the bypass payloads, so the regex cannot come back unnoticed: `test/getPlainText.test.ts`,
+5 cases, including `<img<a> src=x onerror=alert(1)>`, `<svg<a> onload=…>` and the `<math><mtext><script>`
+mXSS vector.
+
+Rendered output needed a browser, because `SpeakerList`, `PickOfTheDayList` and `SearchResultCard` are
+client-rendered — SSR HTML shows nothing for them. Five pages checked locally, **30 descriptions
+rendered, zero HTML entities in the rendered text, zero child elements inside any description, zero
+hydration warnings.** That last one matters: `getPlainText` runs under jsdom on the server and the real
+DOM on the client, so a parsing difference would surface as a hydration mismatch.
+
+Repeated against the **Vercel preview**, because the local run used `node .output/server` rather than
+the runtime where `isomorphic-dompurify` broke in Phase 5. Same result on three of four pages. The
+podcast detail page logged one `Hydration completed but contains mismatches.` — **not this change**:
+production, which does not have it, logs the identical warning on the same page. Logged as its own
+follow-up under "Build and tooling correctness", with the detail that makes it findable.
+
+Two of my own checks failed before the code did, and both were the check's fault:
+
+- The first version flagged `/konferenz` for "undecoded entities" on `Web &amp; AI Edition 2026`. That
+  is Vue correctly escaping the literal `&` that `getPlainText` now produces; the browser decodes it
+  back. The check was reading source HTML where it should have read rendered text.
+- The first version reported "0 descriptions — none ✓" for `/hall-of-fame` and `/pick-of-the-day` and
+  called it a pass. `SpeakerListItem` and `PickOfTheDayListItem` are not on those pages at all; they
+  are on `/podcast/[slug]`, `/meetup/[slug]` and `/hall-of-fame/[slug]`. A zero count now fails.
+
+| gate | before | after |
+| --- | --- | --- |
+| `lint` | 0 errors, 134 warnings | 0 errors, **129** warnings — five fewer `vue/no-v-html` |
+| `test` | 52/52 | **57/57** |
+| ratchet | 263 | 263 |
+| `build` | exit 0, 31.3 MB | exit 0, 31.3 MB |
+| jsdom in client bundle | — | absent, confirmed |
+
+### Deliberate non-changes
+
+**`helpers/getMetaInfo.ts:48` keeps the same regex.** It is the only other use of that pattern, and it
+is **not** an innerHTML sink — its output goes into `<meta content="...">`. Checked rather than assumed:
+one CMS description contains a raw `"` in its first 160 characters, and production renders it as
+`&quot;`, so Nuxt escapes attribute values. A surviving `<img onerror=…>` would be inert there. Fixing
+it would also drag `isomorphic-dompurify` into the `helpers` barrel for no security gain. The
+`&uuml;` entities it leaves encoded are decoded by the HTML parser, so meta descriptions read
+correctly today.
+
+**Reachability, restated honestly.** Every input here is CMS-authored, so exploiting the old regex
+needed Directus write access or a tampered Algolia index. This was defence in depth, not an open door —
+and the strongest argument for fixing it was never the exploit, it was that four components were
+pushing plain text through an HTML sink for no reason.
+
 ## Phase 6 — Deliberately deferred
 
 Not blocked by EOL. Do **not** fold these into the phases above.
@@ -1367,6 +1482,47 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
 
 ### 3. Build and tooling correctness
 
+- [ ] **Pre-existing hydration mismatch on podcast detail pages, on deployed environments only.**
+      Found while verifying the `v-html` audit, and **confirmed not caused by it**: production, which
+      does not have that change, logs the identical warning on the same page.
+
+      ```
+      https://www.programmier.bar/podcast/deep-dive-24-typescript-mit-stefan-baumgartner
+      → console: "Hydration completed but contains mismatches."
+      ```
+
+      A **local** `node .output/server` build of the same commit logs **zero** warnings, while both
+      the Vercel preview and production log one, so it tracks the deployment environment rather than
+      the code.
+
+      **Ruled out, so nobody repeats the work:**
+
+      - **ISR staleness.** The obvious theory, and wrong: the ISR-cached HTML and a freshly rendered
+        one (via a cache-busting query) are **byte-identical**, so SSR output is stable over time.
+      - **`useNow.ts`.** Not used on this page at all — only `pages/konferenz/[slug]/index.vue` — and
+        it exists specifically to avoid this, by serialising the SSR timestamp into the payload.
+      - **`useWeightedRandomSelection` / `TestimonialSlider`.** Not on this page either. **But it is a
+        genuine latent instance of this bug elsewhere** — it seeds off `Math.floor(Date.now() /
+        3600000)`, an hour bucket, and renders on `/`, `/meetup`, `/konferenz` and
+        `/konferenz/[slug]`. With `isr: 3600`, HTML cached in one hour bucket can be hydrated by a
+        client in the next, selecting different testimonials. Those pages showed no warning when
+        checked, which only means the check did not straddle a boundary.
+      - **The `<template><!----></template>` that SSR emits as the first child of `<main>`.** It looked
+        conclusive — it is absent from the hydrated DOM — but it appears on *every* page, including
+        the three that produce no warning. It is an artefact of comparing `innerHTML`: browsers put
+        `<template>` content in `.content`, so it reads as empty.
+
+      **Dev mode did not give a clean reproduction.** It failed with `H3Error: Failed to fetch
+      dynamically imported module: pages/podcast/[slug].vue`, so the client rendered the error page
+      against a server-rendered real page and produced a cascade of mismatch warnings that are
+      artefacts of that failure. Retry from a clean `.nuxt` before trusting anything it reports.
+
+      **The most promising lead is a real bug in its own right:** `composables/useLoadingScreen.ts`
+      holds `isLoading` in a **module-scope `ref`**. On the server that module is instantiated once per
+      worker, so the flag is shared across concurrent requests — one visitor's navigation can change
+      what another's SSR renders. `<LoadingScreen />` is the first child of `<main>`, exactly where the
+      divergence appears. Fix that regardless of whether it turns out to be this mismatch: SSR state
+      belongs in `useState`, not a module-level `ref`.
 - [ ] ⚠️ **Remove `nitro.externals.inline: ['pinia']`.** Waiting on an upstream Pinia fix — see
       [Waiting on upstream: the Pinia 4 export map](#waiting-on-upstream-the-pinia-4-export-map)
       below for exactly what to watch for and how to check.
@@ -1415,36 +1571,9 @@ browser-support decision nobody made.
 
 ### 5. Small, verified, uncontroversial
 
-- [ ] ⚠️⚠️ **Audit the `v-html` sites. Two of eleven sanitise; several strip tags with a regex and
-      the strip is bypassable.** This supersedes the "do we need jsdom" question below, and it is the
-      genuinely important one.
-
-      Eleven `v-html` bindings exist. `InnerHtml.vue` and `NewsTicker.vue` use DOMPurify. `PodcastPlayer.vue`
-      inlines a build-time SVG twice, which is fine. The remaining **seven** render CMS- or
-      Algolia-sourced values, and the ones that defend themselves do it like this:
-
-      ```js
-      props.pickOfTheDay.description.replace(/<[^<>]+>/g, '')   // PickOfTheDayListItem.vue:52
-      props.item.description?.replace(/<[^<>]+>/g, '')          // SearchResultCard.vue:89,103,110
-      ```
-
-      That pattern cannot match a tag containing `<` or `>`, so a nested tag reassembles into a live
-      one. Verified:
-
-      | input | after strip, into `v-html` | |
-      | --- | --- | --- |
-      | `<img<a> src=x onerror=alert(1)>` | `<img src=x onerror=alert(1)>` | **executes** |
-      | `<svg<a> onload=alert(1)>` | `<svg onload=alert(1)>` | **executes** |
-      | `<script>alert(1)</script>` | `alert(1)` | inert — `innerHTML` never runs injected `<script>` |
-      | `<p>Ein <strong>Text</strong> mit <a href="/x">Link</a></p>` | `Ein Text mit Link` | all markup destroyed |
-
-      **Reachability:** the input is CMS-authored, so this needs Directus write access (or a tampered
-      Algolia index) — defence in depth, not an open door. Not a reason to leave it.
-
-      **The fix is smaller than the problem.** That last row is the tell: these components strip *every*
-      tag, so they render plain text through an HTML sink. `{{ }}` interpolation is both safer and
-      simpler, needs no sanitiser, and removes the sink outright. Only components that genuinely render
-      rich HTML need DOMPurify — currently two.
+- [x] ✅ **Audited and fixed the `v-html` sites** — done 2026-08-03. **Nine live bindings are now
+      four, and every one of those four sanitises.** See "The `v-html` audit" below for the detail,
+      including two places where this document's own earlier plan was wrong.
 - [ ] **Does the server need `jsdom`? Probably yes, and it is not urgent** — correcting an earlier
       overstatement in this document, which called this "the blocking question". It is not blocking:
 
@@ -1838,6 +1967,9 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-03 | Ruled out the Node version as the cause of the `isomorphic-dompurify` failure. The project setting reads `20.x`, which looks decisive and is not — `engines.node` overrides it and the failing build log states that **Node 24.x** was used. Recorded in the plan because it is the obvious first hypothesis; it also revealed that the project setting is stale and a latent trap if `engines.node` is ever simplified. |
 | 2026-08-03 | **Retracted** this document's claim that "does the server need jsdom" had become the blocking question. It had not: `isomorphic-dompurify@2.20.0` declares `dompurify: ^3.2.3`, so sanitiser patches still arrive, and `jsdom: ^26.0.0`, so the tree cannot drift into the ESM break. The pin costs ~4 MB and v3's `clearWindow()`, not security. |
 | 2026-08-03 | Keep jsdom for anything still using DOMPurify. Its mXSS handling depends on parsing in a real DOM — verified when `<math><mtext><script>` reduced to `<math><mtext></mtext></math>` — so swapping to a parser-based sanitiser would trade security properties for install size. If weight ever matters, try `linkedom` + DOMPurify and re-run the 64-case harness. |
+| 2026-08-03 | The `v-html` audit shipped: 9 live bindings became 4, all sanitising. Five excerpt sites moved to a parsing text-extractor plus `{{ }}`, removing the sink; the two unfiltered ProfileCreation sites gained DOMPurify because they genuinely render rich HTML. Two commented-out dead bindings deleted. |
+| 2026-08-03 | **Corrected this document twice in the process.** It claimed eleven bindings and described the two in `PodcastPlayer.vue` as fine build-time SVG inlining — they were commented-out dead code calling `require()`. And "the fix is `{{ }}`" would have shipped a visible bug: the fields carry HTML entities that the old regex never decoded, relying on the browser to do it via `v-html`, so plain interpolation would have printed `f&uuml;r` on every umlaut. The shipped helper parses and returns real text instead. |
+| 2026-08-03 | Left `helpers/getMetaInfo.ts` on the same vulnerable regex on purpose: it writes to a `<meta content>` attribute, not innerHTML. Verified Nuxt escapes attribute values by finding a CMS description containing a raw `"` and confirming production renders `&quot;`. Changing it would pull `isomorphic-dompurify` into the `helpers` barrel for no security gain. |
 | 2026-08-03 | The `v-html` audit supersedes the jsdom question. 2 of 11 bindings sanitise; several regex-strip tags and the strip is bypassable by nested-tag reconstruction (`<img<a> src=x onerror=…>` reassembles). Since those components strip *all* markup, `{{ }}` is both safer and simpler and removes the sink — a smaller fix than the dependency debate it was hiding behind. |
 | 2026-08-03 | `@directus/sdk` taken to **24.0.0** despite the server being frozen at 11.17.4, because the SDK major tracks the Directus monorepo rather than a server API contract: 21.3.0 is simply the SDK that shipped *with* 11.17.4, and 22/23/24 shipped with 12.0/12.1/12.2. Of the four breaking changes, three touch commands this app never calls. Holding at 21 would have deferred nothing real. |
 | 2026-08-03 | Verified the 12.2-era client against the **live 11.x server** rather than reasoning from the changelog alone. Eight queries copied from the real call sites returned byte-identical responses on both SDKs. Necessary because CI builds with `SKIP_PRERENDER_ROUTE_DISCOVERY=true` and so never contact the CMS — no gate in this repo would have caught a wire-level break. That the server is still 11.x was itself confirmed from `/server/health` returning 200, which Directus 12.0 changed to 404 unauthenticated. |

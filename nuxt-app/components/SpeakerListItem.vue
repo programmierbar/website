@@ -29,8 +29,9 @@ class="mt-10 md:mt-0"
             <!-- Description -->
             <p
                 class="mt-5 line-clamp-4 space-y-8 text-base font-light leading-normal text-white md:mt-10 md:text-xl lg:text-2xl"
-                v-html="description"
-            />
+            >
+                {{ description }}
+            </p>
 
             <!-- Link -->
             <LinkButton class="mt-6" :href="href">Mehr Infos</LinkButton>
@@ -42,6 +43,7 @@ class="mt-10 md:mt-0"
 import { getFullSpeakerName } from 'shared-code'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
+import { getPlainText } from '~/helpers/sanitize'
 import type { SpeakerItem } from '../types'
 import DirectusImage from './DirectusImage.vue'
 import LinkButton from './LinkButton.vue'
@@ -66,8 +68,7 @@ export default defineComponent({
         // Create get full name function
         const fullName = computed(() => getFullSpeakerName(props.speaker))
 
-        // Create plain description text
-        const description = computed(() => props.speaker.description.replace(/<[^<>]+>/g, ''))
+        const description = computed(() => getPlainText(props.speaker.description))
 
         // Create href to speaker's subpage
         const href = computed(() => `/hall-of-fame/${props.speaker.slug}`)

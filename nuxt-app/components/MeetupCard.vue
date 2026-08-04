@@ -20,8 +20,9 @@
             <!-- Description -->
             <p
                 class="mt-6 line-clamp-4 space-y-8 text-base font-light leading-normal text-white md:text-xl lg:text-2xl"
-                v-html="description"
-            />
+            >
+                {{ description }}
+            </p>
 
             <!-- Likes -->
             <LinkButton class="mt-6" :href="href">Mehr Infos</LinkButton>
@@ -30,6 +31,7 @@
 </template>
 
 <script lang="ts">
+import { getPlainText } from '~/helpers/sanitize'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
 import type { MeetupItem } from '../types'
@@ -59,8 +61,7 @@ export default defineComponent({
         // Create href to meetup subpage
         const href = computed(() => `/meetup/${props.meetup.slug}`)
 
-        // Create plain description text
-        const description = computed(() => props.meetup.description.replace(/<[^<>]+>/g, ''))
+        const description = computed(() => getPlainText(props.meetup.description))
 
         return {
             href,
