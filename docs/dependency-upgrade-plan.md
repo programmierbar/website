@@ -41,6 +41,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
 | — | [Registry sweep and the formatter bump](#registry-sweep-and-the-formatter-bump--done-2026-08-04) | ✅ Done (2026-08-04) |
 | — | [Prettier sweep + format gate](#the-prettier-sweep-and-the-format-gate--done-2026-08-04) | ✅ Done (2026-08-04) |
+| — | [Node 24 alignment for `nuxt-app`](#node-24-alignment-for-nuxt-app--done-2026-08-04) | ✅ Done (2026-08-04) |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
 Each phase's own write-up ends with what it deliberately left behind. Those are also gathered into
@@ -1617,6 +1618,129 @@ loaded is indistinguishable from the same chunk rehashed. Asset filenames keep t
 those are still compared. And 11 routes is not every route — the four portal and checkout pages are
 behind flags or payment state and were not exercised.
 
+## Node 24 alignment for `nuxt-app` — done 2026-08-04
+
+**Nothing about the runtime changed. Four declarations that disagreed with it now agree.** Verified from
+the production build log for `main` (`3bde75d`):
+
+```
+Warning: Due to "engines": { "node": "^22.19.0 || ^24.11.0 || >=26.0.0" } in your `package.json` file,
+the Node.js Version defined in your Project Settings ("20.x") will not apply,
+Node.js Version "24.x" will be used instead.
+```
+
+So `engines.node` is authoritative on Vercel — it beats the project setting *and* `.nvmrc`, which
+Vercel does not mention at all. Production has been on 24.x while every declaration said 22 or 20.
+
+| declaration | was | now |
+| --- | --- | --- |
+| `nuxt-app/package.json` `engines.node` | `^22.19.0 \|\| ^24.11.0 \|\| >=26.0.0` | `^24.11.0 \|\| >=26.0.0` |
+| `nuxt-app/.nvmrc` | `v22` | `24` |
+| `run_tests.yml` (nuxt-app job) | `node-version: 22` | `node-version-file: nuxt-app/.nvmrc` |
+| `smoke_tests.yml` | `node-version: 22` | `node-version-file: nuxt-app/.nvmrc` |
+| Vercel project `nodeVersion` | `20.x` | ⬜ **still `20.x`** — dashboard-only, see below |
+
+Narrowing `engines` keeps Vercel resolving 24.x, so the deployed runtime is untouched. The workflows
+now **read `.nvmrc`** rather than naming a version, so CI and local development cannot drift apart
+again — one file to change instead of three. That is the same reasoning as the format gate: remove the
+opportunity for divergence rather than re-synchronising by hand.
+
+**The Directus extension stays on Node 22**, in both `run_tests.yml` and
+`algolia-index-maintenance.yml`. It has its own lockfile and Jest setup and is frozen under the licence
+block; moving its runtime would be an untested change to a tree nobody is permitted to upgrade.
+
+### The `v22` in `.nvmrc` was a floor, not a ceiling — checked before moving it
+
+`nuxt-app/.nvmrc` was not missing, and it was not arbitrary. It came from
+**#174, "Pin nuxt-app to Node 22 to fix Vercel runtime crash"** (2026-05-06), and the crash was
+`ERR_REQUIRE_ESM`: a lockfile regen pulled `jsdom@28 → html-encoding-sniffer@6 → @exodus/bytes`
+(ESM-only), whose CJS `require()` works only on Node 22.12+ or 20.19+. Vercel was running Node 20 and
+every SSR function died at startup.
+
+That pin raised a floor. **Node 24 clears it by a wider margin than 22 did**, so moving forward cannot
+reintroduce that failure — and the chain is not even present now, since Phase 5 pinned
+`isomorphic-dompurify` back to `~2.20.0` with jsdom 26. Worth recording because a commit titled "pin to
+fix crash" reads like a ceiling, and moving it without opening it would have been reckless.
+
+### npm 11 arrives with Node 24 and gates dependency install scripts
+
+Node 24.19.0 bundles npm 11.17.0, which does not run third-party lifecycle scripts by default:
+
+```
+npm warn allow-scripts 4 packages have install scripts not yet covered by allowScripts:
+npm warn allow-scripts   esbuild@0.28.1 (postinstall: node install.js)
+npm warn allow-scripts   fsevents@2.3.2, fsevents@2.3.3, unrs-resolver@1.12.2
+```
+
+**The project's own `postinstall` still runs** — `nuxt prepare` executed and regenerated
+`.nuxt/eslint.config.mjs`, which `npm run lint` depends on. Only *dependency* scripts are gated, and
+none of them turned out to be load-bearing: after a clean `npm ci` with all four blocked, `esbuild
+--version` works (its binary comes from the `@esbuild/darwin-arm64` optional dependency, not from
+`install.js`), and the full gate set passes.
+
+**Left blocked rather than allowlisted.** Blocking is the safer default, an `allowScripts` entry is a
+standing grant to execute arbitrary code at install time, and nothing needs it. The warnings in CI logs
+are expected.
+
+### Verification — run on Node 24, not on 22
+
+Installed 24.19.0 locally and ran everything against it after a clean `npm ci`, rather than pushing and
+letting CI find out: `prettier:check` clean, **91 tests passing**, `lint` 0 errors / 127 warnings
+(identical to Node 22), typecheck ratchet **steady at 263**, and
+`SKIP_PRERENDER_ROUTE_DISCOVERY=true npm run build` exit 0. `npm ci` under npm 11 left
+`package-lock.json` byte-identical.
+
+### Three review findings, all valid
+
+Reviewers caught three things this PR's own "all declarations agree" claim had missed:
+
+1. **`package-lock.json` still carried the old range** in `packages[""].engines`. Real: the lockfile
+   mirrors the manifest, so it read `^22.19.0 || …` while `package.json` read `^24.11.0 || …`, and the
+   next `npm install` would have rewritten it as unexplained noise inside someone else's PR. Synced.
+2. **`README.md` still said "Node.js version 19+ (CI uses v22, tested up to v24)"** — wrong on both
+   counts, and the file a new contributor reads first. Replaced with a table naming 24 for `nuxt-app`
+   and 22 for `directus-cms`, since the two trees genuinely differ now.
+3. **`.nvmrc: 24` is looser than `engines: ^24.11.0`** — it permits 24.0.0–24.10.x. Correct, and it
+   cannot be fixed the obvious way; see below.
+
+#### `.nvmrc` cannot express the floor, and pinning a patch would be worse
+
+The suggested fix is to put `24.11.0` in `.nvmrc`. That trades a narrow problem for a permanent one:
+the format supports no ranges, so an exact version pins both developers *and* CI to a superseded patch —
+CI would install 24.11.0 instead of the 24.18.0 it resolved today, and stop picking up Node security
+releases within the major. There is no `.nvmrc` value meaning "≥24.11 inside major 24".
+
+What actually happens: both resolvers pick the newest available 24.x, so `.nvmrc: 24` yields a version
+satisfying `engines` in every normal case. The residual gap is a developer who *already* has an old
+24.x installed — `nvm use` would select it, and npm only **warns** (`EBADENGINE`).
+
+**The one way to make the floor binding is `engine-strict=true`**, which promotes that warning to a hard
+install failure. Not added here: this PR's claim is that nothing about the runtime or install behaviour
+changes, and `engine-strict` would fail a colleague's `npm install` rather than warn. It is a one-line
+`.npmrc` if wanted — and it would be an `.npmrc` containing an option that actually does something,
+unlike the one this PR deletes.
+
+### Discovered: npm 11 wants to rewrite the lockfile's dev classification
+
+Syncing the lockfile under **npm 11** (Node 24) produced **168 changed lines**, not one: it strips
+`"dev": true` from roughly fifty optional packages (`@emnapi/*` and similar). Under **npm 10** the same
+command produces exactly the one-line `engines` change. So the churn is npm's changed dev/optional
+classification, not a consequence of narrowing `engines`.
+
+Deliberately **not** taken here — it has semantic content (`npm ci --omit=dev` would install a different
+set), and bundling fifty unverified reclassifications into a PR whose claim is "nothing changes" would
+make that claim false. The one-line sync was produced under npm 10 for that reason.
+
+Worth knowing that this is already live and harmless: Vercel builds on Node 24, so **production has been
+resolving this lockfile with npm 11 for some time** without trouble. Logged as its own item below.
+
+### Still outstanding: the Vercel project setting
+
+`nodeVersion` remains `20.x`, now overridden twice over. It is dashboard-only — the MCP surface exposes
+no project-update call — so it needs a human. The reason to fix it is unchanged and is *not* about
+today's runtime: if `engines.node` were ever simplified or dropped, the project would silently fall back
+to Node 20, which is below both Nuxt's floor and the `require(esm)` threshold that caused #174.
+
 ## Phase 6 — Deliberately deferred
 
 Not blocked by EOL. Do **not** fold these into the phases above.
@@ -1625,8 +1749,10 @@ Not blocked by EOL. Do **not** fold these into the phases above.
       and `@nuxtjs/tailwindcss@6` hard-pins `tailwindcss ~3.4.17`, so it also means moving to
       `@tailwindcss/vite`. `tailwind.config.js` carries a substantial custom theme (brand colours,
       seven custom breakpoints). Its own project.
-- [ ] **Node 22 → 24.** Verify Vercel's supported runtimes first. Update `engines.node`, `.nvmrc`,
-      and the `node-version` in every workflow together.
+- [x] ✅ **Node 22 → 24** — done 2026-08-04 for `nuxt-app`. See
+      [the write-up](#node-24-alignment-for-nuxt-app--done-2026-08-04). The Directus extension stays on
+      22 deliberately. **Production was already running 24.x**, so this aligned the declarations with
+      reality rather than changing the runtime.
 - [ ] **TypeScript 6.0.3 → 7.x.** Only the 7.x jump remains — **6.0.3 landed separately after
       Phase 2** (see below). TS 7 is the Go-based native rewrite, and the open question is no
       longer "will our code cope" but "do the tools support it": TS 7 broke `ts-api-utils` (it
@@ -1933,6 +2059,24 @@ browser-support decision nobody made.
       empty `content` alone as out of scope.)
 - [ ] **Drop `@ubclaunchpad/vue-fathom`** (last publish April 2022, 1 usage). Fathom's own snippet
       is a few lines — inlining it removes a dependency entirely. See Appendix A.
+- [ ] **Regenerate `nuxt-app/package-lock.json` under npm 11, deliberately.** Node 24 brings npm 11,
+      which classifies dev/optional dependencies differently: `npm install --package-lock-only` rewrites
+      **168 lines**, stripping `"dev": true` from ~50 optional packages (`@emnapi/*` and friends). The
+      same command under npm 10 changes one line.
+
+      Not urgent, and **not broken today** — Vercel already builds on Node 24, so production has been
+      resolving the current lockfile with npm 11 without trouble. But it means anyone running
+      `npm install` on Node 24 gets a large incidental diff, which is how unrelated churn ends up inside
+      an unrelated PR.
+
+      Wants its own change, because it is not cosmetic: `npm ci --omit=dev` would install a different
+      set afterwards. Verify a production-shaped install (`npm ci --omit=dev`) still yields a working
+      build before and after, rather than trusting the reclassification.
+- [ ] **Consider `engine-strict=true`.** `engines.node` is currently advisory — npm warns `EBADENGINE`
+      and continues, so the `^24.11.0` floor is not actually enforced anywhere except by whichever Node
+      `.nvmrc` happens to select. One line in a new `nuxt-app/.npmrc` makes it binding. Deliberately left
+      out of the Node 24 alignment because it changes install behaviour for other people: a wrong local
+      Node would fail the install instead of warning. CI and Vercel are unaffected either way.
 - [ ] **Re-check the `brace-expansion` advisory.** It stopped being reported during Phase 4, but
       the package is **still 2.1.4, unchanged** — the advisory data moved, not our tree. Treat it as
       unresolved rather than fixed.
@@ -1945,13 +2089,15 @@ browser-support decision nobody made.
       what runs, so this does **not** pre-empt Phase 6's "Node 22 → 24" item — that one is about
       `engines`, `.nvmrc` and the workflows agreeing, and should be told that production is already
       on 24.
-- [ ] **Add a `.nvmrc`.** None exists, and Phase 4 raised `engines.node` to
-      `^22.19.0 || ^24.11.0 || >=26.0.0` — ahead of at least one developer's local Node. Pairs
-      naturally with Phase 6's Node 24 item, which already says to move `engines`, `.nvmrc` and
-      every workflow's `node-version` together.
-- [ ] **Remove or justify `nuxt-app/.npmrc`.** `shamefully-hoist` and `strict-peer-dependencies`
-      are pnpm options and no-ops under npm (Appendix B) — they read as protection that is not
-      there.
+- [x] ✅ **~~Add a `.nvmrc`~~ — corrected: one already existed.** `nuxt-app/.nvmrc` has been tracked
+      since **#174 (2026-05-06)**, holding `v22`. This document claimed "none exists" because the check
+      was run at the repo root only. Moved to `24` in the Node alignment — see
+      [the write-up](#node-24-alignment-for-nuxt-app--done-2026-08-04).
+- [x] ✅ **Removed `nuxt-app/.npmrc`** — done 2026-08-04. Both options were pnpm-only no-ops under npm
+      (Appendix B), and npm 11 — which arrives with Node 24 — promotes them to
+      `Unknown project config … will stop working in the next major version of npm` on every command,
+      in CI *and* in Vercel's build log. Verified no pnpm lockfile or reference exists anywhere in the
+      repo before deleting.
 
 ### 6. Standing items, not one-off tasks
 
@@ -2300,4 +2446,15 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-04 | **Four detectors were built and discarded** before that comparison worked: whitespace-stripping counted quote normalisation as a content change (63 false positives), template-collapsing counted attribute reflow (46), and the raw diff was drowned in chunk hashes, `data-v-*` ids, keyframe names and a per-build uuid. Each mask narrows sensitivity, so the final script asserts it can still see an added class, a removed class, a changed attribute and inline whitespace. |
 | 2026-08-04 | The sweep's single rendered difference — `>Regulär<` becoming `> Regulär <` where Prettier broke a 120+ character line — was **measured in Chromium rather than reasoned about**, with a positive control. Identical geometry for the real case; the same edit between two `inline-block` siblings shifts 4.12px. Without the control, "identical" would have been indistinguishable from a measurement that cannot see whitespace. Prettier judges whitespace significance from a tag's default display, so a `<div>` made `inline-block` by a Tailwind class is exactly the blind spot to check for. |
 | 2026-08-04 | Recorded that `main` has **no branch protection** (404 from the protection endpoint), so no CI check has ever blocked a merge. Phase 0 made upgrades detectable, not unmergeable — a distinction the plan had been treating as settled. Needs a repo admin, like Renovate. |
+| 2026-08-04 | Node 24 alignment shipped for `nuxt-app` only, with the Directus extension left on 22. Its jobs use a separate lockfile and Jest setup and the tree is frozen under the licence block, so moving its runtime would be an untested change nobody is allowed to follow up on. |
+| 2026-08-04 | Workflows changed to `node-version-file: nuxt-app/.nvmrc` instead of a literal `node-version`. Re-synchronising three declarations by hand is what produced this drift; making CI read the file removes the opportunity. Same reasoning as the format gate one layer down. |
+| 2026-08-04 | **Opened `.nvmrc` before moving it, and it changed the framing.** It was not missing — this document's "none exists" was another repo-root-only check — and its `v22` came from #174, "Pin nuxt-app to Node 22 to fix Vercel runtime crash". That crash was `ERR_REQUIRE_ESM` on Node 20, so the pin was a **floor**; Node 24 clears it by a wider margin. A commit titled "pin to fix crash" reads like a ceiling, and moving it unread would have been reckless. |
+| 2026-08-04 | Narrowed `engines.node` to `^24.11.0 \|\| >=26.0.0` after confirming from the production build log that Vercel already resolves **24.x** and that `engines` beats both the project setting and `.nvmrc`. The deployed runtime is therefore unchanged by this PR — the declarations were what disagreed with reality. |
+| 2026-08-04 | Verified on Node 24 locally — installed 24.19.0, clean `npm ci`, full gate set — rather than pushing and reading CI. A Node major is the case where a native dependency breaks, and a CI round-trip is a slower way to learn that than five minutes on the machine. |
+| 2026-08-04 | Left npm 11's gated dependency install scripts (`esbuild`, `fsevents`, `unrs-resolver`) **blocked rather than allowlisted**. The project's own `postinstall` still runs, so `nuxt prepare` is unaffected; a clean `npm ci` with all four blocked passes every gate, and `allowScripts` would be a standing grant to run arbitrary install-time code for no benefit. |
+| 2026-08-04 | Deleted `nuxt-app/.npmrc` as part of the Node move rather than as its own item: npm 11 promotes its two pnpm-only no-ops to deprecation warnings on every command, including in Vercel's build log, and this PR is what puts npm 11 in CI. |
+| 2026-08-04 | Three review findings on the Node alignment all held up: the lockfile's `packages[""].engines` still carried the old range, `README.md` still told contributors Node 19+ with CI on 22, and `.nvmrc: 24` is looser than `engines: ^24.11.0`. A PR claiming "all declarations agree" had missed three declarations — worth recording, because the claim was the whole point of the PR. |
+| 2026-08-04 | Synced the lockfile's engine metadata **under npm 10, producing a one-line diff**, after the same command under npm 11 rewrote 168 lines by stripping `"dev": true` from ~50 optional packages. Bundling fifty unverified reclassifications into a PR whose claim is "nothing changes" would have made the claim false. The npm 11 rewrite is logged as its own item. |
+| 2026-08-04 | Declined the suggested `.nvmrc` fix of pinning `24.11.0`. The format supports no ranges, so an exact version pins CI and developers to a superseded patch — CI resolved 24.18.0 today and would have installed 24.11.0 instead, forgoing Node security releases inside the major. There is no `.nvmrc` value meaning "≥24.11 within 24"; the reviewer identified a real gap with no good fix at that layer. |
+| 2026-08-04 | Left `engines.node` **advisory** rather than adding `engine-strict=true` alongside the Node move. It is the only way to make the floor binding, but it converts a colleague's wrong-Node warning into a failed install — a behaviour change for someone not party to the decision, and outside a PR whose claim is that install behaviour is unchanged. Logged for a decision. |
 | 2026-08-03 | SDK 22's `RequestError` refactor was treated as the one real risk and checked at runtime, not by reading. `isTransientError()` casts to `{ response?: { status?: number } }`, so a shape change would compile, pass every gate, and silently stop prerender retries under `prerender.failOnError` — one flaky CMS response would then abort a deploy. `RequestError` preserves `.response`; confirmed across 7 transient codes, 5 permanent codes and a connection refusal. |
