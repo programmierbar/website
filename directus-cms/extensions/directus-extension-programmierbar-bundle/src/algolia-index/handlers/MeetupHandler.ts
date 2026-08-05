@@ -1,10 +1,10 @@
-import { AbstractItemHandler } from './ItemHandler.ts';
-import { sanitize, sanitizeFull, truncateToByteLimit } from '../util/sanitizer.ts';
+import { sanitize, sanitizeFull, truncateToByteLimit } from '../util/sanitizer.ts'
+import { AbstractItemHandler } from './ItemHandler.ts'
 
 // Keep meetup records comfortably below Algolia's per-record size limit. Mirrors the podcast handler:
 // once the sanitized text grows past this, we fall back to fully stripped (tag-less) text.
-const MAX_TALK_TEXT_LENGTH = 2500;
-const MAX_DESCRIPTION_LENGTH = 2500;
+const MAX_TALK_TEXT_LENGTH = 2500
+const MAX_DESCRIPTION_LENGTH = 2500
 
 // Algolia rejects any record over a hard 10 KB (10000-byte) limit, and a rejected record means the
 // meetup vanishes from search entirely. We target this slightly lower ceiling for the payload this
@@ -12,20 +12,19 @@ const MAX_DESCRIPTION_LENGTH = 2500;
 // that the rebuild/repair CLIs and the live hook append to every payload after buildAttributes()
 // returns (two UUIDs, ~110 bytes). Algolia counts the SERIALIZED record (UTF-8 bytes, including JSON
 // escaping), so the fitting logic below measures JSON.stringify() rather than guessing field sizes.
-const MAX_PAYLOAD_BYTES = 9700;
+const MAX_PAYLOAD_BYTES = 9700
 // Talks take at most this share of the budget; the description (the snippet shown in search results)
 // then gets whatever is left, so a talk-less meetup can still use almost the entire allowance for its
 // text rather than being cut short by a fixed, smaller cap.
-const MAX_TALK_TEXT_BYTES = 4000;
+const MAX_TALK_TEXT_BYTES = 4000
 
-export class MeetupHandler extends AbstractItemHandler{
-
+export class MeetupHandler extends AbstractItemHandler {
     get collectionName(): string {
-        return 'meetups';
+        return 'meetups'
     }
 
     get type(): string {
-        return 'meetup';
+        return 'meetup'
     }
 
     // Every field read by updateRequired() and buildAttributes(). `status` is added by the hook.
@@ -40,9 +39,16 @@ export class MeetupHandler extends AbstractItemHandler{
     // `talks.items.update` handler.
     get indexFields(): string[] {
         return [
-            'id', 'title', 'slug', 'intro', 'description', 'published_on', 'cover_image',
-            'talks.talk.title', 'talks.talk.abstract',
-        ];
+            'id',
+            'title',
+            'slug',
+            'intro',
+            'description',
+            'published_on',
+            'cover_image',
+            'talks.talk.title',
+            'talks.talk.abstract',
+        ]
     }
 
     updateRequired(item: any): boolean {
@@ -65,25 +71,25 @@ export class MeetupHandler extends AbstractItemHandler{
         // markup that both pollutes search and blows past Algolia's record-size limit. We strip it the
         // same way the podcast handler does — sanitize() keeps a little structure, sanitizeFull()
         // removes everything — falling back to the harder strip once the text gets long.
-        let description = this.buildDescription(item, sanitize);
+        let description = this.buildDescription(item, sanitize)
         if (description.length > MAX_DESCRIPTION_LENGTH) {
-            description = this.buildDescription(item, sanitizeFull);
+            description = this.buildDescription(item, sanitizeFull)
         }
 
         // Talk text lives in its own searchable `talks` attribute rather than in `description`: the
         // search result card displays `description`, and we don't want to bury the meetup summary
         // under the concatenated talk abstracts. The index defines no explicit searchableAttributes,
         // so every attribute — including this one — is searchable by default.
-        let talks = this.buildTalkText(item, sanitize);
+        let talks = this.buildTalkText(item, sanitize)
         if (talks.length > MAX_TALK_TEXT_LENGTH) {
-            talks = this.buildTalkText(item, sanitizeFull);
+            talks = this.buildTalkText(item, sanitizeFull)
         }
 
         // Talks get a bounded share of the budget; the description takes whatever is left.
-        talks = truncateToByteLimit(talks, MAX_TALK_TEXT_BYTES);
+        talks = truncateToByteLimit(talks, MAX_TALK_TEXT_BYTES)
 
         const payload = {
-            _type : this.type,
+            _type: this.type,
             title: item.title,
             // Always send a string (empty when there's no content), never `undefined`. The hook and
             // rebuild push via partialUpdateObject, which drops `undefined` properties from the
@@ -95,7 +101,7 @@ export class MeetupHandler extends AbstractItemHandler{
             published_on: item.published_on,
             image: item.cover_image ? `${this.env.PUBLIC_URL}assets/${item.cover_image}` : undefined,
             slug: item.slug,
-        };
+        }
 
         // Final size guard against Algolia's 10 KB hard limit. We measure the SERIALIZED payload and
         // trim the description (the only remaining unbounded field) until it fits. Measuring the real
@@ -103,9 +109,9 @@ export class MeetupHandler extends AbstractItemHandler{
         // cases: long titles/slugs (the schema allows 255 chars each) eat into the same budget, and
         // JSON escaping (every `\n` in a conference agenda becomes `\\n`) makes the serialized size
         // larger than the raw byte count.
-        this.fitPayloadToByteLimit(payload);
+        this.fitPayloadToByteLimit(payload)
 
-        return [payload];
+        return [payload]
     }
 
     // Trims `payload.description` until the serialized payload is within MAX_PAYLOAD_BYTES. Loops
@@ -116,9 +122,12 @@ export class MeetupHandler extends AbstractItemHandler{
             payload.description.length > 0 &&
             Buffer.byteLength(JSON.stringify(payload), 'utf8') > MAX_PAYLOAD_BYTES
         ) {
-            const overflowBytes = Buffer.byteLength(JSON.stringify(payload), 'utf8') - MAX_PAYLOAD_BYTES;
-            const descriptionBytes = Buffer.byteLength(payload.description, 'utf8');
-            payload.description = truncateToByteLimit(payload.description, Math.max(0, descriptionBytes - overflowBytes));
+            const overflowBytes = Buffer.byteLength(JSON.stringify(payload), 'utf8') - MAX_PAYLOAD_BYTES
+            const descriptionBytes = Buffer.byteLength(payload.description, 'utf8')
+            payload.description = truncateToByteLimit(
+                payload.description,
+                Math.max(0, descriptionBytes - overflowBytes)
+            )
         }
     }
 
@@ -129,24 +138,23 @@ export class MeetupHandler extends AbstractItemHandler{
             .filter(Boolean)
             .map((text: string) => sanitizer(text).trim())
             .filter(Boolean)
-            .join(' ');
+            .join(' ')
     }
 
     // Concatenates every linked talk's title + abstract into one searchable string. Each `item.talks`
     // entry is a `meetups_talks` junction row of shape `{ talk: { title, abstract }, ... }`.
     private buildTalkText(item: any, sanitizer: (input: string) => string): string {
         if (!Array.isArray(item.talks)) {
-            return '';
+            return ''
         }
 
         return item.talks
             .map((entry: any) => entry?.talk)
             .filter(Boolean)
-            .map((talk: any) => [talk.title, talk.abstract ? sanitizer(talk.abstract) : '']
-                .filter(Boolean)
-                .join(' ')
-                .trim())
+            .map((talk: any) =>
+                [talk.title, talk.abstract ? sanitizer(talk.abstract) : ''].filter(Boolean).join(' ').trim()
+            )
             .filter(Boolean)
-            .join(' ');
+            .join(' ')
     }
 }

@@ -1,18 +1,26 @@
-import { AbstractItemHandler } from './ItemHandler.ts';
+import { AbstractItemHandler } from './ItemHandler.ts'
 
 export class SpeakerHandler extends AbstractItemHandler {
-
     get collectionName(): string {
-        return 'speakers';
+        return 'speakers'
     }
 
     get type(): string {
-        return 'speaker';
+        return 'speaker'
     }
 
     // Every field read by updateRequired() and buildAttributes(). `status` is added by the hook.
     get indexFields(): string[] {
-        return ['id', 'first_name', 'last_name', 'academic_title', 'description', 'published_on', 'slug', 'profile_image'];
+        return [
+            'id',
+            'first_name',
+            'last_name',
+            'academic_title',
+            'description',
+            'published_on',
+            'slug',
+            'profile_image',
+        ]
     }
 
     updateRequired(item: any): boolean {
@@ -28,15 +36,17 @@ export class SpeakerHandler extends AbstractItemHandler {
     }
 
     buildAttributes(item: any): Record<string, any>[] {
-        return [{
-            _type : this.type,
-            first_name: item.first_name,
-            last_name: item.last_name,
-            academic_title: item.academic_title,
-            description: item.description,
-            published_on: item.published_on,
-            slug: item.slug,
-            image: item.profile_image ? `${this.env.PUBLIC_URL}assets/${item.profile_image}` : undefined,
-        }]
+        return [
+            {
+                _type: this.type,
+                first_name: item.first_name,
+                last_name: item.last_name,
+                academic_title: item.academic_title,
+                description: item.description,
+                published_on: item.published_on,
+                slug: item.slug,
+                image: item.profile_image ? `${this.env.PUBLIC_URL}assets/${item.profile_image}` : undefined,
+            },
+        ]
     }
 }

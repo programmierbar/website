@@ -18,7 +18,7 @@ export async function getPodcastData(
 ): Promise<PodcastData> {
     const { logger, ItemsService } = dependencies
 
-    let pickOfTheDayItems: PickOfTheDay[] = [];
+    let pickOfTheDayItems: PickOfTheDay[] = []
 
     // !!!!
     // This will currently fail due to permission issues, most likely

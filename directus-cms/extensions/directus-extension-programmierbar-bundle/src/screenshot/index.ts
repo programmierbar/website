@@ -27,17 +27,23 @@ export default defineHook(({ action }, hookContext) => {
      * It sets the "image" field on newly created
      * pick of the day items, if necessary.
      */
-    action('picks_of_the_day.items.create', safeAction(HOOK_NAME, logger, ({ payload, ...metadata }, context) =>
-        handleAction({ payload, metadata, context })
-    ))
+    action(
+        'picks_of_the_day.items.create',
+        safeAction(HOOK_NAME, logger, ({ payload, ...metadata }, context) =>
+            handleAction({ payload, metadata, context })
+        )
+    )
 
     /**
      * It sets the "image" field on updated pick
      * of the day items, if necessary.
      */
-    action('picks_of_the_day.items.update', safeAction(HOOK_NAME, logger, ({ payload, ...metadata }, context) =>
-        handleAction({ payload, metadata, context })
-    ))
+    action(
+        'picks_of_the_day.items.update',
+        safeAction(HOOK_NAME, logger, ({ payload, ...metadata }, context) =>
+            handleAction({ payload, metadata, context })
+        )
+    )
 
     /**
      * It handles the action logic that sets the "image" field on

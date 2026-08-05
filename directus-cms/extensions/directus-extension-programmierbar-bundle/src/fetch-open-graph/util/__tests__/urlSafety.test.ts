@@ -50,7 +50,9 @@ describe('assertPublicUrl', () => {
     })
 
     test('rejects a public hostname that resolves to a private address', async () => {
-        await expect(assertPublicUrl('http://sneaky.example.com', privateResolver)).rejects.toThrow(/non-public address/)
+        await expect(assertPublicUrl('http://sneaky.example.com', privateResolver)).rejects.toThrow(
+            /non-public address/
+        )
     })
 
     test('rejects an unparseable URL', async () => {

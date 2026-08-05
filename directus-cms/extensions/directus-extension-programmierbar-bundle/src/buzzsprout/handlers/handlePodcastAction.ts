@@ -1,7 +1,7 @@
+import { createHookErrorConstructor } from '../../shared/errors.ts'
 import { handleBuzzsprout } from './buzzsprout.ts'
 import { getPodcastData } from './podcastData.ts'
 import type { ActionData, BuzzsproutData, Dependencies, PodcastData } from './types.ts'
-import { createHookErrorConstructor } from '../../shared/errors.ts';
 
 /**
  * It handles the podcast action and creates or updates
@@ -62,8 +62,7 @@ export async function handlePodcastAction(
             (payload.status ||
                 payload.published_on ||
                 payload.type ||
-                (podcastItem.number || podcastItem.type === 'other') &&
-                payload.title ||
+                ((podcastItem.number || podcastItem.type === 'other') && payload.title) ||
                 payload.description ||
                 payload.cover_image ||
                 payload.audio_file)
@@ -84,7 +83,7 @@ export async function handlePodcastAction(
 
         if (!buzzsproutData) {
             logger.error(`${HOOK_NAME} hook: No data returned from handleBuzzsprout`)
-            throw new Error("Did not receive Buzzsprout data.")
+            throw new Error('Did not receive Buzzsprout data.')
         }
 
         // Create update data object
@@ -109,7 +108,9 @@ export async function handlePodcastAction(
             return
         }
 
-        logger.info(`${HOOK_NAME} hook: Updating podcast item with id "${itemKey}" and data: ${JSON.stringify(updateData)}`)
+        logger.info(
+            `${HOOK_NAME} hook: Updating podcast item with id "${itemKey}" and data: ${JSON.stringify(updateData)}`
+        )
 
         // If update data contains something, update podcast item
         await podcastItemsService.updateOne(itemKey, updateData)

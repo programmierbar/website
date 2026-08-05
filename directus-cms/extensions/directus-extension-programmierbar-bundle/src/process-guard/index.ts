@@ -31,9 +31,7 @@ export default defineHook((_, { logger }) => {
 
     process.on('uncaughtException', (error: any) => {
         logger.error(`${HOOK_NAME}: uncaughtException: ${error?.stack ?? error}`)
-        postSlackMessage(
-            `:rotating_light: *${HOOK_NAME}*: uncaughtException, restarting: ${error?.message ?? error}`
-        )
+        postSlackMessage(`:rotating_light: *${HOOK_NAME}*: uncaughtException, restarting: ${error?.message ?? error}`)
             .catch(() => {})
             .finally(() => setTimeout(() => process.exit(1), 1000))
     })

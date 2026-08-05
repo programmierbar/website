@@ -1,6 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { createHookErrorConstructor } from '../shared/errors.ts'
-import { getPayloadWithSlug } from './util/getPayloadWithSlug.js';
+import { getPayloadWithSlug } from './util/getPayloadWithSlug.js'
 
 const HOOK_NAME = 'set-slug'
 
@@ -49,13 +49,12 @@ export default defineHook(({ filter }, hookContext) => {
                 // create future item and return payload with "slug"
                 if (
                     type === 'update' &&
-                    (
-                        (metadata.collection === 'speakers' && (payload.academic_title || payload.first_name || payload.last_name)) ||
+                    ((metadata.collection === 'speakers' &&
+                        (payload.academic_title || payload.first_name || payload.last_name)) ||
                         (metadata.collection === 'podcasts' && (payload.type || payload.number || payload.title)) ||
                         (metadata.collection === 'meetups' && payload.title) ||
                         (metadata.collection === 'conferences' && payload.title) ||
-                        (metadata.collection === 'profiles' && (payload.first_name || payload.last_name))
-                    )
+                        (metadata.collection === 'profiles' && (payload.first_name || payload.last_name)))
                 ) {
                     // Create items service instance
                     const itemsService = new ItemsService(metadata.collection, {
@@ -92,8 +91,4 @@ export default defineHook(({ filter }, hookContext) => {
         // Otherwise just return payload
         return payload
     }
-
-
-
-
 })

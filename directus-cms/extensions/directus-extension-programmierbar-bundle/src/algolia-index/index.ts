@@ -1,27 +1,29 @@
-import { defineHook } from '@directus/extensions-sdk';
-import { createFetchRequester } from '@algolia/requester-fetch';
-import { searchClient } from '@algolia/client-search';
- import type { ItemHandler } from './handlers/ItemHandler.ts';
+import { searchClient } from '@algolia/client-search'
+import { createFetchRequester } from '@algolia/requester-fetch'
+import { defineHook } from '@directus/extensions-sdk'
+import type { SearchClient } from 'algoliasearch'
+import type { ItemsService as ItemsServiceType } from '../buzzsprout/handlers/types.js'
+import { safeAction } from '../shared/safeHook.ts'
 import { getHandlers } from './handlers/index.ts'
-import type { SearchClient } from 'algoliasearch';
-import type { ItemsService as ItemsServiceType } from '../buzzsprout/handlers/types.js';
-import { safeAction } from '../shared/safeHook.ts';
+import type { ItemHandler } from './handlers/ItemHandler.ts'
+
 const HOOK_NAME = 'algolia-index'
 
 export default defineHook(({ action }, hookContext) => {
+    const logger = hookContext.logger
+    const env = hookContext.env
+    const ItemsService = hookContext.services.ItemsService satisfies ItemsServiceType
 
-    const logger = hookContext.logger;
-    const env = hookContext.env;
-    const ItemsService = hookContext.services.ItemsService satisfies ItemsServiceType;
-
-    const handlers = getHandlers(env, logger);
+    const handlers = getHandlers(env, logger)
 
     if (!(env.ALGOLIA_APP_ID && env.ALGOLIA_API_KEY && env.ALGOLIA_INDEX)) {
-        logger.warn(`${HOOK_NAME} hook: Did not set ALGOLIA_APP_ID && ALGOLIA_API_KEY && ALGOLIA_INDEX. Algolia extension will not be active.`)
+        logger.warn(
+            `${HOOK_NAME} hook: Did not set ALGOLIA_APP_ID && ALGOLIA_API_KEY && ALGOLIA_INDEX. Algolia extension will not be active.`
+        )
         return
     }
 
-    const client = searchClient(env.ALGOLIA_APP_ID, env.ALGOLIA_API_KEY, { requester: createFetchRequester() });
+    const client = searchClient(env.ALGOLIA_APP_ID, env.ALGOLIA_API_KEY, { requester: createFetchRequester() })
 
     // safeAction wraps each callback so a thrown error / rejected promise is caught and logged
     // instead of becoming an unhandled rejection that crashes the CMS. The callbacks RETURN the
@@ -46,15 +48,18 @@ export default defineHook(({ action }, hookContext) => {
     // Talks are their own collection embedded into meetups (see MeetupHandler). Editing a talk's
     // title/abstract must refresh the meetup entries that embed it — see handleRelatedTalkChange for
     // why only `update` is wired up (create/delete are covered by the accompanying meetup update).
-    action('talks.items.update', safeAction(HOOK_NAME, logger, (metadata, eventContext) =>
-        handleRelatedTalkChange(metadata, eventContext, {
-            meetupHandler: handlers.meetupHandler,
-            client,
-            ItemsService,
-            logger,
-            env
-        })
-    ))
+    action(
+        'talks.items.update',
+        safeAction(HOOK_NAME, logger, (metadata, eventContext) =>
+            handleRelatedTalkChange(metadata, eventContext, {
+                meetupHandler: handlers.meetupHandler,
+                client,
+                ItemsService,
+                logger,
+                env,
+            })
+        )
+    )
 
     action('speakers.items.create', onUpdate(handlers.speakerHandler))
     action('speakers.items.update', onUpdate(handlers.speakerHandler))
@@ -67,17 +72,20 @@ export default defineHook(({ action }, hookContext) => {
     action('transcripts.items.create', onUpdate(handlers.transcriptHandler))
     action('transcripts.items.update', onUpdate(handlers.transcriptHandler))
     action('transcripts.items.delete', onDelete(handlers.transcriptHandler))
-});
+})
 
-async function handleUpdateAction(metadata, eventContext, dependencies: {
-    handler: ItemHandler,
-    client: SearchClient,
-    ItemsService,
-    logger,
-    env
-}){
-
-    const {handler, ItemsService, client, logger, env} = dependencies;
+async function handleUpdateAction(
+    metadata,
+    eventContext,
+    dependencies: {
+        handler: ItemHandler
+        client: SearchClient
+        ItemsService
+        logger
+        env
+    }
+) {
+    const { handler, ItemsService, client, logger, env } = dependencies
 
     // Directus passes `key` for single-item operations and `keys[]` for batch operations.
     const itemKey = metadata.key || (metadata.keys && metadata.keys[0])
@@ -122,37 +130,38 @@ async function handleUpdateAction(metadata, eventContext, dependencies: {
  * omit it, which forces a rebuild.
  */
 async function reindexByKey(dependencies: {
-    handler: ItemHandler,
-    collection: string,
-    itemKey: any,
-    eventContext: any,
-    ItemsService,
-    client: SearchClient,
-    logger,
-    env,
-    changedPayload?: any,
+    handler: ItemHandler
+    collection: string
+    itemKey: any
+    eventContext: any
+    ItemsService
+    client: SearchClient
+    logger
+    env
+    changedPayload?: any
 }): Promise<void> {
-    const { handler, collection, itemKey, eventContext, ItemsService, client, logger, env, changedPayload } = dependencies;
+    const { handler, collection, itemKey, eventContext, ItemsService, client, logger, env, changedPayload } =
+        dependencies
 
     const { fields: collectionFields } = eventContext.schema.collections[collection]
 
     const itemsService = new ItemsService(collection, {
         accountability: eventContext.accountability,
         schema: eventContext.schema,
-    }) as ItemsServiceType;
+    }) as ItemsServiceType
 
     // `status` is requested only when the collection actually has the field — asking Directus for a
     // non-existent field throws.
-    const fieldsToRead = collectionFields.status
-        ? [...handler.indexFields, 'status']
-        : [...handler.indexFields]
+    const fieldsToRead = collectionFields.status ? [...handler.indexFields, 'status'] : [...handler.indexFields]
 
     const item = await itemsService.readOne(itemKey, { fields: fieldsToRead })
 
     // Only published items belong in the index. Action hooks run *after* the write, so the item we
     // just read already reflects the new status; there is no need to also inspect the diff.
     if (collectionFields.status && item.status !== 'published') {
-        logger.info(`${HOOK_NAME} hook: Item "${itemKey}" is not published (status: "${item.status}"). Ensuring it is absent from the search index.`)
+        logger.info(
+            `${HOOK_NAME} hook: Item "${itemKey}" is not published (status: "${item.status}"). Ensuring it is absent from the search index.`
+        )
         // Always issue the delete (it is idempotent): this covers depublishing as well as items that
         // were never indexed. We delete by the handler's deletion filter, NOT by a single objectID —
         // entries are stored as `<id>_0`, `<id>_1`, … (transcripts produce many chunks), so deleting
@@ -176,7 +185,7 @@ async function reindexByKey(dependencies: {
             distinct: handler.buildDistinctKey(item),
             _directus_reference: handler.buildDirectusReference(item),
         }
-    });
+    })
 
     // Some handlers (transcripts) expand one item into many chunk entries, and the number of chunks
     // can change between saves, so we delete the previous entries before re-creating them. Building
@@ -188,21 +197,27 @@ async function reindexByKey(dependencies: {
     }
 
     try {
-        await Promise.all(payloads.map(async (payload, index) => {
-            await client.partialUpdateObject({
-                indexName: env.ALGOLIA_INDEX,
-                objectID: `${itemKey}_${index}`,
-                attributesToUpdate: payload,
-                createIfNotExists: true,
-            });
-        }));
+        await Promise.all(
+            payloads.map(async (payload, index) => {
+                await client.partialUpdateObject({
+                    indexName: env.ALGOLIA_INDEX,
+                    objectID: `${itemKey}_${index}`,
+                    attributesToUpdate: payload,
+                    createIfNotExists: true,
+                })
+            })
+        )
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        logger.error(`${HOOK_NAME} hook: Failed to update search index for "${handler.collectionName}" item "${itemKey}": ${errorMessage}`);
-        throw error;
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        logger.error(
+            `${HOOK_NAME} hook: Failed to update search index for "${handler.collectionName}" item "${itemKey}": ${errorMessage}`
+        )
+        throw error
     }
 
-    logger.info(`${HOOK_NAME} hook: Updated search index "${env.ALGOLIA_INDEX}" for "${handler.collectionName}" item "${itemKey}"`)
+    logger.info(
+        `${HOOK_NAME} hook: Updated search index "${env.ALGOLIA_INDEX}" for "${handler.collectionName}" item "${itemKey}"`
+    )
 }
 
 /**
@@ -219,14 +234,18 @@ async function reindexByKey(dependencies: {
  *   - delete: the talk can no longer be read to find its meetups; Directus removes the junction rows,
  *     which updates the meetups' `talks` field and triggers `meetups.items.update` to refresh them.
  */
-async function handleRelatedTalkChange(metadata, eventContext, dependencies: {
-    meetupHandler: ItemHandler,
-    client: SearchClient,
-    ItemsService,
-    logger,
-    env
-}) {
-    const { meetupHandler, client, ItemsService, logger, env } = dependencies;
+async function handleRelatedTalkChange(
+    metadata,
+    eventContext,
+    dependencies: {
+        meetupHandler: ItemHandler
+        client: SearchClient
+        ItemsService
+        logger
+        env
+    }
+) {
+    const { meetupHandler, client, ItemsService, logger, env } = dependencies
 
     const talkKey = metadata.key || (metadata.keys && metadata.keys[0])
     if (!talkKey) {
@@ -245,14 +264,12 @@ async function handleRelatedTalkChange(metadata, eventContext, dependencies: {
     const talksService = new ItemsService('talks', {
         accountability: eventContext.accountability,
         schema: eventContext.schema,
-    }) as ItemsServiceType;
+    }) as ItemsServiceType
 
     // `meetups` is the talk's reverse M2M alias → rows of the `meetups_talks` junction, each with a
     // `meetup` id.
     const talk = await talksService.readOne(talkKey, { fields: ['meetups.meetup'] })
-    const meetupIds = (talk?.meetups ?? [])
-        .map((row: any) => row?.meetup)
-        .filter(Boolean)
+    const meetupIds = (talk?.meetups ?? []).map((row: any) => row?.meetup).filter(Boolean)
 
     if (meetupIds.length === 0) {
         logger.info(`${HOOK_NAME} hook: Talk "${talkKey}" is not linked to any meetup; nothing to reindex.`)
@@ -276,13 +293,17 @@ async function handleRelatedTalkChange(metadata, eventContext, dependencies: {
     }
 }
 
-async function handleDeleteAction(metadata, eventContext, dependencies: {
-    handler: ItemHandler,
-    client: SearchClient,
-    logger,
-    env
-}) {
-    const {handler, client, logger, env} = dependencies;
+async function handleDeleteAction(
+    metadata,
+    eventContext,
+    dependencies: {
+        handler: ItemHandler
+        client: SearchClient
+        logger
+        env
+    }
+) {
+    const { handler, client, logger, env } = dependencies
 
     const itemKey = metadata.key || (metadata.keys && metadata.keys[0])
     if (!itemKey) {
@@ -292,7 +313,9 @@ async function handleDeleteAction(metadata, eventContext, dependencies: {
 
     const deletedIds = await deleteFromIndex({ handler, client, env, itemKey })
 
-    logger.info(`${HOOK_NAME} hook: Removed item(s) "${JSON.stringify(deletedIds)}" from search index via filter ${handler.buildDeletionFilter({ id: itemKey })}`)
+    logger.info(
+        `${HOOK_NAME} hook: Removed item(s) "${JSON.stringify(deletedIds)}" from search index via filter ${handler.buildDeletionFilter({ id: itemKey })}`
+    )
 }
 
 /**
@@ -305,12 +328,12 @@ async function handleDeleteAction(metadata, eventContext, dependencies: {
  * delete paths so deletion behaves identically everywhere.
  */
 async function deleteFromIndex(dependencies: {
-    handler: ItemHandler,
-    client: SearchClient,
-    env,
-    itemKey,
+    handler: ItemHandler
+    client: SearchClient
+    env
+    itemKey
 }): Promise<string[]> {
-    const { handler, client, env, itemKey } = dependencies;
+    const { handler, client, env, itemKey } = dependencies
 
     const results = await client.browseObjects({
         indexName: env.ALGOLIA_INDEX,
@@ -318,18 +341,18 @@ async function deleteFromIndex(dependencies: {
         attributesToRetrieve: ['objectID'],
         browseParams: {
             filters: handler.buildDeletionFilter({ id: itemKey }),
-        }
-    });
+        },
+    })
 
-    const idsForDeletion = results.hits.map((hit: any) => hit.objectID);
+    const idsForDeletion = results.hits.map((hit: any) => hit.objectID)
     if (idsForDeletion.length === 0) {
-        return [];
+        return []
     }
 
     await client.deleteObjects({
         indexName: env.ALGOLIA_INDEX,
         objectIDs: idsForDeletion,
-    });
+    })
 
-    return idsForDeletion;
+    return idsForDeletion
 }
