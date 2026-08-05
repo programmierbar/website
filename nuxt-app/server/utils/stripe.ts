@@ -7,7 +7,12 @@ import Stripe from 'stripe'
 // Keep this value and the `stripe` dependency as separate decisions: changing it is an API migration
 // that needs the Stripe changelog read against the params in `tickets/create-checkout.post.ts`, not
 // something to carry along with an npm update.
-const STRIPE_API_VERSION = '2026-02-25.clover'
+//
+// The cast is required and deliberate. `apiVersion` is typed as the single literal the installed SDK
+// bundles, so pinning any other version cannot type-check — the SDK is on `2026-07-29.dahlia` while we
+// deliberately still talk `2026-02-25.clover`. The cost is that TypeScript no longer rejects a
+// nonsense version string here, so treat this line as hand-checked against Stripe's changelog.
+export const STRIPE_API_VERSION = '2026-02-25.clover' as Stripe.LatestApiVersion
 
 let stripeInstance: Stripe | null = null
 
