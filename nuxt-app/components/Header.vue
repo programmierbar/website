@@ -82,10 +82,10 @@
             tabindex="-1"
         >
             <div
-                class="flex min-h-screen flex-col space-y-16 px-6 pb-8 pt-28 lg:pl-8 lg:pr-24 lg:pt-36 xl:pr-32 2xl:pr-48"
+                class="flex min-h-screen flex-col space-y-8 px-6 pb-8 pt-28 lg:pl-8 lg:pr-24 lg:pt-32 xl:pr-32 2xl:pr-48"
             >
                 <!-- Main menu -->
-                <ul class="flex flex-col space-y-4 lg:flex-grow lg:items-end lg:space-y-0">
+                <ul class="flex flex-col space-y-4 lg:items-end lg:space-y-0">
                     <li
                         v-for="(mainMenuItem, index) in mainMenuItems"
                         :key="mainMenuItem.href"
@@ -109,7 +109,7 @@
                 </ul>
 
                 <div
-                    class="flex flex-grow flex-col justify-between space-y-16 lg:flex-grow-0 lg:flex-row-reverse lg:items-end lg:space-y-0"
+                    class="flex flex-col space-y-8 lg:flex-row-reverse lg:items-end lg:space-y-0"
                 >
                     <!-- Social networks -->
                     <SocialNetworks class="h-8 self-end" />
