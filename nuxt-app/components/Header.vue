@@ -184,6 +184,10 @@ const bodyElement = useBodyElement()
 // scroll lock is released, instead of clobbering a pre-existing value
 const previousBodyOverflow = ref('')
 
+// Remember the body's inline padding-right for the same reason, since it is
+// adjusted to compensate for the width of the hidden scrollbar
+const previousBodyPaddingRight = ref('')
+
 // Track whether the scroll lock is actually applied, set synchronously with
 // the overflow change so it stays consistent regardless of watcher timing
 const scrollLocked = ref(false)
@@ -202,14 +206,25 @@ watch(menuIsOpen, () => {
 watch(menuIsOpen, () => {
     if (bodyElement.value) {
         if (menuIsOpen.value) {
-            // Save the current inline overflow before locking so a value set
-            // elsewhere isn't lost, then lock the scroll
+            // Measure the scrollbar width before hiding overflow (afterwards
+            // the scrollbar is gone and the measurement would be 0)
+            const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+            // Save the current inline overflow and padding-right before locking
+            // so values set elsewhere aren't lost, then lock the scroll
             previousBodyOverflow.value = bodyElement.value.style.overflow
+            previousBodyPaddingRight.value = bodyElement.value.style.paddingRight
             bodyElement.value.style.overflow = 'hidden'
+            // Compensate the hidden scrollbar with padding-right so the fixed
+            // header doesn't shift when the scrollbar disappears
+            if (scrollbarWidth > 0) {
+                const currentPaddingRight = parseFloat(getComputedStyle(bodyElement.value).paddingRight) || 0
+                bodyElement.value.style.paddingRight = `${currentPaddingRight + scrollbarWidth}px`
+            }
             scrollLocked.value = true
         } else if (scrollLocked.value) {
-            // Restore the previously saved overflow value on close
+            // Restore the previously saved overflow and padding-right on close
             bodyElement.value.style.overflow = previousBodyOverflow.value
+            bodyElement.value.style.paddingRight = previousBodyPaddingRight.value
             scrollLocked.value = false
         }
     }
@@ -222,6 +237,7 @@ watch(menuIsOpen, () => {
 onBeforeUnmount(() => {
     if (bodyElement.value && scrollLocked.value) {
         bodyElement.value.style.overflow = previousBodyOverflow.value
+        bodyElement.value.style.paddingRight = previousBodyPaddingRight.value
         scrollLocked.value = false
     }
 })
