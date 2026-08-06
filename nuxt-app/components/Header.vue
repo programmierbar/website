@@ -180,6 +180,10 @@ const menuElement = ref<HTMLElement>()
 // Create body element reference for locking background scroll
 const bodyElement = useBodyElement()
 
+// Remember the body's inline overflow value so it can be restored when the
+// scroll lock is released, instead of clobbering a pre-existing value
+const previousBodyOverflow = ref('')
+
 // Track analytic menu events
 watch(menuIsOpen, () => {
     if (menuIsOpen.value) {
@@ -193,7 +197,15 @@ watch(menuIsOpen, () => {
 // page can't move behind the overlay, and release it when it closes
 watch(menuIsOpen, () => {
     if (bodyElement.value) {
-        bodyElement.value.style.overflow = menuIsOpen.value ? 'hidden' : ''
+        if (menuIsOpen.value) {
+            // Save the current inline overflow before locking so a value set
+            // elsewhere isn't lost, then lock the scroll
+            previousBodyOverflow.value = bodyElement.value.style.overflow
+            bodyElement.value.style.overflow = 'hidden'
+        } else {
+            // Restore the previously saved overflow value on close
+            bodyElement.value.style.overflow = previousBodyOverflow.value
+        }
     }
 })
 
@@ -201,7 +213,7 @@ watch(menuIsOpen, () => {
 // while the menu is still open, so the page can't stay locked
 onBeforeUnmount(() => {
     if (bodyElement.value) {
-        bodyElement.value.style.overflow = ''
+        bodyElement.value.style.overflow = previousBodyOverflow.value
     }
 })
 
