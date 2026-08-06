@@ -108,9 +108,7 @@
                     </li>
                 </ul>
 
-                <div
-                    class="flex flex-col space-y-8 lg:flex-row-reverse lg:items-end lg:space-y-0"
-                >
+                <div class="flex flex-col space-y-8 lg:flex-row-reverse lg:items-end lg:space-y-0">
                     <!-- Social networks -->
                     <SocialNetworks class="h-8 self-end" />
 
