@@ -184,6 +184,10 @@ const bodyElement = useBodyElement()
 // scroll lock is released, instead of clobbering a pre-existing value
 const previousBodyOverflow = ref('')
 
+// Track whether the scroll lock is actually applied, set synchronously with
+// the overflow change so it stays consistent regardless of watcher timing
+const scrollLocked = ref(false)
+
 // Track analytic menu events
 watch(menuIsOpen, () => {
     if (menuIsOpen.value) {
@@ -202,20 +206,23 @@ watch(menuIsOpen, () => {
             // elsewhere isn't lost, then lock the scroll
             previousBodyOverflow.value = bodyElement.value.style.overflow
             bodyElement.value.style.overflow = 'hidden'
-        } else {
+            scrollLocked.value = true
+        } else if (scrollLocked.value) {
             // Restore the previously saved overflow value on close
             bodyElement.value.style.overflow = previousBodyOverflow.value
+            scrollLocked.value = false
         }
     }
 })
 
-// Make sure the scroll lock is released if the component is unmounted
-// while the menu is still open, so the page can't stay locked. Only
-// restore when the menu is open (i.e. the lock is actually held), so we
-// don't clobber a pre-existing overflow value we never captured
+// Release the lock if the component is unmounted while it still holds it
+// (e.g. a route change unmounts before the close watcher has run), so the
+// page can't stay permanently locked. Drive this off the actual lock state,
+// not menuIsOpen, since the watcher is async and may not have run yet
 onBeforeUnmount(() => {
-    if (bodyElement.value && menuIsOpen.value) {
+    if (bodyElement.value && scrollLocked.value) {
         bodyElement.value.style.overflow = previousBodyOverflow.value
+        scrollLocked.value = false
     }
 })
 
