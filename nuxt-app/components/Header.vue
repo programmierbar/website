@@ -108,7 +108,7 @@
                     </li>
                 </ul>
 
-                <div class="flex flex-col space-y-8 lg:flex-row-reverse lg:items-end lg:space-y-0">
+                <div class="flex flex-col space-y-8 lg:flex-row-reverse lg:items-end lg:justify-between lg:space-y-0">
                     <!-- Social networks -->
                     <SocialNetworks class="h-8 self-end" />
 
@@ -137,8 +137,8 @@ import SearchSVG from '~/assets/icons/search.svg'
 import BrandIcon from '~/assets/images/brand-icon.svg'
 import BrandLogo from '~/assets/images/brand-logo.svg'
 import PrimaryPbButton from '~/components/PrimaryPbButton.vue'
-import { nextTick, onMounted, ref, watch } from 'vue'
-import { useDocument, useEventListener } from '../composables'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useBodyElement, useDocument, useEventListener } from '../composables'
 import { CLOSE_MENU_EVENT_ID, CLOSE_SEARCH_EVENT_ID, OPEN_MENU_EVENT_ID, OPEN_SEARCH_EVENT_ID } from '../config'
 import { trackGoal } from '../helpers'
 import SocialNetworks from './SocialNetworks.vue'
@@ -177,12 +177,31 @@ const searchPlaceholder = ref('')
 const searchInputElement = ref<HTMLInputElement>()
 const menuElement = ref<HTMLElement>()
 
+// Create body element reference for locking background scroll
+const bodyElement = useBodyElement()
+
 // Track analytic menu events
 watch(menuIsOpen, () => {
     if (menuIsOpen.value) {
         trackGoal(OPEN_MENU_EVENT_ID)
     } else {
         trackGoal(CLOSE_MENU_EVENT_ID)
+    }
+})
+
+// Lock background scroll while the menu is open so the underlying
+// page can't move behind the overlay, and release it when it closes
+watch(menuIsOpen, () => {
+    if (bodyElement.value) {
+        bodyElement.value.style.overflow = menuIsOpen.value ? 'hidden' : ''
+    }
+})
+
+// Make sure the scroll lock is released if the component is unmounted
+// while the menu is still open, so the page can't stay locked
+onBeforeUnmount(() => {
+    if (bodyElement.value) {
+        bodyElement.value.style.overflow = ''
     }
 })
 
