@@ -210,9 +210,11 @@ watch(menuIsOpen, () => {
 })
 
 // Make sure the scroll lock is released if the component is unmounted
-// while the menu is still open, so the page can't stay locked
+// while the menu is still open, so the page can't stay locked. Only
+// restore when the menu is open (i.e. the lock is actually held), so we
+// don't clobber a pre-existing overflow value we never captured
 onBeforeUnmount(() => {
-    if (bodyElement.value) {
+    if (bodyElement.value && menuIsOpen.value) {
         bodyElement.value.style.overflow = previousBodyOverflow.value
     }
 })
