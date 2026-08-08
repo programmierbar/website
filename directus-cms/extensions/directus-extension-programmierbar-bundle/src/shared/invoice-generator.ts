@@ -1,7 +1,7 @@
-import PDFDocument from 'pdfkit'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import PDFDocument from 'pdfkit'
 
 // Seller info (hardcoded)
 const SELLER = {
@@ -154,7 +154,10 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
 
         // --- Separator ---
         y += 20
-        doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        doc.moveTo(50, y)
+            .lineTo(50 + pageWidth, y)
+            .strokeColor('#ccc')
+            .stroke()
 
         // --- Customer info ---
         y += 12
@@ -196,7 +199,10 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
 
         // --- Separator ---
         y += 10
-        doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        doc.moveTo(50, y)
+            .lineTo(50 + pageWidth, y)
+            .strokeColor('#ccc')
+            .stroke()
 
         // --- Line items table ---
         y += 14
@@ -229,7 +235,10 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         y += 35
 
         // --- Separator ---
-        doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        doc.moveTo(50, y)
+            .lineTo(50 + pageWidth, y)
+            .strokeColor('#ccc')
+            .stroke()
         y += 14
 
         // --- Totals ---
@@ -260,7 +269,10 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         doc.text(formatEur(data.vatAmountCents), valueX, y, { width: valueW, align: 'right' })
 
         y += 24
-        doc.moveTo(280, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        doc.moveTo(280, y)
+            .lineTo(50 + pageWidth, y)
+            .strokeColor('#ccc')
+            .stroke()
         y += 14
 
         doc.fontSize(10).fillColor('#000')
@@ -285,10 +297,7 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
  * Generate the next invoice number for a conference.
  * Pattern: PB-CON{YY}-{NNN}
  */
-export async function generateInvoiceNumber(
-    ordersService: any,
-    conferenceYear: number
-): Promise<string> {
+export async function generateInvoiceNumber(ordersService: any, conferenceYear: number): Promise<string> {
     const yy = String(conferenceYear).slice(-2)
     const prefix = `PB-CON${yy}-`
 

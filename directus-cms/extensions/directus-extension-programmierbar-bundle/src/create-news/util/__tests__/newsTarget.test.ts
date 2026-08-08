@@ -57,7 +57,10 @@ describe('buildUniqueNewsSlug', () => {
     })
 
     test('appends the next free numeric suffix on collision', async () => {
-        const rows = [{ id: 'a', slug: 'react-19-released' }, { id: 'b', slug: 'react-19-released-2' }]
+        const rows = [
+            { id: 'a', slug: 'react-19-released' },
+            { id: 'b', slug: 'react-19-released-2' },
+        ]
         await expect(buildUniqueNewsSlug(service(rows), 'React 19 Released')).resolves.toBe('react-19-released-3')
     })
 

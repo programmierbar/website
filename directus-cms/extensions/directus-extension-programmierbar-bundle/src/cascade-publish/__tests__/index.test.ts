@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { postSlackMessage } from './../../shared/postSlackMessage.ts'
+import registerHook from './../index.ts'
 
 // The extensions SDK ships as ESM and is not transformed under Jest's CJS mode,
 // so stub it. The real `defineHook` simply returns its callback.
@@ -12,9 +14,6 @@ jest.mock('./../../shared/postSlackMessage.ts', () => ({
     postSlackMessage: jest.fn(),
 }))
 
-import { postSlackMessage } from './../../shared/postSlackMessage.ts'
-import registerHook from './../index.ts'
-
 const postSlackMessageMock = jest.mocked(postSlackMessage)
 
 // Handlers are registered through `safeAction`, which detaches the work into its
@@ -24,7 +23,11 @@ const flush = () => new Promise<void>((resolve) => setImmediate(resolve))
 
 type Handler = (metadata: Record<string, any>, eventContext: Record<string, any>) => void
 
-async function invoke(handler: Handler, metadata: Record<string, any>, eventContext: Record<string, any> = { accountability: {} }) {
+async function invoke(
+    handler: Handler,
+    metadata: Record<string, any>,
+    eventContext: Record<string, any> = { accountability: {} }
+) {
     handler(metadata, eventContext)
     await flush()
 }
@@ -210,10 +213,7 @@ describe('cascade-publish hook', () => {
     test('does not change archived related items', async () => {
         const { handlers, updateOneCalls } = setup({
             parentItem: {
-                speakers: [
-                    { speaker: { id: 'sp1', status: 'archived' } },
-                    { speaker: { id: 'sp2', status: 'draft' } },
-                ],
+                speakers: [{ speaker: { id: 'sp1', status: 'archived' } }, { speaker: { id: 'sp2', status: 'draft' } }],
                 picks_of_the_day: [{ id: 'pick1', status: 'archived' }],
             },
         })
@@ -254,7 +254,10 @@ describe('cascade-publish hook', () => {
             parentItem: { speakers: [{ speaker: { id: 'sp1', status: 'draft' } }], picks_of_the_day: [] },
         })
 
-        await invoke(handlers.get('podcasts.items.update')!, { keys: ['pod1', 'pod2'], payload: { status: 'published' } })
+        await invoke(handlers.get('podcasts.items.update')!, {
+            keys: ['pod1', 'pod2'],
+            payload: { status: 'published' },
+        })
 
         expect(updateOneCalls).toEqual([
             { collection: 'speakers', id: 'sp1', data: { status: 'published' } },
@@ -282,10 +285,7 @@ describe('cascade-publish hook', () => {
     test('publishes complete children while skipping incomplete ones in the same relation', async () => {
         const { handlers, updateOneCalls } = setup({
             parentItem: {
-                speakers: [
-                    { speaker: { id: 'sp1', status: 'draft' } },
-                    { speaker: { id: 'sp2', status: 'draft' } },
-                ],
+                speakers: [{ speaker: { id: 'sp1', status: 'draft' } }, { speaker: { id: 'sp2', status: 'draft' } }],
                 picks_of_the_day: [],
             },
             fieldsByCollection: { speakers: [requiredField('first_name')] },

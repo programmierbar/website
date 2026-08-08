@@ -1,11 +1,11 @@
-import { PodcastHandler } from "./PodcastHandler.ts"
-import type { ItemHandler } from "./ItemHandler.ts"
-import { MeetupHandler } from './MeetupHandler.ts';
-import { SpeakerHandler } from './SpeakerHandler.ts';
-import { PickOfTheDayHandler } from './PickOfTheDayHandler.ts';
-import { TranscriptHandler } from './TranscriptHandler.js';
+import type { ItemHandler } from './ItemHandler.ts'
+import { MeetupHandler } from './MeetupHandler.ts'
+import { PickOfTheDayHandler } from './PickOfTheDayHandler.ts'
+import { PodcastHandler } from './PodcastHandler.ts'
+import { SpeakerHandler } from './SpeakerHandler.ts'
+import { TranscriptHandler } from './TranscriptHandler.js'
 
-type knownHandlers = "podcastHandler" | "meetupHandler" | "speakerHandler" | "pickOfTheDayHandler" | "transcriptHandler";
+type knownHandlers = 'podcastHandler' | 'meetupHandler' | 'speakerHandler' | 'pickOfTheDayHandler' | 'transcriptHandler'
 
 export function getHandlers(env, logger): Record<knownHandlers, ItemHandler> {
     return {

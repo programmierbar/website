@@ -1,11 +1,11 @@
 export interface ItemHandler {
-    collectionName: string;
+    collectionName: string
     /**
      * The `_type` value this handler writes onto every index entry (see `buildAttributes`). It is the
      * authoritative source for the type string, so consumers that need to query the index by type
      * (e.g. the repair CLI) MUST read it from here rather than deriving it from `collectionName`.
      */
-    type: string;
+    type: string
     /**
      * The Directus fields required to build this handler's index entries — the single source of
      * truth shared by the live hook (which re-reads the full item) and the rebuild/repair CLIs
@@ -13,7 +13,7 @@ export interface ItemHandler {
      * read, including relational fields with their nested paths (e.g. `podcast.*`). If a field is
      * missing here it will silently be absent from the index.
      */
-    indexFields: string[];
+    indexFields: string[]
     /**
      * Page size for the rebuild/repair CLIs' bulk reads from Directus. Most collections are small
      * enough (in both row count AND per-row size) to fetch in a single `limit: -1` request, so the
@@ -23,39 +23,40 @@ export interface ItemHandler {
      * transcripts, which embed a full hour of audio transcription per row. There a single bulk read
      * overruns Directus (and would pin hundreds of MB in memory), so they must be paged through.
      */
-    pageSize: number;
-    updateRequired(item: any): boolean;
-    buildAttributes(item: any): Record<string, any>[];
-    requiresDistinctDeletionBeforeUpdate(): boolean;
-    buildDistinctKey(item: any): string;
-    buildDeletionFilter(item: any): string;
-    buildDirectusReference(item: any): string;
+    pageSize: number
+    updateRequired(item: any): boolean
+    buildAttributes(item: any): Record<string, any>[]
+    requiresDistinctDeletionBeforeUpdate(): boolean
+    buildDistinctKey(item: any): string
+    buildDeletionFilter(item: any): string
+    buildDirectusReference(item: any): string
 }
 
 export abstract class AbstractItemHandler {
-
-    constructor(protected env, private logger) {
-    }
+    constructor(
+        protected env,
+        private logger
+    ) {}
 
     // No pagination by default: the whole collection is fetched in one request. Handlers with large
     // rows (e.g. transcripts) override this with a small positive page size. See ItemHandler.pageSize.
     get pageSize(): number {
-        return -1;
+        return -1
     }
 
     requiresDistinctDeletionBeforeUpdate(): boolean {
-        return false;
+        return false
     }
 
     buildDistinctKey(item: any): string {
-        return `${item.id}`;
+        return `${item.id}`
     }
 
     buildDirectusReference(item: any): string {
-        return `${item.id}`;
+        return `${item.id}`
     }
 
     buildDeletionFilter(item: any): string {
-        return `_directus_reference:${this.buildDirectusReference(item)}`;
+        return `_directus_reference:${this.buildDirectusReference(item)}`
     }
 }

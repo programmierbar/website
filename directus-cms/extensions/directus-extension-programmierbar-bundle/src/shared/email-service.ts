@@ -110,10 +110,7 @@ export async function getEmailTemplate(
 /**
  * Send an email using a template from the CMS.
  */
-export async function sendTemplatedEmail(
-    options: SendEmailOptions,
-    context: EmailServiceContext
-): Promise<boolean> {
+export async function sendTemplatedEmail(options: SendEmailOptions, context: EmailServiceContext): Promise<boolean> {
     const { logger, services, getSchema } = context
     const { MailService } = services
 

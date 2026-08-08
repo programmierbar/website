@@ -1,13 +1,13 @@
-import { describe, expect, test, jest, beforeEach } from '@jest/globals';
-import { isPublishable } from './../isPublishable.ts';
+import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { isPublishable } from './../isPublishable.ts'
 // This configuration is acquired from the log output of interface extension running in directus
 import PodcastFields from './podcasts_fields.json'
 
 describe('isPublishable', () => {
     beforeEach(() => {
         // Clear all mocks before each test
-        jest.clearAllMocks();
-    });
+        jest.clearAllMocks()
+    })
 
     test('Episode with full details should be publishable', async () => {
         const item = {
@@ -21,8 +21,8 @@ describe('isPublishable', () => {
         }
 
         const publishableResult = isPublishable(item, PodcastFields)
-        expect(publishableResult).toEqual(true);
-    });
+        expect(publishableResult).toEqual(true)
+    })
 
     test.each([
         [
@@ -103,12 +103,10 @@ describe('isPublishable', () => {
             false,
             'missing audio_file',
         ],
-    ])('Episode %s should be publishable: %s', async (item, expected, _reason
-    ) => {
-        const result = isPublishable(item, PodcastFields);
-        expect(result).toBe(expected);
-    });
-
+    ])('Episode %s should be publishable: %s', async (item, expected, _reason) => {
+        const result = isPublishable(item, PodcastFields)
+        expect(result).toBe(expected)
+    })
 
     test.each([
         [
@@ -163,11 +161,8 @@ describe('isPublishable', () => {
             true,
             'Other episodes do not require a number',
         ],
-
-    ])('Number is optional for some episodes %s to be publishable: %s', async (item, expected, _reason
-    ) => {
-        const result = isPublishable(item, PodcastFields);
-        expect(result).toBe(expected);
-    });
-
-});
+    ])('Number is optional for some episodes %s to be publishable: %s', async (item, expected, _reason) => {
+        const result = isPublishable(item, PodcastFields)
+        expect(result).toBe(expected)
+    })
+})

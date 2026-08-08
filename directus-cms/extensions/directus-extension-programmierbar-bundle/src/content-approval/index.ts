@@ -9,15 +9,18 @@ export default defineHook(({ action }, hookContext) => {
     const getSchema = hookContext.getSchema
 
     // Listen for updates to podcast_generated_content
-    action('podcast_generated_content.items.update', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
-        const { payload, keys } = metadata
+    action(
+        'podcast_generated_content.items.update',
+        safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
+            const { payload, keys } = metadata
 
-        if (payload.status === 'approved') {
-            await handleApproval(keys, eventContext)
-        } else if (payload.status && payload.status !== 'approved') {
-            await handleUnapproval(keys, eventContext)
-        }
-    }))
+            if (payload.status === 'approved') {
+                await handleApproval(keys, eventContext)
+            } else if (payload.status && payload.status !== 'approved') {
+                await handleUnapproval(keys, eventContext)
+            }
+        })
+    )
 
     async function handleApproval(keys: string[], eventContext: any) {
         try {
@@ -64,8 +67,7 @@ export default defineHook(({ action }, hookContext) => {
                     fields: ['id', 'status'],
                 })
 
-                const allApproved =
-                    allContent.length > 0 && allContent.every((c: any) => c.status === 'approved')
+                const allApproved = allContent.length > 0 && allContent.every((c: any) => c.status === 'approved')
 
                 if (allApproved) {
                     logger.info(

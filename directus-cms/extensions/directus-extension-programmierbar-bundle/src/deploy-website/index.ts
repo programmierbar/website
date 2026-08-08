@@ -1,8 +1,8 @@
 import { defineHook } from '@directus/extensions-sdk'
 import axios from 'axios'
 import { createHookErrorConstructor } from '../shared/errors.ts'
-import { postSlackMessage } from './../shared/postSlackMessage.ts'
 import { safeAction } from '../shared/safeHook.ts'
+import { postSlackMessage } from './../shared/postSlackMessage.ts'
 
 const HOOK_NAME = 'deploy-website'
 
@@ -12,23 +12,31 @@ export default defineHook(({ action }, hookContext) => {
     const ItemsService = hookContext.services.ItemsService
 
     if (!env.VERCEL_DEPLOY_WEBHOOK_URL) {
-        logger.warn(`${HOOK_NAME} hook: Did not set VERCEL_DEPLOY_WEBHOOK_URL. Vercel deployment extension will not be active.`)
+        logger.warn(
+            `${HOOK_NAME} hook: Did not set VERCEL_DEPLOY_WEBHOOK_URL. Vercel deployment extension will not be active.`
+        )
         return
     }
 
     /**
      * It deploys our website on created items, if necessary.
      */
-    action('items.create', safeAction(HOOK_NAME, logger, ({ payload, ...metadata }, context) =>
-        handleAction('create', { payload, metadata, context })
-    ))
+    action(
+        'items.create',
+        safeAction(HOOK_NAME, logger, ({ payload, ...metadata }, context) =>
+            handleAction('create', { payload, metadata, context })
+        )
+    )
 
     /**
      * It deploys our website on updated items, if necessary.
      */
-    action('items.update', safeAction(HOOK_NAME, logger, ({ payload, ...metadata }, context) =>
-        handleAction('update', { payload, metadata, context })
-    ))
+    action(
+        'items.update',
+        safeAction(HOOK_NAME, logger, ({ payload, ...metadata }, context) =>
+            handleAction('update', { payload, metadata, context })
+        )
+    )
 
     async function handleAction(
         type: string,
@@ -49,9 +57,9 @@ export default defineHook(({ action }, hookContext) => {
             if (['profiles', 'ratings', 'ratings_target'].includes(metadata.collection)) {
                 logger.info(
                     `${HOOK_NAME} hook: Updated item was in "${metadata.collection}" collection. ` +
-                    `Exiting hook early.`
-                );
-                return;
+                        `Exiting hook early.`
+                )
+                return
             }
 
             // Get fields of collection
@@ -59,10 +67,7 @@ export default defineHook(({ action }, hookContext) => {
 
             // Deploy website only if status field exists
             if (!fields.status) {
-                logger.info(
-                    `${HOOK_NAME} hook: Item has not status field.` +
-                    `Exiting hook early.`
-                );
+                logger.info(`${HOOK_NAME} hook: Item has not status field.` + `Exiting hook early.`)
                 return
             }
 
@@ -80,10 +85,7 @@ export default defineHook(({ action }, hookContext) => {
             const contentUpdateRelevant = item.status === 'published' || (type === 'update' && payload.status)
 
             if (!contentUpdateRelevant) {
-                logger.info(
-                    `${HOOK_NAME} hook: Item update not relevant` +
-                    `Exiting hook early.`
-                );
+                logger.info(`${HOOK_NAME} hook: Item update not relevant` + `Exiting hook early.`)
                 return
             }
 

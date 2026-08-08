@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { postSlackMessage } from './../../shared/postSlackMessage.ts'
+import registerHook from './../index.ts'
 
 // The extensions SDK ships as ESM and is not transformed under Jest's CJS mode,
 // so stub it. The real `defineHook` simply returns its callback.
@@ -20,9 +22,6 @@ jest.mock('./../../shared/errors.ts', () => ({
             }
         },
 }))
-
-import { postSlackMessage } from './../../shared/postSlackMessage.ts'
-import registerHook from './../index.ts'
 
 const postSlackMessageMock = jest.mocked(postSlackMessage)
 

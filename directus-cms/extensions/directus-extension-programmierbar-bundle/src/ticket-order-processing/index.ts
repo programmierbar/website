@@ -1,16 +1,16 @@
-import { defineHook } from '@directus/extensions-sdk'
 import { randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
+import { defineHook } from '@directus/extensions-sdk'
 import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
-import { getSetting } from '../shared/settings.js'
-import { generateUniqueTicketCode, formatPrice } from '../shared/ticket-utils.js'
 import {
-    generateInvoicePdf,
     generateInvoiceNumber,
+    generateInvoicePdf,
     ticketTypeLabel,
     type InvoiceData,
 } from '../shared/invoice-generator.js'
 import { safeAction } from '../shared/safeHook.ts'
+import { getSetting } from '../shared/settings.js'
+import { formatPrice, generateUniqueTicketCode } from '../shared/ticket-utils.js'
 
 const HOOK_NAME = 'ticket-order-processing'
 
@@ -33,309 +33,317 @@ export default defineHook(({ action }, hookContext) => {
      * Creates tickets with profile tokens, generates invoice, and sends emails
      * (QR codes are generated later when the attendee completes their profile)
      */
-    action('ticket_orders.items.update', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
-        const { payload, keys } = metadata
+    action(
+        'ticket_orders.items.update',
+        safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
+            const { payload, keys } = metadata
 
-        // Only proceed if status is being set to 'paid'
-        if (payload.status !== 'paid') {
-            return
-        }
+            // Only proceed if status is being set to 'paid'
+            if (payload.status !== 'paid') {
+                return
+            }
 
-        const context: EmailServiceContext = {
-            logger,
-            services,
-            getSchema,
-            accountability: eventContext.accountability,
-        }
+            const context: EmailServiceContext = {
+                logger,
+                services,
+                getSchema,
+                accountability: eventContext.accountability,
+            }
 
-        try {
-            const schema = await getSchema()
+            try {
+                const schema = await getSchema()
 
-            const ordersService = new ItemsService('ticket_orders', {
-                schema,
-                accountability: { admin: true },
-            })
-
-            const ticketsService = new ItemsService('tickets', {
-                schema,
-                accountability: { admin: true },
-            })
-
-            const conferencesService = new ItemsService('conferences', {
-                schema,
-                accountability: { admin: true },
-            })
-
-            const websiteUrl = (await getSetting('website_url', context)) || 'https://www.programmier.bar'
-
-            for (const orderId of keys) {
-                logger.info(`${HOOK_NAME}: Processing paid order ${orderId}`)
-
-                // Get order details (including billing fields for invoice)
-                const order = await ordersService.readOne(orderId, {
-                    fields: [
-                        'id',
-                        'order_number',
-                        'conference',
-                        'purchase_type',
-                        'purchaser_first_name',
-                        'purchaser_last_name',
-                        'purchaser_email',
-                        'company_name',
-                        'company_vat_id',
-                        'billing_address_line1',
-                        'billing_address_line2',
-                        'billing_city',
-                        'billing_postal_code',
-                        'billing_country',
-                        'billing_email',
-                        'subtotal_cents',
-                        'discount_amount_cents',
-                        'total_cents',
-                        'total_gross_cents',
-                        'vat_amount_cents',
-                        'attendees_json',
-                        'ticket_type',
-                        'is_internal',
-                    ],
+                const ordersService = new ItemsService('ticket_orders', {
+                    schema,
+                    accountability: { admin: true },
                 })
 
-                if (!order) {
-                    logger.error(`${HOOK_NAME}: Order ${orderId} not found`)
-                    continue
-                }
-
-                // Get conference details (title + start_on for invoice year + ticket limit)
-                const conference = await conferencesService.readOne(order.conference, {
-                    fields: ['title', 'start_on', 'ticket_max_quantity'],
+                const ticketsService = new ItemsService('tickets', {
+                    schema,
+                    accountability: { admin: true },
                 })
 
-                if (!conference) {
-                    logger.error(`${HOOK_NAME}: Conference ${order.conference} not found`)
-                    continue
-                }
+                const conferencesService = new ItemsService('conferences', {
+                    schema,
+                    accountability: { admin: true },
+                })
 
-                // Get attendees from order (Directus may already parse JSON fields)
-                let attendees: Array<{ firstName: string; lastName: string; email: string }> = []
-                try {
-                    if (order.attendees_json) {
-                        // Handle both cases: already parsed (object/array) or string
-                        if (typeof order.attendees_json === 'string') {
-                            attendees = JSON.parse(order.attendees_json)
-                        } else if (Array.isArray(order.attendees_json)) {
-                            attendees = order.attendees_json
-                        }
-                    }
-                } catch (e) {
-                    logger.error(`${HOOK_NAME}: Failed to parse attendees_json for order ${orderId}: ${e}`)
-                    continue
-                }
+                const websiteUrl = (await getSetting('website_url', context)) || 'https://www.programmier.bar'
 
-                if (attendees.length === 0) {
-                    logger.error(`${HOOK_NAME}: No attendees found for order ${orderId}`)
-                    continue
-                }
+                for (const orderId of keys) {
+                    logger.info(`${HOOK_NAME}: Processing paid order ${orderId}`)
 
-                const isInternal = order.is_internal === true
-
-                // Hard limit check: verify ticket limit before creating tickets (internal tickets don't count)
-                if (!isInternal && conference.ticket_max_quantity !== null && conference.ticket_max_quantity !== undefined) {
-                    const existingTickets = await ticketsService.readByQuery({
-                        filter: {
-                            conference: { _eq: order.conference },
-                            status: { _neq: 'cancelled' },
-                            is_internal: { _neq: true },
-                        },
-                        aggregate: { count: ['id'] },
+                    // Get order details (including billing fields for invoice)
+                    const order = await ordersService.readOne(orderId, {
+                        fields: [
+                            'id',
+                            'order_number',
+                            'conference',
+                            'purchase_type',
+                            'purchaser_first_name',
+                            'purchaser_last_name',
+                            'purchaser_email',
+                            'company_name',
+                            'company_vat_id',
+                            'billing_address_line1',
+                            'billing_address_line2',
+                            'billing_city',
+                            'billing_postal_code',
+                            'billing_country',
+                            'billing_email',
+                            'subtotal_cents',
+                            'discount_amount_cents',
+                            'total_cents',
+                            'total_gross_cents',
+                            'vat_amount_cents',
+                            'attendees_json',
+                            'ticket_type',
+                            'is_internal',
+                        ],
                     })
-                    const currentCount = Number(existingTickets?.[0]?.count?.id ?? 0)
-                    if (currentCount + attendees.length > conference.ticket_max_quantity) {
-                        logger.error(
-                            `${HOOK_NAME}: Ticket limit exceeded for conference ${order.conference}. ` +
-                            `Current: ${currentCount}, requested: ${attendees.length}, limit: ${conference.ticket_max_quantity}. ` +
-                            `Marking order ${orderId} as cancelled.`
-                        )
-                        await ordersService.updateOne(orderId, { status: 'cancelled' })
+
+                    if (!order) {
+                        logger.error(`${HOOK_NAME}: Order ${orderId} not found`)
                         continue
                     }
-                }
 
-
-                const pricePerTicket = Math.round((order.total_cents || 0) / attendees.length)
-                const purchaserName = `${order.purchaser_first_name} ${order.purchaser_last_name}`
-
-                // --- Generate invoice (skipped for internal employee orders) ---
-                let invoiceNumber: string | null = null
-                let invoiceFileName: string | null = null
-                let pdfBuffer: Buffer | null = null
-
-                if (!isInternal) {
-                    const conferenceYear = new Date(conference.start_on).getFullYear()
-                    invoiceNumber = await generateInvoiceNumber(ordersService, conferenceYear)
-
-                    const now = new Date()
-                    const invoiceDate = now.toLocaleDateString('de-DE', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
+                    // Get conference details (title + start_on for invoice year + ticket limit)
+                    const conference = await conferencesService.readOne(order.conference, {
+                        fields: ['title', 'start_on', 'ticket_max_quantity'],
                     })
 
-                    // Derive per-ticket price from the pre-discount subtotal so the line item reconciles with Zwischensumme; the Rabatt line takes us down to the actual total.
-                    const subtotalCents = order.subtotal_cents || order.total_cents || 0
-                    const baseUnitNetCents = Math.round(subtotalCents / attendees.length)
-                    const grossPerTicket = Math.round(baseUnitNetCents * 1.19)
-
-                    const invoiceData: InvoiceData = {
-                        invoiceNumber,
-                        invoiceDate,
-                        purchaserName,
-                        purchaserEmail: order.purchaser_email,
-                        companyName: order.company_name,
-                        companyVatId: order.company_vat_id,
-                        billingAddressLine1: order.billing_address_line1,
-                        billingAddressLine2: order.billing_address_line2,
-                        billingCity: order.billing_city,
-                        billingPostalCode: order.billing_postal_code,
-                        billingCountry: order.billing_country,
-                        conferenceTitle: conference.title,
-                        ticketType: ticketTypeLabel(order.ticket_type),
-                        ticketCount: attendees.length,
-                        unitPriceGrossCents: grossPerTicket,
-                        subtotalCents: order.subtotal_cents || order.total_cents,
-                        discountAmountCents: order.discount_amount_cents || 0,
-                        vatAmountCents: order.vat_amount_cents || 0,
-                        totalGrossCents: order.total_gross_cents || order.total_cents,
+                    if (!conference) {
+                        logger.error(`${HOOK_NAME}: Conference ${order.conference} not found`)
+                        continue
                     }
 
-                    logger.info(`${HOOK_NAME}: Generating invoice ${invoiceNumber} for order ${order.order_number}`)
-                    pdfBuffer = await generateInvoicePdf(invoiceData)
+                    // Get attendees from order (Directus may already parse JSON fields)
+                    let attendees: Array<{ firstName: string; lastName: string; email: string }> = []
+                    try {
+                        if (order.attendees_json) {
+                            // Handle both cases: already parsed (object/array) or string
+                            if (typeof order.attendees_json === 'string') {
+                                attendees = JSON.parse(order.attendees_json)
+                            } else if (Array.isArray(order.attendees_json)) {
+                                attendees = order.attendees_json
+                            }
+                        }
+                    } catch (e) {
+                        logger.error(`${HOOK_NAME}: Failed to parse attendees_json for order ${orderId}: ${e}`)
+                        continue
+                    }
 
-                    // Upload PDF to Directus files
-                    const filesService = new FilesService({
-                        accountability: { admin: true },
-                        schema,
-                    })
+                    if (attendees.length === 0) {
+                        logger.error(`${HOOK_NAME}: No attendees found for order ${orderId}`)
+                        continue
+                    }
 
-                    invoiceFileName = `Rechnung-${invoiceNumber}.pdf`
-                    const storageLocation = env.STORAGE_LOCATIONS?.split(',')[0]
+                    const isInternal = order.is_internal === true
 
-                    const pdfStream = Readable.from([pdfBuffer])
-                    const fileId = await filesService.uploadOne(pdfStream, {
-                        type: 'application/pdf',
-                        filename_download: invoiceFileName,
-                        title: `Rechnung ${invoiceNumber}`,
-                        ...(storageLocation && { storage: storageLocation }),
-                    })
-
-                    // Update order with invoice number and file reference
-                    await ordersService.updateOne(orderId, {
-                        invoice_number: invoiceNumber,
-                        invoice_file: fileId,
-                    })
-
-                    logger.info(`${HOOK_NAME}: Invoice ${invoiceNumber} generated and stored (file: ${fileId})`)
-                } else {
-                    logger.info(`${HOOK_NAME}: Skipping invoice for internal order ${order.order_number}`)
-                }
-
-                // --- Create individual tickets with profile tokens (no QR codes yet) ---
-                const ticketRecords: Array<{
-                    attendeeName: string
-                    attendeeEmail: string
-                    ticketCode: string
-                    profileToken: string
-                }> = []
-
-                for (const attendee of attendees) {
-                    const ticketCode = await generateUniqueTicketCode(ticketsService)
-                    const profileToken = randomUUID()
-
-                    // Create ticket in database with pending profile
-                    await ticketsService.createOne({
-                        ticket_code: ticketCode,
-                        order: orderId,
-                        conference: order.conference,
-                        attendee_first_name: attendee.firstName,
-                        attendee_last_name: attendee.lastName,
-                        attendee_email: attendee.email,
-                        ticket_type: order.ticket_type,
-                        price_cents: pricePerTicket,
-                        status: 'valid',
-                        profile_token: profileToken,
-                        profile_status: 'pending',
-                        is_internal: isInternal,
-                    })
-
-                    ticketRecords.push({
-                        attendeeName: `${attendee.firstName} ${attendee.lastName}`,
-                        attendeeEmail: attendee.email,
-                        ticketCode,
-                        profileToken,
-                    })
-
-                    logger.info(`${HOOK_NAME}: Created ticket ${ticketCode} for ${attendee.email} (profile pending)`)
-                }
-
-                // --- Send purchaser confirmation email with invoice PDF (skipped for internal orders) ---
-                if (!isInternal && pdfBuffer && invoiceFileName && invoiceNumber) {
-                    const totalAmount = formatPrice(order.total_gross_cents || order.total_cents)
-
-                    await sendTemplatedEmail(
-                        {
-                            templateKey: 'ticket_order_confirmation',
-                            to: order.purchaser_email,
-                            cc: order.billing_email || undefined,
-                            data: {
-                                purchaser_name: purchaserName,
-                                conference_title: conference.title,
-                                order_number: order.order_number,
-                                total_amount: totalAmount,
-                                ticket_count: ticketRecords.length,
-                                invoice_number: invoiceNumber,
+                    // Hard limit check: verify ticket limit before creating tickets (internal tickets don't count)
+                    if (
+                        !isInternal &&
+                        conference.ticket_max_quantity !== null &&
+                        conference.ticket_max_quantity !== undefined
+                    ) {
+                        const existingTickets = await ticketsService.readByQuery({
+                            filter: {
+                                conference: { _eq: order.conference },
+                                status: { _neq: 'cancelled' },
+                                is_internal: { _neq: true },
                             },
-                            attachments: [
-                                {
-                                    filename: invoiceFileName,
-                                    content: pdfBuffer,
-                                    contentType: 'application/pdf',
+                            aggregate: { count: ['id'] },
+                        })
+                        const currentCount = Number(existingTickets?.[0]?.count?.id ?? 0)
+                        if (currentCount + attendees.length > conference.ticket_max_quantity) {
+                            logger.error(
+                                `${HOOK_NAME}: Ticket limit exceeded for conference ${order.conference}. ` +
+                                    `Current: ${currentCount}, requested: ${attendees.length}, limit: ${conference.ticket_max_quantity}. ` +
+                                    `Marking order ${orderId} as cancelled.`
+                            )
+                            await ordersService.updateOne(orderId, { status: 'cancelled' })
+                            continue
+                        }
+                    }
+
+                    const pricePerTicket = Math.round((order.total_cents || 0) / attendees.length)
+                    const purchaserName = `${order.purchaser_first_name} ${order.purchaser_last_name}`
+
+                    // --- Generate invoice (skipped for internal employee orders) ---
+                    let invoiceNumber: string | null = null
+                    let invoiceFileName: string | null = null
+                    let pdfBuffer: Buffer | null = null
+
+                    if (!isInternal) {
+                        const conferenceYear = new Date(conference.start_on).getFullYear()
+                        invoiceNumber = await generateInvoiceNumber(ordersService, conferenceYear)
+
+                        const now = new Date()
+                        const invoiceDate = now.toLocaleDateString('de-DE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                        })
+
+                        // Derive per-ticket price from the pre-discount subtotal so the line item reconciles with Zwischensumme; the Rabatt line takes us down to the actual total.
+                        const subtotalCents = order.subtotal_cents || order.total_cents || 0
+                        const baseUnitNetCents = Math.round(subtotalCents / attendees.length)
+                        const grossPerTicket = Math.round(baseUnitNetCents * 1.19)
+
+                        const invoiceData: InvoiceData = {
+                            invoiceNumber,
+                            invoiceDate,
+                            purchaserName,
+                            purchaserEmail: order.purchaser_email,
+                            companyName: order.company_name,
+                            companyVatId: order.company_vat_id,
+                            billingAddressLine1: order.billing_address_line1,
+                            billingAddressLine2: order.billing_address_line2,
+                            billingCity: order.billing_city,
+                            billingPostalCode: order.billing_postal_code,
+                            billingCountry: order.billing_country,
+                            conferenceTitle: conference.title,
+                            ticketType: ticketTypeLabel(order.ticket_type),
+                            ticketCount: attendees.length,
+                            unitPriceGrossCents: grossPerTicket,
+                            subtotalCents: order.subtotal_cents || order.total_cents,
+                            discountAmountCents: order.discount_amount_cents || 0,
+                            vatAmountCents: order.vat_amount_cents || 0,
+                            totalGrossCents: order.total_gross_cents || order.total_cents,
+                        }
+
+                        logger.info(`${HOOK_NAME}: Generating invoice ${invoiceNumber} for order ${order.order_number}`)
+                        pdfBuffer = await generateInvoicePdf(invoiceData)
+
+                        // Upload PDF to Directus files
+                        const filesService = new FilesService({
+                            accountability: { admin: true },
+                            schema,
+                        })
+
+                        invoiceFileName = `Rechnung-${invoiceNumber}.pdf`
+                        const storageLocation = env.STORAGE_LOCATIONS?.split(',')[0]
+
+                        const pdfStream = Readable.from([pdfBuffer])
+                        const fileId = await filesService.uploadOne(pdfStream, {
+                            type: 'application/pdf',
+                            filename_download: invoiceFileName,
+                            title: `Rechnung ${invoiceNumber}`,
+                            ...(storageLocation && { storage: storageLocation }),
+                        })
+
+                        // Update order with invoice number and file reference
+                        await ordersService.updateOne(orderId, {
+                            invoice_number: invoiceNumber,
+                            invoice_file: fileId,
+                        })
+
+                        logger.info(`${HOOK_NAME}: Invoice ${invoiceNumber} generated and stored (file: ${fileId})`)
+                    } else {
+                        logger.info(`${HOOK_NAME}: Skipping invoice for internal order ${order.order_number}`)
+                    }
+
+                    // --- Create individual tickets with profile tokens (no QR codes yet) ---
+                    const ticketRecords: Array<{
+                        attendeeName: string
+                        attendeeEmail: string
+                        ticketCode: string
+                        profileToken: string
+                    }> = []
+
+                    for (const attendee of attendees) {
+                        const ticketCode = await generateUniqueTicketCode(ticketsService)
+                        const profileToken = randomUUID()
+
+                        // Create ticket in database with pending profile
+                        await ticketsService.createOne({
+                            ticket_code: ticketCode,
+                            order: orderId,
+                            conference: order.conference,
+                            attendee_first_name: attendee.firstName,
+                            attendee_last_name: attendee.lastName,
+                            attendee_email: attendee.email,
+                            ticket_type: order.ticket_type,
+                            price_cents: pricePerTicket,
+                            status: 'valid',
+                            profile_token: profileToken,
+                            profile_status: 'pending',
+                            is_internal: isInternal,
+                        })
+
+                        ticketRecords.push({
+                            attendeeName: `${attendee.firstName} ${attendee.lastName}`,
+                            attendeeEmail: attendee.email,
+                            ticketCode,
+                            profileToken,
+                        })
+
+                        logger.info(
+                            `${HOOK_NAME}: Created ticket ${ticketCode} for ${attendee.email} (profile pending)`
+                        )
+                    }
+
+                    // --- Send purchaser confirmation email with invoice PDF (skipped for internal orders) ---
+                    if (!isInternal && pdfBuffer && invoiceFileName && invoiceNumber) {
+                        const totalAmount = formatPrice(order.total_gross_cents || order.total_cents)
+
+                        await sendTemplatedEmail(
+                            {
+                                templateKey: 'ticket_order_confirmation',
+                                to: order.purchaser_email,
+                                cc: order.billing_email || undefined,
+                                data: {
+                                    purchaser_name: purchaserName,
+                                    conference_title: conference.title,
+                                    order_number: order.order_number,
+                                    total_amount: totalAmount,
+                                    ticket_count: ticketRecords.length,
+                                    invoice_number: invoiceNumber,
                                 },
-                            ],
-                        },
-                        context
-                    )
-
-                    logger.info(`${HOOK_NAME}: Sent confirmation email with invoice to ${order.purchaser_email}`)
-                }
-
-                // --- Send profile invitation email to all attendees ---
-                for (const ticket of ticketRecords) {
-                    const portalUrl = `${websiteUrl}/ticket-portal?token=${encodeURIComponent(ticket.profileToken)}`
-
-                    await sendTemplatedEmail(
-                        {
-                            templateKey: 'ticket_profile_invitation',
-                            to: ticket.attendeeEmail,
-                            data: {
-                                attendee_name: ticket.attendeeName,
-                                conference_title: conference.title,
-                                portal_url: portalUrl,
-                                purchaser_name: purchaserName,
+                                attachments: [
+                                    {
+                                        filename: invoiceFileName,
+                                        content: pdfBuffer,
+                                        contentType: 'application/pdf',
+                                    },
+                                ],
                             },
-                        },
-                        context
+                            context
+                        )
+
+                        logger.info(`${HOOK_NAME}: Sent confirmation email with invoice to ${order.purchaser_email}`)
+                    }
+
+                    // --- Send profile invitation email to all attendees ---
+                    for (const ticket of ticketRecords) {
+                        const portalUrl = `${websiteUrl}/ticket-portal?token=${encodeURIComponent(ticket.profileToken)}`
+
+                        await sendTemplatedEmail(
+                            {
+                                templateKey: 'ticket_profile_invitation',
+                                to: ticket.attendeeEmail,
+                                data: {
+                                    attendee_name: ticket.attendeeName,
+                                    conference_title: conference.title,
+                                    portal_url: portalUrl,
+                                    purchaser_name: purchaserName,
+                                },
+                            },
+                            context
+                        )
+
+                        logger.info(`${HOOK_NAME}: Sent profile invitation to ${ticket.attendeeEmail}`)
+                    }
+
+                    logger.info(
+                        `${HOOK_NAME}: Order ${order.order_number} processed with ${ticketRecords.length} tickets${invoiceNumber ? `, invoice ${invoiceNumber}` : ' (internal, no invoice)'}`
                     )
-
-                    logger.info(`${HOOK_NAME}: Sent profile invitation to ${ticket.attendeeEmail}`)
                 }
-
-                logger.info(
-                    `${HOOK_NAME}: Order ${order.order_number} processed with ${ticketRecords.length} tickets${invoiceNumber ? `, invoice ${invoiceNumber}` : ' (internal, no invoice)'}`
-                )
+            } catch (err: any) {
+                logger.error(`${HOOK_NAME}: Error processing order: ${err?.message || err}`)
             }
-        } catch (err: any) {
-            logger.error(`${HOOK_NAME}: Error processing order: ${err?.message || err}`)
-        }
-    }))
+        })
+    )
 
     logger.info(`${HOOK_NAME} hook registered`)
 })
