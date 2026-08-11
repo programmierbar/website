@@ -4,7 +4,7 @@ import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-se
 import { getSetting } from '../shared/settings.js'
 import { generateUniqueTicketCode, formatPrice } from '../shared/ticket-utils.js'
 import { generateInvoiceNumber } from '../shared/invoice-generator.js'
-import { createAndStoreInvoice } from '../shared/invoice-service.js'
+import { issueOriginalInvoice, markInvoiceSent } from '../shared/invoice-service.js'
 import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'ticket-order-processing'
@@ -57,6 +57,11 @@ export default defineHook(({ action }, hookContext) => {
             })
 
             const conferencesService = new ItemsService('conferences', {
+                schema,
+                accountability: { admin: true },
+            })
+
+            const invoicesService = new ItemsService('ticket_invoices', {
                 schema,
                 accountability: { admin: true },
             })
@@ -159,14 +164,20 @@ export default defineHook(({ action }, hookContext) => {
                 const pricePerTicket = Math.round((order.total_cents || 0) / attendees.length)
                 const purchaserName = `${order.purchaser_first_name} ${order.purchaser_last_name}`
 
-                // --- Generate invoice (skipped for internal employee orders) ---
+                // --- Generate invoice document (skipped for internal employee orders) ---
+                // Document generation is deliberately separate from email sending below:
+                // the document row is created first with sent_at = null, and only a
+                // successfully sent confirmation email marks it as issued. Corrections and
+                // cancellations are created through the invoice-lifecycle endpoint and
+                // never pass through this hook, so they can never trigger this email.
                 let invoiceNumber: string | null = null
                 let invoiceFileName: string | null = null
                 let pdfBuffer: Buffer | null = null
+                let invoiceDocumentId: string | null = null
 
                 if (!isInternal) {
                     const conferenceYear = new Date(conference.start_on).getFullYear()
-                    invoiceNumber = await generateInvoiceNumber(ordersService, conferenceYear)
+                    invoiceNumber = await generateInvoiceNumber(ordersService, invoicesService, conferenceYear)
 
                     logger.info(`${HOOK_NAME}: Generating invoice ${invoiceNumber} for order ${order.order_number}`)
 
@@ -175,22 +186,24 @@ export default defineHook(({ action }, hookContext) => {
                         schema,
                     })
 
-                    const invoiceResult = await createAndStoreInvoice({
+                    const invoiceResult = await issueOriginalInvoice({
                         order,
                         conferenceTitle: conference.title,
                         ticketCount: attendees.length,
                         invoiceNumber,
                         invoiceDate: new Date(),
                         ordersService,
+                        invoicesService,
                         filesService,
                         storageLocation: env.STORAGE_LOCATIONS?.split(',')[0],
                     })
 
                     pdfBuffer = invoiceResult.pdfBuffer
                     invoiceFileName = invoiceResult.invoiceFileName
+                    invoiceDocumentId = invoiceResult.documentId
 
                     logger.info(
-                        `${HOOK_NAME}: Invoice ${invoiceNumber} generated and stored (file: ${invoiceResult.fileId})`
+                        `${HOOK_NAME}: Invoice ${invoiceNumber} generated and stored (file: ${invoiceResult.fileId}, document: ${invoiceResult.documentId})`
                     )
                 } else {
                     logger.info(`${HOOK_NAME}: Skipping invoice for internal order ${order.order_number}`)
@@ -238,7 +251,7 @@ export default defineHook(({ action }, hookContext) => {
                 if (!isInternal && pdfBuffer && invoiceFileName && invoiceNumber) {
                     const totalAmount = formatPrice(order.total_gross_cents || order.total_cents)
 
-                    await sendTemplatedEmail(
+                    const emailSent = await sendTemplatedEmail(
                         {
                             templateKey: 'ticket_order_confirmation',
                             to: order.purchaser_email,
@@ -262,7 +275,17 @@ export default defineHook(({ action }, hookContext) => {
                         context
                     )
 
-                    logger.info(`${HOOK_NAME}: Sent confirmation email with invoice to ${order.purchaser_email}`)
+                    if (emailSent && invoiceDocumentId) {
+                        // The invoice left the house: record issuance on the document row.
+                        // If sending failed, sent_at stays null and the invoice may still be
+                        // regenerated before it is dispatched manually.
+                        await markInvoiceSent(invoicesService, invoiceDocumentId)
+                        logger.info(`${HOOK_NAME}: Sent confirmation email with invoice to ${order.purchaser_email}`)
+                    } else if (!emailSent) {
+                        logger.error(
+                            `${HOOK_NAME}: Confirmation email for order ${order.order_number} could not be sent — invoice ${invoiceNumber} remains marked as not issued`
+                        )
+                    }
                 }
 
                 // --- Send profile invitation email to all attendees ---
