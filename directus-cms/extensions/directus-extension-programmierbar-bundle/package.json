@@ -148,6 +148,11 @@
                 "type": "endpoint",
                 "name": "ticket-wallet",
                 "source": "src/ticket-wallet/index.ts"
+            },
+            {
+                "type": "endpoint",
+                "name": "regenerate-invoice",
+                "source": "src/regenerate-invoice/index.ts"
             }
         ],
         "host": "^10.10.0"
