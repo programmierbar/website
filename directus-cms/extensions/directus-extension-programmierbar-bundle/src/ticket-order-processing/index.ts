@@ -5,9 +5,13 @@ import { getSetting } from '../shared/settings.js'
 import { generateUniqueTicketCode, formatPrice } from '../shared/ticket-utils.js'
 import { generateInvoiceNumber } from '../shared/invoice-generator.js'
 import { issueOriginalInvoice, markInvoiceSent } from '../shared/invoice-service.js'
+import { postSlackMessage } from '../shared/postSlackMessage.ts'
 import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'ticket-order-processing'
+
+/** How often to attempt stamping `sent_at` on the invoice document row. */
+const MARK_SENT_ATTEMPTS = 3
 
 export default defineHook(({ action }, hookContext) => {
     const logger = hookContext.logger
@@ -279,8 +283,44 @@ export default defineHook(({ action }, hookContext) => {
                         // The invoice left the house: record issuance on the document row.
                         // If sending failed, sent_at stays null and the invoice may still be
                         // regenerated before it is dispatched manually.
-                        await markInvoiceSent(invoicesService, invoiceDocumentId)
-                        logger.info(`${HOOK_NAME}: Sent confirmation email with invoice to ${order.purchaser_email}`)
+                        //
+                        // The customer now holds an issued invoice, so a lost sent_at update
+                        // would wrongly allow in-place regeneration through the lifecycle
+                        // endpoint. Retry the update and, if it keeps failing, escalate to
+                        // Slack so a human reconciles the document row.
+                        const sentAt = new Date() // capture once: retries must not shift the recorded time
+                        let markSentError: unknown = null
+                        for (let attempt = 1; attempt <= MARK_SENT_ATTEMPTS; attempt++) {
+                            try {
+                                await markInvoiceSent(invoicesService, invoiceDocumentId, sentAt)
+                                markSentError = null
+                                break
+                            } catch (err: any) {
+                                markSentError = err
+                                logger.warn(
+                                    `${HOOK_NAME}: Attempt ${attempt}/${MARK_SENT_ATTEMPTS} to mark invoice ${invoiceNumber} as sent failed: ${err?.message || err}`
+                                )
+                            }
+                        }
+
+                        if (markSentError) {
+                            logger.error(
+                                `${HOOK_NAME}: Invoice ${invoiceNumber} for order ${order.order_number} was emailed to ${order.purchaser_email}, but stamping sent_at on document ${invoiceDocumentId} failed persistently: ${(markSentError as any)?.message || markSentError}`
+                            )
+                            try {
+                                await postSlackMessage(
+                                    `:warning: *${HOOK_NAME}*: Rechnung ${invoiceNumber} zu Bestellung ${order.order_number} wurde per E-Mail an ${order.purchaser_email} verschickt, aber sent_at konnte auf dem Rechnungsdokument (${invoiceDocumentId}) nicht gespeichert werden: ${(markSentError as any)?.message || markSentError}. Bitte sent_at manuell setzen — sonst erlaubt der Invoice-Lifecycle-Endpoint, die bereits verschickte Rechnung in-place neu zu generieren.`
+                                )
+                            } catch (slackErr: any) {
+                                logger.error(
+                                    `${HOOK_NAME}: Failed to send Slack notification: ${slackErr?.message || slackErr}`
+                                )
+                            }
+                        } else {
+                            logger.info(
+                                `${HOOK_NAME}: Sent confirmation email with invoice to ${order.purchaser_email}`
+                            )
+                        }
                     } else if (!emailSent) {
                         logger.error(
                             `${HOOK_NAME}: Confirmation email for order ${order.order_number} could not be sent — invoice ${invoiceNumber} remains marked as not issued`

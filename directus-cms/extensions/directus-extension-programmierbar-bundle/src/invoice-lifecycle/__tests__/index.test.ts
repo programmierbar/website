@@ -261,6 +261,16 @@ describe('invoice-lifecycle endpoint', () => {
             expect(res.statusCode).toBe(400)
             expect(res.body.error).toContain('no invoice')
         })
+
+        test('400 when a legacy order needs backfilling but has no date_paid', async () => {
+            const { call, calls } = await setup({ order: { date_paid: null }, invoices: [] })
+            const res = await call('correction')
+            expect(res.statusCode).toBe(400)
+            expect(res.body.error).toContain('date_paid')
+            // No document row was invented with a made-up issuance date.
+            expect(calls.creates).toHaveLength(0)
+            expect(calls.uploads).toHaveLength(0)
+        })
     })
 
     describe('regenerate (only BEFORE issuance)', () => {
@@ -330,6 +340,25 @@ describe('invoice-lifecycle endpoint', () => {
             const res = await call('regenerate')
             expect(res.statusCode).toBe(400)
             expect(res.body.error).toContain('not paid')
+        })
+
+        test('refuses to regenerate a correction whose reference cannot be resolved', async () => {
+            const original = issuedOriginalRow()
+            const brokenCorrection = issuedOriginalRow({
+                id: 'doc-correction-1',
+                type: 'correction',
+                invoice_number: 'PB-CON26-002',
+                related_invoice: 'doc-vanished', // dangling reference
+                date_created: '2026-02-01T00:00:00.000Z',
+                sent_at: null,
+            })
+            const { call, calls } = await setup({ invoices: [original, brokenCorrection] })
+
+            const res = await call('regenerate')
+            expect(res.statusCode).toBe(400)
+            expect(res.body.error).toContain('reference')
+            expect(calls.uploads).toHaveLength(0)
+            expect(calls.updates).toHaveLength(0)
         })
     })
 
@@ -503,6 +532,24 @@ describe('invoice-lifecycle endpoint', () => {
             expect(res.statusCode).toBe(400)
             expect(res.body.error).toContain('not been issued')
             expect(calls.creates).toHaveLength(0)
+        })
+
+        test.each([
+            ['missing', null],
+            ['malformed', '{not json'],
+        ])('is rejected when the referenced snapshot is %s instead of falling back to order data', async (_label, snapshotJson) => {
+            const { call, calls, db } = await setup({
+                invoices: [issuedOriginalRow({ snapshot_json: snapshotJson })],
+            })
+
+            const res = await call('cancellation')
+
+            expect(res.statusCode).toBe(400)
+            expect(res.body.error).toContain('snapshot')
+            // No storno was created from the order's current (mutable) values.
+            expect(calls.creates).toHaveLength(0)
+            expect(calls.uploads).toHaveLength(0)
+            expect(db.ticket_invoices).toHaveLength(1)
         })
 
         test('cannot cancel the same invoice twice', async () => {

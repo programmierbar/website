@@ -58,19 +58,9 @@ const LOGO_PATHS = [
  */
 export type InvoiceDocumentKind = 'invoice' | 'correction' | 'cancellation'
 
-export interface InvoiceData {
+interface InvoiceDataBase {
     invoiceNumber: string
     invoiceDate: string // formatted DD.MM.YYYY
-    /** Defaults to 'invoice'. */
-    documentKind?: InvoiceDocumentKind
-    /**
-     * Invoice number of the referenced (corrected/cancelled) document. Required for
-     * corrections and cancellations: §31 Abs. 5 UStDV demands a specific reference
-     * to the original invoice on the correcting document.
-     */
-    referenceNumber?: string
-    /** Invoice date of the referenced document, formatted DD.MM.YYYY. */
-    referenceDate?: string
     // Customer
     purchaserName: string
     purchaserEmail: string
@@ -93,6 +83,28 @@ export interface InvoiceData {
     totalGrossCents: number
 }
 
+/**
+ * A regular Rechnung never carries a reference; a Rechnungsberichtigung or
+ * Stornorechnung MUST carry both the number and the date of the document it
+ * corrects/cancels — §31 Abs. 5 UStDV demands a specific reference to the
+ * original invoice on the correcting document. The union makes it impossible
+ * to type-check a correction/cancellation without a complete reference.
+ */
+export type InvoiceData =
+    | (InvoiceDataBase & {
+          /** Defaults to 'invoice'. */
+          documentKind?: 'invoice'
+          referenceNumber?: never
+          referenceDate?: never
+      })
+    | (InvoiceDataBase & {
+          documentKind: 'correction' | 'cancellation'
+          /** Invoice number of the referenced (corrected/cancelled) document. */
+          referenceNumber: string
+          /** Invoice date of the referenced document, formatted DD.MM.YYYY. */
+          referenceDate: string
+      })
+
 function formatEur(cents: number): string {
     return new Intl.NumberFormat('de-DE', {
         style: 'currency',
@@ -114,6 +126,17 @@ function drawLogo(doc: InstanceType<typeof PDFDocument>, x: number, y: number, s
  * Generate an invoice PDF and return it as a Buffer.
  */
 export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
+    const kind: InvoiceDocumentKind = data.documentKind || 'invoice'
+
+    // Defense in depth alongside the InvoiceData union: a correction/cancellation
+    // without a complete reference would be legally defective (§31 Abs. 5 UStDV),
+    // so fail loudly instead of rendering "vom undefined".
+    if (kind !== 'invoice' && (!data.referenceNumber || !data.referenceDate)) {
+        return Promise.reject(
+            new Error(`A ${kind} document requires the referenced invoice's number and date (§31 Abs. 5 UStDV)`)
+        )
+    }
+
     return new Promise((resolve, reject) => {
         const doc = new PDFDocument({ size: 'A4', margin: 50 })
         const chunks: Buffer[] = []
@@ -130,7 +153,6 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         }
 
         const pageWidth = doc.page.width - 100 // margins
-        const kind: InvoiceDocumentKind = data.documentKind || 'invoice'
 
         // --- Header with logo ---
         drawLogo(doc, 50, 50, 0.55)
@@ -145,7 +167,8 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         doc.text(`Rechnungsdatum: ${data.invoiceDate}`, 50, 75, { align: 'right' })
         if (kind === 'invoice') {
             doc.text(`Fälligkeitsdatum: ${data.invoiceDate}`, 50, 87, { align: 'right' })
-        } else if (data.referenceNumber) {
+        } else {
+            // referenceNumber/referenceDate are guaranteed by the guard above.
             doc.text(`Bezug: Rechnung Nr. ${data.referenceNumber} vom ${data.referenceDate}`, 50, 87, {
                 align: 'right',
             })
@@ -215,7 +238,7 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
 
         // --- Explicit reference to the corrected/cancelled invoice (§31 Abs. 5 UStDV) ---
-        if (kind !== 'invoice' && data.referenceNumber) {
+        if (kind !== 'invoice') {
             y += 14
             const referenceText =
                 kind === 'correction'

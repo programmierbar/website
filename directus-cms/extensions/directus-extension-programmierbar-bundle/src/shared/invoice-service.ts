@@ -80,7 +80,9 @@ export function formatInvoiceDate(date: Date): string {
 export function buildInvoiceSnapshot(order: InvoiceOrder, conferenceTitle: string, ticketCount: number): InvoiceSnapshot {
     // Derive per-ticket price from the pre-discount subtotal so the line item reconciles
     // with Zwischensumme; the Rabatt line takes us down to the actual total.
-    const subtotalCents = order.subtotal_cents || order.total_cents || 0
+    // `??` (not `||`) everywhere below: 0 is a legitimate stored amount (free orders,
+    // 100% discounts, 0 VAT) and must not be treated as missing.
+    const subtotalCents = order.subtotal_cents ?? order.total_cents ?? 0
     const baseUnitNetCents = Math.round(subtotalCents / ticketCount)
     const grossPerTicket = Math.round(baseUnitNetCents * 1.19)
 
@@ -101,9 +103,9 @@ export function buildInvoiceSnapshot(order: InvoiceOrder, conferenceTitle: strin
         ticket_count: ticketCount,
         unit_price_gross_cents: grossPerTicket,
         subtotal_cents: subtotalCents,
-        discount_amount_cents: order.discount_amount_cents || 0,
-        vat_amount_cents: order.vat_amount_cents || 0,
-        total_gross_cents: (order.total_gross_cents || order.total_cents || 0) as number,
+        discount_amount_cents: order.discount_amount_cents ?? 0,
+        vat_amount_cents: order.vat_amount_cents ?? 0,
+        total_gross_cents: order.total_gross_cents ?? order.total_cents ?? 0,
     }
 }
 
@@ -138,16 +140,30 @@ export function parseInvoiceSnapshot(raw: InvoiceSnapshot | string | null | unde
     return raw
 }
 
-export interface RenderInvoiceParams {
+interface RenderInvoiceBaseParams {
     snapshot: InvoiceSnapshot
     invoiceNumber: string
     invoiceDate: Date
-    documentKind?: InvoiceDocumentKind
-    referenceNumber?: string
-    referenceDate?: Date
     filesService: any
     storageLocation?: string
 }
+
+/**
+ * Mirrors the `InvoiceData` union: corrections and cancellations must reference
+ * the corrected/cancelled invoice by number AND date (§31 Abs. 5 UStDV), a plain
+ * invoice never carries a reference.
+ */
+export type RenderInvoiceParams =
+    | (RenderInvoiceBaseParams & {
+          documentKind?: 'invoice'
+          referenceNumber?: never
+          referenceDate?: never
+      })
+    | (RenderInvoiceBaseParams & {
+          documentKind: 'correction' | 'cancellation'
+          referenceNumber: string
+          referenceDate: Date
+      })
 
 export interface RenderInvoiceResult {
     fileId: string
@@ -170,12 +186,9 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
     const { snapshot, invoiceNumber, invoiceDate, filesService } = params
     const kind: InvoiceDocumentKind = params.documentKind || 'invoice'
 
-    const invoiceData: InvoiceData = {
+    const baseData = {
         invoiceNumber,
         invoiceDate: formatInvoiceDate(invoiceDate),
-        documentKind: kind,
-        ...(params.referenceNumber && { referenceNumber: params.referenceNumber }),
-        ...(params.referenceDate && { referenceDate: formatInvoiceDate(params.referenceDate) }),
         purchaserName: snapshot.purchaser_name,
         purchaserEmail: snapshot.purchaser_email,
         companyName: snapshot.company_name,
@@ -193,6 +206,24 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
         discountAmountCents: snapshot.discount_amount_cents,
         vatAmountCents: snapshot.vat_amount_cents,
         totalGrossCents: snapshot.total_gross_cents,
+    }
+
+    let invoiceData: InvoiceData
+    if (kind === 'invoice') {
+        invoiceData = { ...baseData, documentKind: 'invoice' }
+    } else {
+        // Runtime backstop for callers outside the type system: a correction or
+        // cancellation without a complete reference would render "vom undefined"
+        // and be legally defective (§31 Abs. 5 UStDV).
+        if (!params.referenceNumber || !params.referenceDate) {
+            throw new Error(`A ${kind} document requires the referenced invoice's number and date`)
+        }
+        invoiceData = {
+            ...baseData,
+            documentKind: kind,
+            referenceNumber: params.referenceNumber,
+            referenceDate: formatInvoiceDate(params.referenceDate),
+        }
     }
 
     const pdfBuffer = await generateInvoicePdf(invoiceData)
@@ -319,6 +350,21 @@ export function findCancellationFor(documents: InvoiceDocument[], documentId: st
     return documents.find((doc) => doc.type === 'cancellation' && doc.related_invoice === documentId) || null
 }
 
+/**
+ * Thrown by {@link ensureInvoiceDocuments} when a legacy invoice cannot be
+ * backfilled because the order has no `date_paid`. Callers surface this as a
+ * client error (the admin must set the payment date first) — silently stamping
+ * "now" as the issuance date would falsify the audit trail.
+ */
+export class MissingDatePaidError extends Error {
+    constructor(orderNumber: string | null | undefined) {
+        super(
+            `Order ${orderNumber || '(unknown)'} has no date_paid — cannot backfill its invoice document with a truthful issuance date. Set the order's payment date first.`
+        )
+        this.name = 'MissingDatePaidError'
+    }
+}
+
 export interface EnsureInvoiceDocumentParams {
     order: InvoiceOrder & { invoice_number?: string | null; invoice_file?: string | null; date_paid?: string | null }
     conferenceTitle: string
@@ -336,6 +382,9 @@ export interface EnsureInvoiceDocumentParams {
  * regenerated. The snapshot is the best available data (the order's current billing
  * fields); the original PDF in `invoice_file` remains the authoritative rendering.
  *
+ * Throws {@link MissingDatePaidError} when the backfill is needed but the order has
+ * no `date_paid` — there is no truthful issuance date to record in that case.
+ *
  * Returns the documents list of the order including any backfilled row.
  */
 export async function ensureInvoiceDocuments(params: EnsureInvoiceDocumentParams): Promise<InvoiceDocument[]> {
@@ -346,7 +395,11 @@ export async function ensureInvoiceDocuments(params: EnsureInvoiceDocumentParams
         return documents
     }
 
-    const issuedAt = order.date_paid ? new Date(order.date_paid) : new Date()
+    if (!order.date_paid) {
+        throw new MissingDatePaidError(order.order_number)
+    }
+
+    const issuedAt = new Date(order.date_paid)
     const snapshot = buildInvoiceSnapshot(order, params.conferenceTitle, params.ticketCount)
 
     await invoicesService.createOne({

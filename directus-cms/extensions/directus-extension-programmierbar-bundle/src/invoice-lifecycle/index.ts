@@ -7,10 +7,12 @@ import {
     ensureInvoiceDocuments,
     findCancellationFor,
     findCurrentInvoiceDocument,
+    MissingDatePaidError,
     negateInvoiceSnapshot,
     parseInvoiceSnapshot,
     renderAndUploadInvoice,
     type InvoiceDocument,
+    type RenderInvoiceResult,
 } from '../shared/invoice-service.js'
 
 const ENDPOINT_NAME = 'invoice-lifecycle'
@@ -147,12 +149,22 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             )
         }
 
-        const documents = await ensureInvoiceDocuments({
-            order,
-            conferenceTitle: conference.title,
-            ticketCount,
-            invoicesService,
-        })
+        let documents: InvoiceDocument[]
+        try {
+            documents = await ensureInvoiceDocuments({
+                order,
+                conferenceTitle: conference.title,
+                ticketCount,
+                invoicesService,
+            })
+        } catch (err) {
+            // Backfilling a legacy invoice needs a truthful issuance date: tell the
+            // admin to set date_paid instead of silently recording a wrong one.
+            if (err instanceof MissingDatePaidError) {
+                throw new HttpError(400, err.message)
+            }
+            throw err
+        }
 
         return {
             order,
@@ -226,28 +238,40 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             throw new HttpError(400, `Invoice ${current.invoice_number} has been cancelled`)
         }
 
-        // A regenerated correction must keep its printed reference to the corrected invoice.
-        let referenceNumber: string | undefined
-        let referenceDate: Date | undefined
-        if (current.type === 'correction' && current.related_invoice) {
-            const predecessor = ctx.documents.find((doc) => doc.id === current.related_invoice)
-            if (predecessor) {
-                referenceNumber = predecessor.invoice_number
-                referenceDate = new Date(predecessor.invoice_date)
-            }
-        }
-
         const snapshot = buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount)
-        const rendered = await renderAndUploadInvoice({
-            snapshot,
-            invoiceNumber: current.invoice_number,
-            invoiceDate: new Date(current.invoice_date),
-            documentKind: current.type === 'correction' ? 'correction' : 'invoice',
-            referenceNumber,
-            referenceDate,
-            filesService: ctx.filesService,
-            storageLocation: storageLocation(),
-        })
+
+        let rendered: RenderInvoiceResult
+        if (current.type === 'correction') {
+            // A regenerated correction must keep its printed reference to the corrected
+            // invoice (§31 Abs. 5 UStDV) — without a resolvable predecessor the document
+            // cannot be rendered lawfully, so refuse instead of rendering a broken PDF.
+            const predecessor = ctx.documents.find((doc) => doc.id === current.related_invoice)
+            if (!predecessor) {
+                throw new HttpError(
+                    400,
+                    `Correction ${current.invoice_number} does not reference a known invoice document — cannot regenerate it with the legally required reference`
+                )
+            }
+            rendered = await renderAndUploadInvoice({
+                snapshot,
+                invoiceNumber: current.invoice_number,
+                invoiceDate: new Date(current.invoice_date),
+                documentKind: 'correction',
+                referenceNumber: predecessor.invoice_number,
+                referenceDate: new Date(predecessor.invoice_date),
+                filesService: ctx.filesService,
+                storageLocation: storageLocation(),
+            })
+        } else {
+            rendered = await renderAndUploadInvoice({
+                snapshot,
+                invoiceNumber: current.invoice_number,
+                invoiceDate: new Date(current.invoice_date),
+                documentKind: 'invoice',
+                filesService: ctx.filesService,
+                storageLocation: storageLocation(),
+            })
+        }
 
         // The document is not issued yet, so updating its PDF and snapshot in place is allowed.
         await ctx.invoicesService.updateOne(current.id, {
@@ -354,14 +378,23 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             throw new HttpError(400, `Invoice ${current.invoice_number} has already been cancelled`)
         }
 
+        // Mirror the amounts the referenced invoice was actually issued with. Every
+        // document row carries a snapshot (lazy backfill provides one for legacy
+        // invoices), so a missing/unparsable snapshot is a data problem — falling
+        // back to the order's current mutable values could silently produce a storno
+        // over the wrong amounts. Refuse instead.
+        const referencedSnapshot = parseInvoiceSnapshot(current.snapshot_json)
+        if (!referencedSnapshot) {
+            throw new HttpError(
+                400,
+                `Invoice ${current.invoice_number} has no readable billing snapshot — cannot mirror its amounts for a Stornorechnung. Fix the document's snapshot_json first.`
+            )
+        }
+
         const conferenceYear = new Date(ctx.conference.start_on).getFullYear()
         const invoiceNumber = await generateInvoiceNumber(ctx.ordersService, ctx.invoicesService, conferenceYear)
         const invoiceDate = new Date()
 
-        // Mirror the amounts the referenced invoice was actually issued with.
-        const referencedSnapshot =
-            parseInvoiceSnapshot(current.snapshot_json) ??
-            buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount)
         const snapshot = negateInvoiceSnapshot(referencedSnapshot)
 
         const rendered = await renderAndUploadInvoice({

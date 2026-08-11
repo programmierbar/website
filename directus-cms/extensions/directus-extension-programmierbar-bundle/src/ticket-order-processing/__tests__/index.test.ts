@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals'
 import { sendTemplatedEmail } from '../../shared/email-service.ts'
 import { generateInvoiceNumber } from '../../shared/invoice-generator.ts'
 import { issueOriginalInvoice, markInvoiceSent } from '../../shared/invoice-service.ts'
+import { postSlackMessage } from '../../shared/postSlackMessage.ts'
 import { generateUniqueTicketCode } from '../../shared/ticket-utils.ts'
 import registerHook from '../index.ts'
 
@@ -28,8 +29,12 @@ jest.mock('../../shared/ticket-utils.ts', () => ({
     generateUniqueTicketCode: jest.fn(),
     formatPrice: (cents: number) => `${(cents / 100).toFixed(2)} €`,
 }))
+jest.mock('../../shared/postSlackMessage.ts', () => ({
+    postSlackMessage: jest.fn(),
+}))
 
 const sendTemplatedEmailMock = jest.mocked(sendTemplatedEmail)
+const postSlackMessageMock = jest.mocked(postSlackMessage)
 const issueOriginalInvoiceMock = jest.mocked(issueOriginalInvoice)
 const markInvoiceSentMock = jest.mocked(markInvoiceSent)
 const generateInvoiceNumberMock = jest.mocked(generateInvoiceNumber)
@@ -123,6 +128,7 @@ beforeEach(() => {
     sendTemplatedEmailMock.mockReset()
     issueOriginalInvoiceMock.mockReset()
     markInvoiceSentMock.mockReset()
+    postSlackMessageMock.mockReset()
     generateInvoiceNumberMock.mockClear()
     generateUniqueTicketCodeMock.mockReset()
 
@@ -176,7 +182,7 @@ describe('ticket-order-processing hook', () => {
 
         // Issuance is recorded on the document row after the email went out.
         expect(markInvoiceSentMock).toHaveBeenCalledTimes(1)
-        expect(markInvoiceSentMock).toHaveBeenCalledWith(serviceInstances['ticket_invoices']![0], 'doc-1')
+        expect(markInvoiceSentMock).toHaveBeenCalledWith(serviceInstances['ticket_invoices']![0], 'doc-1', expect.any(Date))
 
         // Both attendees got their profile invitation.
         const invitations = sendTemplatedEmailMock.mock.calls.filter(
@@ -195,6 +201,55 @@ describe('ticket-order-processing hook', () => {
 
         expect(issueOriginalInvoiceMock).toHaveBeenCalledTimes(1)
         expect(markInvoiceSentMock).not.toHaveBeenCalled()
+        expect(postSlackMessageMock).not.toHaveBeenCalled()
+    })
+
+    test('retries a failing markInvoiceSent and recovers without escalating', async () => {
+        markInvoiceSentMock.mockRejectedValueOnce(new Error('deadlock')).mockResolvedValueOnce(undefined)
+        const { invoke } = setup()
+        await invoke({ status: 'paid' })
+
+        expect(markInvoiceSentMock).toHaveBeenCalledTimes(2)
+        expect(postSlackMessageMock).not.toHaveBeenCalled()
+    })
+
+    test('escalates to Slack when markInvoiceSent keeps failing, without crashing the hook', async () => {
+        markInvoiceSentMock.mockRejectedValue(new Error('db down'))
+        const { invoke, logger } = setup()
+        await invoke({ status: 'paid' })
+
+        // All retry attempts were used up.
+        expect(markInvoiceSentMock).toHaveBeenCalledTimes(3)
+
+        // A human is notified through Slack, with order + invoice number and the reason.
+        expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+        const slackMessage = postSlackMessageMock.mock.calls[0]![0]
+        expect(slackMessage).toContain('PB-CON26-001')
+        expect(slackMessage).toContain('ORD-2026-ABC123')
+        expect(slackMessage).toContain('db down')
+
+        // The failure is also logged with the affected order and invoice number.
+        const errorLog = logger.error.mock.calls.map((call) => call[0]).join('\n')
+        expect(errorLog).toContain('PB-CON26-001')
+        expect(errorLog).toContain('ORD-2026-ABC123')
+
+        // The hook carried on: attendees still received their profile invitations.
+        const invitations = sendTemplatedEmailMock.mock.calls.filter(
+            ([opts]) => (opts as any).templateKey === 'ticket_profile_invitation'
+        )
+        expect(invitations).toHaveLength(2)
+    })
+
+    test('a failing Slack escalation is swallowed and the hook still completes', async () => {
+        markInvoiceSentMock.mockRejectedValue(new Error('db down'))
+        postSlackMessageMock.mockRejectedValue(new Error('slack down'))
+        const { invoke } = setup()
+        await invoke({ status: 'paid' })
+
+        const invitations = sendTemplatedEmailMock.mock.calls.filter(
+            ([opts]) => (opts as any).templateKey === 'ticket_profile_invitation'
+        )
+        expect(invitations).toHaveLength(2)
     })
 
     test('internal orders: no invoice document, no confirmation email, but profile invitations', async () => {

@@ -11,12 +11,14 @@ import {
     findCurrentInvoiceDocument,
     issueOriginalInvoice,
     markInvoiceSent,
+    MissingDatePaidError,
     negateInvoiceSnapshot,
     parseInvoiceSnapshot,
     renderAndUploadInvoice,
     type InvoiceDocument,
     type InvoiceOrder,
     type InvoiceSnapshot,
+    type RenderInvoiceParams,
 } from '../invoice-service.ts'
 
 const ORDER: InvoiceOrder & { order_number: string } = {
@@ -128,6 +130,26 @@ describe('buildInvoiceSnapshot', () => {
         expect(snapshot.total_gross_cents).toBe(19000)
         expect(snapshot.discount_amount_cents).toBe(0)
     })
+
+    test('keeps legitimate 0 amounts instead of treating them as missing (free order)', () => {
+        const snapshot = buildInvoiceSnapshot(
+            {
+                ...ORDER,
+                subtotal_cents: 0,
+                discount_amount_cents: 0,
+                total_cents: 19000, // must NOT leak into the 0-valued columns
+                total_gross_cents: 0,
+                vat_amount_cents: 0,
+            },
+            'Conf',
+            1
+        )
+        expect(snapshot.subtotal_cents).toBe(0)
+        expect(snapshot.discount_amount_cents).toBe(0)
+        expect(snapshot.vat_amount_cents).toBe(0)
+        expect(snapshot.total_gross_cents).toBe(0)
+        expect(snapshot.unit_price_gross_cents).toBe(0)
+    })
 })
 
 describe('negateInvoiceSnapshot', () => {
@@ -193,15 +215,22 @@ describe('renderAndUploadInvoice', () => {
         ['cancellation', 'Stornorechnung-PB-CON26-001.pdf', 'Stornorechnung PB-CON26-001'],
     ] as const)('names the %s document after its kind', async (kind, fileName, title) => {
         const filesService = fakeFilesService()
-        const result = await renderAndUploadInvoice({
+        const base = {
             snapshot: buildInvoiceSnapshot(ORDER, 'Conf', 2),
             invoiceNumber: 'PB-CON26-001',
             invoiceDate: new Date('2026-02-01T10:00:00Z'),
-            documentKind: kind,
-            referenceNumber: kind === 'invoice' ? undefined : 'PB-CON26-000',
-            referenceDate: kind === 'invoice' ? undefined : new Date('2026-01-15T10:00:00Z'),
             filesService,
-        })
+        }
+        const params: RenderInvoiceParams =
+            kind === 'invoice'
+                ? { ...base, documentKind: kind }
+                : {
+                      ...base,
+                      documentKind: kind,
+                      referenceNumber: 'PB-CON26-000',
+                      referenceDate: new Date('2026-01-15T10:00:00Z'),
+                  }
+        const result = await renderAndUploadInvoice(params)
 
         expect(result.invoiceFileName).toBe(fileName)
         expect(result.fileId).toBe('file-1')
@@ -211,6 +240,35 @@ describe('renderAndUploadInvoice', () => {
             filename_download: fileName,
             title,
         })
+    })
+
+    test.each(['correction', 'cancellation'] as const)(
+        'rejects a %s without the referenced invoice date instead of rendering "vom undefined"',
+        async (kind) => {
+            const filesService = fakeFilesService()
+            const params = {
+                snapshot: buildInvoiceSnapshot(ORDER, 'Conf', 2),
+                invoiceNumber: 'PB-CON26-002',
+                invoiceDate: new Date('2026-02-01T10:00:00Z'),
+                documentKind: kind,
+                referenceNumber: 'PB-CON26-001',
+                // referenceDate deliberately missing — the type system forbids this,
+                // but Directus rows are not type-checked at runtime.
+            } as unknown as RenderInvoiceParams
+            await expect(renderAndUploadInvoice(params)).rejects.toThrow(/number and date/)
+            expect(filesService.uploadOne).not.toHaveBeenCalled()
+        }
+    )
+
+    test('rejects a correction without any reference at all', async () => {
+        const params = {
+            snapshot: buildInvoiceSnapshot(ORDER, 'Conf', 2),
+            invoiceNumber: 'PB-CON26-002',
+            invoiceDate: new Date('2026-02-01T10:00:00Z'),
+            documentKind: 'correction',
+            filesService: fakeFilesService(),
+        } as unknown as RenderInvoiceParams
+        await expect(renderAndUploadInvoice(params)).rejects.toThrow(/number and date/)
     })
 })
 
@@ -298,6 +356,19 @@ describe('ensureInvoiceDocuments (lazy backfill of pre-existing invoices)', () =
             invoicesService,
         })
         expect(documents).toHaveLength(1)
+        expect(invoicesService.createOne).not.toHaveBeenCalled()
+    })
+
+    test('refuses to backfill when date_paid is missing instead of inventing an issuance date', async () => {
+        const invoicesService = fakeInvoicesService()
+        await expect(
+            ensureInvoiceDocuments({
+                order: { ...legacyOrder, date_paid: null },
+                conferenceTitle: 'Conf',
+                ticketCount: 2,
+                invoicesService,
+            })
+        ).rejects.toThrow(MissingDatePaidError)
         expect(invoicesService.createOne).not.toHaveBeenCalled()
     })
 
