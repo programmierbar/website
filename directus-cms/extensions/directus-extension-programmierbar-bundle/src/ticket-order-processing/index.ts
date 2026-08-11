@@ -1,15 +1,10 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { randomUUID } from 'node:crypto'
-import { Readable } from 'node:stream'
 import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
 import { getSetting } from '../shared/settings.js'
 import { generateUniqueTicketCode, formatPrice } from '../shared/ticket-utils.js'
-import {
-    generateInvoicePdf,
-    generateInvoiceNumber,
-    ticketTypeLabel,
-    type InvoiceData,
-} from '../shared/invoice-generator.js'
+import { generateInvoiceNumber } from '../shared/invoice-generator.js'
+import { createAndStoreInvoice } from '../shared/invoice-service.js'
 import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'ticket-order-processing'
@@ -173,67 +168,30 @@ export default defineHook(({ action }, hookContext) => {
                     const conferenceYear = new Date(conference.start_on).getFullYear()
                     invoiceNumber = await generateInvoiceNumber(ordersService, conferenceYear)
 
-                    const now = new Date()
-                    const invoiceDate = now.toLocaleDateString('de-DE', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                    })
-
-                    // Derive per-ticket price from the pre-discount subtotal so the line item reconciles with Zwischensumme; the Rabatt line takes us down to the actual total.
-                    const subtotalCents = order.subtotal_cents || order.total_cents || 0
-                    const baseUnitNetCents = Math.round(subtotalCents / attendees.length)
-                    const grossPerTicket = Math.round(baseUnitNetCents * 1.19)
-
-                    const invoiceData: InvoiceData = {
-                        invoiceNumber,
-                        invoiceDate,
-                        purchaserName,
-                        purchaserEmail: order.purchaser_email,
-                        companyName: order.company_name,
-                        companyVatId: order.company_vat_id,
-                        billingAddressLine1: order.billing_address_line1,
-                        billingAddressLine2: order.billing_address_line2,
-                        billingCity: order.billing_city,
-                        billingPostalCode: order.billing_postal_code,
-                        billingCountry: order.billing_country,
-                        conferenceTitle: conference.title,
-                        ticketType: ticketTypeLabel(order.ticket_type),
-                        ticketCount: attendees.length,
-                        unitPriceGrossCents: grossPerTicket,
-                        subtotalCents: order.subtotal_cents || order.total_cents,
-                        discountAmountCents: order.discount_amount_cents || 0,
-                        vatAmountCents: order.vat_amount_cents || 0,
-                        totalGrossCents: order.total_gross_cents || order.total_cents,
-                    }
-
                     logger.info(`${HOOK_NAME}: Generating invoice ${invoiceNumber} for order ${order.order_number}`)
-                    pdfBuffer = await generateInvoicePdf(invoiceData)
 
-                    // Upload PDF to Directus files
                     const filesService = new FilesService({
                         accountability: { admin: true },
                         schema,
                     })
 
-                    invoiceFileName = `Rechnung-${invoiceNumber}.pdf`
-                    const storageLocation = env.STORAGE_LOCATIONS?.split(',')[0]
-
-                    const pdfStream = Readable.from([pdfBuffer])
-                    const fileId = await filesService.uploadOne(pdfStream, {
-                        type: 'application/pdf',
-                        filename_download: invoiceFileName,
-                        title: `Rechnung ${invoiceNumber}`,
-                        ...(storageLocation && { storage: storageLocation }),
+                    const invoiceResult = await createAndStoreInvoice({
+                        order,
+                        conferenceTitle: conference.title,
+                        ticketCount: attendees.length,
+                        invoiceNumber,
+                        invoiceDate: new Date(),
+                        ordersService,
+                        filesService,
+                        storageLocation: env.STORAGE_LOCATIONS?.split(',')[0],
                     })
 
-                    // Update order with invoice number and file reference
-                    await ordersService.updateOne(orderId, {
-                        invoice_number: invoiceNumber,
-                        invoice_file: fileId,
-                    })
+                    pdfBuffer = invoiceResult.pdfBuffer
+                    invoiceFileName = invoiceResult.invoiceFileName
 
-                    logger.info(`${HOOK_NAME}: Invoice ${invoiceNumber} generated and stored (file: ${fileId})`)
+                    logger.info(
+                        `${HOOK_NAME}: Invoice ${invoiceNumber} generated and stored (file: ${invoiceResult.fileId})`
+                    )
                 } else {
                     logger.info(`${HOOK_NAME}: Skipping invoice for internal order ${order.order_number}`)
                 }
