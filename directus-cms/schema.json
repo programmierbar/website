@@ -2173,6 +2173,34 @@
       }
     },
     {
+      "collection": "ticket_invoices",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": null,
+        "archive_value": null,
+        "collapse": "open",
+        "collection": "ticket_invoices",
+        "color": null,
+        "display_template": "{{invoice_number}} ({{type}})",
+        "group": "Ticketing",
+        "hidden": false,
+        "icon": "receipt",
+        "item_duplication_fields": null,
+        "note": "Issued invoice documents (originals, corrections, cancellations) — immutable once sent",
+        "preview_url": null,
+        "singleton": false,
+        "sort": 4,
+        "sort_field": null,
+        "translations": null,
+        "unarchive_value": null,
+        "versioning": false
+      },
+      "schema": {
+        "name": "ticket_invoices"
+      }
+    },
+    {
       "collection": "transcripts",
       "meta": {
         "accountability": "all",
@@ -38423,6 +38451,68 @@
       }
     },
     {
+      "collection": "ticket_orders",
+      "field": "invoice_actions",
+      "type": "alias",
+      "meta": {
+        "collection": "ticket_orders",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "invoice_actions",
+        "group": null,
+        "hidden": false,
+        "interface": "invoice-actions",
+        "note": "Rechnung neu generieren, berichtigen oder stornieren",
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 33,
+        "special": [
+          "alias",
+          "no-data"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
+      "collection": "ticket_orders",
+      "field": "invoices",
+      "type": "alias",
+      "meta": {
+        "collection": "ticket_orders",
+        "conditions": null,
+        "display": "related-values",
+        "display_options": {
+          "template": "{{invoice_number}} ({{type}})"
+        },
+        "field": "invoices",
+        "group": null,
+        "hidden": false,
+        "interface": "list-o2m",
+        "note": "Invoice documents issued for this order",
+        "options": {
+          "template": "{{invoice_number}} ({{type}})",
+          "enableCreate": false
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 34,
+        "special": [
+          "o2m"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
       "collection": "tickets",
       "field": "id",
       "type": "uuid",
@@ -39512,6 +39602,556 @@
         "table": "tickets",
         "data_type": "boolean",
         "default_value": false,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "id",
+      "type": "uuid",
+      "meta": {
+        "collection": "ticket_invoices",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "searchable": true,
+        "sort": 1,
+        "special": [
+          "uuid"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "ticket_invoices",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_indexed": false,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "order",
+      "type": "uuid",
+      "meta": {
+        "collection": "ticket_invoices",
+        "conditions": null,
+        "display": "related-values",
+        "display_options": {
+          "template": "{{order_number}}"
+        },
+        "field": "order",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown-m2o",
+        "note": "Ticket order this document belongs to",
+        "options": {
+          "template": "{{order_number}}"
+        },
+        "readonly": true,
+        "required": true,
+        "searchable": true,
+        "sort": 2,
+        "special": [
+          "m2o"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "order",
+        "table": "ticket_invoices",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": true,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "ticket_orders",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "type",
+      "type": "string",
+      "meta": {
+        "collection": "ticket_invoices",
+        "conditions": null,
+        "display": "labels",
+        "display_options": {
+          "choices": [
+            {
+              "background": "#10B981",
+              "foreground": "#FFFFFF",
+              "value": "original"
+            },
+            {
+              "background": "#F59E0B",
+              "foreground": "#FFFFFF",
+              "value": "correction"
+            },
+            {
+              "background": "#EF4444",
+              "foreground": "#FFFFFF",
+              "value": "cancellation"
+            }
+          ],
+          "showAsDot": true
+        },
+        "field": "type",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": "Document type: original invoice, Rechnungsberichtigung or Stornorechnung",
+        "options": {
+          "choices": [
+            {
+              "text": "Original",
+              "value": "original"
+            },
+            {
+              "text": "Rechnungsberichtigung",
+              "value": "correction"
+            },
+            {
+              "text": "Stornorechnung",
+              "value": "cancellation"
+            }
+          ]
+        },
+        "readonly": true,
+        "required": true,
+        "searchable": true,
+        "sort": 3,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "type",
+        "table": "ticket_invoices",
+        "data_type": "character varying",
+        "default_value": "original",
+        "max_length": 50,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "invoice_number",
+      "type": "string",
+      "meta": {
+        "collection": "ticket_invoices",
+        "conditions": null,
+        "display": "raw",
+        "display_options": null,
+        "field": "invoice_number",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": "Sequential invoice number (PB-CON{YY}-{NNN}), shared series across all document types",
+        "options": null,
+        "readonly": true,
+        "required": true,
+        "searchable": true,
+        "sort": 4,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "invoice_number",
+        "table": "ticket_invoices",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 50,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_indexed": true,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "invoice_date",
+      "type": "timestamp",
+      "meta": {
+        "collection": "ticket_invoices",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": null,
+        "field": "invoice_date",
+        "group": null,
+        "hidden": false,
+        "interface": "datetime",
+        "note": "Invoice date printed on the document",
+        "options": null,
+        "readonly": true,
+        "required": true,
+        "searchable": true,
+        "sort": 5,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "invoice_date",
+        "table": "ticket_invoices",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "invoice_file",
+      "type": "uuid",
+      "meta": {
+        "collection": "ticket_invoices",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "invoice_file",
+        "group": null,
+        "hidden": false,
+        "interface": "file",
+        "note": "The rendered PDF of this document",
+        "options": {
+          "enableCreate": false
+        },
+        "readonly": true,
+        "required": false,
+        "searchable": true,
+        "sort": 6,
+        "special": [
+          "file"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "invoice_file",
+        "table": "ticket_invoices",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_files",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "related_invoice",
+      "type": "uuid",
+      "meta": {
+        "collection": "ticket_invoices",
+        "conditions": null,
+        "display": "related-values",
+        "display_options": {
+          "template": "{{invoice_number}}"
+        },
+        "field": "related_invoice",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown-m2o",
+        "note": "The document this correction/cancellation refers to (§31 Abs. 5 UStDV)",
+        "options": {
+          "template": "{{invoice_number}}"
+        },
+        "readonly": true,
+        "required": false,
+        "searchable": true,
+        "sort": 7,
+        "special": [
+          "m2o"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "related_invoice",
+        "table": "ticket_invoices",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": true,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "ticket_invoices",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "sent_at",
+      "type": "timestamp",
+      "meta": {
+        "collection": "ticket_invoices",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "sent_at",
+        "group": null,
+        "hidden": false,
+        "interface": "datetime",
+        "note": "When this document was sent to the customer — set automatically for the confirmation email; once set, the document counts as issued and becomes immutable",
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 8,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "sent_at",
+        "table": "ticket_invoices",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "snapshot_json",
+      "type": "json",
+      "meta": {
+        "collection": "ticket_invoices",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "snapshot_json",
+        "group": null,
+        "hidden": false,
+        "interface": "input-code",
+        "note": "Immutable snapshot of the billing data and amounts this document was rendered from",
+        "options": {
+          "language": "json"
+        },
+        "readonly": true,
+        "required": false,
+        "searchable": false,
+        "sort": 9,
+        "special": [
+          "cast-json"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "snapshot_json",
+        "table": "ticket_invoices",
+        "data_type": "json",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "user_created",
+      "type": "uuid",
+      "meta": {
+        "collection": "ticket_invoices",
+        "conditions": null,
+        "display": "user",
+        "display_options": null,
+        "field": "user_created",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown-m2o",
+        "note": "Who created this document (empty for system-generated originals)",
+        "options": {
+          "template": "{{avatar}} {{first_name}} {{last_name}}"
+        },
+        "readonly": true,
+        "required": false,
+        "searchable": true,
+        "sort": 10,
+        "special": [
+          "user-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "user_created",
+        "table": "ticket_invoices",
+        "data_type": "uuid",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "date_created",
+      "type": "timestamp",
+      "meta": {
+        "collection": "ticket_invoices",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_created",
+        "group": null,
+        "hidden": false,
+        "interface": "datetime",
+        "note": "Document creation timestamp",
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "searchable": true,
+        "sort": 11,
+        "special": [
+          "date-created"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_created",
+        "table": "ticket_invoices",
+        "data_type": "timestamp with time zone",
+        "default_value": null,
         "max_length": null,
         "numeric_precision": null,
         "numeric_scale": null,
@@ -44005,6 +44645,81 @@
         "constraint_name": "tickets_conference_foreign",
         "on_update": "NO ACTION",
         "on_delete": "CASCADE"
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "order",
+      "related_collection": "ticket_orders",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "ticket_invoices",
+        "many_field": "order",
+        "one_allowed_collections": null,
+        "one_collection": "ticket_orders",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": "invoices",
+        "sort_field": null
+      },
+      "schema": {
+        "table": "ticket_invoices",
+        "column": "order",
+        "foreign_key_table": "ticket_orders",
+        "foreign_key_column": "id",
+        "constraint_name": "ticket_invoices_order_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "invoice_file",
+      "related_collection": "directus_files",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "ticket_invoices",
+        "many_field": "invoice_file",
+        "one_allowed_collections": null,
+        "one_collection": "directus_files",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "ticket_invoices",
+        "column": "invoice_file",
+        "foreign_key_table": "directus_files",
+        "foreign_key_column": "id",
+        "constraint_name": "ticket_invoices_invoice_file_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "SET NULL"
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "related_invoice",
+      "related_collection": "ticket_invoices",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "ticket_invoices",
+        "many_field": "related_invoice",
+        "one_allowed_collections": null,
+        "one_collection": "ticket_invoices",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "ticket_invoices",
+        "column": "related_invoice",
+        "foreign_key_table": "ticket_invoices",
+        "foreign_key_column": "id",
+        "constraint_name": "ticket_invoices_related_invoice_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
       }
     },
     {

@@ -1,7 +1,5 @@
 import PDFDocument from 'pdfkit'
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { tryLoadMuseoFont } from './museo-font.js'
 
 // Seller info (hardcoded)
 const SELLER = {
@@ -52,7 +50,15 @@ const LOGO_PATHS = [
     },
 ]
 
-export interface InvoiceData {
+/**
+ * Which kind of financial document the PDF represents:
+ * - 'invoice': a regular Rechnung
+ * - 'correction': a Rechnungsberichtigung that replaces an already-issued invoice
+ * - 'cancellation': a Stornorechnung that voids an already-issued invoice with mirrored negative amounts
+ */
+export type InvoiceDocumentKind = 'invoice' | 'correction' | 'cancellation'
+
+interface InvoiceDataBase {
     invoiceNumber: string
     invoiceDate: string // formatted DD.MM.YYYY
     // Customer
@@ -77,21 +83,33 @@ export interface InvoiceData {
     totalGrossCents: number
 }
 
+/**
+ * A regular Rechnung never carries a reference; a Rechnungsberichtigung or
+ * Stornorechnung MUST carry both the number and the date of the document it
+ * corrects/cancels — §31 Abs. 5 UStDV demands a specific reference to the
+ * original invoice on the correcting document. The union makes it impossible
+ * to type-check a correction/cancellation without a complete reference.
+ */
+export type InvoiceData =
+    | (InvoiceDataBase & {
+          /** Defaults to 'invoice'. */
+          documentKind?: 'invoice'
+          referenceNumber?: never
+          referenceDate?: never
+      })
+    | (InvoiceDataBase & {
+          documentKind: 'correction' | 'cancellation'
+          /** Invoice number of the referenced (corrected/cancelled) document. */
+          referenceNumber: string
+          /** Invoice date of the referenced document, formatted DD.MM.YYYY. */
+          referenceDate: string
+      })
+
 function formatEur(cents: number): string {
     return new Intl.NumberFormat('de-DE', {
         style: 'currency',
         currency: 'EUR',
     }).format(cents / 100)
-}
-
-function tryLoadMuseoFont(): Buffer | null {
-    try {
-        const distDir = path.dirname(fileURLToPath(import.meta.url))
-        const fontPath = path.resolve(distDir, '..', 'assets', 'MuseoSans700.otf')
-        return fs.readFileSync(fontPath)
-    } catch {
-        return null
-    }
 }
 
 function drawLogo(doc: InstanceType<typeof PDFDocument>, x: number, y: number, scale: number) {
@@ -108,6 +126,17 @@ function drawLogo(doc: InstanceType<typeof PDFDocument>, x: number, y: number, s
  * Generate an invoice PDF and return it as a Buffer.
  */
 export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
+    const kind: InvoiceDocumentKind = data.documentKind || 'invoice'
+
+    // Defense in depth alongside the InvoiceData union: a correction/cancellation
+    // without a complete reference would be legally defective (§31 Abs. 5 UStDV),
+    // so fail loudly instead of rendering "vom undefined".
+    if (kind !== 'invoice' && (!data.referenceNumber || !data.referenceDate)) {
+        return Promise.reject(
+            new Error(`A ${kind} document requires the referenced invoice's number and date (§31 Abs. 5 UStDV)`)
+        )
+    }
+
     return new Promise((resolve, reject) => {
         const doc = new PDFDocument({ size: 'A4', margin: 50 })
         const chunks: Buffer[] = []
@@ -128,12 +157,22 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         // --- Header with logo ---
         drawLogo(doc, 50, 50, 0.55)
 
+        const heading =
+            kind === 'correction' ? 'Rechnungsberichtigung' : kind === 'cancellation' ? 'Stornorechnung' : 'Rechnung'
+
         doc.fontSize(18).fillColor('#000')
-        doc.text(`Rechnung Nr.: ${data.invoiceNumber}`, 50, 50, { align: 'right' })
+        doc.text(`${heading} Nr.: ${data.invoiceNumber}`, 50, 50, { align: 'right' })
 
         doc.fontSize(9).fillColor('#666')
         doc.text(`Rechnungsdatum: ${data.invoiceDate}`, 50, 75, { align: 'right' })
-        doc.text(`Fälligkeitsdatum: ${data.invoiceDate}`, 50, 87, { align: 'right' })
+        if (kind === 'invoice') {
+            doc.text(`Fälligkeitsdatum: ${data.invoiceDate}`, 50, 87, { align: 'right' })
+        } else {
+            // referenceNumber/referenceDate are guaranteed by the guard above.
+            doc.text(`Bezug: Rechnung Nr. ${data.referenceNumber} vom ${data.referenceDate}`, 50, 87, {
+                align: 'right',
+            })
+        }
 
         // --- Seller info ---
         let y = 115
@@ -198,6 +237,19 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         y += 10
         doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
 
+        // --- Explicit reference to the corrected/cancelled invoice (§31 Abs. 5 UStDV) ---
+        if (kind !== 'invoice') {
+            y += 14
+            const referenceText =
+                kind === 'correction'
+                    ? `Diese Rechnungsberichtigung berichtigt und ersetzt die Rechnung Nr. ${data.referenceNumber} vom ${data.referenceDate}.`
+                    : `Diese Stornorechnung storniert die Rechnung Nr. ${data.referenceNumber} vom ${data.referenceDate}.`
+            doc.fontSize(10).fillColor('#000')
+            doc.text(referenceText, 50, y, { width: pageWidth })
+            y += 18
+            doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        }
+
         // --- Line items table ---
         y += 14
 
@@ -242,10 +294,12 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         doc.text(formatEur(data.subtotalCents), valueX, y, { width: valueW, align: 'right' })
         y += 20
 
-        if (data.discountAmountCents > 0) {
+        if (data.discountAmountCents !== 0) {
+            // Discounts are stored as the deducted amount; render as negative. On a
+            // Stornorechnung the mirrored discount is negative, which renders positive here.
             doc.fontSize(9).fillColor('#666')
             doc.text('Rabatt', labelX + 20, y)
-            doc.text(`-${formatEur(data.discountAmountCents)}`, valueX, y, { width: valueW, align: 'right' })
+            doc.text(formatEur(-data.discountAmountCents), valueX, y, { width: valueW, align: 'right' })
             y += 16
         }
 
@@ -266,34 +320,27 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         doc.fontSize(10).fillColor('#000')
         doc.text('Rechnungsbetrag', labelX, y)
         doc.text(formatEur(data.totalGrossCents), valueX, y, { width: valueW, align: 'right' })
-        y += 18
-        doc.text('Bezahlter Betrag', labelX, y)
-        doc.text(formatEur(data.totalGrossCents), valueX, y, { width: valueW, align: 'right' })
 
-        y += 24
-        doc.rect(280, y - 4, pageWidth - 230, 22).fill('#f0fdf4')
-        doc.fontSize(10).fillColor('#16a34a')
-        doc.text('Offener Betrag', labelX, y)
-        doc.text(formatEur(0), valueX, y, { width: valueW, align: 'right' })
+        // Payment-status lines only make sense on a payable document, not on a Storno.
+        if (kind !== 'cancellation') {
+            y += 18
+            doc.text('Bezahlter Betrag', labelX, y)
+            doc.text(formatEur(data.totalGrossCents), valueX, y, { width: valueW, align: 'right' })
+
+            y += 24
+            doc.rect(280, y - 4, pageWidth - 230, 22).fill('#f0fdf4')
+            doc.fontSize(10).fillColor('#16a34a')
+            doc.text('Offener Betrag', labelX, y)
+            doc.text(formatEur(0), valueX, y, { width: valueW, align: 'right' })
+        }
 
         // Finalize
         doc.end()
     })
 }
 
-/**
- * Generate the next invoice number for a conference.
- * Pattern: PB-CON{YY}-{NNN}
- */
-export async function generateInvoiceNumber(
-    ordersService: any,
-    conferenceYear: number
-): Promise<string> {
-    const yy = String(conferenceYear).slice(-2)
-    const prefix = `PB-CON${yy}-`
-
-    // Find the highest existing invoice number with this prefix
-    const existingOrders = await ordersService.readByQuery({
+async function highestInvoiceNumber(itemsService: any, prefix: string): Promise<number> {
+    const existing = await itemsService.readByQuery({
         filter: {
             invoice_number: { _starts_with: prefix },
         },
@@ -302,17 +349,41 @@ export async function generateInvoiceNumber(
         limit: 1,
     })
 
-    let nextNum = 1
-    if (existingOrders && existingOrders.length > 0 && existingOrders[0].invoice_number) {
-        const existing = existingOrders[0].invoice_number as string
-        const numPart = existing.replace(prefix, '')
+    if (existing && existing.length > 0 && existing[0].invoice_number) {
+        const numPart = (existing[0].invoice_number as string).replace(prefix, '')
         const parsed = parseInt(numPart, 10)
         if (!isNaN(parsed)) {
-            nextNum = parsed + 1
+            return parsed
         }
     }
 
-    return `${prefix}${String(nextNum).padStart(3, '0')}`
+    return 0
+}
+
+/**
+ * Generate the next invoice number for a conference.
+ * Pattern: PB-CON{YY}-{NNN}
+ *
+ * Corrections and cancellations draw from the same sequential series as original
+ * invoices. The maximum is taken across BOTH `ticket_orders.invoice_number` (legacy
+ * orders that predate the `ticket_invoices` collection, plus the order's pointer to
+ * its current invoice) and `ticket_invoices.invoice_number` (every issued document),
+ * so numbers are never reused regardless of backfill state.
+ */
+export async function generateInvoiceNumber(
+    ordersService: any,
+    invoicesService: any,
+    conferenceYear: number
+): Promise<string> {
+    const yy = String(conferenceYear).slice(-2)
+    const prefix = `PB-CON${yy}-`
+
+    const highest = Math.max(
+        await highestInvoiceNumber(ordersService, prefix),
+        await highestInvoiceNumber(invoicesService, prefix)
+    )
+
+    return `${prefix}${String(highest + 1).padStart(3, '0')}`
 }
 
 /**
