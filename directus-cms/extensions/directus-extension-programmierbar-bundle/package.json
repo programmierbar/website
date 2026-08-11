@@ -153,6 +153,11 @@
                 "type": "endpoint",
                 "name": "regenerate-invoice",
                 "source": "src/regenerate-invoice/index.ts"
+            },
+            {
+                "type": "interface",
+                "name": "regenerate-invoice-button",
+                "source": "src/regenerate-invoice/interface.ts"
             }
         ],
         "host": "^10.10.0"
