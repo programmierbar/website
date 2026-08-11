@@ -5,7 +5,7 @@ import { getSetting } from '../shared/settings.js'
 import { generateUniqueTicketCode, formatPrice } from '../shared/ticket-utils.js'
 import { generateInvoiceNumber } from '../shared/invoice-generator.js'
 import { issueOriginalInvoice, markInvoiceSent } from '../shared/invoice-service.js'
-import { postSlackMessage } from '../shared/postSlackMessage.ts'
+import { postSlackMessage } from '../shared/postSlackMessage.js'
 import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'ticket-order-processing'

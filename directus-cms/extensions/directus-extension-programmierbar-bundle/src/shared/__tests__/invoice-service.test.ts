@@ -9,6 +9,7 @@ import {
     ensureInvoiceDocuments,
     findCancellationFor,
     findCurrentInvoiceDocument,
+    InvalidTicketCountError,
     issueOriginalInvoice,
     markInvoiceSent,
     MissingDatePaidError,
@@ -149,6 +150,13 @@ describe('buildInvoiceSnapshot', () => {
         expect(snapshot.vat_amount_cents).toBe(0)
         expect(snapshot.total_gross_cents).toBe(0)
         expect(snapshot.unit_price_gross_cents).toBe(0)
+    })
+
+    test('rejects a non-positive ticket count instead of baking Infinity/NaN into the snapshot', () => {
+        expect(() => buildInvoiceSnapshot(ORDER, 'Conf', 0)).toThrow(InvalidTicketCountError)
+        expect(() => buildInvoiceSnapshot(ORDER, 'Conf', 0)).toThrow(/invalid ticket count \(0\)/)
+        expect(() => buildInvoiceSnapshot(ORDER, 'Conf', -1)).toThrow(InvalidTicketCountError)
+        expect(() => buildInvoiceSnapshot(ORDER, 'Conf', Number.NaN)).toThrow(InvalidTicketCountError)
     })
 })
 

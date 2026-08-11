@@ -7,6 +7,7 @@ import {
     ensureInvoiceDocuments,
     findCancellationFor,
     findCurrentInvoiceDocument,
+    InvalidTicketCountError,
     MissingDatePaidError,
     negateInvoiceSnapshot,
     parseInvoiceSnapshot,
@@ -193,6 +194,12 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             } catch (err: any) {
                 if (err instanceof HttpError) {
                     res.status(err.status).send({ error: err.message })
+                    return
+                }
+                // Same class of client error as the empty-attendees 400 in
+                // loadOrderContext: nothing to invoice, not a server fault.
+                if (err instanceof InvalidTicketCountError) {
+                    res.status(400).send({ error: err.message })
                     return
                 }
                 logger.error(

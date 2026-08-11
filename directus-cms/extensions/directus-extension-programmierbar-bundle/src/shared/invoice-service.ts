@@ -75,9 +75,32 @@ export function formatInvoiceDate(date: Date): string {
 }
 
 /**
+ * Thrown by {@link buildInvoiceSnapshot} when the ticket count is not a positive
+ * number. Dividing by 0 (or NaN) would silently bake Infinity/NaN amounts into the
+ * frozen snapshot and the rendered PDF. Callers surface this as a client error —
+ * an order without attendees has nothing to invoice.
+ */
+export class InvalidTicketCountError extends Error {
+    constructor(orderNumber: string | null | undefined, ticketCount: number) {
+        super(
+            `Order ${orderNumber || '(unknown)'} has an invalid ticket count (${ticketCount}) — cannot build an invoice snapshot without at least one ticket`
+        )
+        this.name = 'InvalidTicketCountError'
+    }
+}
+
+/**
  * Build the immutable billing/amount snapshot for an order as it looks right now.
+ *
+ * Throws {@link InvalidTicketCountError} for a non-positive or non-finite
+ * `ticketCount` — the per-ticket price division below would otherwise produce
+ * Infinity/NaN in the snapshot.
  */
 export function buildInvoiceSnapshot(order: InvoiceOrder, conferenceTitle: string, ticketCount: number): InvoiceSnapshot {
+    if (!Number.isFinite(ticketCount) || ticketCount <= 0) {
+        throw new InvalidTicketCountError(order.order_number, ticketCount)
+    }
+
     // Derive per-ticket price from the pre-discount subtotal so the line item reconciles
     // with Zwischensumme; the Rabatt line takes us down to the actual total.
     // `??` (not `||`) everywhere below: 0 is a legitimate stored amount (free orders,
