@@ -1,20 +1,17 @@
 <script setup lang="ts">
 import { useApi } from '@directus/extensions-sdk'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import {
+    deriveInvoiceActionsState,
+    isExistingItemKey,
+    type InvoiceDocumentRow,
+} from './invoice-actions-state.js'
 
 const props = defineProps<{ collection: string; primaryKey: string }>()
 
 const api = useApi()
 
 type ActionKey = 'regenerate' | 'correction' | 'cancellation'
-
-interface InvoiceDocumentRow {
-    id: string
-    type: 'original' | 'correction' | 'cancellation'
-    invoice_number: string
-    sent_at: string | null
-    related_invoice: string | null
-}
 
 const loading = ref(true)
 const loadFailed = ref(false)
@@ -26,37 +23,15 @@ const errorMessage = ref<string | null>(null)
 const orderInvoiceNumber = ref<string | null>(null)
 const documents = ref<InvoiceDocumentRow[]>([])
 
-// On the "create item" page there is no order yet.
-const isExistingItem = computed(() => props.primaryKey && props.primaryKey !== '+')
+// False on the "create item" page — and while Directus is still loading the
+// item record, during which it passes '+' instead of the real primary key.
+const isExistingItem = computed(() => isExistingItemKey(props.primaryKey))
 
-const currentDocument = computed<InvoiceDocumentRow | null>(() => {
-    for (let i = documents.value.length - 1; i >= 0; i--) {
-        const doc = documents.value[i]
-        if (doc && (doc.type === 'original' || doc.type === 'correction')) {
-            return doc
-        }
-    }
-    return null
-})
+const state = computed(() => deriveInvoiceActionsState(orderInvoiceNumber.value, documents.value))
 
-const isCancelled = computed(() => {
-    const current = currentDocument.value
-    if (!current) return false
-    return documents.value.some((doc) => doc.type === 'cancellation' && doc.related_invoice === current.id)
-})
-
-// Orders that got their invoice before the ticket_invoices collection existed have
-// no document rows yet; all pre-existing invoices were emailed, so they count as issued.
-const isIssued = computed(() => {
-    const current = currentDocument.value
-    if (current) return current.sent_at !== null
-    return orderInvoiceNumber.value !== null
-})
-
-const hasInvoice = computed(() => orderInvoiceNumber.value !== null || currentDocument.value !== null)
-
-const showRegenerate = computed(() => hasInvoice.value && !isIssued.value && !isCancelled.value)
-const showPostIssuanceActions = computed(() => hasInvoice.value && isIssued.value && !isCancelled.value)
+const isCancelled = computed(() => state.value.isCancelled)
+const showRegenerate = computed(() => state.value.showRegenerate)
+const showPostIssuanceActions = computed(() => state.value.showPostIssuanceActions)
 
 const ACTION_TEXT: Record<ActionKey, { button: string; title: string; body: string; confirm: string }> = {
     regenerate: {
@@ -89,7 +64,10 @@ const ACTION_TEXT: Record<ActionKey, { button: string; title: string; body: stri
     },
 }
 
+let loadStateRunId = 0
+
 async function loadState(): Promise<void> {
+    const runId = ++loadStateRunId
     loading.value = true
     loadFailed.value = false
     try {
@@ -106,6 +84,7 @@ async function loadState(): Promise<void> {
                 },
             }),
         ])
+        if (runId !== loadStateRunId) return // a newer load superseded this one
         orderInvoiceNumber.value = orderResponse.data.data?.invoice_number ?? null
         documents.value = documentsResponse.data.data ?? []
         if (orderResponse.data.data?.is_internal === true) {
@@ -114,9 +93,10 @@ async function loadState(): Promise<void> {
             documents.value = []
         }
     } catch {
+        if (runId !== loadStateRunId) return
         loadFailed.value = true
     } finally {
-        loading.value = false
+        if (runId === loadStateRunId) loading.value = false
     }
 }
 
@@ -146,13 +126,21 @@ async function runAction(action: ActionKey): Promise<void> {
     }
 }
 
-onMounted(() => {
-    if (isExistingItem.value) {
-        void loadState()
-    } else {
-        loading.value = false
-    }
-})
+// The item detail page mounts interfaces with primary key '+' while the item
+// record is still loading and swaps in the real key afterwards, so a one-shot
+// onMounted fetch would run too early and never see the key (the actions then
+// stayed invisible). Reacting to the key covers mount AND the later swap.
+watch(
+    () => props.primaryKey,
+    (primaryKey) => {
+        if (isExistingItemKey(primaryKey)) {
+            void loadState()
+        } else {
+            loading.value = false
+        }
+    },
+    { immediate: true }
+)
 </script>
 
 <template>
@@ -182,6 +170,11 @@ onMounted(() => {
 
             <v-notice v-else-if="isCancelled" type="info">
                 Die Rechnung dieser Bestellung wurde storniert — es sind keine weiteren Aktionen möglich.
+            </v-notice>
+
+            <v-notice v-else type="info">
+                Für diese Bestellung gibt es keine Rechnung (z.&nbsp;B. interne oder noch nicht bezahlte Bestellung) —
+                es sind keine Rechnungs-Aktionen verfügbar.
             </v-notice>
         </template>
 
