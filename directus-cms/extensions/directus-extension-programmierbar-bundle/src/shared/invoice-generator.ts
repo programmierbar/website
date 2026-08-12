@@ -111,6 +111,9 @@ const LOGO_ORIGIN = { x: 50, y: 50 }
 const LOGO_SCALE = 0.55
 const LOGO_VIEWBOX = { width: 280, height: 33 }
 
+/** Right edge of the logo's bounding box in the PDF header. */
+export const LOGO_RIGHT_EDGE = LOGO_ORIGIN.x + LOGO_VIEWBOX.width * LOGO_SCALE
+
 /** Minimum horizontal gap between the logo's right edge and the heading block. */
 const HEADING_LOGO_GAP = 15
 
@@ -120,7 +123,7 @@ const HEADING_LOGO_GAP = 15
  * otherwise a long heading ("Rechnungsberichtigung Nr.: PB-CON26-0499")
  * overlaps the logo.
  */
-export const HEADING_X = LOGO_ORIGIN.x + LOGO_VIEWBOX.width * LOGO_SCALE + HEADING_LOGO_GAP
+export const HEADING_X = LOGO_RIGHT_EDGE + HEADING_LOGO_GAP
 
 export const HEADING_MAX_FONT_SIZE = 18
 export const HEADING_MIN_FONT_SIZE = 13

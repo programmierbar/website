@@ -2,7 +2,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { describe, expect, jest, test } from '@jest/globals'
 import PDFDocument from 'pdfkit'
-import { fitHeadingFontSize, HEADING_MAX_FONT_SIZE, HEADING_MIN_FONT_SIZE, HEADING_X } from '../invoice-generator.ts'
+import {
+    fitHeadingFontSize,
+    HEADING_MAX_FONT_SIZE,
+    HEADING_MIN_FONT_SIZE,
+    HEADING_X,
+    LOGO_RIGHT_EDGE,
+} from '../invoice-generator.ts'
 
 // `import.meta.url` in the font loader cannot be parsed by Jest's CJS transform.
 jest.mock('../museo-font.ts', () => ({ tryLoadMuseoFont: () => null }))
@@ -22,11 +28,8 @@ function measuringDoc() {
 }
 
 describe('invoice heading layout', () => {
-    // Logo: drawn at x=50 with scale 0.55, SVG viewBox width 280.
-    const logoRightEdge = 50 + 280 * 0.55
-
     test('heading block starts right of the logo bounding box', () => {
-        expect(HEADING_X).toBeGreaterThan(logoRightEdge)
+        expect(HEADING_X).toBeGreaterThan(LOGO_RIGHT_EDGE)
     })
 
     test('widest realistic headings fit on one line within the heading block', () => {
