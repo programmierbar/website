@@ -105,6 +105,49 @@ export type InvoiceData =
           referenceDate: string
       })
 
+// Logo geometry in the PDF header: drawn at LOGO_ORIGIN with LOGO_SCALE,
+// the SVG viewBox is 280 x 33 (see LOGO_PATHS above).
+const LOGO_ORIGIN = { x: 50, y: 50 }
+const LOGO_SCALE = 0.55
+const LOGO_VIEWBOX = { width: 280, height: 33 }
+
+/** Right edge of the logo's bounding box in the PDF header. */
+export const LOGO_RIGHT_EDGE = LOGO_ORIGIN.x + LOGO_VIEWBOX.width * LOGO_SCALE
+
+/** Minimum horizontal gap between the logo's right edge and the heading block. */
+const HEADING_LOGO_GAP = 15
+
+/**
+ * Left edge of the heading's text block. The heading shares the top row with
+ * the logo, so its block MUST start right of the logo's bounding box —
+ * otherwise a long heading ("Rechnungsberichtigung Nr.: PB-CON26-0499")
+ * overlaps the logo.
+ */
+export const HEADING_X = LOGO_RIGHT_EDGE + HEADING_LOGO_GAP
+
+export const HEADING_MAX_FONT_SIZE = 18
+export const HEADING_MIN_FONT_SIZE = 13
+
+/**
+ * Find the largest font size (between HEADING_MAX_FONT_SIZE and
+ * HEADING_MIN_FONT_SIZE) at which `text` fits into `maxWidth` on a single
+ * line. Returns HEADING_MIN_FONT_SIZE even if the text still overflows at
+ * that size — the caller then lets pdfkit wrap it inside the same constrained
+ * block, where additional lines land below the logo row instead of on top of
+ * the logo.
+ */
+export function fitHeadingFontSize(
+    measure: (text: string, fontSize: number) => number,
+    text: string,
+    maxWidth: number
+): number {
+    let fontSize = HEADING_MAX_FONT_SIZE
+    while (fontSize > HEADING_MIN_FONT_SIZE && measure(text, fontSize) > maxWidth) {
+        fontSize -= 1
+    }
+    return fontSize
+}
+
 function formatEur(cents: number): string {
     return new Intl.NumberFormat('de-DE', {
         style: 'currency',
@@ -155,27 +198,48 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         const pageWidth = doc.page.width - 100 // margins
 
         // --- Header with logo ---
-        drawLogo(doc, 50, 50, 0.55)
+        drawLogo(doc, LOGO_ORIGIN.x, LOGO_ORIGIN.y, LOGO_SCALE)
 
         const heading =
             kind === 'correction' ? 'Rechnungsberichtigung' : kind === 'cancellation' ? 'Stornorechnung' : 'Rechnung'
+        const headingText = `${heading} Nr.: ${data.invoiceNumber}`
 
-        doc.fontSize(18).fillColor('#000')
-        doc.text(`${heading} Nr.: ${data.invoiceNumber}`, 50, 50, { align: 'right' })
+        // The heading shares the top row with the logo, so its right-aligned text
+        // block is constrained to start right of the logo's bounding box. If the
+        // heading is too long for that block at the default size (e.g.
+        // "Rechnungsberichtigung Nr.: ..."), shrink the font until it fits on one
+        // line; if even the minimum size overflows, pdfkit wraps it within the
+        // same block, so extra lines continue below the logo row — the heading
+        // can never overlap the logo.
+        const headingWidth = 50 + pageWidth - HEADING_X
+        doc.fillColor('#000')
+        const headingFontSize = fitHeadingFontSize(
+            (text, size) => doc.fontSize(size).widthOfString(text),
+            headingText,
+            headingWidth
+        )
+        doc.fontSize(headingFontSize)
+        doc.text(headingText, HEADING_X, 50, { width: headingWidth, align: 'right' })
+
+        // Date/reference lines keep their original positions unless a wrapped
+        // (multi-line) heading pushes them down.
+        const headingHeight = doc.heightOfString(headingText, { width: headingWidth })
+        const headingWrapped = headingHeight > doc.currentLineHeight() * 1.5
+        const metaY = headingWrapped ? Math.ceil(50 + headingHeight + 6) : 75
 
         doc.fontSize(9).fillColor('#666')
-        doc.text(`Rechnungsdatum: ${data.invoiceDate}`, 50, 75, { align: 'right' })
+        doc.text(`Rechnungsdatum: ${data.invoiceDate}`, 50, metaY, { align: 'right' })
         if (kind === 'invoice') {
-            doc.text(`Fälligkeitsdatum: ${data.invoiceDate}`, 50, 87, { align: 'right' })
+            doc.text(`Fälligkeitsdatum: ${data.invoiceDate}`, 50, metaY + 12, { align: 'right' })
         } else {
             // referenceNumber/referenceDate are guaranteed by the guard above.
-            doc.text(`Bezug: Rechnung Nr. ${data.referenceNumber} vom ${data.referenceDate}`, 50, 87, {
+            doc.text(`Bezug: Rechnung Nr. ${data.referenceNumber} vom ${data.referenceDate}`, 50, metaY + 12, {
                 align: 'right',
             })
         }
 
         // --- Seller info ---
-        let y = 115
+        let y = Math.max(115, metaY + 40)
         doc.fontSize(9).fillColor('#333')
         doc.text(SELLER.name, 50, y)
         y += 13
@@ -193,7 +257,10 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
 
         // --- Separator ---
         y += 20
-        doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        doc.moveTo(50, y)
+            .lineTo(50 + pageWidth, y)
+            .strokeColor('#ccc')
+            .stroke()
 
         // --- Customer info ---
         y += 12
@@ -235,7 +302,10 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
 
         // --- Separator ---
         y += 10
-        doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        doc.moveTo(50, y)
+            .lineTo(50 + pageWidth, y)
+            .strokeColor('#ccc')
+            .stroke()
 
         // --- Explicit reference to the corrected/cancelled invoice (§31 Abs. 5 UStDV) ---
         if (kind !== 'invoice') {
@@ -247,7 +317,10 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
             doc.fontSize(10).fillColor('#000')
             doc.text(referenceText, 50, y, { width: pageWidth })
             y += 18
-            doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+            doc.moveTo(50, y)
+                .lineTo(50 + pageWidth, y)
+                .strokeColor('#ccc')
+                .stroke()
         }
 
         // --- Line items table ---
@@ -281,7 +354,10 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         y += 35
 
         // --- Separator ---
-        doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        doc.moveTo(50, y)
+            .lineTo(50 + pageWidth, y)
+            .strokeColor('#ccc')
+            .stroke()
         y += 14
 
         // --- Totals ---
@@ -314,7 +390,10 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         doc.text(formatEur(data.vatAmountCents), valueX, y, { width: valueW, align: 'right' })
 
         y += 24
-        doc.moveTo(280, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        doc.moveTo(280, y)
+            .lineTo(50 + pageWidth, y)
+            .strokeColor('#ccc')
+            .stroke()
         y += 14
 
         doc.fontSize(10).fillColor('#000')
