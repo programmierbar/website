@@ -14,7 +14,33 @@
             </button>
         </div>
         <div v-if="message" class="p-4 text-base font-bold leading-normal text-lime md:text-xl lg:text-2xl">
-            <p>{{ message.text }}</p>
+            <!-- The up-vote thank-you carries links, so it lives in the template — flash messages render as plain text. -->
+            <p v-if="votedDirection === 'up'">
+                Danke dir! 💚 Wenn du magst: Deine Bewertung bei
+                <a
+                    class="underline hover:text-blue"
+                    :href="APPLE_PODCASTS_URL"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-cursor-hover
+                    @click="() => trackGoal(OPEN_APPLE_PODCASTS_EVENT_ID)"
+                >
+                    Apple Podcasts
+                </a>
+                oder
+                <a
+                    class="underline hover:text-blue"
+                    :href="SPOTIFY_URL"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-cursor-hover
+                    @click="() => trackGoal(OPEN_SPOTIFY_EVENT_ID)"
+                >
+                    Spotify
+                </a>
+                hilft uns dabei, noch mehr Hörer:innen wie dich zu erreichen.
+            </p>
+            <p v-else>{{ message.text }}</p>
         </div>
     </div>
 
@@ -76,6 +102,8 @@
 import thumbs_down from '~/assets/icons/thumb-down.svg'
 import thumbs_up from '~/assets/icons/thumb-up.svg'
 import { useDirectus } from '~/composables/useDirectus'
+import { APPLE_PODCASTS_URL, OPEN_APPLE_PODCASTS_EVENT_ID, OPEN_SPOTIFY_EVENT_ID, SPOTIFY_URL } from '~/config'
+import { trackGoal } from '~/helpers'
 import type { DirectusPodcastItem } from '~/types'
 import { ref } from 'vue'
 import { defaultPatterns } from 'web-haptics'
@@ -96,6 +124,9 @@ const comment = ref('')
 
 const ratingId = ref(message.value?.payload?.id || '')
 
+// Only set once a vote went through, so the error path keeps the plain error message.
+const votedDirection = ref<'up' | 'down' | null>(null)
+
 const rate = async function (upOrDown: 'up' | 'down') {
     if (istActive.value) return
     istActive.value = true
@@ -109,8 +140,10 @@ const rate = async function (upOrDown: 'up' | 'down') {
             },
         })
         setMessage('Vielen Dank für dein Feedback!', 'rating', {})
+        votedDirection.value = upOrDown
         ratingId.value = result?.id ?? ''
     } catch {
+        votedDirection.value = null
         setMessage('Leider trat ein Fehler auf.', 'rating', {})
     }
     istActive.value = false
