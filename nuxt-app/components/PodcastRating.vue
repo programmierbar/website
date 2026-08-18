@@ -102,12 +102,12 @@
 import thumbs_down from '~/assets/icons/thumb-down.svg'
 import thumbs_up from '~/assets/icons/thumb-up.svg'
 import { useDirectus } from '~/composables/useDirectus'
+import { APPLE_PODCASTS_URL, OPEN_APPLE_PODCASTS_EVENT_ID, OPEN_SPOTIFY_EVENT_ID, SPOTIFY_URL } from '~/config'
+import { trackGoal } from '~/helpers'
 import type { DirectusPodcastItem } from '~/types'
 import { ref } from 'vue'
 import { defaultPatterns } from 'web-haptics'
 import { useWebHaptics } from 'web-haptics/vue'
-import { APPLE_PODCASTS_URL, OPEN_APPLE_PODCASTS_EVENT_ID, OPEN_SPOTIFY_EVENT_ID, SPOTIFY_URL } from '../config'
-import { trackGoal } from '../helpers'
 
 const { message, setMessage, clearMessage } = useFlashMessage()
 const props = defineProps<{ podcast: DirectusPodcastItem }>()
@@ -143,6 +143,7 @@ const rate = async function (upOrDown: 'up' | 'down') {
         votedDirection.value = upOrDown
         ratingId.value = result?.id ?? ''
     } catch {
+        votedDirection.value = null
         setMessage('Leider trat ein Fehler auf.', 'rating', {})
     }
     istActive.value = false
