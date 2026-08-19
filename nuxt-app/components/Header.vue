@@ -82,10 +82,10 @@
             tabindex="-1"
         >
             <div
-                class="flex min-h-screen flex-col space-y-16 px-6 pb-8 pt-28 lg:pl-8 lg:pr-24 lg:pt-36 xl:pr-32 2xl:pr-48"
+                class="flex min-h-screen flex-col space-y-8 px-6 pb-8 pt-28 lg:pl-8 lg:pr-24 lg:pt-32 xl:pr-32 2xl:pr-48"
             >
                 <!-- Main menu -->
-                <ul class="flex flex-col space-y-4 lg:flex-grow lg:items-end lg:space-y-0">
+                <ul class="flex flex-col space-y-4 lg:items-end lg:space-y-0">
                     <li
                         v-for="(mainMenuItem, index) in mainMenuItems"
                         :key="mainMenuItem.href"
@@ -108,9 +108,7 @@
                     </li>
                 </ul>
 
-                <div
-                    class="flex flex-grow flex-col justify-between space-y-16 lg:flex-grow-0 lg:flex-row-reverse lg:items-end lg:space-y-0"
-                >
+                <div class="flex flex-col space-y-8 lg:flex-row-reverse lg:items-end lg:justify-between lg:space-y-0">
                     <!-- Social networks -->
                     <SocialNetworks class="h-8 self-end" />
 
@@ -139,8 +137,8 @@ import SearchSVG from '~/assets/icons/search.svg'
 import BrandIcon from '~/assets/images/brand-icon.svg'
 import BrandLogo from '~/assets/images/brand-logo.svg'
 import PrimaryPbButton from '~/components/PrimaryPbButton.vue'
-import { nextTick, onMounted, ref, watch } from 'vue'
-import { useDocument, useEventListener } from '../composables'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useBodyElement, useDocument, useEventListener } from '../composables'
 import { CLOSE_MENU_EVENT_ID, CLOSE_SEARCH_EVENT_ID, OPEN_MENU_EVENT_ID, OPEN_SEARCH_EVENT_ID } from '../config'
 import { trackGoal } from '../helpers'
 import SocialNetworks from './SocialNetworks.vue'
@@ -149,7 +147,6 @@ const FLAG_SHOW_LOGIN = useRuntimeConfig().public.FLAG_SHOW_LOGIN
 const FLAG_SHOW_NEWS = useRuntimeConfig().public.FLAG_SHOW_NEWS
 
 const mainMenuItems = [
-    { label: 'Home', href: '/' },
     { label: 'Podcast', href: '/podcast' },
     ...(FLAG_SHOW_NEWS ? [{ label: 'News', href: '/news' }] : []),
     { label: 'Meetup', href: '/meetup' },
@@ -180,12 +177,68 @@ const searchPlaceholder = ref('')
 const searchInputElement = ref<HTMLInputElement>()
 const menuElement = ref<HTMLElement>()
 
+// Create body element reference for locking background scroll
+const bodyElement = useBodyElement()
+
+// Remember the body's inline overflow value so it can be restored when the
+// scroll lock is released, instead of clobbering a pre-existing value
+const previousBodyOverflow = ref('')
+
+// Remember the body's inline padding-right for the same reason, since it is
+// adjusted to compensate for the width of the hidden scrollbar
+const previousBodyPaddingRight = ref('')
+
+// Track whether the scroll lock is actually applied, set synchronously with
+// the overflow change so it stays consistent regardless of watcher timing
+const scrollLocked = ref(false)
+
 // Track analytic menu events
 watch(menuIsOpen, () => {
     if (menuIsOpen.value) {
         trackGoal(OPEN_MENU_EVENT_ID)
     } else {
         trackGoal(CLOSE_MENU_EVENT_ID)
+    }
+})
+
+// Lock background scroll while the menu is open so the underlying
+// page can't move behind the overlay, and release it when it closes
+watch(menuIsOpen, () => {
+    if (bodyElement.value) {
+        if (menuIsOpen.value) {
+            // Measure the scrollbar width before hiding overflow (afterwards
+            // the scrollbar is gone and the measurement would be 0)
+            const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+            // Save the current inline overflow and padding-right before locking
+            // so values set elsewhere aren't lost, then lock the scroll
+            previousBodyOverflow.value = bodyElement.value.style.overflow
+            previousBodyPaddingRight.value = bodyElement.value.style.paddingRight
+            bodyElement.value.style.overflow = 'hidden'
+            // Compensate the hidden scrollbar with padding-right so the fixed
+            // header doesn't shift when the scrollbar disappears
+            if (scrollbarWidth > 0) {
+                const currentPaddingRight = parseFloat(getComputedStyle(bodyElement.value).paddingRight) || 0
+                bodyElement.value.style.paddingRight = `${currentPaddingRight + scrollbarWidth}px`
+            }
+            scrollLocked.value = true
+        } else if (scrollLocked.value) {
+            // Restore the previously saved overflow and padding-right on close
+            bodyElement.value.style.overflow = previousBodyOverflow.value
+            bodyElement.value.style.paddingRight = previousBodyPaddingRight.value
+            scrollLocked.value = false
+        }
+    }
+})
+
+// Release the lock if the component is unmounted while it still holds it
+// (e.g. a route change unmounts before the close watcher has run), so the
+// page can't stay permanently locked. Drive this off the actual lock state,
+// not menuIsOpen, since the watcher is async and may not have run yet
+onBeforeUnmount(() => {
+    if (bodyElement.value && scrollLocked.value) {
+        bodyElement.value.style.overflow = previousBodyOverflow.value
+        bodyElement.value.style.paddingRight = previousBodyPaddingRight.value
+        scrollLocked.value = false
     }
 })
 

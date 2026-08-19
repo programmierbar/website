@@ -1,18 +1,17 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { randomUUID } from 'node:crypto'
-import { Readable } from 'node:stream'
 import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
 import { getSetting } from '../shared/settings.js'
 import { generateUniqueTicketCode, formatPrice } from '../shared/ticket-utils.js'
-import {
-    generateInvoicePdf,
-    generateInvoiceNumber,
-    ticketTypeLabel,
-    type InvoiceData,
-} from '../shared/invoice-generator.js'
+import { generateInvoiceNumber } from '../shared/invoice-generator.js'
+import { issueOriginalInvoice, markInvoiceSent } from '../shared/invoice-service.js'
+import { postSlackMessage } from '../shared/postSlackMessage.js'
 import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'ticket-order-processing'
+
+/** How often to attempt stamping `sent_at` on the invoice document row. */
+const MARK_SENT_ATTEMPTS = 3
 
 export default defineHook(({ action }, hookContext) => {
     const logger = hookContext.logger
@@ -62,6 +61,11 @@ export default defineHook(({ action }, hookContext) => {
             })
 
             const conferencesService = new ItemsService('conferences', {
+                schema,
+                accountability: { admin: true },
+            })
+
+            const invoicesService = new ItemsService('ticket_invoices', {
                 schema,
                 accountability: { admin: true },
             })
@@ -164,76 +168,47 @@ export default defineHook(({ action }, hookContext) => {
                 const pricePerTicket = Math.round((order.total_cents || 0) / attendees.length)
                 const purchaserName = `${order.purchaser_first_name} ${order.purchaser_last_name}`
 
-                // --- Generate invoice (skipped for internal employee orders) ---
+                // --- Generate invoice document (skipped for internal employee orders) ---
+                // Document generation is deliberately separate from email sending below:
+                // the document row is created first with sent_at = null, and only a
+                // successfully sent confirmation email marks it as issued. Corrections and
+                // cancellations are created through the invoice-lifecycle endpoint and
+                // never pass through this hook, so they can never trigger this email.
                 let invoiceNumber: string | null = null
                 let invoiceFileName: string | null = null
                 let pdfBuffer: Buffer | null = null
+                let invoiceDocumentId: string | null = null
 
                 if (!isInternal) {
                     const conferenceYear = new Date(conference.start_on).getFullYear()
-                    invoiceNumber = await generateInvoiceNumber(ordersService, conferenceYear)
-
-                    const now = new Date()
-                    const invoiceDate = now.toLocaleDateString('de-DE', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                    })
-
-                    // Derive per-ticket price from the pre-discount subtotal so the line item reconciles with Zwischensumme; the Rabatt line takes us down to the actual total.
-                    const subtotalCents = order.subtotal_cents || order.total_cents || 0
-                    const baseUnitNetCents = Math.round(subtotalCents / attendees.length)
-                    const grossPerTicket = Math.round(baseUnitNetCents * 1.19)
-
-                    const invoiceData: InvoiceData = {
-                        invoiceNumber,
-                        invoiceDate,
-                        purchaserName,
-                        purchaserEmail: order.purchaser_email,
-                        companyName: order.company_name,
-                        companyVatId: order.company_vat_id,
-                        billingAddressLine1: order.billing_address_line1,
-                        billingAddressLine2: order.billing_address_line2,
-                        billingCity: order.billing_city,
-                        billingPostalCode: order.billing_postal_code,
-                        billingCountry: order.billing_country,
-                        conferenceTitle: conference.title,
-                        ticketType: ticketTypeLabel(order.ticket_type),
-                        ticketCount: attendees.length,
-                        unitPriceGrossCents: grossPerTicket,
-                        subtotalCents: order.subtotal_cents || order.total_cents,
-                        discountAmountCents: order.discount_amount_cents || 0,
-                        vatAmountCents: order.vat_amount_cents || 0,
-                        totalGrossCents: order.total_gross_cents || order.total_cents,
-                    }
+                    invoiceNumber = await generateInvoiceNumber(ordersService, invoicesService, conferenceYear)
 
                     logger.info(`${HOOK_NAME}: Generating invoice ${invoiceNumber} for order ${order.order_number}`)
-                    pdfBuffer = await generateInvoicePdf(invoiceData)
 
-                    // Upload PDF to Directus files
                     const filesService = new FilesService({
                         accountability: { admin: true },
                         schema,
                     })
 
-                    invoiceFileName = `Rechnung-${invoiceNumber}.pdf`
-                    const storageLocation = env.STORAGE_LOCATIONS?.split(',')[0]
-
-                    const pdfStream = Readable.from([pdfBuffer])
-                    const fileId = await filesService.uploadOne(pdfStream, {
-                        type: 'application/pdf',
-                        filename_download: invoiceFileName,
-                        title: `Rechnung ${invoiceNumber}`,
-                        ...(storageLocation && { storage: storageLocation }),
+                    const invoiceResult = await issueOriginalInvoice({
+                        order,
+                        conferenceTitle: conference.title,
+                        ticketCount: attendees.length,
+                        invoiceNumber,
+                        invoiceDate: new Date(),
+                        ordersService,
+                        invoicesService,
+                        filesService,
+                        storageLocation: env.STORAGE_LOCATIONS?.split(',')[0],
                     })
 
-                    // Update order with invoice number and file reference
-                    await ordersService.updateOne(orderId, {
-                        invoice_number: invoiceNumber,
-                        invoice_file: fileId,
-                    })
+                    pdfBuffer = invoiceResult.pdfBuffer
+                    invoiceFileName = invoiceResult.invoiceFileName
+                    invoiceDocumentId = invoiceResult.documentId
 
-                    logger.info(`${HOOK_NAME}: Invoice ${invoiceNumber} generated and stored (file: ${fileId})`)
+                    logger.info(
+                        `${HOOK_NAME}: Invoice ${invoiceNumber} generated and stored (file: ${invoiceResult.fileId}, document: ${invoiceResult.documentId})`
+                    )
                 } else {
                     logger.info(`${HOOK_NAME}: Skipping invoice for internal order ${order.order_number}`)
                 }
@@ -280,7 +255,7 @@ export default defineHook(({ action }, hookContext) => {
                 if (!isInternal && pdfBuffer && invoiceFileName && invoiceNumber) {
                     const totalAmount = formatPrice(order.total_gross_cents || order.total_cents)
 
-                    await sendTemplatedEmail(
+                    const emailSent = await sendTemplatedEmail(
                         {
                             templateKey: 'ticket_order_confirmation',
                             to: order.purchaser_email,
@@ -304,7 +279,53 @@ export default defineHook(({ action }, hookContext) => {
                         context
                     )
 
-                    logger.info(`${HOOK_NAME}: Sent confirmation email with invoice to ${order.purchaser_email}`)
+                    if (emailSent && invoiceDocumentId) {
+                        // The invoice left the house: record issuance on the document row.
+                        // If sending failed, sent_at stays null and the invoice may still be
+                        // regenerated before it is dispatched manually.
+                        //
+                        // The customer now holds an issued invoice, so a lost sent_at update
+                        // would wrongly allow in-place regeneration through the lifecycle
+                        // endpoint. Retry the update and, if it keeps failing, escalate to
+                        // Slack so a human reconciles the document row.
+                        const sentAt = new Date() // capture once: retries must not shift the recorded time
+                        let markSentError: unknown = null
+                        for (let attempt = 1; attempt <= MARK_SENT_ATTEMPTS; attempt++) {
+                            try {
+                                await markInvoiceSent(invoicesService, invoiceDocumentId, sentAt)
+                                markSentError = null
+                                break
+                            } catch (err: any) {
+                                markSentError = err
+                                logger.warn(
+                                    `${HOOK_NAME}: Attempt ${attempt}/${MARK_SENT_ATTEMPTS} to mark invoice ${invoiceNumber} as sent failed: ${err?.message || err}`
+                                )
+                            }
+                        }
+
+                        if (markSentError) {
+                            logger.error(
+                                `${HOOK_NAME}: Invoice ${invoiceNumber} for order ${order.order_number} was emailed to ${order.purchaser_email}, but stamping sent_at on document ${invoiceDocumentId} failed persistently: ${(markSentError as any)?.message || markSentError}`
+                            )
+                            try {
+                                await postSlackMessage(
+                                    `:warning: *${HOOK_NAME}*: Rechnung ${invoiceNumber} zu Bestellung ${order.order_number} wurde per E-Mail an ${order.purchaser_email} verschickt, aber sent_at konnte auf dem Rechnungsdokument (${invoiceDocumentId}) nicht gespeichert werden: ${(markSentError as any)?.message || markSentError}. Bitte sent_at manuell setzen — sonst erlaubt der Invoice-Lifecycle-Endpoint, die bereits verschickte Rechnung in-place neu zu generieren.`
+                                )
+                            } catch (slackErr: any) {
+                                logger.error(
+                                    `${HOOK_NAME}: Failed to send Slack notification: ${slackErr?.message || slackErr}`
+                                )
+                            }
+                        } else {
+                            logger.info(
+                                `${HOOK_NAME}: Sent confirmation email with invoice to ${order.purchaser_email}`
+                            )
+                        }
+                    } else if (!emailSent) {
+                        logger.error(
+                            `${HOOK_NAME}: Confirmation email for order ${order.order_number} could not be sent — invoice ${invoiceNumber} remains marked as not issued`
+                        )
+                    }
                 }
 
                 // --- Send profile invitation email to all attendees ---

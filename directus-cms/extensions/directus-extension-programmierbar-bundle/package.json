@@ -148,6 +148,16 @@
                 "type": "endpoint",
                 "name": "ticket-wallet",
                 "source": "src/ticket-wallet/index.ts"
+            },
+            {
+                "type": "endpoint",
+                "name": "invoice-lifecycle",
+                "source": "src/invoice-lifecycle/index.ts"
+            },
+            {
+                "type": "interface",
+                "name": "invoice-actions",
+                "source": "src/invoice-lifecycle/interface.ts"
             }
         ],
         "host": "^10.10.0"
