@@ -8,11 +8,12 @@ import Stripe from 'stripe'
 // that needs the Stripe changelog read against the params in `tickets/create-checkout.post.ts`, not
 // something to carry along with an npm update.
 //
-// The cast is required and deliberate. `apiVersion` is typed as the single literal the installed SDK
+// The constant stays a plain string literal so it does not advertise a type it cannot honour: the cast
+// belongs at each call site instead. `apiVersion` is typed as the single literal the installed SDK
 // bundles, so pinning any other version cannot type-check — the SDK is on `2026-07-29.dahlia` while we
 // deliberately still talk `2026-02-25.clover`. The cost is that TypeScript no longer rejects a
 // nonsense version string here, so treat this line as hand-checked against Stripe's changelog.
-export const STRIPE_API_VERSION = '2026-02-25.clover' as Stripe.LatestApiVersion
+export const STRIPE_API_VERSION = '2026-02-25.clover'
 
 let stripeInstance: Stripe | null = null
 
@@ -26,7 +27,9 @@ export function getStripe(): Stripe {
         if (!config.stripeSecretKey) {
             throw new Error('NUXT_STRIPE_SECRET_KEY is not configured')
         }
-        stripeInstance = new Stripe(config.stripeSecretKey, { apiVersion: STRIPE_API_VERSION })
+        stripeInstance = new Stripe(config.stripeSecretKey, {
+            apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
+        })
     }
     return stripeInstance
 }

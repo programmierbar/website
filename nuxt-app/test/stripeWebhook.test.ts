@@ -18,7 +18,9 @@ const SECRET = 'whsec_test_secret_do_not_use'
 
 // Constructed the same way `getStripe()` does, against the same pinned version, so a version the SDK
 // rejects would fail here rather than in production.
-const stripe = new Stripe('sk_test_dummy_key_not_used_for_signing', { apiVersion: STRIPE_API_VERSION })
+const stripe = new Stripe('sk_test_dummy_key_not_used_for_signing', {
+    apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
+})
 
 const EVENT = JSON.stringify({
     id: 'evt_test',
@@ -66,7 +68,9 @@ describe('Stripe webhook signature verification', () => {
         )
     })
 
-    it('accepts a Buffer body, which is what the raw request provides', () => {
+    // Buffer support is defensive: `webhook.post.ts` calls `readRawBody(event)` without an encoding, so
+    // h3 hands the handler a utf8 string today. This pins the Buffer overload in case that changes.
+    it('accepts a Buffer body', () => {
         const buffer = Buffer.from(EVENT, 'utf8')
         const event = stripe.webhooks.constructEvent(buffer, sign(EVENT), SECRET)
 
@@ -97,7 +101,7 @@ describe('Stripe checkout session request', () => {
         }) as unknown as typeof fetch
 
         const client = new Stripe('sk_test_dummy_key_not_used_for_signing', {
-            apiVersion: STRIPE_API_VERSION,
+            apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
             httpClient: Stripe.createFetchHttpClient(fakeFetch),
         })
 
@@ -172,7 +176,7 @@ describe('Stripe checkout session request', () => {
         expect(session.id).toBe('cs_test_captured')
     })
 
-    it('keeps the {CHECKOUT_SESSION_ID} placeholder unescaped for Stripe to substitute', async () => {
+    it('keeps the {CHECKOUT_SESSION_ID} placeholder intact through the form-encode round-trip', async () => {
         const { sent } = await capture(PARAMS)
 
         expect(sent.body).toContain('success_url=https://example.com/success?session_id={CHECKOUT_SESSION_ID}')
