@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Podcast rating triggers: the show-note links redirect to ?vote=…, which a
+# JS-rendering crawler casts as a real vote. Keep crawlers out of both shapes.
+Disallow: /podcast/*/up
+Disallow: /podcast/*/down
+Disallow: /*?vote=
