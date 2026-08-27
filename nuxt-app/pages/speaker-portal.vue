@@ -112,13 +112,13 @@
                             <label class="form-label">Bio / Beschreibung *</label>
                             <p class="mb-2 text-sm text-white/60">
                                 Bitte schreibe die Bio in der dritten Person Singular, nicht in der Ich-Form (z. B.
-                                „Philipp Hauer arbeitet remote als Head of Engineering bei commercetools …“).
+                                „Erika Mustermann arbeitet remote als Head of Engineering bei der Beispiel GmbH …“).
                             </p>
                             <textarea
                                 v-model="formData.description"
                                 class="form-textarea"
                                 rows="5"
-                                placeholder="z. B. „Philipp Hauer arbeitet remote als Head of Engineering bei commercetools und beschäftigt sich vor allem mit …“"
+                                placeholder="z. B. „Erika Mustermann arbeitet remote als Head of Engineering bei der Beispiel GmbH und beschäftigt sich vor allem mit …“"
                                 required
                                 maxlength="2000"
                             />
