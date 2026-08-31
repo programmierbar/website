@@ -98,6 +98,7 @@ import BrandLogoIcon from '~/assets/images/brand-logo.svg'
 import PrimaryPbButton from '~/components/PrimaryPbButton.vue'
 import TestimonialSlider from '~/components/TestimonialSlider.vue'
 import { useDirectus } from '~/composables/useDirectus'
+import { getUpcomingMeetups } from '~/helpers'
 import { getAssetUrl } from '~/helpers/getAssetUrl'
 import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'
@@ -120,13 +121,7 @@ const { data: pageData } = useAsyncData(async () => {
         directus.getTestimonials(),
     ])
 
-    const now = new Date()
-
-    // The query sorts newest first, so upcoming meetups have to be reversed: the next date belongs at
-    // the top of the section, not the one furthest out.
-    const upcomingMeetups = meetups
-        .filter((meetup) => new Date(meetup.start_on) > now)
-        .sort((a, b) => new Date(a.start_on).getTime() - new Date(b.start_on).getTime())
+    const upcomingMeetups = getUpcomingMeetups(meetups, new Date())
 
     return { homePage, latestPodcasts, podcastCount, upcomingMeetups, testimonials }
 })

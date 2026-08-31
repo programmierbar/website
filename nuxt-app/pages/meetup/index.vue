@@ -39,6 +39,7 @@
 import TestimonialSlider from '~/components/TestimonialSlider.vue'
 import { useLoadingScreen, usePageMeta } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
+import { getPastMeetups, getUpcomingMeetups } from '~/helpers'
 import type { DirectusMeetupItem, DirectusMeetupPage, DirectusTestimonialItem } from '~/types'
 import { computed, type ComputedRef } from 'vue'
 
@@ -53,15 +54,11 @@ const { data: pageData } = useAsyncData(async () => {
         directus.getTestimonials(),
     ])
 
+    // One reference time for both lists, so a meetup cannot fall out of either.
     const now = new Date()
 
-    const pastMeetups = meetups.filter((meetup) => new Date(meetup.start_on) < now)
-
-    // The query sorts newest first, which is what the past list wants. Upcoming meetups have to run
-    // the other way round, so the next date is the one at the top instead of the one furthest out.
-    const upcomingMeetups = meetups
-        .filter((meetup) => new Date(meetup.start_on) > now)
-        .sort((a, b) => new Date(a.start_on).getTime() - new Date(b.start_on).getTime())
+    const pastMeetups = getPastMeetups(meetups, now)
+    const upcomingMeetups = getUpcomingMeetups(meetups, now)
 
     return { meetupPage, upcomingMeetups, pastMeetups, testimonials }
 })
