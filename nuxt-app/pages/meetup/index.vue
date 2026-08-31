@@ -53,20 +53,14 @@ const { data: pageData } = useAsyncData(async () => {
         directus.getTestimonials(),
     ])
 
-    const pastMeetups = meetups.filter((meetup) => {
-        const now = new Date()
+    const now = new Date()
 
-        return new Date(meetup.start_on) < now
-    })
+    const pastMeetups = meetups.filter((meetup) => new Date(meetup.start_on) < now)
 
     // The query sorts newest first, which is what the past list wants. Upcoming meetups have to run
     // the other way round, so the next date is the one at the top instead of the one furthest out.
     const upcomingMeetups = meetups
-        .filter((meetup) => {
-            const now = new Date()
-
-            return new Date(meetup.start_on) > now
-        })
+        .filter((meetup) => new Date(meetup.start_on) > now)
         .sort((a, b) => new Date(a.start_on).getTime() - new Date(b.start_on).getTime())
 
     return { meetupPage, upcomingMeetups, pastMeetups, testimonials }
