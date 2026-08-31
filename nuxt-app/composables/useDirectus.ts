@@ -629,6 +629,7 @@ export function useDirectus() {
                     'start_on',
                     'end_on',
                     'title',
+                    'intro',
                     'description',
                     'cover_image.*',
                     'tags.tag.id',

@@ -59,11 +59,15 @@ const { data: pageData } = useAsyncData(async () => {
         return new Date(meetup.start_on) < now
     })
 
-    const upcomingMeetups = meetups.filter((meetup) => {
-        const now = new Date()
+    // The query sorts newest first, which is what the past list wants. Upcoming meetups have to run
+    // the other way round, so the next date is the one at the top instead of the one furthest out.
+    const upcomingMeetups = meetups
+        .filter((meetup) => {
+            const now = new Date()
 
-        return new Date(meetup.start_on) > now
-    })
+            return new Date(meetup.start_on) > now
+        })
+        .sort((a, b) => new Date(a.start_on).getTime() - new Date(b.start_on).getTime())
 
     return { meetupPage, upcomingMeetups, pastMeetups, testimonials }
 })

@@ -120,10 +120,14 @@ const { data: pageData } = useAsyncData(async () => {
         directus.getTestimonials(),
     ])
 
-    const upcomingMeetups = meetups.filter((meetup) => {
-        const now = new Date()
-        return new Date(meetup.start_on) > now
-    })
+    // The query sorts newest first, so upcoming meetups have to be reversed: the next date belongs at
+    // the top of the section, not the one furthest out.
+    const upcomingMeetups = meetups
+        .filter((meetup) => {
+            const now = new Date()
+            return new Date(meetup.start_on) > now
+        })
+        .sort((a, b) => new Date(a.start_on).getTime() - new Date(b.start_on).getTime())
 
     return { homePage, latestPodcasts, podcastCount, upcomingMeetups, testimonials }
 })
