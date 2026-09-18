@@ -9,6 +9,9 @@ node_modules
 .output
 dist
 
+# fallow's analysis cache and audit base snapshots
+.fallow
+
 # Playwright smoke-test artefacts
 playwright-report
 test-results
