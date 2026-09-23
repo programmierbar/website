@@ -98,6 +98,7 @@ import BrandLogoIcon from '~/assets/images/brand-logo.svg'
 import PrimaryPbButton from '~/components/PrimaryPbButton.vue'
 import TestimonialSlider from '~/components/TestimonialSlider.vue'
 import { useDirectus } from '~/composables/useDirectus'
+import { getUpcomingMeetups } from '~/helpers'
 import { getAssetUrl } from '~/helpers/getAssetUrl'
 import { generatePodcastSeries } from '~/helpers/jsonLdGenerator'
 import { computed, type ComputedRef } from 'vue'
@@ -120,10 +121,7 @@ const { data: pageData } = useAsyncData(async () => {
         directus.getTestimonials(),
     ])
 
-    const upcomingMeetups = meetups.filter((meetup) => {
-        const now = new Date()
-        return new Date(meetup.start_on) > now
-    })
+    const upcomingMeetups = getUpcomingMeetups(meetups, new Date())
 
     return { homePage, latestPodcasts, podcastCount, upcomingMeetups, testimonials }
 })

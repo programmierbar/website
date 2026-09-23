@@ -44,7 +44,10 @@ export default defineComponent({
     props: {
         meetups: {
             type: Array as PropType<
-                Pick<MeetupItem, 'start_on' | 'end_on' | 'title' | 'cover_image' | 'description'>[]
+                Pick<
+                    MeetupItem,
+                    'id' | 'slug' | 'start_on' | 'end_on' | 'title' | 'cover_image' | 'intro' | 'description'
+                >[]
             >,
             required: true,
         },

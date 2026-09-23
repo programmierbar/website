@@ -39,6 +39,7 @@
 import TestimonialSlider from '~/components/TestimonialSlider.vue'
 import { useLoadingScreen, usePageMeta } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
+import { getPastMeetups, getUpcomingMeetups } from '~/helpers'
 import type { DirectusMeetupItem, DirectusMeetupPage, DirectusTestimonialItem } from '~/types'
 import { computed, type ComputedRef } from 'vue'
 
@@ -53,17 +54,11 @@ const { data: pageData } = useAsyncData(async () => {
         directus.getTestimonials(),
     ])
 
-    const pastMeetups = meetups.filter((meetup) => {
-        const now = new Date()
+    // One reference time for both lists, so a meetup cannot fall out of either.
+    const now = new Date()
 
-        return new Date(meetup.start_on) < now
-    })
-
-    const upcomingMeetups = meetups.filter((meetup) => {
-        const now = new Date()
-
-        return new Date(meetup.start_on) > now
-    })
+    const pastMeetups = getPastMeetups(meetups, now)
+    const upcomingMeetups = getUpcomingMeetups(meetups, now)
 
     return { meetupPage, upcomingMeetups, pastMeetups, testimonials }
 })

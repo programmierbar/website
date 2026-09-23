@@ -63,8 +63,13 @@ jobs:
       run:
         working-directory: nuxt-app
     steps:
+      # Full history, not the default `fetch-depth: 1`: the fallow step below diffs against the PR's
+      # base branch, and a depth-1 checkout has neither that branch nor a merge base to diff against.
+      # The repository is ~11 MB, so fetching all of it costs less than the targeted-fetch dance.
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Reads nuxt-app/.nvmrc rather than naming a version here, so CI and local development cannot
       # drift apart again — there is one file to change, not three.
@@ -77,6 +82,22 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # Dead-code gate: reports unused exports, files, types and unresolved imports as annotations on
+      # the PR diff. `audit --base` scores only what the PR introduces, so the existing findings do not
+      # have to be fixed first and there is no baseline file to keep in sync.
+      #
+      # `continue-on-error` while the 26 pre-existing findings are still in the tree: a run that turns
+      # the job red on day one gets switched off rather than used. Remove it once those are cleaned up
+      # (tracked separately) — from then on a newly introduced dead export fails the job.
+      #
+      # Pinned to an exact version and run through npx rather than added to package.json: fallow is a
+      # ~54 MB platform binary plus a ~27 MB type-aware sidecar, and only CI runs it, so it should not
+      # land in every `npm ci` (local installs and the Vercel build included). Renovate is scoped to
+      # `nuxt-app/**`, so this pin is bumped by hand.
+      - name: Dead-code audit (fallow)
+        continue-on-error: true
+        run: npx --yes fallow@3.27.0 audit --base "origin/$GITHUB_BASE_REF" --format github-annotations
 
       # Keep `prettier:check`, not `prettier` — the latter writes, so it would pass by mutating.
       # Without this step formatting is voluntary, which is how 90 files drifted after the Prettier

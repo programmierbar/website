@@ -559,7 +559,7 @@ sort key.
 | 6 | `asset-generation` | 701 | — | Delete-then-recreate; the conventions doc warns about broken references on mid-process failure |
 | 7 | `social-media-publish` | 445 | — | Outbound publishing; mistakes are public |
 | 8 | `ticket-order-processing`, `ticket-profile-completion`, `ticket-wallet` | 341 / 181 / 121 | — | Payments. 16 typecheck errors between them |
-| 9 | `speaker-portal-notifications`, `content-approval`, `conference`, `set-published-on` | 364 / 130 / 88 / 88 | — | |
+| 9 | `speaker-portal-notifications`, `conference`, `set-published-on` | 364 / 88 / 88 | — | |
 | 10 | `create-profile`, `process-guard`, `speaker-token`, `publishable` | ≤58 | — | Low value, do last or never |
 
 - [ ] One entry per PR, in that order. Items 1–5 are what Phase 4 and Phase 6 depend on; 6–10 can

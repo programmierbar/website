@@ -37,8 +37,8 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | TypeScript 5.9 → 6.0.3 (interstitial, own PR) | ✅ Done (2026-07-31) |
 | 3 | `@nuxt/image-edge` → `@nuxt/image@2` | ✅ Done (2026-07-31) |
 | 4 | **Nuxt 3 → Nuxt 4** | ✅ Done (2026-08-03) |
-| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | 🔄 In progress — 5 of 7 done, 1 **reverted upstream**; only `stripe` left; **audit at zero** |
-| 6 | Deferred: Tailwind 4, Node 24 | ⬜ Deliberately deferred |
+| 5 | Ecosystem majors (Pinia, ESLint, Zod, Directus SDK, Stripe, DOMPurify) | ✅ Done (2026-08-04) — 6 of 7; DOMPurify **reverted upstream**; **audit at zero** |
+| 6 | Deferred: Tailwind 4, TypeScript 7, `app/` migration | ⬜ Deliberately deferred — **Node 24 done early**, see below |
 | — | [Registry sweep and the formatter bump](#registry-sweep-and-the-formatter-bump--done-2026-08-04) | ✅ Done (2026-08-04) |
 | — | [Prettier sweep + format gate](#the-prettier-sweep-and-the-format-gate--done-2026-08-04) | ✅ Done (2026-08-04) |
 | — | [Node 24 alignment for `nuxt-app`](#node-24-alignment-for-nuxt-app--done-2026-08-04) | ✅ Done (2026-08-04) |
@@ -693,13 +693,14 @@ order, or in parallel by different people.
 - [x] **`nodemailer` 8.0.11 → 9.0.3** — ✅ done 2026-08-03. **`npm audit` now reports
       `found 0 vulnerabilities`**, closing the backlog that started at 49 distinct advisories.
       Details below.
-- [ ] **`stripe` 20.4.1 → 22.4.0** — 7 files. Check the pinned API version and the webhook
-      signature-verification API.
+- [x] **`stripe` 20.4.1 → 22.4.0** — ✅ done 2026-08-04, with the **API version pinned first** so the
+      library bump could not move it. This item said "check the pinned API version"; the answer was that
+      there wasn't one. Details below.
 - [ ] 🚫 **`isomorphic-dompurify` 2.20.0 → 3.21.0 — attempted 2026-08-03 and reverted.** It breaks
       the Vercel function runtime, and it has no security upside to justify a workaround. **Stays at
       `~2.20.0`.** Full diagnosis below; re-attempt only when the upstream chain is fixed.
 
-### Progress: 5 of 7 done, 1 reverted
+### Progress: 6 of 7 done, 1 reverted — the phase is complete
 
 | item | status |
 | --- | --- |
@@ -708,12 +709,13 @@ order, or in parallel by different people.
 | ESLint → **10** + flat config | ✅ done 2026-08-03 — see the version note below |
 | Zod → 4, drop `h3-zod` | ✅ done 2026-08-03 |
 | `@directus/sdk` → 24 | ✅ done 2026-08-03 — verified against the live 11.x server |
-| `stripe` → 22.4.0 | ⬜ **deliberately last** — see sequencing note |
+| `stripe` → 22.4.0 | ✅ done 2026-08-04 — API version pinned first, so the wire is unchanged |
 | `isomorphic-dompurify` → 3.x | 🚫 **attempted and reverted 2026-08-03** — breaks the Vercel runtime |
 
-**Sequencing: `stripe` goes last.** Requested 2026-08-03. Everything else in this phase is
-time-unconstrained, but Stripe touches the payment path and may want a second pair of eyes from a
-colleague, so it should not be the thing blocking the rest. **`stripe` is now the only item left.**
+**Sequencing: `stripe` went last.** Requested 2026-08-03, because it touches the payment path and wanted
+a second pair of eyes. It shipped without waiting for that review, and the reason is the pin: with the
+API version held at its current value, the bump changes the library and provably nothing on the wire, so
+what is left for a reviewer is a small, separate decision rather than a bundled one.
 
 The [comment audit](#comment-audit-across-the-upgrade-series--done-2026-08-03) was originally
 scheduled for after this phase, but ran early while `stripe` waits on a colleague — it was independent
@@ -1195,6 +1197,122 @@ and its emitted request was read directly and is unchanged.
 **One stale note corrected:** this item was described above as touching "the 884-line `useDirectus.ts`".
 That file is now 1082 lines. The count was right when written and is not load-bearing either way —
 the file needed no edits.
+
+### `stripe` 20.4.1 → 22.4.0, with the API version pinned first
+
+This item said *"check the pinned API version and the webhook signature-verification API."* **There was
+no pinned API version** — `server/utils/stripe.ts` called `new Stripe(config.stripeSecretKey)` with no
+options, so the SDK sent whichever version it bundled:
+
+| SDK | bundled API version |
+| --- | --- |
+| 20.4.1 (was installed) | `2026-02-25.clover` |
+| 22.4.0 (target) | `2026-07-29.dahlia` |
+
+So the bump was never "a library upgrade that happens to touch types" — it would have **silently moved
+checkout and webhooks onto a different Stripe API major**, `clover` → `dahlia`. That is the real content
+of this item, and it was invisible in the diff.
+
+**Shipped as two commits.** First the pin at its current value, verified as a no-op by reading the SDK's
+own default out of `node_modules` and comparing (`2026-02-25.clover` both sides). Then the library bump
+on top, with the wire held constant. That split is what let it ship without the payment review: what is
+left for a reviewer is one line, `clover` → `dahlia`, not a version bump with an API migration hidden
+inside it.
+
+#### The cast, and why it is the price of the split
+
+SDK 22 types `apiVersion` as the single literal it bundles, so pinning anything else cannot type-check:
+
+```
+server/utils/stripe.ts(24,63): error TS2322: Type '"2026-02-25.clover"' is not assignable to type '"2026-07-29.dahlia"'.
+```
+
+That was the **only** type error the whole upgrade produced, which is itself the useful finding: our code
+is already dahlia-compatible, and nothing else in SDK 22's breaking-change list touches it. Resolved with
+`as Stripe.LatestApiVersion`. The cost is honest and recorded in the file: TypeScript no longer rejects a
+nonsense version string on that line, so it is hand-checked rather than compiler-checked.
+
+The residual trade-off worth naming: types now describe **dahlia** while the wire speaks **clover**. That
+cannot break existing calls, but it means TypeScript would accept a dahlia-only field that clover rejects
+at runtime. It is the argument for making `clover` → `dahlia` a near-term follow-up rather than an
+open-ended one.
+
+#### Verified against the API surface, not the changelog summary
+
+The app's entire Stripe surface is four things: `checkout.sessions.create`, `webhooks.constructEvent`, and
+the `Stripe.Event` / `Stripe.Checkout.Session` types. Checked each dahlia breaking change against the
+params `buildStripeSessionParams` actually sends (`mode`, `customer_email`, `line_items[].price_data`,
+`success_url`, `cancel_url`, `metadata`):
+
+| dahlia breaking change | our exposure |
+| --- | --- |
+| `dynamic_tax_rates` removed from `line_items[]` | not used — grep found no occurrence |
+| `twint.setup_future_usage` enum widened | not used |
+| Issuing / PaymentRecord / Radar / V2 Core changes | none of those resources are called |
+
+SDK 22's own breaking changes are likewise clear: we already use `new Stripe()`, pass params as a single
+first argument, use no callbacks, no per-request host override, and none of the dropped type aliases.
+
+#### Nine tests, because the webhook is the one silent failure
+
+`tickets/webhook.post.ts` is how a paid order becomes a fulfilled order. If signature verification breaks,
+the site keeps taking money and stops issuing tickets, and **no gate and no visitor would see it** — so
+SDK 21's "throw an error when using the wrong webhook parsing method" was the change to worry about.
+There are now two variants, `constructEvent` (synchronous, Node crypto) and `constructEventAsync`; we
+call the synchronous one.
+
+`test/stripeWebhook.test.ts` covers both halves of the payment path with no network and no real keys,
+using Stripe's own `generateTestHeaderString` and `createFetchHttpClient`:
+
+- a correctly signed payload verifies and parses, including `metadata.order_id`
+- a payload modified after signing is rejected
+- a signature made with a different secret is rejected
+- a signature older than the replay tolerance is rejected
+- a `Buffer` body works, which is what `readRawBody` provides
+- the outgoing request carries **`Stripe-Version: 2026-02-25.clover`**, proving the pin reaches the wire
+- an unpinned client sends something *different* — the negative control, without which the line above
+  cannot distinguish "the pin is honoured" from "the SDK sends clover anyway"
+- the checkout request posts amount, currency and `metadata[order_id]` intact under SDK 22's rewritten
+  argument handling
+- `{CHECKOUT_SESSION_ID}` survives unescaped for Stripe to substitute
+
+The signature tests are mutually validating rather than individually trusted: the same payload and secret
+verify, and each single perturbation fails, so the signing helper cannot be a no-op.
+
+#### And a runtime probe, because of Pinia
+
+Pinia 4 passed every local gate and failed only on a real request under `NODE_ENV=production`, because
+bundling changed how it initialised. SDK 22 reworked its entry points and made `Stripe` a true ES6 class,
+so that is the same class of risk — and a build that succeeds says nothing about it.
+
+Booted `.output/server/index.mjs` under `NODE_ENV=production` with dummy Stripe credentials and posted to
+`/api/tickets/webhook` twice:
+
+| probe | result |
+| --- | --- |
+| forged signature `t=1,v1=deadbeef` | **400** `Invalid signature` |
+| valid signature for the same payload | **200** `{"received":true}` |
+
+Both were needed: an endpoint that rejected everything would pass the first, and one that verified nothing
+would pass the second. Also confirmed directly that the ESM default import — what the source uses and what
+Nitro bundles — constructs and exposes `webhooks.constructEvent` and `checkout.sessions.create`.
+
+Incidentally confirmed SDK 22's documented CJS change: `require('stripe')` no longer carries `.default` or
+`.Stripe`, and the value it returns is not `instanceof` itself. Irrelevant here, since nothing in this app
+requires Stripe through CJS, but it is the detail that would break a consumer that did.
+
+#### Verification
+
+`npm test` **100 passing across 11 files** (was 91/10) · `prettier:check` clean · `lint` 0 errors, 127
+warnings · typecheck ratchet **steady at 263** · build exit 0 · `npm audit` `found 0 vulnerabilities` ·
+plus the production-bundle probe above. All on Node 24.19.0.
+
+#### Follow-up: the actual API migration
+
+`clover` → `dahlia` is now a one-line change, and the evidence above suggests it is a no-op for this app's
+surface. It still deserves the payment-path review this item was waiting for, because "the changelog says
+our fields are untouched" is not the same as someone who knows the checkout flow confirming it. Logged in
+the backlog.
 
 ### 🚫 `isomorphic-dompurify` 2.20.0 → 3.21.0 — attempted and reverted
 
@@ -2059,6 +2177,19 @@ browser-support decision nobody made.
       empty `content` alone as out of scope.)
 - [ ] **Drop `@ubclaunchpad/vue-fathom`** (last publish April 2022, 1 usage). Fathom's own snippet
       is a few lines — inlining it removes a dependency entirely. See Appendix A.
+- [ ] 💳 **Move the Stripe API version `2026-02-25.clover` → `2026-07-29.dahlia`.** One line in
+      `server/utils/stripe.ts`, and it removes the cast there along with the types-describe-dahlia /
+      wire-speaks-clover mismatch the pin introduced.
+
+      The evidence says it is a no-op for this app: dahlia's breaking Checkout changes are
+      `dynamic_tax_rates` (unused) and a `twint` enum (unused), and every other change is in resources
+      this app never calls. **That is still not the same as a review** — this is the payment path, and
+      "the changelog says our fields are untouched" wants confirmation from someone who knows the
+      checkout flow. That is exactly the review `stripe` was waiting on, now reduced to one line.
+
+      When it moves: delete the `as Stripe.LatestApiVersion` cast, and expect
+      `test/stripeWebhook.test.ts` to fail on the two assertions that name `clover` explicitly — they are
+      designed to.
 - [ ] **Regenerate `nuxt-app/package-lock.json` under npm 11, deliberately.** Node 24 brings npm 11,
       which classifies dev/optional dependencies differently: `npm install --package-lock-only` rewrites
       **168 lines**, stripping `"dev": true` from ~50 optional packages (`@emnapi/*` and friends). The
@@ -2453,6 +2584,11 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-04 | Verified on Node 24 locally — installed 24.19.0, clean `npm ci`, full gate set — rather than pushing and reading CI. A Node major is the case where a native dependency breaks, and a CI round-trip is a slower way to learn that than five minutes on the machine. |
 | 2026-08-04 | Left npm 11's gated dependency install scripts (`esbuild`, `fsevents`, `unrs-resolver`) **blocked rather than allowlisted**. The project's own `postinstall` still runs, so `nuxt prepare` is unaffected; a clean `npm ci` with all four blocked passes every gate, and `allowScripts` would be a standing grant to run arbitrary install-time code for no benefit. |
 | 2026-08-04 | Deleted `nuxt-app/.npmrc` as part of the Node move rather than as its own item: npm 11 promotes its two pnpm-only no-ops to deprecation warnings on every command, including in Vercel's build log, and this PR is what puts npm 11 in CI. |
+| 2026-08-04 | **`stripe` shipped without the payment review it was waiting for, because pinning the API version removed what needed reviewing.** The item said "check the pinned API version"; there was none, so the SDK sent whichever version it bundled and the bump would have moved the wire from `clover` to `dahlia` invisibly. Pinning first, in its own commit and verified as a no-op against the SDK's own default, made the bump provably library-only and reduced the reviewable decision to one line. |
+| 2026-08-04 | Accepted a deliberate `as Stripe.LatestApiVersion` cast, the only type error the whole SDK 22 upgrade produced. That it was the *only* one is the finding: our code is already dahlia-compatible. The cost — TypeScript no longer rejects a nonsense version string, and types now describe dahlia while the wire speaks clover — is recorded in the file and is the argument for making the dahlia move a near-term follow-up. |
+| 2026-08-04 | Checked dahlia's breaking changes against the params `buildStripeSessionParams` actually sends, rather than against the changelog summary. `dynamic_tax_rates` and the `twint` enum are both unused; everything else touches Issuing, PaymentRecord, Radar or V2 Core, which this app never calls. |
+| 2026-08-04 | Added nine tests for the payment path, prompted by SDK 21's "throw an error when using the wrong webhook parsing method". The webhook is the one silent failure mode in the app — if verification breaks, the site keeps taking money and stops issuing tickets, and no gate or visitor sees it. Includes a **negative control** proving the version pin does work: an unpinned client sends something different, without which the header assertion could not distinguish a honoured pin from an SDK that sends clover anyway. |
+| 2026-08-04 | Probed the built bundle under `NODE_ENV=production` rather than trusting a green build, because SDK 22 reworked its entry points and made `Stripe` an ES6 class — the same shape as the Pinia 4 failure, which passed every gate and broke only on a real request. A forged signature returned 400 and a valid one 200; both were needed, since an endpoint that rejects everything passes the first and one that verifies nothing passes the second. |
 | 2026-08-04 | Three review findings on the Node alignment all held up: the lockfile's `packages[""].engines` still carried the old range, `README.md` still told contributors Node 19+ with CI on 22, and `.nvmrc: 24` is looser than `engines: ^24.11.0`. A PR claiming "all declarations agree" had missed three declarations — worth recording, because the claim was the whole point of the PR. |
 | 2026-08-04 | Synced the lockfile's engine metadata **under npm 10, producing a one-line diff**, after the same command under npm 11 rewrote 168 lines by stripping `"dev": true` from ~50 optional packages. Bundling fifty unverified reclassifications into a PR whose claim is "nothing changes" would have made the claim false. The npm 11 rewrite is logged as its own item. |
 | 2026-08-04 | Declined the suggested `.nvmrc` fix of pinning `24.11.0`. The format supports no ranges, so an exact version pins CI and developers to a superseded patch — CI resolved 24.18.0 today and would have installed 24.11.0 instead, forgoing Node security releases inside the major. There is no `.nvmrc` value meaning "≥24.11 within 24"; the reviewer identified a real gap with no good fix at that layer. |
