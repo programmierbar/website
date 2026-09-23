@@ -124,7 +124,9 @@ export default defineHook(({ action, filter }, hookContext) => {
                     limit: 1,
                 })
                 if (existing.length > 0) {
-                    logger.info(`${HOOK_NAME}: ${SOURCE_COLLECTION} ${newsLinkId} is already linked to a news item, skipping`)
+                    logger.info(
+                        `${HOOK_NAME}: ${SOURCE_COLLECTION} ${newsLinkId} is already linked to a news item, skipping`
+                    )
                     continue
                 }
 
@@ -159,9 +161,13 @@ export default defineHook(({ action, filter }, hookContext) => {
                     throw junctionError
                 }
 
-                logger.info(`${HOOK_NAME}: Created news ${newsId} for ${SOURCE_COLLECTION} ${newsLinkId} (slug: ${slug ?? 'none'})`)
+                logger.info(
+                    `${HOOK_NAME}: Created news ${newsId} for ${SOURCE_COLLECTION} ${newsLinkId} (slug: ${slug ?? 'none'})`
+                )
             } catch (error: any) {
-                logger.error(`${HOOK_NAME}: Failed to create news item for ${SOURCE_COLLECTION} ${newsLinkId}: ${error.message}`)
+                logger.error(
+                    `${HOOK_NAME}: Failed to create news item for ${SOURCE_COLLECTION} ${newsLinkId}: ${error.message}`
+                )
                 await notifySlack(
                     `:warning: *${HOOK_NAME}*: Für den News-Link ${newsLinkId} konnte kein verknüpfter News-Eintrag erstellt werden. Der Link ist dadurch nicht über die News-Sammlung abrufbar. Bitte manuell prüfen:\n` +
                         `Fehler: ${error.message}\n` +
@@ -215,9 +221,13 @@ export default defineHook(({ action, filter }, hookContext) => {
                 }
 
                 await newsService.updateOne(newsId, { slug })
-                logger.info(`${HOOK_NAME}: Updated slug of news ${newsId} to "${slug}" from ${SOURCE_COLLECTION} ${newsLinkId}`)
+                logger.info(
+                    `${HOOK_NAME}: Updated slug of news ${newsId} to "${slug}" from ${SOURCE_COLLECTION} ${newsLinkId}`
+                )
             } catch (error: any) {
-                logger.error(`${HOOK_NAME}: Failed to sync slug for ${SOURCE_COLLECTION} ${newsLinkId}: ${error.message}`)
+                logger.error(
+                    `${HOOK_NAME}: Failed to sync slug for ${SOURCE_COLLECTION} ${newsLinkId}: ${error.message}`
+                )
                 await notifySlack(
                     `:warning: *${HOOK_NAME}*: Der Slug des News-Eintrags für den Link ${newsLinkId} konnte nicht aktualisiert werden.\n` +
                         `Fehler: ${error.message}`
@@ -270,7 +280,9 @@ export default defineHook(({ action, filter }, hookContext) => {
                     `${HOOK_NAME}: Removed ${junctionRows.length} junction row(s) and ${newsIds.length} news item(s) for deleted ${SOURCE_COLLECTION} ${newsLinkId}`
                 )
             } catch (error: any) {
-                logger.error(`${HOOK_NAME}: Failed to clean up news item for deleted ${SOURCE_COLLECTION} ${newsLinkId}: ${error.message}`)
+                logger.error(
+                    `${HOOK_NAME}: Failed to clean up news item for deleted ${SOURCE_COLLECTION} ${newsLinkId}: ${error.message}`
+                )
                 await notifySlack(
                     `:warning: *${HOOK_NAME}*: Nach dem Löschen des News-Links ${newsLinkId} konnte der verknüpfte News-Eintrag nicht aufgeräumt werden. Es könnte ein verwaister Eintrag zurückbleiben.\n` +
                         `Fehler: ${error.message}`
@@ -331,7 +343,9 @@ export default defineHook(({ action, filter }, hookContext) => {
                 }
             }
         } catch (error: any) {
-            logger.error(`${HOOK_NAME}: Publish guard could not verify source links, allowing publish: ${error.message}`)
+            logger.error(
+                `${HOOK_NAME}: Publish guard could not verify source links, allowing publish: ${error.message}`
+            )
             await notifySlack(
                 `:warning: *${HOOK_NAME}*: Die Pflichtfeld-Prüfung vor dem Veröffentlichen von News konnte nicht ausgeführt werden. Die Veröffentlichung wurde trotzdem zugelassen.\n` +
                     `Fehler: ${error.message}`
@@ -411,7 +425,9 @@ export default defineHook(({ action, filter }, hookContext) => {
                 }
 
                 if (linkIds.length > 0) {
-                    logger.info(`${HOOK_NAME}: Mirrored status "${newStatus}" from news ${newsId} to ${linkIds.length} link(s)`)
+                    logger.info(
+                        `${HOOK_NAME}: Mirrored status "${newStatus}" from news ${newsId} to ${linkIds.length} link(s)`
+                    )
                 }
             } catch (error: any) {
                 logger.error(`${HOOK_NAME}: Failed to mirror status for news ${newsId}: ${error.message}`)
@@ -458,10 +474,14 @@ export default defineHook(({ action, filter }, hookContext) => {
                     await junctionService.deleteOne(row.id)
                 }
                 if (rows.length > 0) {
-                    logger.info(`${HOOK_NAME}: Archived ${rows.length} link(s) and dropped junction row(s) for deleted news ${newsId}`)
+                    logger.info(
+                        `${HOOK_NAME}: Archived ${rows.length} link(s) and dropped junction row(s) for deleted news ${newsId}`
+                    )
                 }
             } catch (error: any) {
-                logger.error(`${HOOK_NAME}: Failed to archive source links for deleted news ${newsId}: ${error.message}`)
+                logger.error(
+                    `${HOOK_NAME}: Failed to archive source links for deleted news ${newsId}: ${error.message}`
+                )
                 await notifySlack(
                     `:warning: *${HOOK_NAME}*: Beim Löschen des News-Eintrags ${newsId} konnte der verknüpfte News-Link nicht archiviert werden. Bitte manuell prüfen.\n` +
                         `Fehler: ${error.message}`

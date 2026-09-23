@@ -1,4 +1,4 @@
-import { describe, expect, test, jest, beforeEach } from '@jest/globals'
+import { beforeEach, describe, expect, jest, test } from '@jest/globals'
 import { safeAction } from '../safeHook.ts'
 
 function createLogger() {

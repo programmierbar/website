@@ -66,8 +66,14 @@ npm run migrate:db   # Database migrations
 
 ```bash
 # In directus-cms/extensions/directus-extension-programmierbar-bundle/
-npm test              # Run Jest tests
+npm run prettier:check   # Formatting — fails, never rewrites
+npm run lint             # ESLint over .ts and the one .vue file
+npm test                 # Jest
+npm run build            # directus-extension build
 ```
+
+That is the full CI gate, in order. There is deliberately no typecheck step yet — `tsc` cannot
+currently run on that tree at all. See [the tooling plan](docs/directus-extension-tooling-plan.md).
 
 ## Code Principles
 
@@ -114,16 +120,19 @@ Additional hints can be found in:
 
 ### Formatting is enforced, not requested
 
-CI runs `npm run prettier:check` in `nuxt-app`, so unformatted code fails the build. Nobody should be
-expected to remember the formatter — turn on **format on save** and it never comes up:
+CI runs `npm run prettier:check` in **both** `nuxt-app` and the Directus extension bundle, so
+unformatted code fails the build. Nobody should be expected to remember the formatter — turn on
+**format on save** and it never comes up:
 
 - **WebStorm**: Settings → Languages & Frameworks → JavaScript → Prettier → *On save*
 - **VS Code**: the Prettier extension, plus `"editor.formatOnSave": true`
 
-Both read `nuxt-app/.prettierrc` on their own, and `nuxt-app/.editorconfig` covers indentation and line
-endings before that is set up. Keep those two in step — they overlap, and an editor that indents to a
-different width than Prettier produces a diff on every save. If a PR fails the check, `npm run prettier`
-fixes it — never hand-edit to satisfy it.
+Editors pick up whichever `.prettierrc` is nearest the file, and each gated tree ships one alongside an
+`.editorconfig` that covers indentation and line endings before the formatter is set up. Keep each pair
+in step — they overlap, and an editor that indents to a different width than Prettier produces a diff on
+every save. The two configs are identical apart from `nuxt-app`'s Tailwind class-sorting plugin, so the
+same editor setup works in both. If a PR fails the check, `npm run prettier` fixes it — never hand-edit
+to satisfy it.
 
 Note that `npm run lint` (ESLint) needs `nuxt prepare` to have run first, since `eslint.config.mjs`
 extends the generated `.nuxt/eslint.config.mjs`. `npm ci` does this via `postinstall`.

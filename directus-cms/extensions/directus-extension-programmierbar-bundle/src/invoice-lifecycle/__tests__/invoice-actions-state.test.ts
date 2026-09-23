@@ -1,9 +1,5 @@
 import { describe, expect, test } from '@jest/globals'
-import {
-    deriveInvoiceActionsState,
-    isExistingItemKey,
-    type InvoiceDocumentRow,
-} from '../invoice-actions-state.ts'
+import { deriveInvoiceActionsState, isExistingItemKey, type InvoiceDocumentRow } from '../invoice-actions-state.ts'
 
 function doc(overrides: Partial<InvoiceDocumentRow> & Pick<InvoiceDocumentRow, 'id' | 'type'>): InvoiceDocumentRow {
     return {
@@ -98,7 +94,12 @@ describe('deriveInvoiceActionsState', () => {
         const state = deriveInvoiceActionsState('PB-CON26-001', [
             doc({ id: 'doc-1', type: 'original', sent_at: '2026-01-20T10:00:00.000Z' }),
             doc({ id: 'doc-2', type: 'cancellation', invoice_number: 'PB-CON26-003', related_invoice: 'doc-1' }),
-            doc({ id: 'doc-3', type: 'correction', invoice_number: 'PB-CON26-004', sent_at: '2026-01-21T10:00:00.000Z' }),
+            doc({
+                id: 'doc-3',
+                type: 'correction',
+                invoice_number: 'PB-CON26-004',
+                sent_at: '2026-01-21T10:00:00.000Z',
+            }),
         ])
 
         expect(state.isCancelled).toBe(false)

@@ -1,64 +1,76 @@
-# Automated Testing Setup for directus-extension-programmierbar-bundle
+# Testing `directus-extension-programmierbar-bundle`
 
-This document provides an overview of the automated testing setup for the `directus-extension-programmierbar-bundle` project.
-
-## Testing Framework
-
-The project uses Jest as the testing framework, with the following configuration:
-
-- **TypeScript Support**: Using ts-jest for TypeScript support
-- **Test Files**: Located in `__tests__` directories with `.test.ts` extension
-- **Configuration**: Jest configuration in `jest.config.ts`
-
-## Test Structure
-
-The tests are organized as follows:
-
-- Each extension has its own `__tests__` directory
-- Test files are named after the function or component they test
-- Test utilities are stored in a `utils` directory within the `__tests__` directory
-
-## Running Tests
-
-To run the tests, use the following command:
+## Running the suite
 
 ```bash
-npm test
+npm test          # run once
+npm run test:watch
 ```
 
-## Current Test Coverage
+The full CI gate, in the order `.github/workflows/run_tests.yml` runs it:
 
-The following components have automated tests:
+```bash
+npm run prettier:check   # formatting — fails, never rewrites
+npm run lint             # ESLint over .ts and the one .vue file
+npm test                 # Jest
+npm run build            # directus-extension build
+```
 
-- `getPayloadWithSlug` function in the `set-slug` hook
+There is deliberately no typecheck step yet. `tsc` cannot currently run on this tree at all — see
+[the tooling plan](../../../docs/directus-extension-tooling-plan.md), Phase 1.
 
-## Adding More Tests
+## Framework
 
-To add tests for other components:
+Jest with `ts-jest`. Tests live in `__tests__/` directories beside the code they cover and are named
+`*.test.ts`; `jest.config.ts` matches `**/__tests__/**/*.test.ts` and nothing else.
 
-1. Create a `__tests__` directory in the component's directory
-2. Create a test file with the `.test.ts` extension
-3. Write tests using Jest's testing functions
-4. Run the tests to verify they work
+**The suite runs as CommonJS, not ESM** — despite `jest.config.ts` asking for ESM. This is not a
+detail you can ignore when writing tests, and
+[ADR 0001](../../../_ADRs/0001-jest-runs-in-cjs-mode.md) explains why it is that way and what it
+costs. In short: `jest.unstable_mockModule` and top-level `await` do not work, and an ESM-only
+dependency anywhere in a tested import chain has to be stubbed before it can be imported.
 
-## Test Documentation
+## How to write a test here
 
-Each `__tests__` directory contains a README.md file that explains:
+**Prefer extracting pure functions.** The established pattern is to move business logic into a
+`util/` module with no framework imports and unit-test that directly — no mocks, no module-format
+problems. Five extensions already do this (`set-slug`, `member-matching`, `cascade-publish`,
+`create-news`, `fetch-open-graph`), and it is the approach that will survive the move off Jest.
 
-- The testing approach for that component
-- The test cases covered
-- How to run the tests
-- How to add more tests
-- The mocking strategy used
+**When a hook's entry file must be tested directly**, use hoisted `jest.mock(...)` and stub the
+ESM-only framework dependencies:
 
-## Dependencies
+```ts
+// The real `defineHook` just returns its callback, so this stub exercises the real hook logic
+// without loading the untranspiled package.
+jest.mock('@directus/extensions-sdk', () => ({
+    defineHook: (callback: unknown) => callback,
+}))
+```
 
-The testing setup uses the following dependencies:
+See `cascade-publish/__tests__/index.test.ts` for the full pattern. Also mock anything that reaches
+the network — `postSlackMessage`, `email-service`, `axios` — so tests stay offline.
 
-- jest: The testing framework
-- ts-jest: TypeScript support for Jest
-- @types/jest: TypeScript type definitions for Jest
-- @jest/globals: Global functions and types for Jest
-- ts-node: For running TypeScript files directly
+**Two things worth testing in every hook**, both from
+[the Directus conventions](../../../.claude/rules/directus-conventions.md):
 
-These dependencies are listed in the `package.json` file.
+1. Does it behave correctly when an item is **created** already in the triggering state, not just
+   when one is updated into it?
+2. Is there a guard that stops it firing repeatedly — a status field or equivalent?
+
+## Current coverage
+
+**205 assertions across 15 files, covering 9 of the bundle's 26 entries.**
+
+| Covered                                                                                              | Test files |
+| ---------------------------------------------------------------------------------------------------- | ---------- |
+| `shared` (`isPublishable`, `safeHook`, `settings`)                                                   | 3          |
+| `fetch-open-graph` (incl. `openGraph`, `urlSafety`)                                                  | 3          |
+| `cascade-publish`                                                                                    | 2          |
+| `create-news` (incl. `newsTarget`)                                                                   | 2          |
+| `member-matching`, `newsletter-double-opt-in`, `post-to-discord`, `schedule-publication`, `set-slug` | 1 each     |
+
+The other 17 entries have no tests, including the four largest modules in the bundle
+(`algolia-index` at 1333 LOC, `buzzsprout`, `asset-generation`, `social-media-publish`). Closing that
+gap is Phase 5 of [the tooling plan](../../../docs/directus-extension-tooling-plan.md), which ranks
+them by size and blast radius.

@@ -1,6 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
+import type { FilterHandler } from '@directus/types'
 import { createHookErrorConstructor } from '../shared/errors.ts'
-import type { FilterHandler} from '@directus/types'
 
 const HOOK_NAME = 'create-profile'
 
@@ -9,12 +9,18 @@ export default defineHook(({ filter }, hookContext) => {
     const ItemsService = hookContext.services.ItemsService
 
     type UserPayloadType = {
-        profiles: {
-            profiles_id: string,
-        }[] | undefined,
+        profiles:
+            | {
+                  profiles_id: string
+              }[]
+            | undefined
     }
 
-    const handler: FilterHandler<UserPayloadType> = async function(payload, _metadata, context): Promise<UserPayloadType> {
+    const handler: FilterHandler<UserPayloadType> = async function (
+        payload,
+        _metadata,
+        context
+    ): Promise<UserPayloadType> {
         try {
             logger.info(`${HOOK_NAME} hook: Start filter function`)
 
@@ -32,7 +38,7 @@ export default defineHook(({ filter }, hookContext) => {
                 knex: context.database,
             })
 
-            const newProfileId = await profilesItemsService.createOne({});
+            const newProfileId = await profilesItemsService.createOne({})
 
             logger.info(`${HOOK_NAME} hook: Created profile ${newProfileId} for newly created user.`)
 
@@ -43,10 +49,10 @@ export default defineHook(({ filter }, hookContext) => {
                     {
                         profiles_id: newProfileId as string,
                     },
-                ]
+                ],
             }
 
-        // Handle unknown errors
+            // Handle unknown errors
         } catch (error: any) {
             logger.error(`${HOOK_NAME} hook: Error: ${error.message}`)
             const hookError = createHookErrorConstructor(HOOK_NAME, error.message)

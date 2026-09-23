@@ -410,7 +410,9 @@ describe('invoice-lifecycle endpoint', () => {
                 invoices: [issuedOriginalRow({ invoice_number: 'PB-CON26-005' })],
             })
             // Another order's documents already advanced the series in ticket_invoices.
-            db.ticket_invoices.push(issuedOriginalRow({ id: 'doc-other', order: 'order-2', invoice_number: 'PB-CON26-007' }))
+            db.ticket_invoices.push(
+                issuedOriginalRow({ id: 'doc-other', order: 'order-2', invoice_number: 'PB-CON26-007' })
+            )
 
             const res = await call('correction')
             expect(res.statusCode).toBe(200)
@@ -537,20 +539,23 @@ describe('invoice-lifecycle endpoint', () => {
         test.each([
             ['missing', null],
             ['malformed', '{not json'],
-        ])('is rejected when the referenced snapshot is %s instead of falling back to order data', async (_label, snapshotJson) => {
-            const { call, calls, db } = await setup({
-                invoices: [issuedOriginalRow({ snapshot_json: snapshotJson })],
-            })
+        ])(
+            'is rejected when the referenced snapshot is %s instead of falling back to order data',
+            async (_label, snapshotJson) => {
+                const { call, calls, db } = await setup({
+                    invoices: [issuedOriginalRow({ snapshot_json: snapshotJson })],
+                })
 
-            const res = await call('cancellation')
+                const res = await call('cancellation')
 
-            expect(res.statusCode).toBe(400)
-            expect(res.body.error).toContain('snapshot')
-            // No storno was created from the order's current (mutable) values.
-            expect(calls.creates).toHaveLength(0)
-            expect(calls.uploads).toHaveLength(0)
-            expect(db.ticket_invoices).toHaveLength(1)
-        })
+                expect(res.statusCode).toBe(400)
+                expect(res.body.error).toContain('snapshot')
+                // No storno was created from the order's current (mutable) values.
+                expect(calls.creates).toHaveLength(0)
+                expect(calls.uploads).toHaveLength(0)
+                expect(db.ticket_invoices).toHaveLength(1)
+            }
+        )
 
         test('cannot cancel the same invoice twice', async () => {
             const original = issuedOriginalRow()

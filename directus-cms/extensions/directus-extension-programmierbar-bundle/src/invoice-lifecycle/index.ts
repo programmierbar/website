@@ -202,9 +202,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                     res.status(400).send({ error: err.message })
                     return
                 }
-                logger.error(
-                    `${ENDPOINT_NAME}: Error in ${action} for order ${req.params.id}: ${err?.message || err}`
-                )
+                logger.error(`${ENDPOINT_NAME}: Error in ${action} for order ${req.params.id}: ${err?.message || err}`)
                 res.status(500).send({ error: `Failed to run invoice ${action}` })
             }
         })

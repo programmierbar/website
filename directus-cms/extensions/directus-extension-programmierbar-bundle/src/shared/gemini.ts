@@ -102,9 +102,7 @@ export async function generateImageWithGemini(
     }
 
     // Check for image data in the response
-    const imagePart = candidate.content?.parts?.find(
-        (part: any) => part.inlineData?.mimeType?.startsWith('image/')
-    )
+    const imagePart = candidate.content?.parts?.find((part: any) => part.inlineData?.mimeType?.startsWith('image/'))
 
     if (imagePart?.inlineData) {
         return {

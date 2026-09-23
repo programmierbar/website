@@ -58,7 +58,7 @@ async function getAccessToken(serviceAccountEmail: string, privateKey: string): 
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
     })
-    const data = await res.json() as any
+    const data = (await res.json()) as any
     if (!res.ok) {
         throw new Error(`OAuth failed: ${JSON.stringify(data)}`)
     }
@@ -124,17 +124,14 @@ async function upsertGoogleWalletClass(env: Record<string, string>): Promise<voi
     console.log(`Upserting class ${classId}...`)
 
     // Try PUT (update) first, then POST (create) if 404
-    const putRes = await fetch(
-        `https://walletobjects.googleapis.com/walletobjects/v1/eventTicketClass/${classId}`,
-        {
-            method: 'PUT',
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(classDefinition),
-        }
-    )
+    const putRes = await fetch(`https://walletobjects.googleapis.com/walletobjects/v1/eventTicketClass/${classId}`, {
+        method: 'PUT',
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(classDefinition),
+    })
 
     if (putRes.ok) {
         console.log('Class updated successfully via REST API')
@@ -145,17 +142,14 @@ async function upsertGoogleWalletClass(env: Record<string, string>): Promise<voi
 
     if (putRes.status === 404) {
         console.log('Class not found, creating...')
-        const postRes = await fetch(
-            'https://walletobjects.googleapis.com/walletobjects/v1/eventTicketClass',
-            {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(classDefinition),
-            }
-        )
+        const postRes = await fetch('https://walletobjects.googleapis.com/walletobjects/v1/eventTicketClass', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(classDefinition),
+        })
         if (postRes.ok) {
             console.log('Class created successfully via REST API')
             const data = await postRes.json()

@@ -1,8 +1,8 @@
 import { defineHook } from '@directus/extensions-sdk'
-import { sendTemplatedEmail, formatDateGerman, type EmailServiceContext } from '../shared/email-service.js'
-import { getSetting, getSettings } from '../shared/settings.js'
+import { formatDateGerman, sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
 import { postSlackMessage } from '../shared/postSlackMessage.js'
 import { safeAction } from '../shared/safeHook.ts'
+import { getSetting, getSettings } from '../shared/settings.js'
 
 const HOOK_NAME = 'speaker-portal-notifications'
 
@@ -127,135 +127,146 @@ export default defineHook(({ action, schedule }, hookContext) => {
     /**
      * Send invitation email when a new speaker is created (token is auto-generated).
      */
-    action('speakers.items.create', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
-        const { key } = metadata
+    action(
+        'speakers.items.create',
+        safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
+            const { key } = metadata
 
-        try {
-            await sendInvitationForSpeaker(key, eventContext.accountability)
-        } catch (err: any) {
-            logger.error(`${HOOK_NAME}: Error sending invitation email on create: ${err?.message || err}`)
-        }
-    }))
+            try {
+                await sendInvitationForSpeaker(key, eventContext.accountability)
+            } catch (err: any) {
+                logger.error(`${HOOK_NAME}: Error sending invitation email on create: ${err?.message || err}`)
+            }
+        })
+    )
 
     /**
      * Send invitation email when a speaker's portal token is regenerated.
      */
-    action('speakers.items.update', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
-        const { payload, keys } = metadata
+    action(
+        'speakers.items.update',
+        safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
+            const { payload, keys } = metadata
 
-        // Only proceed if portal_token was just set
-        if (!payload.portal_token) {
-            return
-        }
-
-        try {
-            for (const speakerId of keys) {
-                await sendInvitationForSpeaker(speakerId, eventContext.accountability)
+            // Only proceed if portal_token was just set
+            if (!payload.portal_token) {
+                return
             }
-        } catch (err: any) {
-            logger.error(`${HOOK_NAME}: Error sending invitation email on update: ${err?.message || err}`)
-        }
-    }))
+
+            try {
+                for (const speakerId of keys) {
+                    await sendInvitationForSpeaker(speakerId, eventContext.accountability)
+                }
+            } catch (err: any) {
+                logger.error(`${HOOK_NAME}: Error sending invitation email on update: ${err?.message || err}`)
+            }
+        })
+    )
 
     /**
      * Send confirmation when a speaker submits their information.
      */
-    action('speakers.items.update', safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
-        const { payload, keys } = metadata
+    action(
+        'speakers.items.update',
+        safeAction(HOOK_NAME, logger, async function (metadata, eventContext) {
+            const { payload, keys } = metadata
 
-        // Only proceed if status is being set to 'submitted'
-        if (payload.portal_submission_status !== 'submitted') {
-            return
-        }
+            // Only proceed if status is being set to 'submitted'
+            if (payload.portal_submission_status !== 'submitted') {
+                return
+            }
 
-        const context: EmailServiceContext = {
-            logger,
-            services,
-            getSchema,
-            accountability: eventContext.accountability,
-        }
-
-        try {
-            const schema = await getSchema()
-
-            const speakersService = new ItemsService('speakers', {
-                schema,
+            const context: EmailServiceContext = {
+                logger,
+                services,
+                getSchema,
                 accountability: eventContext.accountability,
-            })
+            }
 
-            for (const speakerId of keys) {
-                const speaker = await speakersService.readOne(speakerId, {
-                    fields: ['id', 'first_name', 'last_name', 'email'],
+            try {
+                const schema = await getSchema()
+
+                const speakersService = new ItemsService('speakers', {
+                    schema,
+                    accountability: eventContext.accountability,
                 })
 
-                if (!speaker?.email) {
-                    continue
-                }
-
-                // Find related podcast for context
-                let podcastTitle: string | undefined
-                try {
-                    const podcastSpeakersService = new ItemsService('podcasts_speakers', {
-                        schema,
-                        accountability: eventContext.accountability,
-                    })
-                    const podcastsService = new ItemsService('podcasts', {
-                        schema,
-                        accountability: eventContext.accountability,
+                for (const speakerId of keys) {
+                    const speaker = await speakersService.readOne(speakerId, {
+                        fields: ['id', 'first_name', 'last_name', 'email'],
                     })
 
-                    const relations = await podcastSpeakersService.readByQuery({
-                        filter: { speaker: { _eq: speakerId } },
-                        fields: ['podcast'],
-                        limit: 1,
-                        sort: ['-id'],
-                    })
-
-                    if (relations && relations.length > 0 && relations[0].podcast) {
-                        const podcast = await podcastsService.readOne(relations[0].podcast, {
-                            fields: ['title'],
-                        })
-                        podcastTitle = podcast?.title
+                    if (!speaker?.email) {
+                        continue
                     }
-                } catch {
-                    // Optional
-                }
 
-                const emailData = {
-                    first_name: speaker.first_name,
-                    last_name: speaker.last_name,
-                    podcast_title: podcastTitle,
-                }
+                    // Find related podcast for context
+                    let podcastTitle: string | undefined
+                    try {
+                        const podcastSpeakersService = new ItemsService('podcasts_speakers', {
+                            schema,
+                            accountability: eventContext.accountability,
+                        })
+                        const podcastsService = new ItemsService('podcasts', {
+                            schema,
+                            accountability: eventContext.accountability,
+                        })
 
-                // Send confirmation to speaker
-                logger.info(`${HOOK_NAME}: Sending submission confirmation to ${speaker.email}`)
+                        const relations = await podcastSpeakersService.readByQuery({
+                            filter: { speaker: { _eq: speakerId } },
+                            fields: ['podcast'],
+                            limit: 1,
+                            sort: ['-id'],
+                        })
 
-                await sendTemplatedEmail(
-                    {
-                        templateKey: 'speaker_submission_confirmation',
-                        to: speaker.email,
-                        data: emailData,
-                    },
-                    context
-                )
+                        if (relations && relations.length > 0 && relations[0].podcast) {
+                            const podcast = await podcastsService.readOne(relations[0].podcast, {
+                                fields: ['title'],
+                            })
+                            podcastTitle = podcast?.title
+                        }
+                    } catch {
+                        // Optional
+                    }
 
-                // Notify admin via Slack
-                const speakerName = `${speaker.first_name} ${speaker.last_name}`
-                const podcastInfo = podcastTitle ? ` für "${podcastTitle}"` : ''
-                try {
-                    await postSlackMessage(
-                        `:white_check_mark: *Speaker Portal*: ${speakerName} hat die Informationen${podcastInfo} eingereicht. ${env.PUBLIC_URL}admin/content/speakers/${speakerId}`
+                    const emailData = {
+                        first_name: speaker.first_name,
+                        last_name: speaker.last_name,
+                        podcast_title: podcastTitle,
+                    }
+
+                    // Send confirmation to speaker
+                    logger.info(`${HOOK_NAME}: Sending submission confirmation to ${speaker.email}`)
+
+                    await sendTemplatedEmail(
+                        {
+                            templateKey: 'speaker_submission_confirmation',
+                            to: speaker.email,
+                            data: emailData,
+                        },
+                        context
                     )
-                } catch (slackError: any) {
-                    logger.error(`${HOOK_NAME}: Failed to send Slack notification: ${slackError?.message}`)
-                }
 
-                logger.info(`${HOOK_NAME}: Submission confirmation sent for ${speaker.first_name} ${speaker.last_name}`)
+                    // Notify admin via Slack
+                    const speakerName = `${speaker.first_name} ${speaker.last_name}`
+                    const podcastInfo = podcastTitle ? ` für "${podcastTitle}"` : ''
+                    try {
+                        await postSlackMessage(
+                            `:white_check_mark: *Speaker Portal*: ${speakerName} hat die Informationen${podcastInfo} eingereicht. ${env.PUBLIC_URL}admin/content/speakers/${speakerId}`
+                        )
+                    } catch (slackError: any) {
+                        logger.error(`${HOOK_NAME}: Failed to send Slack notification: ${slackError?.message}`)
+                    }
+
+                    logger.info(
+                        `${HOOK_NAME}: Submission confirmation sent for ${speaker.first_name} ${speaker.last_name}`
+                    )
+                }
+            } catch (err: any) {
+                logger.error(`${HOOK_NAME}: Error sending submission confirmation: ${err?.message || err}`)
             }
-        } catch (err: any) {
-            logger.error(`${HOOK_NAME}: Error sending submission confirmation: ${err?.message || err}`)
-        }
-    }))
+        })
+    )
 
     /**
      * Scheduled task to send deadline reminders.
@@ -295,14 +306,7 @@ export default defineHook(({ action, schedule }, hookContext) => {
                         { portal_submission_deadline: { _nnull: true } },
                     ],
                 },
-                fields: [
-                    'id',
-                    'first_name',
-                    'last_name',
-                    'email',
-                    'portal_token',
-                    'portal_submission_deadline',
-                ],
+                fields: ['id', 'first_name', 'last_name', 'email', 'portal_token', 'portal_submission_deadline'],
             })
 
             logger.info(`${HOOK_NAME}: Found ${pendingSpeakers.length} pending speakers to check`)

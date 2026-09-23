@@ -33,7 +33,7 @@ watch(
     }
 )
 
-watch([() => itemData.value, () => fieldData.value], async function (newValue, oldValue) {
+watch([() => itemData.value, () => fieldData.value], async function () {
     logToUi('item and field data changed')
 
     if (itemData.value && fieldData.value) {

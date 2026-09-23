@@ -1,8 +1,4 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
-
-// `import.meta.url` in the font loader cannot be parsed by Jest's CJS transform.
-jest.mock('../museo-font.ts', () => ({ tryLoadMuseoFont: () => null }))
-
 import { generateInvoiceNumber } from '../invoice-generator.ts'
 import {
     buildInvoiceSnapshot,
@@ -21,6 +17,9 @@ import {
     type InvoiceSnapshot,
     type RenderInvoiceParams,
 } from '../invoice-service.ts'
+
+// `import.meta.url` in the font loader cannot be parsed by Jest's CJS transform.
+jest.mock('../museo-font.ts', () => ({ tryLoadMuseoFont: () => null }))
 
 const ORDER: InvoiceOrder & { order_number: string } = {
     id: 'order-1',

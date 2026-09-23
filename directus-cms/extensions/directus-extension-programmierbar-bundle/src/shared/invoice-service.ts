@@ -96,7 +96,11 @@ export class InvalidTicketCountError extends Error {
  * `ticketCount` — the per-ticket price division below would otherwise produce
  * Infinity/NaN in the snapshot.
  */
-export function buildInvoiceSnapshot(order: InvoiceOrder, conferenceTitle: string, ticketCount: number): InvoiceSnapshot {
+export function buildInvoiceSnapshot(
+    order: InvoiceOrder,
+    conferenceTitle: string,
+    ticketCount: number
+): InvoiceSnapshot {
     if (!Number.isFinite(ticketCount) || ticketCount <= 0) {
         throw new InvalidTicketCountError(order.order_number, ticketCount)
     }
@@ -326,7 +330,11 @@ export async function issueOriginalInvoice(params: IssueOriginalInvoiceParams): 
  * From this moment on the document counts as issued and may only be corrected or
  * cancelled — never regenerated in place.
  */
-export async function markInvoiceSent(invoicesService: any, documentId: string, sentAt: Date = new Date()): Promise<void> {
+export async function markInvoiceSent(
+    invoicesService: any,
+    documentId: string,
+    sentAt: Date = new Date()
+): Promise<void> {
     await invoicesService.updateOne(documentId, { sent_at: sentAt.toISOString() })
 }
 

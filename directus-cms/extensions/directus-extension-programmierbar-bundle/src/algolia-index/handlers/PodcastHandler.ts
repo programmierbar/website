@@ -1,23 +1,22 @@
-import { AbstractItemHandler } from './ItemHandler.ts';
-import { sanitize, sanitizeFull } from '../util/sanitizer.ts';
+import { sanitize, sanitizeFull } from '../util/sanitizer.ts'
+import { AbstractItemHandler } from './ItemHandler.ts'
 
 export class PodcastHandler extends AbstractItemHandler {
-
     get collectionName(): string {
-        return 'podcasts';
+        return 'podcasts'
     }
 
     get type(): string {
-        return 'podcast';
+        return 'podcast'
     }
 
     // Every field read by updateRequired() and buildAttributes(). `status` is added by the hook.
     get indexFields(): string[] {
-        return ['id', 'title', 'slug', 'description', 'number', 'type', 'published_on', 'cover_image'];
+        return ['id', 'title', 'slug', 'description', 'number', 'type', 'published_on', 'cover_image']
     }
 
     buildDistinctKey(item: any): string {
-        return `podcast-${item.id}`;
+        return `podcast-${item.id}`
     }
 
     updateRequired(item: any): boolean {
@@ -33,23 +32,24 @@ export class PodcastHandler extends AbstractItemHandler {
     }
 
     buildAttributes(item: any): Record<string, any>[] {
-
         // This is a simple workaround for the algolia size-limit per index-entry
         // Ideally, we would split this out into multiple index entries later
-        let description = sanitize(item.description);
+        let description = sanitize(item.description)
         if (description.length > 2500) {
-            description = sanitizeFull(item.description);
+            description = sanitizeFull(item.description)
         }
 
-        return [{
-            _type : this.type,
-            title: item.title,
-            number: item.number,
-            description: description,
-            type: item.type,
-            published_on: item.published_on,
-            image: item.cover_image ? `${this.env.PUBLIC_URL}assets/${item.cover_image}` : undefined,
-            slug: item.slug,
-        }]
+        return [
+            {
+                _type: this.type,
+                title: item.title,
+                number: item.number,
+                description: description,
+                type: item.type,
+                published_on: item.published_on,
+                image: item.cover_image ? `${this.env.PUBLIC_URL}assets/${item.cover_image}` : undefined,
+                slug: item.slug,
+            },
+        ]
     }
 }

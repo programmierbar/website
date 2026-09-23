@@ -147,7 +147,9 @@ export default defineHook(({ action }, hookContext) => {
                 if (skipped.length > 0) {
                     await notifySlack(
                         `:warning: *${HOOK_NAME}*: Folgende mit ${parentCollection} ${parentKey} verknüpfte Einträge konnten nicht automatisch veröffentlicht werden, da Pflichtfelder fehlen. Bitte manuell prüfen und veröffentlichen:\n` +
-                            skipped.map((item) => `${env.PUBLIC_URL}admin/content/${item.collection}/${item.id}`).join('\n')
+                            skipped
+                                .map((item) => `${env.PUBLIC_URL}admin/content/${item.collection}/${item.id}`)
+                                .join('\n')
                     )
                 }
             } catch (error: any) {

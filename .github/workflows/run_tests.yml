@@ -5,6 +5,9 @@ on:
     paths:
       - 'directus-cms/extensions/directus-extension-programmierbar-bundle/**'
       - 'nuxt-app/**'
+      # The extension bundle imports from shared-code/, so a change there can break its build or
+      # tests. Without this line those changes skip the gate entirely.
+      - 'shared-code/**'
       - '.github/workflows/run_tests.yml'
 
 jobs:
@@ -17,13 +20,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Deliberately still 22 while nuxt-app moves to 24: this tree has its own lockfile, its own
-      # Jest setup, and is frozen pending the Directus licence clarification. Moving its runtime
-      # would be an untested change to a tree nobody is allowed to upgrade.
-      - name: Use Node.js 22.x
+      # Reads the bundle's own .nvmrc rather than naming a version here, so CI, the Docker image and
+      # local development have one file to change instead of three.
+      #
+      # Deliberately still 22 while nuxt-app is on 24 — but *not* because of the Directus licence
+      # block, which an earlier version of this comment claimed. Every @directus/* package this
+      # bundle uses is MIT; only the `directus` server package is licence-blocked, and it lives in
+      # directus-cms/package.json. The real reason is Dockerfile.directus: Node 24 brings npm 11,
+      # which gates the install scripts this tree's native dependencies need.
+      - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: directus-cms/extensions/directus-extension-programmierbar-bundle/.nvmrc
           cache: 'npm'
           cache-dependency-path: 'directus-cms/extensions/directus-extension-programmierbar-bundle/package-lock.json'
 
@@ -31,11 +39,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Keep `prettier:check`, not `prettier` — the latter writes, so it would pass by mutating.
+      # Without this step formatting is voluntary, which is how 64 files drifted here unnoticed.
+      - name: Check formatting
+        run: npm run prettier:check
+
+      # Keep `lint`, not `eslint` — the latter runs with --fix, so it mutates instead of failing.
       - name: Run ESLint
         run: npm run lint
 
       - name: Run tests
         run: npm test
+
+      # Nothing above confirms the bundle still compiles: `directus-extension build` has its own
+      # Rollup/esbuild pipeline that neither ESLint nor Jest exercises, so a change that breaks the
+      # actual artefact Directus loads could otherwise merge green.
+      - name: Build
+        run: npm run build
 
   nuxt-app-test:
     runs-on: ubuntu-latest

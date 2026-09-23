@@ -1,5 +1,5 @@
-import { readItems } from '@directus/sdk';
-import type { ItemHandler } from '../handlers/ItemHandler.ts';
+import { readItems } from '@directus/sdk'
+import type { ItemHandler } from '../handlers/ItemHandler.ts'
 
 // Shared bulk-read helpers for the rebuild/repair CLIs.
 //
@@ -17,12 +17,8 @@ import type { ItemHandler } from '../handlers/ItemHandler.ts';
  * on), because it never holds more than a single page in memory. This is what makes rebuilding the
  * transcript index — where each row carries a full hour of audio transcription — feasible.
  */
-export async function* streamItems(
-    client: any,
-    collection: string,
-    handler: ItemHandler,
-): AsyncGenerator<any> {
-    const pageSize = handler.pageSize;
+export async function* streamItems(client: any, collection: string, handler: ItemHandler): AsyncGenerator<any> {
+    const pageSize = handler.pageSize
 
     // No pagination: fetch the whole collection in one request.
     if (pageSize <= 0) {
@@ -30,29 +26,29 @@ export async function* streamItems(
             readItems(collection, {
                 fields: handler.indexFields,
                 limit: -1,
-            }),
-        );
-        yield* items;
-        return;
+            })
+        )
+        yield* items
+        return
     }
 
     // Paged read. Directus pages are 1-based; a short (or empty) page means we've reached the end.
-    let page = 1;
+    let page = 1
     while (true) {
         const batch = await client.request(
             readItems(collection, {
                 fields: handler.indexFields,
                 limit: pageSize,
                 page,
-            }),
-        );
+            })
+        )
 
-        yield* batch;
+        yield* batch
 
         if (batch.length < pageSize) {
-            break;
+            break
         }
-        page++;
+        page++
     }
 }
 
@@ -61,14 +57,10 @@ export async function* streamItems(
  * whole collection in memory at once — e.g. the repair CLI, which diffs the database against the
  * index. Otherwise prefer streamItems() to keep the memory footprint bounded.
  */
-export async function collectItems(
-    client: any,
-    collection: string,
-    handler: ItemHandler,
-): Promise<any[]> {
-    const items: any[] = [];
+export async function collectItems(client: any, collection: string, handler: ItemHandler): Promise<any[]> {
+    const items: any[] = []
     for await (const item of streamItems(client, collection, handler)) {
-        items.push(item);
+        items.push(item)
     }
-    return items;
+    return items
 }

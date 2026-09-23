@@ -1,9 +1,8 @@
 /// <reference types="@directus/extensions/api.d.ts" />
 import { defineEndpoint } from '@directus/extensions-sdk'
-import { generateAppleWalletPass, type WalletPassInput } from '../shared/wallet-pass-generator.js'
-import { getRequiredSetting } from '../shared/settings.js'
-
 import type { SandboxEndpointRouter } from 'directus:api'
+import { getRequiredSetting } from '../shared/settings.js'
+import { generateAppleWalletPass, type WalletPassInput } from '../shared/wallet-pass-generator.js'
 
 export default defineEndpoint(async (router: SandboxEndpointRouter, context) => {
     const logger = context.logger

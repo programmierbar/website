@@ -1,18 +1,20 @@
 import { defineHook } from '@directus/extensions-sdk'
+import { safeAction } from '../shared/safeHook.ts'
 import { handlePickOfTheDayAction } from './handlers/handlePickOfTheDayAction.ts'
 import { handlePodcastAction } from './handlers/handlePodcastAction.ts'
 import { handleTagAction } from './handlers/handleTagAction.ts'
-import { safeAction } from '../shared/safeHook.ts'
 
 const HOOK_NAME = 'buzzsprout'
 
 export default defineHook(({ action }, hookContext) => {
-    const logger = hookContext.logger;
-    const env = hookContext.env;
-    const ItemsService = hookContext.services.ItemsService;
+    const logger = hookContext.logger
+    const env = hookContext.env
+    const ItemsService = hookContext.services.ItemsService
 
     if (!(env.BUZZSPROUT_API_URL && env.BUZZSPROUT_API_TOKEN)) {
-        logger.warn(`${HOOK_NAME} hook: Did not set BUZZSPROUT_API_URL && BUZZSPROUT_API_TOKEN. Buzzsprout extension will not be active.`)
+        logger.warn(
+            `${HOOK_NAME} hook: Did not set BUZZSPROUT_API_URL && BUZZSPROUT_API_TOKEN. Buzzsprout extension will not be active.`
+        )
         return
     }
 
@@ -61,4 +63,3 @@ export default defineHook(({ action }, hookContext) => {
     action('tags.items.create', safeAction(HOOK_NAME, logger, tagHandler))
     action('tags.items.update', safeAction(HOOK_NAME, logger, tagHandler))
 })
-

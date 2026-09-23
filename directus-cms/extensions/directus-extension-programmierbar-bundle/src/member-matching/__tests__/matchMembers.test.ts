@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals'
-import type { MemberData } from './../matchMembers.ts';
+import type { MemberData } from './../matchMembers.ts'
 import { extractSpeakerNames, findMatchingMembers } from './../matchMembers.ts'
 
 describe('extractSpeakerNames', () => {

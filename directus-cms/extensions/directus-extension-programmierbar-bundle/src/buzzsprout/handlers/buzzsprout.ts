@@ -1,5 +1,5 @@
-import type { AxiosRequestConfig} from 'axios';
-import { default as axios } from 'axios';
+import type { AxiosRequestConfig } from 'axios'
+import { default as axios } from 'axios'
 // @ts-ignore
 import { getFullPodcastTitle, getUrlSlug } from '../../../../../../shared-code/index.ts'
 import { postSlackMessage } from '../../shared/postSlackMessage.ts'
@@ -196,7 +196,9 @@ export async function handleBuzzsprout(
 
         const buzzsproutResponse = await axios(requestConfig)
 
-        logger.info(`${HOOK_NAME} hook: Received response (${buzzsproutResponse.status} / ${buzzsproutResponse.statusText}) from buzzsprout: ${JSON.stringify(buzzsproutResponse.data)}`)
+        logger.info(
+            `${HOOK_NAME} hook: Received response (${buzzsproutResponse.status} / ${buzzsproutResponse.statusText}) from buzzsprout: ${JSON.stringify(buzzsproutResponse.data)}`
+        )
 
         // Throw error if the request was not successful
         if (buzzsproutResponse.status !== 200 && buzzsproutResponse.status !== 201) {
@@ -210,12 +212,12 @@ export async function handleBuzzsprout(
 
         // If an error occurs, log it and inform team via Slack
     } catch (error: any) {
-        if ( error['message']) {
+        if (error['message']) {
             logger.error(`${HOOK_NAME} hook: Error message: "${error.message}"`)
-        } else if ( typeof error['toString'] === 'function') {
-            logger.error(`${HOOK_NAME} hook: "${typeof  error}" Error toString: "${error.toString()}"`)
+        } else if (typeof error['toString'] === 'function') {
+            logger.error(`${HOOK_NAME} hook: "${typeof error}" Error toString: "${error.toString()}"`)
         }
-        if ( error['response']) {
+        if (error['response']) {
             logger.error(`${HOOK_NAME} hook: Error response payload: "${JSON.stringify(error.response.data)}"`)
         }
         try {

@@ -215,10 +215,7 @@ function signJwt(payload: object, privateKey: string): string {
     return `${encodedHeader}.${encodedPayload}.${signature}`
 }
 
-export function generateGoogleWalletUrl(
-    input: WalletPassInput,
-    env: Record<string, string>
-): string | null {
+export function generateGoogleWalletUrl(input: WalletPassInput, env: Record<string, string>): string | null {
     const config = loadGoogleConfig(env)
     if (!config) return null
 

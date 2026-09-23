@@ -21,10 +21,10 @@ The tests cover the following scenarios:
 4. **Conferences**: Generating slugs for conferences with titles.
 5. **Profiles**: Generating slugs for profiles with first names and last names.
 6. **Edge Cases**:
-   - Not updating slugs for profiles when `update_slug` is set to `false`.
-   - Handling unsupported collections.
-   - Handling missing required fields.
-   - Handling newly created items without keys.
+    - Not updating slugs for profiles when `update_slug` is set to `false`.
+    - Handling unsupported collections.
+    - Handling missing required fields.
+    - Handling newly created items without keys.
 
 ## Running the Tests
 
@@ -40,6 +40,6 @@ To add more tests:
 
 1. Add new test cases to the `getPayloadWithSlug.test.ts` file.
 2. Follow the existing pattern of Arrange-Act-Assert:
-   - **Arrange**: Set up the test data (futureItem, payload, metadata).
-   - **Act**: Call the function being tested.
-   - **Assert**: Verify the results using Jest's expect functions.
+    - **Arrange**: Set up the test data (futureItem, payload, metadata).
+    - **Act**: Call the function being tested.
+    - **Assert**: Verify the results using Jest's expect functions.

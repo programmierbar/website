@@ -1,4 +1,10 @@
 # Choose a base image
+#
+# Keep this in step with `directus-cms/extensions/directus-extension-programmierbar-bundle/.nvmrc`,
+# which CI reads — the image and CI must build the extension on the same Node, or CI stops being
+# evidence about production. Moving to 24 is deliberately deferred: Node 24 ships npm 11, which
+# gates dependency install scripts, and this tree needs them to run (sharp, sqlite3, isolated-vm,
+# esbuild all build native code on install). See docs/directus-extension-tooling-plan.md.
 FROM node:22
 
 # Set working directory
@@ -9,7 +15,10 @@ COPY directus-cms/package.json .
 COPY directus-cms/package-lock.json .
 
 # Install dependencies
-RUN npm install
+#
+# `npm ci`, not `npm install`: the latter is free to resolve versions the lockfile does not record,
+# so the image could ship dependencies CI never tested. `npm ci` fails instead, which is the point.
+RUN npm ci
 
 # Copy the shared code that lives outside of directus dir
 COPY shared-code ../shared-code
@@ -20,8 +29,8 @@ COPY directus-cms .
 # Set working directory to interface extension
 WORKDIR /usr/src/app/directus-cms/extensions/directus-extension-programmierbar-bundle
 
-# Install publishable interface extension dependencies
-RUN npm install
+# Install extension bundle dependencies (its own lockfile, copied in by `COPY directus-cms .` above)
+RUN npm ci
 
 # Build the extension
 RUN npm run build

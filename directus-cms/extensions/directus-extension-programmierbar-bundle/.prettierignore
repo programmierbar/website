@@ -1,0 +1,8 @@
+# Local editor/agent tool state. `prettier . --write` walks the whole tree, and without this it
+# rewrites contributors' untracked `.claude/settings.local.json` — a file the formatter has no
+# business touching and that nobody reviews.
+#
+# `node_modules` and `dist` are not listed here on purpose: Prettier reads `.gitignore` in addition
+# to this file, and the bundle's `.gitignore` already covers both. Duplicating them would mean two
+# places to keep in step.
+.claude

@@ -55,8 +55,7 @@ export function deriveInvoiceActionsState(
     const current = findCurrentDocument(documents)
 
     const isCancelled =
-        current !== null &&
-        documents.some((doc) => doc.type === 'cancellation' && doc.related_invoice === current.id)
+        current !== null && documents.some((doc) => doc.type === 'cancellation' && doc.related_invoice === current.id)
 
     // Orders that got their invoice before the ticket_invoices collection existed
     // have no document rows yet; all pre-existing invoices were emailed, so they

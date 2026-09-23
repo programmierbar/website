@@ -11,9 +11,8 @@ import { getFullPodcastTitle, getFullSpeakerName, getUrlSlug } from './../../../
  */
 export async function getPayloadWithSlug(
     futureItem: any,
-    { payload, metadata }: { payload: any; metadata: Record<string, any>}
+    { payload, metadata }: { payload: any; metadata: Record<string, any> }
 ) {
-
     // If collection name is "speakers" and "academic_title", "first_name" and
     // "last_name" ist set, return payload with speaker slug
     if (metadata.collection === 'speakers' && futureItem.first_name && futureItem.last_name) {
@@ -25,12 +24,13 @@ export async function getPayloadWithSlug(
 
     // If collection name is "podcasts" and "type", "number" and "title" is set,
     // return payload with podcast slug
-    if (metadata.collection === 'podcasts' && (
-        (futureItem.type === 'deep_dive' && futureItem.number && futureItem.title) ||
-        (futureItem.type === 'cto_special' && futureItem.number && futureItem.title) ||
-        (futureItem.type === 'news' && futureItem.number && futureItem.title) ||
-        (futureItem.type === 'other' && futureItem.title)
-    )) {
+    if (
+        metadata.collection === 'podcasts' &&
+        ((futureItem.type === 'deep_dive' && futureItem.number && futureItem.title) ||
+            (futureItem.type === 'cto_special' && futureItem.number && futureItem.title) ||
+            (futureItem.type === 'news' && futureItem.number && futureItem.title) ||
+            (futureItem.type === 'other' && futureItem.title))
+    ) {
         return {
             ...payload,
             slug: getUrlSlug(getFullPodcastTitle(futureItem)),
@@ -59,11 +59,11 @@ export async function getPayloadWithSlug(
     //  return payload with profile slug
     if (metadata.collection === 'profiles' && futureItem.first_name && futureItem.last_name) {
         if (futureItem.update_slug === false) {
-            return payload;
+            return payload
         }
 
         const result = {
-            ...payload
+            ...payload,
         }
 
         // Set suffix if empty or null
@@ -71,15 +71,15 @@ export async function getPayloadWithSlug(
             result.slug_suffix = await getUniqueIdentifier()
         }
 
-        let suffix = '';
+        let suffix = ''
         if (futureItem.slug_suffix) {
-            suffix = futureItem.slug_suffix;
+            suffix = futureItem.slug_suffix
         } else {
-            suffix = result.slug_suffix;
+            suffix = result.slug_suffix
         }
-        result.slug = getUrlSlug(`${futureItem.first_name}-${futureItem.last_name}-${suffix}`);
+        result.slug = getUrlSlug(`${futureItem.first_name}-${futureItem.last_name}-${suffix}`)
 
-        return result;
+        return result
     }
 
     // Otherwise just return payload
@@ -88,22 +88,21 @@ export async function getPayloadWithSlug(
 
 // We use this approach to generate a unique part for the slug that remains stable over the lifetime of an item
 async function getUniqueIdentifier(input?: string): Promise<string> {
-
     if (!input) {
-        input = crypto.randomUUID();
+        input = crypto.randomUUID()
     }
 
     // Convert the string to an ArrayBuffer
-    const encoder = new TextEncoder();
-    const data = encoder.encode(input);
+    const encoder = new TextEncoder()
+    const data = encoder.encode(input)
 
     // Generate the SHA-256 hash
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
 
     // Convert the hash to a hex string
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
 
     // Get the first 4 characters of the hex string
-    return hashHex.slice(0, 4);
+    return hashHex.slice(0, 4)
 }

@@ -1,7 +1,7 @@
-import type { Dependencies } from '../buzzsprout/handlers/types.js';
-import { createHookErrorConstructor } from './../shared/errors.ts';
-import { postSlackMessage } from './../shared/postSlackMessage.ts';
 import type { Query } from '@directus/types/dist/query.js'
+import type { Dependencies } from '../buzzsprout/handlers/types.js'
+import { createHookErrorConstructor } from './../shared/errors.ts'
+import { postSlackMessage } from './../shared/postSlackMessage.ts'
 
 async function generateTranscriptItem(
     HOOK_NAME: string,
@@ -12,10 +12,8 @@ async function generateTranscriptItem(
         payload: any
         metadata: Record<string, any>
         context: any
-    }, {
-        logger,
-        ItemsService,
-    }: Dependencies,
+    },
+    { logger, ItemsService }: Dependencies
 ) {
     try {
         logger.info(`${HOOK_NAME} hook: Start "${metadata.collection}" action function`)
@@ -33,33 +31,34 @@ async function generateTranscriptItem(
         const item = await podcastItemsService.readOne(metadata.key || metadata.keys[0])
 
         if (!item.audio_file) {
-            logger.info(
-                `${HOOK_NAME} hook: Updated podcast has no audio file set. ` +
-                `Exiting hook early.`
-            );
-            return;
+            logger.info(`${HOOK_NAME} hook: Updated podcast has no audio file set. ` + `Exiting hook early.`)
+            return
         }
 
         const query: Query = {
             filter: {
-                podcast: {_eq: item.id},
-                podcast_audio_file: {_eq: item.audio_file},
-            }
-        };
-
-        const existingTranscripts = await transcriptItemsService.readByQuery(query);
-
-        if (existingTranscripts.length > 0) {
-            logger.info(`${HOOK_NAME} hook: Found ${existingTranscripts.length} existing transcripts for podcast: "${item.id}". ` +
-                `Exiting hook early.`);
-            return;
+                podcast: { _eq: item.id },
+                podcast_audio_file: { _eq: item.audio_file },
+            },
         }
 
-        const newTranscript = await transcriptItemsService.createOne({podcast: item.id, podcast_audio_file: item.audio_file, service: 'deepgram'});
+        const existingTranscripts = await transcriptItemsService.readByQuery(query)
 
-        logger.info(
-            `${HOOK_NAME} hook: Generated a transcript "${newTranscript.id}" for podcast: "${item.id}".`
-        );
+        if (existingTranscripts.length > 0) {
+            logger.info(
+                `${HOOK_NAME} hook: Found ${existingTranscripts.length} existing transcripts for podcast: "${item.id}". ` +
+                    `Exiting hook early.`
+            )
+            return
+        }
+
+        const newTranscript = await transcriptItemsService.createOne({
+            podcast: item.id,
+            podcast_audio_file: item.audio_file,
+            service: 'deepgram',
+        })
+
+        logger.info(`${HOOK_NAME} hook: Generated a transcript "${newTranscript.id}" for podcast: "${item.id}".`)
     } catch (error: any) {
         try {
             await postSlackMessage(
@@ -75,4 +74,4 @@ async function generateTranscriptItem(
     }
 }
 
-export default generateTranscriptItem;
+export default generateTranscriptItem

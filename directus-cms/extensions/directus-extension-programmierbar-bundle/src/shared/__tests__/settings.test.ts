@@ -21,9 +21,9 @@ function buildContext(rows: Array<{ value: any }>) {
 
 describe('getRequiredSetting', () => {
     test('returns the value when the setting is present', async () => {
-        await expect(getRequiredSetting('website_url', buildContext([{ value: 'https://staging.example' }]))).resolves.toBe(
-            'https://staging.example'
-        )
+        await expect(
+            getRequiredSetting('website_url', buildContext([{ value: 'https://staging.example' }]))
+        ).resolves.toBe('https://staging.example')
     })
 
     test('throws when the setting is missing', async () => {

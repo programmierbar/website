@@ -76,7 +76,10 @@ describe('normalizeOpenGraph', () => {
     })
 
     test('resolves a relative og:image against the page URL', () => {
-        const result = normalizeOpenGraph(parseMetaTags('<meta property="og:image" content="/media/pic.jpg">'), PAGE_URL)
+        const result = normalizeOpenGraph(
+            parseMetaTags('<meta property="og:image" content="/media/pic.jpg">'),
+            PAGE_URL
+        )
         expect(result.image).toBe('https://example.com/media/pic.jpg')
     })
 

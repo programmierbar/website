@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { postSlackMessage } from './../../shared/postSlackMessage.ts'
+import registerHook from './../index.ts'
 
 // The extensions SDK ships as ESM and is not transformed under Jest's CJS mode,
 // so stub it. The real `defineHook` simply returns its callback.
@@ -23,9 +25,6 @@ jest.mock('./../../shared/errors.ts', () => ({
             }
         },
 }))
-
-import { postSlackMessage } from './../../shared/postSlackMessage.ts'
-import registerHook from './../index.ts'
 
 const postSlackMessageMock = jest.mocked(postSlackMessage)
 
@@ -199,7 +198,10 @@ describe('create-news hook', () => {
 
         await invokeAction(handler, { key: 'link-2', payload: { title: 'React 19 Released' } })
 
-        expect(recorded.createOne[0]).toEqual({ collection: 'news', data: { status: 'draft', slug: 'react-19-released-2' } })
+        expect(recorded.createOne[0]).toEqual({
+            collection: 'news',
+            data: { status: 'draft', slug: 'react-19-released-2' },
+        })
     })
 
     test('create: creates the news without a slug when the title is empty', async () => {

@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { useApi } from '@directus/extensions-sdk'
 import { computed, ref, watch } from 'vue'
-import {
-    deriveInvoiceActionsState,
-    isExistingItemKey,
-    type InvoiceDocumentRow,
-} from './invoice-actions-state.js'
+import { deriveInvoiceActionsState, isExistingItemKey, type InvoiceDocumentRow } from './invoice-actions-state.js'
 
 const props = defineProps<{ collection: string; primaryKey: string }>()
 

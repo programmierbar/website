@@ -1,4 +1,8 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { default as axios } from 'axios'
+import { postSlackMessage } from './../../shared/postSlackMessage.ts'
+import registerHook from './../index.ts'
+import { assertPublicUrl } from './../util/urlSafety.ts'
 
 // The extensions SDK ships as ESM and is not transformed under Jest's CJS mode,
 // so stub it. The real `defineHook` simply returns its callback.
@@ -23,11 +27,6 @@ jest.mock('./../util/urlSafety.ts', () => ({
     assertPublicUrl: jest.fn(),
 }))
 
-import { default as axios } from 'axios'
-import { postSlackMessage } from './../../shared/postSlackMessage.ts'
-import { assertPublicUrl } from './../util/urlSafety.ts'
-import registerHook from './../index.ts'
-
 const axiosGet = (axios as any).get as jest.Mock
 const postSlackMessageMock = jest.mocked(postSlackMessage)
 const assertPublicUrlMock = jest.mocked(assertPublicUrl)
@@ -38,7 +37,11 @@ const flush = () => new Promise<void>((resolve) => setImmediate(resolve))
 
 type Handler = (metadata: Record<string, any>, context: Record<string, any>) => void
 
-async function invoke(handler: Handler, meta: Record<string, any>, context: Record<string, any> = { accountability: {}, schema: {} }) {
+async function invoke(
+    handler: Handler,
+    meta: Record<string, any>,
+    context: Record<string, any> = { accountability: {}, schema: {} }
+) {
     handler(meta, context)
     await flush()
 }
@@ -97,9 +100,15 @@ describe('fetch-open-graph hook', () => {
         axiosGet.mockResolvedValue({ status: 200, headers: { 'content-type': 'text/html' }, data: OG_HTML })
         const { handlers, updateOneCalls } = setup()
 
-        await invoke(handlers.get('news_links.items.create')!, { key: 'link-1', payload: { link: 'https://example.com/a' } })
+        await invoke(handlers.get('news_links.items.create')!, {
+            key: 'link-1',
+            payload: { link: 'https://example.com/a' },
+        })
 
-        expect(axiosGet).toHaveBeenCalledWith('https://example.com/a', expect.objectContaining({ timeout: expect.any(Number) }))
+        expect(axiosGet).toHaveBeenCalledWith(
+            'https://example.com/a',
+            expect.objectContaining({ timeout: expect.any(Number) })
+        )
         expect(updateOneCalls).toHaveLength(1)
         expect(updateOneCalls[0].id).toBe('link-1')
         expect(updateOneCalls[0].data.open_graph.title).toBe('OG Title')
@@ -110,7 +119,10 @@ describe('fetch-open-graph hook', () => {
     test('does nothing when the payload has no link (loop avoidance)', async () => {
         const { handlers, updateOneCalls } = setup()
 
-        await invoke(handlers.get('news_links.items.update')!, { key: 'link-2', payload: { open_graph: { title: 'x' } } })
+        await invoke(handlers.get('news_links.items.update')!, {
+            key: 'link-2',
+            payload: { open_graph: { title: 'x' } },
+        })
 
         expect(axiosGet).not.toHaveBeenCalled()
         expect(updateOneCalls).toEqual([])
@@ -120,7 +132,10 @@ describe('fetch-open-graph hook', () => {
         axiosGet.mockRejectedValue(new Error('ECONNREFUSED'))
         const { handlers, updateOneCalls, logger } = setup()
 
-        await invoke(handlers.get('news_links.items.create')!, { key: 'link-3', payload: { link: 'https://bad.example' } })
+        await invoke(handlers.get('news_links.items.create')!, {
+            key: 'link-3',
+            payload: { link: 'https://bad.example' },
+        })
 
         // Still writes an empty object so stale data isn't retained for the new link.
         expect(updateOneCalls).toEqual([{ id: 'link-3', data: { open_graph: {} } }])
@@ -135,7 +150,10 @@ describe('fetch-open-graph hook', () => {
         axiosGet.mockResolvedValue({ status: 404, headers: { 'content-type': 'text/html' }, data: '' })
         const { handlers, updateOneCalls } = setup()
 
-        await invoke(handlers.get('news_links.items.create')!, { key: 'link-4', payload: { link: 'https://example.com/missing' } })
+        await invoke(handlers.get('news_links.items.create')!, {
+            key: 'link-4',
+            payload: { link: 'https://example.com/missing' },
+        })
 
         expect(updateOneCalls).toEqual([{ id: 'link-4', data: { open_graph: {} } }])
         expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
@@ -145,7 +163,10 @@ describe('fetch-open-graph hook', () => {
         axiosGet.mockResolvedValue({ status: 200, headers: { 'content-type': 'application/pdf' }, data: '%PDF' })
         const { handlers, updateOneCalls } = setup()
 
-        await invoke(handlers.get('news_links.items.create')!, { key: 'link-5', payload: { link: 'https://example.com/file.pdf' } })
+        await invoke(handlers.get('news_links.items.create')!, {
+            key: 'link-5',
+            payload: { link: 'https://example.com/file.pdf' },
+        })
 
         // Not an error, so no Slack — but still write {} to avoid stale data.
         expect(updateOneCalls).toEqual([{ id: 'link-5', data: { open_graph: {} } }])
@@ -156,7 +177,10 @@ describe('fetch-open-graph hook', () => {
         assertPublicUrlMock.mockRejectedValue(new Error('Refusing to fetch internal host: localhost'))
         const { handlers, updateOneCalls } = setup()
 
-        await invoke(handlers.get('news_links.items.create')!, { key: 'link-6', payload: { link: 'http://localhost/admin' } })
+        await invoke(handlers.get('news_links.items.create')!, {
+            key: 'link-6',
+            payload: { link: 'http://localhost/admin' },
+        })
 
         expect(axiosGet).not.toHaveBeenCalled()
         expect(updateOneCalls).toEqual([{ id: 'link-6', data: { open_graph: {} } }])
@@ -172,7 +196,10 @@ describe('fetch-open-graph hook', () => {
         })
         const { handlers, updateOneCalls } = setup()
 
-        await invoke(handlers.get('news_links.items.create')!, { key: 'link-7', payload: { link: 'https://example.com/start' } })
+        await invoke(handlers.get('news_links.items.create')!, {
+            key: 'link-7',
+            payload: { link: 'https://example.com/start' },
+        })
 
         expect(updateOneCalls[0].data.open_graph.image).toBe('https://redirected.example.com/img/pic.jpg')
     })
@@ -181,7 +208,10 @@ describe('fetch-open-graph hook', () => {
         axiosGet.mockResolvedValue({ status: 200, headers: { 'content-type': 'text/html' }, data: OG_HTML })
         const { handlers, updateOneCalls } = setup()
 
-        await invoke(handlers.get('news_links.items.update')!, { keys: ['a', 'b'], payload: { link: 'https://example.com/shared' } })
+        await invoke(handlers.get('news_links.items.update')!, {
+            keys: ['a', 'b'],
+            payload: { link: 'https://example.com/shared' },
+        })
 
         expect(axiosGet).toHaveBeenCalledTimes(1)
         expect(updateOneCalls.map((c) => c.id)).toEqual(['a', 'b'])

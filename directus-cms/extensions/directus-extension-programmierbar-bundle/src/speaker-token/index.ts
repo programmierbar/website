@@ -1,5 +1,5 @@
-import { defineHook } from '@directus/extensions-sdk'
 import { randomUUID } from 'node:crypto'
+import { defineHook } from '@directus/extensions-sdk'
 
 const HOOK_NAME = 'speaker-token'
 

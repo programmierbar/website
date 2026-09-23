@@ -142,7 +142,11 @@ function buildTemplateVariables(
 /**
  * Generate assets for a single podcast
  */
-export async function generateAssetsForPodcast(hookName: string, podcastId: number, services: HookServices): Promise<void> {
+export async function generateAssetsForPodcast(
+    hookName: string,
+    podcastId: number,
+    services: HookServices
+): Promise<void> {
     const { logger, ItemsService, FilesService, AssetsService, getSchema, env, accountability } = services
     const geminiApiKey = env.GEMINI_API_KEY
 
@@ -248,7 +252,9 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
             const haystack = [podcast.title, podcast.number].filter(Boolean).join(' ').toLowerCase()
             const matches = haystack.includes(t.title_contains.toLowerCase())
             if (!matches) {
-                logger.info(`${hookName}: Skipping template "${t.name}" - title/number doesn't contain "${t.title_contains}"`)
+                logger.info(
+                    `${hookName}: Skipping template "${t.name}" - title/number doesn't contain "${t.title_contains}"`
+                )
             }
             return matches
         })
@@ -328,7 +334,12 @@ export async function generateAssetsForPodcast(hookName: string, podcastId: numb
 
                 // Add speaker profile image if required and available
                 if (template.requires_speaker_image && speakerProfileImageId) {
-                    const speakerImageData = await getFileAsBase64(speakerProfileImageId, filesService, assetsService, logger)
+                    const speakerImageData = await getFileAsBase64(
+                        speakerProfileImageId,
+                        filesService,
+                        assetsService,
+                        logger
+                    )
                     if (speakerImageData) {
                         inputImages.push(speakerImageData)
                     }

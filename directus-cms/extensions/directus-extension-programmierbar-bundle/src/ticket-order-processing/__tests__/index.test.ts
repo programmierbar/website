@@ -182,7 +182,11 @@ describe('ticket-order-processing hook', () => {
 
         // Issuance is recorded on the document row after the email went out.
         expect(markInvoiceSentMock).toHaveBeenCalledTimes(1)
-        expect(markInvoiceSentMock).toHaveBeenCalledWith(serviceInstances['ticket_invoices']![0], 'doc-1', expect.any(Date))
+        expect(markInvoiceSentMock).toHaveBeenCalledWith(
+            serviceInstances['ticket_invoices']![0],
+            'doc-1',
+            expect.any(Date)
+        )
 
         // Both attendees got their profile invitation.
         const invitations = sendTemplatedEmailMock.mock.calls.filter(
