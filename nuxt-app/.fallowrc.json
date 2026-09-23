@@ -1,0 +1,28 @@
+{
+    "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+    "minimumVersion": "3.27.0",
+
+    // `shared-code` is a Nuxt alias (see nuxt.config.ts), not a package. fallow does not read
+    // nuxt.config.ts, so without these two entries every import of it is reported as an unresolved
+    // import (11 findings) plus one unlisted dependency — all false positives.
+    "ignoreUnresolvedImports": ["shared-code", "shared-code/**"],
+    "ignoreDependencies": ["shared-code"],
+
+    "rules": {
+        // Off pre-emptively: this tree produces no class-member findings today, and the ones seen
+        // while evaluating fallow on this code were all false positives.
+        "unused-class-members": "off",
+        // No architecture boundaries and no rule packs are configured for this project. Saying so
+        // explicitly is what fallow asks for, instead of it reporting "nothing was measured".
+        "boundary-violation": "off",
+        "policy-violation": "off"
+    },
+
+    // Complexity is not a gate here: 104 of 1286 functions are already above the default thresholds,
+    // so a CRAP score would fail a PR for touching an already-complex function rather than for adding
+    // dead code. Duplication needs no entry — it is reported but never gates (`duplicates.threshold`
+    // defaults to 0 = no limit).
+    "health": {
+        "ignore": ["**"]
+    }
+}
