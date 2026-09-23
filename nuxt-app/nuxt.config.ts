@@ -3,8 +3,17 @@ import svgLoader from 'vite-svg-loader'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { useDirectus } from './composables/useDirectus'
+import {
+    DEV,
+    DEVTOOLS,
+    DIRECTUS_CMS_URL,
+    DISCORD_INVITE_LINK,
+    FLAG_ENABLE_UI_PREVIEWS,
+    FLAG_SHOW_LOGIN,
+    FLAG_SHOW_NEWS,
+    FLAG_SHOW_NEWSLETTER,
+} from './config'
 import { enableDirectusRetries } from './services'
-import { DEV, DEVTOOLS, DIRECTUS_CMS_URL, FLAG_SHOW_LOGIN, DISCORD_INVITE_LINK } from './config'
 
 const directus = useDirectus()
 
@@ -35,9 +44,7 @@ export default defineNuxtConfig({
     },
 
     // Global CSS: https://go.nuxtjs.dev/config-css
-    css: [
-      'vue-json-pretty/lib/styles.css',
-    ],
+    css: ['vue-json-pretty/lib/styles.css'],
 
     runtimeConfig: {
         // Email (SMTP)
@@ -52,6 +59,9 @@ export default defineNuxtConfig({
         stripeWebhookSecret: '', // Set via NUXT_STRIPE_WEBHOOK_SECRET env var
         public: {
             FLAG_SHOW_LOGIN: FLAG_SHOW_LOGIN,
+            FLAG_SHOW_NEWS: FLAG_SHOW_NEWS,
+            FLAG_SHOW_NEWSLETTER: FLAG_SHOW_NEWSLETTER,
+            FLAG_ENABLE_UI_PREVIEWS: FLAG_ENABLE_UI_PREVIEWS,
             DISCORD_INVITE_LINK: DISCORD_INVITE_LINK,
             directusCmsUrl: DIRECTUS_CMS_URL,
             stripePublishableKey: '', // Set via NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY env var
@@ -66,6 +76,12 @@ export default defineNuxtConfig({
             svgLoader(), // https://github.com/jpkleemans/vite-svg-loader#readme
             './plugins/vue-json-pretty.js',
         ],
+        build: {
+            // Do not remove without setting `css.lightningcss.targets`: Vite's lightningcss default
+            // rewrites media queries to Level 4 range syntax, which needs Safari 16.4+ and drops
+            // every breakpoint at once on older versions rather than degrading.
+            cssMinify: 'esbuild',
+        },
     },
 
     // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
@@ -77,13 +93,16 @@ export default defineNuxtConfig({
 
         //  https://go.nuxtjs.dev/tailwindcss
         '@nuxtjs/tailwindcss',
-        // https://v1.image.nuxtjs.org/get-started/
-        '@nuxt/image-edge',
+        // https://image.nuxt.com/get-started/installation
+        '@nuxt/image',
         // // Sitemap Module for Nuxt
         // '@nuxtjs/sitemap',
         'nuxt-jsonld',
         '@pinia/nuxt',
         '@nuxtjs/algolia',
+        // Generates .nuxt/eslint.config.mjs, which eslint.config.mjs extends — so linting
+        // requires `nuxt prepare` to have run.
+        '@nuxt/eslint',
     ],
 
     // Router configuration: https://nuxtjs.org/docs/configuration-glossary/configuration-router
@@ -93,23 +112,44 @@ export default defineNuxtConfig({
                 return
             }
 
+            // Keep image URLs out of the prerender crawl. Following them makes the crawler resize
+            // every `<nuxt-img>` variant it finds — 1476 files and ~100 MB from 44 routes — and
+            // exhaust connections to the CMS, which fails the build via `failOnError`.
+            //
+            // Keep the `static` guard even though there is no `generate` script any more: `npx nuxi
+            // generate` still works, sets `nitro.static`, and produces no server. There the crawler's
+            // output *is* what serves these URLs, so skipping it would silently 404 every optimised
+            // image instead of failing loudly.
+            if (!nitroConfig.static) {
+                nitroConfig.prerender ??= {}
+                nitroConfig.prerender.ignore ??= []
+                nitroConfig.prerender.ignore.push('/_ipx')
+            }
+
+            // Lets CI build without the CMS being reachable. Skips route discovery only — the
+            // bundle is still built in full, and deploys never set it.
+            if (process.env.SKIP_PRERENDER_ROUTE_DISCOVERY === 'true') {
+                console.info('[nitro:config] SKIP_PRERENDER_ROUTE_DISCOVERY set — skipping CMS route discovery')
+                return
+            }
+
             // The route-discovery fetches below are read-only and run before
             // prerendering, so transient Directus failures may retry safely.
             enableDirectusRetries()
 
             const routes: string[] = [
-              '/',
-              '/podcast',
-              '/meetup',
-              '/konferenz',
-              '/hall-of-fame',
-              '/ueber-uns',
-              '/impressum',
-              '/datenschutz',
-              '/kontakt',
-              '/verhaltensregeln',
-              '/aufnahmen',
-              '/pick-of-the-day',
+                '/',
+                '/podcast',
+                '/meetup',
+                '/konferenz',
+                '/hall-of-fame',
+                '/ueber-uns',
+                '/impressum',
+                '/datenschutz',
+                '/kontakt',
+                '/verhaltensregeln',
+                '/aufnahmen',
+                '/pick-of-the-day',
             ]
 
             const podcasts = await directus.getPodcasts(10)
@@ -151,12 +191,12 @@ export default defineNuxtConfig({
     //   exclude: ['/impressum', '/datenschutz'],
     // },
 
-    // https://image.nuxtjs.org/
+    // https://image.nuxt.com/get-started/configuration
+    //
+    // An `alias` entry would not work here: this app uses ipx, and alias resolution is skipped when
+    // the provider sets `supportsAlias: true`, as both ipx providers do. Keys must also start with `/`.
     image: {
         domains: [DIRECTUS_CMS_URL.replace(/^https?:\/\//, '')],
-        alias: {
-            cms: `${DIRECTUS_CMS_URL}/assets`,
-        },
         screens: {
             xs: 520,
             sm: 640,
@@ -174,6 +214,17 @@ export default defineNuxtConfig({
         prerender: {
             failOnError: true,
         },
+        externals: {
+            // Do not remove: Pinia 4 ships only its bundler build, so externalising it leaves Vue's
+            // compile-time flags as undefined globals and every SSR route 500s. Inlining puts it
+            // through rollup, which substitutes them. Only reproducible under NODE_ENV=production,
+            // so no gate here catches it — retest with a real request, not `npm run build`.
+            //
+            // Temporary. Remove once `npm view pinia exports --json` shows a `node` or `production`
+            // condition on `"."` again. Full diagnosis: docs/dependency-upgrade-plan.md,
+            // "Waiting on upstream: the Pinia 4 export map".
+            inline: ['pinia'],
+        },
     },
 
     routeRules: {
@@ -185,6 +236,12 @@ export default defineNuxtConfig({
         '/speaker-portal': { isr: false },
         '/suche': { isr: false },
         '/api/**': { isr: false },
+
+        // Render per-request from the `?token=` (and `?preview=`) query. Under
+        // ISR the first query-less render (invalid) would be cached and served
+        // for every token, breaking confirmation — same reason as the portals.
+        '/newsletter/confirm': { isr: false },
+        '/newsletter/unsubscribe': { isr: false },
 
         // /app UA-branches between iOS/Android store URLs on conference hosts;
         // a cached response would pin the first-seen platform for everyone.

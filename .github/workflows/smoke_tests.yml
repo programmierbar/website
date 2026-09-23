@@ -1,0 +1,49 @@
+name: Smoke tests
+
+# Runs against the Vercel preview, deliberately not in the pull-request gate: these pages render
+# from live Directus content, so gating on them would fail CI whenever the CMS hiccups. The preview
+# is also the only place with production's Nitro preset, ISR behaviour and edge redirects.
+#
+# `deployment_status` fires once per deployment; the job filters for successful previews.
+
+on: deployment_status
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment_status.environment != 'Production'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nuxt-app
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: nuxt-app/.nvmrc
+          cache: 'npm'
+          cache-dependency-path: 'nuxt-app/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npm run test:smoke:install
+
+      - name: Run smoke tests
+        env:
+          SMOKE_BASE_URL: ${{ github.event.deployment_status.target_url }}
+        run: npm run test:smoke
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: nuxt-app/playwright-report/
+          retention-days: 7

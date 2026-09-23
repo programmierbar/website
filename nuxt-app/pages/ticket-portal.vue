@@ -24,8 +24,8 @@
             <div v-else-if="submitted" class="mt-16">
                 <SectionHeading element="h1">Vielen Dank!</SectionHeading>
                 <p class="mt-8 text-xl text-white">
-                    Deine Angaben wurden erfolgreich gespeichert.
-                    Dein Ticket mit QR-Code wird dir in Kürze per E-Mail zugeschickt.
+                    Deine Angaben wurden erfolgreich gespeichert. Dein Ticket mit QR-Code wird dir in Kürze per E-Mail
+                    zugeschickt.
                 </p>
             </div>
 
@@ -34,16 +34,11 @@
                 <SectionHeading class="mt-8 md:mt-0" element="h1">Ticket vervollständigen</SectionHeading>
 
                 <p class="mt-8 text-lg text-white md:text-xl">
-                    Hallo {{ ticket.attendee_first_name }}! Bitte vervollständige deine Angaben,
-                    damit wir dir dein finales Ticket für die {{ ticket.conference_title }} zusenden können.
+                    Hallo {{ ticket.attendee_first_name }}! Bitte vervollständige deine Angaben, damit wir dir dein
+                    finales Ticket für die {{ ticket.conference_title }} zusenden können.
                 </p>
 
-                <form
-                    class="mt-12 space-y-8"
-                    :class="formState"
-                    novalidate
-                    @submit.prevent="submitForm"
-                >
+                <form class="mt-12 space-y-8" :class="formState" novalidate @submit.prevent="submitForm">
                     <!-- Personal Info Section -->
                     <div class="bg-gray-900 p-6 md:p-8 lg:p-12">
                         <h2 class="mb-6 text-xl font-bold text-lime md:text-2xl">Persönliche Informationen</h2>
@@ -185,8 +180,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
 import { getMetaInfo } from '~/helpers'
+import { onMounted, ref } from 'vue'
 
 const route = useRoute()
 

@@ -1,5 +1,3 @@
-import type { H3Event } from 'h3'
-import { getOS } from '~/helpers'
 import {
     CONFERENCE_VANITY_HOSTS,
     DISCORD_INVITE_LINK,
@@ -7,6 +5,8 @@ import {
     PROGRAMMIER_CON_APP_IOS,
     WEBFINGER_HOST,
 } from '~/config'
+import { getOS } from '~/helpers'
+import type { H3Event } from 'h3'
 
 function hostStartsWithAny(host: string, prefixes: readonly string[]): boolean {
     return prefixes.some((prefix) => host.startsWith(prefix))

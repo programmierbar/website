@@ -126,13 +126,33 @@
             },
             {
                 "type": "hook",
+                "name": "post-to-discord",
+                "source": "src/post-to-discord/index.ts"
+            },
+            {
+                "type": "hook",
                 "name": "fetch-open-graph",
                 "source": "src/fetch-open-graph/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "newsletter-double-opt-in",
+                "source": "src/newsletter-double-opt-in/index.ts"
             },
             {
                 "type": "endpoint",
                 "name": "ticket-wallet",
                 "source": "src/ticket-wallet/index.ts"
+            },
+            {
+                "type": "endpoint",
+                "name": "invoice-lifecycle",
+                "source": "src/invoice-lifecycle/index.ts"
+            },
+            {
+                "type": "interface",
+                "name": "invoice-actions",
+                "source": "src/invoice-lifecycle/interface.ts"
             }
         ],
         "host": "^10.10.0"

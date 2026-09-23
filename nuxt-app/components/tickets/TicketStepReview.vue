@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue'
 import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
+import { computed, onMounted, ref, watch } from 'vue'
 import TicketPricingSummary from './TicketPricingSummary.vue'
 
 const emit = defineEmits(['validityChange'])
@@ -73,7 +73,7 @@ async function proceedToPayment() {
 <template>
     <div class="ticket-step-review">
         <h2 class="mb-2 text-3xl font-bold text-white md:text-4xl">Bestellung prüfen</h2>
-        <p class="mb-8 text-lg text-gray-300">Bitte überprüfe deine Angaben vor der Zahlung.</p>
+        <p class="text-gray-300 mb-8 text-lg">Bitte überprüfe deine Angaben vor der Zahlung.</p>
 
         <!-- Attendees summary -->
         <div class="mb-6 rounded-lg border border-gray-700 bg-gray-800/50 p-6">
@@ -85,10 +85,8 @@ async function proceedToPayment() {
                     class="flex items-center justify-between border-b border-gray-700 pb-3 last:border-0 last:pb-0"
                 >
                     <div>
-                        <p class="font-medium text-white">
-                            {{ attendee.firstName }} {{ attendee.lastName }}
-                        </p>
-                        <p class="text-sm text-gray-400">{{ attendee.email }}</p>
+                        <p class="font-medium text-white">{{ attendee.firstName }} {{ attendee.lastName }}</p>
+                        <p class="text-gray-400 text-sm">{{ attendee.email }}</p>
                     </div>
                     <span class="text-sm text-[#848a98]">Ticket {{ index + 1 }}</span>
                 </div>
@@ -99,14 +97,15 @@ async function proceedToPayment() {
         <div class="mb-6 rounded-lg border border-gray-700 bg-gray-800/50 p-6">
             <h3 class="mb-4 text-lg font-bold text-white">Rechnungsadresse</h3>
 
-            <div class="space-y-2 text-gray-300">
-                <p class="font-medium text-white">
-                    {{ store.purchaser.firstName }} {{ store.purchaser.lastName }}
-                </p>
+            <div class="text-gray-300 space-y-2">
+                <p class="font-medium text-white">{{ store.purchaser.firstName }} {{ store.purchaser.lastName }}</p>
                 <p>{{ store.purchaser.email }}</p>
 
                 <!-- Company address -->
-                <div v-if="store.purchaseType === 'company' && store.company" class="mt-4 border-t border-gray-700 pt-4">
+                <div
+                    v-if="store.purchaseType === 'company' && store.company"
+                    class="mt-4 border-t border-gray-700 pt-4"
+                >
                     <p class="font-medium text-white">{{ store.company.name }}</p>
                     <p>{{ store.company.address.line1 }}</p>
                     <p v-if="store.company.address.line2">{{ store.company.address.line2 }}</p>
@@ -118,7 +117,10 @@ async function proceedToPayment() {
                 </div>
 
                 <!-- Personal address (optional) -->
-                <div v-if="store.purchaseType === 'personal' && store.showPersonalAddress && store.personalAddress" class="mt-4 border-t border-gray-700 pt-4">
+                <div
+                    v-if="store.purchaseType === 'personal' && store.showPersonalAddress && store.personalAddress"
+                    class="mt-4 border-t border-gray-700 pt-4"
+                >
                     <p v-if="store.personalAddress.line1">{{ store.personalAddress.line1 }}</p>
                     <p v-if="store.personalAddress.line2">{{ store.personalAddress.line2 }}</p>
                     <p v-if="store.personalAddress.postalCode || store.personalAddress.city">
@@ -139,18 +141,14 @@ async function proceedToPayment() {
             <h3 class="mb-3 text-sm font-bold text-white">Rabattcode</h3>
             <div v-if="store.discountValid" class="flex items-center justify-between">
                 <div>
-                    <span class="text-sm text-green-400">
+                    <span class="text-green-400 text-sm">
                         {{ store.pricingSettings?.discountLabel || store.discountCode }}
                     </span>
-                    <span class="ml-2 text-sm text-gray-400">
+                    <span class="text-gray-400 ml-2 text-sm">
                         &ndash; {{ store.formatPrice(store.discountAmountCents) }} Rabatt
                     </span>
                 </div>
-                <button
-                    type="button"
-                    class="text-sm text-gray-400 hover:text-white"
-                    @click="removeDiscountCode"
-                >
+                <button type="button" class="text-gray-400 text-sm hover:text-white" @click="removeDiscountCode">
                     Entfernen
                 </button>
             </div>
@@ -172,7 +170,7 @@ async function proceedToPayment() {
                     <span v-else>Einlösen</span>
                 </button>
             </div>
-            <p v-if="discountMessage && !store.discountValid" class="mt-2 text-sm text-red-400">
+            <p v-if="discountMessage && !store.discountValid" class="text-red-400 mt-2 text-sm">
                 {{ discountMessage }}
             </p>
         </div>
@@ -185,10 +183,12 @@ async function proceedToPayment() {
                     type="checkbox"
                     class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-600 bg-gray-800 text-lime focus:ring-lime focus:ring-offset-0"
                 />
-                <span class="text-sm text-gray-300">
+                <span class="text-gray-300 text-sm">
                     Ich akzeptiere die Hinweise zu den
-                    <a href="/verhaltensregeln" target="_blank" class="text-lime hover:underline">Verhaltensregeln</a>, den
-                    <a href="/aufnahmen" target="_blank" class="text-lime hover:underline">Foto- und Videoaufnahmen</a>, dem
+                    <a href="/verhaltensregeln" target="_blank" class="text-lime hover:underline">Verhaltensregeln</a>,
+                    den
+                    <a href="/aufnahmen" target="_blank" class="text-lime hover:underline">Foto- und Videoaufnahmen</a>,
+                    dem
                     <a href="/datenschutz" target="_blank" class="text-lime hover:underline">Datenschutz</a>
                     und die
                     <a href="/agb" target="_blank" class="text-lime hover:underline">AGB</a>.
@@ -198,7 +198,7 @@ async function proceedToPayment() {
         </div>
 
         <!-- Error message -->
-        <p v-if="paymentError" class="mb-4 rounded-lg bg-red-500/10 p-4 text-red-400">
+        <p v-if="paymentError" class="bg-red-500/10 text-red-400 mb-4 rounded-lg p-4">
             {{ paymentError }}
         </p>
 
@@ -215,12 +215,8 @@ async function proceedToPayment() {
         </button>
 
         <p class="mt-4 text-center text-sm text-[#848a98]">
-            <span v-if="store.isEmployeeCode">
-                Durch den Team-Code ist keine Zahlung nötig.
-            </span>
-            <span v-else>
-                Du wirst zur sicheren Zahlungsseite von Stripe weitergeleitet.
-            </span>
+            <span v-if="store.isEmployeeCode"> Durch den Team-Code ist keine Zahlung nötig. </span>
+            <span v-else> Du wirst zur sicheren Zahlungsseite von Stripe weitergeleitet. </span>
         </p>
     </div>
 </template>

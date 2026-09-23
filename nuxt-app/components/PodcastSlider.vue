@@ -74,8 +74,8 @@
             "
             type="button"
             :title="index === 1 ? 'Scroll left' : 'Scroll right'"
-            :data-cursor-arrow-left="(index === 1 && !scrollStartReached) ? true : null"
-            :data-cursor-arrow-right="(index === 2 && !scrollEndReached) ? true : null"
+            :data-cursor-arrow-left="index === 1 && !scrollStartReached ? true : null"
+            :data-cursor-arrow-right="index === 2 && !scrollEndReached ? true : null"
             @click="() => scrollTo(index === 1 ? 'left' : 'right')"
         />
     </div>
@@ -87,7 +87,6 @@ import PodcastFigureIcon from '~/assets/images/podcast-figure.svg'
 import { CLICK_SCROLL_LEFT_ARROW_EVENT_ID, CLICK_SCROLL_RIGHT_ARROW_EVENT_ID } from '~/config'
 import { trackGoal } from '~/helpers'
 import type { PodcastItem } from '~/types'
-import smoothscroll from 'smoothscroll-polyfill'
 import { onMounted, ref } from 'vue'
 import FadeAnimation from './FadeAnimation.vue'
 import GenericLazyList from './GenericLazyList.vue'
@@ -115,9 +114,6 @@ const scrollBoxElement = ref<HTMLDivElement>()
 // Create scroll start and end reached reference
 const scrollStartReached = ref(true)
 const scrollEndReached = ref(true)
-
-// Add smooth scroll polyfill
-onMounted(smoothscroll.polyfill)
 
 /**
  * It detects whether the start or the end of the scrolling area

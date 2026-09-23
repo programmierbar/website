@@ -4,19 +4,19 @@
 // podcast page, whose client-side script POSTs /api/vote. Crawlers follow the
 // redirect but don't run JS, so they never register a vote.
 export default eventHandler(function (event) {
-  const requestPath = event.path
-  if (!requestPath.startsWith('/podcast/')) {
-    return
-  }
+    const requestPath = event.path
+    if (!requestPath.startsWith('/podcast/')) {
+        return
+    }
 
-  // Path pattern "/podcast/[slug]/[up|down]"
-  const match = requestPath.match(/^\/podcast\/([^/]+)\/(up|down)$/)
-  if (!match) {
-    return
-  }
+    // Path pattern "/podcast/[slug]/[up|down]"
+    const match = requestPath.match(/^\/podcast\/([^/]+)\/(up|down)$/)
+    if (!match) {
+        return
+    }
 
-  const slug = match[1]
-  const direction = match[2]
+    const slug = match[1]
+    const direction = match[2]
 
-  return sendRedirect(event, `/podcast/${slug}?vote=${direction}`, 302)
+    return sendRedirect(event, `/podcast/${slug}?vote=${direction}`, 302)
 })

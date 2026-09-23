@@ -54,7 +54,6 @@ export default defineHook(({ filter }, hookContext) => {
                         (metadata.collection === 'podcasts' && (payload.type || payload.number || payload.title)) ||
                         (metadata.collection === 'meetups' && payload.title) ||
                         (metadata.collection === 'conferences' && payload.title) ||
-                        (metadata.collection === 'news_links' && payload.title) ||
                         (metadata.collection === 'profiles' && (payload.first_name || payload.last_name))
                     )
                 ) {

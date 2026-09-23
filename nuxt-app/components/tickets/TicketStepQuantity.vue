@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue'
-import { VAT_RATE_PERCENT } from '~/config'
 import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
+import { VAT_RATE_PERCENT } from '~/config'
+import { computed, onMounted, ref, watch } from 'vue'
 import TicketPricingSummary from './TicketPricingSummary.vue'
 
 defineProps<{
@@ -46,19 +46,16 @@ function incrementTickets() {
         store.setTicketCount(store.ticketCount + 1)
     }
 }
-
 </script>
 
 <template>
     <div class="ticket-step-quantity">
         <h2 class="mb-2 text-3xl font-bold text-white md:text-4xl">Tickets sichern</h2>
-        <p class="mb-8 text-lg text-gray-300">{{ conferenceTitle }}</p>
+        <p class="text-gray-300 mb-8 text-lg">{{ conferenceTitle }}</p>
 
         <!-- Ticket count selector -->
         <div class="mb-8">
-            <label class="mb-3 block text-sm font-bold uppercase tracking-wider text-gray-400">
-                Anzahl Tickets
-            </label>
+            <label class="text-gray-400 mb-3 block text-sm font-bold uppercase tracking-wider"> Anzahl Tickets </label>
             <div class="flex items-center gap-4">
                 <button
                     type="button"
@@ -86,7 +83,7 @@ function incrementTickets() {
         </div>
 
         <!-- Error state when pricing failed to load -->
-        <div v-if="store.hasPricingError" class="mb-8 rounded-lg bg-red-500/10 border border-red-500/50 p-4">
+        <div v-if="store.hasPricingError" class="bg-red-500/10 border-red-500/50 mb-8 rounded-lg border p-4">
             <p class="text-red-400 font-medium">{{ store.error }}</p>
         </div>
 
@@ -98,7 +95,7 @@ function incrementTickets() {
                         <span v-if="store.isEarlyBird" class="font-bold text-lime">Early Bird</span>
                         <span v-else>Regulär</span>
                     </p>
-                    <p v-if="store.isEarlyBird && formattedEarlyBirdDeadline" class="text-sm text-gray-400">
+                    <p v-if="store.isEarlyBird && formattedEarlyBirdDeadline" class="text-gray-400 text-sm">
                         Verfügbar bis {{ formattedEarlyBirdDeadline }}
                     </p>
                 </div>

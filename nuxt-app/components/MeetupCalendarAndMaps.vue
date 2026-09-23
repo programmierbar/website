@@ -131,12 +131,11 @@ onMounted(() => {
 // Create Meetup URL
 const meetupUrl = computed(() => props.meetup.meetup_url || MEETUP_URL)
 const meetupDomain = computed(() => {
+    if (props.meetup.meetup_url) {
+        const url = new URL(props.meetup.meetup_url)
+        return url.host.replace('www.', '')
+    }
 
-  if (props.meetup.meetup_url) {
-    const url = new URL(props.meetup.meetup_url);
-    return url.host.replace('www.', '');
-  }
-
-  return MEETUP_URL;
+    return MEETUP_URL
 })
 </script>

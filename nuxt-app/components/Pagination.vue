@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import AngleRightIcon from '~/assets/icons/angle-right.svg'
 import AngleLeftIcon from '~/assets/icons/angle-left.svg'
+import AngleRightIcon from '~/assets/icons/angle-right.svg'
 import { computed, ref } from 'vue'
 
 const props = defineProps<{
@@ -115,7 +115,10 @@ function handleKeydown(event: KeyboardEvent) {
                 </div>
                 <div
                     class="flex flex-row items-center justify-center"
-                    :class="{ 'opacity-30 cursor-not-allowed': isNextButtonDisabled, 'cursor-pointer': !isNextButtonDisabled }"
+                    :class="{
+                        'cursor-not-allowed opacity-30': isNextButtonDisabled,
+                        'cursor-pointer': !isNextButtonDisabled,
+                    }"
                     @click="nextPage"
                 >
                     <button class="font-bold uppercase tracking-widest text-white" :disabled="isNextButtonDisabled">

@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'directus-cms/extensions/directus-extension-programmierbar-bundle/**'
+      - 'nuxt-app/**'
+      - '.github/workflows/run_tests.yml'
 
 jobs:
   test:
@@ -15,16 +17,65 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Deliberately still 22 while nuxt-app moves to 24: this tree has its own lockfile, its own
+      # Jest setup, and is frozen pending the Directus licence clarification. Moving its runtime
+      # would be an untested change to a tree nobody is allowed to upgrade.
       - name: Use Node.js 22.x
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
+          cache-dependency-path: 'directus-cms/extensions/directus-extension-programmierbar-bundle/package-lock.json'
 
+      # Keep `npm ci`, not `npm install`, so the lockfile stays authoritative.
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run ESLint
         run: npm run lint
 
       - name: Run tests
         run: npm test
+
+  nuxt-app-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nuxt-app
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Reads nuxt-app/.nvmrc rather than naming a version here, so CI and local development cannot
+      # drift apart again — there is one file to change, not three.
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: nuxt-app/.nvmrc
+          cache: 'npm'
+          cache-dependency-path: 'nuxt-app/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Keep `prettier:check`, not `prettier` — the latter writes, so it would pass by mutating.
+      # Without this step formatting is voluntary, which is how 90 files drifted after the Prettier
+      # 3.2 -> 3.9 bump in Phase 2 with nothing noticing.
+      - name: Check formatting
+        run: npm run prettier:check
+
+      # Keep `lint`, not `eslint` — the latter runs with --fix, so it mutates instead of failing.
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      # Fails only if the error count rises above .typecheck-baseline; see the script for why.
+      - name: Typecheck (ratchet)
+        run: npm run typecheck:ratchet
+
+      - name: Build
+        env:
+          SKIP_PRERENDER_ROUTE_DISCOVERY: 'true'
+        run: npm run build

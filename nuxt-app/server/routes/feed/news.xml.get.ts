@@ -55,6 +55,15 @@ export default defineEventHandler(async (event) => {
             continue
         }
 
+        if (!item.published_on) {
+            // A published news item must have a publication date (set by the CMS
+            // set-published-on hook). A missing one is a data-integrity fault, not
+            // a normal case — skip it rather than emit an undated feed entry, and
+            // log it loudly so it gets investigated.
+            console.warn(`news feed: published news item "${item.id}" has no published_on; skipping`)
+            continue
+        }
+
         const openGraph = link.open_graph
         const title = link.title || openGraph?.title || link.link
         const description = link.comment || openGraph?.description || ''
@@ -67,9 +76,10 @@ export default defineEventHandler(async (event) => {
             // The news item id is stable across edits and independent of the
             // external URL, so it is the right permanent identifier.
             guid: item.id,
-            // The meta item is created together with its link, so its
-            // date_created is the publication date used for ordering and pubDate.
-            date: item.date_created,
+            // `published_on` is the editor-controlled publication date the list
+            // and feed are ordered by. Guaranteed present here (undated items are
+            // skipped above).
+            date: item.published_on,
             ...(enclosure ? { enclosure } : {}),
         })
     }

@@ -1,7 +1,5 @@
 import PDFDocument from 'pdfkit'
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { tryLoadMuseoFont } from './museo-font.js'
 
 // Seller info (hardcoded)
 const SELLER = {
@@ -52,7 +50,15 @@ const LOGO_PATHS = [
     },
 ]
 
-export interface InvoiceData {
+/**
+ * Which kind of financial document the PDF represents:
+ * - 'invoice': a regular Rechnung
+ * - 'correction': a Rechnungsberichtigung that replaces an already-issued invoice
+ * - 'cancellation': a Stornorechnung that voids an already-issued invoice with mirrored negative amounts
+ */
+export type InvoiceDocumentKind = 'invoice' | 'correction' | 'cancellation'
+
+interface InvoiceDataBase {
     invoiceNumber: string
     invoiceDate: string // formatted DD.MM.YYYY
     // Customer
@@ -77,21 +83,76 @@ export interface InvoiceData {
     totalGrossCents: number
 }
 
+/**
+ * A regular Rechnung never carries a reference; a Rechnungsberichtigung or
+ * Stornorechnung MUST carry both the number and the date of the document it
+ * corrects/cancels — §31 Abs. 5 UStDV demands a specific reference to the
+ * original invoice on the correcting document. The union makes it impossible
+ * to type-check a correction/cancellation without a complete reference.
+ */
+export type InvoiceData =
+    | (InvoiceDataBase & {
+          /** Defaults to 'invoice'. */
+          documentKind?: 'invoice'
+          referenceNumber?: never
+          referenceDate?: never
+      })
+    | (InvoiceDataBase & {
+          documentKind: 'correction' | 'cancellation'
+          /** Invoice number of the referenced (corrected/cancelled) document. */
+          referenceNumber: string
+          /** Invoice date of the referenced document, formatted DD.MM.YYYY. */
+          referenceDate: string
+      })
+
+// Logo geometry in the PDF header: drawn at LOGO_ORIGIN with LOGO_SCALE,
+// the SVG viewBox is 280 x 33 (see LOGO_PATHS above).
+const LOGO_ORIGIN = { x: 50, y: 50 }
+const LOGO_SCALE = 0.55
+const LOGO_VIEWBOX = { width: 280, height: 33 }
+
+/** Right edge of the logo's bounding box in the PDF header. */
+export const LOGO_RIGHT_EDGE = LOGO_ORIGIN.x + LOGO_VIEWBOX.width * LOGO_SCALE
+
+/** Minimum horizontal gap between the logo's right edge and the heading block. */
+const HEADING_LOGO_GAP = 15
+
+/**
+ * Left edge of the heading's text block. The heading shares the top row with
+ * the logo, so its block MUST start right of the logo's bounding box —
+ * otherwise a long heading ("Rechnungsberichtigung Nr.: PB-CON26-0499")
+ * overlaps the logo.
+ */
+export const HEADING_X = LOGO_RIGHT_EDGE + HEADING_LOGO_GAP
+
+export const HEADING_MAX_FONT_SIZE = 18
+export const HEADING_MIN_FONT_SIZE = 13
+
+/**
+ * Find the largest font size (between HEADING_MAX_FONT_SIZE and
+ * HEADING_MIN_FONT_SIZE) at which `text` fits into `maxWidth` on a single
+ * line. Returns HEADING_MIN_FONT_SIZE even if the text still overflows at
+ * that size — the caller then lets pdfkit wrap it inside the same constrained
+ * block, where additional lines land below the logo row instead of on top of
+ * the logo.
+ */
+export function fitHeadingFontSize(
+    measure: (text: string, fontSize: number) => number,
+    text: string,
+    maxWidth: number
+): number {
+    let fontSize = HEADING_MAX_FONT_SIZE
+    while (fontSize > HEADING_MIN_FONT_SIZE && measure(text, fontSize) > maxWidth) {
+        fontSize -= 1
+    }
+    return fontSize
+}
+
 function formatEur(cents: number): string {
     return new Intl.NumberFormat('de-DE', {
         style: 'currency',
         currency: 'EUR',
     }).format(cents / 100)
-}
-
-function tryLoadMuseoFont(): Buffer | null {
-    try {
-        const distDir = path.dirname(fileURLToPath(import.meta.url))
-        const fontPath = path.resolve(distDir, '..', 'assets', 'MuseoSans700.otf')
-        return fs.readFileSync(fontPath)
-    } catch {
-        return null
-    }
 }
 
 function drawLogo(doc: InstanceType<typeof PDFDocument>, x: number, y: number, scale: number) {
@@ -108,6 +169,17 @@ function drawLogo(doc: InstanceType<typeof PDFDocument>, x: number, y: number, s
  * Generate an invoice PDF and return it as a Buffer.
  */
 export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
+    const kind: InvoiceDocumentKind = data.documentKind || 'invoice'
+
+    // Defense in depth alongside the InvoiceData union: a correction/cancellation
+    // without a complete reference would be legally defective (§31 Abs. 5 UStDV),
+    // so fail loudly instead of rendering "vom undefined".
+    if (kind !== 'invoice' && (!data.referenceNumber || !data.referenceDate)) {
+        return Promise.reject(
+            new Error(`A ${kind} document requires the referenced invoice's number and date (§31 Abs. 5 UStDV)`)
+        )
+    }
+
     return new Promise((resolve, reject) => {
         const doc = new PDFDocument({ size: 'A4', margin: 50 })
         const chunks: Buffer[] = []
@@ -126,17 +198,48 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         const pageWidth = doc.page.width - 100 // margins
 
         // --- Header with logo ---
-        drawLogo(doc, 50, 50, 0.55)
+        drawLogo(doc, LOGO_ORIGIN.x, LOGO_ORIGIN.y, LOGO_SCALE)
 
-        doc.fontSize(18).fillColor('#000')
-        doc.text(`Rechnung Nr.: ${data.invoiceNumber}`, 50, 50, { align: 'right' })
+        const heading =
+            kind === 'correction' ? 'Rechnungsberichtigung' : kind === 'cancellation' ? 'Stornorechnung' : 'Rechnung'
+        const headingText = `${heading} Nr.: ${data.invoiceNumber}`
+
+        // The heading shares the top row with the logo, so its right-aligned text
+        // block is constrained to start right of the logo's bounding box. If the
+        // heading is too long for that block at the default size (e.g.
+        // "Rechnungsberichtigung Nr.: ..."), shrink the font until it fits on one
+        // line; if even the minimum size overflows, pdfkit wraps it within the
+        // same block, so extra lines continue below the logo row — the heading
+        // can never overlap the logo.
+        const headingWidth = 50 + pageWidth - HEADING_X
+        doc.fillColor('#000')
+        const headingFontSize = fitHeadingFontSize(
+            (text, size) => doc.fontSize(size).widthOfString(text),
+            headingText,
+            headingWidth
+        )
+        doc.fontSize(headingFontSize)
+        doc.text(headingText, HEADING_X, 50, { width: headingWidth, align: 'right' })
+
+        // Date/reference lines keep their original positions unless a wrapped
+        // (multi-line) heading pushes them down.
+        const headingHeight = doc.heightOfString(headingText, { width: headingWidth })
+        const headingWrapped = headingHeight > doc.currentLineHeight() * 1.5
+        const metaY = headingWrapped ? Math.ceil(50 + headingHeight + 6) : 75
 
         doc.fontSize(9).fillColor('#666')
-        doc.text(`Rechnungsdatum: ${data.invoiceDate}`, 50, 75, { align: 'right' })
-        doc.text(`Fälligkeitsdatum: ${data.invoiceDate}`, 50, 87, { align: 'right' })
+        doc.text(`Rechnungsdatum: ${data.invoiceDate}`, 50, metaY, { align: 'right' })
+        if (kind === 'invoice') {
+            doc.text(`Fälligkeitsdatum: ${data.invoiceDate}`, 50, metaY + 12, { align: 'right' })
+        } else {
+            // referenceNumber/referenceDate are guaranteed by the guard above.
+            doc.text(`Bezug: Rechnung Nr. ${data.referenceNumber} vom ${data.referenceDate}`, 50, metaY + 12, {
+                align: 'right',
+            })
+        }
 
         // --- Seller info ---
-        let y = 115
+        let y = Math.max(115, metaY + 40)
         doc.fontSize(9).fillColor('#333')
         doc.text(SELLER.name, 50, y)
         y += 13
@@ -154,7 +257,10 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
 
         // --- Separator ---
         y += 20
-        doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        doc.moveTo(50, y)
+            .lineTo(50 + pageWidth, y)
+            .strokeColor('#ccc')
+            .stroke()
 
         // --- Customer info ---
         y += 12
@@ -196,7 +302,26 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
 
         // --- Separator ---
         y += 10
-        doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        doc.moveTo(50, y)
+            .lineTo(50 + pageWidth, y)
+            .strokeColor('#ccc')
+            .stroke()
+
+        // --- Explicit reference to the corrected/cancelled invoice (§31 Abs. 5 UStDV) ---
+        if (kind !== 'invoice') {
+            y += 14
+            const referenceText =
+                kind === 'correction'
+                    ? `Diese Rechnungsberichtigung berichtigt und ersetzt die Rechnung Nr. ${data.referenceNumber} vom ${data.referenceDate}.`
+                    : `Diese Stornorechnung storniert die Rechnung Nr. ${data.referenceNumber} vom ${data.referenceDate}.`
+            doc.fontSize(10).fillColor('#000')
+            doc.text(referenceText, 50, y, { width: pageWidth })
+            y += 18
+            doc.moveTo(50, y)
+                .lineTo(50 + pageWidth, y)
+                .strokeColor('#ccc')
+                .stroke()
+        }
 
         // --- Line items table ---
         y += 14
@@ -229,7 +354,10 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         y += 35
 
         // --- Separator ---
-        doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        doc.moveTo(50, y)
+            .lineTo(50 + pageWidth, y)
+            .strokeColor('#ccc')
+            .stroke()
         y += 14
 
         // --- Totals ---
@@ -242,10 +370,12 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         doc.text(formatEur(data.subtotalCents), valueX, y, { width: valueW, align: 'right' })
         y += 20
 
-        if (data.discountAmountCents > 0) {
+        if (data.discountAmountCents !== 0) {
+            // Discounts are stored as the deducted amount; render as negative. On a
+            // Stornorechnung the mirrored discount is negative, which renders positive here.
             doc.fontSize(9).fillColor('#666')
             doc.text('Rabatt', labelX + 20, y)
-            doc.text(`-${formatEur(data.discountAmountCents)}`, valueX, y, { width: valueW, align: 'right' })
+            doc.text(formatEur(-data.discountAmountCents), valueX, y, { width: valueW, align: 'right' })
             y += 16
         }
 
@@ -260,40 +390,36 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         doc.text(formatEur(data.vatAmountCents), valueX, y, { width: valueW, align: 'right' })
 
         y += 24
-        doc.moveTo(280, y).lineTo(50 + pageWidth, y).strokeColor('#ccc').stroke()
+        doc.moveTo(280, y)
+            .lineTo(50 + pageWidth, y)
+            .strokeColor('#ccc')
+            .stroke()
         y += 14
 
         doc.fontSize(10).fillColor('#000')
         doc.text('Rechnungsbetrag', labelX, y)
         doc.text(formatEur(data.totalGrossCents), valueX, y, { width: valueW, align: 'right' })
-        y += 18
-        doc.text('Bezahlter Betrag', labelX, y)
-        doc.text(formatEur(data.totalGrossCents), valueX, y, { width: valueW, align: 'right' })
 
-        y += 24
-        doc.rect(280, y - 4, pageWidth - 230, 22).fill('#f0fdf4')
-        doc.fontSize(10).fillColor('#16a34a')
-        doc.text('Offener Betrag', labelX, y)
-        doc.text(formatEur(0), valueX, y, { width: valueW, align: 'right' })
+        // Payment-status lines only make sense on a payable document, not on a Storno.
+        if (kind !== 'cancellation') {
+            y += 18
+            doc.text('Bezahlter Betrag', labelX, y)
+            doc.text(formatEur(data.totalGrossCents), valueX, y, { width: valueW, align: 'right' })
+
+            y += 24
+            doc.rect(280, y - 4, pageWidth - 230, 22).fill('#f0fdf4')
+            doc.fontSize(10).fillColor('#16a34a')
+            doc.text('Offener Betrag', labelX, y)
+            doc.text(formatEur(0), valueX, y, { width: valueW, align: 'right' })
+        }
 
         // Finalize
         doc.end()
     })
 }
 
-/**
- * Generate the next invoice number for a conference.
- * Pattern: PB-CON{YY}-{NNN}
- */
-export async function generateInvoiceNumber(
-    ordersService: any,
-    conferenceYear: number
-): Promise<string> {
-    const yy = String(conferenceYear).slice(-2)
-    const prefix = `PB-CON${yy}-`
-
-    // Find the highest existing invoice number with this prefix
-    const existingOrders = await ordersService.readByQuery({
+async function highestInvoiceNumber(itemsService: any, prefix: string): Promise<number> {
+    const existing = await itemsService.readByQuery({
         filter: {
             invoice_number: { _starts_with: prefix },
         },
@@ -302,17 +428,41 @@ export async function generateInvoiceNumber(
         limit: 1,
     })
 
-    let nextNum = 1
-    if (existingOrders && existingOrders.length > 0 && existingOrders[0].invoice_number) {
-        const existing = existingOrders[0].invoice_number as string
-        const numPart = existing.replace(prefix, '')
+    if (existing && existing.length > 0 && existing[0].invoice_number) {
+        const numPart = (existing[0].invoice_number as string).replace(prefix, '')
         const parsed = parseInt(numPart, 10)
         if (!isNaN(parsed)) {
-            nextNum = parsed + 1
+            return parsed
         }
     }
 
-    return `${prefix}${String(nextNum).padStart(3, '0')}`
+    return 0
+}
+
+/**
+ * Generate the next invoice number for a conference.
+ * Pattern: PB-CON{YY}-{NNN}
+ *
+ * Corrections and cancellations draw from the same sequential series as original
+ * invoices. The maximum is taken across BOTH `ticket_orders.invoice_number` (legacy
+ * orders that predate the `ticket_invoices` collection, plus the order's pointer to
+ * its current invoice) and `ticket_invoices.invoice_number` (every issued document),
+ * so numbers are never reused regardless of backfill state.
+ */
+export async function generateInvoiceNumber(
+    ordersService: any,
+    invoicesService: any,
+    conferenceYear: number
+): Promise<string> {
+    const yy = String(conferenceYear).slice(-2)
+    const prefix = `PB-CON${yy}-`
+
+    const highest = Math.max(
+        await highestInvoiceNumber(ordersService, prefix),
+        await highestInvoiceNumber(invoicesService, prefix)
+    )
+
+    return `${prefix}${String(highest + 1).padStart(3, '0')}`
 }
 
 /**

@@ -13,7 +13,8 @@
             data-cursor-hover
         />
 
-        <!-- Header: date + source tag -->
+        <!-- Header: date + source tag. The date slot stays rendered even when
+           empty so the source tag keeps its right-aligned position. -->
         <header class="flex items-center justify-between gap-3.5">
             <span class="text-[13px] font-light italic text-[#abb2b5]">{{ formattedDate }}</span>
             <span
@@ -56,25 +57,40 @@
             />
         </div>
 
-        <!-- Footer: article link + brand mark -->
-        <footer class="flex flex-wrap items-center justify-between gap-4 border-t border-[#3a3d3f] pt-5">
-            <LinkButton class="relative z-10" :href="newsLink.link" target="_blank" rel="noopener noreferrer">Zum Artikel</LinkButton>
-            <BrandLogo v-if="showBrandMark" class="h-5 opacity-85" alt="programmier.bar" />
+        <!-- Footer: optional podcast reference, then article link + brand mark -->
+        <footer class="flex flex-col gap-5 border-t border-[#3a3d3f] pt-5">
+            <NewsPodcastReference v-if="podcastEpisode" :podcast="podcastEpisode" :seconds-from="podcastSecondsFrom" />
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <LinkButton class="relative z-10" :href="newsLink.link" target="_blank" rel="noopener noreferrer"
+                    >Zum Artikel</LinkButton
+                >
+                <BrandLogo v-if="showBrandMark" class="h-5 opacity-85" alt="programmier.bar" />
+            </div>
         </footer>
     </article>
 </template>
 
 <script setup lang="ts">
 import BrandLogo from '~/assets/images/brand-logo.svg'
-import type { DirectusFileItem, DirectusMemberItem, DirectusNewsLinkItem } from '~/types/directus'
+import type { DirectusFileItem, DirectusMemberItem, DirectusNewsLinkItem, DirectusPodcastItem } from '~/types/directus'
 import { computed, toRefs } from 'vue'
 import DirectusImage from './DirectusImage.vue'
 import InnerHtml from './InnerHtml.vue'
 import LinkButton from './LinkButton.vue'
+import NewsPodcastReference from './NewsPodcastReference.vue'
 
 const props = withDefaults(
     defineProps<{
         newsLink: DirectusNewsLinkItem
+        // The publication date, from the parent `news` meta item's `published_on`.
+        // Null/undefined for an item in a broken state (published without a date),
+        // in which case no date is shown.
+        publishedOn?: string | null
+        // The referenced podcast episode and the discussion's start offset, both
+        // from the parent `news` item (the editor curates them while publishing).
+        // Only an expanded object renders the reference block; an id or null hides
+        podcast?: string | DirectusPodcastItem | null
+        podcastSecondsFrom?: number | null
         showBrandMark?: boolean
         // When set, the whole card links here (used by the list view). Omit on the
         // detail page so the card is not a self-link.
@@ -83,12 +99,15 @@ const props = withDefaults(
         headingLevel?: 'h1' | 'h2'
     }>(),
     {
+        publishedOn: undefined,
+        podcast: undefined,
+        podcastSecondsFrom: undefined,
         showBrandMark: false,
         to: undefined,
         headingLevel: 'h1',
     }
 )
-const { newsLink } = toRefs(props)
+const { newsLink, publishedOn, podcast } = toRefs(props)
 
 // The member is only usable when it was expanded (an object, not an id/null).
 const member = computed<DirectusMemberItem | null>(() =>
@@ -104,6 +123,11 @@ const memberImage = computed<DirectusFileItem | null>(() => {
     return image && typeof image === 'object' ? image : null
 })
 
+// The referenced podcast episode, only when it was expanded (an object, not an id/null)
+const podcastEpisode = computed<DirectusPodcastItem | null>(() =>
+    podcast.value && typeof podcast.value === 'object' ? (podcast.value as DirectusPodcastItem) : null
+)
+
 // Only render the opinion block when there is both a comment and an author.
 const hasOpinion = computed(() => Boolean(newsLink.value.comment && member.value))
 
@@ -113,12 +137,16 @@ const initials = computed(() =>
     member.value ? `${member.value.first_name.charAt(0)}${member.value.last_name.charAt(0)}`.toUpperCase() : ''
 )
 
+// Empty when the item has no publication date (a broken state); the template
+// then renders no date rather than substituting a different one.
 const formattedDate = computed(() =>
-    new Date(newsLink.value.date_created).toLocaleDateString('de-DE', {
-        timeZone: 'Europe/Berlin',
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-    })
+    publishedOn.value
+        ? new Date(publishedOn.value).toLocaleDateString('de-DE', {
+              timeZone: 'Europe/Berlin',
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+          })
+        : ''
 )
 </script>

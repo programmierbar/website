@@ -86,11 +86,13 @@ async function repairCollection(configItem: typeof configuration[0]): Promise<Re
     stats.totalDbItems = dbItems.length;
     console.log(`📊 Found ${stats.totalDbItems} items in database`);
 
-    // Get all items from Algolia index for this collection
+    // Get all items from Algolia index for this collection. The type filter comes straight from the
+    // handler (the same `_type` it writes onto every entry), so it can't drift from the stored value —
+    // deriving it from the collection name broke `picks_of_the_day` (→ `pick_of_the_day`).
     const indexItems = await algoliaClient.browseObjects({
         indexName: ALGOLIA_INDEX,
         browseParams: {
-            filters: `_type:${configItem.handler.collectionName === 'podcasts' ? 'podcast' : configItem.handler.collectionName.slice(0, -1)}`,
+            filters: `_type:${configItem.handler.type}`,
         }
     });
 

@@ -2,6 +2,11 @@
 
 This file provides context for AI assistants working with the programmier.bar website codebase.
 
+## Behaviour
+
+Do not automatically commit code changes, unless you were tasked with doing so.
+Do not automatically push code changes, unless you were tasked with doing so.
+
 ## Project Overview
 
 A podcast/conference/meetup platform for the German developer community. Built with Nuxt 3 (Vue 3) frontend and Directus 11 headless CMS.
@@ -13,7 +18,8 @@ A podcast/conference/meetup platform for the German developer community. Built w
 - **Server**: Nitro (Nuxt's server engine)
 - **Search**: Algolia
 - **AI**: Google Gemini (spam filtering)
-- **Node**: v19+ (v22 in CI)
+- **Node**: 24 for `nuxt-app` — see `nuxt-app/.nvmrc`, which CI reads too. The Directus extension
+  still builds on 22.
 
 ## Directory Structure
 
@@ -39,10 +45,14 @@ website/
 ```bash
 npm run dev          # Development server
 npm run build        # Production build
-npm run generate     # Static site generation
 npm run eslint       # Lint with auto-fix
 npm run prettier     # Format code
 ```
+
+There is deliberately no static-generation script. See
+[the upgrade plan](docs/dependency-upgrade-plan.md) for why: a static build has to prerender every
+`<nuxt-img>` variant, which is ~6200 downloads and resizes against the CMS, and it does not finish.
+Nothing deployed used it — Vercel runs `nuxt build` and serves images through `_vercel/image`.
 
 ### Directus CMS (run from `directus-cms/`)
 
@@ -101,6 +111,22 @@ Additional hints can be found in:
 - **ESLint**: Nuxt recommended config with TypeScript
 - **Imports**: Auto-sorted, use `type` keyword for type-only imports
 - **Components**: PascalCase, single-word names allowed
+
+### Formatting is enforced, not requested
+
+CI runs `npm run prettier:check` in `nuxt-app`, so unformatted code fails the build. Nobody should be
+expected to remember the formatter — turn on **format on save** and it never comes up:
+
+- **WebStorm**: Settings → Languages & Frameworks → JavaScript → Prettier → *On save*
+- **VS Code**: the Prettier extension, plus `"editor.formatOnSave": true`
+
+Both read `nuxt-app/.prettierrc` on their own, and `nuxt-app/.editorconfig` covers indentation and line
+endings before that is set up. Keep those two in step — they overlap, and an editor that indents to a
+different width than Prettier produces a diff on every save. If a PR fails the check, `npm run prettier`
+fixes it — never hand-edit to satisfy it.
+
+Note that `npm run lint` (ESLint) needs `nuxt prepare` to have run first, since `eslint.config.mjs`
+extends the generated `.nuxt/eslint.config.mjs`. `npm ci` does this via `postinstall`.
 
 ## Key Patterns
 

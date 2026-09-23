@@ -5,10 +5,10 @@
 </template>
 
 <script lang="ts">
+import { parseCmsDate } from '~/helpers'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
 import type { MeetupItem } from '../types'
-import { parseCmsDate } from '~/helpers'
 
 export default defineComponent({
     props: {

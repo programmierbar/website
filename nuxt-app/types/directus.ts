@@ -1,5 +1,3 @@
-/* eslint-disable no-use-before-define */
-
 import type { FileItem, PartnerItem, TalkItem } from '~/types/items'
 
 export interface DirectusFileItem extends FileItem {
@@ -344,11 +342,7 @@ export interface DirectusNewsLinkItem {
     link: string
     comment: string | null
     open_graph: OpenGraphMetadata | null
-    slug: string
     member: string | DirectusMemberItem | null
-    podcast: string | DirectusPodcastItem | null
-    podcast_seconds_from: number | null
-    podcast_seconds_to: number | null
     date_created: string
     date_updated: string | null
 }
@@ -360,7 +354,12 @@ export interface DirectusNewsLinkItem {
 export interface DirectusNewsItem {
     id: string
     status: string
+    slug: string | null
     sort: number | null
+    published_on: string | null
+    podcast: string | DirectusPodcastItem | null
+    podcast_seconds_from: number | null
+    podcast_seconds_to: number | null
     date_created: string
     date_updated: string | null
     target: {
@@ -587,4 +586,23 @@ export interface DirectusTicketDiscountCodeItem {
     max_uses: number | null
     active: boolean
     is_employee_code: boolean
+}
+
+// Newsletter
+
+export type NewsletterSubscriberStatus = 'pending' | 'confirmed' | 'unsubscribed' | 'bounced' | 'complained'
+
+export interface DirectusNewsletterSubscriberItem {
+    id: string
+    status: NewsletterSubscriberStatus
+    email: string
+    // Secrets for the (later) double-opt-in confirm / unsubscribe links.
+    confirm_token: string
+    confirm_token_expires_at: string
+    unsubscribe_token: string
+    confirmed_at: string | null
+    unsubscribed_at: string | null
+    signed_up_at: string
+    date_created: string | null
+    date_updated: string | null
 }

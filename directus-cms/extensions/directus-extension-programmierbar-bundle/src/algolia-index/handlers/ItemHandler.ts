@@ -1,6 +1,12 @@
 export interface ItemHandler {
     collectionName: string;
     /**
+     * The `_type` value this handler writes onto every index entry (see `buildAttributes`). It is the
+     * authoritative source for the type string, so consumers that need to query the index by type
+     * (e.g. the repair CLI) MUST read it from here rather than deriving it from `collectionName`.
+     */
+    type: string;
+    /**
      * The Directus fields required to build this handler's index entries — the single source of
      * truth shared by the live hook (which re-reads the full item) and the rebuild/repair CLIs
      * (which fetch items in bulk). MUST list every field that `updateRequired` and `buildAttributes`

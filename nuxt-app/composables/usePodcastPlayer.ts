@@ -1,12 +1,8 @@
-import { onMounted, reactive, ref, toRefs, watch } from 'vue'
+import { onMounted, reactive, ref, shallowRef, toRefs, watch } from 'vue'
 import { PAUSE_PODCAST_EVENT_ID, PLAY_PODCAST_EVENT_ID } from '../config'
 import { trackGoal } from '../helpers'
 import type { PodcastItem } from '../types'
-import {
-    createAudioElementSource,
-    type MediaSource,
-    type SourceCallbacks,
-} from './useMediaSource'
+import { createAudioElementSource, type MediaSource, type SourceCallbacks } from './useMediaSource'
 
 type PodcastBasics = Pick<PodcastItem, 'id' | 'slug' | 'type' | 'number' | 'title' | 'audio_url'>
 
@@ -14,7 +10,12 @@ export type PodcastPlayerSourceFactory = (callbacks: SourceCallbacks) => MediaSo
 
 const podcast = ref<PodcastBasics>()
 const audioElement = ref<HTMLAudioElement>()
-const activeSource = ref<MediaSource | null>(null)
+// shallowRef, not ref: a deep ref stores objects as a reactive proxy, so
+// `activeSource.value === source` would never hold for the raw source we just
+// assigned — silently breaking the "did the user switch episodes while the
+// audio element was still loading?" guards below. The source is a bag of
+// methods with no state of its own, so there is nothing to make reactive.
+const activeSource = shallowRef<MediaSource | null>(null)
 const audioState = reactive({
     volume: 1,
     currentTime: 0,
@@ -114,6 +115,15 @@ export function usePodcastPlayer() {
         isScrubbing = true
     }
 
+    /**
+     * Returns whether the given podcast is the one currently loaded in the
+     * player and actively playing (i.e. not paused). Matches by id, so any
+     * object carrying the podcast id works. Useful for toggling a play/pause
+     * affordance on episode cards and reference blocks.
+     */
+    const isPlaying = (podcastToCheck: Pick<PodcastItem, 'id'>) =>
+        !audioState.paused && podcast.value?.id === podcastToCheck.id
+
     const backward = () => setCurrentTime(Math.max(audioState.currentTime - 15, 0))
 
     const forward = () => setCurrentTime(Math.min(audioState.currentTime + 15, audioState.duration))
@@ -123,10 +133,16 @@ export function usePodcastPlayer() {
      * global HTMLAudioElement and streams `audio_url`. A `sourceFactory` may be
      * passed to bind the bar to a different playback backend (e.g. a YouTube
      * IFrame player) — in that case the audio element is not used.
+     *
+     * `startAt` (seconds) begins the episode at an offset — e.g. jumping to the
+     * point a news item is discussed. For the audio element the seek is applied
+     * once metadata is available (setting `currentTime` before then is reset to
+     * 0 by the browser), guarded so a quick episode switch doesn't seek the
+     * wrong source.
      */
     const setPodcast = (
         nextPodcast: PodcastBasics,
-        options?: { sourceFactory?: PodcastPlayerSourceFactory }
+        options?: { sourceFactory?: PodcastPlayerSourceFactory; startAt?: number }
     ) => {
         if (!audioElement.value) return
 
@@ -137,11 +153,42 @@ export function usePodcastPlayer() {
         audioState.duration = 1
         audioState.paused = true
 
+        const startAt = options?.startAt && options.startAt > 0 ? options.startAt : 0
+
         if (options?.sourceFactory) {
-            activeSource.value = options.sourceFactory(callbacks)
+            const source = options.sourceFactory(callbacks)
+            activeSource.value = source
+            if (startAt) {
+                // Non-audio-element backends (e.g. YouTube) accept a seek before
+                // playback, so apply it directly.
+                source.seek(startAt)
+                audioState.currentTime = startAt
+            }
         } else {
-            audioElement.value.src = nextPodcast.audio_url
-            activeSource.value = createAudioElementSource(audioElement.value, callbacks)
+            const audio = audioElement.value
+            audio.src = nextPodcast.audio_url
+            const source = createAudioElementSource(audio, callbacks)
+            activeSource.value = source
+
+            if (startAt) {
+                const applySeek = () => {
+                    // Bail if the user switched episodes before metadata loaded,
+                    // so we don't seek the wrong source.
+                    if (activeSource.value !== source) return
+                    try {
+                        audio.currentTime = startAt
+                    } catch {
+                        /* duration may not be known yet on some browsers; ignore */
+                    }
+                    audioState.currentTime = startAt
+                }
+
+                if (audio.readyState >= 1 /* HAVE_METADATA */) {
+                    applySeek()
+                } else {
+                    audio.addEventListener('loadedmetadata', applySeek, { once: true })
+                }
+            }
         }
 
         activeSource.value.setVolume(audioState.volume)
@@ -179,6 +226,10 @@ export function usePodcastPlayer() {
         source.setVolume(audioState.volume)
 
         const applySeek = () => {
+            // Bail if something re-bound the bar (another episode, or the video
+            // player re-attaching) before metadata loaded, so we don't seek or
+            // report a position that belongs to the previous source.
+            if (activeSource.value !== source) return
             try {
                 audio.currentTime = options.seekTime
             } catch {
@@ -194,7 +245,10 @@ export function usePodcastPlayer() {
         }
 
         if (options.autoplay) {
-            const startPlayback = () => source.play()
+            const startPlayback = () => {
+                if (activeSource.value !== source) return
+                source.play()
+            }
             if (audio.readyState >= 3 /* HAVE_FUTURE_DATA */) {
                 startPlayback()
             } else {
@@ -226,6 +280,7 @@ export function usePodcastPlayer() {
         pause,
         setCurrentTime,
         beginScrubbing,
+        isPlaying,
         backward,
         forward,
         setPodcast,

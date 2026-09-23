@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useDirectus } from '~/composables/useDirectus'
-import { getMetaInfo } from '~/helpers'
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
+import { getMetaInfo } from '~/helpers'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const route = useRoute()
 const directus = useDirectus()
@@ -120,27 +120,15 @@ useHead(() =>
                 <!-- Success icon -->
                 <div class="mb-8 flex justify-center">
                     <div class="flex h-24 w-24 items-center justify-center rounded-full bg-lime/20">
-                        <svg
-                            class="h-12 w-12 text-lime"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M5 13l4 4L19 7"
-                            />
+                        <svg class="h-12 w-12 text-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
                 </div>
 
                 <h1 class="text-4xl font-bold md:text-5xl">Vielen Dank!</h1>
 
-                <p class="mt-6 text-xl text-gray-300">
-                    Deine Bestellung war erfolgreich.
-                </p>
+                <p class="text-gray-300 mt-6 text-xl">Deine Bestellung war erfolgreich.</p>
 
                 <!-- Loading state while polling -->
                 <div v-if="!pollingDone" class="mt-8 rounded-lg bg-gray-800/50 p-6">
@@ -148,7 +136,10 @@ useHead(() =>
                 </div>
 
                 <!-- Single ticket: show button to complete ticket -->
-                <div v-else-if="orderReady && isSingleTicket && profileUrl" class="mt-8 rounded-lg bg-gray-800/50 p-6 text-left">
+                <div
+                    v-else-if="orderReady && isSingleTicket && profileUrl"
+                    class="mt-8 rounded-lg bg-gray-800/50 p-6 text-left"
+                >
                     <h2 class="mb-4 text-lg font-bold text-lime">Nächster Schritt</h2>
                     <p class="text-gray-300">
                         Bitte vervollständige deine Angaben, damit wir dir dein Ticket mit QR-Code zusenden können.
@@ -166,18 +157,33 @@ useHead(() =>
                 <!-- Multi ticket: show info about emails -->
                 <div v-else-if="orderReady && !isSingleTicket" class="mt-8 rounded-lg bg-gray-800/50 p-6 text-left">
                     <h2 class="mb-4 text-lg font-bold text-lime">Was passiert jetzt?</h2>
-                    <ul class="space-y-3 text-gray-300">
+                    <ul class="text-gray-300 space-y-3">
                         <li class="flex items-start gap-3">
-                            <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">1</span>
+                            <span
+                                class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime"
+                                >1</span
+                            >
                             <span>Du erhältst in Kürze eine Bestätigungsmail.</span>
                         </li>
                         <li class="flex items-start gap-3">
-                            <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">2</span>
-                            <span>Alle Teilnehmenden erhalten eine E-Mail mit einem Link zur Vervollständigung ihrer Angaben.</span>
+                            <span
+                                class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime"
+                                >2</span
+                            >
+                            <span
+                                >Alle Teilnehmenden erhalten eine E-Mail mit einem Link zur Vervollständigung ihrer
+                                Angaben.</span
+                            >
                         </li>
                         <li class="flex items-start gap-3">
-                            <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">3</span>
-                            <span>Sobald die Angaben vervollständigt sind, wird das Ticket mit QR-Code per E-Mail versendet.</span>
+                            <span
+                                class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime"
+                                >3</span
+                            >
+                            <span
+                                >Sobald die Angaben vervollständigt sind, wird das Ticket mit QR-Code per E-Mail
+                                versendet.</span
+                            >
                         </li>
                     </ul>
                 </div>
@@ -185,14 +191,26 @@ useHead(() =>
                 <!-- Fallback: polling timed out or no session_id -->
                 <div v-else class="mt-8 rounded-lg bg-gray-800/50 p-6 text-left">
                     <h2 class="mb-4 text-lg font-bold text-lime">Was passiert jetzt?</h2>
-                    <ul class="space-y-3 text-gray-300">
+                    <ul class="text-gray-300 space-y-3">
                         <li class="flex items-start gap-3">
-                            <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">1</span>
-                            <span>Alle Teilnehmenden erhalten eine E-Mail mit einem Link zur Vervollständigung ihrer Angaben.</span>
+                            <span
+                                class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime"
+                                >1</span
+                            >
+                            <span
+                                >Alle Teilnehmenden erhalten eine E-Mail mit einem Link zur Vervollständigung ihrer
+                                Angaben.</span
+                            >
                         </li>
                         <li class="flex items-start gap-3">
-                            <span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime">2</span>
-                            <span>Sobald die Angaben vervollständigt sind, wird das Ticket mit QR-Code per E-Mail versendet.</span>
+                            <span
+                                class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime/20 text-xs text-lime"
+                                >2</span
+                            >
+                            <span
+                                >Sobald die Angaben vervollständigt sind, wird das Ticket mit QR-Code per E-Mail
+                                versendet.</span
+                            >
                         </li>
                     </ul>
                 </div>
@@ -200,7 +218,8 @@ useHead(() =>
                 <p class="mt-8 text-sm text-[#848a98]">
                     Keine E-Mail erhalten? Bitte prüfe deinen Spam-Ordner oder kontaktiere uns unter
                     <a href="mailto:podcast@programmier.bar" class="text-lime hover:underline">
-                        podcast@programmier.bar</a>.
+                        podcast@programmier.bar</a
+                    >.
                 </p>
 
                 <div class="mt-12 flex flex-col gap-4 sm:flex-row sm:justify-center">

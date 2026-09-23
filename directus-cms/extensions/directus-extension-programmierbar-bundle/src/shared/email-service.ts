@@ -5,7 +5,8 @@
  * - Template rendering using Handlebars syntax
  * - Email sending via Directus MailService
  * - Reading templates from the email_templates collection
- * - Reading settings from the automation_settings collection
+ *
+ * Reading values from the automation_settings collection lives in `settings.ts`.
  */
 
 import type { Logger } from 'pino'
@@ -69,74 +70,6 @@ export interface SendEmailOptions {
     replyTo?: string
     cc?: string
     attachments?: EmailAttachment[]
-}
-
-/**
- * Get a setting value from the automation_settings collection.
- */
-export async function getSetting(
-    key: string,
-    context: EmailServiceContext
-): Promise<string | null> {
-    const { services, getSchema, logger } = context
-    const { ItemsService } = services
-
-    try {
-        const schema = await getSchema()
-        const settingsService = new ItemsService('automation_settings', {
-            schema,
-            accountability: { admin: true },
-        })
-
-        const settings = await settingsService.readByQuery({
-            filter: { key: { _eq: key } },
-            fields: ['value'],
-            limit: 1,
-        })
-
-        if (settings && settings.length > 0) {
-            return settings[0].value
-        }
-
-        return null
-    } catch (err: any) {
-        logger.warn(`Failed to read setting '${key}': ${err?.message || err}`)
-        return null
-    }
-}
-
-/**
- * Get multiple settings as an object.
- */
-export async function getSettings(
-    keys: string[],
-    context: EmailServiceContext
-): Promise<Record<string, string>> {
-    const { services, getSchema, logger } = context
-    const { ItemsService } = services
-
-    const result: Record<string, string> = {}
-
-    try {
-        const schema = await getSchema()
-        const settingsService = new ItemsService('automation_settings', {
-            schema,
-            accountability: { admin: true },
-        })
-
-        const settings = await settingsService.readByQuery({
-            filter: { key: { _in: keys } },
-            fields: ['key', 'value'],
-        })
-
-        for (const setting of settings) {
-            result[setting.key] = setting.value
-        }
-    } catch (err: any) {
-        logger.warn(`Failed to read settings: ${err?.message || err}`)
-    }
-
-    return result
 }
 
 /**

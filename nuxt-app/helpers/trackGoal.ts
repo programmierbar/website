@@ -1,4 +1,4 @@
-import * as fathom from 'fathom-client';
+import * as fathom from 'fathom-client'
 
 /**
  * A helper function that tracks goals with Fathom Analytics.
@@ -8,6 +8,6 @@ import * as fathom from 'fathom-client';
  */
 export function trackGoal(eventId: string, value?: number): void {
     fathom.trackEvent(eventId, {
-      _value: value || 0
-    });
+        _value: value || 0,
+    })
 }

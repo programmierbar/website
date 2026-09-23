@@ -1,22 +1,22 @@
-import type { TalkItem } from '~/types';
-import { getFullSpeakerName } from 'shared-code';
+import type { TalkItem } from '~/types'
+import { getFullSpeakerName } from 'shared-code'
 
-export const buildSpeakerNamesForTalk = function(talk: TalkItem): string {
-  const result = 'mit ';
+export const buildSpeakerNamesForTalk = function (talk: TalkItem): string {
+    const result = 'mit '
 
-  const speakers: string[] = [];
+    const speakers: string[] = []
 
-  talk.speakers.forEach((speaker) => {
-    speakers.push(getFullSpeakerName(speaker.speaker));
-  });
+    talk.speakers.forEach((speaker) => {
+        speakers.push(getFullSpeakerName(speaker.speaker))
+    })
 
-  talk.members.forEach((member) => {
-    speakers.push(`${member.member.first_name} ${member.member.last_name}`);
-  });
+    talk.members.forEach((member) => {
+        speakers.push(`${member.member.first_name} ${member.member.last_name}`)
+    })
 
-  if (speakers.length === 0) {
-    return '';
-  }
+    if (speakers.length === 0) {
+        return ''
+    }
 
-  return result + speakers.join(' & ');
-};
+    return result + speakers.join(' & ')
+}

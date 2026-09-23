@@ -2,7 +2,7 @@
     <li class="flex flex-col md:flex-row-reverse md:items-center">
         <!-- Event image -->
         <NuxtLink
-            v-if='hasImage'
+            v-if="hasImage"
             class="block md:ml-16 md:h-60 md:w-1/2 lg:ml-20 lg:h-80 xl:h-96 2xl:h-112"
             :to="href"
             data-cursor-hover
@@ -17,10 +17,7 @@
             />
         </NuxtLink>
 
-        <div
-class="mt-10 md:mt-0"
-             :class="hasImage ? 'md:w-1/2' : ''"
-        >
+        <div class="mt-10 md:mt-0" :class="hasImage ? 'md:w-1/2' : ''">
             <!-- Name -->
             <h3 class="text-xl font-black text-white md:text-2xl lg:text-3xl">
                 {{ fullName }}
@@ -29,8 +26,9 @@ class="mt-10 md:mt-0"
             <!-- Description -->
             <p
                 class="mt-5 line-clamp-4 space-y-8 text-base font-light leading-normal text-white md:mt-10 md:text-xl lg:text-2xl"
-                v-html="description"
-            />
+            >
+                {{ description }}
+            </p>
 
             <!-- Link -->
             <LinkButton class="mt-6" :href="href">Mehr Infos</LinkButton>
@@ -39,6 +37,7 @@ class="mt-10 md:mt-0"
 </template>
 
 <script lang="ts">
+import { getPlainText } from '~/helpers/sanitize'
 import { getFullSpeakerName } from 'shared-code'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
@@ -66,8 +65,7 @@ export default defineComponent({
         // Create get full name function
         const fullName = computed(() => getFullSpeakerName(props.speaker))
 
-        // Create plain description text
-        const description = computed(() => props.speaker.description.replace(/<[^<>]+>/g, ''))
+        const description = computed(() => getPlainText(props.speaker.description))
 
         // Create href to speaker's subpage
         const href = computed(() => `/hall-of-fame/${props.speaker.slug}`)

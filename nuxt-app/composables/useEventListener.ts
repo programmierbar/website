@@ -1,4 +1,3 @@
-/* eslint-disable no-redeclare */
 import type { Ref } from 'vue'
 import { onBeforeUnmount, onMounted, watch } from 'vue'
 

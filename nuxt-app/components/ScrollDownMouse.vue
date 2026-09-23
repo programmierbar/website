@@ -15,8 +15,7 @@
 </template>
 
 <script lang="ts">
-import smoothscroll from 'smoothscroll-polyfill'
-import { defineComponent, onMounted, ref } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { useEventListener, useWindow } from '../composables'
 import { CLICK_SCROLL_DOWN_MOUSE_EVENT_ID } from '../config'
 import { trackGoal } from '../helpers'
@@ -50,9 +49,6 @@ export default defineComponent({
                 behavior: 'smooth',
             })
         }
-
-        // Add smooth scroll polyfill
-        onMounted(smoothscroll.polyfill)
 
         return {
             opacity,

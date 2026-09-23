@@ -28,9 +28,7 @@
             <div v-else-if="!isAuthenticated" class="mt-16 text-center">
                 <p class="text-xl text-pink">Nicht eingeloggt.</p>
                 <p class="mt-2 text-white/60">Bitte zuerst im Directus einloggen.</p>
-                <NuxtLink to="/login" class="mt-4 inline-block text-lime hover:text-blue">
-                    Zum Login
-                </NuxtLink>
+                <NuxtLink to="/login" class="mt-4 inline-block text-lime hover:text-blue"> Zum Login </NuxtLink>
             </div>
 
             <!-- Scanner -->
@@ -49,12 +47,8 @@
                             {{ scanResult.firstName }}
                         </div>
                         <div class="mt-2 text-lg text-white/80">{{ scanResult.lastName }}</div>
-                        <div v-if="scanResult.alreadyCheckedIn" class="mt-4 text-yellow-400">
-                            Bereits eingecheckt
-                        </div>
-                        <div v-else class="mt-4 text-lime">
-                            Willkommen!
-                        </div>
+                        <div v-if="scanResult.alreadyCheckedIn" class="text-yellow-400 mt-4">Bereits eingecheckt</div>
+                        <div v-else class="mt-4 text-lime">Willkommen!</div>
                     </div>
                 </Transition>
 
@@ -148,7 +142,7 @@ onBeforeUnmount(() => {
 
 async function refreshStats() {
     try {
-        stats.value = await $fetch('/api/checkin/stats') as any
+        stats.value = (await $fetch('/api/checkin/stats')) as any
     } catch {
         // Stats not critical
     }

@@ -1,5 +1,5 @@
+import { filterSpam } from '../../helpers'
 import { EmailSchema, sendEmail } from '../utils'
-import { filterSpam } from '../../helpers';
 
 export default defineEventHandler(async (event) => {
     // Read body once and use for both honeypot check and validation
@@ -15,20 +15,20 @@ export default defineEventHandler(async (event) => {
     const parseResult = EmailSchema.safeParse(rawBody)
     if (!parseResult.success) {
         const issue = parseResult.error.issues[0]
-        const key = issue?.path?.[0] ?? 'input'
+        const key = String(issue?.path?.[0] ?? 'input')
         const message = issue?.message ?? 'Validation error'
         throw createError({ statusCode: 400, message: `${key}: ${message}` })
     }
     const clientData = parseResult.data
 
-    const spamValidation = await filterSpam(clientData);
+    const spamValidation = await filterSpam(clientData)
 
     if (spamValidation.isSpam === true && spamValidation.confidenceScore > 0.8) {
-      console.log(`Spam blocked. Reason: ${spamValidation.reason}`);
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Nachricht konnte nicht versendet werden.',
-      });
+        console.log(`Spam blocked. Reason: ${spamValidation.reason}`)
+        throw createError({
+            statusCode: 400,
+            statusMessage: 'Nachricht konnte nicht versendet werden.',
+        })
     }
 
     // Send email with user's message to us

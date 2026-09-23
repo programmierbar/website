@@ -1,7 +1,7 @@
-import { defineStore } from 'pinia'
 import { VAT_RATE } from '~/config'
-import type { TicketAttendee, CompanyBillingInfo, BillingAddress, Purchaser } from '~/types/items'
 import type { PurchaseType, TicketType } from '~/types/directus'
+import type { BillingAddress, CompanyBillingInfo, Purchaser, TicketAttendee } from '~/types/items'
+import { defineStore } from 'pinia'
 
 interface TicketPricingSettings {
     earlyBirdPriceCents: number | null
@@ -160,7 +160,11 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
             if (this.isEmployeeCode) {
                 return 0
             }
-            if (this.discountValid && this.pricingSettings?.discountPriceCents !== null && this.pricingSettings?.discountPriceCents !== undefined) {
+            if (
+                this.discountValid &&
+                this.pricingSettings?.discountPriceCents !== null &&
+                this.pricingSettings?.discountPriceCents !== undefined
+            ) {
                 return this.pricingSettings.discountPriceCents
             }
             return this.basePriceCents
@@ -247,11 +251,16 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
         /**
          * Set pricing settings from conference data
          */
-        setPricingSettings(settings: {
-            ticket_early_bird_price_cents: number | null
-            ticket_regular_price_cents: number | null
-            ticket_early_bird_deadline: string | null
-        } | null | undefined) {
+        setPricingSettings(
+            settings:
+                | {
+                      ticket_early_bird_price_cents: number | null
+                      ticket_regular_price_cents: number | null
+                      ticket_early_bird_deadline: string | null
+                  }
+                | null
+                | undefined
+        ) {
             if (!settings || settings.ticket_regular_price_cents === null) {
                 this.pricingError = true
                 this.error = 'Preise konnten nicht geladen werden. Bitte versuche es später erneut.'
@@ -475,7 +484,12 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
                     },
                 })
 
-                const result = response as { valid: boolean; discountPriceCents?: number; discountLabel?: string; isEmployeeCode?: boolean }
+                const result = response as {
+                    valid: boolean
+                    discountPriceCents?: number
+                    discountLabel?: string
+                    isEmployeeCode?: boolean
+                }
                 this.discountValid = result.valid
 
                 if (result.valid && this.pricingSettings) {

@@ -1,5 +1,5 @@
-import { verifyWebhookSignature } from '../../utils/stripe'
 import type Stripe from 'stripe'
+import { verifyWebhookSignature } from '../../utils/stripe'
 
 /**
  * Stripe webhook handler for ticket purchases.

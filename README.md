@@ -10,9 +10,17 @@ Source code of: [https://www.programmier.bar/](https://www.programmier.bar/)
 
 ## Setup
 
-These install instructions assume you are using Node.js version 19+ (CI uses v22, tested up to v24).
+**The two trees need different Node versions.** Run `nvm use` (or your manager's equivalent) inside the
+directory you are working in:
 
-**Prerequisites for Node 22+:**
+| tree | Node | source of truth |
+| --- | --- | --- |
+| `nuxt-app` | **24** | `nuxt-app/.nvmrc`, which CI reads too. `engines.node` requires `^24.11.0 \|\| >=26.0.0` |
+| `directus-cms` | 22 | its workflows; deliberately left behind while the tree is frozen |
+
+Node 24 is also what production runs — Vercel resolves it from `nuxt-app/package.json`'s `engines.node`.
+
+**Prerequisites:**
 - Python 3 with setuptools (for native module compilation)
 - On macOS: `brew install python-setuptools`
 

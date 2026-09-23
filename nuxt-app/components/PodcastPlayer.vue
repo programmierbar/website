@@ -1,5 +1,11 @@
 <template>
-    <div class="transition-all" :class="podcastPlayer.podcast ? 'h-16 xl:h-20' : 'invisible h-0'">
+    <!-- Keep data-testid: the route smoke tests anchor on it, and this element stays invisible
+         until a podcast is selected, so there is no other reliable hook. -->
+    <div
+        data-testid="podcast-player"
+        class="transition-all"
+        :class="podcastPlayer.podcast ? 'h-16 xl:h-20' : 'invisible h-0'"
+    >
         <div
             class="fixed bottom-0 left-0 z-40 flex w-full flex-col bg-lime transition-transform duration-300 xl:h-20 xl:flex-row xl:space-x-16 xl:px-8"
             :class="
@@ -44,13 +50,6 @@
                         :class="isExpanded ? 'pointer-events-none invisible opacity-0' : 'delay-200 duration-500'"
                         :style="isExpanded ? 'transition: visibility 0s .15s, opacity .15s' : undefined"
                     >
-                        <!-- <button
-              class="h-6 text-pink"
-              type="button"
-              data-cursor-hover
-              @click.stop=""
-              v-html="require('../assets/icons/heart.svg?raw')"
-            /> -->
                         <div class="flex h-full w-8 justify-center">
                             <button
                                 v-if="podcastPlayer.paused"
@@ -162,12 +161,6 @@
                     :class="!isExpanded && 'invisible xl:visible'"
                     :style="!isExpanded ? 'transition: visibility 0s 0.3s' : undefined"
                 >
-                    <!-- <button
-            class="h-6 text-pink"
-            type="button"
-            data-cursor-hover
-            v-html="require('../assets/icons/heart.svg?raw')"
-          /> -->
                     <div class="flex space-x-8">
                         <button
                             v-if="clipboard.isSupported || share.isSupported"
@@ -207,7 +200,7 @@ import { getFullPodcastTitle, getPodcastTypeAndNumber } from 'shared-code'
 import { computed, ref, watch } from 'vue'
 import { useClipboard, usePodcastPlayer, useShare } from '../composables'
 import { BUZZSPROUT_TRACKING_URL, DOWNLOAD_PODCAST_EVENT_ID } from '../config'
-import { trackGoal } from '../helpers'
+import { formatAudioTimestamp, trackGoal } from '../helpers'
 
 // Use podcast player, clipboard and share
 const podcastPlayer = usePodcastPlayer()
@@ -234,23 +227,11 @@ const downloadUrl = computed(
     () => podcastPlayer.podcast && `${BUZZSPROUT_TRACKING_URL}/${podcastPlayer.podcast.audio_url}?download=true`
 )
 
-/**
- * It returns an audio timestamp based on a time value in seconds.
- *
- * @param time The time in seconds.
- *
- * @returns A audio timestamp.
- */
-const getAudioTimestamp = (time: number) => {
-    const isoString = new Date(time * 1000).toISOString()
-    return time < 3600 ? isoString.substr(14, 5) : isoString.substr(11, 8)
-}
-
 // Create current time string
-const currentTimeString = computed(() => getAudioTimestamp(podcastPlayer.currentTime))
+const currentTimeString = computed(() => formatAudioTimestamp(podcastPlayer.currentTime))
 
 // Create duration string
-const durationString = computed(() => getAudioTimestamp(podcastPlayer.duration))
+const durationString = computed(() => formatAudioTimestamp(podcastPlayer.duration))
 
 // Create progress string
 const progressString = computed(() => `${(podcastPlayer.currentTime / podcastPlayer.duration) * 100}%`)
@@ -278,16 +259,7 @@ const collapsePlayer = () => {
 // `change` event that clears the scrubbing flag). Other keys — Tab, modifiers,
 // etc. — must NOT begin scrubbing, otherwise the flag would never be cleared
 // and time updates would stay suppressed indefinitely.
-const SEEK_KEYS = new Set([
-    'ArrowLeft',
-    'ArrowRight',
-    'ArrowUp',
-    'ArrowDown',
-    'PageUp',
-    'PageDown',
-    'Home',
-    'End',
-])
+const SEEK_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'])
 
 /**
  * It begins scrubbing only when a real seek key is pressed, so that a matching

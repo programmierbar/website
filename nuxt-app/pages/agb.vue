@@ -5,7 +5,7 @@
 
             <!-- Heading -->
             <SectionHeading class="mt-8 md:mt-0" element="h1">
-              {{ agbPage.heading }}
+                {{ agbPage.heading }}
             </SectionHeading>
 
             <!-- Text -->
@@ -29,7 +29,7 @@ const breadcrumbs = [{ label: 'AGB' }]
 const { data: agbPage } = useAsyncData(() => directus.getAgbPage())
 
 if (agbPage.value && agbPage.value.status !== 'published') {
-  throw new Error('The page was not found.')
+    throw new Error('The page was not found.')
 }
 
 useLoadingScreen(agbPage)

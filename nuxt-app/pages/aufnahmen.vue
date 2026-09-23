@@ -29,7 +29,7 @@ const breadcrumbs = [{ label: 'Hinweis zu Foto- und Videoaufnahmen' }]
 const { data: recordingsPage } = useAsyncData(() => directus.getRecordingsPage())
 
 if (recordingsPage.value && recordingsPage.value.status !== 'published') {
-  throw new Error('The page was not found.')
+    throw new Error('The page was not found.')
 }
 
 // Set loading screen
