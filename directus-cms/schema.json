@@ -37449,8 +37449,8 @@
         "is_generated": false,
         "generation_expression": null,
         "has_auto_increment": false,
-        "foreign_key_table": null,
-        "foreign_key_column": null
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id"
       }
     },
     {
@@ -38875,9 +38875,9 @@
         "group": null,
         "hidden": false,
         "interface": "input",
-        "note": null,
+        "note": "Maintained automatically: number of the current invoice document (see Invoices)",
         "options": null,
-        "readonly": false,
+        "readonly": true,
         "required": false,
         "searchable": true,
         "sort": 4,
@@ -38919,11 +38919,11 @@
         "group": null,
         "hidden": false,
         "interface": "file",
-        "note": null,
+        "note": "Maintained automatically: PDF of the current invoice document (see Invoices)",
         "options": {
           "enableCreate": false
         },
-        "readonly": false,
+        "readonly": true,
         "required": false,
         "searchable": true,
         "sort": 5,
@@ -39044,12 +39044,12 @@
         "group": null,
         "hidden": false,
         "interface": "list-o2m",
-        "note": "Invoice documents issued for this order",
+        "note": "Invoice documents issued for this order — read-only: documents are never detached or deleted; use the invoice actions for corrections and cancellations",
         "options": {
           "enableCreate": false,
           "template": "{{invoice_number}} ({{type}})"
         },
-        "readonly": false,
+        "readonly": true,
         "required": false,
         "searchable": true,
         "sort": 34,
@@ -44618,6 +44618,31 @@
         "foreign_key_table": "ticket_invoices",
         "foreign_key_column": "id",
         "constraint_name": "ticket_invoices_related_invoice_foreign",
+        "on_update": "NO ACTION",
+        "on_delete": "NO ACTION"
+      }
+    },
+    {
+      "collection": "ticket_invoices",
+      "field": "user_created",
+      "related_collection": "directus_users",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "ticket_invoices",
+        "many_field": "user_created",
+        "one_allowed_collections": null,
+        "one_collection": "directus_users",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": null,
+        "sort_field": null
+      },
+      "schema": {
+        "table": "ticket_invoices",
+        "column": "user_created",
+        "foreign_key_table": "directus_users",
+        "foreign_key_column": "id",
+        "constraint_name": "ticket_invoices_user_created_foreign",
         "on_update": "NO ACTION",
         "on_delete": "NO ACTION"
       }
