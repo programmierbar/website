@@ -214,17 +214,6 @@ export default defineNuxtConfig({
         prerender: {
             failOnError: true,
         },
-        externals: {
-            // Do not remove: Pinia 4 ships only its bundler build, so externalising it leaves Vue's
-            // compile-time flags as undefined globals and every SSR route 500s. Inlining puts it
-            // through rollup, which substitutes them. Only reproducible under NODE_ENV=production,
-            // so no gate here catches it — retest with a real request, not `npm run build`.
-            //
-            // Temporary. Remove once `npm view pinia exports --json` shows a `node` or `production`
-            // condition on `"."` again. Full diagnosis: docs/dependency-upgrade-plan.md,
-            // "Waiting on upstream: the Pinia 4 export map".
-            inline: ['pinia'],
-        },
     },
 
     routeRules: {
