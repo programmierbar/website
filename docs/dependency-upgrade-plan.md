@@ -1984,7 +1984,10 @@ ruleset requires branches to be up to date before merging, but the config rebase
 `"rebaseWhen": "conflicted"`, so Renovate PRs will often wait for someone to click *Update branch*. And
 the Copilot ruleset reviews every Renovate push.
 
-### 2. The 263 `vue-tsc` errors, which are two unrelated problems
+### 2. The `vue-tsc` errors (263, now 253), which are two unrelated problems
+
+**2026-09-25: down to 253.** The two phantom imports described below are fixed, which removed 10
+errors and added none. The table still describes the remaining ones.
 
 Phase 4 moved the ratchet 209 → 263 and the two halves want different treatment:
 
@@ -2011,6 +2014,24 @@ Neither has broken anything because both are `import type`, so they are erased b
 cost is silent: an unresolvable type behaves like `any`, so the return type of `getMetaInfo` — the
 helper every page's `useHead` call goes through — is effectively unchecked, as is the `podcasts`
 computed on the podcast index. Fixing two lines restores type checking to a lot of call sites.
+
+✅ **Fixed 2026-09-25.** It took more than two lines, and both reasons are worth knowing:
+
+- **`getMetaInfo` now uses `useHead`'s own input type**, taken from `#app` as
+  `Parameters<typeof useHead>[0]`. There is no import from `@unhead/vue`, which is not a declared
+  dependency. It is applied with `satisfies` rather than as the return type, because that input type
+  also allows refs and functions. As a return type, it broke the 12 pages that call
+  `useHead(() => getMetaInfo(…))` and `news/index.vue`, which reads `.link` from the result.
+- **Checking it for real surfaced 27 `hid` keys**, a Nuxt 2 / vue-meta convention for de-duplicating
+  tags. unhead v3 deprecates `hid`, and the unknown key made TypeScript reject every tag. They had no
+  effect: production rendered no `hid` attributes and no duplicate tags. They are removed. The rendered
+  `<head>` of 20 pages, covering every `getMetaInfo` page type (audio, profile, article, `noIndex`,
+  and the RSS merge on `/news`), was compared between `main` and the fix: **395 tags, 0 differences**.
+- **`podcast/index.vue` just infers the type**, like the `tags` computed next to it. The phantom import
+  had also turned the podcast list into `unknown`, which accounted for 9 of the 10 errors.
+
+The error that remains in `podcast/index.vue` (line 28, tags typed as `Tag[]`) is unrelated and
+pre-existing.
 
 ### 3. Build and tooling correctness
 
@@ -2044,7 +2065,9 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
       So Phase 0's checks do make a broken change **unmergeable**, not just **detectable**. The
       premise this item worried about holds. **To check protection, query `rules/branches/main`, not
       `branches/main/protection`.** The second is the one that misled this document.
-- [ ] **`types/items.ts` types Deepgram's arrays as single-element tuples.**
+- [x] ✅ **`types/items.ts` types Deepgram's arrays as single-element tuples** — fixed 2026-09-25,
+      `{ … }[]` in all three places. The ratchet did not move (253 before and after, none new, none
+      gone), as expected: `.forEach` and `.find` compile against either form.
       `DeepgramTranscriptResponse.results.utterances`, the nested `words`, and
       `DirectusTranscriptItem.speakers` are all written `[{ … }]` rather than `{ … }[]`, so the type
       claims exactly one element where the API returns many. Found by a reviewer on #242; pre-existing,
@@ -2191,7 +2214,11 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
       what an upgrade tool will translate into `@source`. Tailwind 4's automatic detection scans every
       non-gitignored file, so expect more comment-driven strays like `.shrink`. They are harmless, but
       they will show up in a before/after CSS diff.
-- [ ] **`vitest.config.ts` is loaded as CommonJS while using ESM syntax.** `npm test` warns that
+- [x] ✅ **Renamed to `vitest.config.mts`** — done 2026-09-25. The warning is gone. To prove Vitest
+      loads the renamed file rather than silently falling back to its defaults, `include` was pointed
+      at a nonexistent file, and Vitest found no tests. fallow reports nothing new.
+
+      ~~`vitest.config.ts` is loaded as CommonJS while using ESM syntax.~~ `npm test` warned that
       `configLoader: 'native'` "is planned to become the default in a future major version of Vite",
       at which point this breaks. Prefer **renaming to `vitest.config.mts`** over adding
       `"type": "module"` to `package.json` — the latter would reinterpret every `.js` file in the
