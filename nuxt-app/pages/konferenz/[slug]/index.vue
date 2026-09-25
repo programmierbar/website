@@ -277,6 +277,7 @@ import { useDirectus } from '~/composables/useDirectus'
 import { VAT_RATE } from '~/config'
 import { getMetaInfo, parseCmsDate, trackGoal } from '~/helpers'
 import { getAssetUrl } from '~/helpers/getAssetUrl'
+import { generateEventFromConference } from '~/helpers/jsonLdGenerator'
 import type {
     ConferenceItem,
     DirectusConferencePage,
@@ -449,19 +450,21 @@ const videoUrl = computed(() => getAssetUrl(pageData.value?.conference?.video))
 // Set loading screen
 useLoadingScreen(conference, conferencePage)
 
-// Set page meta data
+// Set page meta data. The date of the event is part of the structured data;
+// `article:published_time` would only state when the page was published.
 useHead(() =>
     conference.value
         ? getMetaInfo({
-              type: 'article',
+              type: 'website',
               path: route.path,
               title: conference.value.title,
               description: conference.value.text_1,
               image: conference.value.cover_image,
-              publishedAt: conference.value.published_on.split('T')[0],
           })
         : {}
 )
+
+useJsonld(() => generateEventFromConference(conference.value))
 
 // Create breadcrumb list
 const breadcrumbs = computed(() => [

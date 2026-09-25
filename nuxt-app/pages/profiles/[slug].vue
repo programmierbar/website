@@ -65,7 +65,7 @@ useHead(() =>
         : {}
 )
 
-useJsonld(generateProfile(profile.value))
+useJsonld(() => generateProfile(profile.value))
 
 // Create breadcrumb list
 const breadcrumbs = computed(() => [

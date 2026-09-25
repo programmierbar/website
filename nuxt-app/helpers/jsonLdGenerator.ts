@@ -1,12 +1,27 @@
-import { BUZZSPROUT_RSS_FEED_URL, DIRECTUS_CMS_URL } from '~/config'
-import type { DirectusProfileItem, MemberItem, PodcastItem, SpeakerItem } from '~/types'
+import type {
+    ConferenceItem,
+    DirectusProfileItem,
+    FileItem,
+    MeetupItem,
+    MemberItem,
+    PodcastItem,
+    SpeakerItem,
+} from '~/types'
 import type { JsonLD } from 'nuxt-jsonld/dist/types/index.d'
-import type { Person, PodcastEpisode, PodcastSeries, WithContext } from 'schema-dts'
+import type { Event, Person, PodcastEpisode, PodcastSeries, WithContext } from 'schema-dts'
 import { getPodcastType } from 'shared-code'
+import { BUZZSPROUT_RSS_FEED_URL, WEBSITE_NAME, WEBSITE_URL } from '../config'
 import { getAssetUrl } from './getAssetUrl'
+import { getPlainText } from './getPlainText'
+import { parseCmsDate } from './parseCmsDate'
 
 function generatePodcastUrl(podcast: PodcastItem): string {
-    return `${DIRECTUS_CMS_URL}/podcast/${podcast.slug}`
+    return `${WEBSITE_URL}/podcast/${podcast.slug}`
+}
+
+// Omit the image instead of emitting an empty string when there is none
+function getImageUrl(image?: FileItem | string | null): string | undefined {
+    return getAssetUrl(image) || undefined
 }
 
 function generatePersonFromSpeaker(speaker: SpeakerItem): WithContext<Person> {
@@ -16,7 +31,7 @@ function generatePersonFromSpeaker(speaker: SpeakerItem): WithContext<Person> {
         givenName: speaker.first_name,
         familyName: speaker.last_name,
         jobTitle: speaker.occupation,
-        image: getAssetUrl(speaker.profile_image),
+        image: getImageUrl(speaker.profile_image),
         sameAs: [
             speaker.twitter_url,
             speaker.linkedin_url,
@@ -35,7 +50,7 @@ function generatePersonFromMember(member: MemberItem): WithContext<Person> {
         givenName: member.first_name,
         familyName: member.last_name,
         jobTitle: member.occupation,
-        image: getAssetUrl(member.normal_image),
+        image: getImageUrl(member.normal_image),
     }
 }
 
@@ -43,9 +58,9 @@ function generatePodcastSeries(): WithContext<PodcastSeries> {
     return {
         '@context': 'https://schema.org',
         '@type': 'PodcastSeries',
-        name: 'programmier.bar',
-        url: 'https://programmier.bar',
-        mainEntityOfPage: 'https://programmier.bar',
+        name: WEBSITE_NAME,
+        url: WEBSITE_URL,
+        mainEntityOfPage: WEBSITE_URL,
         webFeed: BUZZSPROUT_RSS_FEED_URL,
         sameAs: [
             'https://twitter.com/programmierbar',
@@ -73,8 +88,8 @@ function generatePodcastEpisodeFromPodcast(podcast?: PodcastItem): JsonLD | null
         '@type': 'PodcastEpisode',
         name: podcast.title,
         partOfSeries,
-        image: getAssetUrl(podcast.cover_image),
-        description: podcast.description,
+        image: getImageUrl(podcast.cover_image),
+        description: getPlainText(podcast.description),
         datePublished: podcast.published_on,
         episodeNumber: `${type} ${podcast.number}`,
         url: generatePodcastUrl(podcast),
@@ -94,7 +109,7 @@ function generateProfile(profile?: DirectusProfileItem): JsonLD {
         familyName: profile.last_name,
         jobTitle: profile.job_role,
         alternateName: profile.display_name,
-        image: getAssetUrl(profile.profile_image),
+        image: getImageUrl(profile.profile_image),
     }
 
     if (profile.job_employer) {
@@ -107,4 +122,43 @@ function generateProfile(profile?: DirectusProfileItem): JsonLD {
     return profileSchema
 }
 
-export { generatePersonFromSpeaker, generatePodcastEpisodeFromPodcast, generatePodcastSeries, generateProfile }
+function generateEvent(
+    event: Pick<MeetupItem | ConferenceItem, 'title' | 'start_on' | 'end_on' | 'cover_image'>,
+    description: string,
+    path: string
+): WithContext<Event> {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'Event',
+        name: event.title,
+        description: getPlainText(description),
+        startDate: parseCmsDate(event.start_on).toISOString(),
+        endDate: parseCmsDate(event.end_on).toISOString(),
+        image: getImageUrl(event.cover_image),
+        url: WEBSITE_URL + path,
+        organizer: {
+            '@type': 'Organization',
+            name: WEBSITE_NAME,
+            url: WEBSITE_URL,
+        },
+    }
+}
+
+function generateEventFromMeetup(meetup?: MeetupItem): JsonLD | null {
+    if (!meetup) return null
+    return generateEvent(meetup, meetup.description, `/meetup/${meetup.slug}`)
+}
+
+function generateEventFromConference(conference?: ConferenceItem): JsonLD | null {
+    if (!conference) return null
+    return generateEvent(conference, conference.text_1, `/konferenz/${conference.slug}`)
+}
+
+export {
+    generateEventFromConference,
+    generateEventFromMeetup,
+    generatePersonFromSpeaker,
+    generatePodcastEpisodeFromPodcast,
+    generatePodcastSeries,
+    generateProfile,
+}

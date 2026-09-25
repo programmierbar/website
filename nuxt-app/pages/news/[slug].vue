@@ -66,6 +66,7 @@ useHead(() =>
               path: route.path,
               title: newsLink.value.title,
               description: newsLink.value.comment || newsLink.value.open_graph?.description || '',
+              externalImageUrl: newsLink.value.open_graph?.image,
               // Omit the published time entirely when published_on is missing
               // (a broken state) rather than substituting a different date.
               publishedAt: news.value?.published_on ? news.value.published_on.split('T')[0] : undefined,

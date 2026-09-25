@@ -22,6 +22,17 @@ export const BUZZSPROUT_TRACKING_URL = 'https://op3.dev/e/https://www.podtrac.co
 export const WEBSITE_URL = process.env.WEBSITE_URL || 'https://www.programmier.bar'
 export const WEBSITE_NAME = 'programmier.bar'
 export const TWITTER_HANDLE = '@programmierbar'
+export const WEBSITE_LOCALE = 'de_DE'
+
+// Open Graph image for every page that has no image of its own. The file lives in `public/`, so it
+// can be replaced by overwriting it — keep the dimensions below in sync with the new file.
+export const DEFAULT_OG_IMAGE = {
+    path: '/images/og-default.png',
+    type: 'image/png',
+    width: 1200,
+    height: 630,
+    alt: `${WEBSITE_NAME} – Die Plattform für App- und Webentwicklung`,
+}
 
 // News RSS feed (served by server/routes/feed/news.xml.get.ts, linked from the
 // news page). Single source of truth for the path and title used by both.
