@@ -32,6 +32,7 @@ import NewsItem from '~/components/NewsItem.vue'
 import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo, resolveNewsLink } from '~/helpers'
+import { getPlainText } from '~/helpers/sanitize'
 import { computed } from 'vue'
 
 const route = useRoute()
@@ -65,7 +66,7 @@ useHead(() =>
               type: 'article',
               path: route.path,
               title: newsLink.value.title,
-              description: newsLink.value.comment || newsLink.value.open_graph?.description || '',
+              description: getPlainText(newsLink.value.comment || newsLink.value.open_graph?.description),
               externalImageUrl: newsLink.value.open_graph?.image,
               // Omit the published time entirely when published_on is missing
               // (a broken state) rather than substituting a different date.

@@ -9,7 +9,6 @@ import {
 } from '../config'
 import type { FileItem } from '../types'
 import { getAssetUrl } from './getAssetUrl'
-import { getPlainText } from './getPlainText'
 import { getTrimmedString } from './getTrimmedString'
 
 type HeadInput = Parameters<typeof useHead>[0]
@@ -19,6 +18,9 @@ interface Data {
     type: 'website' | 'podcast' | 'profile' | 'article'
     path: string
     title: string
+    // Plain text. Convert CMS rich text with `getPlainText` from
+    // `helpers/sanitize` first; it is not imported here because this module is
+    // part of the helpers barrel, which server routes import.
     description?: string | null
     image?: FileItem | null
     // Absolute URL of an image hosted elsewhere, e.g. the Open Graph image of
@@ -105,8 +107,9 @@ export function getMetaInfo({
     const pageTitle = title.trim()
     const documentTitle = path === '/' ? pageTitle : `${pageTitle} | ${WEBSITE_NAME}`
 
-    // Convert rich text to a single line of plain text and trim it
-    const trimmedDescription = getTrimmedString(getPlainText(description ?? ''), DESCRIPTION_MAX_LENGTH)
+    // Replace multiple whitespace characters, including line breaks, with a
+    // single space and trim the description at a word boundary
+    const trimmedDescription = getTrimmedString((description ?? '').replace(/\s+/g, ' ').trim(), DESCRIPTION_MAX_LENGTH)
 
     const ogImage = getOgImage(pageTitle, image, externalImageUrl)
 

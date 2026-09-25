@@ -129,6 +129,7 @@ import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { OPEN_YOUTUBE_EVENT_ID } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
+import { getMeetupTeaser } from '~/helpers/getMeetupTeaser'
 import { generateEventFromMeetup } from '~/helpers/jsonLdGenerator'
 import type { DirectusFileItem, DirectusTestimonialItem, MeetupItem, TagItem } from '~/types'
 import { computed, type ComputedRef } from 'vue'
@@ -205,7 +206,7 @@ useHead(() =>
               type: 'website',
               path: route.path,
               title: meetup.value.title,
-              description: meetup.value.description,
+              description: getMeetupTeaser(meetup.value),
               image: meetup.value.cover_image,
           })
         : {}

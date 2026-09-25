@@ -10,10 +10,11 @@ import type {
 import type { JsonLD } from 'nuxt-jsonld/dist/types/index.d'
 import type { Event, Person, PodcastEpisode, PodcastSeries, WithContext } from 'schema-dts'
 import { getPodcastType } from 'shared-code'
-import { BUZZSPROUT_RSS_FEED_URL, WEBSITE_NAME, WEBSITE_URL } from '../config'
+import { BUZZSPROUT_RSS_FEED_URL, EVENT_LOCATION, WEBSITE_NAME, WEBSITE_URL } from '../config'
 import { getAssetUrl } from './getAssetUrl'
-import { getPlainText } from './getPlainText'
+import { getMeetupTeaser } from './getMeetupTeaser'
 import { parseCmsDate } from './parseCmsDate'
+import { getPlainText } from './sanitize'
 
 function generatePodcastUrl(podcast: PodcastItem): string {
     return `${WEBSITE_URL}/podcast/${podcast.slug}`
@@ -131,9 +132,12 @@ function generateEvent(
         '@context': 'https://schema.org',
         '@type': 'Event',
         name: event.title,
-        description: getPlainText(description),
+        description,
         startDate: parseCmsDate(event.start_on).toISOString(),
         endDate: parseCmsDate(event.end_on).toISOString(),
+        eventStatus: 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        location: EVENT_LOCATION,
         image: getImageUrl(event.cover_image),
         url: WEBSITE_URL + path,
         organizer: {
@@ -146,12 +150,12 @@ function generateEvent(
 
 function generateEventFromMeetup(meetup?: MeetupItem): JsonLD | null {
     if (!meetup) return null
-    return generateEvent(meetup, meetup.description, `/meetup/${meetup.slug}`)
+    return generateEvent(meetup, getMeetupTeaser(meetup), `/meetup/${meetup.slug}`)
 }
 
 function generateEventFromConference(conference?: ConferenceItem): JsonLD | null {
     if (!conference) return null
-    return generateEvent(conference, conference.text_1, `/konferenz/${conference.slug}`)
+    return generateEvent(conference, getPlainText(conference.text_1), `/konferenz/${conference.slug}`)
 }
 
 export {

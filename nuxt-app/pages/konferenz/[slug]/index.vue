@@ -278,6 +278,7 @@ import { VAT_RATE } from '~/config'
 import { getMetaInfo, parseCmsDate, trackGoal } from '~/helpers'
 import { getAssetUrl } from '~/helpers/getAssetUrl'
 import { generateEventFromConference } from '~/helpers/jsonLdGenerator'
+import { getPlainText } from '~/helpers/sanitize'
 import type {
     ConferenceItem,
     DirectusConferencePage,
@@ -458,7 +459,7 @@ useHead(() =>
               type: 'website',
               path: route.path,
               title: conference.value.title,
-              description: conference.value.text_1,
+              description: getPlainText(conference.value.text_1),
               image: conference.value.cover_image,
           })
         : {}

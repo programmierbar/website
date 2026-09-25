@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_OG_IMAGE, WEBSITE_URL } from '../config'
 import { getMetaInfo } from '../helpers/getMetaInfo'
-import { getPlainText } from '../helpers/getPlainText'
 import { getTrimmedString } from '../helpers/getTrimmedString'
 import type { FileItem } from '../types'
 
@@ -14,43 +13,6 @@ function getContent(meta: Meta[], key: string) {
 }
 
 const cover: FileItem = { id: 'cover-id', title: 'Cover Deep Dive 123', type: 'image/jpeg', width: 1500, height: 1500 }
-
-describe('getPlainText', () => {
-    it('keeps paragraphs and line breaks apart', () => {
-        expect(getPlainText('<p>Das war verheerend.</p><p>PS: Danke!</p>')).toBe('Das war verheerend. PS: Danke!')
-        expect(getPlainText('Zeile eins<br>Zeile zwei<br/>Zeile drei')).toBe('Zeile eins Zeile zwei Zeile drei')
-        expect(getPlainText('<ul><li>Eins</li><li>Zwei</li></ul>')).toBe('Eins Zwei')
-    })
-
-    it('does not add spaces for inline elements', () => {
-        expect(getPlainText('<p>Ein <a href="https://example.com">Link</a>, <strong>fett</strong>.</p>')).toBe(
-            'Ein Link, fett.'
-        )
-    })
-
-    it('decodes named and numeric character references', () => {
-        expect(getPlainText('L&uuml;cke im Agenten-&Ouml;kosystem &ndash; gro&szlig;')).toBe(
-            'Lücke im Agenten-Ökosystem – groß'
-        )
-        expect(getPlainText('JetBrains&rsquo; &bdquo;Air&ldquo; &amp; mehr')).toBe('JetBrains’ „Air“ & mehr')
-        expect(getPlainText('&#252; &#xFC; &#x1F37B;')).toBe('ü ü 🍻')
-    })
-
-    it('decodes only once and keeps encoded markup as text', () => {
-        expect(getPlainText('&amp;uuml;')).toBe('&uuml;')
-        expect(getPlainText('&lt;div&gt;')).toBe('<div>')
-    })
-
-    it('leaves unknown references alone', () => {
-        expect(getPlainText('&unknown; &#0;')).toBe('&unknown; &#0;')
-    })
-
-    it('collapses whitespace, including non-breaking spaces', () => {
-        expect(getPlainText('\n<p>Zum Schluss&nbsp;<a>Googlebook</a></p>\n\n<p>  Ende </p>')).toBe(
-            'Zum Schluss Googlebook Ende'
-        )
-    })
-})
 
 describe('getTrimmedString', () => {
     it('returns short strings unchanged', () => {
@@ -99,8 +61,8 @@ describe('getMetaInfo', () => {
         expect(getContent(meta, 'og:locale')).toBe('de_DE')
     })
 
-    it('converts rich text descriptions and trims them at a word boundary', () => {
-        const description = `<p>Das war verheerend.</p><p>PS: Gr&uuml;&szlig;e ${'und noch mehr Text '.repeat(10)}</p>`
+    it('collapses whitespace in descriptions and trims them at a word boundary', () => {
+        const description = `Das war verheerend.\n\nPS: Grüße ${'und noch mehr Text '.repeat(10)}`
         const { meta } = getMetaInfo({ type: 'website', path: '/x', title: 'X', description })
         const content = getContent(meta, 'description')!
         expect(content.startsWith('Das war verheerend. PS: Grüße und noch mehr Text')).toBe(true)
@@ -112,7 +74,7 @@ describe('getMetaInfo', () => {
     })
 
     it('omits the description tags if there is no description', () => {
-        const { meta } = getMetaInfo({ type: 'website', path: '/x', title: 'X', description: '<p></p>' })
+        const { meta } = getMetaInfo({ type: 'website', path: '/x', title: 'X', description: ' \n ' })
         expect(getContent(meta, 'description')).toBeUndefined()
         expect(getContent(meta, 'og:description')).toBeUndefined()
     })

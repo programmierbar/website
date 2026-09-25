@@ -107,6 +107,7 @@ import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo, trackGoal } from '~/helpers'
 import { generatePersonFromSpeaker } from '~/helpers/jsonLdGenerator'
+import { getPlainText } from '~/helpers/sanitize'
 import type { TagItem } from '~/types'
 import { getFullSpeakerName } from 'shared-code'
 import { computed } from 'vue'
@@ -175,7 +176,7 @@ useHead(() =>
               type: 'profile',
               path: route.path,
               title: fullName.value || 'Speaker',
-              description: speaker.value.description,
+              description: getPlainText(speaker.value.description),
               image: speaker.value.profile_image,
               firstName: speaker.value.first_name,
               lastName: speaker.value.last_name,

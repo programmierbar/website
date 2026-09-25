@@ -34,6 +34,21 @@ export const DEFAULT_OG_IMAGE = {
     alt: `${WEBSITE_NAME} – Die Plattform für App- und Webentwicklung`,
 }
 
+// Venue of meetups and conferences, used as the location in their structured data. Nearly all
+// events take place here; the rare event elsewhere is an accepted exception, as there is no
+// location field in the CMS.
+export const EVENT_LOCATION = {
+    '@type': 'Place',
+    name: 'Lotum media GmbH',
+    address: {
+        '@type': 'PostalAddress',
+        streetAddress: 'Am Goldstein 1',
+        postalCode: '61231',
+        addressLocality: 'Bad Nauheim',
+        addressCountry: 'DE',
+    },
+} as const
+
 // News RSS feed (served by server/routes/feed/news.xml.get.ts, linked from the
 // news page). Single source of truth for the path and title used by both.
 export const NEWS_FEED_PATH = '/feed/news.xml'

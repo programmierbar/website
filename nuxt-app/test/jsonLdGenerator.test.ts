@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { WEBSITE_URL } from '../config'
+import { EVENT_LOCATION, WEBSITE_URL } from '../config'
 import {
     generateEventFromConference,
     generateEventFromMeetup,
@@ -73,12 +73,13 @@ describe('generatePersonFromSpeaker', () => {
 })
 
 describe('generateEventFromMeetup', () => {
-    it('describes the meetup as an event with its dates', () => {
+    it('describes the meetup as an event with its dates and teaser', () => {
         const event = asRecord(
             generateEventFromMeetup({
                 slug: 'mein-meetup',
                 title: 'Mein Meetup',
-                description: '<p>Vortrag</p><p>Diskussion</p>',
+                intro: '<p>Worum es geht.</p><p>Und warum.</p>',
+                description: '<p>Lightning Talks</p><p>Agenda</p>',
                 start_on: '2026-10-22T16:00:00.000Z',
                 end_on: '2026-10-22T20:00:00.000Z',
                 cover_image: cover,
@@ -86,11 +87,41 @@ describe('generateEventFromMeetup', () => {
         )
         expect(event['@type']).toBe('Event')
         expect(event.name).toBe('Mein Meetup')
-        expect(event.description).toBe('Vortrag Diskussion')
+        expect(event.description).toBe('Worum es geht. Und warum.')
         expect(event.startDate).toBe('2026-10-22T16:00:00.000Z')
         expect(event.endDate).toBe('2026-10-22T20:00:00.000Z')
         expect(event.url).toBe(`${WEBSITE_URL}/meetup/mein-meetup`)
         expect(event.image).toMatch(/\/assets\/cover-id$/)
+        expect(event.eventStatus).toBe('https://schema.org/EventScheduled')
+        expect(event.eventAttendanceMode).toBe('https://schema.org/OfflineEventAttendanceMode')
+        expect(event.location).toEqual({
+            '@type': 'Place',
+            name: EVENT_LOCATION.name,
+            address: {
+                '@type': 'PostalAddress',
+                streetAddress: 'Am Goldstein 1',
+                postalCode: '61231',
+                addressLocality: 'Bad Nauheim',
+                addressCountry: 'DE',
+            },
+        })
+    })
+
+    it('falls back to the description for meetups without an intro', () => {
+        for (const intro of [null, '', '<p></p>']) {
+            const event = asRecord(
+                generateEventFromMeetup({
+                    slug: 'altes-meetup',
+                    title: 'Altes Meetup',
+                    intro,
+                    description: '<p>Vortrag</p><p>Diskussion</p>',
+                    start_on: '2024-10-22T16:00:00.000Z',
+                    end_on: '2024-10-22T20:00:00.000Z',
+                    cover_image: cover,
+                } as unknown as MeetupItem)
+            )
+            expect(event.description).toBe('Vortrag Diskussion')
+        }
     })
 
     it('returns null without a meetup', () => {
@@ -113,5 +144,6 @@ describe('generateEventFromConference', () => {
         expect(event.startDate).toBe('2026-11-25T07:00:00.000Z')
         expect(event.endDate).toBe('2026-11-26T17:00:00.000Z')
         expect(event.url).toBe(`${WEBSITE_URL}/konferenz/meine-konferenz`)
+        expect(event.location).toBe(EVENT_LOCATION)
     })
 })

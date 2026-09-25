@@ -147,6 +147,7 @@ import {
 } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
 import { generatePodcastEpisodeFromPodcast } from '~/helpers/jsonLdGenerator'
+import { getPlainText } from '~/helpers/sanitize'
 import type { PodcastItem, TagItem } from '~/types'
 import { getFullPodcastTitle, getPodcastType } from 'shared-code'
 import { computed, type ComputedRef } from 'vue'
@@ -218,7 +219,7 @@ useHead(() =>
               type: 'podcast',
               path: route.path,
               title: getFullPodcastTitle(podcast.value),
-              description: podcast.value.description,
+              description: getPlainText(podcast.value.description),
               publishedAt: podcast.value.published_on.split('T')[0],
               image: podcast.value.cover_image,
               audioUrl: podcast.value.audio_url || undefined,

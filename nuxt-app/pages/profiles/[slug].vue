@@ -30,6 +30,7 @@ import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo } from '~/helpers'
 import { generateProfile } from '~/helpers/jsonLdGenerator'
+import { getPlainText } from '~/helpers/sanitize'
 import type { DirectusProfileItem } from '~/types'
 import { computed, type ComputedRef } from 'vue'
 
@@ -59,7 +60,7 @@ useHead(() =>
               type: 'website',
               path: route.path,
               title: `${profile.value.first_name} ${profile.value.last_name}`,
-              description: profile.value.description,
+              description: getPlainText(profile.value.description),
               image: profile.value.profile_image,
           })
         : {}
