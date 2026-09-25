@@ -32,18 +32,29 @@ import NewsItem from '~/components/NewsItem.vue'
 import { useLoadingScreen } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo, resolveNewsLink } from '~/helpers'
+import { getPlainText } from '~/helpers/sanitize'
 import { computed } from 'vue'
 
 const route = useRoute()
 const directus = useDirectus()
 
-const { data: news } = await useAsyncData(route.fullPath, () =>
+const { data: news, error } = await useAsyncData(route.fullPath, () =>
     directus.getPublishedNewsBySlug(route.params.slug as string)
 )
 
-// A missing or unpublished slug is a 404, not a server error. This is thrown at
-// setup level (not inside the useAsyncData handler, where it would only populate
-// the error ref) so the response carries the correct status.
+// Errors are thrown at setup level (not inside the useAsyncData handler, where
+// they would only populate the error ref) so the response carries the correct
+// status. A failed request is a server error and must not look like a 404.
+if (error.value) {
+    throw createError({
+        statusCode: 500,
+        statusMessage: error.value.message || 'Failed to load news item.',
+        fatal: true,
+        cause: error.value,
+    })
+}
+
+// A missing or unpublished slug is a 404, not a server error
 if (!news.value) {
     throw createError({ statusCode: 404, statusMessage: 'The news item was not found.', fatal: true })
 }
@@ -65,7 +76,8 @@ useHead(() =>
               type: 'article',
               path: route.path,
               title: newsLink.value.title,
-              description: newsLink.value.comment || newsLink.value.open_graph?.description || '',
+              description: getPlainText(newsLink.value.comment || newsLink.value.open_graph?.description),
+              externalImageUrl: newsLink.value.open_graph?.image,
               // Omit the published time entirely when published_on is missing
               // (a broken state) rather than substituting a different date.
               publishedAt: news.value?.published_on ? news.value.published_on.split('T')[0] : undefined,

@@ -147,6 +147,7 @@ import {
 } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
 import { generatePodcastEpisodeFromPodcast } from '~/helpers/jsonLdGenerator'
+import { getPlainText } from '~/helpers/sanitize'
 import type { PodcastItem, TagItem } from '~/types'
 import { getFullPodcastTitle, getPodcastType } from 'shared-code'
 import { computed, type ComputedRef } from 'vue'
@@ -157,7 +158,7 @@ const directus = useDirectus()
 
 // Query podcast, pick of the day,
 // speaker count and related podcasts
-const { data: pageData } = useAsyncData(route.fullPath, async () => {
+const { data: pageData, error } = await useAsyncData(route.fullPath, async () => {
     const [podcast, pickOfTheDayCount, speakerCount] = await Promise.all([
         // Podcast
         await directus.getPodcastBySlug(route.params.slug as string),
@@ -166,9 +167,9 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
         // Speaker count
         await directus.getSpeakersCount(),
     ])
-    // Throw error if podcast does not exist
+    // A missing podcast is a 404 (handled below), not a fetch failure
     if (!podcast) {
-        throw new Error('The podcast was not found.')
+        return null
     }
 
     // Transcript
@@ -181,6 +182,20 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
     // speaker count and related podcasts
     return { podcast, pickOfTheDayCount, speakerCount, relatedPodcasts, transcript }
 })
+
+// Throw at setup level (not inside the useAsyncData handler, where it would
+// only populate the error ref) so the response carries the correct status
+if (error.value) {
+    throw createError({
+        statusCode: 500,
+        statusMessage: error.value.message || 'Failed to load podcast.',
+        fatal: true,
+        cause: error.value,
+    })
+}
+if (!pageData.value) {
+    throw createError({ statusCode: 404, statusMessage: 'The podcast was not found.', fatal: true })
+}
 
 // Extract podcast, pick of the day, speaker
 // and related podcasts count from page data
@@ -204,7 +219,7 @@ useHead(() =>
               type: 'podcast',
               path: route.path,
               title: getFullPodcastTitle(podcast.value),
-              description: podcast.value.description,
+              description: getPlainText(podcast.value.description),
               publishedAt: podcast.value.published_on.split('T')[0],
               image: podcast.value.cover_image,
               audioUrl: podcast.value.audio_url || undefined,
@@ -212,7 +227,7 @@ useHead(() =>
         : {}
 )
 
-useJsonld(generatePodcastEpisodeFromPodcast(podcast.value))
+useJsonld(() => generatePodcastEpisodeFromPodcast(podcast.value))
 
 // Create podcast type
 const type = computed(() => podcast.value && getPodcastType(podcast.value))
