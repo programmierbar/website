@@ -42,6 +42,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | [Registry sweep and the formatter bump](#registry-sweep-and-the-formatter-bump--done-2026-08-04) | ✅ Done (2026-08-04) |
 | — | [Prettier sweep + format gate](#the-prettier-sweep-and-the-format-gate--done-2026-08-04) | ✅ Done (2026-08-04) |
 | — | [Node 24 alignment for `nuxt-app`](#node-24-alignment-for-nuxt-app--done-2026-08-04) | ✅ Done (2026-08-04) |
+| — | [Patch and minor refresh](#patch-and-minor-refresh--done-2026-09-25) — audit back from 10 to **0** | ✅ Done (2026-09-25) |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
 Each phase's own write-up ends with what it deliberately left behind. Those are also gathered into
@@ -1859,6 +1860,68 @@ no project-update call — so it needs a human. The reason to fix it is unchange
 today's runtime: if `engines.node` were ever simplified or dropped, the project would silently fall back
 to Node 20, which is below both Nuxt's floor and the `require(esm)` threshold that caused #174.
 
+## Patch and minor refresh — done 2026-09-25
+
+**Seven weeks after Phase 5 ended the audit at zero, it was back at 10** (5 high, 5 moderate) —
+14 distinct advisories, all fixable without a major. This is the re-accumulation that
+[installing Renovate](#1-install-the-renovate-github-app--highest-value-item-here) exists to prevent;
+it is still not installed, so this was done by hand, the same way as Phase 2: `npm update`, then
+`npm audit fix` without `--force`.
+
+| package | before | after | advisories cleared | reaches production? |
+| --- | --- | --- | --- | --- |
+| `nodemailer` | 9.0.4 | 9.1.1 | 1 high (address-parser DoS), 3 moderate (recipient-domain bypasses, `resolveContent` file access) | **yes** — the contact form |
+| `sharp` | 0.35.3 | 0.35.4 | 1 high (bundled libheif) | no — dev-only in the lockfile |
+| `svgo` | 3.3.4 | 3.3.5 | 1 high, 1 moderate (`removeScripts` bypasses) | build-time |
+| `nanoid` | 3.3.16 | 3.3.19 | 1 high | transitive |
+| `js-yaml` | 4.3.1 | 4.3.2 | 1 high | transitive |
+| `dompurify` | 3.4.12 | 3.4.16 | 1 moderate (XSS via `IN_PLACE` hook removal) | **yes** — floated in through `isomorphic-dompurify ~2.20.0`, as [predicted](#5-small-verified-uncontroversial) |
+| `devalue`, `qs` | 5.9.0, 6.15.3 | 5.9.4, 6.16.0 | 3 moderate | transitive |
+| `vitest` | 4.1.10 | 4.1.11 | 1 moderate | test-only |
+
+Framework and toolchain moves along the way, all within their major: `nuxt` 4.5.1 → 4.5.2, `vue`
+3.5.40 → 3.5.43, `vite` 8.2.0 → 8.3.1, `pinia` 4.0.2 → 4.0.3, `zod` 4.4.3 → 4.6.5, `stripe` 22.4.0 →
+22.6.2, `eslint` 10.8.0 → 10.11.0, `@playwright/test` 1.62 → 1.63.
+
+### The lockfile diff looks like 37 majors. It is hoisting, plus one real bug.
+
+Comparing the lockfiles package by package reports 37 top-level entries that changed major. Almost all
+are **hoisting**: npm put a different copy of the same package at the top of `node_modules`, while the
+set of versions in the tree stayed identical — `cookie-es` is `1.2.3, 2.0.1, 3.1.1` on both sides, for
+example. Three are genuine cross-major moves, all transitive: `eslint-plugin-unicorn` 65 → 73 (via
+`@nuxt/eslint-config`; lint output unchanged, 0 errors / 127 warnings either way), `schema-dts` 1 → 2
+(via `nuxt-jsonld`; our one import of it is `import type`, and the ratchet is unchanged) and
+`instantsearch-ui-components` 0.33 → 0.41 (via `vue-instantsearch`; verified by running a real search,
+below).
+
+Hoisting is harmless **unless something relies on it**, and something did. `server/middleware/cocktails.ts`
+imports `defineEventHandler` and `getHeader` from `'h3'`, which `package.json` never declared. It resolved
+only because Nitro's `h3@1.15.11` happened to sit at the top. After the update, the top slot went to
+**`h3@2.0.1-rc.32`** — a release candidate of the next major, pulled in by `@eslint/config-inspector`.
+That middleware runs on every server request.
+
+It happened to keep working — the built server returned correct JSON on `/api/cocktails` — but that was
+luck, not design, and the next reshuffle could break it. The fix is to **declare `h3: ^1.15.11`**, the
+same range `nitropack@2.13.4` requires. That puts 1.x back at the top on purpose; the 2.x RC is now nested
+under the ESLint inspector only. Drop the declaration when Nitro moves to h3 2, not before.
+
+### Verification
+
+- Audit: **10 → 0** (14 distinct advisories → 0)
+- `prettier:check` clean, `lint` 0 errors / 127 warnings (unchanged), `test` 110/110
+- Ratchet steady at **263**
+- Build → exit 0. One new warning, `MODULE_LEVEL_DIRECTIVE` for `"use client"` in `web-haptics`, which
+  is **unchanged at 0.0.6** — the newer Vite reports a directive it always had. It is a React Server
+  Components marker and means nothing to Nuxt, so discarding it is correct.
+- Smoke suite **18/18** against `NODE_ENV=production node .output/server/index.mjs`. Needed
+  `npx playwright install chromium` first, because Playwright 1.63 wants a newer browser build; CI's
+  `test:smoke:install` step handles that on its own.
+- **Pinia 4.0.3 still needs the `inline` workaround** — its `exports["."]` is still a bare string — and
+  `/` returns 200 in production mode with it in place. See
+  [Waiting on upstream](#waiting-on-upstream-the-pinia-4-export-map).
+- Search checked in a browser, because the smoke test only proves `/suche` renders: `?search=typescript`
+  returns 20 hits, rendered, with zero console errors or warnings.
+
 ## Phase 6 — Deliberately deferred
 
 Not blocked by EOL. Do **not** fold these into the phases above.
@@ -2208,9 +2271,10 @@ browser-support decision nobody made.
       `.nvmrc` happens to select. One line in a new `nuxt-app/.npmrc` makes it binding. Deliberately left
       out of the Node 24 alignment because it changes install behaviour for other people: a wrong local
       Node would fail the install instead of warning. CI and Vercel are unaffected either way.
-- [ ] **Re-check the `brace-expansion` advisory.** It stopped being reported during Phase 4, but
-      the package is **still 2.1.4, unchanged** — the advisory data moved, not our tree. Treat it as
-      unresolved rather than fixed.
+- [x] ✅ **Re-checked the `brace-expansion` advisory** — 2026-09-25. It had stopped being reported
+      while the package sat at 2.1.4, which proved nothing about our tree. The `maintenance-v2` line
+      has since shipped new releases, the tree now resolves **2.1.7**, and the audit is clean against
+      it. Resolved by an actual version change this time, not by the advisory data moving.
 - [ ] ⚠️ **The Vercel project's `nodeVersion` says `20.x` but is silently overridden to `24.x`.**
       `engines.node` in `nuxt-app/package.json` wins, and every build log carries a warning saying so.
       Two reasons to align the setting anyway: the dashboard currently tells anyone who looks the wrong
@@ -2356,8 +2420,8 @@ upgrade would mean a reviewer cannot tell the upgrade from the prose edit.
 
 ### Waiting on upstream: the Pinia 4 export map
 
-**Status as of 2026-08-03: not fixed, and no upstream issue exists.** `pinia@4.0.2` is the newest
-release (only 4.0.0, 4.0.1 and 4.0.2 have been published) and still carries the defect.
+**Status as of 2026-09-25: not fixed, and no upstream issue exists.** `pinia@4.0.3` is the newest
+release and still carries the defect — its `exports["."]` is still the bare string `"./dist/pinia.js"`.
 
 This section exists because `nitro.externals.inline: ['pinia']` in `nuxt.config.ts` is a workaround
 for someone else's packaging bug, and workarounds with nothing concrete to watch for are how
