@@ -663,10 +663,11 @@ detail needed to act on them; kept here as the record of what this phase chose n
 - [x] Stop the prerender crawler walking image URLs, so a full local build works — done 2026-08-04
       (#240): 193s and intermittently failing became 29s. Scoped to non-static builds; see the
       follow-up backlog for why that guard matters.
-- [ ] `tailwind.config.js` `content` globs are `'./pages/**/*.{html,js}'` and
+- [x] `tailwind.config.js` `content` globs are `'./pages/**/*.{html,js}'` and
       `'./components/**/*.{html,js}'` — **no `.vue`**. The site is styled only because
       `@nuxtjs/tailwindcss` injects its own defaults over the top. Worth fixing before Tailwind 4
-      (Phase 6), which changes content detection.
+      (Phase 6), which changes content detection. ✅ Fixed 2026-09-25, see the
+      [follow-up backlog](#3-build-and-tooling-correctness).
 - [ ] The `app/` directory migration remains a **separate** later PR (Phase 6).
 
 ---
@@ -1941,7 +1942,8 @@ Not blocked by EOL. Do **not** fold these into the phases above.
 - [ ] **Tailwind 3.4 → 4.x.** This is a config-format rewrite (JS config → CSS-first `@theme`),
       and `@nuxtjs/tailwindcss@6` hard-pins `tailwindcss ~3.4.17`, so it also means moving to
       `@tailwindcss/vite`. `tailwind.config.js` carries a substantial custom theme (brand colours,
-      seven custom breakpoints). Its own project.
+      seven custom breakpoints). Its own project. Its prerequisite, correct `content` globs, is done
+      (2026-09-25). Compare generated CSS before and after, the way that fix was verified.
 - [x] ✅ **Node 22 → 24** — done 2026-08-04 for `nuxt-app`. See
       [the write-up](#node-24-alignment-for-nuxt-app--done-2026-08-04). The Directus extension stays on
       22 deliberately. **Production was already running 24.x**, so this aligned the declarations with
@@ -2157,12 +2159,38 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
       CMS links (twice, on different surfaces), then the ipx capacity wall. Nothing depended on the
       script: no workflow or Vercel config invoked it, and Vercel serves images through `_vercel/image`.
       `AGENTS.md` records the absence so it is not reinstated as an oversight.
-- [ ] ⚠️ **`tailwind.config.js` `content` globs do not include `.vue`.** They are
-      `'./pages/**/*.{html,js}'` and `'./components/**/*.{html,js}'`, so they match essentially
-      nothing; styling works only because `@nuxtjs/tailwindcss` injects its own defaults on top.
-      **Fix this before Tailwind 4** (Phase 6), which changes content detection — a latent
-      misconfiguration plus a detection rewrite is how you get a site that loses half its CSS with
-      no error.
+- [x] ✅ **Fixed the `tailwind.config.js` `content` globs** — done 2026-09-25. They were
+      `'./pages/**/*.{html,js}'` and `'./components/**/*.{html,js}'`, which matched **zero files**:
+      `pages/` and `components/` contain only `.vue`. Styling worked only because `@nuxtjs/tailwindcss`
+      merges its own default globs into ours. Now:
+
+      ```js
+      content: ['./app.vue', './error.vue', './pages/**/*.vue', './components/**/*.vue'],
+      ```
+
+      That is where every class lives. Nothing else scanned or unscanned uses classes:
+      `composables/` and `plugins/` have none, and `helpers/`, `services/` and `config.ts`, which the
+      module does *not* scan, build no class names. So today's CSS was not missing anything either.
+
+      **Verified by output, not by eye**, because `content` only decides which utilities are
+      generated. The CSS was generated with Tailwind's own PostCSS plugin three ways:
+
+      | config | rules | result |
+      | --- | --- | --- |
+      | old globs alone, without the module's defaults | 40 | **no utilities at all**: Tailwind warns "No utility classes were detected", and only the base reset is left |
+      | merged config, before (what shipped) | 1310 | baseline |
+      | merged config, after (what ships now) | 1310 | **byte-identical** to the baseline |
+      | new globs alone, without the module's defaults | 1309 | baseline minus `.shrink` |
+
+      The one missing rule shows the new list is *complete*, not that it is short. `.shrink` is
+      generated today only because a **code comment** in `composables/useMediaSource.ts` contains the
+      word "shrink", and no template uses a bare `shrink` class. On top of that, two full
+      `nuxt build`s, before and after, emit the same 22 CSS files with the same combined hash.
+
+      **For Tailwind 4:** the module's merge goes away with `@nuxtjs/tailwindcss`, so these globs are
+      what an upgrade tool will translate into `@source`. Tailwind 4's automatic detection scans every
+      non-gitignored file, so expect more comment-driven strays like `.shrink`. They are harmless, but
+      they will show up in a before/after CSS diff.
 - [ ] **`vitest.config.ts` is loaded as CommonJS while using ESM syntax.** `npm test` warns that
       `configLoader: 'native'` "is planned to become the default in a future major version of Vite",
       at which point this breaks. Prefer **renaming to `vitest.config.mts`** over adding
@@ -2596,8 +2624,8 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 - **There is no static-generation path**, deliberately. See the follow-up backlog: prerendering every
   image variant is ~6200 CMS fetches and does not complete. `npx nuxi generate` still exists as a CLI
   command, which is why the `nitro.static` guard on the ignore rule has to stay.
-- **`tailwind.config.js` `content` globs do not include `.vue`** — they are
-  `'./pages/**/*.{html,js}'` and `'./components/**/*.{html,js}'`. Nothing is broken today only
+- **`tailwind.config.js` `content` globs did not include `.vue`** (✅ fixed 2026-09-25) — they were
+  `'./pages/**/*.{html,js}'` and `'./components/**/*.{html,js}'`. Nothing was broken only
   because `@nuxtjs/tailwindcss` supplies its own default globs on top. A consequence worth knowing
   while debugging: a class that exists in no source file will not be generated, so probing Tailwind
   by injecting a class at runtime always reports "not applied" regardless of configuration.

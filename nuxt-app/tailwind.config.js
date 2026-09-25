@@ -3,7 +3,7 @@ const plugin = require('tailwindcss/plugin')
 
 module.exports = {
     mode: 'jit',
-    content: ['./pages/**/*.{html,js}', './components/**/*.{html,js}'],
+    content: ['./app.vue', './error.vue', './pages/**/*.vue', './components/**/*.vue'],
     theme: {
         colors: {
             transparent: 'transparent',
