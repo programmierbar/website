@@ -122,7 +122,8 @@ const formError = ref('')
 
 const comment = ref('')
 
-const ratingId = ref(message.value?.payload?.id || '')
+// Set from the /api/vote response; the optional comment is attached to this rating.
+const ratingId = ref('')
 
 // Only set once a vote went through, so the error path keeps the plain error message.
 const votedDirection = ref<'up' | 'down' | null>(null)
@@ -139,12 +140,12 @@ const rate = async function (upOrDown: 'up' | 'down') {
                 direction: upOrDown,
             },
         })
-        setMessage('Vielen Dank für dein Feedback!', 'rating', {})
+        setMessage('Vielen Dank für dein Feedback!', 'rating')
         votedDirection.value = upOrDown
         ratingId.value = result?.id ?? ''
     } catch {
         votedDirection.value = null
-        setMessage('Leider trat ein Fehler auf.', 'rating', {})
+        setMessage('Leider trat ein Fehler auf.', 'rating')
     }
     istActive.value = false
 }

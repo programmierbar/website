@@ -1,7 +1,6 @@
 export interface FlashMessage {
     type: 'rating' | 'rating-error'
     text: string
-    payload: any
 }
 
 export const useFlashMessage = () => {
@@ -15,13 +14,10 @@ export const useFlashMessage = () => {
         return cookieValue
     })
 
-    // `Record<string, unknown>`, not `{}` — the latter accepts any non-nullish value, including `0`
-    // and `""`, which is not what "payload" means here.
-    const setMessage = (text: string, type: 'rating', payload: Record<string, unknown>) => {
+    const setMessage = (text: string, type: 'rating') => {
         message.value = {
             text,
             type,
-            payload,
         }
     }
 
