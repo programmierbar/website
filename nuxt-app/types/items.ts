@@ -168,19 +168,15 @@ export enum DirectusTranscriptItemServices {
 
 interface DeepgramTranscriptResponse {
     results: {
-        utterances: [
-            {
-                transcript: string
+        utterances: {
+            transcript: string
+            speaker: string
+            words: {
+                punctuated_word: string
+                start: number
                 speaker: string
-                words: [
-                    {
-                        punctuated_word: string
-                        start: number
-                        speaker: string
-                    },
-                ]
-            },
-        ]
+            }[]
+        }[]
     }
 }
 
@@ -190,7 +186,7 @@ export interface DirectusTranscriptItem {
     status: string
     podcast: DirectusPodcastItem
     podcast_audio_file: FileItem
-    speakers: [{ name: string; identifier: string }]
+    speakers: { name: string; identifier: string }[]
     service: DirectusTranscriptItemServices
     supported_features: string[]
     raw_response: null | DeepgramTranscriptResponse
