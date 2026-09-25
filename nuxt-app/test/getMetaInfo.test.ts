@@ -38,6 +38,20 @@ describe('getTrimmedString', () => {
     it('cuts inside a word if there is no boundary close to the limit', () => {
         expect(getTrimmedString('Donaudampfschifffahrtsgesellschaft', 10)).toBe('Donaudamp…')
     })
+
+    it('does not cut an emoji in half', () => {
+        const trimmed = getTrimmedString('Prost🍻zusammen', 7)
+        expect(trimmed).toBe('Prost…')
+        expect(trimmed).not.toMatch(/[\uD800-\uDFFF]/)
+        expect(getTrimmedString('Prost🍻zusammen', 8)).toBe('Prost🍻…')
+    })
+
+    it('handles tiny limits and strings without any words', () => {
+        expect(getTrimmedString('Hallo', 0)).toBe('')
+        expect(getTrimmedString('Hallo', 1)).toBe('…')
+        expect(getTrimmedString('Hallo', 2)).toBe('H…')
+        expect(getTrimmedString('!!!!!!!!!!', 5)).toBe('…')
+    })
 })
 
 describe('getMetaInfo', () => {

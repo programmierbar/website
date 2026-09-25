@@ -1,11 +1,11 @@
 import type {
     ConferenceItem,
+    DirectusMemberItem,
     DirectusProfileItem,
+    DirectusSpeakerItem,
     FileItem,
     MeetupItem,
-    MemberItem,
     PodcastItem,
-    SpeakerItem,
 } from '~/types'
 import type { JsonLD } from 'nuxt-jsonld/dist/types/index.d'
 import type { Event, Person, PodcastEpisode, PodcastSeries, WithContext } from 'schema-dts'
@@ -25,32 +25,38 @@ function getImageUrl(image?: FileItem | string | null): string | undefined {
     return getAssetUrl(image) || undefined
 }
 
-function generatePersonFromSpeaker(speaker: SpeakerItem): WithContext<Person> {
+function generatePersonFromSpeaker(speaker: DirectusSpeakerItem): WithContext<Person> {
+    // Not every query loads the profile links, e.g. the speakers of a podcast
+    const sameAs = [
+        speaker.twitter_url,
+        speaker.linkedin_url,
+        speaker.instagram_url,
+        speaker.github_url,
+        speaker.youtube_url,
+        speaker.website_url,
+    ].filter((url): url is string => !!url)
+
     return {
         '@context': 'https://schema.org',
         '@type': 'Person',
+        name: `${speaker.first_name} ${speaker.last_name}`,
         givenName: speaker.first_name,
         familyName: speaker.last_name,
-        jobTitle: speaker.occupation,
+        honorificPrefix: speaker.academic_title || undefined,
+        jobTitle: speaker.occupation || undefined,
         image: getImageUrl(speaker.profile_image),
-        sameAs: [
-            speaker.twitter_url,
-            speaker.linkedin_url,
-            speaker.instagram_url,
-            speaker.github_url,
-            speaker.youtube_url,
-            speaker.website_url,
-        ].filter((url) => url && url.length > 0) as string[],
+        sameAs: sameAs.length ? sameAs : undefined,
     }
 }
 
-function generatePersonFromMember(member: MemberItem): WithContext<Person> {
+function generatePersonFromMember(member: DirectusMemberItem): WithContext<Person> {
     return {
         '@context': 'https://schema.org',
         '@type': 'Person',
+        name: `${member.first_name} ${member.last_name}`,
         givenName: member.first_name,
         familyName: member.last_name,
-        jobTitle: member.occupation,
+        jobTitle: member.occupation || undefined,
         image: getImageUrl(member.normal_image),
     }
 }
@@ -76,10 +82,14 @@ function generatePodcastEpisodeFromPodcast(podcast?: PodcastItem): JsonLD | null
 
     const type = getPodcastType(podcast)
 
-    const creator: Person[] = [
-        ...(podcast.speakers ?? []).map(generatePersonFromSpeaker),
-        ...(podcast.members ?? []).map(generatePersonFromMember),
-    ]
+    // `speakers` and `members` hold the junction rows, not the people
+    const speakers = (podcast.speakers ?? [])
+        .map((row) => row?.speaker)
+        .filter((speaker): speaker is DirectusSpeakerItem => typeof speaker === 'object' && speaker !== null)
+    const members = (podcast.members ?? [])
+        .map((row) => (typeof row === 'object' && row !== null ? row.member : null))
+        .filter((member): member is DirectusMemberItem => typeof member === 'object' && member !== null)
+    const creator: Person[] = [...speakers.map(generatePersonFromSpeaker), ...members.map(generatePersonFromMember)]
 
     const partOfSeries = generatePodcastSeries()
 
@@ -94,7 +104,7 @@ function generatePodcastEpisodeFromPodcast(podcast?: PodcastItem): JsonLD | null
         datePublished: podcast.published_on,
         episodeNumber: `${type} ${podcast.number}`,
         url: generatePodcastUrl(podcast),
-        creator,
+        creator: creator.length ? creator : undefined,
     }
 
     return podcastEpisode

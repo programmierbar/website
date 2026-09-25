@@ -42,6 +42,59 @@ describe('generatePodcastEpisodeFromPodcast', () => {
         expect(episode.description).toBe('Erster Absatz. Zweiter Absatz mit Ümlaut.')
     })
 
+    it('lists speakers and members from their junction rows as creators', () => {
+        const episode = asRecord(
+            generatePodcastEpisodeFromPodcast({
+                ...podcast,
+                speakers: [
+                    {
+                        id: 1,
+                        speaker: {
+                            first_name: 'Erika',
+                            last_name: 'Muster',
+                            academic_title: 'Dr.',
+                            occupation: 'Entwicklerin',
+                            profile_image: cover,
+                        },
+                    },
+                ],
+                members: [
+                    { id: 2, member: { first_name: 'Max', last_name: 'Beispiel', normal_image: 'member-image' } },
+                    // Unexpanded relations must not turn into empty people
+                    { id: 3, member: 'member-id' },
+                    4,
+                ],
+            } as unknown as PodcastItem)
+        )
+        expect(episode.creator).toEqual([
+            {
+                '@context': 'https://schema.org',
+                '@type': 'Person',
+                name: 'Erika Muster',
+                givenName: 'Erika',
+                familyName: 'Muster',
+                honorificPrefix: 'Dr.',
+                jobTitle: 'Entwicklerin',
+                image: expect.stringMatching(/\/assets\/cover-id$/),
+                sameAs: undefined,
+            },
+            {
+                '@context': 'https://schema.org',
+                '@type': 'Person',
+                name: 'Max Beispiel',
+                givenName: 'Max',
+                familyName: 'Beispiel',
+                jobTitle: undefined,
+                image: expect.stringMatching(/\/assets\/member-image$/),
+            },
+        ])
+    })
+
+    it('omits the creators if there are none', () => {
+        const episode = asRecord(generatePodcastEpisodeFromPodcast(podcast))
+        expect(episode.creator).toBeUndefined()
+    })
+
     it('returns null without a podcast', () => {
         expect(generatePodcastEpisodeFromPodcast(undefined)).toBeNull()
     })
