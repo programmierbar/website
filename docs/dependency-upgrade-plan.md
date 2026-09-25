@@ -43,12 +43,13 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | [Prettier sweep + format gate](#the-prettier-sweep-and-the-format-gate--done-2026-08-04) | ✅ Done (2026-08-04) |
 | — | [Node 24 alignment for `nuxt-app`](#node-24-alignment-for-nuxt-app--done-2026-08-04) | ✅ Done (2026-08-04) |
 | — | [Patch and minor refresh](#patch-and-minor-refresh--done-2026-09-25) — audit back from 10 to **0** | ✅ Done (2026-09-25) |
+| — | [Pinia workaround removed](#waiting-on-upstream-the-pinia-4-export-map) — fixed upstream in 4.0.3 | ✅ Done (2026-09-25) |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
 Each phase's own write-up ends with what it deliberately left behind. Those are also gathered into
 the **follow-up backlog** above, which is the list to read if you are looking for work rather than
 history. Two things in it are worth knowing about even if you never pick them up: the Renovate app
-was configured in Phase 0 and **still is not installed**, and `tailwind.config.js` has content globs
+was configured in Phase 0 and **still is not installed** (tracked in #259), and `tailwind.config.js` has content globs
 that match almost nothing, which becomes dangerous at Tailwind 4.
 
 ---
@@ -841,6 +842,9 @@ plugin error was being swallowed. Instrumenting the built bundle step by step fo
 substituted. Verified rather than assumed — zero unreplaced flag references in the output, and
 exactly **one** `createPinia` definition, so inlining a state library has not created a second module
 instance with its own store registry.
+
+> **Removed 2026-09-25.** Pinia 4.0.3 fixed the defect upstream. See
+> [Waiting on upstream](#waiting-on-upstream-the-pinia-4-export-map).
 
 This is a workaround for someone else's packaging bug and should be removed when Pinia ships a
 node-safe build. Logged in the follow-up backlog so it does not become permanent dead config of the
@@ -1757,7 +1761,7 @@ Vercel does not mention at all. Production has been on 24.x while every declarat
 | `nuxt-app/.nvmrc` | `v22` | `24` |
 | `run_tests.yml` (nuxt-app job) | `node-version: 22` | `node-version-file: nuxt-app/.nvmrc` |
 | `smoke_tests.yml` | `node-version: 22` | `node-version-file: nuxt-app/.nvmrc` |
-| Vercel project `nodeVersion` | `20.x` | ⬜ **still `20.x`** — dashboard-only, see below |
+| Vercel project `nodeVersion` | `20.x` | `24.x` — changed in the dashboard; confirmed 2026-09-25, see below |
 
 Narrowing `engines` keeps Vercel resolving 24.x, so the deployed runtime is untouched. The workflows
 now **read `.nvmrc`** rather than naming a version, so CI and local development cannot drift apart
@@ -1853,12 +1857,12 @@ make that claim false. The one-line sync was produced under npm 10 for that reas
 Worth knowing that this is already live and harmless: Vercel builds on Node 24, so **production has been
 resolving this lockfile with npm 11 for some time** without trouble. Logged as its own item below.
 
-### Still outstanding: the Vercel project setting
+### The Vercel project setting — done
 
-`nodeVersion` remains `20.x`, now overridden twice over. It is dashboard-only — the MCP surface exposes
-no project-update call — so it needs a human. The reason to fix it is unchanged and is *not* about
-today's runtime: if `engines.node` were ever simplified or dropped, the project would silently fall back
-to Node 20, which is below both Nuxt's floor and the `require(esm)` threshold that caused #174.
+`nodeVersion` was `20.x` when this was written, overridden by `engines.node`. It has since been set to
+**`24.x`** in the dashboard; confirmed from the project settings on 2026-09-25. The reason it mattered was
+never today's runtime: if `engines.node` were ever simplified or dropped, the project would have silently
+fallen back to Node 20, which is below both Nuxt's floor and the `require(esm)` threshold that caused #174.
 
 ## Patch and minor refresh — done 2026-09-25
 
@@ -1900,10 +1904,17 @@ only because Nitro's `h3@1.15.11` happened to sit at the top. After the update, 
 **`h3@2.0.1-rc.32`** — a release candidate of the next major, pulled in by `@eslint/config-inspector`.
 That middleware runs on every server request.
 
-It happened to keep working — the built server returned correct JSON on `/api/cocktails` — but that was
-luck, not design, and the next reshuffle could break it. The fix is to **declare `h3: ^1.15.11`**, the
-same range `nitropack@2.13.4` requires. That puts 1.x back at the top on purpose; the 2.x RC is now nested
-under the ESLint inspector only. Drop the declaration when Nitro moves to h3 2, not before.
+The fix is to **declare `h3: ^1.15.11`**, the same range `nitropack@2.13.4` requires. That puts 1.x
+back at the top on purpose; the 2.x RC is now nested under the ESLint inspector only. Drop the
+declaration when Nitro moves to h3 2, not before.
+
+**Correction, 2026-09-25: the runtime was never at risk.** This section first said the middleware kept
+working "by luck" and that "the next reshuffle could break it". Both are wrong. `@nuxt/nitro-server`
+sets a Nitro alias, `"h3": h3Entry`, where `h3Entry` is resolved from Nitro's own package directory. So
+the server, in dev and in production builds, always gets Nitro's nested `h3@1.15.11`, wherever npm
+hoists. The declaration is still right, for a narrower reason. Our code imports `h3`, and tools that
+resolve it *without* Nitro's alias — `vue-tsc`, for the `H3Event` type imports — were reading the 2.x
+RC's types.
 
 ### Verification
 
@@ -1916,8 +1927,9 @@ under the ESLint inspector only. Drop the declaration when Nitro moves to h3 2, 
 - Smoke suite **18/18** against `NODE_ENV=production node .output/server/index.mjs`. Needed
   `npx playwright install chromium` first, because Playwright 1.63 wants a newer browser build; CI's
   `test:smoke:install` step handles that on its own.
-- **Pinia 4.0.3 still needs the `inline` workaround** — its `exports["."]` is still a bare string — and
-  `/` returns 200 in production mode with it in place. See
+- `/` returns 200 in production mode with Pinia 4.0.3 and the `inline` workaround in place. This
+  section first concluded the workaround was **still needed**, from the unchanged export map. That was
+  wrong: 4.0.3 fixed the bug in code, and the workaround was removed afterwards. See
   [Waiting on upstream](#waiting-on-upstream-the-pinia-4-export-map).
 - Search checked in a browser, because the smoke test only proves `/suche` renders: `?search=typescript`
   returns 20 hits, rendered, with zero console errors or warnings.
@@ -1965,6 +1977,11 @@ every phase so far has been manual work that Renovate would have surfaced as it 
 is already written and already scoped (`includePaths: ["nuxt-app/**"]`, majors behind
 `dependencyDashboardApproval`, `directus-cms/**` deliberately excluded for the licence block).
 
+**Tracked in #259** (2026-09-25), which also records two interactions with the "PR Rules" ruleset. The
+ruleset requires branches to be up to date before merging, but the config rebases only
+`"rebaseWhen": "conflicted"`, so Renovate PRs will often wait for someone to click *Update branch*. And
+the Copilot ruleset reviews every Renovate push.
+
 ### 2. The 263 `vue-tsc` errors, which are two unrelated problems
 
 Phase 4 moved the ratchet 209 → 263 and the two halves want different treatment:
@@ -2004,20 +2021,27 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
       afterwards, to avoid colliding with the one remaining Phase 5 diff. It had the order backwards:
       `stripe` had not started, so sweeping first is what makes *its* diff clean. The advice would
       have been right only if the stripe PR were already open.
-- [ ] ⚠️ **`main` has no branch protection, so none of the CI checks actually blocks a merge.**
-      `GET /repos/programmierbar/website/branches/main/protection` returns **404 Branch not
-      protected**. `lint`, `test`, `typecheck:ratchet`, `build` and the new format check all go red
-      and rely on a human noticing before clicking merge.
+- [x] ✅ **~~`main` has no branch protection~~ — corrected: it is protected by a ruleset.** This item
+      was based on `GET /repos/programmierbar/website/branches/main/protection` returning **404 Branch
+      not protected**. That endpoint only reports *classic* branch protection and cannot see
+      **rulesets**. The repo has a "PR Rules" ruleset, created 2026-08-04, the same day this item was
+      written. Checked 2026-09-25 via `GET /repos/programmierbar/website/rules/branches/main`, which
+      returns the rules actually in effect on `main`:
 
-      Worth stating precisely, because it is a gap in Phase 0's premise rather than a missing feature:
-      Phase 0 made upgrades **detectable**, which it achieved. It did not make a broken upgrade
-      **unmergeable**. Eight phases of dependency changes were verified by exactly those checks, so a
-      red ratchet is currently a suggestion.
+      | rule | setting |
+      | --- | --- |
+      | pull request | required, 0 approvals |
+      | status checks | `nuxt-app-test` and `test`, **strict**: the branch must be up to date with `main` |
+      | deployments | `Preview` must deploy successfully |
+      | force push | blocked |
+      | bypass | org admins, always |
 
-      Requires a repo admin — Settings → Branches → require status checks. Pairs with
-      [installing Renovate](#1-install-the-renovate-github-app--highest-value-item-here), which is
-      also gated on the same person: bot-authored dependency PRs are precisely the case where nobody
-      is watching the checks.
+      A second ruleset, "Copilot review for default branch", blocks deletion and force pushes with no
+      bypass, and requests a Copilot review on every push.
+
+      So Phase 0's checks do make a broken change **unmergeable**, not just **detectable**. The
+      premise this item worried about holds. **To check protection, query `rules/branches/main`, not
+      `branches/main/protection`.** The second is the one that misled this document.
 - [ ] **`types/items.ts` types Deepgram's arrays as single-element tuples.**
       `DeepgramTranscriptResponse.results.utterances`, the nested `words`, and
       `DirectusTranscriptItem.speakers` are all written `[{ … }]` rather than `{ … }[]`, so the type
@@ -2099,9 +2123,9 @@ computed on the podcast index. Fixing two lines restores type checking to a lot 
 
       So **both leads are now eliminated and this remains open.** The next thing to try is the dev-mode
       reproduction from a clean `.nuxt`, since that is the only tool that names the offending element.
-- [ ] ⚠️ **Remove `nitro.externals.inline: ['pinia']`.** Waiting on an upstream Pinia fix — see
-      [Waiting on upstream: the Pinia 4 export map](#waiting-on-upstream-the-pinia-4-export-map)
-      below for exactly what to watch for and how to check.
+- [x] ✅ **Removed `nitro.externals.inline: ['pinia']`** — done 2026-09-25. Pinia 4.0.3 fixed the bug
+      in its code, but not the way this document's exit condition was watching for. See
+      [Waiting on upstream: the Pinia 4 export map](#waiting-on-upstream-the-pinia-4-export-map).
 - [x] ✅ **A full local `npm run build` works again** — done 2026-08-04 (#240), via
       `nitro.prerender.ignore: ['/_ipx']` applied only when a server will serve those URLs.
 
@@ -2275,7 +2299,10 @@ browser-support decision nobody made.
       while the package sat at 2.1.4, which proved nothing about our tree. The `maintenance-v2` line
       has since shipped new releases, the tree now resolves **2.1.7**, and the audit is clean against
       it. Resolved by an actual version change this time, not by the advisory data moving.
-- [ ] ⚠️ **The Vercel project's `nodeVersion` says `20.x` but is silently overridden to `24.x`.**
+- [x] ✅ **Vercel's `nodeVersion` is now `24.x`**, confirmed from the project settings 2026-09-25. The
+      original item is kept below for the reasoning.
+
+      ~~The Vercel project's `nodeVersion` says `20.x` but is silently overridden to `24.x`.~~
       `engines.node` in `nuxt-app/package.json` wins, and every build log carries a warning saying so.
       Two reasons to align the setting anyway: the dashboard currently tells anyone who looks the wrong
       answer, and it is a **latent trap** — if `engines.node` were ever simplified or dropped, the
@@ -2420,8 +2447,42 @@ upgrade would mean a reviewer cannot tell the upgrade from the prose edit.
 
 ### Waiting on upstream: the Pinia 4 export map
 
-**Status as of 2026-09-25: not fixed, and no upstream issue exists.** `pinia@4.0.3` is the newest
-release and still carries the defect — its `exports["."]` is still the bare string `"./dist/pinia.js"`.
+**Resolved 2026-09-25: fixed upstream in `pinia@4.0.3` (2026-08-12), and the workaround is removed.**
+The `pinia` floor in `package.json` is now `^4.0.3`, because without the workaround 4.0.2 is a broken
+version for this app.
+
+**This document's exit condition would never have fired.** It said to watch `npm view pinia exports
+--json` for a restored `node` condition. 4.0.3's export map is unchanged, still the bare string
+`"./dist/pinia.js"`, so that check still reports "not fixed". Pinia took the *other* route listed below,
+fix 2: all five flag reads in `dist/pinia.js` are now guarded as `typeof __VUE_PROD_DEVTOOLS__ !==
+"undefined" && __VUE_PROD_DEVTOOLS__`. The lesson for the next workaround: make the exit condition the
+**behaviour**, not one of the possible fixes.
+
+**Verified in isolation, because the app-level test turned out to be blind.** The retest below —
+remove the line, build, `curl` under `NODE_ENV=production` — returned 200 on 4.0.3. But the negative
+control, the same build with Pinia forced back to 4.0.2, **also returned 200**. That same setup was a
+500 in August, so the test could no longer see the bug.
+
+The cause is hoisting. `vue-router`'s Node entry (`vue-router.node.mjs`) begins with `global.__VUE_PROD_DEVTOOLS__ = false`.
+Until #258, `vue-router` was nested at `nuxt/node_modules/vue-router`. #258 hoisted it to the top level,
+and it is now traced into `.output/server/node_modules` as an external and loaded before Pinia installs.
+So it defines the global that 4.0.2 reads unguarded. That masks the bug, and only because of where npm
+placed a package.
+
+So the check was run on Pinia alone: plain Node, the project's Vue, no `vue-router`, the flag undefined,
+`createPinia()` installed into an SSR app and a store read:
+
+| Pinia | `NODE_ENV=production` | `NODE_ENV=development` |
+| --- | --- | --- |
+| 4.0.2 | **`ReferenceError: __VUE_PROD_DEVTOOLS__ is not defined`** | OK |
+| 4.0.3 | OK | OK |
+
+That reproduces the original defect exactly, including "production only", and shows 4.0.3 fixes it
+without depending on `vue-router`. The app-level checks were then rerun on 4.0.3 without the workaround:
+build exit 0, every route 200 under `NODE_ENV=production`, smoke suite 18/18.
+
+The rest of this section is kept as the diagnosis. Its "How to check" and "If it stays unfixed" parts
+are obsolete.
 
 This section exists because `nitro.externals.inline: ['pinia']` in `nuxt.config.ts` is a workaround
 for someone else's packaging bug, and workarounds with nothing concrete to watch for are how
@@ -2657,4 +2718,9 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-08-04 | Synced the lockfile's engine metadata **under npm 10, producing a one-line diff**, after the same command under npm 11 rewrote 168 lines by stripping `"dev": true` from ~50 optional packages. Bundling fifty unverified reclassifications into a PR whose claim is "nothing changes" would have made the claim false. The npm 11 rewrite is logged as its own item. |
 | 2026-08-04 | Declined the suggested `.nvmrc` fix of pinning `24.11.0`. The format supports no ranges, so an exact version pins CI and developers to a superseded patch — CI resolved 24.18.0 today and would have installed 24.11.0 instead, forgoing Node security releases inside the major. There is no `.nvmrc` value meaning "≥24.11 within 24"; the reviewer identified a real gap with no good fix at that layer. |
 | 2026-08-04 | Left `engines.node` **advisory** rather than adding `engine-strict=true` alongside the Node move. It is the only way to make the floor binding, but it converts a colleague's wrong-Node warning into a failed install — a behaviour change for someone not party to the decision, and outside a PR whose claim is that install behaviour is unchanged. Logged for a decision. |
+| 2026-09-25 | Patch and minor refresh (#258): audit 10 → 0 with no majors. Declared `h3: ^1.15.11` after an update hoisted an h3 2.0 RC above Nitro's copy. **Later corrected**: Nitro aliases `h3` to its own copy, so only `vue-tsc` was affected, never the runtime. |
+| 2026-09-25 | **Retracted "`main` has no branch protection".** The 404 came from the classic protection endpoint, which cannot see rulesets. The "PR Rules" ruleset (2026-08-04) requires PRs, strict `nuxt-app-test` and `test` checks, and a successful Preview deployment. Check `rules/branches/main` in future. |
+| 2026-09-25 | Vercel `nodeVersion` confirmed at `24.x`. Renovate installation handed to a colleague and tracked in #259. |
+| 2026-09-25 | Removed `nitro.externals.inline: ['pinia']` and raised the floor to `pinia ^4.0.3`. 4.0.3 guards its flag reads, but its export map is unchanged, so **the documented exit condition would never have fired**. Found by reading `dist/pinia.js` instead of `package.json`. |
+| 2026-09-25 | Did not accept the app-level retest on its own: the negative control (4.0.2, no workaround) also passed, because #258 hoisted `vue-router`, whose Node entry sets the flag globally. Settled with an isolated probe instead: 4.0.2 throws the original `ReferenceError` under production, and 4.0.3 does not. |
 | 2026-08-03 | SDK 22's `RequestError` refactor was treated as the one real risk and checked at runtime, not by reading. `isTransientError()` casts to `{ response?: { status?: number } }`, so a shape change would compile, pass every gate, and silently stop prerender retries under `prerender.failOnError` — one flaky CMS response would then abort a deploy. `RequestError` preserves `.response`; confirmed across 7 transient codes, 5 permanent codes and a connection refusal. |
