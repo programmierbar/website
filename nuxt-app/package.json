@@ -28,6 +28,7 @@
         "@pinia/nuxt": "^1.0.1",
         "@types/google.maps": "^3.55.3",
         "@ubclaunchpad/vue-fathom": "^2.0.0",
+        "h3": "^1.15.11",
         "html5-qrcode": "^2.3.8",
         "isomorphic-dompurify": "~2.20.0",
         "nodemailer": "^9.0.3",
