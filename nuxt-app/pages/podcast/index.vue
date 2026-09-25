@@ -74,7 +74,7 @@
 // TODO - I have the feeling that the initial load is slower.
 //  Check why initial loading is slower than on live site. Probably because of the tags composable
 import { useLoadingScreen, usePageMeta } from '~/composables'
-import { useDirectus, type LatestPodcasts } from '~/composables/useDirectus'
+import { useDirectus } from '~/composables/useDirectus'
 import { useTagFilterNew } from '~/composables/useTagFilterNew'
 import type { DirectusPodcastPage } from '~/types'
 import { computed, type ComputedRef } from 'vue'
@@ -95,7 +95,7 @@ const { data: pageData } = useAsyncData(async () => {
 
 // Extract about page and members from page data
 const podcastPage: ComputedRef<DirectusPodcastPage | undefined> = computed(() => pageData.value?.podcastPage)
-const podcasts: ComputedRef<LatestPodcasts | undefined> = computed(() => pageData.value?.podcasts)
+const podcasts = computed(() => pageData.value?.podcasts)
 const tags = computed(() => pageData.value?.tags)
 // Set loading screen
 useLoadingScreen(podcastPage, podcasts)
