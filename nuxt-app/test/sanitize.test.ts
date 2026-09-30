@@ -111,6 +111,32 @@ describe('getPlainText', () => {
     it('keeps text content when unwrapping elements', () => {
         expect(getPlainText('<div onclick=alert(1)>sichtbar</div>')).toBe('sichtbar')
     })
+
+    it('keeps paragraphs, list items and line breaks apart', () => {
+        expect(getPlainText('<p>Das war verheerend.</p><p>PS: Danke!</p>')).toBe('Das war verheerend. PS: Danke!')
+        expect(getPlainText('Zeile eins<br>Zeile zwei<br/>Zeile drei')).toBe('Zeile eins Zeile zwei Zeile drei')
+        expect(getPlainText('<ul><li>Eins</li><li>Zwei</li></ul>')).toBe('Eins Zwei')
+    })
+
+    it('does not add spaces around inline elements', () => {
+        expect(getPlainText('<p>Ein <a href="/x">Link</a>, <strong>fett</strong>.</p>')).toBe('Ein Link, fett.')
+    })
+
+    it('collapses whitespace, including non-breaking spaces, into a single line', () => {
+        expect(getPlainText('\n<p>Zum Schluss&nbsp;<a>Googlebook</a></p>\n\n<p>  Ende </p>')).toBe(
+            'Zum Schluss Googlebook Ende'
+        )
+    })
+
+    it('keeps angle brackets that are not markup', () => {
+        expect(getPlainText('2 < 3 and 4 > 1')).toBe('2 < 3 and 4 > 1')
+        expect(getPlainText('<p>a <b>&lt;</b> b</p><p>c > d</p>')).toBe('a < b c > d')
+    })
+
+    it('decodes only once, so encoded markup stays text', () => {
+        expect(getPlainText('&amp;uuml;')).toBe('&uuml;')
+        expect(getPlainText('&lt;p&gt;kein Absatz&lt;/p&gt;')).toBe('<p>kein Absatz</p>')
+    })
 })
 
 describe('links inside rich text', () => {
