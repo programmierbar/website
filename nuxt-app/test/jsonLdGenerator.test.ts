@@ -177,6 +177,19 @@ describe('generateEventFromMeetup', () => {
         }
     })
 
+    it('returns null for a meetup without a start date', () => {
+        expect(
+            generateEventFromMeetup({
+                slug: 'mein-meetup',
+                title: 'Mein Meetup',
+                intro: '<p>Worum es geht.</p>',
+                start_on: null,
+                end_on: null,
+                cover_image: cover,
+            } as unknown as MeetupItem)
+        ).toBeNull()
+    })
+
     it('returns null without a meetup', () => {
         expect(generateEventFromMeetup(undefined)).toBeNull()
     })
@@ -198,5 +211,35 @@ describe('generateEventFromConference', () => {
         expect(event.endDate).toBe('2026-11-26T17:00:00.000Z')
         expect(event.url).toBe(`${WEBSITE_URL}/konferenz/meine-konferenz`)
         expect(event.location).toBe(EVENT_LOCATION)
+    })
+
+    it('omits a missing end date', () => {
+        const event = asRecord(
+            generateEventFromConference({
+                slug: 'meine-konferenz',
+                title: 'Meine Konferenz',
+                text_1: 'Zwei Tage',
+                start_on: '2026-11-25T08:00:00',
+                end_on: null,
+                cover_image: cover,
+            } as unknown as ConferenceItem)
+        )
+        expect(event.startDate).toBe('2026-11-25T07:00:00.000Z')
+        expect(event.endDate).toBeUndefined()
+    })
+
+    it('returns null without a valid start date', () => {
+        for (const start_on of [null, undefined, '', 'kein Datum']) {
+            expect(
+                generateEventFromConference({
+                    slug: 'meine-konferenz',
+                    title: 'Meine Konferenz',
+                    text_1: 'Zwei Tage',
+                    start_on,
+                    end_on: '2026-11-26T18:00:00',
+                    cover_image: cover,
+                } as unknown as ConferenceItem)
+            ).toBeNull()
+        }
     })
 })

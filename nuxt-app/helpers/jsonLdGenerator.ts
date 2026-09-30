@@ -133,18 +133,29 @@ function generateProfile(profile?: DirectusProfileItem): JsonLD {
     return profileSchema
 }
 
+// The dates are nullable in the CMS, and an unparsable one would make toISOString() throw
+function getIsoDate(value?: string | null): string | undefined {
+    if (!value) return undefined
+    const date = parseCmsDate(value)
+    return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
+}
+
 function generateEvent(
     event: Pick<MeetupItem | ConferenceItem, 'title' | 'start_on' | 'end_on' | 'cover_image'>,
     description: string,
     path: string
-): WithContext<Event> {
+): WithContext<Event> | null {
+    // Search engines require a start date, so there is no event schema without one
+    const startDate = getIsoDate(event.start_on)
+    if (!startDate) return null
+
     return {
         '@context': 'https://schema.org',
         '@type': 'Event',
         name: event.title,
         description,
-        startDate: parseCmsDate(event.start_on).toISOString(),
-        endDate: parseCmsDate(event.end_on).toISOString(),
+        startDate,
+        endDate: getIsoDate(event.end_on),
         eventStatus: 'https://schema.org/EventScheduled',
         eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
         location: EVENT_LOCATION,

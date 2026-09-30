@@ -1,3 +1,5 @@
+const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+
 /**
  * A helper function that trims a string to a maximal length. It cuts at the last word boundary if
  * there is one reasonably close to the limit, and marks the cut with an ellipsis.
@@ -19,11 +21,14 @@ export function getTrimmedString(string: string, maxLength: number) {
     // detect a word that ends exactly at the limit
     const budget = maxLength - 1
     const lastSpace = string.slice(0, budget + 1).lastIndexOf(' ')
-    let trimmedString = lastSpace > budget * 0.6 ? string.slice(0, lastSpace) : string.slice(0, budget)
+    const cut = lastSpace > budget * 0.6 ? lastSpace : budget
 
-    // Don't cut an emoji or other character outside the BMP in half
-    if (/[\uD800-\uDBFF]$/.test(trimmedString)) {
-        trimmedString = trimmedString.slice(0, -1)
+    // Don't cut an emoji or other grapheme cluster (e.g. a ZWJ sequence or a flag) in half:
+    // drop the cluster that straddles the cut instead
+    let trimmedString = ''
+    for (const { segment, index } of graphemeSegmenter.segment(string)) {
+        if (index + segment.length > cut) break
+        trimmedString += segment
     }
 
     return trimmedString.replace(/[\s.,;:!?–—-]+$/, '') + '…'

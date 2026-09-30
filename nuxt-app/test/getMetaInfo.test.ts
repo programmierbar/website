@@ -46,6 +46,13 @@ describe('getTrimmedString', () => {
         expect(getTrimmedString('Prost🍻zusammen', 8)).toBe('Prost🍻…')
     })
 
+    it('does not split an emoji made of several code points', () => {
+        const family = '👨‍👩‍👧'
+        expect(getTrimmedString(`Hallo${family}zusammen`, 8)).toBe('Hallo…')
+        expect(getTrimmedString(`Hallo${family}zusammen`, 6 + family.length)).toBe(`Hallo${family}…`)
+        expect(getTrimmedString('Fahne🇩🇪zeigen', 7)).toBe('Fahne…')
+    })
+
     it('handles tiny limits and strings without any words', () => {
         expect(getTrimmedString('Hallo', 0)).toBe('')
         expect(getTrimmedString('Hallo', 1)).toBe('…')
