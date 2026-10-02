@@ -2078,7 +2078,15 @@ pre-existing.
       iterates all N elements at runtime. It would bite the first person to index past `[0]` or read
       `.length`, which TypeScript narrows to the literal `1`. Fix is `{ … }[]` in three places; worth
       re-running the typecheck ratchet with it, since it touches types feeding the transcript path.
-- [ ] ⚠️ **`components/TalkItem.vue` has HTML comments inside a `class` attribute**, so the browser
+- [x] ✅ **Fixed 2026-09-25**, keeping `grid`. Git history settles the question below: the original
+      source had multi-line class lists with the comments after each group (`lg:order-none <!-- Reset
+      order for grid -->`), so `grid` has been a class since the component was written, and the layout
+      has always been `display: grid`. Only the comment words were removed, and the explanation now
+      lives in template comments. Verified that none of the removed words matches any selector in the
+      shipped CSS, and that all 63 talk blocks on the conference page have identical computed layout,
+      position and size against `main`, at 390 px and 1280 px.
+
+      ~~`components/TalkItem.vue` has HTML comments inside a `class` attribute~~, so the browser
       receives `<!--`, `Mobile`, `order`, `Reset`, `for`, `grid` and `-->` as class names on two
       `<div>`s. Found via the formatter bump, which deduplicated the resulting `grid grid`.
 
@@ -2289,16 +2297,34 @@ browser-support decision nobody made.
       undefined`). Zod 4 ships locales, and `z.config(z.locales.de())` was verified to produce
       `Ungültige Eingabe: erwartet string, erhalten undefined`. One line, but it rewrites many
       user-facing strings, so it wants its own review rather than riding along with an upgrade.
-- [ ] ⚠️ **`components/ConferenceTickets.vue` appears to be entirely unused.** Nothing renders it,
+- [ ] ⚠️ **`components/ConferenceTickets.vue` appears to be entirely unused.** *Decided 2026-09-25:
+      leave it for now.* Nothing renders it,
       and none of its three props is read inside it — `ticketsOnSale` is neither passed by any caller
       nor referenced in the component. Found while fixing a lint error in it. Either wire it up or
       delete it; a component nothing renders is a component nobody notices is broken.
-- [ ] ⚠️ **The podcast rating flash-message payload is always empty.** `components/PodcastRating.vue`
+- [x] ✅ **Removed the dead read** — 2026-09-25. The rating comment *does* need the ID, and gets it
+      from the `POST /api/vote` response (`ratingId.value = result?.id`). The flash payload was the old
+      route: the GET vote middleware used to set a `flash-message` cookie with `payload: { id }`. Since
+      voting moved to `POST` (7389b0b), nothing writes it. The read and the unused `payload` argument
+      are gone. No behaviour changes: `ratingId` always started as `''`.
+
+      ~~The podcast rating flash-message payload is always empty.~~ `components/PodcastRating.vue`
       reads `message.value?.payload?.id` into `ratingId`, but both `setMessage(...)` call sites in that
       same file pass `{}`. So `payload.id` is always `undefined` and `ratingId` is always `''`. Either
       the id should be passed or the read should go, but as written one of the two is dead. Found while
       fixing the `{}` type on `setMessage` in Phase 5.
-- [ ] ⚠️ **The local `.env` sets an email variable that nothing reads.** `nuxt-app/.env` provides
+- [x] ✅ **Checked production, documented the names** — 2026-09-25. The Vercel project sets
+      `NUXT_EMAIL_SMTP_HOST`, `_PORT`, `_USER`, `_PASS` and `NUXT_EMAIL_FROM` for production and
+      preview (names read, values not decrypted), so **production is correct**. `.env.example` now
+      documents `NUXT_EMAIL_SMTP_USER` and `NUXT_EMAIL_SMTP_PASS`. Local `.env` files are each
+      developer's own to fix. `NUXT_EMAIL_SMTP_PASS` is not enabled for Vercel's *development*
+      environment, so `vercel env pull` does not provide it.
+
+      Also noticed: `NUXT_EMAIL_SMTP_PASS` is stored as an ordinary **encrypted** variable, while
+      every other credential on the project is **sensitive** (never readable again). Worth switching
+      in the dashboard.
+
+      ~~The local `.env` sets an email variable that nothing reads.~~ `nuxt-app/.env` provides
       exactly one email var, `NUXT_EMAIL_PASSWORD`, and **no code reads it** — `runtimeConfig`
       declares `emailSmtpPass`, which Nuxt populates from `NUXT_EMAIL_SMTP_PASS`. So locally
       `emailSmtpPass` is empty and `sendEmail` throws "SMTP host, user, or password not configured"
@@ -2313,12 +2339,29 @@ browser-support decision nobody made.
       user again. `getCurrentUser()` is called from `onMounted`, so this is client-side console
       output. Not currently reachable in production (login is behind `FLAG_SHOW_LOGIN`), which is
       exactly why it should be cleaned up *before* that flag is ever turned on.
-- [ ] **`error.vue` ships an empty meta description** — `{ name: 'description', content: '' }`.
+- [x] ✅ **Removed** — 2026-09-25, but **the premise below was out of date**. The live 404 page
+      renders no description tag at all, because the head library omits a `<meta>` with empty content.
+      The entry had no effect. The rendered 404 head is identical before and after (7 tags).
+
+      ~~`error.vue` ships an empty meta description~~ — `{ name: 'description', content: '' }`.
       Either give the 404 page a real description or drop the tag; an empty one is worse than
       absent. (Phase 4 removed the dead `hid` key from this same entry but deliberately left the
       empty `content` alone as out of scope.)
-- [ ] **Drop `@ubclaunchpad/vue-fathom`** (last publish April 2022, 1 usage). Fathom's own snippet
-      is a few lines — inlining it removes a dependency entirely. See Appendix A.
+- [x] ✅ **Dropped `@ubclaunchpad/vue-fathom`** — 2026-09-25, replaced by `fathom-client` rather than
+      an inline snippet. The plugin only called `fathom-client`'s `load()` and provided a `$fathom`
+      nothing injects. `helpers/trackGoal.ts` already imported `fathom-client`, **undeclared**, so it
+      resolved only through `vue-fathom`: deleting the plugin alone would have broken every goal. Now
+      declared at the 3.7.2 already installed, and the plugin calls `load()` with the same options.
+      In a browser, both builds load the same script with the same attributes and attempt the same
+      beacons (blocked in the test, so nothing reached production analytics).
+- [ ] ⚠️ **Client-side navigations are counted as page views of the previous page, twice.** Found
+      while verifying the Fathom swap, and identical on `main`. After clicking from `/` to `/podcast`,
+      Fathom sends **two** beacons, both with `p=/`, although `location.pathname` and the canonical
+      link already read `/podcast` a moment later. The likely cause is `canonical: true`: Fathom reads
+      the canonical link when the route changes, before Nuxt updates the head. So in-site navigations
+      are probably attributed to the page just left. Confirm against the Fathom dashboard before
+      fixing; the fix is probably `canonical: false`, or a manual `trackPageview()` after the head
+      updates.
 - [ ] 💳 **Move the Stripe API version `2026-02-25.clover` → `2026-07-29.dahlia`.** One line in
       `server/utils/stripe.ts`, and it removes the cast there along with the types-describe-dahlia /
       wire-speaks-clover mismatch the pin introduced.
@@ -2332,7 +2375,14 @@ browser-support decision nobody made.
       When it moves: delete the `as Stripe.LatestApiVersion` cast, and expect
       `test/stripeWebhook.test.ts` to fail on the two assertions that name `clover` explicitly — they are
       designed to.
-- [ ] **Regenerate `nuxt-app/package-lock.json` under npm 11, deliberately.** Node 24 brings npm 11,
+- [x] ⚠️ **Happened incidentally, in #258** — not deliberately, as this item asked. That PR's
+      `npm update` ran under npm 11, and `npm install --package-lock-only` now changes nothing. What it
+      skipped is the `npm ci --omit=dev` check below. Nothing here installs that way (Vercel and CI do
+      full installs), so that is a gap in evidence rather than a known problem. One consequence:
+      **npm 10 (Node 22) now refuses the lockfile** as out of sync, which `engine-strict` turns into a
+      clear error (below).
+
+      ~~Regenerate `nuxt-app/package-lock.json` under npm 11, deliberately.~~ Node 24 brings npm 11,
       which classifies dev/optional dependencies differently: `npm install --package-lock-only` rewrites
       **168 lines**, stripping `"dev": true` from ~50 optional packages (`@emnapi/*` and friends). The
       same command under npm 10 changes one line.
@@ -2345,7 +2395,14 @@ browser-support decision nobody made.
       Wants its own change, because it is not cosmetic: `npm ci --omit=dev` would install a different
       set afterwards. Verify a production-shaped install (`npm ci --omit=dev`) still yields a working
       build before and after, rather than trusting the reclassification.
-- [ ] **Consider `engine-strict=true`.** `engines.node` is currently advisory — npm warns `EBADENGINE`
+- [x] ✅ **`engine-strict=true` added** in `nuxt-app/.npmrc` — 2026-09-25, decided by the maintainer.
+      Every dependency's own engine range is satisfied on Node 24.19, apart from one Windows-only
+      optional package that npm skips on other platforms. Negative control with Node 22.17.1, on a copy
+      of the project: with the setting, `npm ci` stops at once with `EBADENGINE` and names the required
+      range. Without it, npm warns, carries on, and then fails with an unrelated-looking "lockfile out
+      of sync" error.
+
+      ~~Consider `engine-strict=true`.~~ `engines.node` was advisory — npm warns `EBADENGINE`
       and continues, so the `^24.11.0` floor is not actually enforced anywhere except by whichever Node
       `.nvmrc` happens to select. One line in a new `nuxt-app/.npmrc` makes it binding. Deliberately left
       out of the Node 24 alignment because it changes install behaviour for other people: a wrong local
@@ -2629,7 +2686,7 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | `@nuxt/image-edge` | Feb 2024 (nightly) | Phase 3 removes it |
 | `h3-zod` | Jan 2024 | ✅ removed in Phase 5 (Zod 4) |
 | `eslint-plugin-nuxt` | Aug 2023 | ✅ removed in Phase 5 (ESLint 10) |
-| `@ubclaunchpad/vue-fathom` | Apr 2022 | 1 usage. Fathom's own snippet is a few lines — consider inlining and dropping the dependency. |
+| ~~`@ubclaunchpad/vue-fathom`~~ ✅ removed 2026-09-25 | Apr 2022 | 1 usage. Fathom's own snippet is a few lines — consider inlining and dropping the dependency. |
 | `smoothscroll-polyfill` | Aug 2022 | ✅ removed in Phase 1 |
 | `rss` | Sep 2023 | Still works, no replacement needed. Watch it. |
 | `@nuxtjs/algolia` | Nov 2025 | Fine, but it is the module most likely to need attention at Nuxt 5. |
@@ -2778,4 +2835,6 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | 2026-09-25 | Vercel `nodeVersion` confirmed at `24.x`. Renovate installation handed to a colleague and tracked in #259. |
 | 2026-09-25 | Removed `nitro.externals.inline: ['pinia']` and raised the floor to `pinia ^4.0.3`. 4.0.3 guards its flag reads, but its export map is unchanged, so **the documented exit condition would never have fired**. Found by reading `dist/pinia.js` instead of `package.json`. |
 | 2026-09-25 | Did not accept the app-level retest on its own: the negative control (4.0.2, no workaround) also passed, because #258 hoisted `vue-router`, whose Node entry sets the flag globally. Settled with an isolated probe instead: 4.0.2 throws the original `ReferenceError` under production, and 4.0.3 does not. |
+| 2026-09-25 | Maintainer decisions on the small-fix backlog: **`engine-strict=true` adopted**, which settles the 2026-08-04 entry that left it "for a decision". `ConferenceTickets.vue` left alone for now. German Zod messages go in their own PR, so the wording can be reviewed as text. The rest is bundled in one PR, one commit per fix. |
+| 2026-09-25 | Replaced `vue-fathom` with a declared `fathom-client`, not the inline snippet this document suggested. `trackGoal` already depended on `fathom-client` without declaring it, the same undeclared-import pattern as `h3`, so the plugin could not simply be deleted. |
 | 2026-08-03 | SDK 22's `RequestError` refactor was treated as the one real risk and checked at runtime, not by reading. `isTransientError()` casts to `{ response?: { status?: number } }`, so a shape change would compile, pass every gate, and silently stop prerender retries under `prerender.failOnError` — one flaky CMS response would then abort a deploy. `RequestError` preserves `.response`; confirmed across 7 transient codes, 5 permanent codes and a connection refusal. |

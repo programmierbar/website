@@ -84,7 +84,6 @@ useLoadingScreen()
 useHead({
     title: 'Error 404 – Seite nicht gefunden | programmier.bar',
     meta: [
-        { name: 'description', content: '' },
         { name: 'robots', content: 'noindex, nofollow' },
         { charset: 'utf-8' },
         {
