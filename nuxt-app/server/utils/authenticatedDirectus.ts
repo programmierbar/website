@@ -51,6 +51,7 @@ export function useAuthenticatedDirectus() {
                     'github_url',
                     'instagram_url',
                     'youtube_url',
+                    'mastodon_url',
                     'portal_token_expires',
                     'portal_submission_status',
                     'portal_submission_deadline',

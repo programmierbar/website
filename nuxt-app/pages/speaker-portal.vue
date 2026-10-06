@@ -297,6 +297,7 @@
 
 <script setup lang="ts">
 import { getMetaInfo } from '~/helpers'
+import { formatOccupation, parseOccupation } from '~/helpers/speakerOccupation'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const route = useRoute()
@@ -369,12 +370,13 @@ onMounted(async () => {
         deadline.value = data.speaker.portal_submission_deadline
 
         // Pre-fill form with existing data
+        const occupation = parseOccupation(data.speaker.occupation)
         formData.value = {
             academic_title: data.speaker.academic_title || '',
             first_name: data.speaker.first_name || '',
             last_name: data.speaker.last_name || '',
-            job_title: data.speaker.occupation?.split(' at ')[0] || '',
-            company: data.speaker.occupation?.split(' at ')[1] || '',
+            job_title: occupation.jobTitle,
+            company: occupation.company,
             description: data.speaker.description || '',
             website_url: data.speaker.website_url || '',
             linkedin_url: data.speaker.linkedin_url || '',
@@ -518,7 +520,7 @@ async function submitForm(event: Event) {
             'data',
             JSON.stringify({
                 ...formData.value,
-                occupation: `${formData.value.job_title} at ${formData.value.company}`,
+                occupation: formatOccupation({ jobTitle: formData.value.job_title, company: formData.value.company }),
             })
         )
 

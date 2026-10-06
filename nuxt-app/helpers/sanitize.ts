@@ -106,3 +106,84 @@ export function getPlainText(html: string | null | undefined): string {
 
     return (fragment.textContent ?? '').replace(/\s+/g, ' ').trim()
 }
+
+// Private-use characters that survive the parser untouched, so block structure can be carried
+// through `textContent` (which would otherwise flatten it) and turned into line breaks afterwards.
+const PARAGRAPH_MARK = '\uE000'
+const LINE_BREAK_MARK = '\uE001'
+const BLOCK_END_REGEX =
+    /<\/(?:address|article|blockquote|dd|div|dl|dt|figcaption|figure|footer|h[1-6]|header|li|ol|p|pre|section|table|tr|ul)\s*>/gi
+const LINE_BREAK_REGEX = /<br\b[^>]*>/gi
+
+/**
+ * Turns CMS rich text into plain text for editing in a `<textarea>`, keeping its paragraphs.
+ *
+ * Each block element becomes a paragraph (separated by a blank line) and `<br>` a single line
+ * break; every other tag is removed and entities are decoded. Like {@link getPlainText} the result
+ * is real text, not HTML. {@link plainTextToHtml} is its inverse.
+ *
+ * Newlines *inside* a paragraph are kept, because the site renders `p` with `whitespace-pre-line`
+ * and so shows them; newlines between paragraphs are only source formatting and are dropped.
+ */
+export function htmlToPlainText(html: string | null | undefined): string {
+    if (!html) {
+        return ''
+    }
+
+    const marked = html
+        .replace(/\r\n?/g, '\n')
+        .replace(LINE_BREAK_REGEX, LINE_BREAK_MARK)
+        .replace(BLOCK_END_REGEX, `$&${PARAGRAPH_MARK}`)
+
+    const fragment = DOMPurify.sanitize(marked, {
+        ALLOWED_TAGS: [],
+        ALLOWED_ATTR: [],
+        RETURN_DOM_FRAGMENT: true,
+    })
+
+    return (fragment.textContent ?? '')
+        .split(PARAGRAPH_MARK)
+        .map((block) =>
+            block
+                .trim()
+                .replaceAll(LINE_BREAK_MARK, '\n')
+                .split('\n')
+                .map((line) => line.replace(/[ \t\u00a0]+/g, ' ').trim())
+                .join('\n')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim()
+        )
+        .filter(Boolean)
+        .join('\n\n')
+}
+
+const HTML_ESCAPES: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+}
+
+/**
+ * Turns plain text typed into a `<textarea>` into the rich-text HTML the CMS stores.
+ *
+ * Everything the user typed is escaped, so `<script>` stays visible text instead of becoming
+ * markup. Blank lines separate `<p>` paragraphs and single newlines become `<br>`.
+ */
+export function plainTextToHtml(text: string | null | undefined): string {
+    if (!text) {
+        return ''
+    }
+
+    return text
+        .replace(/\r\n?/g, '\n')
+        .split(/\n[ \t]*\n/)
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean)
+        .map(
+            (paragraph) =>
+                `<p>${paragraph.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]!).replace(/\n/g, '<br>')}</p>`
+        )
+        .join('')
+}

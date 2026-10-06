@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getPlainText, sanitizeHtml, sanitizeInlineHtml } from '../helpers/sanitize'
+import { getPlainText, htmlToPlainText, plainTextToHtml, sanitizeHtml, sanitizeInlineHtml } from '../helpers/sanitize'
 
 // This module is the single place that decides how untrusted CMS text becomes safe to render, so the
 // policy itself is worth pinning down rather than only its callers.
@@ -181,5 +181,74 @@ describe('links inside rich text', () => {
 
     it('normalises src as well as href', () => {
         expect(sanitizeHtml('<img src="example.com/a.png">')).toBe('<img src="https://example.com/a.png">')
+    })
+})
+
+// The speaker portal edits the rich-text `description` in a plain textarea: these two convert between
+// the forms, and the portal relies on them round-tripping without losing paragraphs.
+describe('htmlToPlainText', () => {
+    it('returns an empty string for empty input', () => {
+        expect(htmlToPlainText(null)).toBe('')
+        expect(htmlToPlainText(undefined)).toBe('')
+        expect(htmlToPlainText('')).toBe('')
+    })
+
+    it('separates paragraphs with a blank line and keeps <br> as a line break', () => {
+        expect(htmlToPlainText('<p>Erster Absatz.</p>\n<p>Zweiter<br>Absatz.</p>')).toBe(
+            'Erster Absatz.\n\nZweiter\nAbsatz.'
+        )
+    })
+
+    it('strips other tags and keeps their text', () => {
+        expect(
+            htmlToPlainText('<p>Arbeitet bei <a href="https://example.com"><strong>Beispiel</strong></a>.</p>')
+        ).toBe('Arbeitet bei Beispiel.')
+    })
+
+    it('decodes entities', () => {
+        expect(htmlToPlainText('<p>Tom &amp; Jerry f&uuml;r&nbsp;&lt;3 &#8211; &quot;ok&quot;</p>')).toBe(
+            'Tom & Jerry für <3 \u2013 "ok"'
+        )
+    })
+
+    it('does not glue blocks together', () => {
+        expect(htmlToPlainText('<h2>Titel</h2><ul><li>Eins</li><li>Zwei</li></ul>')).toBe('Titel\n\nEins\n\nZwei')
+    })
+
+    it('leaves plain text unchanged', () => {
+        expect(htmlToPlainText('Zeile eins\nZeile zwei\n\nNeuer Absatz')).toBe('Zeile eins\nZeile zwei\n\nNeuer Absatz')
+    })
+
+    it('drops scripts entirely', () => {
+        expect(htmlToPlainText('<p>Hallo</p><script>alert(1)</script>')).toBe('Hallo')
+    })
+})
+
+describe('plainTextToHtml', () => {
+    it('returns an empty string for empty input', () => {
+        expect(plainTextToHtml(null)).toBe('')
+        expect(plainTextToHtml(undefined)).toBe('')
+        expect(plainTextToHtml('')).toBe('')
+        expect(plainTextToHtml(' \n \n ')).toBe('')
+    })
+
+    it('wraps paragraphs in <p> and turns single newlines into <br>', () => {
+        expect(plainTextToHtml('Erster Absatz.\r\n\r\nZweiter\nAbsatz.')).toBe(
+            '<p>Erster Absatz.</p><p>Zweiter<br>Absatz.</p>'
+        )
+    })
+
+    it('escapes markup so it stays text', () => {
+        expect(plainTextToHtml('<script>alert("x")</script> & \'mehr\'')).toBe(
+            '<p>&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; &#39;mehr&#39;</p>'
+        )
+    })
+
+    it('round-trips with htmlToPlainText', () => {
+        const text = 'Erika arbeitet bei <Beispiel> & Co.\nZweite Zeile.\n\nNeuer Absatz mit &amp;.'
+        expect(htmlToPlainText(plainTextToHtml(text))).toBe(text)
+
+        const html = '<p>Erika &amp; Max</p><p>Zeile<br>Zeile</p>'
+        expect(plainTextToHtml(htmlToPlainText(html))).toBe(html)
     })
 })
