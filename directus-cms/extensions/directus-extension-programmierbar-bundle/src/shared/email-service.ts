@@ -10,6 +10,7 @@
  */
 
 import type { Logger } from 'pino'
+import { escapeHtml } from './html.ts'
 
 // Simple Handlebars-like template rendering
 // Supports: {{variable}}, {{{rawHtml}}}, {{#if condition}}...{{/if}}
@@ -35,12 +36,7 @@ function renderTemplate(template: string, data: Record<string, any>): string {
         const value = data[key]
         if (value === null || value === undefined) return ''
         // Escape HTML for security
-        return String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;')
+        return escapeHtml(String(value))
     })
 
     return result
@@ -169,6 +165,8 @@ export async function sendRawEmail(
         to: string
         subject: string
         html: string
+        /** Plain-text alternative, for clients that don't render HTML. */
+        text?: string
         replyTo?: string
     },
     context: EmailServiceContext
@@ -188,6 +186,7 @@ export async function sendRawEmail(
             to: options.to,
             subject: options.subject,
             html: options.html,
+            ...(options.text && { text: options.text }),
             ...(options.replyTo && { replyTo: options.replyTo }),
         })
 

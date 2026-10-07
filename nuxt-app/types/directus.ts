@@ -50,6 +50,7 @@ export interface DirectusPodcastItem {
 
 export interface DirectusMeetupItem {
     id: string
+    status?: string
     slug: string
     published_on: string
     start_on: string
@@ -60,6 +61,11 @@ export interface DirectusMeetupItem {
     description: string
     meetup_url: string
     youtube_url: string | null
+    // Own free registration (see docs in the meetup-registration hook). When
+    // enabled, the page's signup CTA points to the form instead of meetup.com.
+    registration_enabled?: boolean | null
+    // `null` = unlimited. Counts confirmed, non-internal registrations.
+    registration_limit?: number | null
     talks: {
         talk: TalkItem
         sort: number
@@ -605,4 +611,29 @@ export interface DirectusNewsletterSubscriberItem {
     signed_up_at: string
     date_created: string | null
     date_updated: string | null
+}
+
+// Meetup registration
+
+export type MeetupRegistrationStatus = 'confirmed' | 'cancelled'
+
+export interface DirectusMeetupRegistrationItem {
+    id: string
+    meetup: string | DirectusMeetupItem
+    status: MeetupRegistrationStatus
+    full_name: string
+    pronouns: string | null
+    email: string
+    role: string | null
+    company: string | null
+    heard_about_from: string | null
+    heard_about_other: string | null
+    has_meetup_account: boolean | null
+    wants_meetup_updates: boolean
+    meetup_updates_consented_at: string | null
+    is_internal: boolean
+    // Permanent secret for the cancel link in the confirmation mail.
+    cancel_token: string
+    cancelled_at: string | null
+    date_created: string | null
 }
