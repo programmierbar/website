@@ -621,10 +621,11 @@ export interface DirectusMeetupRegistrationItem {
     id: string
     meetup: string | DirectusMeetupItem
     status: MeetupRegistrationStatus
-    full_name: string
+    first_name: string
+    last_name: string
     pronouns: string | null
     email: string
-    role: string | null
+    job_title: string | null
     company: string | null
     heard_about_from: string | null
     heard_about_other: string | null

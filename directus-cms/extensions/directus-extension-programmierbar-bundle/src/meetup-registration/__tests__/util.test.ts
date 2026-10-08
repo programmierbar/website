@@ -76,7 +76,7 @@ describe('rich text', () => {
 
 describe('buildConfirmationMail', () => {
     const input: ConfirmationMailInput = {
-        fullName: 'Erika <Mustermann>',
+        firstName: 'Erika <Mustermann>',
         wantsMeetupUpdates: false,
         meetup: {
             title: 'Local-first Apps mit CRDTs',

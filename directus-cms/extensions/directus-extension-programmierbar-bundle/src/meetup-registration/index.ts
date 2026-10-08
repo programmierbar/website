@@ -100,7 +100,7 @@ export default defineHook(({ filter, action }, hookContext) => {
                 'status',
                 'is_internal',
                 'date_created',
-                'full_name',
+                'first_name',
                 'email',
                 'cancel_token',
                 'wants_meetup_updates',
@@ -153,7 +153,7 @@ export default defineHook(({ filter, action }, hookContext) => {
 
         const bySort = (a: { sort?: number | null }, b: { sort?: number | null }) => (a.sort ?? 0) - (b.sort ?? 0)
         const mail = buildConfirmationMail({
-            fullName: registration.full_name,
+            firstName: registration.first_name,
             wantsMeetupUpdates: registration.wants_meetup_updates === true,
             meetup,
             talks: [...(meetup.talks ?? [])]

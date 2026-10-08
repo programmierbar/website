@@ -54,21 +54,22 @@ describe('internal addresses', () => {
 describe('MeetupRegistrationSchema', () => {
     const base = {
         meetupId: 'a3a8b2c4-0000-4000-8000-000000000001',
-        full_name: ' Erika Mustermann ',
+        first_name: ' Erika ',
+        last_name: ' Mustermann ',
         email: ' erika@example.com ',
     }
 
     it('accepts the minimal form and defaults the consent to false', () => {
         const result = MeetupRegistrationSchema.parse(base)
-        expect(result).toMatchObject({ full_name: 'Erika Mustermann', email: 'erika@example.com' })
+        expect(result).toMatchObject({ first_name: 'Erika', last_name: 'Mustermann', email: 'erika@example.com' })
         expect(result.wants_meetup_updates).toBe(false)
         expect(result.pronouns).toBeUndefined()
     })
 
     it('treats empty optional fields as not provided', () => {
-        const result = MeetupRegistrationSchema.parse({ ...base, pronouns: '  ', role: '', heard_about_from: '' })
+        const result = MeetupRegistrationSchema.parse({ ...base, pronouns: '  ', job_title: '', heard_about_from: '' })
         expect(result.pronouns).toBeUndefined()
-        expect(result.role).toBeUndefined()
+        expect(result.job_title).toBeUndefined()
         expect(result.heard_about_from).toBeUndefined()
     })
 
@@ -85,7 +86,8 @@ describe('MeetupRegistrationSchema', () => {
 
     it('rejects unknown answers, missing names, bad emails and long pronouns', () => {
         expect(MeetupRegistrationSchema.safeParse({ ...base, heard_about_from: 'fax' }).success).toBe(false)
-        expect(MeetupRegistrationSchema.safeParse({ ...base, full_name: ' ' }).success).toBe(false)
+        expect(MeetupRegistrationSchema.safeParse({ ...base, first_name: ' ' }).success).toBe(false)
+        expect(MeetupRegistrationSchema.safeParse({ ...base, last_name: '' }).success).toBe(false)
         expect(MeetupRegistrationSchema.safeParse({ ...base, email: 'nope' }).success).toBe(false)
         expect(MeetupRegistrationSchema.safeParse({ ...base, pronouns: 'x'.repeat(51) }).success).toBe(false)
         expect(MeetupRegistrationSchema.safeParse({ ...base, meetupId: 'x' }).success).toBe(false)

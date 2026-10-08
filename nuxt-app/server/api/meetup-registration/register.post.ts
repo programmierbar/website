@@ -79,10 +79,11 @@ export default defineEventHandler(async (event) => {
     try {
         await useAuthenticatedDirectus().createMeetupRegistration({
             meetup: meetupId,
-            full_name: input.full_name,
+            first_name: input.first_name,
+            last_name: input.last_name,
             email: input.email,
             pronouns: input.pronouns ?? null,
-            role: input.role ?? null,
+            job_title: input.job_title ?? null,
             company: input.company ?? null,
             heard_about_from: input.heard_about_from ?? null,
             heard_about_other: input.heard_about_other ?? null,

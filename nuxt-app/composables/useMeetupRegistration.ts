@@ -4,10 +4,11 @@ import { reactive, ref } from 'vue'
 export type MeetupRegistrationPhase = 'loading' | 'unavailable' | 'ready' | 'submitting' | 'success' | 'error'
 
 export interface MeetupRegistrationFormData {
-    full_name: string
+    first_name: string
+    last_name: string
     email: string
     pronouns: string
-    role: string
+    job_title: string
     company: string
     heard_about_from: string
     heard_about_other: string
@@ -64,10 +65,11 @@ export function useMeetupRegistration(meetupId: string) {
                 method: 'POST',
                 body: {
                     meetupId,
-                    full_name: form.full_name,
+                    first_name: form.first_name,
+                    last_name: form.last_name,
                     email: form.email,
                     pronouns: form.pronouns,
-                    role: form.role,
+                    job_title: form.job_title,
                     company: form.company,
                     heard_about_from: form.heard_about_from,
                     heard_about_other: form.heard_about_other,

@@ -70,29 +70,30 @@
 
             <div class="grid gap-6 md:grid-cols-2">
                 <div>
-                    <label class="form-label" :for="`${uid}-name`">Name *</label>
+                    <label class="form-label" :for="`${uid}-first-name`">Vorname *</label>
                     <input
-                        :id="`${uid}-name`"
-                        v-model="form.full_name"
+                        :id="`${uid}-first-name`"
+                        v-model="form.first_name"
                         type="text"
                         class="form-input"
-                        autocomplete="name"
+                        autocomplete="given-name"
                         required
                         maxlength="100"
                     />
                 </div>
                 <div>
-                    <label class="form-label" :for="`${uid}-pronouns`">Pronomen (optional)</label>
+                    <label class="form-label" :for="`${uid}-last-name`">Nachname *</label>
                     <input
-                        :id="`${uid}-pronouns`"
-                        v-model="form.pronouns"
+                        :id="`${uid}-last-name`"
+                        v-model="form.last_name"
                         type="text"
                         class="form-input"
-                        placeholder="z. B. sie/ihr, er/ihm, they/them"
-                        maxlength="50"
+                        autocomplete="family-name"
+                        required
+                        maxlength="100"
                     />
                 </div>
-                <div class="md:col-span-2">
+                <div>
                     <label class="form-label" :for="`${uid}-email`">E-Mail-Adresse *</label>
                     <input
                         :id="`${uid}-email`"
@@ -106,10 +107,21 @@
                     />
                 </div>
                 <div>
-                    <label class="form-label" :for="`${uid}-role`">Rolle (optional)</label>
+                    <label class="form-label" :for="`${uid}-pronouns`">Pronomen (optional)</label>
                     <input
-                        :id="`${uid}-role`"
-                        v-model="form.role"
+                        :id="`${uid}-pronouns`"
+                        v-model="form.pronouns"
+                        type="text"
+                        class="form-input"
+                        placeholder="z. B. sie/ihr, er/ihm, they/them"
+                        maxlength="50"
+                    />
+                </div>
+                <div>
+                    <label class="form-label" :for="`${uid}-job-title`">Job (optional)</label>
+                    <input
+                        :id="`${uid}-job-title`"
+                        v-model="form.job_title"
                         type="text"
                         class="form-input"
                         placeholder="z. B. Frontend-Entwicklerin, CTO"
@@ -219,10 +231,11 @@ const turnstileToken = ref<string | null>(null)
 const turnstileKey = ref(0)
 
 const form = reactive<MeetupRegistrationFormData>({
-    full_name: '',
+    first_name: '',
+    last_name: '',
     email: '',
     pronouns: '',
-    role: '',
+    job_title: '',
     company: '',
     heard_about_from: '',
     heard_about_other: '',

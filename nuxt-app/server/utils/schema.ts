@@ -201,18 +201,23 @@ const heardAboutValues = MEETUP_HEARD_ABOUT_OPTIONS.map((option) => option.value
 export const MeetupRegistrationSchema = z
     .object({
         meetupId: z.string().uuid('Ungültiges Meetup.'),
-        full_name: z
+        first_name: z
             .string()
             .trim()
-            .min(1, 'Bitte trage deinen Namen ein.')
-            .max(100, 'Dein Name darf nicht länger als 100 Zeichen sein.'),
+            .min(1, 'Bitte trage deinen Vornamen ein.')
+            .max(100, 'Dein Vorname darf nicht länger als 100 Zeichen sein.'),
+        last_name: z
+            .string()
+            .trim()
+            .min(1, 'Bitte trage deinen Nachnamen ein.')
+            .max(100, 'Dein Nachname darf nicht länger als 100 Zeichen sein.'),
         email: z
             .string()
             .trim()
             .email('Deine E-Mail-Adresse scheint ungültig zu sein.')
             .max(200, 'Deine E-Mail-Adresse darf nicht länger als 200 Zeichen sein.'),
         pronouns: optionalText(50),
-        role: optionalText(100),
+        job_title: optionalText(100),
         company: optionalText(100),
         heard_about_from: z.preprocess(
             (value) => (value === '' ? undefined : value),

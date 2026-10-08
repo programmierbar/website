@@ -46,7 +46,8 @@ const validToken = () => issueFormToken(scope, Date.now() - FORM_TOKEN_MIN_AGE_M
 
 const form = (overrides: Record<string, unknown> = {}) => ({
     meetupId: MEETUP_ID,
-    full_name: 'Erika Mustermann',
+    first_name: 'Erika',
+    last_name: 'Mustermann',
     email: 'erika@example.com',
     formToken: validToken(),
     ...overrides,
@@ -115,10 +116,11 @@ describe('POST /api/meetup-registration/register', () => {
         ).resolves.toEqual({ status: 'registered' })
         expect(directus.createMeetupRegistration).toHaveBeenCalledWith({
             meetup: MEETUP_ID,
-            full_name: 'Erika Mustermann',
+            first_name: 'Erika',
+            last_name: 'Mustermann',
             email: 'erika@example.com',
             pronouns: null,
-            role: null,
+            job_title: null,
             company: null,
             heard_about_from: 'podcast',
             heard_about_other: null,

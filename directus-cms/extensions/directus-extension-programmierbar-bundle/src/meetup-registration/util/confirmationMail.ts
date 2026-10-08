@@ -14,7 +14,7 @@ const CONTACT_EMAIL = 'podcast@programmier.bar'
 const TIME_ZONE = 'Europe/Berlin'
 
 export interface ConfirmationMailInput {
-    fullName: string
+    firstName: string
     wantsMeetupUpdates: boolean
     meetup: {
         title: string
@@ -182,7 +182,7 @@ export function buildConfirmationMail(input: ConfirmationMailInput): RenderedMai
 
   <tr>
     <td style="padding:24px 24px 0 24px;${FONT}font-size:16px;line-height:25px;font-weight:300;color:#FFFFFF;">
-      <p style="margin:0 0 14px 0;">Hallo ${esc(input.fullName)},</p>
+      <p style="margin:0 0 14px 0;">Hallo ${esc(input.firstName)},</p>
       <p style="margin:0;">danke für deine Anmeldung! Dein Platz beim Meetup ist reserviert. Hier sind alle Infos auf einen Blick.</p>
     </td>
   </tr>
@@ -310,7 +310,7 @@ export function buildConfirmationMail(input: ConfirmationMailInput): RenderedMai
     ].filter(Boolean)
 
     const text = [
-        `Hallo ${input.fullName},`,
+        `Hallo ${input.firstName},`,
         '',
         'danke für deine Anmeldung! Dein Platz beim Meetup ist reserviert.',
         '',
