@@ -297,11 +297,13 @@
 
 <script setup lang="ts">
 import { getMetaInfo } from '~/helpers'
-import { downscaleImage, MAX_IMAGE_UPLOAD_BYTES } from '~/helpers/downscaleImage'
+import { downscaleImage, fitImagesIntoBudget, MAX_IMAGE_UPLOAD_BYTES } from '~/helpers/downscaleImage'
 import {
+    getSpeakerPortalErrorMessage,
     getSpeakerPortalUserMessage,
     requestSpeakerPortal,
     SPEAKER_PORTAL_CONTACT_EMAIL,
+    SpeakerPortalError,
 } from '~/helpers/speakerPortalRequest'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
@@ -451,7 +453,7 @@ async function prepareImage(input: HTMLInputElement, label: string): Promise<Fil
 
     let uploadFile = file
     try {
-        uploadFile = await downscaleImage(file, MIN_IMAGE_SIZE)
+        uploadFile = await downscaleImage(file)
     } catch (err) {
         // Keep the original; the size check below decides whether it can still be sent.
         console.error(`Speaker portal: could not downscale ${label}:`, err)
@@ -544,12 +546,17 @@ async function submitForm(event: Event) {
             })
         )
 
-        if (profileImageFile.value) {
-            submitData.append('profile_image', profileImageFile.value)
+        const images = [
+            { field: 'profile_image', file: profileImageFile.value },
+            { field: 'event_image', file: actionImageFile.value },
+        ].filter((image): image is { field: string; file: File } => image.file !== null)
+
+        // Each image is at most 3 MB, but both together must still fit into one request.
+        const fittedFiles = await fitImagesIntoBudget(images.map((image) => image.file))
+        if (!fittedFiles) {
+            throw new SpeakerPortalError(getSpeakerPortalErrorMessage(413, undefined))
         }
-        if (actionImageFile.value) {
-            submitData.append('event_image', actionImageFile.value)
-        }
+        images.forEach((image, index) => submitData.append(image.field, fittedFiles[index]!))
 
         await requestSpeakerPortal('/api/speaker-portal/submit', {
             method: 'POST',
