@@ -1,13 +1,24 @@
 import { plainTextToHtml } from '~/helpers/sanitize'
 import { SpeakerSubmissionSchema } from '../../utils/schema'
 
+// Every error leaves this handler as JSON with a German message the portal can show as-is. Anything
+// unexpected is logged here (Vercel function logs) and answered with a generic 500, so internal error
+// text never reaches the speaker.
 export default defineEventHandler(async (event) => {
-    const formData = await readMultipartFormData(event)
+    let formData: Awaited<ReturnType<typeof readMultipartFormData>>
+    try {
+        formData = await readMultipartFormData(event)
+    } catch (err) {
+        console.error('Speaker portal submission: could not read multipart body:', err)
+        formData = undefined
+    }
 
     if (!formData) {
         throw createError({
             statusCode: 400,
-            message: 'Invalid form data',
+            statusMessage: 'Bad Request',
+            message:
+                'Deine Angaben konnten nicht gelesen werden. Bitte lade die Seite neu und versuche es noch einmal.',
         })
     }
 
@@ -21,7 +32,11 @@ export default defineEventHandler(async (event) => {
         if (field.name === 'token') {
             token = field.data.toString()
         } else if (field.name === 'data') {
-            rawData = JSON.parse(field.data.toString())
+            try {
+                rawData = JSON.parse(field.data.toString())
+            } catch (err) {
+                console.error('Speaker portal submission: data field is not valid JSON:', err)
+            }
         } else if (field.name === 'profile_image' && field.filename) {
             profileImage = {
                 filename: field.filename,
@@ -40,14 +55,17 @@ export default defineEventHandler(async (event) => {
     if (!token) {
         throw createError({
             statusCode: 400,
-            message: 'Token is required',
+            statusMessage: 'Bad Request',
+            message: 'Dein Zugangscode fehlt. Bitte nutze den Link aus deiner Einladungs-E-Mail.',
         })
     }
 
     if (!rawData) {
         throw createError({
             statusCode: 400,
-            message: 'Form data is required',
+            statusMessage: 'Bad Request',
+            message:
+                'Deine Angaben konnten nicht gelesen werden. Bitte lade die Seite neu und versuche es noch einmal.',
         })
     }
 
@@ -57,21 +75,23 @@ export default defineEventHandler(async (event) => {
         const firstError = parseResult.error.issues[0]
         throw createError({
             statusCode: 400,
-            message: firstError?.message || 'Ungültige Formulardaten',
+            statusMessage: 'Bad Request',
+            message: firstError?.message || 'Bitte überprüfe deine Angaben und versuche es noch einmal.',
         })
     }
     const data = parseResult.data
 
-    const directus = useAuthenticatedDirectus()
-
     try {
+        const directus = useAuthenticatedDirectus()
+
         // Validate token and get speaker
         const speaker = await directus.getSpeakerByPortalToken(token)
 
         if (!speaker) {
             throw createError({
                 statusCode: 404,
-                message: 'Ungültiger Token',
+                statusMessage: 'Not Found',
+                message: 'Dein Zugangslink ist leider ungültig. Bitte überprüfe den Link aus deiner Einladungs-E-Mail.',
             })
         }
 
@@ -79,7 +99,8 @@ export default defineEventHandler(async (event) => {
         if (speaker.portal_token_expires && new Date(speaker.portal_token_expires) < new Date()) {
             throw createError({
                 statusCode: 410,
-                message: 'Token abgelaufen',
+                statusMessage: 'Gone',
+                message: 'Dein Zugangslink ist leider abgelaufen. Bitte kontaktiere uns für eine neue Einladung.',
             })
         }
 
@@ -87,7 +108,9 @@ export default defineEventHandler(async (event) => {
         if (speaker.portal_submission_status === 'submitted' || speaker.portal_submission_status === 'approved') {
             throw createError({
                 statusCode: 409,
-                message: 'Bereits eingereicht',
+                statusMessage: 'Conflict',
+                message:
+                    'Du hast deine Informationen bereits eingereicht. Kontaktiere uns, falls du Änderungen vornehmen möchtest.',
             })
         }
 
@@ -147,13 +170,15 @@ export default defineEventHandler(async (event) => {
             message: 'Speaker information submitted successfully',
         }
     } catch (err: any) {
-        if (err.statusCode) {
+        // The 4xx errors above are meant for the speaker; everything else is internal.
+        if (err?.statusCode >= 400 && err.statusCode < 500) {
             throw err
         }
         console.error('Speaker portal submission error:', err)
         throw createError({
             statusCode: 500,
-            message: 'Ein Fehler ist beim Speichern deiner Informationen aufgetreten.',
+            statusMessage: 'Internal Server Error',
+            message: 'Beim Speichern deiner Informationen ist leider ein Fehler aufgetreten.',
         })
     }
 })
