@@ -1,3 +1,4 @@
+import { plainTextToHtml } from '~/helpers/sanitize'
 import { SpeakerSubmissionSchema } from '../../utils/schema'
 
 // Every error leaves this handler as JSON with a German message the portal can show as-is. Anything
@@ -141,7 +142,8 @@ export default defineEventHandler(async (event) => {
             first_name: data.first_name,
             last_name: data.last_name,
             occupation: data.occupation,
-            description: data.description,
+            // The form sends plain text; the CMS field and every page rendering it expect rich text.
+            description: plainTextToHtml(data.description),
             website_url: data.website_url || null,
             linkedin_url: data.linkedin_url || null,
             twitter_url: data.twitter_url || null,
