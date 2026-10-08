@@ -14,8 +14,8 @@
                 <p class="mt-8 text-xl text-pink">{{ error }}</p>
                 <p class="mt-4 text-lg text-white/60">
                     Falls du glaubst, dass es sich um einen Fehler handelt, kontaktiere uns bitte unter
-                    <a href="mailto:podcast@programmier.bar" class="text-lime hover:text-blue">
-                        podcast@programmier.bar
+                    <a :href="`mailto:${SPEAKER_PORTAL_CONTACT_EMAIL}`" class="text-lime hover:text-blue">
+                        {{ SPEAKER_PORTAL_CONTACT_EMAIL }}
                     </a>
                 </p>
             </div>
@@ -297,6 +297,12 @@
 
 <script setup lang="ts">
 import { getMetaInfo } from '~/helpers'
+import { downscaleImage, MAX_IMAGE_UPLOAD_BYTES } from '~/helpers/downscaleImage'
+import {
+    getSpeakerPortalUserMessage,
+    requestSpeakerPortal,
+    SPEAKER_PORTAL_CONTACT_EMAIL,
+} from '~/helpers/speakerPortalRequest'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const route = useRoute()
@@ -353,17 +359,14 @@ onMounted(async () => {
 
     if (!token) {
         loading.value = false
-        error.value = 'No access token provided. Please use the link from your invitation email.'
+        error.value = 'Dein Link enthält keinen Zugangscode. Bitte nutze den Link aus deiner Einladungs-E-Mail.'
         return
     }
 
     try {
-        const response = await fetch(`/api/speaker-portal/validate?token=${encodeURIComponent(token)}`)
-        const data = await response.json()
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Invalid or expired token')
-        }
+        const data = await requestSpeakerPortal<{ speaker: any }>(
+            `/api/speaker-portal/validate?token=${encodeURIComponent(token)}`
+        )
 
         speaker.value = data.speaker
         deadline.value = data.speaker.portal_submission_deadline
@@ -385,8 +388,8 @@ onMounted(async () => {
             youtube_url: data.speaker.youtube_url || '',
             mastodon_url: data.speaker.mastodon_url || '',
         }
-    } catch (err: any) {
-        error.value = err.message
+    } catch (err) {
+        error.value = getSpeakerPortalUserMessage(err)
     } finally {
         loading.value = false
     }
@@ -425,54 +428,73 @@ function validateImageDimensions(file: File): Promise<{ valid: boolean; width: n
     })
 }
 
-async function handleProfileImageChange(event: Event) {
-    const input = event.target as HTMLInputElement
-    if (input.files && input.files[0]) {
-        const file = input.files[0]
-
-        // Validate image dimensions
-        const { valid, width, height } = await validateImageDimensions(file)
-        if (!valid) {
-            formError.value = `Profilbild muss mindestens ${MIN_IMAGE_SIZE}x${MIN_IMAGE_SIZE} Pixel groß sein. Dein Bild: ${width}x${height} Pixel.`
-            formState.value = 'error'
-            input.value = '' // Reset input
-            return
-        }
-
-        // Revoke previous object URL to prevent memory leak
-        if (profileImagePreview.value) {
-            URL.revokeObjectURL(profileImagePreview.value)
-        }
-        formError.value = ''
-        formState.value = 'pending'
-        profileImageFile.value = file
-        profileImagePreview.value = URL.createObjectURL(file)
+/**
+ * Checks the chosen image and shrinks it to an uploadable size. Returns the file to upload, or null
+ * after putting a message in `formError` if the image cannot be used.
+ */
+async function prepareImage(input: HTMLInputElement, label: string): Promise<File | null> {
+    const file = input.files?.[0]
+    if (!file) {
+        return null
     }
+
+    const { valid, width, height } = await validateImageDimensions(file)
+    if (!valid) {
+        formError.value =
+            width && height
+                ? `${label} muss mindestens ${MIN_IMAGE_SIZE}x${MIN_IMAGE_SIZE} Pixel groß sein. Dein Bild: ${width}x${height} Pixel.`
+                : `${label} konnte nicht gelesen werden. Bitte wähle ein JPG- oder PNG-Bild aus.`
+        formState.value = 'error'
+        input.value = '' // Reset input
+        return null
+    }
+
+    let uploadFile = file
+    try {
+        uploadFile = await downscaleImage(file, MIN_IMAGE_SIZE)
+    } catch (err) {
+        // Keep the original; the size check below decides whether it can still be sent.
+        console.error(`Speaker portal: could not downscale ${label}:`, err)
+    }
+
+    if (uploadFile.size > MAX_IMAGE_UPLOAD_BYTES) {
+        formError.value = `${label} ist zu groß zum Hochladen. Bitte wähle ein Bild mit höchstens ${Math.floor(MAX_IMAGE_UPLOAD_BYTES / 1024 / 1024)} MB aus.`
+        formState.value = 'error'
+        input.value = '' // Reset input
+        return null
+    }
+
+    formError.value = ''
+    formState.value = 'pending'
+    return uploadFile
+}
+
+async function handleProfileImageChange(event: Event) {
+    const file = await prepareImage(event.target as HTMLInputElement, 'Das Profilbild')
+    if (!file) {
+        return
+    }
+
+    // Revoke previous object URL to prevent memory leak
+    if (profileImagePreview.value) {
+        URL.revokeObjectURL(profileImagePreview.value)
+    }
+    profileImageFile.value = file
+    profileImagePreview.value = URL.createObjectURL(file)
 }
 
 async function handleActionImageChange(event: Event) {
-    const input = event.target as HTMLInputElement
-    if (input.files && input.files[0]) {
-        const file = input.files[0]
-
-        // Validate image dimensions
-        const { valid, width, height } = await validateImageDimensions(file)
-        if (!valid) {
-            formError.value = `Action Shot muss mindestens ${MIN_IMAGE_SIZE}x${MIN_IMAGE_SIZE} Pixel groß sein. Dein Bild: ${width}x${height} Pixel.`
-            formState.value = 'error'
-            input.value = '' // Reset input
-            return
-        }
-
-        // Revoke previous object URL to prevent memory leak
-        if (actionImagePreview.value) {
-            URL.revokeObjectURL(actionImagePreview.value)
-        }
-        formError.value = ''
-        formState.value = 'pending'
-        actionImageFile.value = file
-        actionImagePreview.value = URL.createObjectURL(file)
+    const file = await prepareImage(event.target as HTMLInputElement, 'Der Action Shot')
+    if (!file) {
+        return
     }
+
+    // Revoke previous object URL to prevent memory leak
+    if (actionImagePreview.value) {
+        URL.revokeObjectURL(actionImagePreview.value)
+    }
+    actionImageFile.value = file
+    actionImagePreview.value = URL.createObjectURL(file)
 }
 
 // Clean up object URLs on component unmount
@@ -529,21 +551,15 @@ async function submitForm(event: Event) {
             submitData.append('event_image', actionImageFile.value)
         }
 
-        const response = await fetch('/api/speaker-portal/submit', {
+        await requestSpeakerPortal('/api/speaker-portal/submit', {
             method: 'POST',
             body: submitData,
         })
 
-        const data = await response.json()
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Submission failed')
-        }
-
         submitted.value = true
         window.scrollTo(0, 0)
-    } catch (err: any) {
-        formError.value = err.message
+    } catch (err) {
+        formError.value = getSpeakerPortalUserMessage(err)
         formState.value = 'error'
     }
 }
