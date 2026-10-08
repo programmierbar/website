@@ -1,3 +1,4 @@
+import { MEETUP_HEARD_ABOUT_OPTIONS } from 'shared-code'
 import { z } from 'zod'
 
 export const EmailSchema = z.object({
@@ -185,6 +186,54 @@ export const NewsletterSignupSchema = z.object({
         .max(200, 'Deine E-Mail-Adresse darf nicht länger als 200 Zeichen lang sein.'),
 })
 
+// Meetup registration
+
+// Optional text: an empty or whitespace-only field counts as "not provided" and
+// is stored as null rather than as an empty string.
+const optionalText = (max: number) =>
+    z.preprocess(
+        (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+        z.string().trim().max(max, `Maximal ${max} Zeichen.`).optional()
+    )
+
+const heardAboutValues = MEETUP_HEARD_ABOUT_OPTIONS.map((option) => option.value) as [string, ...string[]]
+
+export const MeetupRegistrationSchema = z
+    .object({
+        meetupId: z.string().uuid('Ungültiges Meetup.'),
+        first_name: z
+            .string()
+            .trim()
+            .min(1, 'Bitte trage deinen Vornamen ein.')
+            .max(100, 'Dein Vorname darf nicht länger als 100 Zeichen sein.'),
+        last_name: z
+            .string()
+            .trim()
+            .min(1, 'Bitte trage deinen Nachnamen ein.')
+            .max(100, 'Dein Nachname darf nicht länger als 100 Zeichen sein.'),
+        email: z
+            .string()
+            .trim()
+            .email('Deine E-Mail-Adresse scheint ungültig zu sein.')
+            .max(200, 'Deine E-Mail-Adresse darf nicht länger als 200 Zeichen sein.'),
+        pronouns: optionalText(50),
+        job_title: optionalText(100),
+        company: optionalText(100),
+        heard_about_from: z.preprocess(
+            (value) => (value === '' ? undefined : value),
+            z.enum(heardAboutValues, { error: 'Bitte wähle eine der Antworten aus.' }).optional()
+        ),
+        heard_about_other: optionalText(200),
+        has_meetup_account: z.boolean().nullable().optional(),
+        wants_meetup_updates: z.boolean().optional().default(false),
+    })
+    // The free-text answer only belongs to "Sonstiges"; drop it otherwise.
+    .transform((data) => ({
+        ...data,
+        heard_about_other: data.heard_about_from === 'other' ? data.heard_about_other : undefined,
+    }))
+
 export type CreateCheckoutInput = z.infer<typeof CreateCheckoutSchema>
 export type TicketAttendeeInput = z.infer<typeof TicketAttendeeSchema>
 export type TicketProfileInput = z.infer<typeof TicketProfileSchema>
+export type MeetupRegistrationInput = z.infer<typeof MeetupRegistrationSchema>

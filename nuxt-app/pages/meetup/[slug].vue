@@ -32,7 +32,11 @@
                     <MeetupCover v-else class="mt-10 md:mt-12 lg:mt-16 xl:w-2/3" :meetup="meetup" />
 
                     <!-- Meetup, calendar & maps -->
-                    <MeetupCalendarAndMaps class="hidden xl:flex xl:w-1/4" :meetup="meetup" />
+                    <MeetupCalendarAndMaps
+                        class="hidden xl:flex xl:w-1/4"
+                        :meetup="meetup"
+                        :has-own-registration="showRegistration"
+                    />
                 </div>
 
                 <!-- Start and end time -->
@@ -69,6 +73,11 @@
                     </NuxtLink>
                 </p>
 
+                <!-- Own free registration -->
+                <section v-if="showRegistration" id="anmeldung" class="mt-12 scroll-mt-32 md:mt-16">
+                    <MeetupRegistrationForm :meetup-id="meetup.id" />
+                </section>
+
                 <!-- Meetup tags -->
                 <!-- TODO: Replace navigateTo() with <a> element -->
                 <TagList
@@ -85,7 +94,11 @@
                 />
 
                 <!-- Meetup, calendar & maps -->
-                <MeetupCalendarAndMaps class="mt-16 md:mt-20 xl:hidden" :meetup="meetup" />
+                <MeetupCalendarAndMaps
+                    class="mt-16 md:mt-20 xl:hidden"
+                    :meetup="meetup"
+                    :has-own-registration="showRegistration"
+                />
             </div>
         </article>
 
@@ -191,6 +204,13 @@ const galleryImages: ComputedRef<DirectusFileItem[]> = computed(() => {
 
     return images
 })
+
+// The form is shown until the event is over; whether it still takes
+// registrations (closed at the start, full) is loaded client-side, since this
+// page is ISR-cached.
+const showRegistration = computed(
+    () => meetup.value?.registration_enabled === true && new Date(meetup.value.end_on) > new Date()
+)
 
 // Convert speaker count to local string
 const speakerCountString = useLocaleString(speakerCount)
