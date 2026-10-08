@@ -284,9 +284,15 @@
                         <button
                             type="submit"
                             class="h-14 w-64 rounded-full border-4 border-lime text-sm font-black uppercase tracking-widest text-lime transition-all hover:bg-lime hover:text-black disabled:cursor-not-allowed disabled:opacity-50 md:h-16 md:w-80 md:border-5 md:text-lg lg:h-20 lg:w-112 lg:border-6 lg:text-xl"
-                            :disabled="formState === 'submitting'"
+                            :disabled="formState === 'submitting' || preparingImages > 0"
                         >
-                            {{ formState === 'submitting' ? 'Wird gesendet...' : 'Absenden' }}
+                            {{
+                                formState === 'submitting'
+                                    ? 'Wird gesendet...'
+                                    : preparingImages > 0
+                                      ? 'Bild wird vorbereitet...'
+                                      : 'Absenden'
+                            }}
                         </button>
                     </div>
                 </form>
@@ -319,6 +325,7 @@ const speaker = ref<any>(null)
 const deadline = ref<string | null>(null)
 const formState = ref<'pending' | 'submitting' | 'error'>('pending')
 const formError = ref('')
+const preparingImages = ref(0)
 
 // Form data
 const formData = ref({
@@ -431,24 +438,19 @@ function validateImageDimensions(file: File): Promise<{ valid: boolean; width: n
 }
 
 /**
- * Checks the chosen image and shrinks it to an uploadable size. Returns the file to upload, or null
- * after putting a message in `formError` if the image cannot be used.
+ * Checks the chosen image and shrinks it to an uploadable size. Returns the file to upload, or the
+ * message to show if the image cannot be used. Leaves the page state alone: by the time this resolves
+ * the speaker may already have picked another image.
  */
-async function prepareImage(input: HTMLInputElement, label: string): Promise<File | null> {
-    const file = input.files?.[0]
-    if (!file) {
-        return null
-    }
-
+async function prepareImage(file: File, label: string): Promise<{ file: File } | { error: string }> {
     const { valid, width, height } = await validateImageDimensions(file)
     if (!valid) {
-        formError.value =
-            width && height
-                ? `${label} muss mindestens ${MIN_IMAGE_SIZE}x${MIN_IMAGE_SIZE} Pixel groß sein. Dein Bild: ${width}x${height} Pixel.`
-                : `${label} konnte nicht gelesen werden. Bitte wähle ein JPG- oder PNG-Bild aus.`
-        formState.value = 'error'
-        input.value = '' // Reset input
-        return null
+        return {
+            error:
+                width && height
+                    ? `${label} muss mindestens ${MIN_IMAGE_SIZE}x${MIN_IMAGE_SIZE} Pixel groß sein. Dein Bild: ${width}x${height} Pixel.`
+                    : `${label} konnte nicht gelesen werden. Bitte wähle ein JPG- oder PNG-Bild aus.`,
+        }
     }
 
     let uploadFile = file
@@ -460,43 +462,63 @@ async function prepareImage(input: HTMLInputElement, label: string): Promise<Fil
     }
 
     if (uploadFile.size > MAX_IMAGE_UPLOAD_BYTES) {
-        formError.value = `${label} ist zu groß zum Hochladen. Bitte wähle ein Bild mit höchstens ${Math.floor(MAX_IMAGE_UPLOAD_BYTES / 1024 / 1024)} MB aus.`
+        return {
+            error: `${label} ist zu groß zum Hochladen. Bitte wähle ein Bild mit höchstens ${Math.floor(MAX_IMAGE_UPLOAD_BYTES / 1024 / 1024)} MB aus.`,
+        }
+    }
+
+    return { file: uploadFile }
+}
+
+const imageSlots = {
+    profile: { label: 'Das Profilbild', file: profileImageFile, preview: profileImagePreview, selection: 0 },
+    action: { label: 'Der Action Shot', file: actionImageFile, preview: actionImagePreview, selection: 0 },
+}
+
+async function handleImageChange(event: Event, slot: (typeof imageSlots)[keyof typeof imageSlots]) {
+    const input = event.target as HTMLInputElement
+    const file = input.files?.[0]
+    if (!file) {
+        return
+    }
+
+    // Resizing a large photo takes a moment. Submitting is blocked meanwhile, and a result that
+    // arrives after the speaker already picked another image is dropped.
+    const selection = ++slot.selection
+    preparingImages.value++
+    let result: Awaited<ReturnType<typeof prepareImage>>
+    try {
+        result = await prepareImage(file, slot.label)
+    } finally {
+        preparingImages.value--
+    }
+    if (selection !== slot.selection) {
+        return
+    }
+
+    if ('error' in result) {
+        formError.value = result.error
         formState.value = 'error'
         input.value = '' // Reset input
-        return null
+        return
     }
 
     formError.value = ''
     formState.value = 'pending'
-    return uploadFile
+    // Revoke previous object URL to prevent memory leak
+    if (slot.preview.value) {
+        URL.revokeObjectURL(slot.preview.value)
+    }
+    slot.file.value = result.file
+    slot.preview.value = URL.createObjectURL(result.file)
 }
 
-async function handleProfileImageChange(event: Event) {
-    const file = await prepareImage(event.target as HTMLInputElement, 'Das Profilbild')
-    if (!file) {
-        return
-    }
-
-    // Revoke previous object URL to prevent memory leak
-    if (profileImagePreview.value) {
-        URL.revokeObjectURL(profileImagePreview.value)
-    }
-    profileImageFile.value = file
-    profileImagePreview.value = URL.createObjectURL(file)
+function handleProfileImageChange(event: Event) {
+    return handleImageChange(event, imageSlots.profile)
 }
 
-async function handleActionImageChange(event: Event) {
-    const file = await prepareImage(event.target as HTMLInputElement, 'Der Action Shot')
-    if (!file) {
-        return
-    }
-
-    // Revoke previous object URL to prevent memory leak
-    if (actionImagePreview.value) {
-        URL.revokeObjectURL(actionImagePreview.value)
-    }
-    actionImageFile.value = file
-    actionImagePreview.value = URL.createObjectURL(file)
+function handleActionImageChange(event: Event) {
+    return handleImageChange(event, imageSlots.action)
 }
 
 // Clean up object URLs on component unmount
@@ -510,6 +532,11 @@ onBeforeUnmount(() => {
 })
 
 async function submitForm(event: Event) {
+    // The button is disabled meanwhile, but Enter in a text field still submits.
+    if (formState.value === 'submitting' || preparingImages.value > 0) {
+        return
+    }
+
     const formElement = event.target as HTMLFormElement
     if (formElement.reportValidity && !formElement.reportValidity()) {
         formError.value = 'Bitte fülle alle Pflichtfelder aus.'
