@@ -43,6 +43,25 @@ describe('fitImagesIntoBudget', () => {
         expect(result![1]).toBe(small)
     })
 
+    // One image bottoms out above its equal share; the other must then use the room that is really left.
+    it('retries against the remaining budget when one image cannot reach its equal share', async () => {
+        const steps: Record<string, number[]> = { 'wide.jpg': [2.7, 2.6, 2.5], 'normal.jpg': [1.9, 1.6, 1.4] }
+        const stepwiseShrink = vi.fn(async (file: File, maxBytes: number) => {
+            if (file.size <= maxBytes) return file
+            const sizes = steps[file.name]!.map((size) => size * MB)
+            return fakeFile(sizes.find((size) => size <= maxBytes) ?? sizes.at(-1)!, file.name)
+        })
+        const originals = [fakeFile(2.9 * MB, 'wide.jpg'), fakeFile(2.8 * MB, 'normal.jpg')]
+
+        const result = await fitImagesIntoBudget(originals, 4 * MB, stepwiseShrink)
+
+        expect(result?.map((file) => Math.round((file.size / MB) * 10) / 10)).toEqual([2.5, 1.4])
+        // Every encode starts from the original, never from an earlier lossy copy.
+        for (const [file] of stepwiseShrink.mock.calls) {
+            expect(originals).toContain(file)
+        }
+    })
+
     it('returns null if the images cannot be shrunk enough', async () => {
         const stubborn = async (file: File) => file
         await expect(

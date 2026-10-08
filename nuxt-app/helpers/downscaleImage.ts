@@ -122,15 +122,23 @@ export async function fitImagesIntoBudget(
     shrink: (file: File, maxBytes: number) => Promise<File> = downscaleImage
 ): Promise<File[] | null> {
     const result = [...files]
-    const largestFirst = result.map((_, index) => index).sort((a, b) => result[b]!.size - result[a]!.size)
+    const largestFirst = files.map((_, index) => index).sort((a, b) => files[b]!.size - files[a]!.size)
 
-    for (const index of largestFirst) {
-        if (totalSize(result) <= budget) {
-            break
+    // Always encodes from the original file, so a retry does not re-compress an already lossy copy.
+    async function shrinkLargestFirst(getTarget: (othersSize: number) => number) {
+        for (const index of largestFirst) {
+            if (totalSize(result) <= budget) {
+                return
+            }
+            const othersSize = totalSize(result) - result[index]!.size
+            result[index] = await shrink(files[index]!, getTarget(othersSize))
         }
-        const others = totalSize(result) - result[index]!.size
-        result[index] = await shrink(result[index]!, Math.max(budget - others, budget / result.length))
     }
+
+    await shrinkLargestFirst((othersSize) => Math.max(budget - othersSize, budget / files.length))
+    // An image that cannot get down to its equal share leaves the others too little room in that pass.
+    // Retry against the room that is actually left.
+    await shrinkLargestFirst((othersSize) => budget - othersSize)
 
     return totalSize(result) <= budget ? result : null
 }
