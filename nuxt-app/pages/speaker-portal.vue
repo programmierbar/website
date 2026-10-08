@@ -14,8 +14,8 @@
                 <p class="mt-8 text-xl text-pink">{{ error }}</p>
                 <p class="mt-4 text-lg text-white/60">
                     Falls du glaubst, dass es sich um einen Fehler handelt, kontaktiere uns bitte unter
-                    <a href="mailto:podcast@programmier.bar" class="text-lime hover:text-blue">
-                        podcast@programmier.bar
+                    <a :href="`mailto:${SPEAKER_PORTAL_CONTACT_EMAIL}`" class="text-lime hover:text-blue">
+                        {{ SPEAKER_PORTAL_CONTACT_EMAIL }}
                     </a>
                 </p>
             </div>
@@ -284,9 +284,15 @@
                         <button
                             type="submit"
                             class="h-14 w-64 rounded-full border-4 border-lime text-sm font-black uppercase tracking-widest text-lime transition-all hover:bg-lime hover:text-black disabled:cursor-not-allowed disabled:opacity-50 md:h-16 md:w-80 md:border-5 md:text-lg lg:h-20 lg:w-112 lg:border-6 lg:text-xl"
-                            :disabled="formState === 'submitting'"
+                            :disabled="formState === 'submitting' || preparingImages > 0"
                         >
-                            {{ formState === 'submitting' ? 'Wird gesendet...' : 'Absenden' }}
+                            {{
+                                formState === 'submitting'
+                                    ? 'Wird gesendet...'
+                                    : preparingImages > 0
+                                      ? 'Bild wird vorbereitet...'
+                                      : 'Absenden'
+                            }}
                         </button>
                     </div>
                 </form>
@@ -297,6 +303,14 @@
 
 <script setup lang="ts">
 import { getMetaInfo } from '~/helpers'
+import { downscaleImage, fitImagesIntoBudget, MAX_IMAGE_UPLOAD_BYTES } from '~/helpers/downscaleImage'
+import {
+    getSpeakerPortalErrorMessage,
+    getSpeakerPortalUserMessage,
+    requestSpeakerPortal,
+    SPEAKER_PORTAL_CONTACT_EMAIL,
+    SpeakerPortalError,
+} from '~/helpers/speakerPortalRequest'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const route = useRoute()
@@ -311,6 +325,7 @@ const speaker = ref<any>(null)
 const deadline = ref<string | null>(null)
 const formState = ref<'pending' | 'submitting' | 'error'>('pending')
 const formError = ref('')
+const preparingImages = ref(0)
 
 // Form data
 const formData = ref({
@@ -353,17 +368,14 @@ onMounted(async () => {
 
     if (!token) {
         loading.value = false
-        error.value = 'No access token provided. Please use the link from your invitation email.'
+        error.value = 'Dein Link enthält keinen Zugangscode. Bitte nutze den Link aus deiner Einladungs-E-Mail.'
         return
     }
 
     try {
-        const response = await fetch(`/api/speaker-portal/validate?token=${encodeURIComponent(token)}`)
-        const data = await response.json()
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Invalid or expired token')
-        }
+        const data = await requestSpeakerPortal<{ speaker: any }>(
+            `/api/speaker-portal/validate?token=${encodeURIComponent(token)}`
+        )
 
         speaker.value = data.speaker
         deadline.value = data.speaker.portal_submission_deadline
@@ -385,8 +397,8 @@ onMounted(async () => {
             youtube_url: data.speaker.youtube_url || '',
             mastodon_url: data.speaker.mastodon_url || '',
         }
-    } catch (err: any) {
-        error.value = err.message
+    } catch (err) {
+        error.value = getSpeakerPortalUserMessage(err)
     } finally {
         loading.value = false
     }
@@ -425,54 +437,88 @@ function validateImageDimensions(file: File): Promise<{ valid: boolean; width: n
     })
 }
 
-async function handleProfileImageChange(event: Event) {
-    const input = event.target as HTMLInputElement
-    if (input.files && input.files[0]) {
-        const file = input.files[0]
-
-        // Validate image dimensions
-        const { valid, width, height } = await validateImageDimensions(file)
-        if (!valid) {
-            formError.value = `Profilbild muss mindestens ${MIN_IMAGE_SIZE}x${MIN_IMAGE_SIZE} Pixel groß sein. Dein Bild: ${width}x${height} Pixel.`
-            formState.value = 'error'
-            input.value = '' // Reset input
-            return
+/**
+ * Checks the chosen image and shrinks it to an uploadable size. Returns the file to upload, or the
+ * message to show if the image cannot be used. Leaves the page state alone: by the time this resolves
+ * the speaker may already have picked another image.
+ */
+async function prepareImage(file: File, label: string): Promise<{ file: File } | { error: string }> {
+    const { valid, width, height } = await validateImageDimensions(file)
+    if (!valid) {
+        return {
+            error:
+                width && height
+                    ? `${label} muss mindestens ${MIN_IMAGE_SIZE}x${MIN_IMAGE_SIZE} Pixel groß sein. Dein Bild: ${width}x${height} Pixel.`
+                    : `${label} konnte nicht gelesen werden. Bitte wähle ein JPG- oder PNG-Bild aus.`,
         }
-
-        // Revoke previous object URL to prevent memory leak
-        if (profileImagePreview.value) {
-            URL.revokeObjectURL(profileImagePreview.value)
-        }
-        formError.value = ''
-        formState.value = 'pending'
-        profileImageFile.value = file
-        profileImagePreview.value = URL.createObjectURL(file)
     }
+
+    let uploadFile = file
+    try {
+        uploadFile = await downscaleImage(file)
+    } catch (err) {
+        // Keep the original; the size check below decides whether it can still be sent.
+        console.error(`Speaker portal: could not downscale ${label}:`, err)
+    }
+
+    if (uploadFile.size > MAX_IMAGE_UPLOAD_BYTES) {
+        return {
+            error: `${label} ist zu groß zum Hochladen. Bitte wähle ein Bild mit höchstens ${Math.floor(MAX_IMAGE_UPLOAD_BYTES / 1024 / 1024)} MB aus.`,
+        }
+    }
+
+    return { file: uploadFile }
 }
 
-async function handleActionImageChange(event: Event) {
+const imageSlots = {
+    profile: { label: 'Das Profilbild', file: profileImageFile, preview: profileImagePreview, selection: 0 },
+    action: { label: 'Der Action Shot', file: actionImageFile, preview: actionImagePreview, selection: 0 },
+}
+
+async function handleImageChange(event: Event, slot: (typeof imageSlots)[keyof typeof imageSlots]) {
     const input = event.target as HTMLInputElement
-    if (input.files && input.files[0]) {
-        const file = input.files[0]
-
-        // Validate image dimensions
-        const { valid, width, height } = await validateImageDimensions(file)
-        if (!valid) {
-            formError.value = `Action Shot muss mindestens ${MIN_IMAGE_SIZE}x${MIN_IMAGE_SIZE} Pixel groß sein. Dein Bild: ${width}x${height} Pixel.`
-            formState.value = 'error'
-            input.value = '' // Reset input
-            return
-        }
-
-        // Revoke previous object URL to prevent memory leak
-        if (actionImagePreview.value) {
-            URL.revokeObjectURL(actionImagePreview.value)
-        }
-        formError.value = ''
-        formState.value = 'pending'
-        actionImageFile.value = file
-        actionImagePreview.value = URL.createObjectURL(file)
+    const file = input.files?.[0]
+    if (!file) {
+        return
     }
+
+    // Resizing a large photo takes a moment. Submitting is blocked meanwhile, and a result that
+    // arrives after the speaker already picked another image is dropped.
+    const selection = ++slot.selection
+    preparingImages.value++
+    let result: Awaited<ReturnType<typeof prepareImage>>
+    try {
+        result = await prepareImage(file, slot.label)
+    } finally {
+        preparingImages.value--
+    }
+    if (selection !== slot.selection) {
+        return
+    }
+
+    if ('error' in result) {
+        formError.value = result.error
+        formState.value = 'error'
+        input.value = '' // Reset input
+        return
+    }
+
+    formError.value = ''
+    formState.value = 'pending'
+    // Revoke previous object URL to prevent memory leak
+    if (slot.preview.value) {
+        URL.revokeObjectURL(slot.preview.value)
+    }
+    slot.file.value = result.file
+    slot.preview.value = URL.createObjectURL(result.file)
+}
+
+function handleProfileImageChange(event: Event) {
+    return handleImageChange(event, imageSlots.profile)
+}
+
+function handleActionImageChange(event: Event) {
+    return handleImageChange(event, imageSlots.action)
 }
 
 // Clean up object URLs on component unmount
@@ -486,6 +532,11 @@ onBeforeUnmount(() => {
 })
 
 async function submitForm(event: Event) {
+    // The button is disabled meanwhile, but Enter in a text field still submits.
+    if (formState.value === 'submitting' || preparingImages.value > 0) {
+        return
+    }
+
     const formElement = event.target as HTMLFormElement
     if (formElement.reportValidity && !formElement.reportValidity()) {
         formError.value = 'Bitte fülle alle Pflichtfelder aus.'
@@ -522,28 +573,27 @@ async function submitForm(event: Event) {
             })
         )
 
-        if (profileImageFile.value) {
-            submitData.append('profile_image', profileImageFile.value)
-        }
-        if (actionImageFile.value) {
-            submitData.append('event_image', actionImageFile.value)
-        }
+        const images = [
+            { field: 'profile_image', file: profileImageFile.value },
+            { field: 'event_image', file: actionImageFile.value },
+        ].filter((image): image is { field: string; file: File } => image.file !== null)
 
-        const response = await fetch('/api/speaker-portal/submit', {
+        // Each image is at most 3 MB, but both together must still fit into one request.
+        const fittedFiles = await fitImagesIntoBudget(images.map((image) => image.file))
+        if (!fittedFiles) {
+            throw new SpeakerPortalError(getSpeakerPortalErrorMessage(413, undefined))
+        }
+        images.forEach((image, index) => submitData.append(image.field, fittedFiles[index]!))
+
+        await requestSpeakerPortal('/api/speaker-portal/submit', {
             method: 'POST',
             body: submitData,
         })
 
-        const data = await response.json()
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Submission failed')
-        }
-
         submitted.value = true
         window.scrollTo(0, 0)
-    } catch (err: any) {
-        formError.value = err.message
+    } catch (err) {
+        formError.value = getSpeakerPortalUserMessage(err)
         formState.value = 'error'
     }
 }
