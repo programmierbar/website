@@ -193,6 +193,7 @@
         "@jest/globals": "^29.7.0",
         "@slack/web-api": "^7.2.0",
         "@types/jest": "^29.5.12",
+        "@types/mjml": "^5.0.0",
         "@types/node": "^24.1.0",
         "@types/pdfkit": "^0.13.9",
         "@types/qrcode": "^1.5.5",
