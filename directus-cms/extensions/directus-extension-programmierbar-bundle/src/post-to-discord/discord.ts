@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { htmlToText } from '../shared/html.ts'
 
 /** programmier.bar brand color (#CFFF00) used as the embed's accent stripe. */
 const EMBED_COLOR = 0xcfff00
@@ -45,66 +46,6 @@ export interface NewsEmbedInput {
 }
 
 /**
- * Named HTML entities the rich-text editor emits. German umlauts are
- * case-sensitive (`&auml;` = ä, `&Auml;` = Ä), so both cases are listed
- * explicitly rather than folded.
- */
-const NAMED_ENTITIES: Record<string, string> = {
-    amp: '&',
-    lt: '<',
-    gt: '>',
-    quot: '"',
-    apos: "'",
-    nbsp: ' ',
-    auml: 'ä',
-    ouml: 'ö',
-    uuml: 'ü',
-    Auml: 'Ä',
-    Ouml: 'Ö',
-    Uuml: 'Ü',
-    szlig: 'ß',
-    euro: '€',
-    hellip: '…',
-    ndash: '–',
-    mdash: '—',
-    bdquo: '„',
-    ldquo: '“',
-    rdquo: '”',
-    sbquo: '‚',
-    lsquo: '‘',
-    rsquo: '’',
-}
-
-/**
- * Decode the HTML entities the rich-text editor emits — named (incl. German
- * umlauts), decimal (`&#228;`) and hex (`&#xE4;`). Runs as a single left-to-right
- * pass so a literal `&amp;lt;` decodes to the text `&lt;` rather than `<`.
- */
-function decodeEntities(value: string): string {
-    return value.replace(/&(#x[0-9a-fA-F]+|#\d+|[a-zA-Z][a-zA-Z0-9]*);/g, (match, entity: string) => {
-        if (entity[0] === '#') {
-            const code =
-                entity[1] === 'x' || entity[1] === 'X'
-                    ? Number.parseInt(entity.slice(2), 16)
-                    : Number.parseInt(entity.slice(1), 10)
-
-            if (Number.isFinite(code) && code >= 0 && code <= 0x10ffff) {
-                return String.fromCodePoint(code)
-            }
-
-            return match
-        }
-        // Unknown named entities are left untouched rather than dropped.
-        return Object.prototype.hasOwnProperty.call(NAMED_ENTITIES, entity) ? NAMED_ENTITIES[entity] : match
-    })
-}
-
-/** Strip every remaining HTML tag from a string. */
-function stripTags(value: string): string {
-    return value.replace(/<[^>]+>/g, '')
-}
-
-/**
  * Convert the rich-text HTML from `news_links.comment` into the Markdown that
  * Discord embed descriptions render. Discord does NOT render HTML, so raw tags
  * would otherwise show up as literal text.
@@ -113,32 +54,9 @@ function stripTags(value: string): string {
  * lines, and block-level tags become newlines; every other tag is dropped.
  */
 export function htmlToDiscordText(html: string): string {
-    if (!html) {
-        return ''
-    }
-
-    const withMarkdown = html
-        // <a href="url">text</a> → [text](url); fall back to the bare URL when
-        // the link has no visible text.
-        .replace(/<a\b[^>]*\bhref=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi, (_match, href, label) => {
-            const text = stripTags(label).trim()
-            return text ? `[${text}](${href})` : href
-        })
-        // `<li>` opens its own bullet line; its closing tag is dropped below so
-        // it does not add a second break between items.
-        .replace(/<li\b[^>]*>/gi, '\n- ')
-        .replace(/<br\s*\/?>/gi, '\n')
-        // Block-level closings become a blank line so paragraphs stay separated.
-        .replace(/<\/(p|div|ul|ol|h[1-6]|blockquote)>/gi, '\n\n')
-
-    const text = decodeEntities(stripTags(withMarkdown))
-
-    return text
-        .split('\n')
-        .map((line) => line.replace(/[ \t]+/g, ' ').trim())
-        .join('\n')
-        .replace(/\n{3,}/g, '\n\n')
-        .trim()
+    // <a href="url">text</a> → [text](url); fall back to the bare URL when the
+    // link has no visible text.
+    return htmlToText(html, (href, text) => (text ? `[${text}](${href})` : href))
 }
 
 /** Trim a string to `max` characters, appending an ellipsis when it overflows. */

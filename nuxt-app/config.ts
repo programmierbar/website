@@ -1,3 +1,6 @@
+// Relative on purpose: nuxt.config.ts imports this file before the `shared-code` alias exists.
+import { EVENT_VENUE } from '../shared-code/helpers/eventVenue'
+
 // Feature Flags
 export const FLAG_SHOW_LOGIN = Boolean(process.env.FLAG_SHOW_LOGIN?.toLowerCase() == 'true')
 export const FLAG_SHOW_NEWS = Boolean(process.env.FLAG_SHOW_NEWS?.toLowerCase() == 'true')
@@ -36,16 +39,17 @@ export const DEFAULT_OG_IMAGE = {
 
 // Venue of meetups and conferences, used as the location in their structured data. Nearly all
 // events take place here; the rare event elsewhere is an accepted exception, as there is no
-// location field in the CMS.
+// location field in the CMS. The venue itself lives in shared-code, because the CMS prints it in
+// the meetup confirmation mail too.
 export const EVENT_LOCATION = {
     '@type': 'Place',
-    name: 'Lotum media GmbH',
+    name: EVENT_VENUE.name,
     address: {
         '@type': 'PostalAddress',
-        streetAddress: 'Am Goldstein 1',
-        postalCode: '61231',
-        addressLocality: 'Bad Nauheim',
-        addressCountry: 'DE',
+        streetAddress: EVENT_VENUE.streetAddress,
+        postalCode: EVENT_VENUE.postalCode,
+        addressLocality: EVENT_VENUE.locality,
+        addressCountry: EVENT_VENUE.country,
     },
 } as const
 
@@ -61,7 +65,7 @@ export const SPOTIFY_URL = 'https://open.spotify.com/show/0ik0sXv9paTQCeThcOLCCJ
 export const BUZZSPROUT_RSS_FEED_URL = 'https://feeds.buzzsprout.com/176239.rss'
 export const YOUTUBE_PODCAST_URL = 'https://www.youtube.com/playlist?list=PLdL7w42vTISATGJPlvPa91GEMOSHqbWZY'
 export const MEETUP_URL = 'https://www.meetup.com/programmierbar'
-export const GOOGLE_MAPS_URL = 'https://goo.gl/maps/7h8a14WPPQkQL4LB8'
+export const GOOGLE_MAPS_URL = EVENT_VENUE.mapsUrl
 export const DISCORD_INVITE_LINK = process.env.DISCORD_INVITE_LINK || 'https://discord.gg'
 
 // programmier.con Apps

@@ -1,9 +1,9 @@
 import { createError } from '@directus/errors'
 
 /**
- * A Directus error class for a hook. `status` defaults to Directus' 500; pass 400 for
- * validation errors the editor should read in the Data Studio.
+ * @param status HTTP status the API answers with (Directus' default is 500).
+ *   Callers that map the error code to a user-facing answer can set e.g. 409.
  */
 export function createHookErrorConstructor(hook: string, message: string, status?: number) {
-    return status === undefined ? createError(hook, message) : createError(hook, message, status)
+    return createError(hook, message, status)
 }
