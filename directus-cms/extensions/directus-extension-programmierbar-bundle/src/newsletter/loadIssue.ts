@@ -89,3 +89,56 @@ export async function loadNewsletterIssue(
 export function isNotFoundError(err: any): boolean {
     return err?.code === 'FORBIDDEN' || err?.name === 'ForbiddenError'
 }
+
+/** The issue cannot be shown to this user: it does not exist (404) or they may not read it (403). */
+export class IssueAccessError extends Error {
+    status: 403 | 404
+    constructor(status: 403 | 404, message: string) {
+        super(message)
+        this.status = status
+    }
+}
+
+/**
+ * Load an issue with the requesting user's own permissions, so a user only previews or
+ * test-sends what they may read. Directus answers both "missing" and "not allowed" with
+ * a ForbiddenError; an admin existence check (with the same version) tells them apart,
+ * so the caller can answer 404 or 403. It reveals existence only to logged-in users.
+ */
+export async function loadNewsletterIssueForUser(
+    services: { ItemsService: any },
+    schema: unknown,
+    accountability: unknown,
+    id: string,
+    version?: string | null
+): Promise<NewsletterIssue> {
+    try {
+        return await loadNewsletterIssue(
+            new services.ItemsService(ISSUES_COLLECTION, { schema, accountability }),
+            id,
+            version
+        )
+    } catch (err: any) {
+        if (!isNotFoundError(err)) {
+            throw err
+        }
+    }
+
+    const label = `Ausgabe ${id}${isContentVersion(version) ? ` (Version ${version})` : ''}`
+    try {
+        const adminQuery: Record<string, unknown> = { fields: ['id'] }
+        if (isContentVersion(version)) {
+            adminQuery.version = version
+        }
+        await new services.ItemsService(ISSUES_COLLECTION, { schema, accountability: { admin: true } }).readOne(
+            id,
+            adminQuery
+        )
+    } catch (err: any) {
+        if (isNotFoundError(err)) {
+            throw new IssueAccessError(404, `${label} nicht gefunden – ist sie schon gespeichert?`)
+        }
+        throw err
+    }
+    throw new IssueAccessError(403, `Keine Berechtigung, ${label} mit ihren Blöcken, Podcasts und Meetups zu lesen`)
+}

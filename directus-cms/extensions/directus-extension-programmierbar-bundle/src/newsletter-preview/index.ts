@@ -1,6 +1,6 @@
 import { defineEndpoint } from '@directus/extensions-sdk'
-import { checkAdminAccess } from '../newsletter/access.ts'
-import { isNotFoundError, ISSUES_COLLECTION, loadNewsletterIssue } from '../newsletter/loadIssue.ts'
+import { checkAuthenticated } from '../newsletter/access.ts'
+import { IssueAccessError, loadNewsletterIssueForUser } from '../newsletter/loadIssue.ts'
 import { renderNewsletterIssue } from '../newsletter/render/index.ts'
 import { getRequiredSetting } from '../shared/settings.ts'
 import { buildPreviewNotice, injectPreviewNotice } from './notice.ts'
@@ -14,12 +14,14 @@ const ENDPOINT_NAME = 'newsletter-preview'
  *
  * Renders the issue through the same MJML renderer the send job will use and returns
  * the HTML, with a preview-only notice above the mail listing unpublished podcasts/meetups
- * the renderer left out (the send job leaves them out too). Configure it in Directus as the Preview URL of `newsletter_issues`:
- * `/newsletter-preview/{{id}}?version={{$version}}`. Without a version (or `main`) the
+ * the renderer left out (the send job leaves them out too). Configure it in Directus as
+ * the Preview URL of `newsletter_issues`: `/newsletter-preview/{{id}}?version={{$version}}`. Without a version (or `main`) the
  * live item is rendered, otherwise the given Content Version.
  *
- * Admins only. The preview iframe is same-origin with the Data Studio, so the admin's
- * session cookie authenticates the request. Nothing is sent or written.
+ * Open to every logged-in user (401 otherwise); the issue is read with their own
+ * permissions (403 without read access, 404 if it does not exist). The preview iframe is
+ * same-origin with the Data Studio, so the user's session cookie authenticates the
+ * request. Nothing is sent or written.
  */
 export default defineEndpoint((router, context) => {
     const { logger, services, getSchema } = context
@@ -32,7 +34,7 @@ export default defineEndpoint((router, context) => {
     }
 
     router.get('/:id', async (req: any, res: any) => {
-        const accessError = checkAdminAccess(req.accountability)
+        const accessError = checkAuthenticated(req.accountability)
         if (accessError) {
             sendText(res, accessError.status, accessError.message)
             return
@@ -43,17 +45,12 @@ export default defineEndpoint((router, context) => {
 
         try {
             const schema = await getSchema()
-            const issuesService = new services.ItemsService(ISSUES_COLLECTION, {
-                schema,
-                accountability: req.accountability,
-            })
-
             let issue
             try {
-                issue = await loadNewsletterIssue(issuesService, id, version)
+                issue = await loadNewsletterIssueForUser(services, schema, req.accountability, id, version)
             } catch (err: any) {
-                if (isNotFoundError(err)) {
-                    sendText(res, 404, `Ausgabe ${id}${version ? ` (Version ${version})` : ''} nicht gefunden`)
+                if (err instanceof IssueAccessError) {
+                    sendText(res, err.status, err.message)
                     return
                 }
                 throw err

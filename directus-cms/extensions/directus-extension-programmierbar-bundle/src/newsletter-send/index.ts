@@ -1,6 +1,6 @@
 import { defineEndpoint } from '@directus/extensions-sdk'
 import { checkAuthenticated } from '../newsletter/access.ts'
-import { isNotFoundError, ISSUES_COLLECTION, loadNewsletterIssue } from '../newsletter/loadIssue.ts'
+import { IssueAccessError, loadNewsletterIssueForUser } from '../newsletter/loadIssue.ts'
 import { renderNewsletterIssue } from '../newsletter/render/index.ts'
 import { buildListUnsubscribeHeaders, buildUnsubscribeUrl, TEST_UNSUBSCRIBE_TOKEN } from '../newsletter/unsubscribe.ts'
 import { sendRawEmail } from '../shared/email-service.ts'
@@ -55,26 +55,6 @@ export default defineEndpoint((router, context) => {
         return email
     }
 
-    /**
-     * A ForbiddenError on the user's own read means "missing" or "not allowed"; an admin
-     * existence check tells the two apart, so the user gets a 404 or a 403.
-     */
-    async function notReadableError(schema: any, id: string): Promise<HttpError> {
-        try {
-            const adminIssues = new services.ItemsService(ISSUES_COLLECTION, {
-                schema,
-                accountability: { admin: true },
-            })
-            await adminIssues.readOne(id, { fields: ['id'] })
-        } catch (err: any) {
-            if (isNotFoundError(err)) {
-                return new HttpError(404, `Ausgabe ${id} nicht gefunden – ist sie schon gespeichert?`)
-            }
-            throw err
-        }
-        return new HttpError(403, 'Keine Berechtigung, diese Ausgabe mit ihren Blöcken, Podcasts und Meetups zu lesen')
-    }
-
     /** The real unsubscribe token if the address is a confirmed subscriber, otherwise null. */
     async function findSubscriberToken(schema: any, email: string): Promise<string | null> {
         const subscribersService = new services.ItemsService(SUBSCRIBERS_COLLECTION, {
@@ -102,19 +82,8 @@ export default defineEndpoint((router, context) => {
         try {
             const schema = await getSchema()
 
-            let issue
-            try {
-                const issuesService = new services.ItemsService(ISSUES_COLLECTION, {
-                    schema,
-                    accountability: req.accountability,
-                })
-                issue = await loadNewsletterIssue(issuesService, id)
-            } catch (err: any) {
-                if (isNotFoundError(err)) {
-                    throw await notReadableError(schema, id)
-                }
-                throw err
-            }
+            // The live item only — a test send never uses a Content Version.
+            const issue = await loadNewsletterIssueForUser(services, schema, req.accountability, id)
 
             const subject = issue.subject?.trim()
             if (!subject) {
@@ -156,7 +125,7 @@ export default defineEndpoint((router, context) => {
                 warnings,
             })
         } catch (err: any) {
-            if (err instanceof HttpError) {
+            if (err instanceof HttpError || err instanceof IssueAccessError) {
                 res.status(err.status).send({ error: err.message })
                 return
             }

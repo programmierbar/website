@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
-import { checkAdminAccess } from '../../newsletter/access.ts'
+import { checkAuthenticated } from '../../newsletter/access.ts'
 import { getRequiredSetting } from '../../shared/settings.ts'
 import registerEndpoint from '../index.ts'
 import { buildPreviewNotice, injectPreviewNotice } from '../notice.ts'
@@ -32,9 +32,13 @@ class ForbiddenError extends Error {
     code = 'FORBIDDEN'
 }
 
-function setup(options: { versions?: Record<string, any>; readError?: Error } = {}) {
-    const readOne = jest.fn(async (id: string, query: any) => {
+function setup(options: { versions?: Record<string, any>; readError?: Error; denyRead?: boolean } = {}) {
+    const readOne = jest.fn(async (id: string, query: any, accountability?: any) => {
         if (options.readError) throw options.readError
+        // `denyRead`: the user's policy does not cover the issue; an admin read still works.
+        if (options.denyRead && accountability?.admin !== true) {
+            throw new ForbiddenError("You don't have permission to access this.")
+        }
         if (id !== ISSUE_ID) throw new ForbiddenError("You don't have permission to access this.")
         if (query.version) {
             const versioned = options.versions?.[query.version]
@@ -46,7 +50,7 @@ function setup(options: { versions?: Record<string, any>; readError?: Error } = 
     const serviceOptions: any[] = []
     const ItemsService = jest.fn().mockImplementation((collection: any, opts: any) => {
         serviceOptions.push({ collection, opts })
-        return { readOne }
+        return { readOne: (id: string, query: any) => readOne(id, query, opts?.accountability) }
     })
     const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
 
@@ -94,25 +98,21 @@ beforeEach(() => {
     getRequiredSettingMock.mockResolvedValue('https://www.programmier.bar')
 })
 
-describe('checkAdminAccess', () => {
-    test('lets admins through', () => {
-        expect(checkAdminAccess({ admin: true, user: 'u' })).toBeNull()
+describe('checkAuthenticated', () => {
+    test('lets every logged-in user through', () => {
+        expect(checkAuthenticated({ user: 'u' })).toBeNull()
+        expect(checkAuthenticated({ user: 'editor-1' })).toBeNull()
     })
 
     test('401 without a user', () => {
-        expect(checkAdminAccess(null)?.status).toBe(401)
-        expect(checkAdminAccess(undefined)?.status).toBe(401)
-        expect(checkAdminAccess({ admin: false, user: null })?.status).toBe(401)
-    })
-
-    test('403 for authenticated non-admins', () => {
-        expect(checkAdminAccess({ admin: false, user: 'editor-1' })?.status).toBe(403)
-        expect(checkAdminAccess({ user: 'editor-1' })?.status).toBe(403)
+        expect(checkAuthenticated(null)?.status).toBe(401)
+        expect(checkAuthenticated(undefined)?.status).toBe(401)
+        expect(checkAuthenticated({ user: null })?.status).toBe(401)
     })
 })
 
 describe('GET /newsletter-preview/:id', () => {
-    test('renders the live issue as HTML for admins', async () => {
+    test('renders the live issue as HTML', async () => {
         const { call, readOne, serviceOptions } = setup()
         const result = await call()
 
@@ -122,7 +122,7 @@ describe('GET /newsletter-preview/:id', () => {
         expect(result.body).toContain('<title>Live-Betreff</title>')
         expect(result.body).toContain('<p>Hallo</p>')
         expect(readOne.mock.calls[0]?.[1]).not.toHaveProperty('version')
-        // Reads run with the requesting admin's accountability, not a blanket admin context.
+        // Reads run with the requesting user's accountability, not a blanket admin context.
         expect(serviceOptions[0]).toEqual({
             collection: 'newsletter_issues',
             opts: expect.objectContaining({ accountability: ADMIN }),
@@ -154,12 +154,33 @@ describe('GET /newsletter-preview/:id', () => {
         expect(readOne).not.toHaveBeenCalled()
     })
 
-    test('403 for non-admins, without reading anything', async () => {
-        const { call, readOne } = setup()
+    test('renders for a non-admin, reading with their own permissions', async () => {
+        const editor = { admin: false, user: 'editor-1' }
+        const { call, serviceOptions } = setup()
+        const result = await call({ accountability: editor })
+
+        expect(result.status).toBe(200)
+        expect(result.body).toContain('<title>Live-Betreff</title>')
+        expect(serviceOptions[0]).toEqual({
+            collection: 'newsletter_issues',
+            opts: expect.objectContaining({ accountability: editor }),
+        })
+    })
+
+    test('403 when the user may not read the issue', async () => {
+        const { call } = setup({ denyRead: true })
         const result = await call({ accountability: { admin: false, user: 'editor-1' } })
 
         expect(result.status).toBe(403)
-        expect(readOne).not.toHaveBeenCalled()
+        expect(result.body).toContain('Keine Berechtigung')
+        expect(result.headers['content-type']).toBe('text/plain; charset=utf-8')
+    })
+
+    test('404 for an unknown version even when the user lacks read access', async () => {
+        const { call } = setup({ denyRead: true })
+        const result = await call({ accountability: { admin: false, user: 'editor-1' }, query: { version: 'weg' } })
+
+        expect(result.status).toBe(404)
     })
 
     test('404 for an unknown issue', async () => {

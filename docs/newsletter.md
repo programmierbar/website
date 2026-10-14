@@ -291,12 +291,16 @@ Issues live in `newsletter_issues` with an M2A field `blocks` (junction `newslet
 - **Loading** — `src/newsletter/loadIssue.ts` holds the field list and reads an issue, optionally from a
   Content Version (`ItemsService.readOne(id, { version })`; Directus applies the version's delta in a
   rolled-back transaction).
-- **Live Preview** — endpoint `GET /newsletter-preview/:id?version=<key>`, admins only (401/403), 404 for
-  an unknown issue or version. Above the mail it shows a preview-only notice listing hidden entries and
+- **Live Preview** — endpoint `GET /newsletter-preview/:id?version=<key>`, for every logged-in backend user
+  (401 otherwise); the issue is read with the user's own permissions (403 without read access), 404 for an
+  unknown issue or version. Above the mail it shows a preview-only notice listing hidden entries and
   warnings ("N Einträge ausgeblendet, weil nicht veröffentlicht: …"); the rendered mail never contains it.
   Preview URL of `newsletter_issues`:
   `https://admin.programmier.bar/newsletter-preview/{{id}}?version={{$version}}`. The preview reloads
   after saving; a new issue has no preview until it was saved once.
+
+Non-destructive newsletter actions (Live Preview, test send to the own address) are open to every logged-in
+backend user and read with their own permissions; destructive or irreversible ones stay admin-only.
 
 ## Issues: test send ("Testversand an mich")
 
