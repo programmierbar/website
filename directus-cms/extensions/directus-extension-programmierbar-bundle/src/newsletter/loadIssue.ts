@@ -7,7 +7,8 @@ export const ISSUES_COLLECTION = 'newsletter_issues'
  * Fields needed to render an issue. `blocks` is the M2A alias over the junction
  * `newsletter_issues_blocks` (`sort`, `collection`, `item`); the podcast/meetup blocks
  * are M2M over `newsletter_blocks_podcasts_podcasts` / `newsletter_blocks_meetups_meetups`,
- * each with its own `sort`.
+ * each with its own `sort`. The podcast/meetup `status` is needed for the renderer's
+ * published filter.
  */
 export const ISSUE_FIELDS = [
     'id',
@@ -20,12 +21,14 @@ export const ISSUE_FIELDS = [
     `blocks.item:${TEXT_BLOCK_COLLECTION}.body`,
     `blocks.item:${PODCASTS_BLOCK_COLLECTION}.heading`,
     `blocks.item:${PODCASTS_BLOCK_COLLECTION}.podcasts.sort`,
+    `blocks.item:${PODCASTS_BLOCK_COLLECTION}.podcasts.podcasts_id.status`,
     `blocks.item:${PODCASTS_BLOCK_COLLECTION}.podcasts.podcasts_id.slug`,
     `blocks.item:${PODCASTS_BLOCK_COLLECTION}.podcasts.podcasts_id.type`,
     `blocks.item:${PODCASTS_BLOCK_COLLECTION}.podcasts.podcasts_id.number`,
     `blocks.item:${PODCASTS_BLOCK_COLLECTION}.podcasts.podcasts_id.title`,
     `blocks.item:${MEETUPS_BLOCK_COLLECTION}.heading`,
     `blocks.item:${MEETUPS_BLOCK_COLLECTION}.meetups.sort`,
+    `blocks.item:${MEETUPS_BLOCK_COLLECTION}.meetups.meetups_id.status`,
     `blocks.item:${MEETUPS_BLOCK_COLLECTION}.meetups.meetups_id.slug`,
     `blocks.item:${MEETUPS_BLOCK_COLLECTION}.meetups.meetups_id.title`,
     `blocks.item:${MEETUPS_BLOCK_COLLECTION}.meetups.meetups_id.start_on`,

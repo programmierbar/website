@@ -283,10 +283,17 @@ Issues live in `newsletter_issues` with an M2A field `blocks` (junction `newslet
   escaped; the text block's rich text is sanitized to the editor's toolbar tags. Podcast/meetup links use
   the `website_url` setting. Without `unsubscribeUrl` (the preview) a placeholder is rendered; the send
   job must pass the subscriber's link.
+- **Published filter** — podcasts and meetups appear only with `status = published`, the same rule the
+  website follows (its Directus queries do not filter, the public permissions do; drafts/archived items
+  are 404 there). It lives in the renderer (`render/published.ts`), so preview and send can never differ.
+  Filtered entries come back as `hidden` (`{ collection, title, status, reason }`); a podcast/meetup block
+  left empty renders nothing and adds a warning.
 - **Loading** — `src/newsletter/loadIssue.ts` holds the field list and reads an issue, optionally from a
   Content Version (`ItemsService.readOne(id, { version })`; Directus applies the version's delta in a
   rolled-back transaction).
 - **Live Preview** — endpoint `GET /newsletter-preview/:id?version=<key>`, admins only (401/403), 404 for
-  an unknown issue or version. Preview URL of `newsletter_issues`:
+  an unknown issue or version. Above the mail it shows a preview-only notice listing hidden entries and
+  warnings ("N Einträge ausgeblendet, weil nicht veröffentlicht: …"); the rendered mail never contains it.
+  Preview URL of `newsletter_issues`:
   `https://admin.programmier.bar/newsletter-preview/{{id}}?version={{$version}}`. The preview reloads
   after saving; a new issue has no preview until it was saved once.

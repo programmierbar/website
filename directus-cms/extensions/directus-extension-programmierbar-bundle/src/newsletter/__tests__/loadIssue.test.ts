@@ -23,6 +23,9 @@ describe('loadNewsletterIssue', () => {
                 'blocks.collection',
                 'blocks.item:newsletter_blocks_text.body',
                 'blocks.item:newsletter_blocks_podcasts.podcasts.podcasts_id.slug',
+                // `status` feeds the renderer's published filter.
+                'blocks.item:newsletter_blocks_podcasts.podcasts.podcasts_id.status',
+                'blocks.item:newsletter_blocks_meetups.meetups.meetups_id.status',
                 'blocks.item:newsletter_blocks_meetups.meetups.meetups_id.start_on',
             ])
         )

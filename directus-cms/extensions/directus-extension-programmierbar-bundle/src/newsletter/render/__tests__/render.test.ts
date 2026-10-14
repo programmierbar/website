@@ -16,8 +16,26 @@ const podcastsBlock: NewsletterIssueBlock = {
     item: {
         heading: 'Neue Folgen',
         podcasts: [
-            { sort: 2, podcasts_id: { slug: 'news-12-zweite', type: 'news', number: '12', title: 'Zweite' } },
-            { sort: 1, podcasts_id: { slug: 'deep-dive-200-erste', type: 'deep_dive', number: '200', title: 'Erste' } },
+            {
+                sort: 2,
+                podcasts_id: {
+                    status: 'published',
+                    slug: 'news-12-zweite',
+                    type: 'news',
+                    number: '12',
+                    title: 'Zweite',
+                },
+            },
+            {
+                sort: 1,
+                podcasts_id: {
+                    status: 'published',
+                    slug: 'deep-dive-200-erste',
+                    type: 'deep_dive',
+                    number: '200',
+                    title: 'Erste',
+                },
+            },
             { sort: 3, podcasts_id: null },
         ],
     },
@@ -31,9 +49,14 @@ const meetupsBlock: NewsletterIssueBlock = {
         meetups: [
             {
                 sort: 1,
-                meetups_id: { slug: 'rust-im-alltag', title: 'Rust im Alltag', start_on: '2026-11-12T17:30:00Z' },
+                meetups_id: {
+                    status: 'published',
+                    slug: 'rust-im-alltag',
+                    title: 'Rust im Alltag',
+                    start_on: '2026-11-12T17:30:00Z',
+                },
             },
-            { sort: 2, meetups_id: { slug: null, title: 'Ohne Slug', start_on: null } },
+            { sort: 2, meetups_id: { status: 'published', slug: null, title: 'Ohne Slug', start_on: null } },
         ],
     },
 }
@@ -47,12 +70,13 @@ const issue = (blocks: NewsletterIssueBlock[], extra: Partial<NewsletterIssue> =
 
 describe('renderNewsletterIssue', () => {
     test('renders subject, preheader and every block type without MJML errors', async () => {
-        const { html, warnings } = await renderNewsletterIssue(
+        const { html, warnings, hidden } = await renderNewsletterIssue(
             issue([textBlock(1, 'Hallo', '<p>Willkommen</p>'), podcastsBlock, meetupsBlock]),
             OPTIONS
         )
 
         expect(warnings).toEqual([])
+        expect(hidden).toEqual([])
         expect(html).toContain('<title>Ausgabe Oktober</title>')
         expect(html).toContain('Das ist neu')
         expect(html).toContain('<h2>Hallo</h2>')
@@ -145,6 +169,7 @@ describe('escaping', () => {
                                 {
                                     sort: 1,
                                     podcasts_id: {
+                                        status: 'published',
                                         slug: 'a"b',
                                         type: 'news',
                                         number: '1',
@@ -182,5 +207,93 @@ describe('escaping', () => {
         expect(mjml).toContain('<ul><li>eins</li></ul><blockquote>Zitat</blockquote><code>c</code>')
         expect(mjml).not.toMatch(/script|onclick|onerror|<style|javascript:|<img|mj-raw/)
         expect(mjml).toContain('<a>böse</a>')
+    })
+})
+
+describe('published filter', () => {
+    const mixedPodcasts = (statuses: Array<string | null | undefined>): NewsletterIssueBlock => ({
+        sort: 1,
+        collection: 'newsletter_blocks_podcasts',
+        item: {
+            heading: 'Folgen',
+            podcasts: statuses.map((status, index) => ({
+                sort: index,
+                podcasts_id: {
+                    status,
+                    slug: `folge-${index}`,
+                    type: 'news',
+                    number: String(index),
+                    title: `Folge ${index}`,
+                },
+            })),
+        },
+    })
+
+    test('hides unpublished podcasts and meetups and reports them', async () => {
+        const { html, hidden, warnings } = await renderNewsletterIssue(
+            issue([
+                mixedPodcasts(['published', 'draft', 'archived', null]),
+                {
+                    sort: 2,
+                    collection: 'newsletter_blocks_meetups',
+                    item: {
+                        heading: 'Meetups',
+                        meetups: [
+                            { sort: 1, meetups_id: { status: 'published', slug: 'live', title: 'Live-Meetup' } },
+                            { sort: 2, meetups_id: { status: 'draft', slug: 'geheim', title: 'Geheim-Meetup' } },
+                        ],
+                    },
+                },
+            ]),
+            OPTIONS
+        )
+
+        expect(html).toContain('folge-0')
+        expect(html).not.toMatch(/folge-1|folge-2|folge-3|Folge 1|Folge 2|Folge 3/)
+        expect(html).toContain('Live-Meetup')
+        expect(html).not.toContain('Geheim-Meetup')
+        expect(hidden).toEqual([
+            { collection: 'podcasts', title: 'News 1: Folge 1', status: 'draft', reason: 'unpublished' },
+            { collection: 'podcasts', title: 'News 2: Folge 2', status: 'archived', reason: 'unpublished' },
+            { collection: 'podcasts', title: 'News 3: Folge 3', status: null, reason: 'unpublished' },
+            { collection: 'meetups', title: 'Geheim-Meetup', status: 'draft', reason: 'unpublished' },
+        ])
+        expect(warnings).toEqual([])
+    })
+
+    test('a podcast block without any published episode renders nothing and is reported', async () => {
+        const { html, hidden, warnings } = await renderNewsletterIssue(
+            issue([textBlock(0, 'Davor', '<p>x</p>'), mixedPodcasts(['draft'])]),
+            OPTIONS
+        )
+
+        expect(html).not.toContain('Folgen')
+        expect(html).not.toContain('block-podcasts')
+        expect(html).toContain('Davor')
+        expect(hidden).toHaveLength(1)
+        expect(warnings).toEqual(['Podcast-Block „Folgen“ übersprungen: keine veröffentlichte Folge'])
+    })
+
+    test('a meetup block without any published meetup renders nothing and is reported', async () => {
+        const { html, warnings } = await renderNewsletterIssue(
+            issue([
+                {
+                    sort: 1,
+                    collection: 'newsletter_blocks_meetups',
+                    item: { heading: null, meetups: [{ sort: 1, meetups_id: { status: 'archived', title: 'Alt' } }] },
+                },
+            ]),
+            OPTIONS
+        )
+
+        expect(html).not.toContain('block-meetups')
+        expect(warnings).toEqual(['Meetup-Block übersprungen: kein veröffentlichtes Meetup'])
+    })
+
+    test('the rendered html never contains a preview notice', async () => {
+        const { html, hidden } = await renderNewsletterIssue(issue([mixedPodcasts(['draft', 'published'])]), OPTIONS)
+        expect(hidden).toHaveLength(1)
+        expect(html).not.toContain('data-preview-notice')
+        expect(html).not.toContain('ausgeblendet')
     })
 })

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals'
 import { getRequiredSetting } from '../../shared/settings.ts'
 import { checkAdminAccess } from '../access.ts'
 import registerEndpoint from '../index.ts'
+import { buildPreviewNotice, injectPreviewNotice } from '../notice.ts'
 
 // The extensions SDK ships as ESM and is not transformed under Jest's CJS mode,
 // so stub it. The real `defineEndpoint` simply returns its callback.
@@ -195,6 +196,62 @@ describe('GET /newsletter-preview/:id', () => {
         expect(logger.error).toHaveBeenCalled()
     })
 
+    test('shows a notice above the mail listing hidden unpublished entries', async () => {
+        const { call, readOne } = setup()
+        readOne.mockResolvedValueOnce({
+            ...ISSUE,
+            blocks: [
+                ...ISSUE.blocks,
+                {
+                    sort: 2,
+                    collection: 'newsletter_blocks_podcasts',
+                    item: {
+                        heading: 'Folgen',
+                        podcasts: [
+                            {
+                                sort: 1,
+                                podcasts_id: {
+                                    status: 'published',
+                                    slug: 'a',
+                                    type: 'news',
+                                    number: '1',
+                                    title: 'Live',
+                                },
+                            },
+                            {
+                                sort: 2,
+                                podcasts_id: {
+                                    status: 'draft',
+                                    slug: 'b',
+                                    type: 'news',
+                                    number: '2',
+                                    title: '<Entwurf>',
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+        })
+        const result = await call()
+
+        expect(result.status).toBe(200)
+        expect(result.body).toMatch(/<body[^>]*><div data-preview-notice/)
+        expect(result.body).toContain('1 Eintrag ausgeblendet, weil nicht veröffentlicht:')
+        expect(result.body).toContain('<li>Podcast: News 2: &lt;Entwurf&gt; (draft)</li>')
+        // The hidden episode itself is not in the mail part.
+        expect(result.body).not.toContain('/podcast/b')
+    })
+
+    test('shows no notice when nothing was hidden', async () => {
+        const { call } = setup()
+        const result = await call()
+
+        expect(result.status).toBe(200)
+        expect(result.body).not.toContain('data-preview-notice')
+        expect(result.body).not.toContain('ausgeblendet')
+    })
+
     test('logs renderer warnings', async () => {
         const { call, logger, readOne } = setup()
         readOne.mockResolvedValueOnce({ ...ISSUE, blocks: [{ sort: 1, collection: 'newsletter_blocks_x', item: {} }] })
@@ -202,5 +259,33 @@ describe('GET /newsletter-preview/:id', () => {
 
         expect(result.status).toBe(200)
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Unbekannter Blocktyp 'newsletter_blocks_x'"))
+        expect(result.body).toContain('Weitere Hinweise:')
+    })
+})
+
+describe('preview notice', () => {
+    test('is empty when nothing was hidden or warned about', () => {
+        expect(buildPreviewNotice({ hidden: [], warnings: [] })).toBe('')
+        expect(injectPreviewNotice('<body><p>x</p></body>', '')).toBe('<body><p>x</p></body>')
+    })
+
+    test('counts and escapes hidden entries', () => {
+        const notice = buildPreviewNotice({
+            warnings: [],
+            hidden: [
+                { collection: 'podcasts', title: 'A & B', status: 'draft', reason: 'unpublished' },
+                { collection: 'meetups', title: '', status: null, reason: 'unpublished' },
+            ],
+        })
+        expect(notice).toContain('2 Einträge ausgeblendet, weil nicht veröffentlicht:')
+        expect(notice).toContain('<li>Podcast: A &amp; B (draft)</li>')
+        expect(notice).toContain('<li>Meetup: (ohne Titel) (ohne Status)</li>')
+    })
+
+    test('is injected right after the opening body tag', () => {
+        expect(injectPreviewNotice('<html><body class="x"><p>Mail</p></body></html>', '<div>N</div>')).toBe(
+            '<html><body class="x"><div>N</div><p>Mail</p></body></html>'
+        )
+        expect(injectPreviewNotice('<p>Mail</p>', '<div>N</div>')).toBe('<div>N</div><p>Mail</p>')
     })
 })

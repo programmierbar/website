@@ -3,6 +3,7 @@ import { ISSUES_COLLECTION, loadNewsletterIssue } from '../newsletter/loadIssue.
 import { renderNewsletterIssue } from '../newsletter/render/index.ts'
 import { getRequiredSetting } from '../shared/settings.ts'
 import { checkAdminAccess } from './access.ts'
+import { buildPreviewNotice, injectPreviewNotice } from './notice.ts'
 
 const ENDPOINT_NAME = 'newsletter-preview'
 
@@ -21,7 +22,8 @@ function isNotFoundError(err: any): boolean {
  * GET /newsletter-preview/:id?version=<key>
  *
  * Renders the issue through the same MJML renderer the send job will use and returns
- * the HTML. Configure it in Directus as the Preview URL of `newsletter_issues`:
+ * the HTML, with a preview-only notice above the mail listing unpublished podcasts/meetups
+ * the renderer left out (the send job leaves them out too). Configure it in Directus as the Preview URL of `newsletter_issues`:
  * `/newsletter-preview/{{id}}?version={{$version}}`. Without a version (or `main`) the
  * live item is rendered, otherwise the given Content Version.
  *
@@ -67,13 +69,19 @@ export default defineEndpoint((router, context) => {
             }
 
             const websiteUrl = await getRequiredSetting('website_url', { logger, services, getSchema })
-            const { html, warnings } = await renderNewsletterIssue(issue, { websiteUrl, unsubscribeUrl: null })
+            const { html, warnings, hidden } = await renderNewsletterIssue(issue, {
+                websiteUrl,
+                unsubscribeUrl: null,
+            })
 
             for (const warning of warnings) {
                 logger.warn(`${ENDPOINT_NAME}: issue ${id}: ${warning}`)
             }
 
-            res.status(200).set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', 'no-store').send(html)
+            res.status(200)
+                .set('Content-Type', 'text/html; charset=utf-8')
+                .set('Cache-Control', 'no-store')
+                .send(injectPreviewNotice(html, buildPreviewNotice({ warnings, hidden })))
         } catch (err: any) {
             logger.error(`${ENDPOINT_NAME}: failed to render issue ${id}: ${err?.message || err}`)
             sendText(res, 500, `Vorschau konnte nicht erzeugt werden: ${err?.message || err}`)

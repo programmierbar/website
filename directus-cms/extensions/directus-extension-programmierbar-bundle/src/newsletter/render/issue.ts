@@ -14,16 +14,17 @@ import {
     type NewsletterPodcastsBlock,
     type NewsletterTextBlock,
     type RenderOptions,
+    type RenderReport,
     type RenderResult,
 } from './types.ts'
 
 const UNSUBSCRIBE_PLACEHOLDER = '[Abmeldelink wird beim Versand eingesetzt]'
 
-function blockMjml(block: NewsletterIssueBlock, options: RenderOptions, warnings: string[]): string {
+function blockMjml(block: NewsletterIssueBlock, options: RenderOptions, report: RenderReport): string {
     const item = block.item
     if (!item || typeof item !== 'object') {
         // The junction row points at a deleted block, or the relation was not expanded.
-        warnings.push(`Block (${block.collection ?? 'unbekannt'}) ohne Inhalt übersprungen`)
+        report.warnings.push(`Block (${block.collection ?? 'unbekannt'}) ohne Inhalt übersprungen`)
         return ''
     }
 
@@ -31,11 +32,11 @@ function blockMjml(block: NewsletterIssueBlock, options: RenderOptions, warnings
         case TEXT_BLOCK_COLLECTION:
             return textBlockMjml(item as NewsletterTextBlock)
         case PODCASTS_BLOCK_COLLECTION:
-            return podcastsBlockMjml(item as NewsletterPodcastsBlock, options.websiteUrl)
+            return podcastsBlockMjml(item as NewsletterPodcastsBlock, options.websiteUrl, report)
         case MEETUPS_BLOCK_COLLECTION:
-            return meetupsBlockMjml(item as NewsletterMeetupsBlock, options.websiteUrl)
+            return meetupsBlockMjml(item as NewsletterMeetupsBlock, options.websiteUrl, report)
         default:
-            warnings.push(`Unbekannter Blocktyp '${block.collection}' übersprungen`)
+            report.warnings.push(`Unbekannter Blocktyp '${block.collection}' übersprungen`)
             return ''
     }
 }
@@ -62,13 +63,18 @@ function footerMjml(unsubscribeUrl: string | null | undefined): string {
  * their `sort` order, then the footer with the unsubscribe link slot.
  *
  * Pure and synchronous — no I/O, no Directus — so the Live Preview and the send path
- * produce exactly the same markup from the same data.
+ * produce exactly the same markup from the same data. Unpublished podcasts/meetups are
+ * filtered out here (see `published.ts`) and recorded in `report`.
  */
-export function buildIssueMjml(issue: NewsletterIssue, options: RenderOptions, warnings: string[] = []): string {
+export function buildIssueMjml(
+    issue: NewsletterIssue,
+    options: RenderOptions,
+    report: RenderReport = { warnings: [], hidden: [] }
+): string {
     const subject = issue.subject?.trim() ?? ''
     const preheader = issue.preheader?.trim() ?? ''
     const blocks = sortBySortField(issue.blocks ?? [])
-        .map((block) => blockMjml(block, options, warnings))
+        .map((block) => blockMjml(block, options, report))
         .join('')
 
     return `<mjml lang="de">
@@ -95,12 +101,13 @@ export function buildIssueMjml(issue: NewsletterIssue, options: RenderOptions, w
  * Render a newsletter issue to email-ready HTML. Data in, HTML out: used by the Live
  * Preview endpoint and meant to be reused unchanged by the send job.
  *
- * MJML validation problems and skipped blocks are returned as `warnings` instead of
- * thrown, so a half-finished draft still previews.
+ * MJML validation problems and skipped blocks are returned as `warnings`, filtered-out
+ * unpublished podcasts/meetups as `hidden` — never thrown, so a half-finished draft still
+ * previews. `html` is the mail only; preview notices belong to the caller.
  */
 export async function renderNewsletterIssue(issue: NewsletterIssue, options: RenderOptions): Promise<RenderResult> {
-    const warnings: string[] = []
-    const source = buildIssueMjml(issue, options, warnings)
+    const report: RenderReport = { warnings: [], hidden: [] }
+    const source = buildIssueMjml(issue, options, report)
 
     const { html, errors } = await mjml2html(source, {
         validationLevel: 'soft',
@@ -109,8 +116,8 @@ export async function renderNewsletterIssue(issue: NewsletterIssue, options: Ren
     })
 
     for (const error of errors ?? []) {
-        warnings.push(`MJML: ${error.formattedMessage ?? error.message}`)
+        report.warnings.push(`MJML: ${error.formattedMessage ?? error.message}`)
     }
 
-    return { html, warnings }
+    return { html, warnings: report.warnings, hidden: report.hidden }
 }

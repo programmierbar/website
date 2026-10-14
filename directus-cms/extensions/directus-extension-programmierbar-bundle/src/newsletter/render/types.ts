@@ -14,6 +14,7 @@ export const PODCASTS_BLOCK_COLLECTION = 'newsletter_blocks_podcasts'
 export const MEETUPS_BLOCK_COLLECTION = 'newsletter_blocks_meetups'
 
 export interface NewsletterPodcast {
+    status?: string | null
     slug?: string | null
     type?: string | null
     number?: string | null
@@ -21,6 +22,7 @@ export interface NewsletterPodcast {
 }
 
 export interface NewsletterMeetup {
+    status?: string | null
     slug?: string | null
     title?: string | null
     start_on?: string | null
@@ -65,8 +67,22 @@ export interface RenderOptions {
     unsubscribeUrl?: string | null
 }
 
-export interface RenderResult {
-    html: string
-    /** MJML validation errors and skipped blocks — never thrown, so the caller decides how loud to be. */
+/** A podcast or meetup the renderer left out because the website would not show it. */
+export interface HiddenEntry {
+    collection: 'podcasts' | 'meetups'
+    title: string
+    status: string | null
+    reason: 'unpublished'
+}
+
+/** What the renderer left out or could not render. Collected, never thrown. */
+export interface RenderReport {
+    /** MJML validation errors, skipped and empty blocks. */
     warnings: string[]
+    /** Unpublished podcasts/meetups that were filtered out. */
+    hidden: HiddenEntry[]
+}
+
+export interface RenderResult extends RenderReport {
+    html: string
 }
