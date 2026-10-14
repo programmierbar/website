@@ -143,6 +143,11 @@
                 "source": "src/newsletter-double-opt-in/index.ts"
             },
             {
+                "type": "hook",
+                "name": "meetup-registration",
+                "source": "src/meetup-registration/index.ts"
+            },
+            {
                 "type": "endpoint",
                 "name": "ticket-wallet",
                 "source": "src/ticket-wallet/index.ts"

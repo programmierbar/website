@@ -57,6 +57,8 @@ export default defineNuxtConfig({
         geminiApiKey: '', // Set via NUXT_GEMINI_API_KEY env var
         stripeSecretKey: '', // Set via NUXT_STRIPE_SECRET_KEY env var
         stripeWebhookSecret: '', // Set via NUXT_STRIPE_WEBHOOK_SECRET env var
+        // Optional Cloudflare Turnstile on the meetup registration form. Off unless both keys are set.
+        turnstileSecretKey: '', // Set via NUXT_TURNSTILE_SECRET_KEY env var
         public: {
             FLAG_SHOW_LOGIN: FLAG_SHOW_LOGIN,
             FLAG_SHOW_NEWS: FLAG_SHOW_NEWS,
@@ -65,6 +67,7 @@ export default defineNuxtConfig({
             DISCORD_INVITE_LINK: DISCORD_INVITE_LINK,
             directusCmsUrl: DIRECTUS_CMS_URL,
             stripePublishableKey: '', // Set via NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY env var
+            turnstileSiteKey: '', // Set via NUXT_PUBLIC_TURNSTILE_SITE_KEY env var
         },
     },
 
@@ -231,6 +234,7 @@ export default defineNuxtConfig({
         // for every token, breaking confirmation — same reason as the portals.
         '/newsletter/confirm': { isr: false },
         '/newsletter/unsubscribe': { isr: false },
+        '/meetup/abmelden': { isr: false },
 
         // /app UA-branches between iOS/Android store URLs on conference hosts;
         // a cached response would pin the first-seen platform for everyone.
