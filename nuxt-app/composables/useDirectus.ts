@@ -360,6 +360,8 @@ export function useDirectus() {
                         'gallery_images.sort',
                         'gallery_images.image.*',
                         'meetup_url',
+                        'registration_enabled',
+                        'registration_limit',
                         'youtube_url',
                         'talks',
                         'talks.*',
