@@ -14,5 +14,9 @@ export default defineEventHandler(async (event) => {
         status = 'error'
     }
 
-    return await sendRedirect(event, `/meetup/abmelden?status=${status}`, 303)
+    const query = new URLSearchParams({ status })
+    if (status === 'error' && typeof body?.token === 'string') {
+        query.set('token', body.token)
+    }
+    return await sendRedirect(event, `/meetup/abmelden?${query.toString()}`, 303)
 })
