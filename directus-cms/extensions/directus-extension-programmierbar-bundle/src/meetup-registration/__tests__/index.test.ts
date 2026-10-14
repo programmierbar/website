@@ -48,6 +48,7 @@ interface World {
     totalCount: number
     existing: Record<string, any> | null
     registration: Record<string, any>
+    rows: Record<string, any>[]
 }
 
 function setup(world: Partial<World> = {}) {
@@ -62,6 +63,7 @@ function setup(world: Partial<World> = {}) {
         publicCount: 0,
         totalCount: 0,
         existing: null,
+        rows: [],
         registration: {
             id: 'reg-1',
             status: 'confirmed',
@@ -96,7 +98,12 @@ function setup(world: Partial<World> = {}) {
         return state.meetup ? [state.meetup] : []
     })
     const readOne = jest.fn(async () => state.registration)
-    const ItemsService = jest.fn().mockImplementation(() => ({ readByQuery, readOne }))
+    const updateOne = jest.fn(async (key: string, data: Record<string, any>) => {
+        Object.assign(state.registration, data)
+        return key
+    })
+    const readMany = jest.fn(async () => state.rows)
+    const ItemsService = jest.fn().mockImplementation(() => ({ readByQuery, readOne, readMany, updateOne }))
 
     const filters = new Map<string, (...args: any[]) => any>()
     const actions = new Map<string, (...args: any[]) => any>()
@@ -112,13 +119,15 @@ function setup(world: Partial<World> = {}) {
     const database = { client: { config: { client: 'pg' } }, raw }
     const create = (payload: Record<string, any>) =>
         filters.get('meetup_registrations.items.create')!(payload, {}, { database, schema: {} })
+    const update = (keys: string[], payload: Record<string, any>) =>
+        filters.get('meetup_registrations.items.update')!(payload, { keys }, { database, schema: {} })
     const created = async (key = 'reg-1') => {
         actions.get('meetup_registrations.items.create')!({ key, payload: {} }, {})
         await flush()
         await flush()
     }
 
-    return { state, create, created, raw, ItemsService }
+    return { state, create, created, update, raw, ItemsService, readByQuery, readMany, updateOne }
 }
 
 beforeEach(() => {
@@ -139,6 +148,16 @@ describe('filter meetup_registrations.items.create', () => {
         // The count runs under a per-meetup lock inside the insert transaction.
         expect(raw).toHaveBeenCalledWith('SELECT pg_advisory_xact_lock(hashtext(?))', [
             `meetup_registrations:${MEETUP_ID}`,
+        ])
+    })
+
+    test('locks on the canonical meetup id, whatever its spelling', async () => {
+        const { create, raw } = setup()
+        await create({ meetup: MEETUP_ID.toUpperCase(), email: 'erika@example.com' })
+        await create({ meetup: { id: MEETUP_ID.toUpperCase() }, email: 'max@example.com' })
+        expect(raw.mock.calls.map((call: any[]) => call[1])).toEqual([
+            [`meetup_registrations:${MEETUP_ID}`],
+            [`meetup_registrations:${MEETUP_ID}`],
         ])
     })
 
@@ -184,8 +203,8 @@ describe('filter meetup_registrations.items.create', () => {
         })
     })
 
-    test('a duplicate is rejected and its confirmation resent, even when full', async () => {
-        const { create } = setup({ publicCount: 100, existing: { id: 'reg-1' } })
+    test('a duplicate is rejected and its confirmation resent', async () => {
+        const { create } = setup({ existing: { id: 'reg-1' } })
 
         await expect(create({ meetup: MEETUP_ID, email: 'Erika@Example.com' })).rejects.toMatchObject({
             code: 'MEETUP_REGISTRATION_DUPLICATE',
@@ -195,6 +214,77 @@ describe('filter meetup_registrations.items.create', () => {
 
         expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
         expect(sendRawEmailMock.mock.calls[0]![0]).toMatchObject({ to: 'erika@example.com' })
+    })
+
+    test('when full, a registered public address gets the same answer as a new one, the mail privately', async () => {
+        const { create } = setup({ publicCount: 100, existing: { id: 'reg-1' } })
+
+        await expect(create({ meetup: MEETUP_ID, email: 'Erika@Example.com' })).rejects.toMatchObject({
+            code: 'MEETUP_REGISTRATION_FULL',
+        })
+        await flush()
+        await flush()
+
+        expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
+        expect(sendRawEmailMock.mock.calls[0]![0]).toMatchObject({ to: 'erika@example.com' })
+
+        // Internal addresses are not limited, so for them it stays a duplicate.
+        const internal = setup({ publicCount: 100, existing: { id: 'reg-2' } })
+        await expect(internal.create({ meetup: MEETUP_ID, email: 'max@lotum.de' })).rejects.toMatchObject({
+            code: 'MEETUP_REGISTRATION_DUPLICATE',
+        })
+    })
+
+    test('a duplicate that opts in records the consent on the existing row before resending', async () => {
+        const { create, updateOne } = setup({ existing: { id: 'reg-1', wants_meetup_updates: false } })
+
+        await expect(
+            create({ meetup: MEETUP_ID, email: 'erika@example.com', wants_meetup_updates: true })
+        ).rejects.toMatchObject({ code: 'MEETUP_REGISTRATION_DUPLICATE' })
+        await flush()
+        await flush()
+
+        expect(updateOne).toHaveBeenCalledTimes(1)
+        expect(updateOne).toHaveBeenCalledWith('reg-1', {
+            wants_meetup_updates: true,
+            meetup_updates_consented_at: expect.any(String),
+        })
+        // The resent confirmation already reflects the opt-in.
+        expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
+        expect(sendRawEmailMock.mock.calls[0]![0].text).toContain('kommende Meetups')
+    })
+
+    test('a duplicate never changes an existing opt-in', async () => {
+        const optedIn = setup({ existing: { id: 'reg-1', wants_meetup_updates: true } })
+        await expect(
+            optedIn.create({ meetup: MEETUP_ID, email: 'erika@example.com', wants_meetup_updates: true })
+        ).rejects.toMatchObject({ code: 'MEETUP_REGISTRATION_DUPLICATE' })
+
+        const withoutCheckbox = setup({ existing: { id: 'reg-1', wants_meetup_updates: true } })
+        await expect(withoutCheckbox.create({ meetup: MEETUP_ID, email: 'erika@example.com' })).rejects.toMatchObject({
+            code: 'MEETUP_REGISTRATION_DUPLICATE',
+        })
+        await flush()
+        await flush()
+
+        expect(optedIn.updateOne).not.toHaveBeenCalled()
+        expect(withoutCheckbox.updateOne).not.toHaveBeenCalled()
+        expect(sendRawEmailMock).toHaveBeenCalledTimes(2)
+    })
+
+    test('a failed consent update goes to Slack and the confirmation is still resent', async () => {
+        const { create, updateOne } = setup({ existing: { id: 'reg-1', wants_meetup_updates: false } })
+        updateOne.mockRejectedValueOnce(new Error('db down'))
+
+        await expect(
+            create({ meetup: MEETUP_ID, email: 'erika@example.com', wants_meetup_updates: true })
+        ).rejects.toMatchObject({ code: 'MEETUP_REGISTRATION_DUPLICATE' })
+        await flush()
+        await flush()
+
+        expect(postSlackMessageMock).toHaveBeenCalledWith(expect.stringContaining('nicht gespeichert'))
+        expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
+        expect(sendRawEmailMock.mock.calls[0]![0].text).not.toContain('kommende Meetups')
     })
 })
 
@@ -235,13 +325,94 @@ describe('action meetup_registrations.items.create', () => {
     })
 
     test('reports the 80 % mark and the last spot to Slack', async () => {
-        const at80 = setup({ publicCount: 80, totalCount: 92 })
+        const at80 = setup({ publicCount: 79, totalCount: 92 })
+        await at80.create({ meetup: MEETUP_ID, email: 'erika@example.com' })
         await at80.created()
         expect(postSlackMessageMock).toHaveBeenLastCalledWith(expect.stringContaining('80 von 100 Plätzen'))
         expect(postSlackMessageMock).toHaveBeenLastCalledWith(expect.stringContaining('92 Anmeldungen'))
 
-        const full = setup({ publicCount: 100 })
+        const full = setup({ publicCount: 99 })
+        await full.create({ meetup: MEETUP_ID, email: 'erika@example.com' })
         await full.created()
         expect(postSlackMessageMock).toHaveBeenLastCalledWith(expect.stringContaining('ausgebucht'))
+        expect(postSlackMessageMock).toHaveBeenCalledTimes(2)
+    })
+
+    test('reports each milestone once, even for registrations with the same date_created', async () => {
+        const { state, create, created } = setup({ publicCount: 79 })
+        // Both are counted under the lock before either action runs.
+        await create({ meetup: MEETUP_ID, email: 'erika@example.com' })
+        state.publicCount = 80
+        await create({ meetup: MEETUP_ID, email: 'max@example.com' })
+
+        await created('reg-1')
+        state.registration = { ...state.registration, id: 'reg-2', email: 'max@example.com' }
+        await created('reg-2')
+
+        expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+        expect(postSlackMessageMock).toHaveBeenCalledWith(expect.stringContaining('80 von 100 Plätzen'))
+    })
+
+    test('reports nothing for a registration that reached no milestone', async () => {
+        const { create, created } = setup({ publicCount: 40 })
+        await create({ meetup: MEETUP_ID, email: 'erika@example.com' })
+        await created()
+        expect(postSlackMessageMock).not.toHaveBeenCalled()
+    })
+})
+
+describe('filter meetup_registrations.items.update', () => {
+    const cancelledRow = { id: 'reg-1', status: 'cancelled', meetup: MEETUP_ID, email: 'erika@example.com' }
+
+    test('lets cancellations and unrelated edits through without reading anything', async () => {
+        const { update, readMany } = setup({ publicCount: 100 })
+        await expect(update(['reg-1'], { status: 'cancelled' })).resolves.toEqual({ status: 'cancelled' })
+        await expect(update(['reg-1'], { wants_meetup_updates: true })).resolves.toEqual({
+            wants_meetup_updates: true,
+        })
+        expect(readMany).not.toHaveBeenCalled()
+    })
+
+    test('unarchiving takes a spot like a new registration', async () => {
+        const open = setup({ publicCount: 99, rows: [cancelledRow] })
+        await expect(open.update(['reg-1'], { status: 'confirmed' })).resolves.toEqual({ status: 'confirmed' })
+
+        const full = setup({ publicCount: 100, rows: [cancelledRow] })
+        await expect(full.update(['reg-1'], { status: 'confirmed' })).rejects.toMatchObject({
+            code: 'MEETUP_REGISTRATION_FULL',
+        })
+    })
+
+    test('a bulk unarchive counts the rows it adds', async () => {
+        const { update } = setup({
+            publicCount: 99,
+            rows: [cancelledRow, { ...cancelledRow, id: 'reg-2', email: 'max@example.com' }],
+        })
+        await expect(update(['reg-1', 'reg-2'], { status: 'confirmed' })).rejects.toMatchObject({
+            code: 'MEETUP_REGISTRATION_FULL',
+        })
+    })
+
+    test('unarchiving an address that has registered again is a duplicate', async () => {
+        const { update, readByQuery } = setup({ rows: [cancelledRow], existing: { id: 'reg-9' } })
+        await expect(update(['reg-1'], { status: 'confirmed' })).rejects.toMatchObject({
+            code: 'MEETUP_REGISTRATION_DUPLICATE',
+        })
+        // The row itself is not its own duplicate.
+        expect(readByQuery).toHaveBeenCalledWith(
+            expect.objectContaining({ filter: expect.objectContaining({ id: { _neq: 'reg-1' } }) })
+        )
+    })
+
+    test('fixing the address of a confirmed registration only checks for duplicates', async () => {
+        const { state, update } = setup({
+            publicCount: 100,
+            rows: [{ ...cancelledRow, status: 'confirmed', email: 'erika@exampel.com' }],
+        })
+        state.meetup!.start_on = YESTERDAY
+        await expect(update(['reg-1'], { email: ' Erika@Example.com' })).resolves.toMatchObject({
+            email: 'erika@example.com',
+            is_internal: false,
+        })
     })
 })

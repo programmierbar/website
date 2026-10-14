@@ -3,6 +3,7 @@
 </template>
 
 <script setup lang="ts">
+import { loadTurnstileScript } from '~/helpers/loadTurnstileScript'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 /**
@@ -12,30 +13,11 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 const props = defineProps<{ siteKey: string }>()
 const emit = defineEmits<{ token: [value: string | null] }>()
 
-const SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
-
 const container = ref<HTMLElement | null>(null)
 let widgetId: string | undefined
 
-function loadScript(): Promise<any> {
-    const w = window as any
-    if (w.turnstile) return Promise.resolve(w.turnstile)
-
-    return new Promise((resolve, reject) => {
-        const existing = document.querySelector<HTMLScriptElement>(`script[src="${SCRIPT_URL}"]`)
-        const script = existing ?? document.createElement('script')
-        script.addEventListener('load', () => resolve(w.turnstile))
-        script.addEventListener('error', reject)
-        if (!existing) {
-            script.src = SCRIPT_URL
-            script.async = true
-            document.head.appendChild(script)
-        }
-    })
-}
-
 onMounted(async () => {
-    const turnstile = await loadScript().catch(() => null)
+    const turnstile = await loadTurnstileScript().catch(() => null)
     if (!turnstile || !container.value) {
         emit('token', null)
         return

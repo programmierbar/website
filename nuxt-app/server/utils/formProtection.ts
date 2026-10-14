@@ -98,20 +98,43 @@ export function resetRateLimits() {
     rateLimitWindows.clear()
 }
 
+/**
+ * The Turnstile keys (NUXT_TURNSTILE_SECRET_KEY, NUXT_PUBLIC_TURNSTILE_SITE_KEY),
+ * or null when neither is set and Turnstile is off. Exactly one of them set is a
+ * misconfiguration, not "off": it throws, so the form fails closed with a
+ * neutral message instead of silently running without the check.
+ */
+function getTurnstileKeys(): { siteKey: string; secretKey: string } | null {
+    const config = useRuntimeConfig()
+    const secretKey = config.turnstileSecretKey
+    const siteKey = config.public.turnstileSiteKey
+    if (!secretKey && !siteKey) {
+        return null
+    }
+    if (!secretKey || !siteKey) {
+        const missing = secretKey ? 'NUXT_PUBLIC_TURNSTILE_SITE_KEY' : 'NUXT_TURNSTILE_SECRET_KEY'
+        console.error(`Turnstile is only partially configured: ${missing} is missing. Set both keys or neither.`)
+        throw createError({
+            statusCode: 503,
+            message: 'Das Formular ist gerade nicht verfügbar. Bitte versuche es später noch einmal.',
+        })
+    }
+    return { siteKey, secretKey }
+}
+
 /** The site key for the browser, or null when Turnstile is not configured. */
 export function getTurnstileSiteKey(): string | null {
-    const config = useRuntimeConfig()
-    return config.turnstileSecretKey && config.public.turnstileSiteKey ? config.public.turnstileSiteKey : null
+    return getTurnstileKeys()?.siteKey ?? null
 }
 
 /**
- * Verify a Cloudflare Turnstile response. Only enforced when both keys are set
- * (NUXT_TURNSTILE_SECRET_KEY, NUXT_PUBLIC_TURNSTILE_SITE_KEY); without them it
- * is off and the form works with the checks above alone.
+ * Verify a Cloudflare Turnstile response. Only enforced when both keys are set;
+ * with neither it is off and the form works with the checks above alone, with
+ * only one it throws (see getTurnstileKeys).
  */
 export async function verifyTurnstile(event: H3Event, token: unknown): Promise<boolean> {
-    const config = useRuntimeConfig()
-    if (!getTurnstileSiteKey()) {
+    const keys = getTurnstileKeys()
+    if (!keys) {
         return true
     }
     if (typeof token !== 'string' || token === '') {
@@ -122,7 +145,7 @@ export async function verifyTurnstile(event: H3Event, token: unknown): Promise<b
         const result = await $fetch<{ success: boolean }>('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
             method: 'POST',
             body: {
-                secret: config.turnstileSecretKey,
+                secret: keys.secretKey,
                 response: token,
                 remoteip: getRequestIP(event, { xForwardedFor: true }),
             },

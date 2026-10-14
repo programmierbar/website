@@ -11,6 +11,9 @@ import {
     verifyFormToken,
 } from '../server/utils/formProtection'
 
+// Turnstile keys as the runtime config reports them; reset before each test.
+const turnstile = vi.hoisted(() => ({ secretKey: '', siteKey: '' }))
+
 // Nuxt/Nitro auto-imports must exist before the handlers are imported (their
 // `defineEventHandler(...)` runs at load time); vi.hoisted runs first.
 const directus = vi.hoisted(() => {
@@ -30,8 +33,8 @@ const directus = vi.hoisted(() => {
     g.createError = (input: any) => Object.assign(new Error(input.message), input)
     g.useRuntimeConfig = () => ({
         directusApiToken: 'test-token',
-        turnstileSecretKey: '',
-        public: { turnstileSiteKey: '' },
+        turnstileSecretKey: turnstile.secretKey,
+        public: { turnstileSiteKey: turnstile.siteKey },
     })
     g.useAuthenticatedDirectus = () => directus
     return directus
@@ -60,6 +63,8 @@ beforeEach(() => {
     Object.values(directus).forEach((fn) => fn.mockReset())
     directus.createMeetupRegistration.mockResolvedValue({ id: 'reg-1' })
     resetRateLimits()
+    turnstile.secretKey = ''
+    turnstile.siteKey = ''
 })
 
 afterEach(() => {
@@ -148,6 +153,21 @@ describe('POST /api/meetup-registration/register', () => {
         await expect(register(form())).rejects.toMatchObject({ statusCode: 500 })
     })
 
+    it.each([
+        ['only the secret key', { secretKey: 'secret', siteKey: '' }],
+        ['only the site key', { secretKey: '', siteKey: 'site' }],
+    ])('fails closed when Turnstile has %s', async (_label, keys) => {
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+        Object.assign(turnstile, keys)
+
+        await expect(register(form())).rejects.toMatchObject({
+            statusCode: 503,
+            message: expect.stringContaining('nicht verfügbar'),
+        })
+        expect(directus.createMeetupRegistration).not.toHaveBeenCalled()
+        expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('partially configured'))
+    })
+
     it('rate-limits one source', async () => {
         for (let i = 0; i < 20; i++) {
             await register(form(), '198.51.100.7')
@@ -172,6 +192,19 @@ describe('GET /api/meetup-registration/availability', () => {
         const result = await availability(MEETUP_ID)
         expect(result).toMatchObject({ state: 'open', spotsLeft: 60, turnstileSiteKey: null })
         expect(verifyFormToken(result.formToken, scope, Date.now() + FORM_TOKEN_MIN_AGE_MS)).toBe('ok')
+    })
+
+    it('fails closed instead of turning Turnstile off when only one key is set', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {})
+        turnstile.secretKey = 'secret'
+        directus.getMeetupRegistrationSettings.mockResolvedValue({
+            status: 'published',
+            start_on: new Date(Date.now() + 86_400_000).toISOString(),
+            registration_enabled: true,
+            registration_limit: 100,
+        })
+        directus.countPublicMeetupRegistrations.mockResolvedValue(0)
+        await expect(availability(MEETUP_ID)).rejects.toMatchObject({ statusCode: 503 })
     })
 
     it('hands out no token once registration is closed', async () => {
