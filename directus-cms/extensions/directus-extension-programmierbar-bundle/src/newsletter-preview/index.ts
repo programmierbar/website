@@ -1,20 +1,11 @@
 import { defineEndpoint } from '@directus/extensions-sdk'
-import { ISSUES_COLLECTION, loadNewsletterIssue } from '../newsletter/loadIssue.ts'
+import { checkAdminAccess } from '../newsletter/access.ts'
+import { isNotFoundError, ISSUES_COLLECTION, loadNewsletterIssue } from '../newsletter/loadIssue.ts'
 import { renderNewsletterIssue } from '../newsletter/render/index.ts'
 import { getRequiredSetting } from '../shared/settings.ts'
-import { checkAdminAccess } from './access.ts'
 import { buildPreviewNotice, injectPreviewNotice } from './notice.ts'
 
 const ENDPOINT_NAME = 'newsletter-preview'
-
-/**
- * Directus answers a missing item, an invalid primary key and an unknown Content
- * Version all with a ForbiddenError. The caller is an admin, so here it can only mean
- * "not found".
- */
-function isNotFoundError(err: any): boolean {
-    return err?.code === 'FORBIDDEN' || err?.name === 'ForbiddenError'
-}
 
 /**
  * Live Preview for newsletter issues.

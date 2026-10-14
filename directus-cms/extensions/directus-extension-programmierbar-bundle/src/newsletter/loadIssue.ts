@@ -80,3 +80,12 @@ export async function loadNewsletterIssue(
     }
     return service.readOne(id, query)
 }
+
+/**
+ * Directus answers a missing item, an invalid primary key and an unknown Content
+ * Version all with a ForbiddenError. The newsletter endpoints are admin-only, so there
+ * it can only mean "not found".
+ */
+export function isNotFoundError(err: any): boolean {
+    return err?.code === 'FORBIDDEN' || err?.name === 'ForbiddenError'
+}

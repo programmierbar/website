@@ -12,19 +12,38 @@ import { performNewsletterUnsubscribe } from '../../utils/newsletterUnsubscribe'
 //
 // Answers with a redirect (POST → 303 → GET) so the outcome is rendered from the
 // query server-side and a reload cannot repeat the submission.
+//
+// The same URL is the target of the `List-Unsubscribe` header in newsletter mails,
+// so it also handles RFC 8058 one-click opt-outs: the mail provider POSTs the body
+// `List-Unsubscribe=One-Click` to the link, with the token only in the query. That
+// request comes from a server, not a browser, and only its status code counts, so it
+// gets a plain 200 instead of a redirect (and a 500 on a technical failure, so the
+// provider can retry). There is no CSRF check on this route to get in the way.
 export default defineEventHandler(async (event) => {
     // Form submissions arrive as `application/x-www-form-urlencoded`; readBody
     // parses that into an object just like it does JSON.
     const body = await readBody(event)
+    const isOneClick = body?.['List-Unsubscribe'] === 'One-Click'
+    // The page's form sends the token in the body; a one-click POST only has the
+    // link's query.
+    const token = body?.token ?? getQuery(event).token
 
     let status: string
     try {
-        status = await performNewsletterUnsubscribe(body?.token)
+        status = await performNewsletterUnsubscribe(token)
     } catch (err: any) {
         // The page has an 'error' view for exactly this — a technical failure is
         // not the same as a dead link, and it offers another attempt.
         console.error('Newsletter unsubscribe (form) error:', err)
         status = 'error'
+    }
+
+    if (isOneClick) {
+        if (status === 'error') {
+            throw createError({ statusCode: 500, message: 'Bei der Abmeldung ist ein Fehler aufgetreten.' })
+        }
+        // Unknown tokens stay a neutral 200 here too — no enumeration.
+        return { status }
     }
 
     return await sendRedirect(event, `/newsletter/unsubscribe?status=${status}`, 303)

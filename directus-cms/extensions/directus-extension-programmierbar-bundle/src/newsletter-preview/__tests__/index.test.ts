@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { checkAdminAccess } from '../../newsletter/access.ts'
 import { getRequiredSetting } from '../../shared/settings.ts'
-import { checkAdminAccess } from '../access.ts'
 import registerEndpoint from '../index.ts'
 import { buildPreviewNotice, injectPreviewNotice } from '../notice.ts'
 

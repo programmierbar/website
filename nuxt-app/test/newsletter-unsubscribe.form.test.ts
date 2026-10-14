@@ -16,6 +16,9 @@ const { readNewsletterSubscriberByUnsubscribeToken, unsubscribeNewsletterSubscri
     const g = globalThis as any
     g.defineEventHandler = (fn: any) => fn
     g.readBody = async (event: any) => event.body ?? {}
+    g.getQuery = (event: any) => event.query ?? {}
+    g.createError = (input: { statusCode: number; message: string }) =>
+        Object.assign(new Error(input.message), { statusCode: input.statusCode })
     g.sendRedirect = sendRedirect
     g.useAuthenticatedDirectus = () => ({
         readNewsletterSubscriberByUnsubscribeToken,
@@ -24,7 +27,7 @@ const { readNewsletterSubscriberByUnsubscribeToken, unsubscribeNewsletterSubscri
     return { readNewsletterSubscriberByUnsubscribeToken, unsubscribeNewsletterSubscriber, sendRedirect }
 })
 
-const invoke = (body: Record<string, unknown>) => (handler as any)({ body })
+const invoke = (body: Record<string, unknown>, query: Record<string, unknown> = {}) => (handler as any)({ body, query })
 
 beforeEach(() => {
     readNewsletterSubscriberByUnsubscribeToken.mockReset()
@@ -85,5 +88,45 @@ describe('POST /newsletter/unsubscribe (no-JS form)', () => {
         await invoke({ token: 'boom' })
 
         expect(sendRedirect).toHaveBeenCalledWith(expect.anything(), '/newsletter/unsubscribe?status=error', 303)
+    })
+
+    // A query token is only a fallback: the page's form always sends it in the body.
+    it('prefers the body token over the query', async () => {
+        readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue(null)
+
+        await invoke({ token: 'from-body' }, { token: 'from-query' })
+
+        expect(readNewsletterSubscriberByUnsubscribeToken).toHaveBeenCalledWith('from-body')
+    })
+})
+
+// RFC 8058: the mail provider POSTs `List-Unsubscribe=One-Click` to the link from the
+// `List-Unsubscribe` header; the token is only in that link's query.
+describe('POST /newsletter/unsubscribe (one-click)', () => {
+    const ONE_CLICK = { 'List-Unsubscribe': 'One-Click' }
+
+    it('opts the subscriber out using the query token and answers 200 without a redirect', async () => {
+        readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status: 'confirmed' })
+
+        const result = await invoke(ONE_CLICK, { token: 'good' })
+
+        expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledWith('sub_1', 'good')
+        expect(result).toEqual({ status: 'unsubscribed' })
+        expect(sendRedirect).not.toHaveBeenCalled()
+    })
+
+    it('answers an unknown token neutrally', async () => {
+        readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue(null)
+
+        expect(await invoke(ONE_CLICK, { token: 'nope' })).toEqual({ status: 'invalid' })
+        expect(unsubscribeNewsletterSubscriber).not.toHaveBeenCalled()
+    })
+
+    it('fails with 500 on a technical error so the provider can retry', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {})
+        readNewsletterSubscriberByUnsubscribeToken.mockRejectedValue(new Error('directus down'))
+
+        await expect(invoke(ONE_CLICK, { token: 'boom' })).rejects.toMatchObject({ statusCode: 500 })
+        expect(sendRedirect).not.toHaveBeenCalled()
     })
 })

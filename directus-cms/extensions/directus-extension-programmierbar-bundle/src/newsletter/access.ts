@@ -4,8 +4,9 @@ export interface AccessError {
 }
 
 /**
- * Admin-only gate for the preview. Unauthenticated requests get 401, authenticated
- * non-admins 403. Returns `null` when the request may proceed.
+ * Admin-only gate for the newsletter endpoints (preview, test send). Unauthenticated
+ * requests get 401, authenticated non-admins 403. Returns `null` when the request may
+ * proceed.
  */
 export function checkAdminAccess(accountability: { user?: string | null; admin?: boolean } | null | undefined) {
     if (accountability?.admin === true) {

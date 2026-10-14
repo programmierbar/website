@@ -161,6 +161,16 @@
                 "type": "endpoint",
                 "name": "newsletter-preview",
                 "source": "src/newsletter-preview/index.ts"
+            },
+            {
+                "type": "endpoint",
+                "name": "newsletter-send",
+                "source": "src/newsletter-send/index.ts"
+            },
+            {
+                "type": "interface",
+                "name": "newsletter-actions",
+                "source": "src/newsletter-actions/interface.ts"
             }
         ],
         "host": "^10.10.0"
