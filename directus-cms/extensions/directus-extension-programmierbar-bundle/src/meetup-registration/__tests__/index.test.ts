@@ -384,6 +384,16 @@ describe('filter meetup_registrations.items.update', () => {
         expect(readMany).not.toHaveBeenCalled()
     })
 
+    test('a cancellation that also changes the address normalizes it without capacity checks', async () => {
+        const { update, readMany } = setup({ publicCount: 100 })
+        await expect(update(['reg-1'], { status: 'cancelled', email: ' Max@Lotum.DE ' })).resolves.toEqual({
+            status: 'cancelled',
+            email: 'max@lotum.de',
+            is_internal: true,
+        })
+        expect(readMany).not.toHaveBeenCalled()
+    })
+
     test('unarchiving takes a spot like a new registration', async () => {
         const open = setup({ publicCount: 99, rows: [cancelledRow] })
         await expect(open.update(['reg-1'], { status: 'confirmed' })).resolves.toEqual({ status: 'confirmed' })

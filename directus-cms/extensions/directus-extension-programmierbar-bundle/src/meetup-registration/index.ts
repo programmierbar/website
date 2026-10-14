@@ -391,17 +391,19 @@ export default defineHook(({ filter, action }, hookContext) => {
 
     filter(`${COLLECTION}.items.update`, async (input: any, meta: any, context: any) => {
         const payload = { ...(input ?? {}) }
+        // Every stored address is normalized, also in an edit that cancels:
+        // a later unarchive relies on `email` and `is_internal`.
+        if (typeof payload.email === 'string') {
+            payload.email = normalizeEmail(payload.email)
+            payload.is_internal = isInternalEmail(payload.email)
+        }
+
         // Cancelling always passes; edits that touch neither status, meetup nor
         // address (notes, consent) cannot change who counts.
         if (payload.status !== undefined && payload.status !== 'confirmed') return payload
         if (payload.status === undefined && payload.meetup === undefined && payload.email === undefined) return payload
         const keys: (string | number)[] = Array.isArray(meta?.keys) ? meta.keys : []
         if (keys.length === 0) return payload
-
-        if (typeof payload.email === 'string') {
-            payload.email = normalizeEmail(payload.email)
-            payload.is_internal = isInternalEmail(payload.email)
-        }
 
         // Directus runs the update filter before its transaction, so the lock
         // below only waits for registrations in flight; an edit in the app is
