@@ -35,12 +35,18 @@ export const ISSUE_FIELDS = [
 ]
 
 /**
- * Directus caps nested O2M/M2M reads at the default query limit; lift it so a long
- * block list is never silently truncated. The renderer sorts by `sort` itself, so the
- * read order does not matter.
+ * Directus caps every nested O2M/M2M read at the default query limit; lift it on each
+ * level so neither the block list nor the podcasts/meetups of one block are silently
+ * truncated. Inside the M2A, Directus addresses a collection's branch as
+ * `item:<collection>` (see `parse-fields` in @directus/api). The renderer sorts by
+ * `sort` itself, so the read order does not matter.
  */
 export const ISSUE_DEEP = {
-    blocks: { _limit: -1 },
+    blocks: {
+        _limit: -1,
+        [`item:${PODCASTS_BLOCK_COLLECTION}`]: { podcasts: { _limit: -1 } },
+        [`item:${MEETUPS_BLOCK_COLLECTION}`]: { meetups: { _limit: -1 } },
+    },
 }
 
 /** The slice of a Directus `ItemsService` this module needs. */

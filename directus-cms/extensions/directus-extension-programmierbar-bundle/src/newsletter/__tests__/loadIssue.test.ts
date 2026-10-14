@@ -16,7 +16,17 @@ describe('loadNewsletterIssue', () => {
         const readOne = jest.fn(async () => ({ subject: 's' }))
         await loadNewsletterIssue({ readOne }, 'id-1')
 
-        expect(readOne).toHaveBeenCalledWith('id-1', { fields: ISSUE_FIELDS, deep: { blocks: { _limit: -1 } } })
+        expect(readOne).toHaveBeenCalledWith('id-1', {
+            fields: ISSUE_FIELDS,
+            // No nested level may fall back to Directus's default limit.
+            deep: {
+                blocks: {
+                    _limit: -1,
+                    'item:newsletter_blocks_podcasts': { podcasts: { _limit: -1 } },
+                    'item:newsletter_blocks_meetups': { meetups: { _limit: -1 } },
+                },
+            },
+        })
         expect(ISSUE_FIELDS).toEqual(
             expect.arrayContaining([
                 'blocks.sort',
