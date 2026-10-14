@@ -269,3 +269,24 @@ Suggested content:
 | Key           | Value      | Description                                                                                                                                                                                                                         |
 | ------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `website_url` | URL string | Public website URL used to build the confirmation link. **Required** — there is no fallback. If it is missing, no confirmation mail is sent and a Slack warning is posted (a wrong host would be baked into an already-sent email). |
+
+## Issues: rendering and Live Preview
+
+Issues live in `newsletter_issues` with an M2A field `blocks` (junction `newsletter_issues_blocks`:
+`sort`, `collection`, `item`) over `newsletter_blocks_text`, `newsletter_blocks_podcasts` and
+`newsletter_blocks_meetups`. The podcast/meetup blocks are M2M over
+`newsletter_blocks_podcasts_podcasts` / `newsletter_blocks_meetups_meetups`, each with its own `sort`.
+
+- **Renderer** — `src/newsletter/render/` in the extension bundle. `renderNewsletterIssue(issue, options)`
+  is a pure function (data in, HTML out) built on MJML: subject/preheader, the blocks in `sort` order, and
+  a footer with the unsubscribe slot. One partial per block type in `render/blocks/`. Plain-text fields are
+  escaped; the text block's rich text is sanitized to the editor's toolbar tags. Podcast/meetup links use
+  the `website_url` setting. Without `unsubscribeUrl` (the preview) a placeholder is rendered; the send
+  job must pass the subscriber's link.
+- **Loading** — `src/newsletter/loadIssue.ts` holds the field list and reads an issue, optionally from a
+  Content Version (`ItemsService.readOne(id, { version })`; Directus applies the version's delta in a
+  rolled-back transaction).
+- **Live Preview** — endpoint `GET /newsletter-preview/:id?version=<key>`, admins only (401/403), 404 for
+  an unknown issue or version. Preview URL of `newsletter_issues`:
+  `https://admin.programmier.bar/newsletter-preview/{{id}}?version={{$version}}`. The preview reloads
+  after saving; a new issue has no preview until it was saved once.
