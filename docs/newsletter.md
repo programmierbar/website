@@ -291,9 +291,45 @@ Issues live in `newsletter_issues` with an M2A field `blocks` (junction `newslet
 - **Loading** — `src/newsletter/loadIssue.ts` holds the field list and reads an issue, optionally from a
   Content Version (`ItemsService.readOne(id, { version })`; Directus applies the version's delta in a
   rolled-back transaction).
-- **Live Preview** — endpoint `GET /newsletter-preview/:id?version=<key>`, admins only (401/403), 404 for
-  an unknown issue or version. Above the mail it shows a preview-only notice listing hidden entries and
+- **Live Preview** — endpoint `GET /newsletter-preview/:id?version=<key>`, for every logged-in backend user
+  (401 otherwise); access to the issue is checked with the user's own permissions (403 without read
+  access), 404 for an unknown issue or version. Above the mail it shows a preview-only notice listing hidden entries and
   warnings ("N Einträge ausgeblendet, weil nicht veröffentlicht: …"); the rendered mail never contains it.
   Preview URL of `newsletter_issues`:
   `https://admin.programmier.bar/newsletter-preview/{{id}}?version={{$version}}`. The preview reloads
   after saving; a new issue has no preview until it was saved once.
+
+Non-destructive newsletter actions (Live Preview, test send to the own address) are open to every logged-in
+backend user who may read the issue (checked with their own permissions); destructive or irreversible ones
+stay admin-only. The content itself is then read with admin rights, like the real send: with the user's
+permissions Directus would silently drop nested items their policy does not cover, and preview or test mail
+would differ from what is sent. The only content filter is the renderer's published filter
+(`loadNewsletterIssueForUser` in `src/newsletter/loadIssue.ts`).
+
+## Issues: test send ("Testversand an mich")
+
+- **Interface** `newsletter-actions` ("Newsletter-Aktionen", alias/presentation field) on the
+  `newsletter_issues` item page, same pattern as `invoice-actions`. It shows the button "Testversand an
+  mich", a confirm dialog naming the recipient, and the result (incl. hidden entries and warnings). On an
+  unsaved new issue it only shows a hint.
+- **Endpoint** `POST /newsletter-send/:id/test`, for **any logged-in user** (401 otherwise) who can read
+  the issue (checked with their own permissions, 403 otherwise; content read as described above). Sends the **saved** issue (live item, never a Content Version) to the **user's own
+  address**, read from `directus_users` for `accountability.user` only (with admin rights, since a
+  non-admin policy may not cover `directus_users`) — there is no recipient parameter. 400 if the account
+  has no email or the issue no subject, 404 for an unknown or unsaved issue, 502 if the mail fails. Subject `[TEST] <subject>`. Nothing is written: no
+  `newsletter_sends` row, no status change; the send is logged.
+- **Rendering** with the shared `renderNewsletterIssue`, so the same published filter as preview and real
+  send applies. Hidden entries and warnings go back to the UI, never into the mail.
+- **Unsubscribe**: if the user's address is a `confirmed` subscriber, the mail carries their real link
+  (clicking it really unsubscribes). Otherwise the token is `00000000-0000-0000-0000-000000000000`, a
+  well-formed UUID that matches nobody, so the website answers "invalid link". (Directus answers a
+  malformed token on the uuid column with a 500; the website now rejects non-UUID confirm and unsubscribe
+  tokens as "invalid" before asking Directus, see `nuxt-app/server/utils/newsletterToken.ts`.)
+- **Headers**: `List-Unsubscribe: <https://…/newsletter/unsubscribe?token=…>` and
+  `List-Unsubscribe-Post: List-Unsubscribe=One-Click` (RFC 8058), via the new `headers` option of
+  `sendRawEmail`/`sendTemplatedEmail` in `src/shared/email-service.ts` (MailService passes it to
+  nodemailer). No `mailto:` entry, because no mailbox processes unsubscribe mails. From address: Directus
+  `EMAIL_FROM`, as for all CMS mail.
+- **One-click on the website**: `nuxt-app/server/routes/newsletter/unsubscribe.post.ts` serves the same URL
+  as the page. A POST with body `List-Unsubscribe=One-Click` (urlencoded or `multipart/form-data`, both
+  allowed by RFC 8058) takes the token from the query, opts out and answers 200 (500 on a technical error) instead of the form's 303 redirect.

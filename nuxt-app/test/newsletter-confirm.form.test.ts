@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import handler from '../server/routes/newsletter/confirm.post'
 
+// Tokens are UUIDs in Directus; malformed ones are rejected before any lookup.
+const BOOM_TOKEN = '22222222-2222-4222-8222-222222222222'
+const GOOD_TOKEN = '11111111-1111-4111-8111-111111111111'
+const STALE_TOKEN = '33333333-3333-4333-8333-333333333333'
+const UNKNOWN_TOKEN = '55555555-5555-4555-8555-555555555555'
+
 // The no-JS confirmation path: a plain form POST, answered with a redirect that
 // carries the outcome so the page can render it server-side.
 //
@@ -64,16 +70,16 @@ describe('POST /newsletter/confirm (no-JS form)', () => {
             confirm_token_expires_at: inOneHour,
         })
 
-        await invoke({ token: 'good' })
+        await invoke({ token: GOOD_TOKEN })
 
-        expect(confirmNewsletterSubscriber).toHaveBeenCalledWith('sub_1', 'good')
+        expect(confirmNewsletterSubscriber).toHaveBeenCalledWith('sub_1', GOOD_TOKEN)
         expectRedirect('confirmed')
     })
 
     it('reports an already-confirmed address without re-writing it', async () => {
         readNewsletterSubscriberByToken.mockResolvedValue({ id: 'sub_1', status: 'confirmed' })
 
-        await invoke({ token: 'good' })
+        await invoke({ token: GOOD_TOKEN })
 
         expect(confirmNewsletterSubscriber).not.toHaveBeenCalled()
         expectRedirect('already_confirmed')
@@ -86,9 +92,9 @@ describe('POST /newsletter/confirm (no-JS form)', () => {
             confirm_token_expires_at: anHourAgo,
         })
 
-        await invoke({ token: 'stale' })
+        await invoke({ token: STALE_TOKEN })
 
-        expect(refreshNewsletterConfirmation).toHaveBeenCalledWith('sub_1', 'stale')
+        expect(refreshNewsletterConfirmation).toHaveBeenCalledWith('sub_1', STALE_TOKEN)
         expect(confirmNewsletterSubscriber).not.toHaveBeenCalled()
         expectRedirect('resent')
     })
@@ -96,7 +102,7 @@ describe('POST /newsletter/confirm (no-JS form)', () => {
     it('reports an unknown token as invalid', async () => {
         readNewsletterSubscriberByToken.mockResolvedValue(null)
 
-        await invoke({ token: 'nope' })
+        await invoke({ token: UNKNOWN_TOKEN })
 
         expectRedirect('invalid')
     })
@@ -114,7 +120,7 @@ describe('POST /newsletter/confirm (no-JS form)', () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
         readNewsletterSubscriberByToken.mockRejectedValue(new Error('directus down'))
 
-        await invoke({ token: 'boom' })
+        await invoke({ token: BOOM_TOKEN })
 
         expectRedirect('error')
     })

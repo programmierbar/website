@@ -1,3 +1,5 @@
+import { isWellFormedNewsletterToken } from './newsletterToken'
+
 // Confirming a double-opt-in subscription is reachable two ways: the JSON route
 // the page calls client-side, and the plain form POST the page renders for
 // visitors without working JavaScript. Both must agree on what counts as an
@@ -15,8 +17,9 @@ export type NewsletterConfirmResult = 'confirmed' | 'already_confirmed' | 'resen
  */
 export async function performNewsletterConfirm(token: unknown): Promise<NewsletterConfirmResult> {
     // Checked here rather than in the handlers so an empty or malformed token
-    // never reaches Directus, and 'invalid' means the same thing on both routes.
-    if (typeof token !== 'string' || token.length === 0) {
+    // never reaches Directus (which answers a non-UUID with a 500), and 'invalid'
+    // means the same thing on both routes.
+    if (!isWellFormedNewsletterToken(token)) {
         return 'invalid'
     }
 

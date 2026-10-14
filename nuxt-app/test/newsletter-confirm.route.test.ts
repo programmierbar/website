@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import handler from '../server/api/newsletter/confirm.post'
 
+// Tokens are UUIDs in Directus; malformed ones are rejected before any lookup.
+const BOOM_TOKEN = '22222222-2222-4222-8222-222222222222'
+const GOOD_TOKEN = '11111111-1111-4111-8111-111111111111'
+const STALE_TOKEN = '33333333-3333-4333-8333-333333333333'
+const UNKNOWN_TOKEN = '55555555-5555-4555-8555-555555555555'
+const X_TOKEN = '44444444-4444-4444-8444-444444444444'
+
 // The handler's Nuxt/Nitro auto-imports must exist BEFORE the module is
 // imported (the `export default defineEventHandler(...)` runs at load time).
 // vitest hoists this vi.hoisted() block above all imports (including the
@@ -50,6 +57,14 @@ describe('POST /api/newsletter/confirm', () => {
         expect(readNewsletterSubscriberByToken).not.toHaveBeenCalled()
     })
 
+    // Directus answers a non-UUID lookup on the token column with a 500.
+    it('returns invalid for a malformed (non-UUID) token, without touching Directus', async () => {
+        const result = await invoke({ token: 'not-a-uuid' })
+
+        expect(result).toEqual({ status: 'invalid' })
+        expect(readNewsletterSubscriberByToken).not.toHaveBeenCalled()
+    })
+
     it('returns invalid for an empty token', async () => {
         const result = await invoke({ token: '' })
         expect(result).toEqual({ status: 'invalid' })
@@ -58,7 +73,7 @@ describe('POST /api/newsletter/confirm', () => {
 
     it('returns invalid for an unknown token', async () => {
         readNewsletterSubscriberByToken.mockResolvedValue(null)
-        const result = await invoke({ token: 'nope' })
+        const result = await invoke({ token: UNKNOWN_TOKEN })
         expect(result).toEqual({ status: 'invalid' })
         expect(confirmNewsletterSubscriber).not.toHaveBeenCalled()
     })
@@ -69,11 +84,11 @@ describe('POST /api/newsletter/confirm', () => {
             status: 'pending',
             confirm_token_expires_at: iso(NOW + 60_000),
         })
-        const result = await invoke({ token: 'good' })
+        const result = await invoke({ token: GOOD_TOKEN })
         expect(result).toEqual({ status: 'confirmed' })
         expect(confirmNewsletterSubscriber).toHaveBeenCalledTimes(1)
         // The token is passed along so the write can be guarded on it.
-        expect(confirmNewsletterSubscriber).toHaveBeenCalledWith('sub_1', 'good')
+        expect(confirmNewsletterSubscriber).toHaveBeenCalledWith('sub_1', GOOD_TOKEN)
     })
 
     it('is idempotent: an already-confirmed subscriber returns already_confirmed and is not re-written', async () => {
@@ -82,7 +97,7 @@ describe('POST /api/newsletter/confirm', () => {
             status: 'confirmed',
             confirm_token_expires_at: iso(NOW + 60_000),
         })
-        const result = await invoke({ token: 'good' })
+        const result = await invoke({ token: GOOD_TOKEN })
         expect(result).toEqual({ status: 'already_confirmed' })
         expect(confirmNewsletterSubscriber).not.toHaveBeenCalled()
     })
@@ -93,10 +108,10 @@ describe('POST /api/newsletter/confirm', () => {
             status: 'pending',
             confirm_token_expires_at: iso(NOW - 1),
         })
-        const result = await invoke({ token: 'stale' })
+        const result = await invoke({ token: STALE_TOKEN })
         expect(result).toEqual({ status: 'resent' })
         expect(refreshNewsletterConfirmation).toHaveBeenCalledTimes(1)
-        expect(refreshNewsletterConfirmation).toHaveBeenCalledWith('sub_1', 'stale')
+        expect(refreshNewsletterConfirmation).toHaveBeenCalledWith('sub_1', STALE_TOKEN)
         expect(confirmNewsletterSubscriber).not.toHaveBeenCalled()
     })
 
@@ -118,7 +133,7 @@ describe('POST /api/newsletter/confirm', () => {
                 })
             confirmNewsletterSubscriber.mockResolvedValue(false)
 
-            const result = await invoke({ token: 'good' })
+            const result = await invoke({ token: GOOD_TOKEN })
             expect(result).toEqual({ status: 'already_confirmed' })
         })
 
@@ -138,7 +153,7 @@ describe('POST /api/newsletter/confirm', () => {
                 })
             confirmNewsletterSubscriber.mockResolvedValue(false)
 
-            const result = await invoke({ token: 'good' })
+            const result = await invoke({ token: GOOD_TOKEN })
             expect(result).toEqual({ status: 'invalid' })
         })
 
@@ -153,7 +168,7 @@ describe('POST /api/newsletter/confirm', () => {
                 .mockResolvedValueOnce(null)
             refreshNewsletterConfirmation.mockResolvedValue(false)
 
-            const result = await invoke({ token: 'stale' })
+            const result = await invoke({ token: STALE_TOKEN })
             expect(result).toEqual({ status: 'resent' })
             expect(refreshNewsletterConfirmation).toHaveBeenCalledTimes(1)
         })
@@ -165,7 +180,7 @@ describe('POST /api/newsletter/confirm', () => {
             status: 'unsubscribed',
             confirm_token_expires_at: iso(NOW + 60_000),
         })
-        const result = await invoke({ token: 'x' })
+        const result = await invoke({ token: X_TOKEN })
         expect(result).toEqual({ status: 'invalid' })
         expect(confirmNewsletterSubscriber).not.toHaveBeenCalled()
     })
@@ -173,6 +188,6 @@ describe('POST /api/newsletter/confirm', () => {
     it('surfaces an unexpected Directus failure as 500', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
         readNewsletterSubscriberByToken.mockRejectedValue(new Error('directus down'))
-        await expect(invoke({ token: 'boom' })).rejects.toMatchObject({ statusCode: 500 })
+        await expect(invoke({ token: BOOM_TOKEN })).rejects.toMatchObject({ statusCode: 500 })
     })
 })
