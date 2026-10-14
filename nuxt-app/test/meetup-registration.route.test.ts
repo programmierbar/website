@@ -259,18 +259,27 @@ describe('cancel', () => {
         await expect(cancel({ token: CANCEL_TOKEN })).resolves.toEqual({ status: 'already_cancelled' })
     })
 
-    it('no-JS form redirects with the outcome, also on failure', async () => {
+    it('no-JS form redirects with the outcome and no token', async () => {
         directus.readMeetupRegistrationByCancelToken.mockResolvedValue({ id: 'reg-1', status: 'confirmed' })
         await expect(cancelForm({ token: CANCEL_TOKEN })).resolves.toEqual({
             location: '/meetup/abmelden?status=cancelled',
             status: 303,
         })
+    })
 
+    it('no-JS form keeps the token on failure, so the retry form can resend it', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
-        directus.readMeetupRegistrationByCancelToken.mockRejectedValue(new Error('down'))
-        await expect(cancelForm({ token: CANCEL_TOKEN })).resolves.toEqual({
-            location: '/meetup/abmelden?status=error',
+        directus.readMeetupRegistrationByCancelToken.mockRejectedValueOnce(new Error('down'))
+        const failed = await cancelForm({ token: CANCEL_TOKEN })
+        expect(failed).toEqual({ location: `/meetup/abmelden?status=error&token=${CANCEL_TOKEN}`, status: 303 })
+
+        // The retry posts the token from that URL and succeeds.
+        const retryToken = new URL(failed.location, 'https://www.programmier.bar').searchParams.get('token')
+        directus.readMeetupRegistrationByCancelToken.mockResolvedValue({ id: 'reg-1', status: 'confirmed' })
+        await expect(cancelForm({ token: retryToken })).resolves.toEqual({
+            location: '/meetup/abmelden?status=cancelled',
             status: 303,
         })
+        expect(directus.cancelMeetupRegistration).toHaveBeenCalledWith('reg-1', CANCEL_TOKEN)
     })
 })

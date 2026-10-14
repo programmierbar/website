@@ -82,8 +82,9 @@ type Milestone = { milestone: 80 | 100; position: number }
  *   sends the confirmation mail and reports that milestone to Slack.
  *
  * filter update — an edit in the Directus app that makes a registration count
- *   for a meetup (unarchive to confirmed, moving a confirmed one, changing its
- *   address) passes the same checks; staff add late attendees by raising the
+ *   for a meetup or take a public seat (unarchive to confirmed, moving a
+ *   confirmed one, an internal address changed to a public one) passes the same
+ *   checks, a corrected public address only the duplicate check; staff add late attendees by raising the
  *   limit. Cancelling (status → cancelled, also via the website's cancel link)
  *   always passes.
  */
@@ -228,13 +229,15 @@ export default defineHook(({ filter, action }, hookContext) => {
      * Milestones decided in the create filter, handed to the create action.
      * Keyed by meetup and address, which is unique among confirmed
      * registrations. An insert that fails after the filter leaves a stale
-     * entry, so the map is capped.
+     * entry: every accepted pass replaces its address's entry (so a retry never
+     * re-announces it), and the map is capped.
      */
     const pendingMilestones = new Map<string, Milestone>()
     const milestoneKey = (meetupKey: string, email: string) => `${meetupKey}|${email}`
 
-    function rememberMilestone(key: string, milestone: Milestone) {
+    function rememberMilestone(key: string, milestone: Milestone | null) {
         pendingMilestones.delete(key)
+        if (!milestone) return
         pendingMilestones.set(key, milestone)
         while (pendingMilestones.size > 100) {
             pendingMilestones.delete(pendingMilestones.keys().next().value!)
@@ -378,11 +381,10 @@ export default defineHook(({ filter, action }, hookContext) => {
             reject('full')
         }
 
-        if (payload.status === 'confirmed' && !payload.is_internal) {
-            const position = publicCount + 1
-            const milestone = getCapacityMilestone(position, limit)
-            if (milestone) rememberMilestone(milestoneKey(meetupKey, payload.email), { milestone, position })
-        }
+        const position = publicCount + 1
+        const milestone =
+            payload.status === 'confirmed' && !payload.is_internal ? getCapacityMilestone(position, limit) : null
+        rememberMilestone(milestoneKey(meetupKey, payload.email), milestone ? { milestone, position } : null)
 
         return payload
     })
@@ -427,10 +429,14 @@ export default defineHook(({ filter, action }, hookContext) => {
             }
             addresses.add(address)
 
-            if (!heldSpot) {
+            // A public seat is taken by joining the meetup as a public address,
+            // and also by turning an internal registration public (new address).
+            // Correcting a public address keeps its seat: duplicate check only.
+            const isInternal = payload.is_internal ?? row.is_internal
+            const takesPublicSeat = !isInternal && !(heldSpot && !row.is_internal)
+            if (!heldSpot || takesPublicSeat) {
                 const { state } = await readMeetupCapacity(meetupKey, options, joined.get(meetupKey) ?? 0)
-                const isInternal = payload.is_internal ?? row.is_internal
-                if (!isInternal) {
+                if (takesPublicSeat) {
                     if (state === 'full') reject('full')
                     joined.set(meetupKey, (joined.get(meetupKey) ?? 0) + 1)
                 }

@@ -353,6 +353,17 @@ describe('action meetup_registrations.items.create', () => {
         expect(postSlackMessageMock).toHaveBeenCalledWith(expect.stringContaining('80 von 100 Plätzen'))
     })
 
+    test('a retry after a failed insert does not re-announce the milestone', async () => {
+        const { state, create, created } = setup({ publicCount: 79 })
+        // Reached 80 %, but the insert then failed: no action ran.
+        await create({ meetup: MEETUP_ID, email: 'erika@example.com' })
+        // Meanwhile someone else took the 80th spot (and its own notice).
+        state.publicCount = 80
+        await create({ meetup: MEETUP_ID, email: 'erika@example.com' })
+        await created()
+        expect(postSlackMessageMock).not.toHaveBeenCalled()
+    })
+
     test('reports nothing for a registration that reached no milestone', async () => {
         const { create, created } = setup({ publicCount: 40 })
         await create({ meetup: MEETUP_ID, email: 'erika@example.com' })
@@ -402,6 +413,25 @@ describe('filter meetup_registrations.items.update', () => {
         expect(readByQuery).toHaveBeenCalledWith(
             expect.objectContaining({ filter: expect.objectContaining({ id: { _neq: 'reg-1' } }) })
         )
+    })
+
+    test('turning an internal registration public takes a seat like a new one', async () => {
+        const internalRow = { ...cancelledRow, status: 'confirmed', email: 'erika@lotum.de', is_internal: true }
+        const full = setup({ publicCount: 100, rows: [internalRow] })
+        await expect(full.update(['reg-1'], { email: 'erika@example.com' })).rejects.toMatchObject({
+            code: 'MEETUP_REGISTRATION_FULL',
+        })
+
+        const started = setup({ rows: [internalRow] })
+        started.state.meetup!.start_on = YESTERDAY
+        await expect(started.update(['reg-1'], { email: 'erika@example.com' })).rejects.toMatchObject({
+            code: 'MEETUP_REGISTRATION_CLOSED',
+        })
+
+        const open = setup({ publicCount: 99, rows: [internalRow] })
+        await expect(open.update(['reg-1'], { email: 'erika@example.com' })).resolves.toMatchObject({
+            is_internal: false,
+        })
     })
 
     test('fixing the address of a confirmed registration only checks for duplicates', async () => {
