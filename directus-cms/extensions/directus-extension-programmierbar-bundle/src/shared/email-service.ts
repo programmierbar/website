@@ -66,6 +66,8 @@ export interface SendEmailOptions {
     replyTo?: string
     cc?: string
     attachments?: EmailAttachment[]
+    /** Extra mail headers (e.g. List-Unsubscribe); passed through MailService to nodemailer. */
+    headers?: Record<string, string>
 }
 
 /**
@@ -138,6 +140,7 @@ export async function sendTemplatedEmail(options: SendEmailOptions, context: Ema
             html,
             ...(options.replyTo && { replyTo: options.replyTo }),
             ...(options.cc && { cc: options.cc }),
+            ...(options.headers && { headers: options.headers }),
             ...(options.attachments && {
                 attachments: options.attachments.map((a) => ({
                     filename: a.filename,
@@ -168,6 +171,8 @@ export async function sendRawEmail(
         /** Plain-text alternative, for clients that don't render HTML. */
         text?: string
         replyTo?: string
+        /** Extra mail headers (e.g. List-Unsubscribe); passed through MailService to nodemailer. */
+        headers?: Record<string, string>
     },
     context: EmailServiceContext
 ): Promise<boolean> {
@@ -188,6 +193,7 @@ export async function sendRawEmail(
             html: options.html,
             ...(options.text && { text: options.text }),
             ...(options.replyTo && { replyTo: options.replyTo }),
+            ...(options.headers && { headers: options.headers }),
         })
 
         logger.info(`Email sent to ${options.to}`)

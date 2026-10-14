@@ -1,3 +1,5 @@
+import { isWellFormedNewsletterToken } from './newsletterToken'
+
 // Opting out has to work for everyone, so it is reachable two ways: the JSON
 // route the page calls client-side, and the plain form POST the page renders for
 // visitors without working JavaScript. Both must agree on what counts as an
@@ -18,8 +20,9 @@ export type NewsletterUnsubscribeResult = 'unsubscribed' | 'already_unsubscribed
  */
 export async function performNewsletterUnsubscribe(token: unknown): Promise<NewsletterUnsubscribeResult> {
     // Checked here rather than in the handlers so an empty or malformed token
-    // never reaches Directus, and 'invalid' means the same thing on both routes.
-    if (typeof token !== 'string' || token.length === 0) {
+    // never reaches Directus (which answers a non-UUID with a 500), and 'invalid'
+    // means the same thing on both routes.
+    if (!isWellFormedNewsletterToken(token)) {
         return 'invalid'
     }
 

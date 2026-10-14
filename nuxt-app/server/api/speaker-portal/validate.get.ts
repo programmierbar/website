@@ -1,3 +1,6 @@
+// Every error leaves this handler as JSON with a German message the portal can show as-is. Anything
+// unexpected is logged here (Vercel function logs) and answered with a generic 500, so internal error
+// text never reaches the speaker.
 export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const token = query.token as string
@@ -5,7 +8,8 @@ export default defineEventHandler(async (event) => {
     if (!token) {
         throw createError({
             statusCode: 400,
-            message: 'Token is required',
+            statusMessage: 'Bad Request',
+            message: 'Dein Zugangscode fehlt. Bitte nutze den Link aus deiner Einladungs-E-Mail.',
         })
     }
 
@@ -15,6 +19,7 @@ export default defineEventHandler(async (event) => {
         if (!speaker) {
             throw createError({
                 statusCode: 404,
+                statusMessage: 'Not Found',
                 message: 'Ungültiger Token. Bitte überprüfe deinen Einladungslink.',
             })
         }
@@ -25,6 +30,7 @@ export default defineEventHandler(async (event) => {
             if (expiresAt < new Date()) {
                 throw createError({
                     statusCode: 410,
+                    statusMessage: 'Gone',
                     message: 'Dieser Token ist abgelaufen. Bitte kontaktiere uns für eine neue Einladung.',
                 })
             }
@@ -34,6 +40,7 @@ export default defineEventHandler(async (event) => {
         if (speaker.portal_submission_status === 'submitted' || speaker.portal_submission_status === 'approved') {
             throw createError({
                 statusCode: 409,
+                statusMessage: 'Conflict',
                 message:
                     'Du hast deine Informationen bereits eingereicht. Kontaktiere uns, falls du Änderungen vornehmen möchtest.',
             })
@@ -60,13 +67,15 @@ export default defineEventHandler(async (event) => {
             },
         }
     } catch (err: any) {
-        if (err.statusCode) {
+        // The 4xx errors above are meant for the speaker; everything else is internal.
+        if (err?.statusCode >= 400 && err.statusCode < 500) {
             throw err
         }
         console.error('Speaker portal validation error:', err)
         throw createError({
             statusCode: 500,
-            message: 'Ein Fehler ist bei der Überprüfung deines Zugangs aufgetreten.',
+            statusMessage: 'Internal Server Error',
+            message: 'Bei der Überprüfung deines Zugangs ist leider ein Fehler aufgetreten.',
         })
     }
 })
