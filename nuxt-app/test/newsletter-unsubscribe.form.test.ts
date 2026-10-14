@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import handler from '../server/routes/newsletter/unsubscribe.post'
 
+// Tokens are UUIDs in Directus; malformed ones are rejected before any lookup.
+const BODY_TOKEN = '66666666-6666-4666-8666-666666666666'
+const BOOM_TOKEN = '22222222-2222-4222-8222-222222222222'
+const GOOD_TOKEN = '11111111-1111-4111-8111-111111111111'
+const QUERY_TOKEN = '77777777-7777-4777-8777-777777777777'
+const UNKNOWN_TOKEN = '55555555-5555-4555-8555-555555555555'
+
 // The no-JS opt-out path: a plain form POST, answered with a redirect that
 // carries the outcome so the page can render it server-side.
 //
@@ -45,16 +52,16 @@ describe('POST /newsletter/unsubscribe (no-JS form)', () => {
     it('opts the subscriber out and redirects with the outcome', async () => {
         readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status: 'confirmed' })
 
-        await invoke({ token: 'good' })
+        await invoke({ token: GOOD_TOKEN })
 
-        expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledWith('sub_1', 'good')
+        expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledWith('sub_1', GOOD_TOKEN)
         expect(sendRedirect).toHaveBeenCalledWith(expect.anything(), '/newsletter/unsubscribe?status=unsubscribed', 303)
     })
 
     it('reports an already-unsubscribed address without re-writing it', async () => {
         readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status: 'unsubscribed' })
 
-        await invoke({ token: 'good' })
+        await invoke({ token: GOOD_TOKEN })
 
         expect(unsubscribeNewsletterSubscriber).not.toHaveBeenCalled()
         expect(sendRedirect).toHaveBeenCalledWith(
@@ -67,7 +74,7 @@ describe('POST /newsletter/unsubscribe (no-JS form)', () => {
     it('reports an unknown token as invalid', async () => {
         readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue(null)
 
-        await invoke({ token: 'nope' })
+        await invoke({ token: UNKNOWN_TOKEN })
 
         expect(sendRedirect).toHaveBeenCalledWith(expect.anything(), '/newsletter/unsubscribe?status=invalid', 303)
     })
@@ -85,7 +92,7 @@ describe('POST /newsletter/unsubscribe (no-JS form)', () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
         readNewsletterSubscriberByUnsubscribeToken.mockRejectedValue(new Error('directus down'))
 
-        await invoke({ token: 'boom' })
+        await invoke({ token: BOOM_TOKEN })
 
         expect(sendRedirect).toHaveBeenCalledWith(expect.anything(), '/newsletter/unsubscribe?status=error', 303)
     })
@@ -94,9 +101,9 @@ describe('POST /newsletter/unsubscribe (no-JS form)', () => {
     it('prefers the body token over the query', async () => {
         readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue(null)
 
-        await invoke({ token: 'from-body' }, { token: 'from-query' })
+        await invoke({ token: BODY_TOKEN }, { token: QUERY_TOKEN })
 
-        expect(readNewsletterSubscriberByUnsubscribeToken).toHaveBeenCalledWith('from-body')
+        expect(readNewsletterSubscriberByUnsubscribeToken).toHaveBeenCalledWith(BODY_TOKEN)
     })
 })
 
@@ -108,9 +115,9 @@ describe('POST /newsletter/unsubscribe (one-click)', () => {
     it('opts the subscriber out using the query token and answers 200 without a redirect', async () => {
         readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status: 'confirmed' })
 
-        const result = await invoke(ONE_CLICK, { token: 'good' })
+        const result = await invoke(ONE_CLICK, { token: GOOD_TOKEN })
 
-        expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledWith('sub_1', 'good')
+        expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledWith('sub_1', GOOD_TOKEN)
         expect(result).toEqual({ status: 'unsubscribed' })
         expect(sendRedirect).not.toHaveBeenCalled()
     })
@@ -118,7 +125,7 @@ describe('POST /newsletter/unsubscribe (one-click)', () => {
     it('answers an unknown token neutrally', async () => {
         readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue(null)
 
-        expect(await invoke(ONE_CLICK, { token: 'nope' })).toEqual({ status: 'invalid' })
+        expect(await invoke(ONE_CLICK, { token: UNKNOWN_TOKEN })).toEqual({ status: 'invalid' })
         expect(unsubscribeNewsletterSubscriber).not.toHaveBeenCalled()
     })
 
@@ -126,7 +133,7 @@ describe('POST /newsletter/unsubscribe (one-click)', () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
         readNewsletterSubscriberByUnsubscribeToken.mockRejectedValue(new Error('directus down'))
 
-        await expect(invoke(ONE_CLICK, { token: 'boom' })).rejects.toMatchObject({ statusCode: 500 })
+        await expect(invoke(ONE_CLICK, { token: BOOM_TOKEN })).rejects.toMatchObject({ statusCode: 500 })
         expect(sendRedirect).not.toHaveBeenCalled()
     })
 })

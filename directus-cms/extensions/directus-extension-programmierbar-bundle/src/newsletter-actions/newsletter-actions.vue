@@ -37,8 +37,8 @@ async function runTestSend(): Promise<void> {
     errorMessage.value = null
 
     try {
-        // useApi() sends the current Directus session, so the endpoint's server-side
-        // admin check runs against the logged-in user and mails only them.
+        // useApi() sends the current Directus session, so the endpoint knows the
+        // logged-in user and mails only them.
         const response = await api.post(`/newsletter-send/${encodeURIComponent(props.primaryKey)}/test`)
         result.value = describeTestSendResult(response.data)
     } catch (error: any) {

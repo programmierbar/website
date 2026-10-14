@@ -56,6 +56,8 @@ interface SetupOptions {
     userEmail?: string | null
     subscribers?: any[]
     sendFails?: boolean
+    /** The requesting user may not read the issue (their policy), admins still can. */
+    denyIssueRead?: boolean
 }
 
 function setup(options: SetupOptions = {}) {
@@ -77,10 +79,13 @@ function setup(options: SetupOptions = {}) {
             if (this.collection === 'newsletter_issues') {
                 calls.issueQueries.push({ id, query, accountability: this.opts?.accountability })
                 if (!issue || id !== ISSUE_ID) throw new ForbiddenError('forbidden')
+                if (options.denyIssueRead && this.opts?.accountability?.admin !== true) {
+                    throw new ForbiddenError('forbidden')
+                }
                 return issue
             }
             if (this.collection === 'directus_users') {
-                calls.userReads.push({ id, query })
+                calls.userReads.push({ id, query, accountability: this.opts?.accountability })
                 return { email: 'userEmail' in options ? options.userEmail : 'Admin@Example.de' }
             }
             throw new Error(`unexpected readOne on ${this.collection}`)
@@ -167,12 +172,37 @@ describe('POST /newsletter-send/:id/test', () => {
         expect(calls.mails).toHaveLength(0)
     })
 
-    test('403 for non-admins, nothing read or sent', async () => {
+    test('a non-admin can send to their own address, reading the issue with their own rights', async () => {
+        const editor = { admin: false, user: 'editor-1' }
         const { call, calls } = setup()
+        const result = await call({ accountability: editor, body: { to: 'someone-else@example.de' } })
+
+        expect(result.status).toBe(200)
+        expect(calls.issueQueries[0].accountability).toEqual(editor)
+        // Their own user record only, read with admin rights (their policy may not cover directus_users).
+        expect(calls.userReads).toEqual([
+            { id: 'editor-1', query: { fields: ['email'] }, accountability: { admin: true } },
+        ])
+        expect(calls.mails).toHaveLength(1)
+        expect(calls.mails[0].to).toBe('Admin@Example.de')
+        expect(JSON.stringify(calls.mails)).not.toContain('someone-else')
+    })
+
+    test('403 without sending when the user may not read the issue', async () => {
+        const { call, calls } = setup({ denyIssueRead: true })
         const result = await call({ accountability: { admin: false, user: 'editor-1' } })
 
         expect(result.status).toBe(403)
-        expect(calls.issueQueries).toHaveLength(0)
+        expect(result.body.error).toContain('Keine Berechtigung')
+        expect(calls.userReads).toHaveLength(0)
+        expect(calls.mails).toHaveLength(0)
+    })
+
+    test('401 for an admin token without a user', async () => {
+        const { call, calls } = setup()
+        const result = await call({ accountability: { admin: true, user: null } })
+
+        expect(result.status).toBe(401)
         expect(calls.mails).toHaveLength(0)
     })
 
@@ -182,7 +212,9 @@ describe('POST /newsletter-send/:id/test', () => {
         const result = await call({ body: { to: 'someone-else@example.de' } })
 
         expect(result.status).toBe(200)
-        expect(calls.userReads).toEqual([{ id: 'admin-1', query: { fields: ['email'] } }])
+        expect(calls.userReads).toEqual([
+            { id: 'admin-1', query: { fields: ['email'] }, accountability: { admin: true } },
+        ])
         expect(calls.mails).toHaveLength(1)
         const mail = calls.mails[0]
         expect(mail.to).toBe('Admin@Example.de')

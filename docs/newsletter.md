@@ -304,17 +304,20 @@ Issues live in `newsletter_issues` with an M2A field `blocks` (junction `newslet
   `newsletter_issues` item page, same pattern as `invoice-actions`. It shows the button "Testversand an
   mich", a confirm dialog naming the recipient, and the result (incl. hidden entries and warnings). On an
   unsaved new issue it only shows a hint.
-- **Endpoint** `POST /newsletter-send/:id/test`, admins only (401/403). Sends the **saved** issue (live
-  item, never a Content Version) to the **logged-in admin's own address** from `directus_users` — there is
-  no recipient parameter. 400 if the account has no email or the issue no subject, 404 for an unknown or
-  unsaved issue, 502 if the mail fails. Subject `[TEST] <subject>`. Nothing is written: no
+- **Endpoint** `POST /newsletter-send/:id/test`, for **any logged-in user** (401 otherwise) who can read
+  the issue: it is loaded with the user's own permissions (403 if they may not read it or its blocks,
+  podcasts, meetups). Sends the **saved** issue (live item, never a Content Version) to the **user's own
+  address**, read from `directus_users` for `accountability.user` only (with admin rights, since a
+  non-admin policy may not cover `directus_users`) — there is no recipient parameter. 400 if the account
+  has no email or the issue no subject, 404 for an unknown or unsaved issue, 502 if the mail fails. Subject `[TEST] <subject>`. Nothing is written: no
   `newsletter_sends` row, no status change; the send is logged.
 - **Rendering** with the shared `renderNewsletterIssue`, so the same published filter as preview and real
   send applies. Hidden entries and warnings go back to the UI, never into the mail.
-- **Unsubscribe**: if the admin's address is a `confirmed` subscriber, the mail carries their real link
+- **Unsubscribe**: if the user's address is a `confirmed` subscriber, the mail carries their real link
   (clicking it really unsubscribes). Otherwise the token is `00000000-0000-0000-0000-000000000000`, a
-  well-formed UUID that matches nobody, so the website answers "invalid link". (A malformed token would
-  make Directus answer 500 on the uuid column.)
+  well-formed UUID that matches nobody, so the website answers "invalid link". (Directus answers a
+  malformed token on the uuid column with a 500; the website now rejects non-UUID confirm and unsubscribe
+  tokens as "invalid" before asking Directus, see `nuxt-app/server/utils/newsletterToken.ts`.)
 - **Headers**: `List-Unsubscribe: <https://…/newsletter/unsubscribe?token=…>` and
   `List-Unsubscribe-Post: List-Unsubscribe=One-Click` (RFC 8058), via the new `headers` option of
   `sendRawEmail`/`sendTemplatedEmail` in `src/shared/email-service.ts` (MailService passes it to

@@ -1,5 +1,5 @@
 import { defineEndpoint } from '@directus/extensions-sdk'
-import { checkAdminAccess } from '../newsletter/access.ts'
+import { checkAuthenticated } from '../newsletter/access.ts'
 import { isNotFoundError, ISSUES_COLLECTION, loadNewsletterIssue } from '../newsletter/loadIssue.ts'
 import { renderNewsletterIssue } from '../newsletter/render/index.ts'
 import { buildListUnsubscribeHeaders, buildUnsubscribeUrl, TEST_UNSUBSCRIBE_TOKEN } from '../newsletter/unsubscribe.ts'
@@ -13,15 +13,16 @@ export const TEST_SUBJECT_PREFIX = '[TEST] '
 /**
  * Sending actions for newsletter issues, called from the `newsletter-actions`
  * interface on the `newsletter_issues` item page (same pattern as `invoice-lifecycle`
- * and `invoice-actions`). Admins only.
+ * and `invoice-actions`).
  *
  * - POST /newsletter-send/:id/test — send the SAVED issue (live item, never a Content
- *   Version) to the requesting admin's own address, with `[TEST]` in front of the
- *   subject. There is no recipient parameter on purpose: a test send can never reach
- *   anyone else.
+ *   Version) to the requesting user's own address, with `[TEST]` in front of the
+ *   subject. Any logged-in user may do this (401 otherwise), but only for an issue they
+ *   can read: the issue is loaded with their own accountability. There is no recipient
+ *   parameter on purpose: a test send can never reach anyone else.
  *
  * The mail is rendered by the shared `renderNewsletterIssue` (same published filter as
- * the preview and the real send) and carries the List-Unsubscribe headers. If the admin
+ * the preview and the real send) and carries the List-Unsubscribe headers. If the user
  * is a confirmed subscriber, their real unsubscribe link is used, otherwise a link with
  * a token that matches nobody. Nothing is written: no `newsletter_sends` row, no status
  * change on the issue.
@@ -37,18 +38,41 @@ export default defineEndpoint((router, context) => {
         }
     }
 
-    /** The requesting admin's own address — the only possible recipient of a test send. */
-    async function readOwnEmail(schema: any, accountability: any): Promise<string> {
-        if (!accountability?.user) {
-            throw new HttpError(400, 'Zum Testversand muss ein Benutzerkonto angemeldet sein')
-        }
-        const usersService = new services.ItemsService('directus_users', { schema, accountability })
-        const user = await usersService.readOne(accountability.user, { fields: ['email'] })
+    /**
+     * The requesting user's own address — the only possible recipient of a test send.
+     *
+     * Read with admin accountability because a non-admin's policy may not allow reading
+     * `directus_users`; it is strictly the record of `accountability.user` and only its
+     * `email` field.
+     */
+    async function readOwnEmail(schema: any, userId: string): Promise<string> {
+        const usersService = new services.ItemsService('directus_users', { schema, accountability: { admin: true } })
+        const user = await usersService.readOne(userId, { fields: ['email'] })
         const email = typeof user?.email === 'string' ? user.email.trim() : ''
         if (!email) {
             throw new HttpError(400, 'Dein Benutzerkonto hat keine E-Mail-Adresse')
         }
         return email
+    }
+
+    /**
+     * A ForbiddenError on the user's own read means "missing" or "not allowed"; an admin
+     * existence check tells the two apart, so the user gets a 404 or a 403.
+     */
+    async function notReadableError(schema: any, id: string): Promise<HttpError> {
+        try {
+            const adminIssues = new services.ItemsService(ISSUES_COLLECTION, {
+                schema,
+                accountability: { admin: true },
+            })
+            await adminIssues.readOne(id, { fields: ['id'] })
+        } catch (err: any) {
+            if (isNotFoundError(err)) {
+                return new HttpError(404, `Ausgabe ${id} nicht gefunden – ist sie schon gespeichert?`)
+            }
+            throw err
+        }
+        return new HttpError(403, 'Keine Berechtigung, diese Ausgabe mit ihren Blöcken, Podcasts und Meetups zu lesen')
     }
 
     /** The real unsubscribe token if the address is a confirmed subscriber, otherwise null. */
@@ -67,7 +91,7 @@ export default defineEndpoint((router, context) => {
     }
 
     router.post('/:id/test', async (req: any, res: any) => {
-        const accessError = checkAdminAccess(req.accountability)
+        const accessError = checkAuthenticated(req.accountability)
         if (accessError) {
             res.status(accessError.status).send({ error: accessError.message })
             return
@@ -87,7 +111,7 @@ export default defineEndpoint((router, context) => {
                 issue = await loadNewsletterIssue(issuesService, id)
             } catch (err: any) {
                 if (isNotFoundError(err)) {
-                    throw new HttpError(404, `Ausgabe ${id} nicht gefunden – ist sie schon gespeichert?`)
+                    throw await notReadableError(schema, id)
                 }
                 throw err
             }
@@ -97,7 +121,7 @@ export default defineEndpoint((router, context) => {
                 throw new HttpError(400, 'Die Ausgabe hat keinen Betreff')
             }
 
-            const recipient = await readOwnEmail(schema, req.accountability)
+            const recipient = await readOwnEmail(schema, req.accountability.user)
             const websiteUrl = await getRequiredSetting('website_url', { logger, services, getSchema })
 
             const subscriberToken = await findSubscriberToken(schema, recipient)

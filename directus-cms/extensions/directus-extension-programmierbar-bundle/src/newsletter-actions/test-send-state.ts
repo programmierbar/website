@@ -1,6 +1,6 @@
 /**
  * Pure client-side helpers for the newsletter actions interface: they turn the
- * `POST /newsletter-send/:id/test` response into what the admin sees. Kept free of
+ * `POST /newsletter-send/:id/test` response into what the user sees. Kept free of
  * Vue and Directus imports so they can be unit-tested.
  */
 
