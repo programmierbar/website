@@ -156,6 +156,11 @@
                 "type": "interface",
                 "name": "invoice-actions",
                 "source": "src/invoice-lifecycle/interface.ts"
+            },
+            {
+                "type": "endpoint",
+                "name": "newsletter-preview",
+                "source": "src/newsletter-preview/index.ts"
             }
         ],
         "host": "^10.10.0"
@@ -175,6 +180,7 @@
         "test:watch": "jest --watch"
     },
     "dependencies": {
+        "mjml": "^5.4.1",
         "passkit-generator": "^3.5.0",
         "pdfkit": "^0.16.0",
         "qrcode": "^1.5.4"
@@ -187,6 +193,7 @@
         "@jest/globals": "^29.7.0",
         "@slack/web-api": "^7.2.0",
         "@types/jest": "^29.5.12",
+        "@types/mjml": "^5.0.0",
         "@types/node": "^24.1.0",
         "@types/pdfkit": "^0.13.9",
         "@types/qrcode": "^1.5.5",
