@@ -171,6 +171,16 @@
                 "type": "interface",
                 "name": "newsletter-actions",
                 "source": "src/newsletter-actions/interface.ts"
+            },
+            {
+                "type": "hook",
+                "name": "newsletter-scheduling",
+                "source": "src/newsletter-scheduling/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "newsletter-mass-send",
+                "source": "src/newsletter-mass-send/index.ts"
             }
         ],
         "host": "^10.10.0"

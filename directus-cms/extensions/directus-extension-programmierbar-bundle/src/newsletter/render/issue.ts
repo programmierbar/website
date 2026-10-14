@@ -3,6 +3,7 @@ import { meetupsBlockMjml } from './blocks/meetups.ts'
 import { podcastsBlockMjml } from './blocks/podcasts.ts'
 import { textBlockMjml } from './blocks/text.ts'
 import { escapeHtml } from './escape.ts'
+import { createWebsiteLinker, type WebsiteLinker } from './links.ts'
 import { sortBySortField } from './sort.ts'
 import {
     MEETUPS_BLOCK_COLLECTION,
@@ -20,7 +21,7 @@ import {
 
 const UNSUBSCRIBE_PLACEHOLDER = '[Abmeldelink wird beim Versand eingesetzt]'
 
-function blockMjml(block: NewsletterIssueBlock, options: RenderOptions, report: RenderReport): string {
+function blockMjml(block: NewsletterIssueBlock, link: WebsiteLinker, report: RenderReport): string {
     const item = block.item
     if (!item || typeof item !== 'object') {
         // The junction row points at a deleted block, or the relation was not expanded.
@@ -32,9 +33,9 @@ function blockMjml(block: NewsletterIssueBlock, options: RenderOptions, report: 
         case TEXT_BLOCK_COLLECTION:
             return textBlockMjml(item as NewsletterTextBlock)
         case PODCASTS_BLOCK_COLLECTION:
-            return podcastsBlockMjml(item as NewsletterPodcastsBlock, options.websiteUrl, report)
+            return podcastsBlockMjml(item as NewsletterPodcastsBlock, link, report)
         case MEETUPS_BLOCK_COLLECTION:
-            return meetupsBlockMjml(item as NewsletterMeetupsBlock, options.websiteUrl, report)
+            return meetupsBlockMjml(item as NewsletterMeetupsBlock, link, report)
         default:
             report.warnings.push(`Unbekannter Blocktyp '${block.collection}' übersprungen`)
             return ''
@@ -73,8 +74,9 @@ export function buildIssueMjml(
 ): string {
     const subject = issue.subject?.trim() ?? ''
     const preheader = issue.preheader?.trim() ?? ''
+    const link = createWebsiteLinker(options.websiteUrl, subject)
     const blocks = sortBySortField(issue.blocks ?? [])
-        .map((block) => blockMjml(block, options, report))
+        .map((block) => blockMjml(block, link, report))
         .join('')
 
     return `<mjml lang="de">

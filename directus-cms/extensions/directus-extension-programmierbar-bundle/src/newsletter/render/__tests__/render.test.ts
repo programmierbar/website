@@ -82,10 +82,14 @@ describe('renderNewsletterIssue', () => {
         expect(html).toContain('<h2>Hallo</h2>')
         expect(html).toContain('<p>Willkommen</p>')
         expect(html).toContain(
-            '<a href="https://www.programmier.bar/podcast/deep-dive-200-erste">Deep Dive 200 – Erste</a>'
+            '<a href="https://www.programmier.bar/podcast/deep-dive-200-erste?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=ausgabe-oktober">Deep Dive 200 – Erste</a>'
         )
-        expect(html).toContain('<a href="https://www.programmier.bar/podcast/news-12-zweite">News 12: Zweite</a>')
-        expect(html).toContain('<a href="https://www.programmier.bar/meetup/rust-im-alltag">Rust im Alltag</a>')
+        expect(html).toContain(
+            '<a href="https://www.programmier.bar/podcast/news-12-zweite?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=ausgabe-oktober">News 12: Zweite</a>'
+        )
+        expect(html).toContain(
+            '<a href="https://www.programmier.bar/meetup/rust-im-alltag?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=ausgabe-oktober">Rust im Alltag</a>'
+        )
         expect(html).toContain('Donnerstag, 12. November 2026 um 18:30 Uhr')
         // A meetup without slug is listed, but not linked.
         expect(html).toContain('<li>Ohne Slug</li>')
@@ -188,7 +192,9 @@ describe('escaping', () => {
         expect(mjml).toContain('<mj-title>&lt;/mj-title&gt;&lt;mj-raw&gt;x&lt;/mj-raw&gt;</mj-title>')
         expect(mjml).toContain('<mj-preview>&lt;i&gt;p&lt;/i&gt;</mj-preview>')
         expect(mjml).toContain('<h2>&lt;b&gt;Heading&lt;/b&gt; &amp; &quot;Co&quot;</h2>')
-        expect(mjml).toContain('href="https://www.programmier.bar/podcast/a%22b"')
+        expect(mjml).toContain(
+            'href="https://www.programmier.bar/podcast/a%22b?utm_source=newsletter&amp;utm_medium=email'
+        )
         expect(mjml).toContain('News 1: &lt;/mj-text&gt;&lt;script&gt;')
         expect(mjml).not.toContain('<script>')
     })
@@ -295,5 +301,24 @@ describe('published filter', () => {
         expect(hidden).toHaveLength(1)
         expect(html).not.toContain('data-preview-notice')
         expect(html).not.toContain('ausgeblendet')
+    })
+})
+
+describe('campaign parameters', () => {
+    test('website links carry utm parameters with the subject slug as campaign', () => {
+        const mjml = buildIssueMjml(issue([podcastsBlock], { subject: 'Neues aus der Bar: Oktober!' }), OPTIONS)
+        expect(mjml).toContain(
+            'href="https://www.programmier.bar/podcast/deep-dive-200-erste?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=neues-aus-der-bar-oktober"'
+        )
+    })
+
+    test('without a subject the campaign parameter is left out', () => {
+        const mjml = buildIssueMjml(issue([podcastsBlock], { subject: null }), OPTIONS)
+        expect(mjml).toContain('podcast/deep-dive-200-erste?utm_source=newsletter&amp;utm_medium=email"')
+    })
+
+    test('the unsubscribe link gets no utm parameters', () => {
+        const mjml = buildIssueMjml(issue([]), { ...OPTIONS, unsubscribeUrl: 'https://www.programmier.bar/u?token=1' })
+        expect(mjml).toContain('href="https://www.programmier.bar/u?token=1"')
     })
 })

@@ -1,4 +1,5 @@
-import { escapeHtml, joinUrl } from '../escape.ts'
+import { escapeHtml } from '../escape.ts'
+import type { WebsiteLinker } from '../links.ts'
 import { selectPublished } from '../published.ts'
 import { sortBySortField } from '../sort.ts'
 import type { NewsletterMeetup, NewsletterMeetupsBlock, RenderReport } from '../types.ts'
@@ -24,7 +25,7 @@ function formatStart(startOn: string | null | undefined): string | null {
  * meetup, in junction order. Unpublished meetups go to `report.hidden`; a block left
  * without any meetup renders nothing.
  */
-export function meetupsBlockMjml(block: NewsletterMeetupsBlock, websiteUrl: string, report: RenderReport): string {
+export function meetupsBlockMjml(block: NewsletterMeetupsBlock, link: WebsiteLinker, report: RenderReport): string {
     const selected = sortBySortField(block.meetups ?? [])
         .map((row) => row.meetups_id)
         .filter((meetup): meetup is NewsletterMeetup => !!meetup && typeof meetup === 'object')
@@ -38,11 +39,11 @@ export function meetupsBlockMjml(block: NewsletterMeetupsBlock, websiteUrl: stri
 
     const items = meetups.map((meetup) => {
         const title = escapeHtml(meetup.title)
-        const link = meetup.slug
-            ? `<a href="${escapeHtml(joinUrl(websiteUrl, `meetup/${encodeURIComponent(meetup.slug)}`))}">${title}</a>`
+        const anchor = meetup.slug
+            ? `<a href="${escapeHtml(link(`meetup/${encodeURIComponent(meetup.slug)}`))}">${title}</a>`
             : title
         const start = formatStart(meetup.start_on)
-        return `<li>${link}${start ? `<br>${escapeHtml(start)}` : ''}</li>`
+        return `<li>${anchor}${start ? `<br>${escapeHtml(start)}` : ''}</li>`
     })
 
     return `

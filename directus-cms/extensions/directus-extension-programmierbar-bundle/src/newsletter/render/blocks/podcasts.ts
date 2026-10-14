@@ -1,5 +1,6 @@
 import { getFullPodcastTitle } from '../../../../../../../shared-code/index.ts'
-import { escapeHtml, joinUrl } from '../escape.ts'
+import { escapeHtml } from '../escape.ts'
+import type { WebsiteLinker } from '../links.ts'
 import { selectPublished } from '../published.ts'
 import { sortBySortField } from '../sort.ts'
 import type { NewsletterPodcast, NewsletterPodcastsBlock, RenderReport } from '../types.ts'
@@ -18,7 +19,7 @@ function podcastTitle(podcast: NewsletterPodcast): string {
  * junction order. Unpublished episodes go to `report.hidden`; a block left without any
  * episode renders nothing.
  */
-export function podcastsBlockMjml(block: NewsletterPodcastsBlock, websiteUrl: string, report: RenderReport): string {
+export function podcastsBlockMjml(block: NewsletterPodcastsBlock, link: WebsiteLinker, report: RenderReport): string {
     const selected = sortBySortField(block.podcasts ?? [])
         .map((row) => row.podcasts_id)
         .filter((podcast): podcast is NewsletterPodcast => !!podcast && typeof podcast === 'object')
@@ -33,7 +34,7 @@ export function podcastsBlockMjml(block: NewsletterPodcastsBlock, websiteUrl: st
     const items = podcasts.map((podcast) => {
         const title = escapeHtml(podcastTitle(podcast))
         const content = podcast.slug
-            ? `<a href="${escapeHtml(joinUrl(websiteUrl, `podcast/${encodeURIComponent(podcast.slug)}`))}">${title}</a>`
+            ? `<a href="${escapeHtml(link(`podcast/${encodeURIComponent(podcast.slug)}`))}">${title}</a>`
             : title
         return `<li>${content}</li>`
     })
