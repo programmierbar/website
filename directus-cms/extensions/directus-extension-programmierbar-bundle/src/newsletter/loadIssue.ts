@@ -100,10 +100,17 @@ export class IssueAccessError extends Error {
 }
 
 /**
- * Load an issue with the requesting user's own permissions, so a user only previews or
- * test-sends what they may read. Directus answers both "missing" and "not allowed" with
- * a ForbiddenError; an admin existence check (with the same version) tells them apart,
- * so the caller can answer 404 or 403. It reveals existence only to logged-in users.
+ * Load an issue for a logged-in user (Live Preview, test send).
+ *
+ * Access is checked with the user's own permissions on the issue itself: Directus
+ * answers both "missing" and "not allowed" with a ForbiddenError, and an admin
+ * existence check tells them apart (404 vs. 403; existence is revealed only to
+ * logged-in users).
+ *
+ * The content is then read with admin rights, exactly like the real send will: with the
+ * user's accountability Directus would silently drop nested blocks, podcasts or meetups
+ * their policy does not cover, and the preview or test mail would differ from what is
+ * sent. The only content filter is the renderer's published filter.
  */
 export async function loadNewsletterIssueForUser(
     services: { ItemsService: any },
@@ -112,33 +119,38 @@ export async function loadNewsletterIssueForUser(
     id: string,
     version?: string | null
 ): Promise<NewsletterIssue> {
-    try {
-        return await loadNewsletterIssue(
-            new services.ItemsService(ISSUES_COLLECTION, { schema, accountability }),
-            id,
-            version
+    const userService = new services.ItemsService(ISSUES_COLLECTION, { schema, accountability })
+    const adminService = new services.ItemsService(ISSUES_COLLECTION, { schema, accountability: { admin: true } })
+    const notFound = () =>
+        new IssueAccessError(
+            404,
+            `Ausgabe ${id}${isContentVersion(version) ? ` (Version ${version})` : ''} nicht gefunden – ist sie schon gespeichert?`
         )
+
+    try {
+        await userService.readOne(id, { fields: ['id'] })
     } catch (err: any) {
         if (!isNotFoundError(err)) {
             throw err
         }
+        try {
+            await adminService.readOne(id, { fields: ['id'] })
+        } catch (adminErr: any) {
+            if (isNotFoundError(adminErr)) {
+                throw notFound()
+            }
+            throw adminErr
+        }
+        throw new IssueAccessError(403, `Keine Berechtigung, die Ausgabe ${id} zu lesen`)
     }
 
-    const label = `Ausgabe ${id}${isContentVersion(version) ? ` (Version ${version})` : ''}`
     try {
-        const adminQuery: Record<string, unknown> = { fields: ['id'] }
-        if (isContentVersion(version)) {
-            adminQuery.version = version
-        }
-        await new services.ItemsService(ISSUES_COLLECTION, { schema, accountability: { admin: true } }).readOne(
-            id,
-            adminQuery
-        )
+        return await loadNewsletterIssue(adminService, id, version)
     } catch (err: any) {
+        // The issue exists (checked above), so this is an unknown Content Version.
         if (isNotFoundError(err)) {
-            throw new IssueAccessError(404, `${label} nicht gefunden – ist sie schon gespeichert?`)
+            throw notFound()
         }
         throw err
     }
-    throw new IssueAccessError(403, `Keine Berechtigung, ${label} mit ihren Blöcken, Podcasts und Meetups zu lesen`)
 }

@@ -24,6 +24,8 @@ const { readNewsletterSubscriberByUnsubscribeToken, unsubscribeNewsletterSubscri
     g.defineEventHandler = (fn: any) => fn
     g.readBody = async (event: any) => event.body ?? {}
     g.getQuery = (event: any) => event.query ?? {}
+    g.getRequestHeader = (event: any, name: string) => event.headers?.[name.toLowerCase()]
+    g.readMultipartFormData = async (event: any) => event.multipart
     g.createError = (input: { statusCode: number; message: string }) =>
         Object.assign(new Error(input.message), { statusCode: input.statusCode })
     g.sendRedirect = sendRedirect
@@ -135,5 +137,34 @@ describe('POST /newsletter/unsubscribe (one-click)', () => {
 
         await expect(invoke(ONE_CLICK, { token: BOOM_TOKEN })).rejects.toMatchObject({ statusCode: 500 })
         expect(sendRedirect).not.toHaveBeenCalled()
+    })
+
+    // RFC 8058 also allows multipart/form-data, which readBody does not decode.
+    describe('multipart/form-data', () => {
+        const multipartEvent = (fields: Record<string, string>, query: Record<string, unknown>) => ({
+            headers: { 'content-type': 'multipart/form-data; boundary=----x' },
+            multipart: Object.entries(fields).map(([name, value]) => ({ name, data: Buffer.from(value) })),
+            query,
+        })
+
+        it('opts the subscriber out and answers 200', async () => {
+            readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status: 'confirmed' })
+
+            const result = await (handler as any)(multipartEvent(ONE_CLICK, { token: GOOD_TOKEN }))
+
+            expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledWith('sub_1', GOOD_TOKEN)
+            expect(result).toEqual({ status: 'unsubscribed' })
+            expect(sendRedirect).not.toHaveBeenCalled()
+        })
+
+        it('fails with 500 when Directus fails', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {})
+            readNewsletterSubscriberByUnsubscribeToken.mockRejectedValue(new Error('directus down'))
+
+            await expect((handler as any)(multipartEvent(ONE_CLICK, { token: BOOM_TOKEN }))).rejects.toMatchObject({
+                statusCode: 500,
+            })
+            expect(sendRedirect).not.toHaveBeenCalled()
+        })
     })
 })

@@ -58,6 +58,8 @@ interface SetupOptions {
     sendFails?: boolean
     /** The requesting user may not read the issue (their policy), admins still can. */
     denyIssueRead?: boolean
+    /** Directus silently drops the nested items the user's policy does not cover. */
+    nestedRestricted?: boolean
 }
 
 function setup(options: SetupOptions = {}) {
@@ -81,6 +83,9 @@ function setup(options: SetupOptions = {}) {
                 if (!issue || id !== ISSUE_ID) throw new ForbiddenError('forbidden')
                 if (options.denyIssueRead && this.opts?.accountability?.admin !== true) {
                     throw new ForbiddenError('forbidden')
+                }
+                if (options.nestedRestricted && this.opts?.accountability?.admin !== true) {
+                    return { ...issue, blocks: [] }
                 }
                 return issue
             }
@@ -188,6 +193,19 @@ describe('POST /newsletter-send/:id/test', () => {
         expect(JSON.stringify(calls.mails)).not.toContain('someone-else')
     })
 
+    test('mails the complete issue even if the user may not read every nested item', async () => {
+        const editor = { admin: false, user: 'editor-1' }
+        const { call, calls } = setup({ nestedRestricted: true })
+        const result = await call({ accountability: editor })
+
+        expect(result.status).toBe(200)
+        // Same content as the real send: access is checked with the user's rights, content read as admin.
+        expect(calls.issueQueries[0]).toEqual({ id: ISSUE_ID, query: { fields: ['id'] }, accountability: editor })
+        expect(calls.issueQueries[1].accountability).toEqual({ admin: true })
+        expect(calls.mails[0].html).toContain('<p>Text</p>')
+        expect(calls.mails[0].html).toContain('/podcast/a')
+    })
+
     test('403 without sending when the user may not read the issue', async () => {
         const { call, calls } = setup({ denyIssueRead: true })
         const result = await call({ accountability: { admin: false, user: 'editor-1' } })
@@ -228,8 +246,13 @@ describe('POST /newsletter-send/:id/test', () => {
         const { call, calls } = setup()
         await call()
 
-        expect(calls.issueQueries[0].query).not.toHaveProperty('version')
+        expect(calls.issueQueries).toHaveLength(2)
+        for (const read of calls.issueQueries) {
+            expect(read.query).not.toHaveProperty('version')
+        }
+        // Access check with the requester's rights, content read as admin like the real send.
         expect(calls.issueQueries[0].accountability).toEqual(ADMIN)
+        expect(calls.issueQueries[1].query.fields).toContain('blocks.collection')
     })
 
     test('passes the List-Unsubscribe headers to the MailService', async () => {

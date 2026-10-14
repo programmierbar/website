@@ -19,10 +19,25 @@ import { performNewsletterUnsubscribe } from '../../utils/newsletterUnsubscribe'
 // request comes from a server, not a browser, and only its status code counts, so it
 // gets a plain 200 instead of a redirect (and a 500 on a technical failure, so the
 // provider can retry). There is no CSRF check on this route to get in the way.
+// The fields of the POST body. The page's form and most one-click senders use
+// `application/x-www-form-urlencoded`, which readBody parses like JSON; RFC 8058
+// also allows `multipart/form-data`, which readBody does not decode.
+async function readUnsubscribeFields(event: Parameters<typeof readBody>[0]): Promise<Record<string, unknown>> {
+    const contentType = getRequestHeader(event, 'content-type') ?? ''
+    if (contentType.toLowerCase().startsWith('multipart/form-data')) {
+        const fields: Record<string, string> = {}
+        for (const part of (await readMultipartFormData(event)) ?? []) {
+            if (part.name && !part.filename) {
+                fields[part.name] = part.data.toString('utf8')
+            }
+        }
+        return fields
+    }
+    return (await readBody(event)) ?? {}
+}
+
 export default defineEventHandler(async (event) => {
-    // Form submissions arrive as `application/x-www-form-urlencoded`; readBody
-    // parses that into an object just like it does JSON.
-    const body = await readBody(event)
+    const body = await readUnsubscribeFields(event)
     const isOneClick = body?.['List-Unsubscribe'] === 'One-Click'
     // The page's form sends the token in the body; a one-click POST only has the
     // link's query.

@@ -32,7 +32,9 @@ class ForbiddenError extends Error {
     code = 'FORBIDDEN'
 }
 
-function setup(options: { versions?: Record<string, any>; readError?: Error; denyRead?: boolean } = {}) {
+function setup(
+    options: { versions?: Record<string, any>; readError?: Error; denyRead?: boolean; nestedRestricted?: boolean } = {}
+) {
     const readOne = jest.fn(async (id: string, query: any, accountability?: any) => {
         if (options.readError) throw options.readError
         // `denyRead`: the user's policy does not cover the issue; an admin read still works.
@@ -44,6 +46,10 @@ function setup(options: { versions?: Record<string, any>; readError?: Error; den
             const versioned = options.versions?.[query.version]
             if (!versioned) throw new ForbiddenError("You don't have permission to access this.")
             return versioned
+        }
+        // `nestedRestricted`: Directus silently drops the blocks the user's policy does not cover.
+        if (options.nestedRestricted && accountability?.admin !== true) {
+            return { ...ISSUE, blocks: [] }
         }
         return ISSUE
     })
@@ -142,7 +148,10 @@ describe('GET /newsletter-preview/:id', () => {
         const result = await call({ query: { version: 'entwurf' } })
 
         expect(result.status).toBe(200)
-        expect(readOne.mock.calls[0]?.[1]).toHaveProperty('version', 'entwurf')
+        // The version goes into the full (admin) read only, not into the access check.
+        expect(readOne.mock.calls[0]).toEqual([ISSUE_ID, { fields: ['id'] }, ADMIN])
+        expect(readOne.mock.calls[1]?.[1]).toHaveProperty('version', 'entwurf')
+        expect(readOne.mock.calls[1]?.[2]).toEqual({ admin: true })
         expect(result.body).toContain('<title>Versions-Betreff</title>')
     })
 
@@ -176,11 +185,16 @@ describe('GET /newsletter-preview/:id', () => {
         expect(result.headers['content-type']).toBe('text/plain; charset=utf-8')
     })
 
-    test('404 for an unknown version even when the user lacks read access', async () => {
-        const { call } = setup({ denyRead: true })
-        const result = await call({ accountability: { admin: false, user: 'editor-1' }, query: { version: 'weg' } })
+    test('renders the complete issue even if the user may not read every nested item', async () => {
+        const editor = { admin: false, user: 'editor-1' }
+        const { call, readOne } = setup({ nestedRestricted: true })
+        const result = await call({ accountability: editor })
 
-        expect(result.status).toBe(404)
+        expect(result.status).toBe(200)
+        // Same content as the real send, which reads with admin rights.
+        expect(result.body).toContain('<p>Hallo</p>')
+        expect(readOne.mock.calls[0]).toEqual([ISSUE_ID, { fields: ['id'] }, editor])
+        expect(readOne.mock.calls[1]?.[2]).toEqual({ admin: true })
     })
 
     test('404 for an unknown issue', async () => {
@@ -219,41 +233,44 @@ describe('GET /newsletter-preview/:id', () => {
 
     test('shows a notice above the mail listing hidden unpublished entries', async () => {
         const { call, readOne } = setup()
-        readOne.mockResolvedValueOnce({
-            ...ISSUE,
-            blocks: [
-                ...ISSUE.blocks,
-                {
-                    sort: 2,
-                    collection: 'newsletter_blocks_podcasts',
-                    item: {
-                        heading: 'Folgen',
-                        podcasts: [
-                            {
-                                sort: 1,
-                                podcasts_id: {
-                                    status: 'published',
-                                    slug: 'a',
-                                    type: 'news',
-                                    number: '1',
-                                    title: 'Live',
+        readOne
+            // First call: the access check (id only); second: the full read.
+            .mockResolvedValueOnce({ id: ISSUE_ID })
+            .mockResolvedValueOnce({
+                ...ISSUE,
+                blocks: [
+                    ...ISSUE.blocks,
+                    {
+                        sort: 2,
+                        collection: 'newsletter_blocks_podcasts',
+                        item: {
+                            heading: 'Folgen',
+                            podcasts: [
+                                {
+                                    sort: 1,
+                                    podcasts_id: {
+                                        status: 'published',
+                                        slug: 'a',
+                                        type: 'news',
+                                        number: '1',
+                                        title: 'Live',
+                                    },
                                 },
-                            },
-                            {
-                                sort: 2,
-                                podcasts_id: {
-                                    status: 'draft',
-                                    slug: 'b',
-                                    type: 'news',
-                                    number: '2',
-                                    title: '<Entwurf>',
+                                {
+                                    sort: 2,
+                                    podcasts_id: {
+                                        status: 'draft',
+                                        slug: 'b',
+                                        type: 'news',
+                                        number: '2',
+                                        title: '<Entwurf>',
+                                    },
                                 },
-                            },
-                        ],
+                            ],
+                        },
                     },
-                },
-            ],
-        })
+                ],
+            })
         const result = await call()
 
         expect(result.status).toBe(200)
@@ -275,7 +292,10 @@ describe('GET /newsletter-preview/:id', () => {
 
     test('logs renderer warnings', async () => {
         const { call, logger, readOne } = setup()
-        readOne.mockResolvedValueOnce({ ...ISSUE, blocks: [{ sort: 1, collection: 'newsletter_blocks_x', item: {} }] })
+        readOne
+            // First call: the access check (id only); second: the full read.
+            .mockResolvedValueOnce({ id: ISSUE_ID })
+            .mockResolvedValueOnce({ ...ISSUE, blocks: [{ sort: 1, collection: 'newsletter_blocks_x', item: {} }] })
         const result = await call()
 
         expect(result.status).toBe(200)
