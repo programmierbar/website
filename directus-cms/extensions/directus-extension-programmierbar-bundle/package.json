@@ -148,6 +148,11 @@
                 "source": "src/meetup-registration/index.ts"
             },
             {
+                "type": "hook",
+                "name": "meetup-registration-retention",
+                "source": "src/meetup-registration-retention/index.ts"
+            },
+            {
                 "type": "endpoint",
                 "name": "ticket-wallet",
                 "source": "src/ticket-wallet/index.ts"
