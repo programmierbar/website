@@ -314,6 +314,49 @@ describe('POST /brevo-webhook: send rows', () => {
     })
 })
 
+describe('POST /brevo-webhook: overlapping events', () => {
+    test('two events racing for the same subscriber: exactly one transition wins', async () => {
+        const { call, tables, writes } = setup({ subscribers: [subscriber('confirmed')] })
+
+        const [bounce, complaint] = await Promise.all([
+            call({ event: 'hard_bounce', email: 'leser@example.de' }),
+            call({ event: 'spam', email: 'leser@example.de', ...NEWSLETTER }),
+        ])
+
+        // Both carried the status guard in their UPDATE; only the first one matched.
+        expect(writes.filter((w) => w.table === 'newsletter_subscribers')).toHaveLength(2)
+        expect(writes.every((w) => w.table !== 'newsletter_subscribers' || w.whereIn.status)).toBe(true)
+        expect(bounce.body.transitioned + complaint.body.transitioned).toBe(1)
+        expect(tables.newsletter_subscribers![0]!.status).toBe('bounced')
+    })
+
+    test('a confirm or unsubscribe that lands first is not overwritten', async () => {
+        const { call, tables } = setup({ subscribers: [subscriber('pending')] })
+        // The website opts out between Brevo's event and our write: the guard sees it.
+        tables.newsletter_subscribers![0]!.status = 'unsubscribed'
+
+        const result = await call({ event: 'hard_bounce', email: 'leser@example.de' })
+
+        expect(result.body).toMatchObject({ transitioned: 0 })
+        expect(tables.newsletter_subscribers![0]!.status).toBe('unsubscribed')
+    })
+
+    test('two events racing for the same send row: the first note stays', async () => {
+        const { call, tables, writes } = setup({ sends: [{ id: SEND_ID, status: 'sent', error: null }] })
+
+        const results = await Promise.all([
+            call({ event: 'blocked', email: 'leser@example.de', ...NEWSLETTER }),
+            call({ event: 'spam', email: 'leser@example.de', ...NEWSLETTER }),
+        ])
+
+        const noteWrites = writes.filter((w) => w.table === 'newsletter_sends')
+        expect(noteWrites).toHaveLength(2)
+        expect(noteWrites.every((w) => w.whereNull.includes('error') && w.where.status === 'sent')).toBe(true)
+        expect(results.map((r) => r.body.notedSends).reduce((a, b) => a + b, 0)).toBe(1)
+        expect(tables.newsletter_sends![0]!.error).toBe('Brevo: blocked')
+    })
+})
+
 describe('POST /brevo-webhook: failures', () => {
     test('a database error answers 500 (so Brevo may retry) and reaches Slack once', async () => {
         const { call } = setup({ subscribers: [subscriber('confirmed')], failWrites: true })
