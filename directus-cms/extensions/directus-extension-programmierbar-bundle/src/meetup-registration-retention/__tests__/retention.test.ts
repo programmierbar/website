@@ -88,13 +88,14 @@ describe('anonymisation', () => {
         })
     })
 
-    test('keeps only email and consent timestamp when the person wants meetup updates', () => {
+    test('keeps only first name, email and consent timestamp when the person wants meetup updates', () => {
         const row = registration({ wants_meetup_updates: true, meetup_updates_consented_at: '2026-08-01T10:00:00Z' })
         const patch = buildAnonymisationPatch(row, 'new-token')
+        expect(patch).not.toHaveProperty('first_name')
         expect(patch).not.toHaveProperty('email')
         expect(patch).not.toHaveProperty('meetup_updates_consented_at')
         expect(patch).not.toHaveProperty('wants_meetup_updates')
-        expect(patch).toMatchObject({ first_name: '', last_name: '', company: null, cancel_token: 'new-token' })
+        expect(patch).toMatchObject({ last_name: '', pronouns: null, company: null, cancel_token: 'new-token' })
     })
 
     test('never touches the statistics fields', () => {
@@ -123,11 +124,15 @@ describe('anonymisation', () => {
         expect(needsAnonymisation(anonymised(consenting))).toBe(false)
     })
 
-    test('withdrawn consent clears the kept email on the next run', () => {
+    test('withdrawn consent clears the kept first name and email on the next run', () => {
         const kept = anonymised(
             registration({ wants_meetup_updates: true, meetup_updates_consented_at: '2026-08-01T10:00Z' })
         )
-        expect(needsAnonymisation({ ...kept, wants_meetup_updates: false })).toBe(true)
+        expect(kept).toMatchObject({ first_name: 'Ada', email: 'ada@example.com' })
+        expect(needsAnonymisation(kept)).toBe(false)
+        const withdrawn = { ...kept, wants_meetup_updates: false }
+        expect(needsAnonymisation(withdrawn)).toBe(true)
+        expect(anonymised(withdrawn)).toMatchObject({ first_name: '', email: '', meetup_updates_consented_at: null })
     })
 
     test('any single remaining personal field triggers anonymisation', () => {
@@ -193,7 +198,7 @@ describe('anonymiseExpiredRegistrations', () => {
         expect(fake.readCalls.every((call) => call.meetupIds.join() === 'old')).toBe(true)
         expect(fake.anonymiseCalls.map((batch) => batch.map((u) => u.id))).toEqual([['a', 'b'], ['c']])
         expect(fake.store.get('a')).toMatchObject({ first_name: '', email: '' })
-        expect(fake.store.get('b')).toMatchObject({ first_name: '', email: 'ada@example.com' })
+        expect(fake.store.get('b')).toMatchObject({ first_name: 'Ada', last_name: '', email: 'ada@example.com' })
         expect(fake.store.get('d')).toMatchObject({ first_name: 'Ada', email: 'ada@example.com' })
     })
 

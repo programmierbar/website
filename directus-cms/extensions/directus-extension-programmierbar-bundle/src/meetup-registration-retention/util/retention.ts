@@ -33,7 +33,18 @@ export const NULLABLE_PERSONAL_FIELDS = [
 ] as const
 
 /** Personal fields that are NOT NULL and therefore cleared to {@link ANONYMISED_TEXT}. */
-export const REQUIRED_PERSONAL_FIELDS = ['first_name', 'last_name'] as const
+export const REQUIRED_PERSONAL_FIELDS = ['last_name'] as const
+
+/**
+ * Kept while the person has consented to invitations (`wants_meetup_updates`):
+ * the address and the consent timestamp as proof of the opt-in, the first name
+ * for a personal greeting. Without consent they are cleared to these values.
+ */
+export const CONSENT_FIELDS = {
+    first_name: ANONYMISED_TEXT,
+    email: ANONYMISED_TEXT,
+    meetup_updates_consented_at: null,
+} as const
 
 /**
  * Fields read per registration: everything {@link needsAnonymisation} looks at.
@@ -43,11 +54,14 @@ export const REQUIRED_PERSONAL_FIELDS = ['first_name', 'last_name'] as const
 export const REGISTRATION_FIELDS = [
     'id',
     ...REQUIRED_PERSONAL_FIELDS,
-    'email',
     ...NULLABLE_PERSONAL_FIELDS,
-    'wants_meetup_updates',
+    'first_name',
+    'email',
     'meetup_updates_consented_at',
+    'wants_meetup_updates',
 ] as const
+
+const CONSENT_FIELD_NAMES = Object.keys(CONSENT_FIELDS) as Array<keyof typeof CONSENT_FIELDS>
 
 export interface RetentionMeetup {
     id: string
@@ -81,9 +95,9 @@ export function isPastRetention(meetup: RetentionMeetup, cutoff: Date): boolean 
 }
 
 /**
- * Invitation consent is the only reason to keep anything personal. Until the
- * consent moves to the "Meetups" list of the newsletter system, the address and
- * the consent timestamp stay as proof of the opt-in.
+ * Invitation consent is the only reason to keep anything personal
+ * ({@link CONSENT_FIELDS}), until it moves to the "Meetups" list of the
+ * newsletter system.
  */
 export function keepsConsentProof(registration: RetentionRegistration): boolean {
     return registration.wants_meetup_updates === true
@@ -98,7 +112,7 @@ export function needsAnonymisation(registration: RetentionRegistration): boolean
     if (REQUIRED_PERSONAL_FIELDS.some((field) => hasValue(registration[field]))) return true
     if (NULLABLE_PERSONAL_FIELDS.some((field) => hasValue(registration[field]))) return true
     if (!keepsConsentProof(registration)) {
-        return hasValue(registration.email) || hasValue(registration.meetup_updates_consented_at)
+        return CONSENT_FIELD_NAMES.some((field) => hasValue(registration[field]))
     }
     return false
 }
@@ -110,8 +124,9 @@ export function needsAnonymisation(registration: RetentionRegistration): boolean
  * so the link in the confirmation mail no longer points at the row.
  *
  * TODO: once invitation consent lives in the "Meetups" list of the newsletter
- * system, migrate rows with `wants_meetup_updates = true` there and drop the
- * exception below, so `email` and `meetup_updates_consented_at` are cleared too.
+ * system, move `first_name`, `email` and the consent of rows with
+ * `wants_meetup_updates = true` there and drop the exception below, so
+ * {@link CONSENT_FIELDS} are always cleared.
  */
 export function buildAnonymisationPatch(
     registration: RetentionRegistration,
@@ -121,8 +136,7 @@ export function buildAnonymisationPatch(
     for (const field of REQUIRED_PERSONAL_FIELDS) patch[field] = ANONYMISED_TEXT
     for (const field of NULLABLE_PERSONAL_FIELDS) patch[field] = null
     if (!keepsConsentProof(registration)) {
-        patch.email = ANONYMISED_TEXT
-        patch.meetup_updates_consented_at = null
+        for (const field of CONSENT_FIELD_NAMES) patch[field] = CONSENT_FIELDS[field]
     }
     return patch
 }
