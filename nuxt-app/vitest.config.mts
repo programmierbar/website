@@ -6,8 +6,12 @@ import { defineConfig } from 'vitest/config'
 // composables run against a stubbed global `$fetch`.
 export default defineConfig({
     resolve: {
-        // Same alias as nuxt.config.ts, so code importing `shared-code` runs in tests as-is.
-        alias: { 'shared-code': fileURLToPath(new URL('../shared-code', import.meta.url)) },
+        alias: {
+            // Server routes import shared helpers via Nuxt's `~` alias; mirror it so they load outside Nuxt.
+            '~': fileURLToPath(new URL('.', import.meta.url)),
+            // Same alias as nuxt.config.ts, so code importing `shared-code` runs in tests as-is.
+            'shared-code': fileURLToPath(new URL('../shared-code', import.meta.url)),
+        },
     },
     test: {
         environment: 'node',

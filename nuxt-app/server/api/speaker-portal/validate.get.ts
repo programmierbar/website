@@ -1,3 +1,5 @@
+import { htmlToPlainText } from '~/helpers/sanitize'
+
 // Every error leaves this handler as JSON with a German message the portal can show as-is. Anything
 // unexpected is logged here (Vercel function logs) and answered with a generic 500, so internal error
 // text never reaches the speaker.
@@ -53,7 +55,8 @@ export default defineEventHandler(async (event) => {
                 last_name: speaker.last_name,
                 academic_title: speaker.academic_title,
                 occupation: speaker.occupation,
-                description: speaker.description,
+                // Rich text in the CMS, but the portal edits it in a plain textarea.
+                description: htmlToPlainText(speaker.description),
                 website_url: speaker.website_url,
                 linkedin_url: speaker.linkedin_url,
                 twitter_url: speaker.twitter_url,
@@ -61,6 +64,7 @@ export default defineEventHandler(async (event) => {
                 github_url: speaker.github_url,
                 instagram_url: speaker.instagram_url,
                 youtube_url: speaker.youtube_url,
+                mastodon_url: speaker.mastodon_url,
                 portal_submission_deadline: speaker.portal_submission_deadline,
                 profile_image: speaker.profile_image,
                 event_image: speaker.event_image,
