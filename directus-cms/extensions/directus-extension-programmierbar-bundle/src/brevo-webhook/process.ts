@@ -8,7 +8,7 @@ export interface WebhookStore {
      */
     transitionSubscriber(email: string, to: SubscriberTransition, now: Date): Promise<boolean>
     /** Writes `note` into `error` of a `sent` row that has no error yet. True if a row changed. */
-    noteSend(sendId: string, note: string): Promise<boolean>
+    noteSend(sendId: string, note: string, now: Date): Promise<boolean>
 }
 
 export interface WebhookDeps {
@@ -16,7 +16,7 @@ export interface WebhookDeps {
     now: () => Date
     logger: { info: (msg: string) => void; warn: (msg: string) => void }
     /** Post to Slack. Never throws. */
-    notify: (text: string) => Promise<void>
+    notify: (text: string) => Promise<unknown>
 }
 
 export interface ProcessResult {
@@ -38,7 +38,7 @@ export async function processBrevoEvents(events: BrevoEvent[], deps: WebhookDeps
     for (const raw of events) {
         const decision = decide(raw)
 
-        if (decision.sendId && (await deps.store.noteSend(decision.sendId, decision.note))) {
+        if (decision.sendId && (await deps.store.noteSend(decision.sendId, decision.note, deps.now()))) {
             result.notedSends++
         }
 

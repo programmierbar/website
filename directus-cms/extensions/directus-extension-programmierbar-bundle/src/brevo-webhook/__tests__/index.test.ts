@@ -18,17 +18,6 @@ const NEWSLETTER = { 'X-Mailin-custom': `newsletter:send:${SEND_ID}`, tags: ['ne
 
 type Row = Record<string, any>
 
-/** Evaluates the subset of Directus filters the store uses. */
-function matches(row: Row, filter: Record<string, any>): boolean {
-    return Object.entries(filter).every(([field, condition]) => {
-        const value = row[field]
-        if ('_eq' in condition) return value === condition._eq
-        if ('_in' in condition) return condition._in.includes(value)
-        if ('_null' in condition) return (value === null || value === undefined) === condition._null
-        throw new Error(`unsupported filter ${JSON.stringify(condition)}`)
-    })
-}
-
 interface SetupOptions {
     secret?: string | undefined
     subscribers?: Row[]
@@ -36,34 +25,55 @@ interface SetupOptions {
     failWrites?: boolean
 }
 
+interface Statement {
+    table: string
+    where: Row
+    whereIn: Record<string, unknown[]>
+    whereNull: string[]
+    data: Row
+}
+
 function setup(options: SetupOptions = {}) {
     const tables: Record<string, Row[]> = {
         newsletter_subscribers: options.subscribers ?? [],
         newsletter_sends: options.sends ?? [],
     }
-    const writes: Array<{ collection: string; method: string; query: any; data: any; accountability: any }> = []
+    const writes: Statement[] = []
 
-    class FakeItemsService {
-        constructor(
-            private collection: string,
-            private opts: any
-        ) {}
-        async updateByQuery(query: any, data: any) {
-            writes.push({
-                collection: this.collection,
-                method: 'updateByQuery',
-                query,
-                data,
-                accountability: this.opts?.accountability,
-            })
-            if (options.failWrites) throw new Error('database down')
-            const rows = (tables[this.collection] ?? []).filter((row) => matches(row, query.filter))
-            for (const row of rows) Object.assign(row, data)
-            return rows.map((row) => row.id)
+    /**
+     * A knex stand-in for `database(table).where(…).whereIn(…).whereNull(…).update(…)`. The
+     * predicate is evaluated inside `update`, like the single SQL statement it stands for.
+     */
+    function database(table: string) {
+        const statement: Statement = { table, where: {}, whereIn: {}, whereNull: [], data: {} }
+        const builder = {
+            where(conditions: Row) {
+                Object.assign(statement.where, conditions)
+                return builder
+            },
+            whereIn(column: string, values: unknown[]) {
+                statement.whereIn[column] = values
+                return builder
+            },
+            whereNull(column: string) {
+                statement.whereNull.push(column)
+                return builder
+            },
+            async update(data: Row) {
+                statement.data = data
+                writes.push(statement)
+                if (options.failWrites) throw new Error('database down')
+                const rows = (tables[table] ?? []).filter(
+                    (row) =>
+                        Object.entries(statement.where).every(([column, value]) => row[column] === value) &&
+                        Object.entries(statement.whereIn).every(([column, values]) => values.includes(row[column])) &&
+                        statement.whereNull.every((column) => row[column] === null || row[column] === undefined)
+                )
+                for (const row of rows) Object.assign(row, data)
+                return rows.length
+            },
         }
-        async updateMany() {
-            throw new Error('updateMany must not be used')
-        }
+        return builder
     }
 
     const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
@@ -78,8 +88,9 @@ function setup(options: SetupOptions = {}) {
         router as any,
         {
             logger,
-            services: { ItemsService: FakeItemsService },
+            services: {},
             getSchema: async () => ({}),
+            database,
             env: 'secret' in options ? { BREVO_WEBHOOK_SECRET: options.secret } : { BREVO_WEBHOOK_SECRET: SECRET },
         } as any
     )
@@ -143,16 +154,18 @@ describe('POST /brevo-webhook: subscribers', () => {
 
         expect(result).toEqual({ status: 200, body: { received: 1, transitioned: 1, notedSends: 0 } })
         expect(tables.newsletter_subscribers![0]!.status).toBe('bounced')
-        // One conditional system write; date_updated is left to Directus.
+        // One conditional UPDATE: the status guard is applied by the database in the same statement.
         expect(writes).toEqual([
             {
-                collection: 'newsletter_subscribers',
-                method: 'updateByQuery',
-                query: { filter: { email: { _eq: 'leser@example.de' }, status: { _in: ['pending', 'confirmed'] } } },
-                data: { status: 'bounced' },
-                accountability: null,
+                table: 'newsletter_subscribers',
+                where: { email: 'leser@example.de' },
+                whereIn: { status: ['pending', 'confirmed'] },
+                whereNull: [],
+                data: { status: 'bounced', date_updated: expect.any(String) },
             },
         ])
+        // Raw knex bypasses Directus, so date_updated (the time of the bounce) is written here.
+        expect(Number.isNaN(new Date(tables.newsletter_subscribers![0]!.date_updated).getTime())).toBe(false)
         expect(slackMock).not.toHaveBeenCalled()
     })
 
@@ -272,6 +285,7 @@ describe('POST /brevo-webhook: send rows', () => {
             id: SEND_ID,
             status: 'sent',
             error: 'Brevo: hard_bounce (mailbox full)',
+            date_updated: expect.any(String),
         })
     })
 
@@ -308,6 +322,27 @@ describe('POST /brevo-webhook: failures', () => {
         expect((await call({ event: 'hard_bounce', email: 'leser@example.de' })).status).toBe(500)
         expect(slackMock).toHaveBeenCalledTimes(1)
         expect(slackMock.mock.calls[0]![0]).toContain('database down')
+    })
+
+    test('a Slack alert that did not go out is retried with the next request', async () => {
+        slackMock.mockRejectedValueOnce(new Error('Slack: down'))
+        const { call } = setup({ subscribers: [subscriber('confirmed')], failWrites: true })
+
+        await call({ event: 'hard_bounce', email: 'leser@example.de' })
+        await call({ event: 'hard_bounce', email: 'leser@example.de' })
+        await call({ event: 'hard_bounce', email: 'leser@example.de' })
+
+        // First post failed, second succeeded, third is suppressed.
+        expect(slackMock).toHaveBeenCalledTimes(2)
+    })
+
+    test('the missing-secret warning is retried too until Slack accepts it', async () => {
+        slackMock.mockRejectedValueOnce(new Error('Slack: down'))
+        const { call } = setup({ secret: undefined })
+
+        for (let i = 0; i < 3; i++) await call({ event: 'hard_bounce', email: 'leser@example.de' })
+
+        expect(slackMock).toHaveBeenCalledTimes(2)
     })
 
     test('a Slack outage does not fail the request', async () => {

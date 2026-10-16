@@ -24,25 +24,31 @@ const ENDPOINT_NAME = 'brevo-webhook'
  * retry them; 500 if the database write failed.
  */
 export default defineEndpoint((router, context) => {
-    const { logger, services, getSchema, env } = context
+    const { logger, env, database } = context
 
-    const store = createDirectusWebhookStore({ services, getSchema })
+    const store = createDirectusWebhookStore({ database })
     const notified = new Set<string>()
 
-    async function notify(text: string): Promise<void> {
+    /** Post to Slack. Never throws; false when the message could not be posted. */
+    async function notify(text: string): Promise<boolean> {
         try {
             await postSlackMessage(text)
+            return true
         } catch (error: any) {
             logger.error(`${ENDPOINT_NAME}: Slack notification failed: ${error?.message ?? error}`)
+            return false
         }
     }
 
-    /** Recurring failures: one Slack message per day each, not one per Brevo request. */
+    /**
+     * Recurring failures: one Slack message per day each, not one per Brevo request. The key
+     * is remembered only once Slack has the message, so a failed post is retried with the
+     * next request (same as newsletter-mass-send).
+     */
     async function notifyOnce(key: string, text: string): Promise<void> {
         const dayKey = `${berlinDayKey(new Date())}:${key}`
         if (notified.has(dayKey)) return
-        notified.add(dayKey)
-        await notify(text)
+        if (await notify(text)) notified.add(dayKey)
     }
 
     router.post('/', async (req: any, res: any) => {

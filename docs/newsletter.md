@@ -394,10 +394,13 @@ the relevant ones into subscriber states. No data-model change was needed.
 | `blocked`       | no status change (Brevo's blocklist, reason unknown) — only noted on the send row            | —                    |
 | anything else   | ignored, incl. `soft_bounce` (temporary; Brevo reports a `hard_bounce` if it becomes final)  | —                    |
 
-- **Only `pending` and `confirmed` subscribers move** (one conditional `updateByQuery`). `unsubscribed`,
+- **Only `pending` and `confirmed` subscribers move**, in one conditional `UPDATE … WHERE email = … AND status
+  IN (…)` via knex (like the send job's claims), so a concurrent confirm or unsubscribe cannot be overwritten.
+  `ItemsService.updateByQuery` would resolve keys first and update by id afterwards. `unsubscribed`,
   `bounced` and `complained` are never overwritten, so repeated and late events are no-ops. `bounced` and
   `complained` are final: the send job only mails `confirmed`, and a new signup for such an address is a
-  duplicate (no-op). The time of the change is the subscriber's `date_updated`, which Directus maintains.
+  duplicate (no-op). The time of the change is the subscriber's `date_updated`, which the webhook writes in the same
+  statement (raw knex bypasses Directus' own timestamping; no `items.update` action fires, and none is needed).
 - **A hard bounce counts from any mail** — the address is dead whichever mail found out. A **spam complaint
   only counts for newsletter mails**: a complaint about a ticket confirmation says nothing about the newsletter.
 - **Telling newsletter mails apart** without a new field: newsletter mails carry `X-Mailin-custom` (Brevo
