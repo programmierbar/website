@@ -12,21 +12,16 @@ interface StoreContext {
     database: any
 }
 
-/** Format a Date the way Directus reads and writes `dateTime` fields: server-local wall time. */
-export function toLocalWallTime(date: Date): string {
-    const pad = (value: number) => String(value).padStart(2, '0')
-    return (
-        `${String(date.getFullYear()).padStart(4, '0')}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
-        `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
-    )
-}
-
 /**
  * The Directus-backed {@link SendStore}. Reads and ordinary writes go through
  * `ItemsService` without accountability (system writes, which the scheduling hook
  * allows). The three state claims are conditional `UPDATE … WHERE status = …` statements
  * via knex, so they are atomic even if two Directus processes ran the job at once: only
  * one of them sees an affected row.
+ *
+ * `sent_at` / `scheduled_at` are `timestamp` (timestamptz) fields, so instants are written
+ * and compared as ISO strings in UTC (`toISOString()`); the daily-limit window starts at
+ * Berlin midnight (see `berlinDayStart`).
  *
  * Rows are claimed queued → sent BEFORE the mail goes out (at most once): if the process
  * dies in between, a recipient may miss the issue, but never gets it twice.
@@ -126,7 +121,7 @@ export function createDirectusSendStore({ services, getSchema, database }: Store
             const rows = await (
                 await items(SENDS_COLLECTION)
             ).readByQuery({
-                filter: { status: { _eq: 'sent' }, sent_at: { _gte: toLocalWallTime(since) } },
+                filter: { status: { _eq: 'sent' }, sent_at: { _gte: since.toISOString() } },
                 aggregate: { count: ['id'] },
             })
             return Number(rows?.[0]?.count?.id ?? 0)
@@ -156,7 +151,7 @@ export function createDirectusSendStore({ services, getSchema, database }: Store
         async claimSend(sendId, sentAt) {
             const changed = await database(SENDS_COLLECTION)
                 .where({ id: sendId, status: 'queued' })
-                .update({ status: 'sent', sent_at: toLocalWallTime(sentAt) })
+                .update({ status: 'sent', sent_at: sentAt.toISOString() })
             return changed === 1
         },
 
@@ -182,7 +177,7 @@ export function createDirectusSendStore({ services, getSchema, database }: Store
         async finishIssue(issueId, sentAt) {
             const changed = await database(ISSUES_COLLECTION)
                 .where({ id: issueId, status: 'sending' })
-                .update({ status: 'sent', sent_at: toLocalWallTime(sentAt) })
+                .update({ status: 'sent', sent_at: sentAt.toISOString() })
             return changed === 1
         },
     }

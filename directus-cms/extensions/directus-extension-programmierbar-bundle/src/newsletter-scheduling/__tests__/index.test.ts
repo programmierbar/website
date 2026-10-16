@@ -54,7 +54,7 @@ describe('newsletter-scheduling hook', () => {
 
     test('lets a complete scheduled issue be created', () => {
         const { filters } = setup(null)
-        const payload = { status: 'scheduled', subject: 'X', scheduled_at: '2026-10-15T09:00:00', blocks: [{}] }
+        const payload = { status: 'scheduled', subject: 'X', scheduled_at: '2026-10-15T09:00:00Z', blocks: [{}] }
         expect(filters.get('newsletter_issues.items.create')!(payload, {}, USER)).toBe(payload)
     })
 

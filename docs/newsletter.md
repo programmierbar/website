@@ -365,5 +365,6 @@ A cron hook (`newsletter-mass-send`, every minute) does the rest; the logic is i
   `utm_source=newsletter&utm_medium=email&utm_campaign=<subject slug>`, in every render (preview, test send,
   real send), so the preview shows the sent links. No tracking pixel, no per-recipient redirect links; links in
   the text block's rich text and the unsubscribe link are left as they are.
-- **Times**: `scheduled_at` and `sent_at` are Directus `dateTime` fields (no time zone); Directus and the job
-  read and write them in the server's local time zone.
+- **Times**: `newsletter_issues.scheduled_at`, `newsletter_issues.sent_at` and `newsletter_sends.sent_at` are
+  Directus `timestamp` fields (timestamptz), stored in UTC; the job writes them as ISO strings with `Z`. Directus
+  Studio converts input from the editor's browser time zone.

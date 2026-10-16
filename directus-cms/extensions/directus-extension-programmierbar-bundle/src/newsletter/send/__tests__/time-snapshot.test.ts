@@ -19,7 +19,7 @@ describe('Berlin day', () => {
 describe('parseDirectusDateTime', () => {
     test('parses values and rejects garbage', () => {
         expect(parseDirectusDateTime('2026-10-15T09:00:00Z')?.toISOString()).toBe('2026-10-15T09:00:00.000Z')
-        expect(parseDirectusDateTime('2026-10-15T09:00:00')?.getHours()).toBe(9)
+        expect(parseDirectusDateTime('2026-10-15T09:00:00+02:00')?.toISOString()).toBe('2026-10-15T07:00:00.000Z')
         expect(parseDirectusDateTime('kein datum')).toBeNull()
         expect(parseDirectusDateTime(null)).toBeNull()
     })

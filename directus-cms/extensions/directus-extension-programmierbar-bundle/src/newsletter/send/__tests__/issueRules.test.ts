@@ -1,7 +1,7 @@
 import { describe, expect, test } from '@jest/globals'
 import { blockCountAfter, checkIssueWrite, type IssueState } from '../issueRules.ts'
 
-const DRAFT: IssueState = { status: 'draft', subject: 'Oktober', scheduled_at: '2026-10-15T09:00:00', blockCount: 2 }
+const DRAFT: IssueState = { status: 'draft', subject: 'Oktober', scheduled_at: '2026-10-15T09:00:00Z', blockCount: 2 }
 
 describe('blockCountAfter', () => {
     test('handles unchanged, full list and change set', () => {
@@ -23,7 +23,7 @@ describe('checkIssueWrite – create', () => {
         )
         expect(
             checkIssueWrite(
-                { status: 'scheduled', subject: 'X', scheduled_at: '2026-10-15T09:00:00', blocks: { create: [{}] } },
+                { status: 'scheduled', subject: 'X', scheduled_at: '2026-10-15T09:00:00Z', blocks: { create: [{}] } },
                 null,
                 false
             )

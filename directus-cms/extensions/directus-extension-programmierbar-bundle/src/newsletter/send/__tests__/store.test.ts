@@ -1,5 +1,5 @@
 import { describe, expect, jest, test } from '@jest/globals'
-import { createDirectusSendStore, toLocalWallTime } from '../store.ts'
+import { createDirectusSendStore } from '../store.ts'
 
 // A tiny knex stand-in: `database(table).where(match).update(values)` updates matching rows
 // and resolves to the number of affected rows, like a conditional UPDATE.
@@ -40,12 +40,6 @@ function services(created: any[], options: { existing?: any[]; duplicateFor?: st
     return { ItemsService }
 }
 
-describe('toLocalWallTime', () => {
-    test('formats like Directus dateTime fields (server-local, no zone)', () => {
-        expect(toLocalWallTime(new Date(2026, 9, 15, 8, 5, 9))).toBe('2026-10-15T08:05:09')
-    })
-})
-
 describe('claims are conditional updates', () => {
     test('claimIssue only moves a scheduled issue, once', async () => {
         const tables = { newsletter_issues: [{ id: 'i1', status: 'scheduled' }] }
@@ -65,11 +59,11 @@ describe('claims are conditional updates', () => {
         const tables = { newsletter_sends: [{ id: 's1', status: 'queued' }] }
         const { database } = fakeDatabase(tables)
         const store = createDirectusSendStore({ services: services([]), getSchema: async () => ({}), database })
-        const now = new Date(2026, 9, 15, 10, 0, 0)
+        const now = new Date('2026-10-15T08:00:00Z')
 
         expect(await store.claimSend('s1', now)).toBe(true)
         expect(await store.claimSend('s1', now)).toBe(false)
-        expect(tables.newsletter_sends[0]).toEqual({ id: 's1', status: 'sent', sent_at: '2026-10-15T10:00:00' })
+        expect(tables.newsletter_sends[0]).toEqual({ id: 's1', status: 'sent', sent_at: '2026-10-15T08:00:00.000Z' })
     })
 
     test('finishIssue only moves a sending issue', async () => {

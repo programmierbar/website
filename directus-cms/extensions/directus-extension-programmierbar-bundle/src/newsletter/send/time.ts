@@ -37,10 +37,9 @@ export function berlinDayStart(now: Date): Date {
 }
 
 /**
- * Parse a Directus `dateTime` value (e.g. `scheduled_at`). The field type stores wall
- * time without a zone, and Directus reads and writes it in the server's local time zone,
- * so the same local interpretation is used here (`new Date` on a zone-less ISO string is
- * local time). Values with an explicit offset are honoured. Returns null when unparsable.
+ * Parse a Directus `timestamp` (timestamptz) value (e.g. `scheduled_at`). Directus returns
+ * these as ISO strings with an offset (e.g. `2026-10-15T07:00:00.000Z`), so the instant is
+ * unambiguous. Returns null when unparsable.
  */
 export function parseDirectusDateTime(value: string | null | undefined): Date | null {
     if (!value) {
