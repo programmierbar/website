@@ -262,6 +262,8 @@ describe('POST /newsletter-send/:id/test', () => {
         expect(calls.mails[0].headers).toEqual({
             'List-Unsubscribe': `<https://www.programmier.bar/newsletter/unsubscribe?token=${TEST_TOKEN}>`,
             'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            'X-Mailin-custom': 'newsletter:test',
+            'X-Mailin-Tag': 'newsletter-test',
         })
     })
 
