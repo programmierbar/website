@@ -37,7 +37,11 @@ export interface Subscriber {
 export interface SendStore {
     getDailyLimit(): Promise<number | null>
     findScheduledIssues(): Promise<ScheduledIssue[]>
-    /** scheduled → sending, only if still scheduled. True if this call made the change. */
+    /**
+     * scheduled → sending, only if still scheduled, clearing `html_snapshot` in the same
+     * update (a snapshot left from an earlier, stopped run must not count as this run's
+     * "fan-out complete" marker). True if this call made the change.
+     */
     claimIssue(issueId: string): Promise<boolean>
     /** sending → scheduled, only if still sending: undoes a claim on an issue that is no longer due. */
     unclaimIssue(issueId: string): Promise<void>
@@ -79,6 +83,8 @@ export interface SendDeps {
     logger: { info: (msg: string) => void; warn: (msg: string) => void; error: (msg: string) => void }
     /** Keys of Slack messages already sent; keeps repeating conditions to one message per day. */
     notified: Set<string>
+    /** One-off messages (start, finish, failed start) Slack did not accept; retried each tick. */
+    pendingAlerts: string[]
 }
 
 async function notifyOnce(deps: SendDeps, key: string, text: string): Promise<void> {
@@ -86,6 +92,28 @@ async function notifyOnce(deps: SendDeps, key: string, text: string): Promise<vo
     if (deps.notified.has(dayKey)) return
     // Remember the key only once Slack has the message, so a failed post is retried next tick.
     if (await deps.notify(text)) deps.notified.add(dayKey)
+}
+
+/** A one-off message: if Slack does not take it, keep it and retry on the next tick. */
+async function notifyEvent(deps: SendDeps, text: string): Promise<void> {
+    if (!(await deps.notify(text))) deps.pendingAlerts.push(text)
+}
+
+async function retryPendingAlerts(deps: SendDeps): Promise<void> {
+    while (deps.pendingAlerts.length > 0) {
+        if (!(await deps.notify(deps.pendingAlerts[0]!))) return
+        deps.pendingAlerts.shift()
+    }
+}
+
+/** A start (or its recovery) failed: back to draft so it does not retry every minute, and tell Slack. */
+async function failStart(deps: SendDeps, issueId: string, error: any): Promise<void> {
+    await deps.store.resetIssueToDraft(issueId)
+    deps.logger.error(`newsletter-mass-send: could not start issue ${issueId}: ${error?.message ?? error}`)
+    await notifyEvent(
+        deps,
+        `:x: *Newsletter*: Versand von Ausgabe ${issueId} konnte nicht starten (${error?.message ?? error}). Die Ausgabe steht wieder auf „draft“. ${deps.adminUrl(issueId)}`
+    )
 }
 
 const label = (issue: { id: string; subject?: string | null }) =>
@@ -147,15 +175,12 @@ export async function startDueIssues(deps: SendDeps): Promise<void> {
             }
             const { queued, recipients } = await prepareIssue(deps, issue.id)
             deps.logger.info(`newsletter-mass-send: started issue ${issue.id}, ${queued} rows queued`)
-            await deps.notify(
+            await notifyEvent(
+                deps,
                 `:outbox_tray: *Newsletter*: Versand von Ausgabe ${issue.id} gestartet – ${recipients} bestätigte Empfänger. ${deps.adminUrl(issue.id)}`
             )
         } catch (error: any) {
-            await deps.store.resetIssueToDraft(issue.id)
-            deps.logger.error(`newsletter-mass-send: could not start issue ${issue.id}: ${error?.message ?? error}`)
-            await deps.notify(
-                `:x: *Newsletter*: Versand von Ausgabe ${issue.id} konnte nicht starten (${error?.message ?? error}). Die Ausgabe steht wieder auf „draft“. ${deps.adminUrl(issue.id)}`
-            )
+            await failStart(deps, issue.id, error)
         }
     }
 }
@@ -185,11 +210,17 @@ export async function processSendingIssues(deps: SendDeps): Promise<void> {
         let snapshot = issue.html_snapshot
         if (!hasUnsubscribePlaceholder(snapshot)) {
             // A crash between claim and the end of the fan-out: prepare again (idempotent).
-            await prepareIssue(deps, issue.id)
-            const refreshed = (await deps.store.findSendingIssues()).find((row) => row.id === issue.id)
-            snapshot = refreshed?.html_snapshot ?? null
-            if (!hasUnsubscribePlaceholder(snapshot)) {
-                throw new Error(`Ausgabe ${issue.id} hat keinen verwendbaren HTML-Snapshot`)
+            // Nothing of this run was sent yet, so a failure is handled like a failed start.
+            try {
+                await prepareIssue(deps, issue.id)
+                const refreshed = (await deps.store.findSendingIssues()).find((row) => row.id === issue.id)
+                snapshot = refreshed?.html_snapshot ?? null
+                if (!hasUnsubscribePlaceholder(snapshot)) {
+                    throw new Error(`Ausgabe ${issue.id} hat keinen verwendbaren HTML-Snapshot`)
+                }
+            } catch (error: any) {
+                await failStart(deps, issue.id, error)
+                continue
             }
         }
         if (!issue.subject?.trim()) {
@@ -273,7 +304,8 @@ async function finishIfDone(deps: SendDeps, issue: SendingIssue): Promise<void> 
     if (!(await deps.store.finishIssue(issue.id, deps.now()))) return
 
     deps.logger.info(`newsletter-mass-send: finished issue ${issue.id}`)
-    await deps.notify(
+    await notifyEvent(
+        deps,
         `:white_check_mark: *Newsletter*: ${label(issue)} ist versendet – ${counts.sent} gesendet, ${counts.failed} fehlgeschlagen, ${counts.prevented} verhindert. ${deps.adminUrl(issue.id)}`
     )
 }
@@ -281,6 +313,7 @@ async function finishIfDone(deps: SendDeps, issue: SendingIssue): Promise<void> 
 /** One cron tick. Errors are reported to Slack (once per day per message) and not rethrown. */
 export async function runNewsletterSendTick(deps: SendDeps): Promise<void> {
     try {
+        await retryPendingAlerts(deps)
         await startDueIssues(deps)
         await processSendingIssues(deps)
     } catch (error: any) {

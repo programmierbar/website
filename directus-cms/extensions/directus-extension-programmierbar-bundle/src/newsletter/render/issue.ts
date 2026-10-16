@@ -31,7 +31,7 @@ function blockMjml(block: NewsletterIssueBlock, link: WebsiteLinker, report: Ren
 
     switch (block.collection) {
         case TEXT_BLOCK_COLLECTION:
-            return textBlockMjml(item as NewsletterTextBlock)
+            return textBlockMjml(item as NewsletterTextBlock, report)
         case PODCASTS_BLOCK_COLLECTION:
             return podcastsBlockMjml(item as NewsletterPodcastsBlock, link, report)
         case MEETUPS_BLOCK_COLLECTION:

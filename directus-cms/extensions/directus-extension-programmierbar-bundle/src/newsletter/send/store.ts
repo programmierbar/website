@@ -53,7 +53,7 @@ export function createDirectusSendStore({ services, getSchema, database }: Store
         async claimIssue(issueId) {
             const changed = await database(ISSUES_COLLECTION)
                 .where({ id: issueId, status: 'scheduled' })
-                .update({ status: 'sending' })
+                .update({ status: 'sending', html_snapshot: null })
             return changed === 1
         },
 

@@ -35,6 +35,7 @@ export default defineHook(({ schedule }, hookContext) => {
         store: createDirectusSendStore({ services, getSchema, database }),
         now: () => new Date(),
         notified,
+        pendingAlerts: [],
         logger,
         adminUrl: (issueId) => `${env.PUBLIC_URL}admin/content/${ISSUES_COLLECTION}/${issueId}`,
         getWebsiteUrl: () => getRequiredSetting('website_url', { logger, services, getSchema }),

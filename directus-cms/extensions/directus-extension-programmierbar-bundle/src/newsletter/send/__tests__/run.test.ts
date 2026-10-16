@@ -62,6 +62,7 @@ class FakeStore implements SendStore {
         const issue = this.issues.find((i) => i.id === issueId && i.status === 'scheduled')
         if (!issue) return false
         issue.status = 'sending'
+        issue.html_snapshot = null
         return true
     }
     async unclaimIssue(issueId: string) {
@@ -150,7 +151,7 @@ function setup(
     options: {
         mailFails?: (to: string) => boolean
         renderFails?: boolean
-        renderedBlocks?: number
+        renderedBlocks?: (issueId: string) => number
         slackFails?: () => boolean
     } = {}
 ) {
@@ -162,13 +163,19 @@ function setup(
         store,
         now: () => NOW,
         notified: new Set(),
+        pendingAlerts: [],
         logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
         adminUrl: (id) => `https://admin.test/admin/content/newsletter_issues/${id}`,
         getWebsiteUrl: async () => 'https://www.programmier.bar',
         renderSnapshot: async (issueId) => {
             renders.push(issueId)
             if (options.renderFails) throw new Error('render kaputt')
-            return { html: SNAPSHOT, warnings: [], hiddenCount: 0, renderedBlocks: options.renderedBlocks ?? 1 }
+            return {
+                html: SNAPSHOT,
+                warnings: [],
+                hiddenCount: 0,
+                renderedBlocks: options.renderedBlocks?.(issueId) ?? 1,
+            }
         },
         sendMail: async (mail) => {
             if (options.mailFails?.(mail.to)) return false
@@ -280,7 +287,7 @@ describe('start', () => {
     })
 
     test('an issue whose blocks all render empty is not started: back to draft, Slack, no rows', async () => {
-        const { store, tick, slack, mails } = setup({ renderedBlocks: 0 })
+        const { store, tick, slack, mails } = setup({ renderedBlocks: () => 0 })
         store.subscribers = [subscriber(1)]
         store.issues = [scheduledIssue()]
 
@@ -290,6 +297,49 @@ describe('start', () => {
         expect(store.sends).toEqual([])
         expect(mails).toEqual([])
         expect(slack.join('\n')).toContain('konnte nicht starten (kein Block hat Inhalt ergeben')
+    })
+
+    test('a rescheduled issue does not reuse the snapshot of its stopped run, even after a crash', async () => {
+        const { store, tick, mails } = setup()
+        const OLD = `<p>Alte Fassung</p><a href="${UNSUBSCRIBE_URL_PLACEHOLDER}">x</a>`
+        store.subscribers = [subscriber(1), subscriber(2), subscriber(3)]
+        // An earlier run sent to sub-1, was stopped, edited and scheduled again.
+        store.issues = [scheduledIssue({ html_snapshot: OLD })]
+        await store.queueSends('issue-1', ['sub-1'])
+        store.sends[0]!.status = 'sent'
+        const realQueue = store.queueSends.bind(store)
+        jest.spyOn(store, 'queueSends').mockImplementationOnce(async (issueId) => {
+            await realQueue(issueId, ['sub-2'])
+            return new Promise<number>(() => {}) // the process dies here
+        })
+        void tick()
+        await new Promise((resolve) => setImmediate(resolve))
+
+        expect(store.issues[0]).toMatchObject({ status: 'sending', html_snapshot: null })
+
+        await tick()
+
+        expect(mails.map((mail) => mail.to).sort()).toEqual(['leser2@example.de', 'leser3@example.de'])
+        expect(mails.every((mail) => mail.html.includes('Inhalt') && !mail.html.includes('Alte Fassung'))).toBe(true)
+        expect(store.issues[0]!.status).toBe('sent')
+    })
+
+    test('a failed recovery puts that issue back to draft and the next issue is still sent', async () => {
+        const { store, tick, mails, slack } = setup({ renderedBlocks: (id) => (id === 'issue-a' ? 0 : 1) })
+        store.subscribers = [subscriber(1)]
+        store.issues = [
+            scheduledIssue({ id: 'issue-a', status: 'sending', html_snapshot: null }),
+            scheduledIssue({ id: 'issue-b', status: 'sending', html_snapshot: null }),
+        ]
+
+        await tick()
+
+        expect(store.issues.map((issue) => issue.status)).toEqual(['draft', 'sent'])
+        expect(store.sends.filter((row) => row.issue === 'issue-a')).toEqual([])
+        expect(mails).toHaveLength(1)
+        expect(slack.join('\n')).toContain(
+            'Versand von Ausgabe issue-a konnte nicht starten (kein Block hat Inhalt ergeben'
+        )
     })
 
     test('an issue postponed after it was read is put back to scheduled, not sent', async () => {
@@ -528,6 +578,23 @@ describe('errors', () => {
         await tick()
 
         expect(slack.filter((text) => text.includes('db weg'))).toHaveLength(1)
+    })
+
+    test('a start announcement Slack did not accept is posted on the next tick', async () => {
+        let slackDown = true
+        const { store, tick, slack } = setup({ slackFails: () => slackDown })
+        store.subscribers = [subscriber(1)]
+        store.issues = [scheduledIssue()]
+        store.limit = 0
+
+        await tick()
+        expect(slack).toEqual([])
+
+        slackDown = false
+        await tick()
+        await tick()
+
+        expect(slack.filter((text) => text.includes('gestartet'))).toHaveLength(1)
     })
 
     test('a subscriber read error leaves the row queued instead of marking it prevented', async () => {

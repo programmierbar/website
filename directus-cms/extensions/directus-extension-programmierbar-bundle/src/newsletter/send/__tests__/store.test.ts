@@ -58,7 +58,7 @@ describe('claims are conditional updates', () => {
         expect(updates[0]).toEqual({
             table: 'newsletter_issues',
             where: { id: 'i1', status: 'scheduled' },
-            values: { status: 'sending' },
+            values: { status: 'sending', html_snapshot: null },
         })
     })
 

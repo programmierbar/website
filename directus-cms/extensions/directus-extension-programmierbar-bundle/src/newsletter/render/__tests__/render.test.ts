@@ -296,6 +296,33 @@ describe('published filter', () => {
         expect(warnings).toEqual(['Meetup-Block übersprungen: kein veröffentlichtes Meetup'])
     })
 
+    test('a text block without heading and visible body renders nothing and is reported', async () => {
+        const { html, warnings, renderedBlocks } = await renderNewsletterIssue(
+            issue([
+                textBlock(1, '', '<p><br></p>'),
+                textBlock(2, '  ', '<p>&nbsp;</p>'),
+                { sort: 3, collection: 'newsletter_blocks_text', item: { heading: null, body: null } },
+                textBlock(4, '', '<script>x</script>'),
+            ]),
+            OPTIONS
+        )
+
+        expect(html).not.toContain('block-text')
+        expect(renderedBlocks).toBe(0)
+        expect(warnings).toEqual(Array(4).fill('Text-Block übersprungen: kein Inhalt'))
+    })
+
+    test('a text block with only a heading or only body text still renders', async () => {
+        const { html, renderedBlocks } = await renderNewsletterIssue(
+            issue([textBlock(1, 'Nur Überschrift', ''), textBlock(2, '', '<p>Nur Text</p>')]),
+            OPTIONS
+        )
+
+        expect(renderedBlocks).toBe(2)
+        expect(html).toContain('Nur Überschrift')
+        expect(html).toContain('Nur Text')
+    })
+
     test('counts the blocks that produced markup; 0 when every entry is hidden or deleted', async () => {
         const mixed = await renderNewsletterIssue(
             issue([textBlock(0, 'Davor', '<p>x</p>'), mixedPodcasts(['draft'])]),
