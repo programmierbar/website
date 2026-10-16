@@ -379,6 +379,22 @@ describe('POST /brevo-webhook: failures', () => {
         expect(slackMock).toHaveBeenCalledTimes(2)
     })
 
+    test('concurrent requests while the first alert is in flight post it only once', async () => {
+        let release!: () => void
+        slackMock.mockImplementationOnce(() => new Promise<void>((resolve) => (release = resolve)))
+        const { call } = setup({ secret: undefined })
+
+        const first = call({ event: 'hard_bounce', email: 'leser@example.de' })
+        await Promise.all([
+            call({ event: 'hard_bounce', email: 'leser@example.de' }),
+            call({ event: 'hard_bounce', email: 'leser@example.de' }),
+        ])
+        release()
+        await first
+
+        expect(slackMock).toHaveBeenCalledTimes(1)
+    })
+
     test('the missing-secret warning is retried too until Slack accepts it', async () => {
         slackMock.mockRejectedValueOnce(new Error('Slack: down'))
         const { call } = setup({ secret: undefined })

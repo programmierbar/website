@@ -42,13 +42,15 @@ export default defineEndpoint((router, context) => {
 
     /**
      * Recurring failures: one Slack message per day each, not one per Brevo request. The key
-     * is remembered only once Slack has the message, so a failed post is retried with the
-     * next request (same as newsletter-mass-send).
+     * is reserved before posting, so concurrent requests do not all post while the first one
+     * is in flight, and released again if Slack did not take the message, so a later request
+     * retries it.
      */
     async function notifyOnce(key: string, text: string): Promise<void> {
         const dayKey = `${berlinDayKey(new Date())}:${key}`
         if (notified.has(dayKey)) return
-        if (await notify(text)) notified.add(dayKey)
+        notified.add(dayKey)
+        if (!(await notify(text))) notified.delete(dayKey)
     }
 
     router.post('/', async (req: any, res: any) => {

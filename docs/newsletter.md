@@ -113,16 +113,19 @@ Sign-up with a confirmed (double opt-in) subscription flow.
 
    | Situation                                 | Result                                     | Page state             |
    | ----------------------------------------- | ------------------------------------------ | ---------------------- |
-   | any status except `unsubscribed`          | `status = unsubscribed`, `unsubscribed_at` | `unsubscribed`         |
+   | `pending` or `confirmed`                  | `status = unsubscribed`, `unsubscribed_at` | `unsubscribed`         |
    | already `unsubscribed`                    | no-op (idempotent)                         | `already_unsubscribed` |
+   | `bounced` / `complained` (Brevo webhook)  | no-op, the final state stays               | `already_unsubscribed` |
    | unknown token                             | no-op                                      | `invalid`              |
    | Directus down / token misconfigured (500) | no-op                                      | `error` (retry)        |
 
    Opting out works from `pending` too — someone who never confirmed can still
    say no, and it stops the confirmation resends. The write is guarded on
-   not-already-unsubscribed, so `unsubscribed_at` keeps the timestamp of the first
-   opt-out rather than being pushed forward by every re-click. Coming back is
-   possible via a normal signup, see step 1.
+   `status IN (pending, confirmed)`, so `unsubscribed_at` keeps the timestamp of the
+   first opt-out rather than being pushed forward by every re-click. Coming back is
+   possible via a normal signup, see step 1. `bounced` and `complained` are never
+   rewritten to `unsubscribed`: a later signup reactivates `unsubscribed` addresses
+   and would mail a dead address or a complainer again.
 
    **Opting out never depends on JavaScript.** The page also renders a plain form
    that POSTs to `server/routes/newsletter/unsubscribe.post.ts` (a Nitro route
