@@ -333,3 +333,45 @@ would differ from what is sent. The only content filter is the renderer's publis
 - **One-click on the website**: `nuxt-app/server/routes/newsletter/unsubscribe.post.ts` serves the same URL
   as the page. A POST with body `List-Unsubscribe=One-Click` (urlencoded or `multipart/form-data`, both
   allowed by RFC 8058) takes the token from the query, opts out and answers 200 (500 on a technical error) instead of the form's 303 redirect.
+
+## Issues: mass send
+
+There is no send button: editors set an issue to **`scheduled`** and pick **`scheduled_at`** (like podcasts).
+A cron hook (`newsletter-mass-send`, every minute) does the rest; the logic is in `src/newsletter/send/`.
+
+- **Scheduling rules** (`newsletter-scheduling` filter hook, create AND update, rules in
+  `newsletter/send/issueRules.ts`): `scheduled` needs a subject, a `scheduled_at` and at least one block —
+  there is no "send now" without a time, to avoid accidental sends. `sending`/`sent` and `html_snapshot` are
+  set only by the send job. Once an issue is `sending` or `sent`, subject, preheader, blocks and
+  `scheduled_at` are frozen. The send job writes without accountability and is not restricted. Changing the
+  status away from `sending` stops a running send.
+- **Start**: due issues (`scheduled_at` ≤ now) move `scheduled` → `sending` by a conditional update (only one
+  process wins); `scheduled_at` is re-read after the claim, and an issue postponed in the meantime goes back to
+  `scheduled`. The issue is rendered once with the shared renderer (live item, admin read), with a placeholder
+  for the personal unsubscribe link. Then one `newsletter_sends` row per **confirmed** subscriber is queued with
+  `dedupe_key = <issue>:<subscriber>` (unique; existing rows are skipped), and only then is the render saved as
+  `html_snapshot`: a snapshot means the fan-out is complete (the claim clears any snapshot of an earlier, stopped
+  run). After a crash mid-fan-out the issue is `sending` without a snapshot, and the next tick prepares it again
+  before anything is sent. If rendering fails, or no block renders any content (e.g. every podcast/meetup is
+  unpublished or deleted, or a text block is empty), the issue goes back to `draft` and Slack is notified — at
+  the start and in that recovery alike; other issues carry on.
+- **Sending**: at most `newsletter_settings.daily_sending_limit` newsletter mails per Berlin day (counted over
+  all issues) and at most 50 per minute. If the limit is not set, nothing is sent and Slack is notified — there
+  is no fallback number. Before each mail the subscriber must still be `confirmed`, otherwise the row becomes
+  `prevented` (a deleted subscriber too; a read error leaves the row queued). Each row is claimed `queued` → `sent` by a conditional update **before** the mail goes out (at
+  most once: a crash can lose a mail, never duplicate one). The mail is the snapshot with the personal
+  unsubscribe link, the issue subject (no prefix) and the List-Unsubscribe headers. A failed mail marks the
+  row `failed` (not retried) and ends the tick.
+- **Finish**: no queued rows left → `sent` + `sent_at` and a Slack summary (sent / failed / prevented). Slack
+  also reports a daily-limit pause, a failed start and unexpected errors (each message at most once per day; a
+  message Slack did not accept is retried on the next tick, as are start, finish and failed-start messages; the
+  retry lives in memory and does not survive a restart).
+- **Overlap**: an in-process flag skips a tick while the previous one runs; the conditional updates and the
+  unique `dedupe_key` guard against a second process.
+- **Campaign parameters**: website links built by the renderer (podcasts, meetups) carry
+  `utm_source=newsletter&utm_medium=email&utm_campaign=<subject slug>`, in every render (preview, test send,
+  real send), so the preview shows the sent links. No tracking pixel, no per-recipient redirect links; links in
+  the text block's rich text and the unsubscribe link are left as they are.
+- **Times**: `newsletter_issues.scheduled_at`, `newsletter_issues.sent_at` and `newsletter_sends.sent_at` are
+  Directus `timestamp` fields (timestamptz), stored in UTC; the job writes them as ISO strings with `Z`. Directus
+  Studio converts input from the editor's browser time zone.

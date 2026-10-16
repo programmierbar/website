@@ -85,4 +85,6 @@ export interface RenderReport {
 
 export interface RenderResult extends RenderReport {
     html: string
+    /** Blocks that produced markup. 0 means the mail is only header and footer. */
+    renderedBlocks: number
 }

@@ -82,10 +82,14 @@ describe('renderNewsletterIssue', () => {
         expect(html).toContain('<h2>Hallo</h2>')
         expect(html).toContain('<p>Willkommen</p>')
         expect(html).toContain(
-            '<a href="https://www.programmier.bar/podcast/deep-dive-200-erste">Deep Dive 200 – Erste</a>'
+            '<a href="https://www.programmier.bar/podcast/deep-dive-200-erste?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=ausgabe-oktober">Deep Dive 200 – Erste</a>'
         )
-        expect(html).toContain('<a href="https://www.programmier.bar/podcast/news-12-zweite">News 12: Zweite</a>')
-        expect(html).toContain('<a href="https://www.programmier.bar/meetup/rust-im-alltag">Rust im Alltag</a>')
+        expect(html).toContain(
+            '<a href="https://www.programmier.bar/podcast/news-12-zweite?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=ausgabe-oktober">News 12: Zweite</a>'
+        )
+        expect(html).toContain(
+            '<a href="https://www.programmier.bar/meetup/rust-im-alltag?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=ausgabe-oktober">Rust im Alltag</a>'
+        )
         expect(html).toContain('Donnerstag, 12. November 2026 um 18:30 Uhr')
         // A meetup without slug is listed, but not linked.
         expect(html).toContain('<li>Ohne Slug</li>')
@@ -188,7 +192,9 @@ describe('escaping', () => {
         expect(mjml).toContain('<mj-title>&lt;/mj-title&gt;&lt;mj-raw&gt;x&lt;/mj-raw&gt;</mj-title>')
         expect(mjml).toContain('<mj-preview>&lt;i&gt;p&lt;/i&gt;</mj-preview>')
         expect(mjml).toContain('<h2>&lt;b&gt;Heading&lt;/b&gt; &amp; &quot;Co&quot;</h2>')
-        expect(mjml).toContain('href="https://www.programmier.bar/podcast/a%22b"')
+        expect(mjml).toContain(
+            'href="https://www.programmier.bar/podcast/a%22b?utm_source=newsletter&amp;utm_medium=email'
+        )
         expect(mjml).toContain('News 1: &lt;/mj-text&gt;&lt;script&gt;')
         expect(mjml).not.toContain('<script>')
     })
@@ -290,10 +296,73 @@ describe('published filter', () => {
         expect(warnings).toEqual(['Meetup-Block übersprungen: kein veröffentlichtes Meetup'])
     })
 
+    test('a text block without heading and visible body renders nothing and is reported', async () => {
+        const { html, warnings, renderedBlocks } = await renderNewsletterIssue(
+            issue([
+                textBlock(1, '', '<p><br></p>'),
+                textBlock(2, '  ', '<p>&nbsp;</p>'),
+                { sort: 3, collection: 'newsletter_blocks_text', item: { heading: null, body: null } },
+                textBlock(4, '', '<script>x</script>'),
+            ]),
+            OPTIONS
+        )
+
+        expect(html).not.toContain('block-text')
+        expect(renderedBlocks).toBe(0)
+        expect(warnings).toEqual(Array(4).fill('Text-Block übersprungen: kein Inhalt'))
+    })
+
+    test('a text block with only a heading or only body text still renders', async () => {
+        const { html, renderedBlocks } = await renderNewsletterIssue(
+            issue([textBlock(1, 'Nur Überschrift', ''), textBlock(2, '', '<p>Nur Text</p>')]),
+            OPTIONS
+        )
+
+        expect(renderedBlocks).toBe(2)
+        expect(html).toContain('Nur Überschrift')
+        expect(html).toContain('Nur Text')
+    })
+
+    test('counts the blocks that produced markup; 0 when every entry is hidden or deleted', async () => {
+        const mixed = await renderNewsletterIssue(
+            issue([textBlock(0, 'Davor', '<p>x</p>'), mixedPodcasts(['draft'])]),
+            OPTIONS
+        )
+        expect(mixed.renderedBlocks).toBe(1)
+
+        const empty = await renderNewsletterIssue(
+            issue([
+                mixedPodcasts(['draft', 'archived']),
+                { sort: 3, collection: 'newsletter_blocks_text', item: null },
+            ]),
+            OPTIONS
+        )
+        expect(empty.renderedBlocks).toBe(0)
+    })
+
     test('the rendered html never contains a preview notice', async () => {
         const { html, hidden } = await renderNewsletterIssue(issue([mixedPodcasts(['draft', 'published'])]), OPTIONS)
         expect(hidden).toHaveLength(1)
         expect(html).not.toContain('data-preview-notice')
         expect(html).not.toContain('ausgeblendet')
+    })
+})
+
+describe('campaign parameters', () => {
+    test('website links carry utm parameters with the subject slug as campaign', () => {
+        const mjml = buildIssueMjml(issue([podcastsBlock], { subject: 'Neues aus der Bar: Oktober!' }), OPTIONS)
+        expect(mjml).toContain(
+            'href="https://www.programmier.bar/podcast/deep-dive-200-erste?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=neues-aus-der-bar-oktober"'
+        )
+    })
+
+    test('without a subject the campaign parameter is left out', () => {
+        const mjml = buildIssueMjml(issue([podcastsBlock], { subject: null }), OPTIONS)
+        expect(mjml).toContain('podcast/deep-dive-200-erste?utm_source=newsletter&amp;utm_medium=email"')
+    })
+
+    test('the unsubscribe link gets no utm parameters', () => {
+        const mjml = buildIssueMjml(issue([]), { ...OPTIONS, unsubscribeUrl: 'https://www.programmier.bar/u?token=1' })
+        expect(mjml).toContain('href="https://www.programmier.bar/u?token=1"')
     })
 })
