@@ -360,6 +360,22 @@ describe('start', () => {
         expect(store.sends).toEqual([])
     })
 
+    test('recovery of a claimed issue that is no longer due puts it back to scheduled, not sent', async () => {
+        const { store, tick, renders, mails } = setup()
+        store.subscribers = [subscriber(1)]
+        // Postponed between read and claim, then the process died before the post-claim check.
+        store.issues = [
+            scheduledIssue({ status: 'sending', html_snapshot: null, scheduled_at: '2026-10-16T08:00:00Z' }),
+        ]
+
+        await tick()
+
+        expect(store.issues[0]!.status).toBe('scheduled')
+        expect(renders).toEqual([])
+        expect(store.sends).toEqual([])
+        expect(mails).toEqual([])
+    })
+
     test('a failing render puts the issue back to draft and reports it', async () => {
         const { store, tick, slack } = setup({ renderFails: true })
         store.issues = [scheduledIssue()]

@@ -212,6 +212,13 @@ export async function processSendingIssues(deps: SendDeps): Promise<void> {
             // A crash between claim and the end of the fan-out: prepare again (idempotent).
             // Nothing of this run was sent yet, so a failure is handled like a failed start.
             try {
+                // The crash may have come before startDueIssues' post-claim due check, so an
+                // issue postponed between read and claim goes back to scheduled here.
+                const scheduledAt = parseDirectusDateTime(await deps.store.getScheduledAt(issue.id))
+                if (!scheduledAt || scheduledAt.getTime() > now.getTime()) {
+                    await deps.store.unclaimIssue(issue.id)
+                    continue
+                }
                 await prepareIssue(deps, issue.id)
                 const refreshed = (await deps.store.findSendingIssues()).find((row) => row.id === issue.id)
                 snapshot = refreshed?.html_snapshot ?? null
