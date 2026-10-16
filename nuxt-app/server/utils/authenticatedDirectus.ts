@@ -379,14 +379,16 @@ export function useAuthenticatedDirectus() {
         return subscribers?.[0] ?? null
     }
 
-    // Opts a subscriber out, from any state that isn't already 'unsubscribed' —
-    // a `pending` address that never confirmed can opt out too, which also stops
-    // the confirmation resends.
+    // Opts a subscriber out from `pending` or `confirmed` — a `pending` address
+    // that never confirmed can opt out too, which also stops the confirmation
+    // resends. `bounced` / `complained` (set by the CMS's Brevo webhook) are
+    // final and stay as they are: as `unsubscribed` a later signup would
+    // reactivate them.
     //
-    // Guarded on the token and on not-already-unsubscribed like the confirm
-    // writes above, so `unsubscribed_at` keeps the timestamp of the first opt-out
-    // instead of being pushed forward by every re-click. Same caveat about the
-    // residual read-to-write window applies.
+    // Guarded on the token and on the status like the confirm writes above, so
+    // `unsubscribed_at` keeps the timestamp of the first opt-out instead of
+    // being pushed forward by every re-click. Same caveat about the residual
+    // read-to-write window applies.
     async function unsubscribeNewsletterSubscriber(id: string, expectedToken: string) {
         const updated = await client.request(
             updateItems(
@@ -395,7 +397,7 @@ export function useAuthenticatedDirectus() {
                     filter: {
                         id: { _eq: id },
                         unsubscribe_token: { _eq: expectedToken },
-                        status: { _neq: 'unsubscribed' },
+                        status: { _in: ['pending', 'confirmed'] },
                     },
                 },
                 {

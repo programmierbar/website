@@ -1,3 +1,4 @@
+import { buildNewsletterTrackingHeaders } from '../brevoTracking.ts'
 import { buildListUnsubscribeHeaders, buildUnsubscribeUrl } from '../unsubscribe.ts'
 import { hasUnsubscribePlaceholder, personalizeSnapshot } from './snapshot.ts'
 import { berlinDayKey, berlinDayStart, parseDirectusDateTime } from './time.ts'
@@ -289,7 +290,11 @@ async function sendBatch(
             to: subscriber.email,
             subject: issue.subject as string,
             html: personalizeSnapshot(snapshot, unsubscribeUrl),
-            headers: buildListUnsubscribeHeaders(unsubscribeUrl),
+            // The send id lets the Brevo webhook note a bounce or complaint on this row.
+            headers: {
+                ...buildListUnsubscribeHeaders(unsubscribeUrl),
+                ...buildNewsletterTrackingHeaders('send', row.id),
+            },
         })
         if (!sent) {
             await deps.store.markSend(row.id, 'failed', 'Mailversand fehlgeschlagen (Details im Server-Log)')

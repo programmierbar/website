@@ -11,6 +11,13 @@ import { isWellFormedNewsletterToken } from './newsletterToken'
 // has to keep working for the life of the subscription.
 export type NewsletterUnsubscribeResult = 'unsubscribed' | 'already_unsubscribed' | 'invalid'
 
+// States that already mean "receives no newsletter". `bounced` and `complained`
+// are set by the CMS's Brevo webhook and are final: an old unsubscribe link (or
+// the one-click POST) must not turn them into `unsubscribed`, because a later
+// signup reactivates `unsubscribed` addresses and would mail a dead address or a
+// complainer again. To the visitor they read as already opted out.
+const OPTED_OUT_STATUSES = new Set(['unsubscribed', 'bounced', 'complained'])
+
 /**
  * Opt one subscriber out by its unsubscribe token. Idempotent: re-clicking a
  * link is a no-op, and unknown tokens get a neutral result (no enumeration).
@@ -36,7 +43,7 @@ export async function performNewsletterUnsubscribe(token: unknown): Promise<News
 
     // Already opted out → idempotent success (handles link re-clicks and mail
     // clients that follow links more than once).
-    if (subscriber.status === 'unsubscribed') {
+    if (OPTED_OUT_STATUSES.has(subscriber.status)) {
         return 'already_unsubscribed'
     }
 
@@ -49,5 +56,5 @@ export async function performNewsletterUnsubscribe(token: unknown): Promise<News
     }
 
     const current = await directus.readNewsletterSubscriberByUnsubscribeToken(token)
-    return current?.status === 'unsubscribed' ? 'already_unsubscribed' : 'invalid'
+    return current && OPTED_OUT_STATUSES.has(current.status) ? 'already_unsubscribed' : 'invalid'
 }

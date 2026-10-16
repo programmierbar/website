@@ -415,6 +415,9 @@ describe('sending', () => {
         expect(mails[0]!.headers).toEqual({
             'List-Unsubscribe': `<${url}>`,
             'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            // Brevo echoes X-Mailin-custom in its webhooks, so a bounce maps back to this row.
+            'X-Mailin-custom': `newsletter:send:${store.sends[0]!.id}`,
+            'X-Mailin-Tag': 'newsletter',
         })
         expect(store.sends[0]).toMatchObject({ status: 'sent', sent_at: NOW })
     })

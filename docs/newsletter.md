@@ -113,16 +113,19 @@ Sign-up with a confirmed (double opt-in) subscription flow.
 
    | Situation                                 | Result                                     | Page state             |
    | ----------------------------------------- | ------------------------------------------ | ---------------------- |
-   | any status except `unsubscribed`          | `status = unsubscribed`, `unsubscribed_at` | `unsubscribed`         |
+   | `pending` or `confirmed`                  | `status = unsubscribed`, `unsubscribed_at` | `unsubscribed`         |
    | already `unsubscribed`                    | no-op (idempotent)                         | `already_unsubscribed` |
+   | `bounced` / `complained` (Brevo webhook)  | no-op, the final state stays               | `already_unsubscribed` |
    | unknown token                             | no-op                                      | `invalid`              |
    | Directus down / token misconfigured (500) | no-op                                      | `error` (retry)        |
 
    Opting out works from `pending` too — someone who never confirmed can still
    say no, and it stops the confirmation resends. The write is guarded on
-   not-already-unsubscribed, so `unsubscribed_at` keeps the timestamp of the first
-   opt-out rather than being pushed forward by every re-click. Coming back is
-   possible via a normal signup, see step 1.
+   `status IN (pending, confirmed)`, so `unsubscribed_at` keeps the timestamp of the
+   first opt-out rather than being pushed forward by every re-click. Coming back is
+   possible via a normal signup, see step 1. `bounced` and `complained` are never
+   rewritten to `unsubscribed`: a later signup reactivates `unsubscribed` addresses
+   and would mail a dead address or a complainer again.
 
    **Opting out never depends on JavaScript.** The page also renders a plain form
    that POSTs to `server/routes/newsletter/unsubscribe.post.ts` (a Nitro route
@@ -328,7 +331,8 @@ would differ from what is sent. The only content filter is the renderer's publis
 - **Headers**: `List-Unsubscribe: <https://…/newsletter/unsubscribe?token=…>` and
   `List-Unsubscribe-Post: List-Unsubscribe=One-Click` (RFC 8058), via the new `headers` option of
   `sendRawEmail`/`sendTemplatedEmail` in `src/shared/email-service.ts` (MailService passes it to
-  nodemailer). No `mailto:` entry, because no mailbox processes unsubscribe mails. From address: Directus
+  nodemailer). No `mailto:` entry, because no mailbox processes unsubscribe mails. Plus `X-Mailin-custom: newsletter:test` / `X-Mailin-Tag: newsletter-test`
+  for the Brevo webhook (see "Bounces and complaints"). From address: Directus
   `EMAIL_FROM`, as for all CMS mail.
 - **One-click on the website**: `nuxt-app/server/routes/newsletter/unsubscribe.post.ts` serves the same URL
   as the page. A POST with body `List-Unsubscribe=One-Click` (urlencoded or `multipart/form-data`, both
@@ -360,7 +364,8 @@ A cron hook (`newsletter-mass-send`, every minute) does the rest; the logic is i
   is no fallback number. Before each mail the subscriber must still be `confirmed`, otherwise the row becomes
   `prevented` (a deleted subscriber too; a read error leaves the row queued). Each row is claimed `queued` → `sent` by a conditional update **before** the mail goes out (at
   most once: a crash can lose a mail, never duplicate one). The mail is the snapshot with the personal
-  unsubscribe link, the issue subject (no prefix) and the List-Unsubscribe headers. A failed mail marks the
+  unsubscribe link, the issue subject (no prefix), the List-Unsubscribe headers and the Brevo
+  tracking headers with the row id (see "Bounces and complaints"). A failed mail marks the
   row `failed` (not retried) and ends the tick.
 - **Finish**: no queued rows left → `sent` + `sent_at` and a Slack summary (sent / failed / prevented). Slack
   also reports a daily-limit pause, a failed start and unexpected errors (each message at most once per day; a
@@ -375,3 +380,78 @@ A cron hook (`newsletter-mass-send`, every minute) does the rest; the logic is i
 - **Times**: `newsletter_issues.scheduled_at`, `newsletter_issues.sent_at` and `newsletter_sends.sent_at` are
   Directus `timestamp` fields (timestamptz), stored in UTC; the job writes them as ISO strings with `Z`. Directus
   Studio converts input from the editor's browser time zone.
+
+## Bounces and complaints (Brevo webhook)
+
+All mail — CMS (`MailService`) and website (nodemailer) — goes out through the Brevo SMTP relay, so Brevo's
+**transactional** webhooks report on every mail of the account: newsletter, double opt-in, tickets, speaker
+portal, contact form. The endpoint `POST /brevo-webhook` (`src/brevo-webhook/` in the extension bundle) turns
+the relevant ones into subscriber states. No data-model change was needed.
+
+| Brevo event     | Effect                                                                                       | Which mails          |
+| --------------- | -------------------------------------------------------------------------------------------- | -------------------- |
+| `hard_bounce`   | subscriber `bounced`                                                                         | any mail             |
+| `invalid_email` | subscriber `bounced`                                                                         | any mail             |
+| `spam`          | subscriber `complained` + Slack message                                                      | newsletter mails     |
+| `unsubscribed`  | subscriber `unsubscribed` + `unsubscribed_at` (Brevo's own unsubscribe, rare)                | newsletter mails     |
+| `blocked`       | no status change (Brevo's blocklist, reason unknown) — only noted on the send row            | —                    |
+| anything else   | ignored, incl. `soft_bounce` (temporary; Brevo reports a `hard_bounce` if it becomes final)  | —                    |
+
+- **Only `pending` and `confirmed` subscribers move**, in one conditional `UPDATE … WHERE email = … AND status
+  IN (…)` via knex (like the send job's claims), so a concurrent confirm or unsubscribe cannot be overwritten.
+  `ItemsService.updateByQuery` would resolve keys first and update by id afterwards. `unsubscribed`,
+  `bounced` and `complained` are never overwritten, so repeated and late events are no-ops. `bounced` and
+  `complained` are final: the send job only mails `confirmed`, and a new signup for such an address is a
+  duplicate (no-op). The time of the change is the subscriber's `date_updated`, which the webhook writes in the same
+  statement (raw knex bypasses Directus' own timestamping; no `items.update` action fires, and none is needed).
+- **A hard bounce counts from any mail** — the address is dead whichever mail found out. A **spam complaint
+  only counts for newsletter mails**: a complaint about a ticket confirmation says nothing about the newsletter.
+- **Telling newsletter mails apart** without a new field: newsletter mails carry `X-Mailin-custom` (Brevo
+  echoes it in every webhook payload) and `X-Mailin-Tag` (becomes the payload's `tags`, and a filter in the
+  Brevo dashboard). Values (`src/newsletter/brevoTracking.ts`): `newsletter:send:<newsletter_sends id>` /
+  tag `newsletter` for the mass send, `newsletter:test` / `newsletter-test` for the test send,
+  `newsletter:double-opt-in` / `newsletter-double-opt-in` for the confirmation mail. Either header is enough.
+- **Send rows**: for a mass-send mail the event is written to that row's `error` (e.g.
+  `Brevo: hard_bounce (user unknown)`), only if the row is `sent` and has no error yet. The status stays
+  `sent`: the mail was handed to Brevo and counts against the daily limit; `failed` means the hand-over itself
+  failed.
+- **Addresses** are matched trimmed and lower-cased, like the website stores them. An unknown address answers
+  200 (most recipients of ticket mails are no subscribers), so Brevo does not retry.
+- **Answers**: 200 for every authenticated request it could process (also ignored events), 401 for wrong or
+  missing credentials, 503 if `BREVO_WEBHOOK_SECRET` is not set (fails closed, Slack once per day), 500 if
+  the database write failed (Slack once per day per error). Brevo may send one event per request or a batched
+  array; both work.
+
+### Authentication
+
+Brevo does not sign webhook payloads. It offers HTTP Basic auth (credentials in the notify URL), a bearer token,
+custom headers and IP allowlisting. **Only Basic auth works here**: Directus treats every
+`Authorization: Bearer …` header as a Directus access token and answers an unknown one with 401 before the
+endpoint runs. The endpoint compares the Basic-auth **password** with `BREVO_WEBHOOK_SECRET` in constant time;
+the user name is not checked (use `brevo`).
+
+### Setup
+
+1. Generate a secret: `openssl rand -hex 32` (hex, so it can go into a URL unescaped).
+2. Set it in the Directus environment: `BREVO_WEBHOOK_SECRET=<secret>`, restart Directus.
+3. In Brevo: **Transactional → Settings → Webhook → Add a new webhook** (the menu path may differ slightly):
+   - URL: `https://brevo:<secret>@admin.programmier.bar/brevo-webhook`
+   - Events: **Hard bounce**, **Spam**, **Invalid email**, **Blocked**, **Unsubscribed**. Not needed: soft
+     bounce, sent, delivered, opened, clicked, deferred.
+4. If the dashboard does not accept credentials in the URL, create the webhook via the API instead:
+
+   ```bash
+   curl -X POST https://api.brevo.com/v3/webhooks \
+     -H "api-key: $BREVO_API_KEY" -H 'content-type: application/json' \
+     -d '{"type":"transactional","description":"Directus newsletter bounces",
+          "url":"https://brevo:<secret>@admin.programmier.bar/brevo-webhook",
+          "events":["hardBounce","spam","invalid","blocked","unsubscribed"]}'
+   ```
+
+5. Check from a shell: without credentials the endpoint answers **401** (**503** means the secret is not set):
+
+   ```bash
+   curl -i -X POST https://admin.programmier.bar/brevo-webhook
+   curl -i -u "brevo:<secret>" -H 'content-type: application/json' -d '{"event":"delivered"}' \
+     https://admin.programmier.bar/brevo-webhook   # 200, nothing changes
+   ```
