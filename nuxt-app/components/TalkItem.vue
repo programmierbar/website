@@ -1,8 +1,7 @@
 <template>
     <div :id="'talk-' + talk.id" class="flex flex-col lg:grid lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
-        <div
-            class="<!-- Mobile order --> <!-- Reset order for --> <!-- Desktop placement --> order-1 grid lg:order-none lg:col-start-1 lg:row-start-1"
-        >
+        <!-- order-* sets the mobile order; lg:order-none resets it so the lg:col/row classes place it in the grid -->
+        <div class="order-1 grid lg:order-none lg:col-start-1 lg:row-start-1">
             <p class="mb-2 text-3xl font-black">{{ talk.title }}</p>
             <p class="text-xl font-light italic lg:mb-7">{{ buildSpeakerNamesForTalk(talk) }}</p>
         </div>
@@ -16,8 +15,9 @@
             <InnerHtml :html="talk.abstract" class="space-y-8 text-xl font-light" />
         </div>
 
+        <!-- lg:self-start stops the media stretching to the row-span height, which would break its aspect ratio -->
         <div
-            class="<!-- Mobile order --> <!-- Reset order for --> <!-- Desktop placement & span --> <!-- Don't stretch to row-span height, keep aspect-ratio --> order-2 mb-5 grid pl-0 lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mb-0 lg:self-start lg:pl-10"
+            class="order-2 mb-5 grid pl-0 lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mb-0 lg:self-start lg:pl-10"
         >
             <EmbeddedVideoPlayer v-if="talk.video_url" :url="talk.video_url" :thumbnail="talk.thumbnail" />
             <DirectusImage
