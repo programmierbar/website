@@ -66,6 +66,14 @@ describe('newsletter-scheduling hook', () => {
         expect(readOne).toHaveBeenCalledWith('issue-1', { fields: ['status', 'subject', 'scheduled_at', 'blocks'] })
     })
 
+    test('rejects an update when the stored issue cannot be read (fails closed)', async () => {
+        const { filters, readOne } = setup({ status: 'sending', subject: 'X', scheduled_at: 'x', blocks: [1] })
+        readOne.mockRejectedValueOnce(new Error('db weg'))
+        const update = filters.get('newsletter_issues.items.update')!
+
+        await expect(update({ preheader: 'neu' }, { keys: ['issue-1'] }, USER)).rejects.toThrow('db weg')
+    })
+
     test('blocks content edits while sending', async () => {
         const { filters } = setup({ status: 'sending', subject: 'X', scheduled_at: 'x', blocks: [1] })
         const update = filters.get('newsletter_issues.items.update')!

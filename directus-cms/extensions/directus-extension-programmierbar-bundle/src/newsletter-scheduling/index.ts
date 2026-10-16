@@ -19,18 +19,16 @@ const HOOK_NAME = 'newsletter-scheduling'
 export default defineHook(({ filter }, hookContext) => {
     const { services, logger } = hookContext
 
-    async function readState(key: string | number, schema: unknown): Promise<IssueState | null> {
+    // A read error is thrown, not turned into "no stored issue": that would skip the
+    // sending/sent freeze and let the write through (fail closed).
+    async function readState(key: string | number, schema: unknown): Promise<IssueState> {
         const issues = new services.ItemsService(ISSUES_COLLECTION, { schema, accountability: null })
-        try {
-            const issue = await issues.readOne(key, { fields: ['status', 'subject', 'scheduled_at', 'blocks'] })
-            return {
-                status: issue?.status ?? null,
-                subject: issue?.subject ?? null,
-                scheduled_at: issue?.scheduled_at ?? null,
-                blockCount: Array.isArray(issue?.blocks) ? issue.blocks.length : 0,
-            }
-        } catch {
-            return null
+        const issue = await issues.readOne(key, { fields: ['status', 'subject', 'scheduled_at', 'blocks'] })
+        return {
+            status: issue?.status ?? null,
+            subject: issue?.subject ?? null,
+            scheduled_at: issue?.scheduled_at ?? null,
+            blockCount: Array.isArray(issue?.blocks) ? issue.blocks.length : 0,
         }
     }
 

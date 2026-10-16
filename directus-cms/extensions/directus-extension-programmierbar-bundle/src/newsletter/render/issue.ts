@@ -72,14 +72,23 @@ export function buildIssueMjml(
     options: RenderOptions,
     report: RenderReport = { warnings: [], hidden: [] }
 ): string {
+    return buildIssue(issue, options, report).mjml
+}
+
+function buildIssue(
+    issue: NewsletterIssue,
+    options: RenderOptions,
+    report: RenderReport
+): { mjml: string; renderedBlocks: number } {
     const subject = issue.subject?.trim() ?? ''
     const preheader = issue.preheader?.trim() ?? ''
     const link = createWebsiteLinker(options.websiteUrl, subject)
-    const blocks = sortBySortField(issue.blocks ?? [])
+    const rendered = sortBySortField(issue.blocks ?? [])
         .map((block) => blockMjml(block, link, report))
-        .join('')
+        .filter((mjml) => mjml !== '')
+    const blocks = rendered.join('')
 
-    return `<mjml lang="de">
+    const mjml = `<mjml lang="de">
   <mj-head>
     <mj-title>${escapeHtml(subject)}</mj-title>
     ${preheader ? `<mj-preview>${escapeHtml(preheader)}</mj-preview>` : ''}
@@ -97,6 +106,7 @@ export function buildIssueMjml(
     ${footerMjml(options.unsubscribeUrl)}
   </mj-body>
 </mjml>`
+    return { mjml, renderedBlocks: rendered.length }
 }
 
 /**
@@ -109,7 +119,7 @@ export function buildIssueMjml(
  */
 export async function renderNewsletterIssue(issue: NewsletterIssue, options: RenderOptions): Promise<RenderResult> {
     const report: RenderReport = { warnings: [], hidden: [] }
-    const source = buildIssueMjml(issue, options, report)
+    const { mjml: source, renderedBlocks } = buildIssue(issue, options, report)
 
     const { html, errors } = await mjml2html(source, {
         validationLevel: 'soft',
@@ -121,5 +131,5 @@ export async function renderNewsletterIssue(issue: NewsletterIssue, options: Ren
         report.warnings.push(`MJML: ${error.formattedMessage ?? error.message}`)
     }
 
-    return { html, warnings: report.warnings, hidden: report.hidden }
+    return { html, warnings: report.warnings, hidden: report.hidden, renderedBlocks }
 }

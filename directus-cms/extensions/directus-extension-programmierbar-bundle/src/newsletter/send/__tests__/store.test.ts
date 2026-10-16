@@ -20,13 +20,20 @@ function fakeDatabase(tables: Record<string, Array<Record<string, any>>>) {
     return { database, updates }
 }
 
-function services(created: any[], options: { existing?: any[]; duplicateFor?: string } = {}) {
+function services(
+    created: any[],
+    options: { existing?: any[]; duplicateFor?: string; subscribers?: any[]; readError?: Error } = {}
+) {
     class ItemsService {
         constructor(
             public collection: string,
             public opts: any
         ) {}
-        async readByQuery() {
+        async readByQuery(query: any) {
+            if (options.readError) throw options.readError
+            if (this.collection === 'newsletter_subscribers') {
+                return (options.subscribers ?? []).filter((row) => row.id === query.filter.id._eq)
+            }
             return options.existing ?? []
         }
         async createOne(data: any) {
@@ -66,6 +73,17 @@ describe('claims are conditional updates', () => {
         expect(tables.newsletter_sends[0]).toEqual({ id: 's1', status: 'sent', sent_at: '2026-10-15T08:00:00.000Z' })
     })
 
+    test('unclaimIssue only moves a sending issue back to scheduled', async () => {
+        const tables = { newsletter_issues: [{ id: 'i1', status: 'sending' }] }
+        const { database, updates } = fakeDatabase(tables)
+        const store = createDirectusSendStore({ services: services([]), getSchema: async () => ({}), database })
+
+        await store.unclaimIssue('i1')
+
+        expect(tables.newsletter_issues[0]!.status).toBe('scheduled')
+        expect(updates[0]!.where).toEqual({ id: 'i1', status: 'sending' })
+    })
+
     test('finishIssue only moves a sending issue', async () => {
         const tables = { newsletter_issues: [{ id: 'i1', status: 'draft' }] }
         const { database } = fakeDatabase(tables)
@@ -94,5 +112,30 @@ describe('queueSends', () => {
                 accountability: null,
             },
         ])
+    })
+})
+
+describe('getSubscriber', () => {
+    const fields = { email: 'a@example.de', status: 'confirmed', unsubscribe_token: 't' }
+
+    test('returns the subscriber, or null when it no longer exists', async () => {
+        const store = createDirectusSendStore({
+            services: services([], { subscribers: [{ id: 'sub-1', ...fields }] }),
+            getSchema: async () => ({}),
+            database: jest.fn(),
+        })
+
+        expect(await store.getSubscriber('sub-1')).toMatchObject(fields)
+        expect(await store.getSubscriber('sub-2')).toBeNull()
+    })
+
+    test('propagates read errors instead of reporting the subscriber as deleted', async () => {
+        const store = createDirectusSendStore({
+            services: services([], { readError: new Error('SQLITE_BUSY') }),
+            getSchema: async () => ({}),
+            database: jest.fn(),
+        })
+
+        await expect(store.getSubscriber('sub-1')).rejects.toThrow('SQLITE_BUSY')
     })
 })

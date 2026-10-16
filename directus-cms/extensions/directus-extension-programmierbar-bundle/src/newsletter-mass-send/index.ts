@@ -45,18 +45,20 @@ export default defineHook(({ schedule }, hookContext) => {
                 issueId
             )
             const websiteUrl = await getRequiredSetting('website_url', { logger, services, getSchema })
-            const { html, warnings, hidden } = await renderNewsletterIssue(issue, {
+            const { html, warnings, hidden, renderedBlocks } = await renderNewsletterIssue(issue, {
                 websiteUrl,
                 unsubscribeUrl: UNSUBSCRIBE_URL_PLACEHOLDER,
             })
-            return { html, warnings, hiddenCount: hidden.length }
+            return { html, warnings, hiddenCount: hidden.length, renderedBlocks }
         },
         sendMail: (mail) => sendRawEmail(mail, { logger, services, getSchema }),
         async notify(text) {
             try {
                 await postSlackMessage(text)
+                return true
             } catch (error: any) {
                 logger.error(`${HOOK_NAME}: Slack notification failed: ${error?.message ?? error}`)
+                return false
             }
         },
     }

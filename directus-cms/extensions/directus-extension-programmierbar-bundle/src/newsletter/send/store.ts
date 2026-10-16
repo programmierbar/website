@@ -15,7 +15,7 @@ interface StoreContext {
 /**
  * The Directus-backed {@link SendStore}. Reads and ordinary writes go through
  * `ItemsService` without accountability (system writes, which the scheduling hook
- * allows). The three state claims are conditional `UPDATE … WHERE status = …` statements
+ * allows). The state claims are conditional `UPDATE … WHERE status = …` statements
  * via knex, so they are atomic even if two Directus processes ran the job at once: only
  * one of them sees an affected row.
  *
@@ -55,6 +55,15 @@ export function createDirectusSendStore({ services, getSchema, database }: Store
                 .where({ id: issueId, status: 'scheduled' })
                 .update({ status: 'sending' })
             return changed === 1
+        },
+
+        async unclaimIssue(issueId) {
+            await database(ISSUES_COLLECTION).where({ id: issueId, status: 'sending' }).update({ status: 'scheduled' })
+        },
+
+        async getScheduledAt(issueId) {
+            const issue = await (await items(ISSUES_COLLECTION)).readOne(issueId, { fields: ['scheduled_at'] })
+            return issue?.scheduled_at ?? null
         },
 
         async resetIssueToDraft(issueId) {
@@ -137,15 +146,16 @@ export function createDirectusSendStore({ services, getSchema, database }: Store
         },
 
         async getSubscriber(subscriberId): Promise<Subscriber | null> {
-            try {
-                return await (
-                    await items(SUBSCRIBERS_COLLECTION)
-                ).readOne(subscriberId, {
-                    fields: ['email', 'status', 'unsubscribe_token'],
-                })
-            } catch {
-                return null
-            }
+            // readByQuery, not readOne: an empty result means "deleted", while a read error
+            // propagates and leaves the row queued instead of marking it prevented.
+            const rows = await (
+                await items(SUBSCRIBERS_COLLECTION)
+            ).readByQuery({
+                filter: { id: { _eq: subscriberId } },
+                fields: ['email', 'status', 'unsubscribe_token'],
+                limit: 1,
+            })
+            return rows?.[0] ?? null
         },
 
         async claimSend(sendId, sentAt) {

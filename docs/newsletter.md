@@ -346,19 +346,24 @@ A cron hook (`newsletter-mass-send`, every minute) does the rest; the logic is i
   `scheduled_at` are frozen. The send job writes without accountability and is not restricted. Changing the
   status away from `sending` stops a running send.
 - **Start**: due issues (`scheduled_at` ≤ now) move `scheduled` → `sending` by a conditional update (only one
-  process wins). The issue is rendered once with the shared renderer (live item, admin read) into
-  `html_snapshot`, with a placeholder for the personal unsubscribe link. Then one `newsletter_sends` row per
-  **confirmed** subscriber is queued with `dedupe_key = <issue>:<subscriber>` (unique; existing rows are
-  skipped). If rendering fails, the issue goes back to `draft` and Slack is notified.
+  process wins); `scheduled_at` is re-read after the claim, and an issue postponed in the meantime goes back to
+  `scheduled`. The issue is rendered once with the shared renderer (live item, admin read), with a placeholder
+  for the personal unsubscribe link. Then one `newsletter_sends` row per **confirmed** subscriber is queued with
+  `dedupe_key = <issue>:<subscriber>` (unique; existing rows are skipped), and only then is the render saved as
+  `html_snapshot`: a snapshot means the fan-out is complete. After a crash mid-fan-out the issue is `sending`
+  without a snapshot, and the next tick prepares it again before anything is sent. If rendering fails, or no
+  block renders any content (e.g. every podcast/meetup is unpublished or deleted), the issue goes back to
+  `draft` and Slack is notified.
 - **Sending**: at most `newsletter_settings.daily_sending_limit` newsletter mails per Berlin day (counted over
   all issues) and at most 50 per minute. If the limit is not set, nothing is sent and Slack is notified — there
   is no fallback number. Before each mail the subscriber must still be `confirmed`, otherwise the row becomes
-  `prevented`. Each row is claimed `queued` → `sent` by a conditional update **before** the mail goes out (at
+  `prevented` (a deleted subscriber too; a read error leaves the row queued). Each row is claimed `queued` → `sent` by a conditional update **before** the mail goes out (at
   most once: a crash can lose a mail, never duplicate one). The mail is the snapshot with the personal
   unsubscribe link, the issue subject (no prefix) and the List-Unsubscribe headers. A failed mail marks the
   row `failed` (not retried) and ends the tick.
 - **Finish**: no queued rows left → `sent` + `sent_at` and a Slack summary (sent / failed / prevented). Slack
-  also reports a daily-limit pause, a failed start and unexpected errors (each message at most once per day).
+  also reports a daily-limit pause, a failed start and unexpected errors (each message at most once per day; a
+  message Slack did not accept is retried on the next tick).
 - **Overlap**: an in-process flag skips a tick while the previous one runs; the conditional updates and the
   unique `dedupe_key` guard against a second process.
 - **Campaign parameters**: website links built by the renderer (podcasts, meetups) carry

@@ -64,6 +64,13 @@ class FakeStore implements SendStore {
         issue.status = 'sending'
         return true
     }
+    async unclaimIssue(issueId: string) {
+        const issue = this.issues.find((i) => i.id === issueId && i.status === 'sending')
+        if (issue) issue.status = 'scheduled'
+    }
+    async getScheduledAt(issueId: string) {
+        return this.issues.find((i) => i.id === issueId)?.scheduled_at ?? null
+    }
     async resetIssueToDraft(issueId: string) {
         this.issues.find((i) => i.id === issueId)!.status = 'draft'
     }
@@ -139,7 +146,14 @@ class FakeStore implements SendStore {
     }
 }
 
-function setup(options: { mailFails?: (to: string) => boolean; renderFails?: boolean } = {}) {
+function setup(
+    options: {
+        mailFails?: (to: string) => boolean
+        renderFails?: boolean
+        renderedBlocks?: number
+        slackFails?: () => boolean
+    } = {}
+) {
     const store = new FakeStore()
     const mails: Array<{ to: string; subject: string; html: string; headers: Record<string, string> }> = []
     const slack: string[] = []
@@ -154,7 +168,7 @@ function setup(options: { mailFails?: (to: string) => boolean; renderFails?: boo
         renderSnapshot: async (issueId) => {
             renders.push(issueId)
             if (options.renderFails) throw new Error('render kaputt')
-            return { html: SNAPSHOT, warnings: [], hiddenCount: 0 }
+            return { html: SNAPSHOT, warnings: [], hiddenCount: 0, renderedBlocks: options.renderedBlocks ?? 1 }
         },
         sendMail: async (mail) => {
             if (options.mailFails?.(mail.to)) return false
@@ -162,7 +176,9 @@ function setup(options: { mailFails?: (to: string) => boolean; renderFails?: boo
             return true
         },
         notify: async (text) => {
+            if (options.slackFails?.()) return false
             slack.push(text)
+            return true
         },
     }
     const tick = () => runNewsletterSendTick(deps)
@@ -233,6 +249,65 @@ describe('start', () => {
         // The missing snapshot is rendered again and only sub-2 is added.
         expect(store.sends.map((row) => row.dedupe_key)).toEqual(['issue-1:sub-1', 'issue-1:sub-2'])
         expect(store.issues[0]!.html_snapshot).toBe(SNAPSHOT)
+    })
+
+    test('a crash during fan-out leaves no snapshot, so the next tick completes the fan-out before finishing', async () => {
+        const { store, tick, mails } = setup()
+        store.subscribers = [subscriber(1), subscriber(2), subscriber(3)]
+        store.issues = [scheduledIssue()]
+        // The process dies after the first row: nothing after queueSends runs.
+        const realQueue = store.queueSends.bind(store)
+        jest.spyOn(store, 'queueSends').mockImplementationOnce(async (issueId) => {
+            await realQueue(issueId, ['sub-1'])
+            return new Promise<number>(() => {}) // never settles
+        })
+        void tick()
+        await new Promise((resolve) => setImmediate(resolve))
+
+        expect(store.issues[0]).toMatchObject({ status: 'sending', html_snapshot: null })
+        expect(store.sends).toHaveLength(1)
+
+        // After the restart.
+        await tick()
+
+        expect(store.sends.map((row) => row.dedupe_key)).toEqual(['issue-1:sub-1', 'issue-1:sub-2', 'issue-1:sub-3'])
+        expect(mails.map((mail) => mail.to).sort()).toEqual([
+            'leser1@example.de',
+            'leser2@example.de',
+            'leser3@example.de',
+        ])
+        expect(store.issues[0]!.status).toBe('sent')
+    })
+
+    test('an issue whose blocks all render empty is not started: back to draft, Slack, no rows', async () => {
+        const { store, tick, slack, mails } = setup({ renderedBlocks: 0 })
+        store.subscribers = [subscriber(1)]
+        store.issues = [scheduledIssue()]
+
+        await tick()
+
+        expect(store.issues[0]).toMatchObject({ status: 'draft', html_snapshot: null })
+        expect(store.sends).toEqual([])
+        expect(mails).toEqual([])
+        expect(slack.join('\n')).toContain('konnte nicht starten (kein Block hat Inhalt ergeben')
+    })
+
+    test('an issue postponed after it was read is put back to scheduled, not sent', async () => {
+        const { store, tick, renders } = setup()
+        store.subscribers = [subscriber(1)]
+        store.issues = [scheduledIssue()]
+        // The editor moves scheduled_at into the future between our read and our claim.
+        const realClaim = store.claimIssue.bind(store)
+        jest.spyOn(store, 'claimIssue').mockImplementationOnce(async (issueId) => {
+            store.issues[0]!.scheduled_at = '2026-10-16T08:00:00Z'
+            return realClaim(issueId)
+        })
+
+        await tick()
+
+        expect(store.issues[0]!.status).toBe('scheduled')
+        expect(renders).toEqual([])
+        expect(store.sends).toEqual([])
     })
 
     test('a failing render puts the issue back to draft and reports it', async () => {
@@ -438,5 +513,35 @@ describe('errors', () => {
         await tick()
 
         expect(slack.filter((text) => text.includes('db weg'))).toHaveLength(1)
+    })
+
+    test('a Slack alert that could not be posted is retried on the next tick', async () => {
+        let slackDown = true
+        const { store, tick, slack } = setup({ slackFails: () => slackDown })
+        jest.spyOn(store, 'findScheduledIssues').mockRejectedValue(new Error('db weg'))
+
+        await tick()
+        expect(slack).toEqual([])
+
+        slackDown = false
+        await tick()
+        await tick()
+
+        expect(slack.filter((text) => text.includes('db weg'))).toHaveLength(1)
+    })
+
+    test('a subscriber read error leaves the row queued instead of marking it prevented', async () => {
+        const { store, tick, mails } = setup()
+        store.subscribers = [subscriber(1)]
+        store.issues = [scheduledIssue({ status: 'sending', html_snapshot: SNAPSHOT })]
+        await store.queueSends('issue-1', ['sub-1'])
+        jest.spyOn(store, 'getSubscriber').mockRejectedValueOnce(new Error('SQLITE_BUSY'))
+
+        await tick()
+        expect(store.sends[0]!.status).toBe('queued')
+        expect(store.issues[0]!.status).toBe('sending')
+
+        await tick()
+        expect(mails.map((mail) => mail.to)).toEqual(['leser1@example.de'])
     })
 })

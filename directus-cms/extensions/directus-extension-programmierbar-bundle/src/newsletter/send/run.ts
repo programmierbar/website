@@ -39,8 +39,13 @@ export interface SendStore {
     findScheduledIssues(): Promise<ScheduledIssue[]>
     /** scheduled → sending, only if still scheduled. True if this call made the change. */
     claimIssue(issueId: string): Promise<boolean>
+    /** sending → scheduled, only if still sending: undoes a claim on an issue that is no longer due. */
+    unclaimIssue(issueId: string): Promise<void>
+    /** The stored `scheduled_at` (as Directus returns it), or null. */
+    getScheduledAt(issueId: string): Promise<string | null>
     /** Back to draft after a failed start, so it does not retry every minute. */
     resetIssueToDraft(issueId: string): Promise<void>
+    /** Written only after the fan-out completed: a stored snapshot means all rows exist. */
     saveSnapshot(issueId: string, html: string): Promise<void>
     confirmedSubscriberIds(): Promise<string[]>
     /** One queued row per subscriber; existing ones are skipped (unique `dedupe_key`). Returns the number created. */
@@ -49,6 +54,7 @@ export interface SendStore {
     getIssueStatus(issueId: string): Promise<string | null>
     countSentSince(since: Date): Promise<number>
     nextQueued(issueId: string, limit: number): Promise<QueuedSend[]>
+    /** Null only when the subscriber no longer exists; read errors are thrown. */
     getSubscriber(subscriberId: string): Promise<Subscriber | null>
     /** queued → sent (with sent_at), only if still queued. True if this call made the change. */
     claimSend(sendId: string, sentAt: Date): Promise<boolean>
@@ -62,10 +68,13 @@ export interface SendDeps {
     store: SendStore
     now: () => Date
     /** Render the live issue with the unsubscribe placeholder (shared renderer). */
-    renderSnapshot: (issueId: string) => Promise<{ html: string; warnings: string[]; hiddenCount: number }>
+    renderSnapshot: (
+        issueId: string
+    ) => Promise<{ html: string; warnings: string[]; hiddenCount: number; renderedBlocks: number }>
     getWebsiteUrl: () => Promise<string>
     sendMail: (mail: { to: string; subject: string; html: string; headers: Record<string, string> }) => Promise<boolean>
-    notify: (text: string) => Promise<void>
+    /** Post to Slack. Never throws; false when the message could not be posted. */
+    notify: (text: string) => Promise<boolean>
     adminUrl: (issueId: string) => string
     logger: { info: (msg: string) => void; warn: (msg: string) => void; error: (msg: string) => void }
     /** Keys of Slack messages already sent; keeps repeating conditions to one message per day. */
@@ -75,22 +84,33 @@ export interface SendDeps {
 async function notifyOnce(deps: SendDeps, key: string, text: string): Promise<void> {
     const dayKey = `${berlinDayKey(deps.now())}:${key}`
     if (deps.notified.has(dayKey)) return
-    deps.notified.add(dayKey)
-    await deps.notify(text)
+    // Remember the key only once Slack has the message, so a failed post is retried next tick.
+    if (await deps.notify(text)) deps.notified.add(dayKey)
 }
 
 const label = (issue: { id: string; subject?: string | null }) =>
     issue.subject ? `„${issue.subject}“` : `Ausgabe ${issue.id}`
 
-/** Render the snapshot and queue one row per confirmed subscriber. Idempotent. */
+/**
+ * Render the snapshot and queue one row per confirmed subscriber. Idempotent.
+ *
+ * The snapshot is saved LAST: it doubles as the "fan-out complete" marker. If the process
+ * dies mid-fan-out, the issue is `sending` without a snapshot, so the next tick prepares
+ * it again (existing rows are skipped) instead of sending to a partial list and finishing.
+ */
 async function prepareIssue(deps: SendDeps, issueId: string): Promise<{ queued: number; recipients: number }> {
-    const { html, warnings, hiddenCount } = await deps.renderSnapshot(issueId)
+    const { html, warnings, hiddenCount, renderedBlocks } = await deps.renderSnapshot(issueId)
     if (!hasUnsubscribePlaceholder(html)) {
         throw new Error('Der gerenderte Snapshot enthält keinen Abmeldelink-Platzhalter')
     }
-    await deps.store.saveSnapshot(issueId, html)
+    if (renderedBlocks === 0) {
+        throw new Error(
+            `kein Block hat Inhalt ergeben (${hiddenCount} unveröffentlichte Einträge ausgeblendet, ${warnings.length} Warnungen) – die Mail wäre leer`
+        )
+    }
     const recipients = await deps.store.confirmedSubscriberIds()
     const queued = await deps.store.queueSends(issueId, recipients)
+    await deps.store.saveSnapshot(issueId, html)
     if (warnings.length > 0 || hiddenCount > 0) {
         deps.logger.warn(
             `newsletter-mass-send: issue ${issueId}: ${hiddenCount} hidden entries, warnings: ${warnings.join(' | ')}`
@@ -118,6 +138,13 @@ export async function startDueIssues(deps: SendDeps): Promise<void> {
         if (!(await deps.store.claimIssue(issue.id))) continue
 
         try {
+            // An editor may have postponed the issue since we read it. Once claimed, scheduled_at
+            // is frozen (newsletter-scheduling), so this re-read sees the final value.
+            const currentAt = parseDirectusDateTime(await deps.store.getScheduledAt(issue.id))
+            if (!currentAt || currentAt.getTime() > now.getTime()) {
+                await deps.store.unclaimIssue(issue.id)
+                continue
+            }
             const { queued, recipients } = await prepareIssue(deps, issue.id)
             deps.logger.info(`newsletter-mass-send: started issue ${issue.id}, ${queued} rows queued`)
             await deps.notify(
@@ -157,7 +184,7 @@ export async function processSendingIssues(deps: SendDeps): Promise<void> {
     for (const issue of issues) {
         let snapshot = issue.html_snapshot
         if (!hasUnsubscribePlaceholder(snapshot)) {
-            // A crash between claim and snapshot: prepare again (idempotent).
+            // A crash between claim and the end of the fan-out: prepare again (idempotent).
             await prepareIssue(deps, issue.id)
             const refreshed = (await deps.store.findSendingIssues()).find((row) => row.id === issue.id)
             snapshot = refreshed?.html_snapshot ?? null

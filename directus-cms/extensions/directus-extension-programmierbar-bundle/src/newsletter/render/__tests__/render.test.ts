@@ -296,6 +296,23 @@ describe('published filter', () => {
         expect(warnings).toEqual(['Meetup-Block übersprungen: kein veröffentlichtes Meetup'])
     })
 
+    test('counts the blocks that produced markup; 0 when every entry is hidden or deleted', async () => {
+        const mixed = await renderNewsletterIssue(
+            issue([textBlock(0, 'Davor', '<p>x</p>'), mixedPodcasts(['draft'])]),
+            OPTIONS
+        )
+        expect(mixed.renderedBlocks).toBe(1)
+
+        const empty = await renderNewsletterIssue(
+            issue([
+                mixedPodcasts(['draft', 'archived']),
+                { sort: 3, collection: 'newsletter_blocks_text', item: null },
+            ]),
+            OPTIONS
+        )
+        expect(empty.renderedBlocks).toBe(0)
+    })
+
     test('the rendered html never contains a preview notice', async () => {
         const { html, hidden } = await renderNewsletterIssue(issue([mixedPodcasts(['draft', 'published'])]), OPTIONS)
         expect(hidden).toHaveLength(1)
