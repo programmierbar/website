@@ -21,6 +21,11 @@ export const DIRECTUS_CMS_URL =
 export const SEND_CONTACT_EMAIL_URL = '/api/email'
 export const BUZZSPROUT_TRACKING_URL = 'https://op3.dev/e/https://www.podtrac.com/pts/redirect.mp3'
 
+// Podcast votes: within this window, a further vote from the same (anonymized, hashed) IP on the
+// same episode replaces the earlier one instead of adding a second. The hash is of a truncated IP,
+// so different listeners can share it — hence a time window rather than one vote per hash forever.
+export const VOTE_COOLDOWN_MINUTES = 10
+
 // programmier.bar
 export const WEBSITE_URL = process.env.WEBSITE_URL || 'https://www.programmier.bar'
 export const WEBSITE_NAME = 'programmier.bar'
