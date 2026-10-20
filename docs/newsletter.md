@@ -395,9 +395,10 @@ the relevant ones into subscriber states. No data-model change was needed.
 | `spam`          | subscriber `complained` + Slack message                                                      | newsletter mails     |
 | `unsubscribed`  | subscriber `unsubscribed` + `unsubscribed_at` (Brevo's own unsubscribe, rare)                | newsletter mails     |
 | `blocked`       | no status change (Brevo's blocklist, reason unknown) — only noted on the send row            | —                    |
+| `error`         | no status change (Brevo could not process/send the mail) — only noted on the send row        | —                    |
 | anything else   | ignored, incl. `soft_bounce` (temporary; Brevo reports a `hard_bounce` if it becomes final)  | —                    |
 
-**Undelivered other mails:** `hard_bounce`, `invalid_email` and `blocked` on a mail **without** a newsletter
+**Undelivered other mails:** `hard_bounce`, `invalid_email`, `blocked` and `error` on a mail **without** a newsletter
 marker (ticket confirmation, invoice, speaker portal, …) additionally post a Slack warning with address,
 event, Brevo's reason and subject, so the mail (e.g. an invoice) can be delivered another way. One message
 per recipient, mail and day (keyed by address plus Brevo's `message-id`, or address + subject without one;
@@ -443,8 +444,10 @@ the user name is not checked (use `brevo`).
 2. Set it in the Directus environment: `BREVO_WEBHOOK_SECRET=<secret>`, restart Directus.
 3. In Brevo: **Transactional → Settings → Webhook → Add a new webhook** (the menu path may differ slightly):
    - URL: `https://brevo:<secret>@admin.programmier.bar/brevo-webhook`
-   - Events: **Hard bounce**, **Spam**, **Invalid email**, **Blocked**, **Unsubscribed**. Not needed: soft
-     bounce, sent, delivered, opened, clicked, deferred.
+   - Events: **Hard bounce**, **Spam**, **Invalid email**, **Blocked**, **Error** (German UI: "Fehler"),
+     **Unsubscribed**. Not needed: soft bounce, sent, delivered, opened, clicked, deferred.
+   - The payload names the error event `error`, but Brevo's webhook API has no value for it in `events`, so
+     it can only be ticked in the dashboard (also for a webhook created via the API in step 4).
 4. If the dashboard does not accept credentials in the URL, create the webhook via the API instead:
 
    ```bash

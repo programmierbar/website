@@ -32,7 +32,7 @@ export interface Decision {
     isNewsletter: boolean
     /**
      * A non-newsletter mail (ticket, invoice, speaker portal, …) did not reach its recipient
-     * (`hard_bounce`, `invalid_email`, `blocked`): someone should know, e.g. to get an invoice
+     * (`hard_bounce`, `invalid_email`, `blocked`, `error`): someone should know, e.g. to get an invoice
      * to the buyer another way.
      */
     mailFailure: boolean
@@ -43,7 +43,7 @@ export interface Decision {
 }
 
 /** Events that mean a mail did not reach its recipient. */
-const UNDELIVERED_EVENTS = new Set(['hard_bounce', 'invalid_email', 'blocked'])
+const UNDELIVERED_EVENTS = new Set(['hard_bounce', 'invalid_email', 'blocked', 'error'])
 
 function optionalString(value: unknown): string | null {
     return typeof value === 'string' && value.trim() ? value.trim() : null
@@ -81,7 +81,9 @@ function parseTags(event: BrevoEvent): unknown {
  * - `unsubscribed` (Brevo's own unsubscribe) → `unsubscribed`, only for newsletter mails.
  * - `blocked` → no status change: Brevo did not send because the address is on its own
  *   blocklist, and the payload does not say why. Noted on the send row.
- * - `hard_bounce`, `invalid_email`, `blocked` on any OTHER mail (no newsletter marker) →
+ * - `error` → no status change: Brevo could not process or send the mail, which says
+ *   nothing about the address. Noted on the send row.
+ * - `hard_bounce`, `invalid_email`, `blocked`, `error` on any OTHER mail (no newsletter marker) →
  *   additionally `mailFailure`, a Slack warning: a ticket confirmation or invoice did not
  *   arrive, and nobody else would notice.
  * - everything else (`soft_bounce`, `deferred`, `delivered`, opens, clicks, …) → ignored.
@@ -111,6 +113,7 @@ export function decide(raw: BrevoEvent): Decision {
             noteSend = true
             break
         case 'blocked':
+        case 'error':
             noteSend = true
             break
     }

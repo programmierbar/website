@@ -58,6 +58,16 @@ describe('decide', () => {
         })
     })
 
+    test('a Brevo error is only noted on the send row', () => {
+        expect(decide({ event: 'error', email: 'a@b.de', ...NEWSLETTER })).toMatchObject({
+            transition: null,
+            sendId: SEND_ID,
+            note: 'Brevo: error',
+            mailFailure: false,
+        })
+        expect(decide({ event: 'error', email: 'a@b.de', ...TICKET })).toMatchObject({ transition: null, sendId: null })
+    })
+
     test('soft bounces and other events are ignored entirely', () => {
         for (const event of ['soft_bounce', 'deferred', 'delivered', 'opened', 'click', 'request', '']) {
             expect(decide({ event, email: 'a@b.de', ...NEWSLETTER })).toMatchObject({ transition: null, sendId: null })
@@ -73,7 +83,7 @@ describe('decide', () => {
     })
 
     test('flags undelivered non-newsletter mails for a Slack warning', () => {
-        for (const event of ['hard_bounce', 'invalid_email', 'blocked']) {
+        for (const event of ['hard_bounce', 'invalid_email', 'blocked', 'error']) {
             expect(decide({ event, email: 'a@b.de', ...TICKET })).toMatchObject({ mailFailure: true })
             expect(decide({ event, email: 'a@b.de', ...NEWSLETTER })).toMatchObject({ mailFailure: false })
             expect(decide({ event, email: 'a@b.de', tag: '["newsletter-double-opt-in"]' })).toMatchObject({

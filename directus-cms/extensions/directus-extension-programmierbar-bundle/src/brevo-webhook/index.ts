@@ -15,8 +15,8 @@ const ENDPOINT_NAME = 'brevo-webhook'
  *
  * - hard bounce / invalid address → subscriber `bounced` (any mail)
  * - spam complaint → `complained` (newsletter mails only), with a Slack message
- * - hard bounce / invalid address / blocked on any other mail (tickets, invoices, …) → Slack
- *   warning, so the mail can be delivered another way
+ * - hard bounce / invalid address / blocked / error on any other mail (tickets, invoices, …)
+ *   → Slack warning, so the mail can be delivered another way
  * - Brevo-side unsubscribe → `unsubscribed` (newsletter mails only)
  * - on a newsletter send, the event is noted in the row's `error`
  *

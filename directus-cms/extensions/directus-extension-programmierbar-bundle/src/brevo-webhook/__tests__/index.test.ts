@@ -310,6 +310,21 @@ describe('POST /brevo-webhook: send rows', () => {
         expect(tables.newsletter_subscribers![0]!.status).toBe('confirmed')
     })
 
+    test('a Brevo error on a mass-send mail is noted; no subscriber change, no Slack', async () => {
+        const { call, tables } = setup({
+            subscribers: [subscriber('confirmed')],
+            sends: [{ id: SEND_ID, status: 'sent', error: null }],
+        })
+
+        const result = await call({ event: 'error', email: 'leser@example.de', reason: 'relay error', ...NEWSLETTER })
+
+        expect(result.body).toEqual({ received: 1, transitioned: 0, notedSends: 1 })
+        expect(tables.newsletter_sends![0]!.error).toBe('Brevo: error (relay error)')
+        expect(tables.newsletter_sends![0]!.status).toBe('sent')
+        expect(tables.newsletter_subscribers![0]!.status).toBe('confirmed')
+        expect(slackMock).not.toHaveBeenCalled()
+    })
+
     test('keeps the first note and never touches a row that is not sent', async () => {
         const { call, tables } = setup({
             sends: [{ id: SEND_ID, status: 'sent', error: 'Brevo: blocked' }],
@@ -342,19 +357,34 @@ describe('POST /brevo-webhook: undelivered non-newsletter mails', () => {
         )
     })
 
-    test.each(['invalid_email', 'blocked'])('%s on a ticket mail warns, also for non-subscribers', async (event) => {
-        const { call, writes } = setup()
+    test.each(['invalid_email', 'blocked', 'error'])(
+        '%s on a ticket mail warns, also for non-subscribers',
+        async (event) => {
+            const { call, writes } = setup()
 
-        const result = await call({ event, email: 'kaeufer@example.de', ...TICKET })
+            const result = await call({ event, email: 'kaeufer@example.de', ...TICKET })
 
-        expect(result.status).toBe(200)
+            expect(result.status).toBe(200)
+            expect(slackMock).toHaveBeenCalledTimes(1)
+            const text = slackMock.mock.calls[0]![0]
+            expect(text).toContain('kaeufer@example.de')
+            expect(text).toContain(`\`${event}\``)
+            expect(text).toContain('„Deine Tickets für die programmier.con“')
+            // blocked never writes; invalid_email only tries the (absent) subscriber.
+            expect(writes.filter((w) => w.table === 'newsletter_sends')).toEqual([])
+        }
+    )
+
+    test('a Brevo error on a ticket mail warns but leaves the subscriber alone', async () => {
+        const { call, tables, writes } = setup({ subscribers: [subscriber('confirmed')] })
+
+        const result = await call({ event: 'error', email: 'leser@example.de', ...TICKET })
+
+        expect(result.body).toEqual({ received: 1, transitioned: 0, notedSends: 0 })
+        expect(tables.newsletter_subscribers![0]!.status).toBe('confirmed')
+        expect(writes).toEqual([])
         expect(slackMock).toHaveBeenCalledTimes(1)
-        const text = slackMock.mock.calls[0]![0]
-        expect(text).toContain('kaeufer@example.de')
-        expect(text).toContain(`\`${event}\``)
-        expect(text).toContain('„Deine Tickets für die programmier.con“')
-        // blocked never writes; invalid_email only tries the (absent) subscriber.
-        expect(writes.filter((w) => w.table === 'newsletter_sends')).toEqual([])
+        expect(slackMock.mock.calls[0]![0]).toContain('`error`')
     })
 
     test('without subject and reason the warning still names address and event', async () => {
@@ -377,7 +407,7 @@ describe('POST /brevo-webhook: undelivered non-newsletter mails', () => {
     test('no warning for newsletter, test and double opt-in mails', async () => {
         const { call } = setup({ sends: [{ id: SEND_ID, status: 'sent', error: null }] })
         for (const marker of [NEWSLETTER, NEWSLETTER_MAIL, { 'X-Mailin-custom': 'newsletter:double-opt-in' }]) {
-            for (const event of ['hard_bounce', 'invalid_email', 'blocked']) {
+            for (const event of ['hard_bounce', 'invalid_email', 'blocked', 'error']) {
                 await call({ event, email: 'leser@example.de', ...marker })
             }
         }
