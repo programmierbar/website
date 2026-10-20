@@ -106,6 +106,43 @@ describe('POST /api/speaker-portal/submit', () => {
         expect(directus.updateSpeaker).not.toHaveBeenCalled()
     })
 
+    describe('rejects a bio that has no text left once converted', () => {
+        // The schema only sees the Markdown. Saving an empty bio would still mark the submission
+        // complete and burn the token, so the speaker could not fix it.
+        it.each([
+            ['only an image', '![x](https://example.com/a.png)'],
+            ['only whitespace', '   \n\n  '],
+            ['only a script', '<script>alert(1)</script>'],
+            ['only markup and entities', '<img src=x>&nbsp;**&#32;**'],
+            ['only invisible characters', '\u200b\u00a0\u2060'],
+        ])('%s', async (_case, description) => {
+            directus.getSpeakerByPortalToken.mockResolvedValue({ id: 's1', portal_submission_status: 'pending' })
+            const data = { ...validData, description }
+            const parts = [
+                part('token', 't'),
+                part('data', JSON.stringify(data)),
+                { name: 'profile_image', filename: 'a.jpg', type: 'image/jpeg', data: Buffer.from('jpg') },
+            ]
+            await expect(invoke(parts)).rejects.toMatchObject({
+                statusCode: 400,
+                message: expect.stringContaining('„Bio / Beschreibung“'),
+            })
+            expect(directus.uploadFile).not.toHaveBeenCalled()
+            expect(directus.updateSpeaker).not.toHaveBeenCalled()
+        })
+    })
+
+    it('stores the bio as sanitised HTML', async () => {
+        directus.getSpeakerByPortalToken.mockResolvedValue({ id: 's1', portal_submission_status: 'pending' })
+        directus.updateSpeaker.mockResolvedValue({})
+        const data = { ...validData, description: 'Erika ist **CTO**. ![x](https://example.com/a.png)' }
+        await invoke([part('token', 't'), part('data', JSON.stringify(data))])
+        expect(directus.updateSpeaker).toHaveBeenCalledWith(
+            's1',
+            expect.objectContaining({ description: '<p>Erika ist <strong>CTO</strong>. </p>' })
+        )
+    })
+
     it('stores the submission and invalidates the token', async () => {
         directus.getSpeakerByPortalToken.mockResolvedValue({ id: 's1', portal_submission_status: 'pending' })
         directus.updateSpeaker.mockResolvedValue({})

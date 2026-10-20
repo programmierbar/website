@@ -344,9 +344,11 @@ const handleKeyDown = (event: KeyboardEvent) => {
     const { metaKey, target } = event
     const key = event.key.toLowerCase()
 
-    // Check if target is an input element
+    // Check if target is an input element. Editable regions count too: the speaker portal's bio editor
+    // is a contenteditable, and typing an "m" or the "/" of a URL there must not open menu or search.
     const targetIsInput =
-        target instanceof HTMLElement && (target.nodeName === 'TEXTAREA' || target.nodeName === 'INPUT')
+        target instanceof HTMLElement &&
+        (target.nodeName === 'TEXTAREA' || target.nodeName === 'INPUT' || target.isContentEditable)
 
     // Open menu if closed, "m" is pressed
     // and target is not an input element
