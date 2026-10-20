@@ -1,0 +1,107 @@
+import DOMPurify from 'isomorphic-dompurify'
+import { Marked } from 'marked'
+import TurndownService from 'turndown'
+import { normalizeExternalUrl } from '../../helpers/normalizeExternalUrl'
+
+// The speaker portal edits the rich-text `speakers.description` as Markdown: the CMS keeps storing
+// HTML (every page renders it through `InnerHtml`), the speaker sees and types Markdown, and these
+// two functions are the only place the formats meet. Both run on the server only, so neither
+// library reaches the client bundle.
+
+const turndown = new TurndownService({
+    headingStyle: 'atx',
+    bulletListMarker: '-',
+    codeBlockStyle: 'fenced',
+    emDelimiter: '_',
+    // `marked` runs with `breaks: true`, so a plain newline already is a `<br>`. Turndown's default
+    // of two trailing spaces would only add invisible characters to the editor.
+    br: '',
+})
+
+// Turndown's own list rule pads the marker to four columns (`-   Item`). Valid, but not what anyone
+// types, and the editor hint promises lists written with `- `. Nested content is indented by the
+// marker's width, which is what CommonMark needs to keep it inside the item.
+turndown.addRule('listItem', {
+    filter: 'li',
+    replacement(content, node) {
+        const parent = node.parentNode as HTMLElement | null
+        let prefix = '- '
+
+        if (parent?.nodeName === 'OL') {
+            const start = Number(parent.getAttribute('start')) || 1
+            prefix = `${start + Array.prototype.indexOf.call(parent.children, node)}. `
+        }
+
+        const body = content
+            .replace(/^\n+/, '')
+            .replace(/\n+$/, '\n')
+            .replace(/\n(?!$)/g, `\n${' '.repeat(prefix.length)}`)
+
+        return prefix + body.trimEnd() + (node.nextSibling ? '\n' : '')
+    },
+})
+
+/**
+ * Turns the CMS rich text of a speaker bio into Markdown for the portal's editor.
+ *
+ * Every block — including blocks nested in other blocks and the items of nested lists — ends up on
+ * its own line, so `<div>Intro<div>Details</div></div>` cannot run together into "IntroDetails".
+ * A value without any tags is taken to be plain text already and passed through unchanged, rather
+ * than having its line breaks collapsed and its `*` escaped as HTML whitespace rules would demand.
+ */
+export function htmlToMarkdown(html: string | null | undefined): string {
+    if (!html?.trim()) {
+        return ''
+    }
+
+    if (!/<[a-z!/]/i.test(html)) {
+        return html.replace(/\r\n?/g, '\n').trim()
+    }
+
+    return turndown.turndown(html).trim()
+}
+
+const escapeAttribute = (value: string) =>
+    value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+const markdown = new Marked({
+    gfm: true,
+    // A single newline is a line break, as it was when the field was a plain textarea.
+    breaks: true,
+    renderer: {
+        link({ href, tokens }) {
+            const text = this.parser.parseInline(tokens)
+            // Speakers leave the scheme off just like CMS editors do (`example.com/blog`), and a
+            // link that resolves against our own domain only leads to a 404.
+            const url = normalizeExternalUrl(href)
+
+            return url && /^(?:https?|mailto):/i.test(url) ? `<a href="${escapeAttribute(url)}">${text}</a>` : text
+        },
+        // A bio has no use for headings; keep the line as emphasised text instead of letting the
+        // sanitiser below strip the tag and run it into the next paragraph.
+        heading({ tokens }) {
+            return `<p><strong>${this.parser.parseInline(tokens)}</strong></p>\n`
+        },
+    },
+})
+
+// What a bio may contain. Anything else — raw HTML typed into the Markdown included — is removed;
+// DOMPurify drops `<script>`, `<iframe>` and friends with their content and unwraps the rest.
+const ALLOWED_TAGS = ['p', 'br', 'strong', 'b', 'em', 'i', 'a', 'ul', 'ol', 'li', 'code']
+const ALLOWED_ATTR = ['href']
+const ALLOWED_URI_REGEXP = /^(?:https?|mailto):/i
+
+/**
+ * Turns the Markdown a speaker typed into the sanitised HTML the CMS stores.
+ *
+ * Only paragraphs, line breaks, emphasis, inline code, lists and http(s)/mailto links survive.
+ */
+export function markdownToHtml(text: string | null | undefined): string {
+    if (!text?.trim()) {
+        return ''
+    }
+
+    const html = markdown.parse(text.replace(/\r\n?/g, '\n'), { async: false })
+
+    return DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR, ALLOWED_URI_REGEXP }).trim()
+}

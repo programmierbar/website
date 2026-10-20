@@ -109,18 +109,25 @@
 
                         <!-- Bio -->
                         <div class="mt-6">
-                            <label class="form-label">Bio / Beschreibung *</label>
-                            <p class="mb-2 text-sm text-white/60">
+                            <label id="bio-label" for="bio" class="form-label">Bio / Beschreibung *</label>
+                            <p id="bio-hint" class="mb-2 text-sm text-white/60">
                                 Bitte schreibe die Bio in der dritten Person Singular, nicht in der Ich-Form (z. B.
                                 „Erika Mustermann arbeitet remote als Head of Engineering bei der Beispiel GmbH …“).
                             </p>
-                            <textarea
+                            <p id="bio-markdown-hint" class="mb-2 text-sm text-white/60">
+                                Du kannst Markdown nutzen: <code>**fett**</code>, <code>_kursiv_</code>,
+                                <code>[Link](https://…)</code> und Listen mit <code>- Punkt</code>.
+                            </p>
+                            <MarkdownEditor
+                                id="bio"
                                 v-model="formData.description"
-                                class="form-textarea"
-                                rows="5"
+                                labelledby="bio-label"
+                                describedby="bio-hint bio-markdown-hint"
+                                :rows="5"
                                 placeholder="z. B. „Erika Mustermann arbeitet remote als Head of Engineering bei der Beispiel GmbH und beschäftigt sich vor allem mit …“"
                                 required
-                                maxlength="2000"
+                                :maxlength="2000"
+                                :invalid="formState === 'error' && !formData.description.trim()"
                             />
                             <p class="mt-1 text-sm text-white/60">
                                 {{ formData.description?.length || 0 }} / 2000 Zeichen
@@ -546,6 +553,13 @@ async function submitForm(event: Event) {
         return
     }
 
+    // The bio editor is not a form control, so `reportValidity()` above does not see it.
+    if (!formData.value.description.trim()) {
+        formError.value = 'Bitte fülle alle Pflichtfelder aus.'
+        formState.value = 'error'
+        return
+    }
+
     // Validate images
     if (!profileImageFile.value && !speaker.value?.profile_image) {
         formError.value = 'Bitte lade ein Profilbild hoch.'
@@ -614,12 +628,7 @@ async function submitForm(event: Event) {
     @apply w-full rounded border-2 border-gray-600 bg-gray-600 px-4 py-3 text-base text-white transition-colors focus:border-lime focus:outline-none;
 }
 
-.form-textarea {
-    @apply w-full rounded border-2 border-gray-600 bg-gray-600 px-4 py-3 text-base text-white transition-colors focus:border-lime focus:outline-none;
-}
-
-.error .form-input:invalid,
-.error .form-textarea:invalid {
+.error .form-input:invalid {
     @apply border-pink;
 }
 </style>

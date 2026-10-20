@@ -1,5 +1,5 @@
-import { plainTextToHtml } from '~/helpers/sanitize'
 import { SpeakerSubmissionSchema } from '../../utils/schema'
+import { markdownToHtml } from '../../utils/speakerBio'
 
 // Every error leaves this handler as JSON with a German message the portal can show as-is. Anything
 // unexpected is logged here (Vercel function logs) and answered with a generic 500, so internal error
@@ -142,8 +142,8 @@ export default defineEventHandler(async (event) => {
             first_name: data.first_name,
             last_name: data.last_name,
             occupation: data.occupation,
-            // The form sends plain text; the CMS field and every page rendering it expect rich text.
-            description: plainTextToHtml(data.description),
+            // The form sends Markdown; the CMS field and every page rendering it expect rich text.
+            description: markdownToHtml(data.description),
             website_url: data.website_url || null,
             linkedin_url: data.linkedin_url || null,
             twitter_url: data.twitter_url || null,
