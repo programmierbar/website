@@ -109,19 +109,33 @@
 
                         <!-- Bio -->
                         <div class="mt-6">
-                            <label class="form-label">Bio / Beschreibung *</label>
-                            <p class="mb-2 text-sm text-white/60">
+                            <label id="bio-label" for="bio" class="form-label">Bio / Beschreibung *</label>
+                            <p id="bio-hint" class="mb-2 text-sm text-white/60">
                                 Bitte schreibe die Bio in der dritten Person Singular, nicht in der Ich-Form (z. B.
                                 „Erika Mustermann arbeitet remote als Head of Engineering bei der Beispiel GmbH …“).
                             </p>
-                            <textarea
+                            <p id="bio-markdown-hint" class="mb-2 text-sm text-white/60">
+                                Du kannst Markdown nutzen: <code>**fett**</code>, <code>_kursiv_</code>,
+                                <code>[Link](https://…)</code> und Listen mit <code>- Punkt</code>.
+                            </p>
+                            <MarkdownEditor
+                                id="bio"
+                                ref="bioEditor"
                                 v-model="formData.description"
-                                class="form-textarea"
-                                rows="5"
+                                labelledby="bio-label"
+                                :describedby="
+                                    bioInvalid ? 'bio-hint bio-markdown-hint bio-error' : 'bio-hint bio-markdown-hint'
+                                "
+                                :rows="5"
                                 placeholder="z. B. „Erika Mustermann arbeitet remote als Head of Engineering bei der Beispiel GmbH und beschäftigt sich vor allem mit …“"
                                 required
-                                maxlength="2000"
+                                :maxlength="2000"
+                                :invalid="bioInvalid"
                             />
+                            <!-- An alert, so a screen reader announces it when a submit is rejected. -->
+                            <p v-if="bioInvalid" id="bio-error" role="alert" class="mt-1 text-sm text-pink">
+                                Bitte gib eine Bio ein.
+                            </p>
                             <p class="mt-1 text-sm text-white/60">
                                 {{ formData.description?.length || 0 }} / 2000 Zeichen
                             </p>
@@ -304,6 +318,7 @@
 <script setup lang="ts">
 import { getMetaInfo } from '~/helpers'
 import { downscaleImage, fitImagesIntoBudget, MAX_IMAGE_UPLOAD_BYTES } from '~/helpers/downscaleImage'
+import { formatOccupation, parseOccupation } from '~/helpers/speakerOccupation'
 import {
     getSpeakerPortalErrorMessage,
     getSpeakerPortalUserMessage,
@@ -311,7 +326,7 @@ import {
     SPEAKER_PORTAL_CONTACT_EMAIL,
     SpeakerPortalError,
 } from '~/helpers/speakerPortalRequest'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const route = useRoute()
 
@@ -324,6 +339,7 @@ const submitted = ref(false)
 const speaker = ref<any>(null)
 const deadline = ref<string | null>(null)
 const formState = ref<'pending' | 'submitting' | 'error'>('pending')
+const bioEditor = ref<{ focus: () => void } | null>(null)
 const formError = ref('')
 const preparingImages = ref(0)
 
@@ -344,6 +360,9 @@ const formData = ref({
     youtube_url: '',
     mastodon_url: '',
 })
+
+// Only after a rejected submit, and only until the speaker has typed something.
+const bioInvalid = computed(() => formState.value === 'error' && !formData.value.description.trim())
 
 // Image handling
 const profileImageInput = ref<HTMLInputElement | null>(null)
@@ -381,12 +400,13 @@ onMounted(async () => {
         deadline.value = data.speaker.portal_submission_deadline
 
         // Pre-fill form with existing data
+        const occupation = parseOccupation(data.speaker.occupation)
         formData.value = {
             academic_title: data.speaker.academic_title || '',
             first_name: data.speaker.first_name || '',
             last_name: data.speaker.last_name || '',
-            job_title: data.speaker.occupation?.split(' at ')[0] || '',
-            company: data.speaker.occupation?.split(' at ')[1] || '',
+            job_title: occupation.jobTitle,
+            company: occupation.company,
             description: data.speaker.description || '',
             website_url: data.speaker.website_url || '',
             linkedin_url: data.speaker.linkedin_url || '',
@@ -544,6 +564,16 @@ async function submitForm(event: Event) {
         return
     }
 
+    // The bio editor is not a form control, so `reportValidity()` above does not see it: move the
+    // focus there ourselves, once the error and `aria-invalid` are rendered.
+    if (!formData.value.description.trim()) {
+        formError.value = 'Bitte fülle alle Pflichtfelder aus.'
+        formState.value = 'error'
+        await nextTick()
+        bioEditor.value?.focus()
+        return
+    }
+
     // Validate images
     if (!profileImageFile.value && !speaker.value?.profile_image) {
         formError.value = 'Bitte lade ein Profilbild hoch.'
@@ -569,7 +599,7 @@ async function submitForm(event: Event) {
             'data',
             JSON.stringify({
                 ...formData.value,
-                occupation: `${formData.value.job_title} at ${formData.value.company}`,
+                occupation: formatOccupation({ jobTitle: formData.value.job_title, company: formData.value.company }),
             })
         )
 
@@ -612,12 +642,7 @@ async function submitForm(event: Event) {
     @apply w-full rounded border-2 border-gray-600 bg-gray-600 px-4 py-3 text-base text-white transition-colors focus:border-lime focus:outline-none;
 }
 
-.form-textarea {
-    @apply w-full rounded border-2 border-gray-600 bg-gray-600 px-4 py-3 text-base text-white transition-colors focus:border-lime focus:outline-none;
-}
-
-.error .form-input:invalid,
-.error .form-textarea:invalid {
+.error .form-input:invalid {
     @apply border-pink;
 }
 </style>

@@ -1,4 +1,5 @@
 import { SpeakerSubmissionSchema } from '../../utils/schema'
+import { hasVisibleText, markdownToHtml } from '../../utils/speakerBio'
 
 // Every error leaves this handler as JSON with a German message the portal can show as-is. Anything
 // unexpected is logged here (Vercel function logs) and answered with a generic 500, so internal error
@@ -81,6 +82,19 @@ export default defineEventHandler(async (event) => {
     const data = parseResult.data
 
     try {
+        // The form sends Markdown; the CMS field and every page rendering it expect rich text. Converted
+        // before anything is stored: the schema only sees the Markdown, and a bio made of nothing but
+        // an image or raw HTML would otherwise be saved empty and the token burned with it.
+        const description = markdownToHtml(data.description)
+        if (!hasVisibleText(description)) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: 'Bad Request',
+                message:
+                    'Bitte fülle das Feld „Bio / Beschreibung“ mit Text aus. Bilder und HTML-Code werden nicht übernommen.',
+            })
+        }
+
         const directus = useAuthenticatedDirectus()
 
         // Validate token and get speaker
@@ -141,7 +155,7 @@ export default defineEventHandler(async (event) => {
             first_name: data.first_name,
             last_name: data.last_name,
             occupation: data.occupation,
-            description: data.description,
+            description,
             website_url: data.website_url || null,
             linkedin_url: data.linkedin_url || null,
             twitter_url: data.twitter_url || null,
