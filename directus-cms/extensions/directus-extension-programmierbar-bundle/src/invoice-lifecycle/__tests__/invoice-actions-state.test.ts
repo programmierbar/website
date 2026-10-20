@@ -1,5 +1,10 @@
 import { describe, expect, test } from '@jest/globals'
-import { deriveInvoiceActionsState, isExistingItemKey, type InvoiceDocumentRow } from '../invoice-actions-state.ts'
+import {
+    deriveInvoiceActionsState,
+    describeActionResult,
+    isExistingItemKey,
+    type InvoiceDocumentRow,
+} from '../invoice-actions-state.ts'
 
 function doc(overrides: Partial<InvoiceDocumentRow> & Pick<InvoiceDocumentRow, 'id' | 'type'>): InvoiceDocumentRow {
     return {
@@ -104,5 +109,44 @@ describe('deriveInvoiceActionsState', () => {
 
         expect(state.isCancelled).toBe(false)
         expect(state.showPostIssuanceActions).toBe(true)
+    })
+})
+
+describe('describeActionResult', () => {
+    test('a correction that reached the customer is a success', () => {
+        const result = describeActionResult('correction', {
+            invoice_number: 'PB-CON26-002',
+            corrects: 'PB-CON26-001',
+            customer_mail: 'sent',
+            accounting_mail: 'sent',
+        })
+        expect(result.type).toBe('success')
+        expect(result.text).toContain('Rechnungsberichtigung PB-CON26-002')
+        expect(result.text).toContain('An den Kunden verschickt.')
+        expect(result.text).toContain('Kopie an die Buchhaltung verschickt.')
+    })
+
+    test.each(['failed', 'template_missing', undefined])(
+        'a cancellation whose customer mail is %s is a warning asking for manual dispatch',
+        (customerMail) => {
+            const result = describeActionResult('cancellation', {
+                invoice_number: 'PB-CON26-003',
+                cancels: 'PB-CON26-001',
+                customer_mail: customerMail,
+                accounting_mail: 'sent',
+            })
+            expect(result.type).toBe('warning')
+            expect(result.text).toContain('Stornorechnung PB-CON26-003')
+            expect(result.text).toContain('manuell an den Kunden')
+        }
+    )
+
+    test('regenerate never reports a customer mail', () => {
+        const result = describeActionResult('regenerate', {
+            invoice_number: 'PB-CON26-001',
+            accounting_mail: 'skipped',
+        })
+        expect(result.type).toBe('success')
+        expect(result.text).not.toContain('Kunden')
     })
 })

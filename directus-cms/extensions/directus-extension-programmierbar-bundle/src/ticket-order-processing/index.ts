@@ -2,17 +2,14 @@ import { randomUUID } from 'node:crypto'
 import { defineHook } from '@directus/extensions-sdk'
 import { sendInvoiceToAccounting } from '../shared/accounting-mail.js'
 import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
+import { recordInvoiceSent } from '../shared/invoice-customer-mail.js'
 import { generateInvoiceNumber } from '../shared/invoice-generator.js'
-import { issueOriginalInvoice, markInvoiceSent } from '../shared/invoice-service.js'
-import { postSlackMessage } from '../shared/postSlackMessage.js'
+import { INVOICE_DOCUMENT_LABEL, issueOriginalInvoice } from '../shared/invoice-service.js'
 import { safeAction } from '../shared/safeHook.ts'
 import { getSetting } from '../shared/settings.js'
 import { formatPrice, generateUniqueTicketCode } from '../shared/ticket-utils.js'
 
 const HOOK_NAME = 'ticket-order-processing'
-
-/** How often to attempt stamping `sent_at` on the invoice document row. */
-const MARK_SENT_ATTEMPTS = 3
 
 export default defineHook(({ action }, hookContext) => {
     const logger = hookContext.logger
@@ -307,41 +304,19 @@ export default defineHook(({ action }, hookContext) => {
                         if (emailSent && invoiceDocumentId) {
                             // The invoice left the house: record issuance on the document row.
                             // If sending failed, sent_at stays null and the invoice may still be
-                            // regenerated before it is dispatched manually.
-                            //
-                            // The customer now holds an issued invoice, so a lost sent_at update
-                            // would wrongly allow in-place regeneration through the lifecycle
-                            // endpoint. Retry the update and, if it keeps failing, escalate to
-                            // Slack so a human reconciles the document row.
-                            const sentAt = new Date() // capture once: retries must not shift the recorded time
-                            let markSentError: unknown = null
-                            for (let attempt = 1; attempt <= MARK_SENT_ATTEMPTS; attempt++) {
-                                try {
-                                    await markInvoiceSent(invoicesService, invoiceDocumentId, sentAt)
-                                    markSentError = null
-                                    break
-                                } catch (err: any) {
-                                    markSentError = err
-                                    logger.warn(
-                                        `${HOOK_NAME}: Attempt ${attempt}/${MARK_SENT_ATTEMPTS} to mark invoice ${invoiceNumber} as sent failed: ${err?.message || err}`
-                                    )
-                                }
-                            }
-
-                            if (markSentError) {
-                                logger.error(
-                                    `${HOOK_NAME}: Invoice ${invoiceNumber} for order ${order.order_number} was emailed to ${order.purchaser_email}, but stamping sent_at on document ${invoiceDocumentId} failed persistently: ${(markSentError as any)?.message || markSentError}`
-                                )
-                                try {
-                                    await postSlackMessage(
-                                        `:warning: *${HOOK_NAME}*: Rechnung ${invoiceNumber} zu Bestellung ${order.order_number} wurde per E-Mail an ${order.purchaser_email} verschickt, aber sent_at konnte auf dem Rechnungsdokument (${invoiceDocumentId}) nicht gespeichert werden: ${(markSentError as any)?.message || markSentError}. Bitte sent_at manuell setzen — sonst erlaubt der Invoice-Lifecycle-Endpoint, die bereits verschickte Rechnung in-place neu zu generieren.`
-                                    )
-                                } catch (slackErr: any) {
-                                    logger.error(
-                                        `${HOOK_NAME}: Failed to send Slack notification: ${slackErr?.message || slackErr}`
-                                    )
-                                }
-                            } else {
+                            // regenerated before it is dispatched manually. A persistently failing
+                            // stamp is retried and escalated to Slack inside.
+                            const recorded = await recordInvoiceSent({
+                                invoicesService,
+                                documentId: invoiceDocumentId,
+                                documentLabel: INVOICE_DOCUMENT_LABEL.invoice,
+                                invoiceNumber,
+                                orderNumber: order.order_number,
+                                recipient: order.purchaser_email,
+                                logger,
+                                source: HOOK_NAME,
+                            })
+                            if (recorded) {
                                 logger.info(
                                     `${HOOK_NAME}: Sent confirmation email with invoice to ${order.purchaser_email}`
                                 )

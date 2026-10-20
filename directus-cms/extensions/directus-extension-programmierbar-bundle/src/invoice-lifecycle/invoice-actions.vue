@@ -1,19 +1,25 @@
 <script setup lang="ts">
 import { useApi } from '@directus/extensions-sdk'
 import { computed, ref, watch } from 'vue'
-import { deriveInvoiceActionsState, isExistingItemKey, type InvoiceDocumentRow } from './invoice-actions-state.js'
+import {
+    deriveInvoiceActionsState,
+    describeActionResult,
+    isExistingItemKey,
+    type InvoiceActionKey,
+    type InvoiceDocumentRow,
+} from './invoice-actions-state.js'
 
 const props = defineProps<{ collection: string; primaryKey: string }>()
 
 const api = useApi()
 
-type ActionKey = 'regenerate' | 'correction' | 'cancellation'
+type ActionKey = InvoiceActionKey
 
 const loading = ref(true)
 const loadFailed = ref(false)
 const busy = ref(false)
 const confirmAction = ref<ActionKey | null>(null)
-const successMessage = ref<string | null>(null)
+const resultMessage = ref<{ type: 'success' | 'warning'; text: string } | null>(null)
 const errorMessage = ref<string | null>(null)
 
 const orderInvoiceNumber = ref<string | null>(null)
@@ -36,8 +42,9 @@ const ACTION_TEXT: Record<ActionKey, { button: string; title: string; body: stri
         body:
             'Das Rechnungs-PDF wird aus den aktuellen Rechnungsdaten der Bestellung neu erzeugt. ' +
             'Rechnungsnummer und Rechnungsdatum bleiben unverändert. Möglich ist das nur, solange die ' +
-            'Rechnung noch nicht versendet wurde. An den Kunden wird keine E-Mail verschickt; die ' +
-            'Buchhaltung erhält die neue Fassung als Ersatz der vorherigen.',
+            'Rechnung noch nicht versendet wurde. An den Kunden wird keine E-Mail verschickt — bitte ' +
+            'manuell senden und danach sent_at setzen; die Buchhaltung erhält die neue Fassung als Ersatz ' +
+            'der vorherigen.',
         confirm: 'Neu generieren',
     },
     correction: {
@@ -46,9 +53,8 @@ const ACTION_TEXT: Record<ActionKey, { button: string; title: string; body: stri
         body:
             'Es wird ein neues Dokument mit eigener Rechnungsnummer und heutigem Datum aus den aktuellen ' +
             'Rechnungsdaten erstellt, das ausdrücklich auf die ursprüngliche Rechnung verweist. Die ' +
-            'ursprüngliche Rechnung bleibt unverändert erhalten. An den Kunden wird keine E-Mail ' +
-            'verschickt — die Berichtigung muss manuell an ihn gesendet werden. Die Buchhaltung erhält ' +
-            'automatisch eine Kopie.',
+            'ursprüngliche Rechnung bleibt unverändert erhalten. Die Berichtigung geht automatisch per ' +
+            'E-Mail an Kunde (Käufer, CC Rechnungs-E-Mail) und Buchhaltung.',
         confirm: 'Berichtigung erstellen',
     },
     cancellation: {
@@ -57,18 +63,10 @@ const ACTION_TEXT: Record<ActionKey, { button: string; title: string; body: stri
         body:
             'Es wird eine Stornorechnung mit eigener Rechnungsnummer und negativen Beträgen erstellt, die ' +
             'die aktuelle Rechnung ausdrücklich referenziert. Die ursprüngliche Rechnung bleibt erhalten. ' +
-            'Stripe, Tickets und der Bestellstatus werden nicht verändert, und an den Kunden wird keine ' +
-            'E-Mail verschickt. Die Buchhaltung erhält automatisch eine Kopie.',
+            'Stripe, Tickets und der Bestellstatus werden nicht verändert. Die Stornorechnung geht ' +
+            'automatisch per E-Mail an Kunde (Käufer, CC Rechnungs-E-Mail) und Buchhaltung.',
         confirm: 'Stornorechnung erstellen',
     },
-}
-
-const ACCOUNTING_MAIL_TEXT: Record<string, string> = {
-    sent: 'Kopie an die Buchhaltung verschickt.',
-    failed: 'Kopie an die Buchhaltung fehlgeschlagen — Hinweis ging an Slack, bitte manuell weiterleiten.',
-    skipped: 'Keine Kopie an die Buchhaltung (Postfach nicht konfiguriert).',
-    misconfigured:
-        'Keine Kopie an die Buchhaltung: SMTP-Zugang unvollständig konfiguriert (siehe Slack) — bitte manuell weiterleiten.',
 }
 
 let loadStateRunId = 0
@@ -109,21 +107,14 @@ async function loadState(): Promise<void> {
 
 async function runAction(action: ActionKey): Promise<void> {
     busy.value = true
-    successMessage.value = null
+    resultMessage.value = null
     errorMessage.value = null
 
     try {
         // useApi() sends the current Directus session, so the endpoint's
         // server-side admin check runs against the logged-in user.
         const response = await api.post(`/invoice-lifecycle/${encodeURIComponent(props.primaryKey)}/${action}`)
-        const nr = response.data.invoice_number
-        const message =
-            action === 'regenerate'
-                ? `Rechnung ${nr} wurde neu generiert. Seite neu laden, um die neue Datei zu sehen.`
-                : action === 'correction'
-                  ? `Rechnungsberichtigung ${nr} wurde erstellt (berichtigt ${response.data.corrects}). Sie wurde NICHT automatisch an den Kunden versendet.`
-                  : `Stornorechnung ${nr} wurde erstellt (storniert ${response.data.cancels}). Sie wurde NICHT automatisch an den Kunden versendet.`
-        successMessage.value = `${message} ${ACCOUNTING_MAIL_TEXT[response.data.accounting_mail] ?? ''}`.trim()
+        resultMessage.value = describeActionResult(action, response.data)
         confirmAction.value = null
         await loadState()
     } catch (error: any) {
@@ -186,8 +177,8 @@ watch(
             </v-notice>
         </template>
 
-        <v-notice v-if="successMessage" type="success" class="result-notice">
-            {{ successMessage }}
+        <v-notice v-if="resultMessage" :type="resultMessage.type" class="result-notice">
+            {{ resultMessage.text }}
         </v-notice>
         <v-notice v-if="errorMessage" type="danger" class="result-notice">
             {{ errorMessage }}
