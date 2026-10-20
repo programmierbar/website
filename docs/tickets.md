@@ -30,6 +30,7 @@ The flow consists of four main phases:
 |----------|-------------|----------|
 | `STORAGE_LOCATIONS` | Comma-separated storage location IDs (first is used for invoice PDFs) | Yes |
 | Email transport config | Directus email settings (`EMAIL_TRANSPORT`, `EMAIL_SMTP_HOST`, etc.) | Yes |
+| `ACCOUNTING_INVOICE_EMAIL` | Accounting mailbox that receives a copy of every invoice document (see [Accounting copy](#accounting-copy)). Unset/empty: no copy is sent | Production |
 
 ## External Services
 
@@ -157,8 +158,9 @@ Key-value settings used by extension hooks.
   1. Creates `tickets` records with unique codes and profile tokens
   2. Generates invoice PDF (pdfkit) and uploads to Directus files
   3. Updates order with `invoice_number` and `invoice_file`
-  4. Sends `ticket_order_confirmation` email to purchaser (with invoice PDF attachment, CC to `billing_email` if set)
-  5. Sends `ticket_profile_invitation` email to all attendees
+  4. Sends a copy of the invoice PDF to the accounting mailbox (see [Accounting copy](#accounting-copy))
+  5. Sends `ticket_order_confirmation` email to purchaser (with invoice PDF attachment, CC to `billing_email` if set)
+  6. Sends `ticket_profile_invitation` email to all attendees
 
 ### `ticket-profile-completion`
 
@@ -174,6 +176,27 @@ Key-value settings used by extension hooks.
 - **Number format**: `PB-CON{YY}-{NNN}` (e.g. `PB-CON26-001`), derived from conference `start_on` year
 - **Seller**: Lotum media GmbH, Am Goldstein 1, 61231 Bad Nauheim, USt-ID DE272856704
 - **Line items**: Show netto (net) prices; VAT (19%) shown separately in totals
+
+## Accounting Copy
+
+Every generated invoice document is mailed to `ACCOUNTING_INVOICE_EMAIL` (GoBD: timely recording),
+as its own plain-text mail from `EMAIL_FROM` with exactly one PDF attached — the same bytes and file
+name as the stored file. Subject: `Rechnung PB-CON26-001`, `Rechnungsberichtigung …` or
+`Stornorechnung …`. The upload mailbox rejects mails with links, images, logos or QR codes, so the
+mail carries no HTML, template, link or signature. The code sets no sender/envelope override, so the
+SMTP envelope sender (MAIL FROM) is `EMAIL_FROM` — unless the mail relay rewrites it, which has to be
+checked on the relay side.
+
+| Document | Sent by |
+|----------|---------|
+| Original invoice | `ticket-order-processing`, right after the document is generated — independent of the customer mail |
+| Rechnungsberichtigung / Stornorechnung | `invoice-lifecycle` endpoint, when the document is created |
+| Regenerated (not yet issued) document | `invoice-lifecycle` endpoint, subject suffixed `(ersetzt vorherige Fassung)` — accounting already holds the earlier version under the same number |
+
+Internal orders have no invoice, so nothing is sent. The accounting copy never sets `sent_at` (that
+records the customer dispatch). It is retried up to three times; if it still fails, a Slack alert
+names the invoice number so the PDF can be forwarded by hand. Order processing and the lifecycle
+endpoint carry on either way.
 
 ## Data Flow
 

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { defineHook } from '@directus/extensions-sdk'
+import { sendInvoiceToAccounting } from '../shared/accounting-mail.js'
 import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
 import { generateInvoiceNumber } from '../shared/invoice-generator.js'
 import { issueOriginalInvoice, markInvoiceSent } from '../shared/invoice-service.js'
@@ -216,6 +217,20 @@ export default defineHook(({ action }, hookContext) => {
 
                         logger.info(
                             `${HOOK_NAME}: Invoice ${invoiceNumber} generated and stored (file: ${invoiceResult.fileId}, document: ${invoiceResult.documentId})`
+                        )
+
+                        // Accounting copy (GoBD: timely recording). The document exists now,
+                        // so it goes out regardless of what happens to the customer mail below.
+                        // Never throws; persistent failures are escalated to Slack inside.
+                        await sendInvoiceToAccounting(
+                            {
+                                documentKind: 'invoice',
+                                invoiceNumber,
+                                pdfBuffer,
+                                invoiceFileName,
+                                orderNumber: order.order_number,
+                            },
+                            { env, emailContext: context, source: HOOK_NAME }
                         )
                     } else {
                         logger.info(`${HOOK_NAME}: Skipping invoice for internal order ${order.order_number}`)

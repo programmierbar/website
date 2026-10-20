@@ -1,6 +1,7 @@
 /// <reference types="@directus/extensions/api.d.ts" />
 import { defineEndpoint } from '@directus/extensions-sdk'
 import type { SandboxEndpointRouter } from 'directus:api'
+import { sendInvoiceToAccounting, type AccountingInvoiceDocument } from '../shared/accounting-mail.js'
 import { generateInvoiceNumber } from '../shared/invoice-generator.js'
 import {
     buildInvoiceSnapshot,
@@ -73,9 +74,11 @@ interface OrderContext {
  *   invoice's snapshot and an explicit reference to it. Touches neither Stripe nor
  *   tickets nor the order status.
  *
- * None of the routes sends an email, none deletes a file, and issued documents are
- * never modified — every operation only ever adds a new document or (pre-issuance)
- * swaps the PDF of the not-yet-sent one.
+ * None of the routes emails the customer, none deletes a file, and issued documents
+ * are never modified — every operation only ever adds a new document or (pre-issuance)
+ * swaps the PDF of the not-yet-sent one. Every rendered PDF is copied to the
+ * accounting mailbox (`ACCOUNTING_INVOICE_EMAIL`, see shared/accounting-mail.ts); the
+ * response reports that as `accounting_mail: 'sent' | 'skipped' | 'failed'`.
  */
 export default defineEndpoint(async (router: SandboxEndpointRouter, context) => {
     const logger = context.logger
@@ -224,12 +227,34 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
     }
 
     /**
+     * Copy a freshly rendered document to the accounting mailbox. Runs after the
+     * document row is stored and never throws, so a mail problem cannot turn a
+     * successfully created document into an error response (persistent failures are
+     * escalated to Slack inside).
+     */
+    function sendToAccounting(req: any, ctx: OrderContext, doc: Omit<AccountingInvoiceDocument, 'orderNumber'>) {
+        return sendInvoiceToAccounting(
+            { ...doc, orderNumber: ctx.order.order_number },
+            {
+                env,
+                emailContext: {
+                    logger,
+                    services: context.services,
+                    getSchema: context.getSchema,
+                    accountability: req.accountability,
+                },
+                source: ENDPOINT_NAME,
+            }
+        )
+    }
+
+    /**
      * Regenerate: replace the PDF of the current (not yet issued) invoice document
      * in place. Keeps the invoice number and the original invoice date. The previous
      * file is intentionally NOT deleted. Once the document has been sent, this is
      * blocked — issued documents are immutable and must be corrected instead.
      */
-    registerRoute('regenerate', async (_req, ctx) => {
+    registerRoute('regenerate', async (req, ctx) => {
         const current = requireCurrentDocument(ctx)
 
         if (ctx.order.status !== 'paid') {
@@ -250,6 +275,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
         const snapshot = buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount, ctx.conference)
 
         let rendered: RenderInvoiceResult
+        let correctedNumber: string | null = null
         if (current.type === 'correction') {
             // A regenerated correction must keep its printed reference to the corrected
             // invoice (§31 Abs. 5 UStDV) — without a resolvable predecessor the document
@@ -261,6 +287,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                     `Correction ${current.invoice_number} does not reference a known invoice document — cannot regenerate it with the legally required reference`
                 )
             }
+            correctedNumber = predecessor.invoice_number
             rendered = await renderAndUploadInvoice({
                 snapshot,
                 invoiceNumber: current.invoice_number,
@@ -295,7 +322,25 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             `${ENDPOINT_NAME}: Regenerated invoice ${current.invoice_number} for order ${ctx.order.order_number} (file: ${rendered.fileId})`
         )
 
-        return { invoice_number: current.invoice_number, invoice_file: rendered.fileId, document_id: current.id }
+        // The earlier version was already copied to accounting when it was created
+        // (the paid hook does so even when the customer mail failed, which is exactly
+        // when a regenerate is possible). Send the replacement too, marked as such, so
+        // the books hold the version the customer will actually receive.
+        const accountingMail = await sendToAccounting(req, ctx, {
+            documentKind: current.type === 'correction' ? 'correction' : 'invoice',
+            invoiceNumber: current.invoice_number,
+            pdfBuffer: rendered.pdfBuffer,
+            invoiceFileName: rendered.invoiceFileName,
+            referenceNumber: correctedNumber,
+            replacesPreviousVersion: true,
+        })
+
+        return {
+            invoice_number: current.invoice_number,
+            invoice_file: rendered.fileId,
+            document_id: current.id,
+            accounting_mail: accountingMail,
+        }
     })
 
     /**
@@ -303,9 +348,9 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
      * current billing data with its own invoice number and today's date, explicitly
      * referencing the corrected invoice. The corrected document stays untouched;
      * the order's legacy pointers move to the correction (the new authoritative
-     * invoice). No email is sent.
+     * invoice). The customer is not emailed; accounting gets a copy.
      */
-    registerRoute('correction', async (_req, ctx) => {
+    registerRoute('correction', async (req, ctx) => {
         const current = requireCurrentDocument(ctx)
 
         if (ctx.order.status !== 'paid') {
@@ -361,11 +406,20 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             `${ENDPOINT_NAME}: Created correction ${invoiceNumber} for invoice ${current.invoice_number} on order ${ctx.order.order_number} (file: ${rendered.fileId})`
         )
 
+        const accountingMail = await sendToAccounting(req, ctx, {
+            documentKind: 'correction',
+            invoiceNumber,
+            pdfBuffer: rendered.pdfBuffer,
+            invoiceFileName: rendered.invoiceFileName,
+            referenceNumber: current.invoice_number,
+        })
+
         return {
             invoice_number: invoiceNumber,
             invoice_file: rendered.fileId,
             document_id: documentId,
             corrects: current.invoice_number,
+            accounting_mail: accountingMail,
         }
     })
 
@@ -373,10 +427,10 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
      * Cancellation (Stornorechnung): create a NEW document with its own invoice
      * number, negative amounts mirroring the referenced invoice's immutable snapshot
      * and an explicit reference to it. Deliberately does NOT touch Stripe, tickets,
-     * the order status or the order's invoice pointers, and sends no email — it only
-     * records the cancellation document.
+     * the order status or the order's invoice pointers, and does not email the
+     * customer — it only records the cancellation document (accounting gets a copy).
      */
-    registerRoute('cancellation', async (_req, ctx) => {
+    registerRoute('cancellation', async (req, ctx) => {
         const current = requireCurrentDocument(ctx)
 
         if (!current.sent_at) {
@@ -438,11 +492,20 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             `${ENDPOINT_NAME}: Created cancellation ${invoiceNumber} for invoice ${current.invoice_number} on order ${ctx.order.order_number} (file: ${rendered.fileId})`
         )
 
+        const accountingMail = await sendToAccounting(req, ctx, {
+            documentKind: 'cancellation',
+            invoiceNumber,
+            pdfBuffer: rendered.pdfBuffer,
+            invoiceFileName: rendered.invoiceFileName,
+            referenceNumber: current.invoice_number,
+        })
+
         return {
             invoice_number: invoiceNumber,
             invoice_file: rendered.fileId,
             document_id: documentId,
             cancels: current.invoice_number,
+            accounting_mail: accountingMail,
         }
     })
 })

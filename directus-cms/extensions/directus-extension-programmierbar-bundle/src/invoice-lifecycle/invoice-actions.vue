@@ -36,7 +36,8 @@ const ACTION_TEXT: Record<ActionKey, { button: string; title: string; body: stri
         body:
             'Das Rechnungs-PDF wird aus den aktuellen Rechnungsdaten der Bestellung neu erzeugt. ' +
             'Rechnungsnummer und Rechnungsdatum bleiben unverändert. Möglich ist das nur, solange die ' +
-            'Rechnung noch nicht versendet wurde. Es wird keine E-Mail verschickt.',
+            'Rechnung noch nicht versendet wurde. An den Kunden wird keine E-Mail verschickt; die ' +
+            'Buchhaltung erhält die neue Fassung als Ersatz der vorherigen.',
         confirm: 'Neu generieren',
     },
     correction: {
@@ -45,8 +46,9 @@ const ACTION_TEXT: Record<ActionKey, { button: string; title: string; body: stri
         body:
             'Es wird ein neues Dokument mit eigener Rechnungsnummer und heutigem Datum aus den aktuellen ' +
             'Rechnungsdaten erstellt, das ausdrücklich auf die ursprüngliche Rechnung verweist. Die ' +
-            'ursprüngliche Rechnung bleibt unverändert erhalten. Es wird keine E-Mail verschickt — die ' +
-            'Berichtigung muss manuell an den Kunden gesendet werden.',
+            'ursprüngliche Rechnung bleibt unverändert erhalten. An den Kunden wird keine E-Mail ' +
+            'verschickt — die Berichtigung muss manuell an ihn gesendet werden. Die Buchhaltung erhält ' +
+            'automatisch eine Kopie.',
         confirm: 'Berichtigung erstellen',
     },
     cancellation: {
@@ -55,9 +57,16 @@ const ACTION_TEXT: Record<ActionKey, { button: string; title: string; body: stri
         body:
             'Es wird eine Stornorechnung mit eigener Rechnungsnummer und negativen Beträgen erstellt, die ' +
             'die aktuelle Rechnung ausdrücklich referenziert. Die ursprüngliche Rechnung bleibt erhalten. ' +
-            'Stripe, Tickets und der Bestellstatus werden nicht verändert, und es wird keine E-Mail verschickt.',
+            'Stripe, Tickets und der Bestellstatus werden nicht verändert, und an den Kunden wird keine ' +
+            'E-Mail verschickt. Die Buchhaltung erhält automatisch eine Kopie.',
         confirm: 'Stornorechnung erstellen',
     },
+}
+
+const ACCOUNTING_MAIL_TEXT: Record<string, string> = {
+    sent: 'Kopie an die Buchhaltung verschickt.',
+    failed: 'Kopie an die Buchhaltung fehlgeschlagen — Hinweis ging an Slack, bitte manuell weiterleiten.',
+    skipped: 'Keine Kopie an die Buchhaltung (Postfach nicht konfiguriert).',
 }
 
 let loadStateRunId = 0
@@ -106,12 +115,13 @@ async function runAction(action: ActionKey): Promise<void> {
         // server-side admin check runs against the logged-in user.
         const response = await api.post(`/invoice-lifecycle/${encodeURIComponent(props.primaryKey)}/${action}`)
         const nr = response.data.invoice_number
-        successMessage.value =
+        const message =
             action === 'regenerate'
                 ? `Rechnung ${nr} wurde neu generiert. Seite neu laden, um die neue Datei zu sehen.`
                 : action === 'correction'
-                  ? `Rechnungsberichtigung ${nr} wurde erstellt (berichtigt ${response.data.corrects}). Sie wurde NICHT automatisch versendet.`
-                  : `Stornorechnung ${nr} wurde erstellt (storniert ${response.data.cancels}). Sie wurde NICHT automatisch versendet.`
+                  ? `Rechnungsberichtigung ${nr} wurde erstellt (berichtigt ${response.data.corrects}). Sie wurde NICHT automatisch an den Kunden versendet.`
+                  : `Stornorechnung ${nr} wurde erstellt (storniert ${response.data.cancels}). Sie wurde NICHT automatisch an den Kunden versendet.`
+        successMessage.value = `${message} ${ACCOUNTING_MAIL_TEXT[response.data.accounting_mail] ?? ''}`.trim()
         confirmAction.value = null
         await loadState()
     } catch (error: any) {

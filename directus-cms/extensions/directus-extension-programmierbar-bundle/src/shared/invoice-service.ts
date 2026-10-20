@@ -260,7 +260,8 @@ export interface RenderInvoiceResult {
     invoiceFileName: string
 }
 
-const KIND_LABEL: Record<InvoiceDocumentKind, string> = {
+/** Human-readable document name, used for PDF file names, titles and mail subjects. */
+export const INVOICE_DOCUMENT_LABEL: Record<InvoiceDocumentKind, string> = {
     invoice: 'Rechnung',
     correction: 'Rechnungsberichtigung',
     cancellation: 'Stornorechnung',
@@ -323,7 +324,7 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
 
     const pdfBuffer = await generateInvoicePdf(invoiceData)
 
-    const label = KIND_LABEL[kind]
+    const label = INVOICE_DOCUMENT_LABEL[kind]
     const invoiceFileName = `${label}-${invoiceNumber}.pdf`
     const pdfStream = Readable.from([pdfBuffer])
     const fileId = await filesService.uploadOne(pdfStream, {
