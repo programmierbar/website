@@ -18,24 +18,31 @@ const turndown = new TurndownService({
     br: '',
 })
 
+// A `<` that `marked` would read as the start of raw HTML or an autolink (CommonMark): a letter opens
+// a tag or a `<scheme:…>` link, `/`, `!` and `?` a closing tag, comment, declaration or processing
+// instruction, and `<local@domain>` an email link, whose local part may also start with a digit or
+// punctuation. Every other `<` stays as typed, so `Tom & Jerry <3` remains readable in the editor.
+// The local part may contain backslashes, because turndown has escaped `_` and friends by then.
+const STARTS_HTML_OR_AUTOLINK =
+    /<(?=[a-z/!?]|[\w.!#$%&'*+/=?^`{|}~\\-]+@[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?(?:\.[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?)*>)/gi
+
 // Turndown escapes most Markdown syntax in text, but not GFM strikethrough (`~x~` and `~~x~~`), which
-// `marked` renders as `<del>` and the sanitiser then unwraps, or `1)` lists. Without these, `~~` in a
-// bio would silently vanish on submit.
+// `marked` renders as `<del>` and the sanitiser then unwraps, `1)` lists, or the raw HTML and
+// autolinks above. Without these, `~~` in a bio would silently vanish on submit. Used for both rich
+// text and tag-free bios.
 const escapeMarkdown = (text: string) =>
     TurndownService.prototype.escape
         .call(turndown, text)
         .replace(/~/g, '\\~')
         .replace(/^(\d+)\)/, '$1\\)')
+        .replace(STARTS_HTML_OR_AUTOLINK, '\\<')
 
 // The text of rich text arrives decoded: `&lt;script&gt;` is `<script>` and `&amp;copy;` is `&copy;`.
 // Written into Markdown as is, `marked` would read the one as a tag (which the sanitiser deletes) and
-// pass the other through as an entity (which shows as ©). Only a `<` that would open a tag, comment
-// or autolink and an `&` that would form an entity get a backslash, so `Tom & Jerry <3` stays
-// readable in the editor.
-turndown.escape = (text: string) =>
-    escapeMarkdown(text)
-        .replace(/<(?=[a-z/!?])/gi, '\\<')
-        .replace(/&(?=#?\w+;)/g, '\\&')
+// pass the other through as an entity (which shows as ©). `escapeMarkdown` covers the `<`; an `&`
+// gets a backslash only where it would form an entity, so `Tom & Jerry` stays readable. A tag-free
+// bio keeps its entities, because the public pages render it as HTML, too.
+turndown.escape = (text: string) => escapeMarkdown(text).replace(/&(?=#?\w+;)/g, '\\&')
 
 // Turndown's own list rule pads the marker to four columns (`-   Item`). Valid, but not what anyone
 // types, and the editor hint promises lists written with `- `. Nested content is indented by the

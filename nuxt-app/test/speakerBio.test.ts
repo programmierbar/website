@@ -171,6 +171,18 @@ describe('markdownToHtml', () => {
         )
     })
 
+    it('round-trips text that would be an email autolink, also with a digit in front', () => {
+        // `<` before a digit is no tag, but `<123@example.com>` is a CommonMark email autolink, which
+        // would lose its brackets. A bare address still becomes a link (GFM), its text stays the same.
+        const visibleText = (html: string) => html.replace(/<[^>]*>/g, '')
+        const html = '<p>Mail: &lt;123@example.com&gt; &lt;&lt;mailto:123@example.com|123@example.com&gt;&gt;</p>'
+        expect(visibleText(markdownToHtml(htmlToMarkdown(html)))).toBe(visibleText(html))
+        // Without tags, too, where `<1` is plain text on the public pages.
+        expect(visibleText(markdownToHtml(htmlToMarkdown('Mail: <123@example.com> <3')))).toBe(
+            'Mail: &lt;123@example.com&gt; &lt;3'
+        )
+    })
+
     it('round-trips double-encoded entities in CMS rich text as text', () => {
         const html = '<p>&amp;copy; &amp;amp; &amp;#169; &amp;#x41;</p>'
         const md = htmlToMarkdown(html)

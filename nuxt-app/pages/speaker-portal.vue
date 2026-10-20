@@ -120,15 +120,22 @@
                             </p>
                             <MarkdownEditor
                                 id="bio"
+                                ref="bioEditor"
                                 v-model="formData.description"
                                 labelledby="bio-label"
-                                describedby="bio-hint bio-markdown-hint"
+                                :describedby="
+                                    bioInvalid ? 'bio-hint bio-markdown-hint bio-error' : 'bio-hint bio-markdown-hint'
+                                "
                                 :rows="5"
                                 placeholder="z. B. „Erika Mustermann arbeitet remote als Head of Engineering bei der Beispiel GmbH und beschäftigt sich vor allem mit …“"
                                 required
                                 :maxlength="2000"
-                                :invalid="formState === 'error' && !formData.description.trim()"
+                                :invalid="bioInvalid"
                             />
+                            <!-- An alert, so a screen reader announces it when a submit is rejected. -->
+                            <p v-if="bioInvalid" id="bio-error" role="alert" class="mt-1 text-sm text-pink">
+                                Bitte gib eine Bio ein.
+                            </p>
                             <p class="mt-1 text-sm text-white/60">
                                 {{ formData.description?.length || 0 }} / 2000 Zeichen
                             </p>
@@ -319,7 +326,7 @@ import {
     SPEAKER_PORTAL_CONTACT_EMAIL,
     SpeakerPortalError,
 } from '~/helpers/speakerPortalRequest'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const route = useRoute()
 
@@ -332,6 +339,7 @@ const submitted = ref(false)
 const speaker = ref<any>(null)
 const deadline = ref<string | null>(null)
 const formState = ref<'pending' | 'submitting' | 'error'>('pending')
+const bioEditor = ref<{ focus: () => void } | null>(null)
 const formError = ref('')
 const preparingImages = ref(0)
 
@@ -352,6 +360,9 @@ const formData = ref({
     youtube_url: '',
     mastodon_url: '',
 })
+
+// Only after a rejected submit, and only until the speaker has typed something.
+const bioInvalid = computed(() => formState.value === 'error' && !formData.value.description.trim())
 
 // Image handling
 const profileImageInput = ref<HTMLInputElement | null>(null)
@@ -553,10 +564,13 @@ async function submitForm(event: Event) {
         return
     }
 
-    // The bio editor is not a form control, so `reportValidity()` above does not see it.
+    // The bio editor is not a form control, so `reportValidity()` above does not see it: move the
+    // focus there ourselves, once the error and `aria-invalid` are rendered.
     if (!formData.value.description.trim()) {
         formError.value = 'Bitte fülle alle Pflichtfelder aus.'
         formState.value = 'error'
+        await nextTick()
+        bioEditor.value?.focus()
         return
     }
 

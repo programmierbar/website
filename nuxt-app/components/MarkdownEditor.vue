@@ -21,6 +21,7 @@
             :required="required"
             :aria-labelledby="labelledby"
             :aria-describedby="describedby"
+            :aria-invalid="invalid || undefined"
             @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
         />
     </div>
@@ -28,7 +29,7 @@
 
 <script setup lang="ts">
 import type { EditorView } from '@codemirror/view'
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = withDefaults(
     defineProps<{
@@ -62,25 +63,32 @@ const fallback = ref<HTMLTextAreaElement | null>(null)
 const ready = ref(false)
 let view: EditorView | null = null
 let unmounted = false
+let setContentAttributes: typeof import('~/helpers/markdownEditor').setContentAttributes | null = null
+
+// The editable element's attributes. Kept in sync while the editor is open, since `invalid` and
+// `describedby` change when a submit is rejected.
+const contentAttributes = computed(() => {
+    // CodeMirror turns spellchecking off by default, which suits code but not a bio.
+    const attributes: Record<string, string> = {
+        spellcheck: 'true',
+        autocorrect: 'on',
+        autocapitalize: 'sentences',
+    }
+    if (props.labelledby) attributes['aria-labelledby'] = props.labelledby
+    if (props.describedby) attributes['aria-describedby'] = props.describedby
+    if (props.required) attributes['aria-required'] = 'true'
+    if (props.invalid) attributes['aria-invalid'] = 'true'
+    return attributes
+})
 
 onMounted(async () => {
     try {
         // Dynamic, so CodeMirror is its own chunk and only loads where this component is used.
-        const { createMarkdownEditor } = await import('~/helpers/markdownEditor')
+        const editor = await import('~/helpers/markdownEditor')
 
         if (unmounted || !container.value) {
             return
         }
-
-        // CodeMirror turns spellchecking off by default, which suits code but not a bio.
-        const attributes: Record<string, string> = {
-            spellcheck: 'true',
-            autocorrect: 'on',
-            autocapitalize: 'sentences',
-        }
-        if (props.labelledby) attributes['aria-labelledby'] = props.labelledby
-        if (props.describedby) attributes['aria-describedby'] = props.describedby
-        if (props.required) attributes['aria-required'] = 'true'
 
         // Someone already typing in the textarea keeps their focus and cursor in the editor.
         const textarea = fallback.value
@@ -94,12 +102,13 @@ onMounted(async () => {
                   }
                 : undefined
 
-        view = createMarkdownEditor(container.value, {
+        setContentAttributes = editor.setContentAttributes
+        view = editor.createMarkdownEditor(container.value, {
             doc: props.modelValue,
             placeholder: props.placeholder,
             maxLength: props.maxlength,
             selection,
-            contentAttributes: attributes,
+            contentAttributes: contentAttributes.value,
             onChange: (value) => emit('update:modelValue', value),
         })
         // `rows` as a minimum height, like the textarea it replaces (1.5rem per line plus padding).
@@ -128,6 +137,23 @@ watch(
         }
     }
 )
+
+watch(contentAttributes, (attributes) => {
+    if (view && setContentAttributes) {
+        view.dispatch({ effects: setContentAttributes(attributes) })
+    }
+})
+
+/** Focuses the field, whichever of editor and fallback textarea is showing. */
+function focus() {
+    if (view && ready.value) {
+        view.focus()
+    } else {
+        fallback.value?.focus()
+    }
+}
+
+defineExpose({ focus })
 
 onBeforeUnmount(() => {
     unmounted = true

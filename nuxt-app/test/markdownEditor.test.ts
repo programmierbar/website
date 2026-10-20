@@ -1,6 +1,7 @@
 import { EditorState } from '@codemirror/state'
+import { EditorView } from '@codemirror/view'
 import { describe, expect, it } from 'vitest'
-import { maxLength } from '../helpers/markdownEditor'
+import { contentAttributes, maxLength, setContentAttributes } from '../helpers/markdownEditor'
 
 // The bio editor replaces a textarea with `maxlength="2000"`; this pins down that it still behaves
 // like one.
@@ -70,5 +71,31 @@ describe('maxLength', () => {
     it('leaves programmatic changes alone', () => {
         const tr = state('').update({ changes: { from: 0, insert: 'a long prefilled value' } })
         expect(tr.state.doc.toString()).toBe('a long prefilled value')
+    })
+})
+
+// `aria-invalid` and `aria-describedby` change while the editor is open (a rejected submit), so the
+// editable element's attributes have to follow.
+describe('contentAttributes', () => {
+    const attributesOf = (state: EditorState) => Object.assign({}, ...state.facet(EditorView.contentAttributes))
+
+    it('starts with the given attributes', () => {
+        const state = EditorState.create({ extensions: contentAttributes({ 'aria-required': 'true' }) })
+        expect(attributesOf(state)).toEqual({ 'aria-required': 'true' })
+    })
+
+    it('replaces them on setContentAttributes', () => {
+        const state = EditorState.create({ extensions: contentAttributes({ 'aria-required': 'true' }) })
+        const next = state.update({
+            effects: setContentAttributes({ 'aria-required': 'true', 'aria-invalid': 'true' }),
+        }).state
+        expect(attributesOf(next)).toEqual({ 'aria-required': 'true', 'aria-invalid': 'true' })
+        expect(attributesOf(next.update({ effects: setContentAttributes({}) }).state)).toEqual({})
+    })
+
+    it('keeps them across ordinary edits', () => {
+        const state = EditorState.create({ extensions: contentAttributes({ 'aria-invalid': 'true' }) })
+        const next = state.update({ changes: { from: 0, insert: 'Hallo' } }).state
+        expect(attributesOf(next)).toEqual({ 'aria-invalid': 'true' })
     })
 })

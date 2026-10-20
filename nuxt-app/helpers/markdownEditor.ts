@@ -1,7 +1,7 @@
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdownKeymap, markdownLanguage, pasteURLAsLink } from '@codemirror/lang-markdown'
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
-import { EditorSelection, EditorState, type Extension } from '@codemirror/state'
+import { EditorSelection, EditorState, StateEffect, StateField, type Extension } from '@codemirror/state'
 import { EditorView, keymap, placeholder as placeholderText } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
 
@@ -61,6 +61,33 @@ export function maxLength(max: number): Extension {
     })
 }
 
+const setContentAttributesEffect = StateEffect.define<Record<string, string>>()
+
+/**
+ * Attributes for the editable element that can change later, via {@link setContentAttributes}: the
+ * component updates `aria-invalid` and `aria-describedby` when a submit is rejected.
+ */
+export function contentAttributes(initial: Record<string, string>): Extension {
+    const field = StateField.define<Record<string, string>>({
+        create: () => initial,
+        update(value, tr) {
+            for (const effect of tr.effects) {
+                if (effect.is(setContentAttributesEffect)) {
+                    value = effect.value
+                }
+            }
+            return value
+        },
+    })
+
+    return [field, EditorView.contentAttributes.from(field)]
+}
+
+/** The effect that replaces the attributes set up with {@link contentAttributes}. */
+export function setContentAttributes(attributes: Record<string, string>): StateEffect<Record<string, string>> {
+    return setContentAttributesEffect.of(attributes)
+}
+
 // Classes rather than inline styles, so the colours come from the Tailwind theme (see the component).
 const highlightStyle = HighlightStyle.define([
     { tag: tags.processingInstruction, class: 'cm-md-mark' },
@@ -96,7 +123,10 @@ export interface MarkdownEditorOptions {
     maxLength?: number
     /** Initial selection, e.g. the cursor of the textarea the editor replaces. Clamped to the document. */
     selection?: { anchor: number; head: number }
-    /** Attributes for the editable element, e.g. `aria-labelledby` or `aria-required`. */
+    /**
+     * Attributes for the editable element, e.g. `aria-labelledby` or `aria-required`. Change them later
+     * with `view.dispatch({ effects: setContentAttributes(…) })`.
+     */
     contentAttributes?: Record<string, string>
 }
 
@@ -117,7 +147,7 @@ export function createMarkdownEditor(parent: HTMLElement, options: MarkdownEdito
                 syntaxHighlighting(highlightStyle),
                 darkTheme,
                 EditorView.lineWrapping,
-                EditorView.contentAttributes.of(options.contentAttributes ?? {}),
+                contentAttributes(options.contentAttributes ?? {}),
                 options.placeholder ? placeholderText(options.placeholder) : [],
                 options.maxLength ? maxLength(options.maxLength) : [],
                 EditorView.updateListener.of((update) => {
