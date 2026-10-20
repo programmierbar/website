@@ -14,6 +14,7 @@ import {
 } from '@directus/sdk'
 import type { Collections } from '~/services/directus'
 import type {
+    DirectusMeetupRegistrationItem,
     DirectusNewsletterSubscriberItem,
     DirectusTicketDiscountCodeItem,
     DirectusTicketItem,
@@ -378,14 +379,16 @@ export function useAuthenticatedDirectus() {
         return subscribers?.[0] ?? null
     }
 
-    // Opts a subscriber out, from any state that isn't already 'unsubscribed' —
-    // a `pending` address that never confirmed can opt out too, which also stops
-    // the confirmation resends.
+    // Opts a subscriber out from `pending` or `confirmed` — a `pending` address
+    // that never confirmed can opt out too, which also stops the confirmation
+    // resends. `bounced` / `complained` (set by the CMS's Brevo webhook) are
+    // final and stay as they are: as `unsubscribed` a later signup would
+    // reactivate them.
     //
-    // Guarded on the token and on not-already-unsubscribed like the confirm
-    // writes above, so `unsubscribed_at` keeps the timestamp of the first opt-out
-    // instead of being pushed forward by every re-click. Same caveat about the
-    // residual read-to-write window applies.
+    // Guarded on the token and on the status like the confirm writes above, so
+    // `unsubscribed_at` keeps the timestamp of the first opt-out instead of
+    // being pushed forward by every re-click. Same caveat about the residual
+    // read-to-write window applies.
     async function unsubscribeNewsletterSubscriber(id: string, expectedToken: string) {
         const updated = await client.request(
             updateItems(
@@ -394,7 +397,7 @@ export function useAuthenticatedDirectus() {
                     filter: {
                         id: { _eq: id },
                         unsubscribe_token: { _eq: expectedToken },
-                        status: { _neq: 'unsubscribed' },
+                        status: { _in: ['pending', 'confirmed'] },
                     },
                 },
                 {
@@ -437,6 +440,81 @@ export function useAuthenticatedDirectus() {
         return (updated?.length ?? 0) > 0
     }
 
+    // Meetup registration. The authoritative rules (open / full / closed,
+    // duplicates, internal addresses) run in the CMS `meetup-registration` hook
+    // inside the insert transaction; these reads only feed the page's
+    // availability display and the cancel link.
+
+    async function getMeetupRegistrationSettings(meetupId: string) {
+        const meetups = await client.request(
+            readItems('meetups', {
+                filter: { id: { _eq: meetupId } },
+                fields: ['id', 'status', 'start_on', 'registration_enabled', 'registration_limit'],
+                limit: 1,
+            })
+        )
+
+        return meetups?.[0] ?? null
+    }
+
+    // Confirmed registrations that count against the public limit.
+    async function countPublicMeetupRegistrations(meetupId: string): Promise<number> {
+        const result = await client.request(
+            aggregate('meetup_registrations' as any, {
+                aggregate: { count: ['id'] },
+                query: {
+                    filter: {
+                        meetup: { _eq: meetupId },
+                        status: { _eq: 'confirmed' },
+                        is_internal: { _neq: true },
+                    },
+                },
+            })
+        )
+        return Number(result?.[0]?.count?.id ?? 0)
+    }
+
+    async function createMeetupRegistration(data: Partial<DirectusMeetupRegistrationItem>) {
+        // Return only the id: the role behind the API token does not need to
+        // read the row it just wrote.
+        return await client.request(createItem('meetup_registrations', data, { fields: ['id'] }))
+    }
+
+    async function readMeetupRegistrationByCancelToken(token: string) {
+        const registrations = await client.request(
+            readItems('meetup_registrations', {
+                filter: { cancel_token: { _eq: token } },
+                fields: ['id', 'status'],
+                limit: 1,
+            })
+        )
+
+        return registrations?.[0] ?? null
+    }
+
+    // Guarded like the newsletter writes above: only a still-confirmed row with
+    // this token is changed, so `cancelled_at` keeps the first cancellation.
+    async function cancelMeetupRegistration(id: string, expectedToken: string) {
+        const updated = await client.request(
+            updateItems(
+                'meetup_registrations',
+                {
+                    filter: {
+                        id: { _eq: id },
+                        cancel_token: { _eq: expectedToken },
+                        status: { _eq: 'confirmed' },
+                    },
+                },
+                {
+                    status: 'cancelled',
+                    cancelled_at: new Date().toISOString(),
+                }
+            )
+        )
+
+        return (updated?.length ?? 0) > 0
+    }
+
     return {
         getSpeakerByPortalToken,
         updateSpeaker,
@@ -463,5 +541,10 @@ export function useAuthenticatedDirectus() {
         readNewsletterSubscriberByUnsubscribeToken,
         unsubscribeNewsletterSubscriber,
         resubscribeNewsletterSubscriber,
+        getMeetupRegistrationSettings,
+        countPublicMeetupRegistrations,
+        createMeetupRegistration,
+        readMeetupRegistrationByCancelToken,
+        cancelMeetupRegistration,
     }
 }

@@ -1,5 +1,12 @@
 import type { useHead } from '#app'
-import { BUZZSPROUT_TRACKING_URL, DIRECTUS_CMS_URL, TWITTER_HANDLE, WEBSITE_NAME, WEBSITE_URL } from '../config'
+import {
+    BUZZSPROUT_TRACKING_URL,
+    DEFAULT_OG_IMAGE,
+    TWITTER_HANDLE,
+    WEBSITE_LOCALE,
+    WEBSITE_NAME,
+    WEBSITE_URL,
+} from '../config'
 import type { FileItem } from '../types'
 import { getAssetUrl } from './getAssetUrl'
 import { getTrimmedString } from './getTrimmedString'
@@ -11,13 +18,64 @@ interface Data {
     type: 'website' | 'podcast' | 'profile' | 'article'
     path: string
     title: string
-    description?: string
-    image?: FileItem
+    // Plain text. Convert CMS rich text with `getPlainText` from
+    // `helpers/sanitize` first; it is not imported here because this module is
+    // part of the helpers barrel, which server routes import.
+    description?: string | null
+    image?: FileItem | null
+    // Absolute URL of an image hosted elsewhere, e.g. the Open Graph image of
+    // a linked article. Only used if there is no `image`.
+    externalImageUrl?: string | null
     audioUrl?: string
     publishedAt?: string
     firstName?: string
     lastName?: string
     noIndex?: boolean
+}
+
+interface OgImage {
+    url: string
+    alt: string
+    type?: string
+    width?: number
+    height?: number
+}
+
+// Facebook and LinkedIn only show the large link preview for images that are at least this wide
+const OG_IMAGE_WIDTH = 1200
+const DESCRIPTION_MAX_LENGTH = 160
+
+/**
+ * Picks the image for the link preview: the page's own image, then an external
+ * image, then the default image of the website.
+ */
+function getOgImage(title: string, image?: FileItem | null, externalImageUrl?: string | null): OgImage {
+    if (image?.width && image.height) {
+        // Never upscale, and keep the aspect ratio of the original
+        const width = Math.min(image.width, OG_IMAGE_WIDTH)
+        const height = Math.round((image.height / image.width) * width)
+        return {
+            url: getAssetUrl(image, { queryParams: { width, height, fit: 'cover', quality: 80 } }),
+            // The file title in the CMS is derived from the file name, so it
+            // doesn't describe the image. The page title does a better job.
+            alt: title,
+            type: image.type,
+            width,
+            height,
+        }
+    }
+
+    if (externalImageUrl && /^https?:\/\//.test(externalImageUrl)) {
+        return { url: externalImageUrl, alt: title }
+    }
+
+    return {
+        url: WEBSITE_URL + DEFAULT_OG_IMAGE.path,
+        alt: DEFAULT_OG_IMAGE.alt,
+        type: DEFAULT_OG_IMAGE.type,
+        width: DEFAULT_OG_IMAGE.width,
+        height: DEFAULT_OG_IMAGE.height,
+    }
 }
 
 /**
@@ -32,8 +90,9 @@ export function getMetaInfo({
     type,
     path,
     title,
-    description = '',
+    description,
     image,
+    externalImageUrl,
     audioUrl,
     publishedAt,
     firstName,
@@ -43,25 +102,31 @@ export function getMetaInfo({
     // Create URL of current site
     const siteUrl = WEBSITE_URL + path
 
-    // Trim title and add website name for subpages
-    const trimmedTitle = path === '/' ? getTrimmedString(title, 60) : getTrimmedString(title, 40) + ' | ' + WEBSITE_NAME
+    // Add website name to the document title of subpages. Search engines and
+    // social networks shorten long titles themselves, so they are not trimmed.
+    const pageTitle = title.trim()
+    const documentTitle = path === '/' ? pageTitle : `${pageTitle} | ${WEBSITE_NAME}`
 
-    // Trim description, remove markdown, and replace multiple whitespace
-    // characters, including line breaks, with a single space
-    const trimmedDescription = getTrimmedString(description.replace(/<[^<>]+>/g, '').replace(/\s+/g, ' '), 160)
+    // Replace multiple whitespace characters, including line breaks, with a
+    // single space and trim the description at a word boundary
+    const trimmedDescription = getTrimmedString((description ?? '').replace(/\s+/g, ' ').trim(), DESCRIPTION_MAX_LENGTH)
 
-    // Create default meta info with title, description,
-    // Open Graph protocol and Twitter Cards
+    const ogImage = getOgImage(pageTitle, image, externalImageUrl)
+
+    // Create default meta info with Open Graph protocol and Twitter Cards
     const meta: MetaTag[] = [
-        {
-            name: 'description',
-            content: trimmedDescription,
-        },
-
         // Open Graph protocol
         {
             property: 'og:type',
             content: type === 'podcast' ? 'article' : type,
+        },
+        {
+            property: 'og:site_name',
+            content: WEBSITE_NAME,
+        },
+        {
+            property: 'og:locale',
+            content: WEBSITE_LOCALE,
         },
         {
             property: 'og:url',
@@ -69,122 +134,66 @@ export function getMetaInfo({
         },
         {
             property: 'og:title',
-            content: trimmedTitle,
+            content: pageTitle,
         },
         {
-            property: 'og:description',
-            content: trimmedDescription,
+            property: 'og:image',
+            content: ogImage.url,
+        },
+        {
+            property: 'og:image:alt',
+            content: ogImage.alt,
         },
 
         // Twitter Cards
         {
             name: 'twitter:card',
-            content: type === 'podcast' ? 'player' : 'summary',
+            content: 'summary_large_image',
         },
         {
             name: 'twitter:site',
             content: TWITTER_HANDLE,
         },
         {
-            name: 'twitter:creator',
-            content: TWITTER_HANDLE,
-        },
-        {
             name: 'twitter:title',
-            content: trimmedTitle,
+            content: pageTitle,
         },
         {
-            name: 'twitter:description',
-            content: trimmedDescription,
+            name: 'twitter:image',
+            content: ogImage.url,
+        },
+        {
+            name: 'twitter:image:alt',
+            content: ogImage.alt,
         },
     ]
 
-    // Add image to meta info if available
-    if (image && image.width && image.height) {
-        const imageMinSize = 512
-        const widthIsSmaller = image.width < image.height
-        const imageWidth = widthIsSmaller ? Math.round((image.width / image.height) * imageMinSize) : imageMinSize
-        const imageHeight = !widthIsSmaller ? Math.round((image.height / image.width) * imageMinSize) : imageMinSize
-        const imageUrl = getAssetUrl(image, {
-            queryParams: {
-                width: imageWidth,
-                height: imageHeight,
-                fit: 'cover',
-                quality: '70',
-            },
-        })
+    // Add image type and dimensions if known
+    if (ogImage.type) {
+        meta.push({ property: 'og:image:type', content: ogImage.type })
+    }
+    if (ogImage.width && ogImage.height) {
         meta.push(
-            // Open Graph protocol
-            {
-                property: 'og:image',
-                content: imageUrl,
-            },
-            {
-                property: 'og:image:type',
-                content: image.type,
-            },
-            {
-                property: 'og:image:width',
-                content: imageWidth.toString(),
-            },
-            {
-                property: 'og:image:height',
-                content: imageHeight.toString(),
-            },
-
-            // Twitter Cards
-            {
-                property: 'twitter:image',
-                content: imageUrl,
-            }
+            { property: 'og:image:width', content: ogImage.width.toString() },
+            { property: 'og:image:height', content: ogImage.height.toString() }
         )
+    }
 
-        // Add alternative text if available
-        if (image.title) {
-            meta.push(
-                // Open Graph protocol
-                {
-                    property: 'og:image:alt',
-                    content: image.title,
-                },
-
-                // Twitter Cards
-                {
-                    property: 'twitter:image:alt',
-                    content: image.title,
-                }
-            )
-        }
+    // Add description if available, as an empty one is worse than none
+    if (trimmedDescription) {
+        meta.push(
+            { name: 'description', content: trimmedDescription },
+            { property: 'og:description', content: trimmedDescription },
+            { name: 'twitter:description', content: trimmedDescription }
+        )
     }
 
     // Add audio to meta info if available
     if (audioUrl) {
-        const audioTrackingUrl = BUZZSPROUT_TRACKING_URL + '/' + audioUrl
-        meta.push(
-            // Open Graph protocol
-            {
-                property: 'og:audio',
-                content: audioTrackingUrl,
-            },
-
-            // Twitter Cards
-            {
-                property: 'twitter:player',
-                content: audioUrl.replace(/\.mp3$/, '') + '?client_source=twitter_card&player_type=full_screen',
-            },
-            {
-                property: 'twitter:player:width',
-                content: '500',
-            },
-            {
-                property: 'twitter:player:height',
-                content: '210',
-            },
-            {
-                property: 'twitter:player:stream',
-                content: audioTrackingUrl + '?client_source=twitter_card',
-            }
-        )
+        meta.push({
+            property: 'og:audio',
+            content: BUZZSPROUT_TRACKING_URL + '/' + audioUrl,
+        })
     }
 
     // Add published time of article and podcast to meta info if available
@@ -199,11 +208,11 @@ export function getMetaInfo({
     if (type === 'profile' && firstName && lastName) {
         meta.push(
             {
-                property: 'og:profile:first_name',
+                property: 'profile:first_name',
                 content: firstName,
             },
             {
-                property: 'og:profile:last_name',
+                property: 'profile:last_name',
                 content: lastName,
             }
         )
@@ -219,7 +228,7 @@ export function getMetaInfo({
 
     // Return meta info
     return {
-        title: trimmedTitle,
+        title: documentTitle,
         link: [{ rel: 'canonical', href: siteUrl }],
         meta,
     } satisfies HeadInput

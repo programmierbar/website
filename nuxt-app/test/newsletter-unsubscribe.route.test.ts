@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import handler from '../server/api/newsletter/unsubscribe.post'
 
+// Tokens are UUIDs in Directus; malformed ones are rejected before any lookup.
+const BOOM_TOKEN = '22222222-2222-4222-8222-222222222222'
+const GOOD_TOKEN = '11111111-1111-4111-8111-111111111111'
+const UNKNOWN_TOKEN = '55555555-5555-4555-8555-555555555555'
+
 // The handler's Nuxt/Nitro auto-imports must exist BEFORE the module is
 // imported (the `export default defineEventHandler(...)` runs at load time).
 // vitest hoists this vi.hoisted() block above all imports (including the
@@ -40,6 +45,14 @@ describe('POST /api/newsletter/unsubscribe', () => {
         expect(readNewsletterSubscriberByUnsubscribeToken).not.toHaveBeenCalled()
     })
 
+    // Directus answers a non-UUID lookup on the token column with a 500.
+    it('returns invalid for a malformed (non-UUID) token, without touching Directus', async () => {
+        const result = await invoke({ token: 'not-a-uuid' })
+
+        expect(result).toEqual({ status: 'invalid' })
+        expect(readNewsletterSubscriberByUnsubscribeToken).not.toHaveBeenCalled()
+    })
+
     it('returns invalid for an empty token', async () => {
         const result = await invoke({ token: '' })
         expect(result).toEqual({ status: 'invalid' })
@@ -48,25 +61,25 @@ describe('POST /api/newsletter/unsubscribe', () => {
 
     it('returns invalid for an unknown token', async () => {
         readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue(null)
-        const result = await invoke({ token: 'nope' })
+        const result = await invoke({ token: UNKNOWN_TOKEN })
         expect(result).toEqual({ status: 'invalid' })
         expect(unsubscribeNewsletterSubscriber).not.toHaveBeenCalled()
     })
 
     it('unsubscribes a confirmed subscriber', async () => {
         readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status: 'confirmed' })
-        const result = await invoke({ token: 'good' })
+        const result = await invoke({ token: GOOD_TOKEN })
         expect(result).toEqual({ status: 'unsubscribed' })
         expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledTimes(1)
         // The token is passed along so the write can be guarded on it.
-        expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledWith('sub_1', 'good')
+        expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledWith('sub_1', GOOD_TOKEN)
     })
 
     it('unsubscribes a pending subscriber that never confirmed', async () => {
         // Opting out has to work before confirmation too — it also stops the
         // confirmation resends.
         readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status: 'pending' })
-        const result = await invoke({ token: 'good' })
+        const result = await invoke({ token: GOOD_TOKEN })
         expect(result).toEqual({ status: 'unsubscribed' })
         expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledTimes(1)
     })
@@ -77,10 +90,32 @@ describe('POST /api/newsletter/unsubscribe', () => {
             status: 'unsubscribed',
             unsubscribed_at: '2026-01-01T00:00:00.000Z',
         })
-        const result = await invoke({ token: 'good' })
+        const result = await invoke({ token: GOOD_TOKEN })
         expect(result).toEqual({ status: 'already_unsubscribed' })
         // Keeps the original opt-out timestamp instead of pushing it forward.
         expect(unsubscribeNewsletterSubscriber).not.toHaveBeenCalled()
+    })
+
+    // Set by the CMS's Brevo webhook. Rewriting them to `unsubscribed` would let a
+    // later signup reactivate a dead address or a complainer.
+    it.each(['bounced', 'complained'])(
+        'treats a %s subscriber as already opted out, without writing',
+        async (status) => {
+            readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status })
+            const result = await invoke({ token: GOOD_TOKEN })
+            expect(result).toEqual({ status: 'already_unsubscribed' })
+            expect(unsubscribeNewsletterSubscriber).not.toHaveBeenCalled()
+        }
+    )
+
+    it('reports already_unsubscribed when a bounce landed between read and write', async () => {
+        readNewsletterSubscriberByUnsubscribeToken
+            .mockResolvedValueOnce({ id: 'sub_1', status: 'confirmed' })
+            .mockResolvedValueOnce({ id: 'sub_1', status: 'bounced' })
+        unsubscribeNewsletterSubscriber.mockResolvedValue(false)
+
+        const result = await invoke({ token: GOOD_TOKEN })
+        expect(result).toEqual({ status: 'already_unsubscribed' })
     })
 
     it('reports already_unsubscribed when a concurrent request got there first', async () => {
@@ -89,13 +124,13 @@ describe('POST /api/newsletter/unsubscribe', () => {
             .mockResolvedValueOnce({ id: 'sub_1', status: 'unsubscribed' })
         unsubscribeNewsletterSubscriber.mockResolvedValue(false)
 
-        const result = await invoke({ token: 'good' })
+        const result = await invoke({ token: GOOD_TOKEN })
         expect(result).toEqual({ status: 'already_unsubscribed' })
     })
 
     it('surfaces an unexpected Directus failure as 500', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
         readNewsletterSubscriberByUnsubscribeToken.mockRejectedValue(new Error('directus down'))
-        await expect(invoke({ token: 'boom' })).rejects.toMatchObject({ statusCode: 500 })
+        await expect(invoke({ token: BOOM_TOKEN })).rejects.toMatchObject({ statusCode: 500 })
     })
 })

@@ -10,6 +10,7 @@
  */
 
 import type { Logger } from 'pino'
+import { escapeHtml } from './html.ts'
 
 // Simple Handlebars-like template rendering
 // Supports: {{variable}}, {{{rawHtml}}}, {{#if condition}}...{{/if}}
@@ -35,12 +36,7 @@ function renderTemplate(template: string, data: Record<string, any>): string {
         const value = data[key]
         if (value === null || value === undefined) return ''
         // Escape HTML for security
-        return String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;')
+        return escapeHtml(String(value))
     })
 
     return result
@@ -70,6 +66,8 @@ export interface SendEmailOptions {
     replyTo?: string
     cc?: string
     attachments?: EmailAttachment[]
+    /** Extra mail headers (e.g. List-Unsubscribe); passed through MailService to nodemailer. */
+    headers?: Record<string, string>
 }
 
 /**
@@ -142,6 +140,7 @@ export async function sendTemplatedEmail(options: SendEmailOptions, context: Ema
             html,
             ...(options.replyTo && { replyTo: options.replyTo }),
             ...(options.cc && { cc: options.cc }),
+            ...(options.headers && { headers: options.headers }),
             ...(options.attachments && {
                 attachments: options.attachments.map((a) => ({
                     filename: a.filename,
@@ -169,7 +168,11 @@ export async function sendRawEmail(
         to: string
         subject: string
         html: string
+        /** Plain-text alternative, for clients that don't render HTML. */
+        text?: string
         replyTo?: string
+        /** Extra mail headers (e.g. List-Unsubscribe); passed through MailService to nodemailer. */
+        headers?: Record<string, string>
     },
     context: EmailServiceContext
 ): Promise<boolean> {
@@ -188,7 +191,9 @@ export async function sendRawEmail(
             to: options.to,
             subject: options.subject,
             html: options.html,
+            ...(options.text && { text: options.text }),
             ...(options.replyTo && { replyTo: options.replyTo }),
+            ...(options.headers && { headers: options.headers }),
         })
 
         logger.info(`Email sent to ${options.to}`)

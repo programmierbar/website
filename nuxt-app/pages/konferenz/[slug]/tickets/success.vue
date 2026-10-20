@@ -108,6 +108,7 @@ useHead(() =>
               title: `Bestellung erfolgreich – ${conference.value.title}`,
               description: `Deine Tickets für die ${conference.value.title} wurden bestellt`,
               image: conference.value.cover_image,
+              noIndex: true,
           })
         : {}
 )

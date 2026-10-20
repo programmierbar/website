@@ -1,6 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import handler from '../server/routes/newsletter/unsubscribe.post'
 
+// Tokens are UUIDs in Directus; malformed ones are rejected before any lookup.
+const BODY_TOKEN = '66666666-6666-4666-8666-666666666666'
+const BOOM_TOKEN = '22222222-2222-4222-8222-222222222222'
+const GOOD_TOKEN = '11111111-1111-4111-8111-111111111111'
+const QUERY_TOKEN = '77777777-7777-4777-8777-777777777777'
+const UNKNOWN_TOKEN = '55555555-5555-4555-8555-555555555555'
+
+// The slice of an H3 event the stubs below read; the handler only ever sees it
+// through those stubs.
+interface FakeEvent {
+    body?: Record<string, unknown>
+    query?: Record<string, unknown>
+    headers?: Record<string, string>
+    multipart?: Array<{ name?: string; filename?: string; data: Buffer }>
+}
+
 // The no-JS opt-out path: a plain form POST, answered with a redirect that
 // carries the outcome so the page can render it server-side.
 //
@@ -12,10 +28,15 @@ const { readNewsletterSubscriberByUnsubscribeToken, unsubscribeNewsletterSubscri
     const readNewsletterSubscriberByUnsubscribeToken = vi.fn()
     const unsubscribeNewsletterSubscriber = vi.fn()
     // Record what the handler redirects to instead of touching a response.
-    const sendRedirect = vi.fn(async (_event: any, location: string, status?: number) => ({ location, status }))
-    const g = globalThis as any
-    g.defineEventHandler = (fn: any) => fn
-    g.readBody = async (event: any) => event.body ?? {}
+    const sendRedirect = vi.fn(async (_event: FakeEvent, location: string, status?: number) => ({ location, status }))
+    const g = globalThis as Record<string, unknown>
+    g.defineEventHandler = (fn: unknown) => fn
+    g.readBody = async (event: FakeEvent) => event.body ?? {}
+    g.getQuery = (event: FakeEvent) => event.query ?? {}
+    g.getRequestHeader = (event: FakeEvent, name: string) => event.headers?.[name.toLowerCase()]
+    g.readMultipartFormData = async (event: FakeEvent) => event.multipart
+    g.createError = (input: { statusCode: number; message: string }) =>
+        Object.assign(new Error(input.message), { statusCode: input.statusCode })
     g.sendRedirect = sendRedirect
     g.useAuthenticatedDirectus = () => ({
         readNewsletterSubscriberByUnsubscribeToken,
@@ -24,7 +45,9 @@ const { readNewsletterSubscriberByUnsubscribeToken, unsubscribeNewsletterSubscri
     return { readNewsletterSubscriberByUnsubscribeToken, unsubscribeNewsletterSubscriber, sendRedirect }
 })
 
-const invoke = (body: Record<string, unknown>) => (handler as any)({ body })
+// `defineEventHandler` is stubbed to return the handler itself, so it can be called with a fake event.
+const run = handler as unknown as (event: FakeEvent) => Promise<unknown>
+const invoke = (body: Record<string, unknown>, query: Record<string, unknown> = {}) => run({ body, query })
 
 beforeEach(() => {
     readNewsletterSubscriberByUnsubscribeToken.mockReset()
@@ -42,16 +65,16 @@ describe('POST /newsletter/unsubscribe (no-JS form)', () => {
     it('opts the subscriber out and redirects with the outcome', async () => {
         readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status: 'confirmed' })
 
-        await invoke({ token: 'good' })
+        await invoke({ token: GOOD_TOKEN })
 
-        expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledWith('sub_1', 'good')
+        expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledWith('sub_1', GOOD_TOKEN)
         expect(sendRedirect).toHaveBeenCalledWith(expect.anything(), '/newsletter/unsubscribe?status=unsubscribed', 303)
     })
 
     it('reports an already-unsubscribed address without re-writing it', async () => {
         readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status: 'unsubscribed' })
 
-        await invoke({ token: 'good' })
+        await invoke({ token: GOOD_TOKEN })
 
         expect(unsubscribeNewsletterSubscriber).not.toHaveBeenCalled()
         expect(sendRedirect).toHaveBeenCalledWith(
@@ -64,7 +87,7 @@ describe('POST /newsletter/unsubscribe (no-JS form)', () => {
     it('reports an unknown token as invalid', async () => {
         readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue(null)
 
-        await invoke({ token: 'nope' })
+        await invoke({ token: UNKNOWN_TOKEN })
 
         expect(sendRedirect).toHaveBeenCalledWith(expect.anything(), '/newsletter/unsubscribe?status=invalid', 303)
     })
@@ -82,8 +105,77 @@ describe('POST /newsletter/unsubscribe (no-JS form)', () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
         readNewsletterSubscriberByUnsubscribeToken.mockRejectedValue(new Error('directus down'))
 
-        await invoke({ token: 'boom' })
+        await invoke({ token: BOOM_TOKEN })
 
         expect(sendRedirect).toHaveBeenCalledWith(expect.anything(), '/newsletter/unsubscribe?status=error', 303)
+    })
+
+    // A query token is only a fallback: the page's form always sends it in the body.
+    it('prefers the body token over the query', async () => {
+        readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue(null)
+
+        await invoke({ token: BODY_TOKEN }, { token: QUERY_TOKEN })
+
+        expect(readNewsletterSubscriberByUnsubscribeToken).toHaveBeenCalledWith(BODY_TOKEN)
+    })
+})
+
+// RFC 8058: the mail provider POSTs `List-Unsubscribe=One-Click` to the link from the
+// `List-Unsubscribe` header; the token is only in that link's query.
+describe('POST /newsletter/unsubscribe (one-click)', () => {
+    const ONE_CLICK = { 'List-Unsubscribe': 'One-Click' }
+
+    it('opts the subscriber out using the query token and answers 200 without a redirect', async () => {
+        readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status: 'confirmed' })
+
+        const result = await invoke(ONE_CLICK, { token: GOOD_TOKEN })
+
+        expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledWith('sub_1', GOOD_TOKEN)
+        expect(result).toEqual({ status: 'unsubscribed' })
+        expect(sendRedirect).not.toHaveBeenCalled()
+    })
+
+    it('answers an unknown token neutrally', async () => {
+        readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue(null)
+
+        expect(await invoke(ONE_CLICK, { token: UNKNOWN_TOKEN })).toEqual({ status: 'invalid' })
+        expect(unsubscribeNewsletterSubscriber).not.toHaveBeenCalled()
+    })
+
+    it('fails with 500 on a technical error so the provider can retry', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {})
+        readNewsletterSubscriberByUnsubscribeToken.mockRejectedValue(new Error('directus down'))
+
+        await expect(invoke(ONE_CLICK, { token: BOOM_TOKEN })).rejects.toMatchObject({ statusCode: 500 })
+        expect(sendRedirect).not.toHaveBeenCalled()
+    })
+
+    // RFC 8058 also allows multipart/form-data, which readBody does not decode.
+    describe('multipart/form-data', () => {
+        const multipartEvent = (fields: Record<string, string>, query: Record<string, unknown>): FakeEvent => ({
+            headers: { 'content-type': 'multipart/form-data; boundary=----x' },
+            multipart: Object.entries(fields).map(([name, value]) => ({ name, data: Buffer.from(value) })),
+            query,
+        })
+
+        it('opts the subscriber out and answers 200', async () => {
+            readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status: 'confirmed' })
+
+            const result = await run(multipartEvent(ONE_CLICK, { token: GOOD_TOKEN }))
+
+            expect(unsubscribeNewsletterSubscriber).toHaveBeenCalledWith('sub_1', GOOD_TOKEN)
+            expect(result).toEqual({ status: 'unsubscribed' })
+            expect(sendRedirect).not.toHaveBeenCalled()
+        })
+
+        it('fails with 500 when Directus fails', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {})
+            readNewsletterSubscriberByUnsubscribeToken.mockRejectedValue(new Error('directus down'))
+
+            await expect(run(multipartEvent(ONE_CLICK, { token: BOOM_TOKEN }))).rejects.toMatchObject({
+                statusCode: 500,
+            })
+            expect(sendRedirect).not.toHaveBeenCalled()
+        })
     })
 })

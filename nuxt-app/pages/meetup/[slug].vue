@@ -32,7 +32,11 @@
                     <MeetupCover v-else class="mt-10 md:mt-12 lg:mt-16 xl:w-2/3" :meetup="meetup" />
 
                     <!-- Meetup, calendar & maps -->
-                    <MeetupCalendarAndMaps class="hidden xl:flex xl:w-1/4" :meetup="meetup" />
+                    <MeetupCalendarAndMaps
+                        class="hidden xl:flex xl:w-1/4"
+                        :meetup="meetup"
+                        :has-own-registration="showRegistration"
+                    />
                 </div>
 
                 <!-- Start and end time -->
@@ -69,6 +73,11 @@
                     </NuxtLink>
                 </p>
 
+                <!-- Own free registration -->
+                <section v-if="showRegistration" id="anmeldung" class="mt-12 scroll-mt-32 md:mt-16">
+                    <MeetupRegistrationForm :meetup-id="meetup.id" />
+                </section>
+
                 <!-- Meetup tags -->
                 <!-- TODO: Replace navigateTo() with <a> element -->
                 <TagList
@@ -85,7 +94,11 @@
                 />
 
                 <!-- Meetup, calendar & maps -->
-                <MeetupCalendarAndMaps class="mt-16 md:mt-20 xl:hidden" :meetup="meetup" />
+                <MeetupCalendarAndMaps
+                    class="mt-16 md:mt-20 xl:hidden"
+                    :meetup="meetup"
+                    :has-own-registration="showRegistration"
+                />
             </div>
         </article>
 
@@ -129,6 +142,8 @@ import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { OPEN_YOUTUBE_EVENT_ID } from '~/config'
 import { getMetaInfo, trackGoal } from '~/helpers'
+import { getMeetupTeaser } from '~/helpers/getMeetupTeaser'
+import { generateEventFromMeetup } from '~/helpers/jsonLdGenerator'
 import type { DirectusFileItem, DirectusTestimonialItem, MeetupItem, TagItem } from '~/types'
 import { computed, type ComputedRef } from 'vue'
 
@@ -138,7 +153,7 @@ const route = useRoute()
 const directus = useDirectus()
 
 // Query meetup, speaker count and related podcast
-const { data: pageData } = useAsyncData(route.fullPath, async () => {
+const { data: pageData, error } = await useAsyncData(route.fullPath, async () => {
     // Query meetup and speaker count async
     const [meetup, speakerCount, testimonials] = await Promise.all([
         directus.getMeetupBySlug(route.params.slug as string),
@@ -146,9 +161,9 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
         directus.getTestimonials(),
     ])
 
-    // Throw error if meetup does not exist
+    // A missing meetup is a 404 (handled below), not a fetch failure
     if (!meetup) {
-        throw new Error('The meetup was not found.')
+        return null
     }
 
     // Query related podcasts
@@ -157,6 +172,20 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
     // Return meetup, speaker count and related podcast
     return { meetup, speakerCount, relatedPodcasts, testimonials }
 })
+
+// Throw at setup level (not inside the useAsyncData handler, where it would
+// only populate the error ref) so the response carries the correct status
+if (error.value) {
+    throw createError({
+        statusCode: 500,
+        statusMessage: error.value.message || 'Failed to load meetup.',
+        fatal: true,
+        cause: error.value,
+    })
+}
+if (!pageData.value) {
+    throw createError({ statusCode: 404, statusMessage: 'The meetup was not found.', fatal: true })
+}
 
 // Extract meetup, speaker count and related podcasts from page data
 const meetup: ComputedRef<MeetupItem | undefined> = computed(() => pageData.value?.meetup)
@@ -176,25 +205,34 @@ const galleryImages: ComputedRef<DirectusFileItem[]> = computed(() => {
     return images
 })
 
+// The form is shown until the event is over; whether it still takes
+// registrations (closed at the start, full) is loaded client-side, since this
+// page is ISR-cached.
+const showRegistration = computed(
+    () => meetup.value?.registration_enabled === true && new Date(meetup.value.end_on) > new Date()
+)
+
 // Convert speaker count to local string
 const speakerCountString = useLocaleString(speakerCount)
 
 // Set loading screen
 useLoadingScreen(meetup, speakerCount)
 
-// Set page meta data
+// Set page meta data. The date of the event is part of the structured data;
+// `article:published_time` would only state when the page was published.
 useHead(() =>
     meetup.value
         ? getMetaInfo({
-              type: 'article',
+              type: 'website',
               path: route.path,
               title: meetup.value.title,
-              description: meetup.value.description,
+              description: getMeetupTeaser(meetup.value),
               image: meetup.value.cover_image,
-              publishedAt: meetup.value.published_on.split('T')[0],
           })
         : {}
 )
+
+useJsonld(() => generateEventFromMeetup(meetup.value))
 
 // Create breadcrumb list
 const breadcrumbs = computed(() => [{ label: 'Meetup', href: '/meetup' }, { label: meetup.value?.title || '' }])

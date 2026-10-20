@@ -1,4 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
+import { buildNewsletterTrackingHeaders } from '../newsletter/brevoTracking.ts'
+import { buildUnsubscribeUrl } from '../newsletter/unsubscribe.ts'
 import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.ts'
 import { createHookErrorConstructor } from '../shared/errors.ts'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
@@ -99,15 +101,15 @@ export default defineHook(({ filter, action }, hookContext) => {
 
         // The unsubscribe token is permanent and works from any state, so the
         // same link is valid in this mail and in every later newsletter issue.
-        const unsubscribeUrl = `${websiteUrl}/newsletter/unsubscribe?token=${encodeURIComponent(
-            subscriber.unsubscribe_token
-        )}`
+        const unsubscribeUrl = buildUnsubscribeUrl(websiteUrl, subscriber.unsubscribe_token)
 
         const sent = await sendTemplatedEmail(
             {
                 templateKey: TEMPLATE_KEY,
                 to: subscriber.email,
                 data: { confirm_url: confirmUrl, unsubscribe_url: unsubscribeUrl },
+                // Marks it as a newsletter mail for the Brevo webhook (spam complaint → complained).
+                headers: buildNewsletterTrackingHeaders('double-opt-in'),
             },
             context
         )

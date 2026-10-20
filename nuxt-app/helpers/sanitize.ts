@@ -75,27 +75,34 @@ export function sanitizeInlineHtml(html: string | null | undefined): string {
     return DOMPurify.sanitize(html, { FORBID_TAGS: ['p'] })
 }
 
+// Elements that separate text visually. Unwrapping them without leaving a space glues the last word
+// of one paragraph to the first word of the next ("verheerend.PS:").
+const BLOCK_TAG_REGEX =
+    /<\/?(?:address|article|blockquote|br|dd|div|dl|dt|figcaption|figure|footer|h[1-6]|header|hr|li|ol|p|pre|section|table|td|th|tr|ul)\b/gi
+
 /**
- * Reduces CMS rich text to plain text.
+ * Reduces CMS rich text to a single line of plain text.
  *
- * For card excerpts and search results, which want a snippet of prose rather than markup. Returns
- * real text, not an HTML string — every entity is decoded (`f&uuml;r` becomes `für`, `&amp;` becomes
- * `&`), so the result is safe to render with `{{ }}` and must not be passed to `v-html`.
+ * For card excerpts, search results and meta descriptions, which want a snippet of prose rather than
+ * markup. Returns real text, not an HTML string — every entity is decoded (`f&uuml;r` becomes `für`,
+ * `&amp;` becomes `&`), so the result is safe to render with `{{ }}` and must not be passed to
+ * `v-html`. Block elements become a space and whitespace is collapsed.
  *
  * Parses rather than pattern-matches on purpose. Stripping tags with a regex such as
  * `/<[^<>]+>/g` cannot match a tag that contains `<` or `>`, so `<img<a> src=x onerror=alert(1)>`
- * survives it as a working tag.
+ * survives it as a working tag. The regex below only inserts a space in front of block tags; the
+ * markup itself is still removed by the parser.
  */
 export function getPlainText(html: string | null | undefined): string {
     if (!html) {
         return ''
     }
 
-    const fragment = DOMPurify.sanitize(html, {
+    const fragment = DOMPurify.sanitize(html.replace(BLOCK_TAG_REGEX, ' $&'), {
         ALLOWED_TAGS: [],
         ALLOWED_ATTR: [],
         RETURN_DOM_FRAGMENT: true,
     })
 
-    return fragment.textContent ?? ''
+    return (fragment.textContent ?? '').replace(/\s+/g, ' ').trim()
 }

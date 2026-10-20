@@ -1,3 +1,4 @@
+import { MEETUP_HEARD_ABOUT_OPTIONS } from 'shared-code'
 import { z } from 'zod'
 
 export const EmailSchema = z.object({
@@ -24,20 +25,37 @@ export const VoteSchema = z.object({
 
 // Speaker portal submission
 
+// Every rule carries a German message: the first failing one is shown to the speaker as-is.
+const speakerText = (label: string, max: number) =>
+    z
+        .string({ error: `Bitte fülle das Feld „${label}“ aus.` })
+        .max(max, `Das Feld „${label}“ darf höchstens ${max} Zeichen lang sein.`)
+
+const requiredSpeakerText = (label: string, max: number) =>
+    speakerText(label, max).min(1, `Bitte fülle das Feld „${label}“ aus.`)
+
+const speakerUrl = (label: string) =>
+    z
+        .string({ error: `Bitte gib bei „${label}“ eine vollständige URL an, z. B. https://…` })
+        .url(`Bitte gib bei „${label}“ eine vollständige URL an, z. B. https://…`)
+        .max(500, `Die URL bei „${label}“ darf höchstens 500 Zeichen lang sein.`)
+        .optional()
+        .or(z.literal(''))
+
 export const SpeakerSubmissionSchema = z.object({
-    academic_title: z.string().max(50).optional().nullable(),
-    first_name: z.string().min(1, 'Vorname ist erforderlich').max(100),
-    last_name: z.string().min(1, 'Nachname ist erforderlich').max(100),
-    occupation: z.string().min(1, 'Jobtitel und Unternehmen sind erforderlich').max(200),
-    description: z.string().min(1, 'Beschreibung ist erforderlich').max(2000),
-    website_url: z.string().url().max(500).optional().or(z.literal('')),
-    linkedin_url: z.string().url().max(500).optional().or(z.literal('')),
-    twitter_url: z.string().url().max(500).optional().or(z.literal('')),
-    bluesky_url: z.string().max(100).optional().or(z.literal('')),
-    github_url: z.string().url().max(500).optional().or(z.literal('')),
-    instagram_url: z.string().url().max(500).optional().or(z.literal('')),
-    youtube_url: z.string().url().max(500).optional().or(z.literal('')),
-    mastodon_url: z.string().url().max(500).optional().or(z.literal('')),
+    academic_title: speakerText('Akademischer Titel', 50).optional().nullable(),
+    first_name: requiredSpeakerText('Vorname', 100),
+    last_name: requiredSpeakerText('Nachname', 100),
+    occupation: requiredSpeakerText('Jobtitel und Unternehmen', 200),
+    description: requiredSpeakerText('Bio / Beschreibung', 2000),
+    website_url: speakerUrl('Website'),
+    linkedin_url: speakerUrl('LinkedIn'),
+    twitter_url: speakerUrl('Twitter / X'),
+    bluesky_url: speakerText('Bluesky', 100).optional().or(z.literal('')),
+    github_url: speakerUrl('GitHub'),
+    instagram_url: speakerUrl('Instagram'),
+    youtube_url: speakerUrl('YouTube'),
+    mastodon_url: speakerUrl('Mastodon'),
 })
 
 // Ticket checkout
@@ -185,6 +203,54 @@ export const NewsletterSignupSchema = z.object({
         .max(200, 'Deine E-Mail-Adresse darf nicht länger als 200 Zeichen lang sein.'),
 })
 
+// Meetup registration
+
+// Optional text: an empty or whitespace-only field counts as "not provided" and
+// is stored as null rather than as an empty string.
+const optionalText = (max: number) =>
+    z.preprocess(
+        (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+        z.string().trim().max(max, `Maximal ${max} Zeichen.`).optional()
+    )
+
+const heardAboutValues = MEETUP_HEARD_ABOUT_OPTIONS.map((option) => option.value) as [string, ...string[]]
+
+export const MeetupRegistrationSchema = z
+    .object({
+        meetupId: z.string().uuid('Ungültiges Meetup.'),
+        first_name: z
+            .string()
+            .trim()
+            .min(1, 'Bitte trage deinen Vornamen ein.')
+            .max(100, 'Dein Vorname darf nicht länger als 100 Zeichen sein.'),
+        last_name: z
+            .string()
+            .trim()
+            .min(1, 'Bitte trage deinen Nachnamen ein.')
+            .max(100, 'Dein Nachname darf nicht länger als 100 Zeichen sein.'),
+        email: z
+            .string()
+            .trim()
+            .email('Deine E-Mail-Adresse scheint ungültig zu sein.')
+            .max(200, 'Deine E-Mail-Adresse darf nicht länger als 200 Zeichen sein.'),
+        pronouns: optionalText(50),
+        job_title: optionalText(100),
+        company: optionalText(100),
+        heard_about_from: z.preprocess(
+            (value) => (value === '' ? undefined : value),
+            z.enum(heardAboutValues, { error: 'Bitte wähle eine der Antworten aus.' }).optional()
+        ),
+        heard_about_other: optionalText(200),
+        has_meetup_account: z.boolean().nullable().optional(),
+        wants_meetup_updates: z.boolean().optional().default(false),
+    })
+    // The free-text answer only belongs to "Sonstiges"; drop it otherwise.
+    .transform((data) => ({
+        ...data,
+        heard_about_other: data.heard_about_from === 'other' ? data.heard_about_other : undefined,
+    }))
+
 export type CreateCheckoutInput = z.infer<typeof CreateCheckoutSchema>
 export type TicketAttendeeInput = z.infer<typeof TicketAttendeeSchema>
 export type TicketProfileInput = z.infer<typeof TicketProfileSchema>
+export type MeetupRegistrationInput = z.infer<typeof MeetupRegistrationSchema>

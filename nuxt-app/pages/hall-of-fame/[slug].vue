@@ -107,6 +107,7 @@ import { useLoadingScreen, useLocaleString } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo, trackGoal } from '~/helpers'
 import { generatePersonFromSpeaker } from '~/helpers/jsonLdGenerator'
+import { getPlainText } from '~/helpers/sanitize'
 import type { TagItem } from '~/types'
 import { getFullSpeakerName } from 'shared-code'
 import { computed } from 'vue'
@@ -117,7 +118,7 @@ const directus = useDirectus()
 const route = useRoute()
 
 // Query speaker, podcast and pick of the day count
-const { data: pageData } = useAsyncData(route.fullPath, async () => {
+const { data: pageData, error } = await useAsyncData(route.fullPath, async () => {
     // Query speaker, podcast and pick of the day count async
     const [speaker, podcastCount, pickOfTheDayCount] = await Promise.all([
         directus.getSpeakerBySlug(route.params.slug as string),
@@ -125,14 +126,28 @@ const { data: pageData } = useAsyncData(route.fullPath, async () => {
         directus.getPickOfTheDayCount(),
     ])
 
-    // Throw error if speaker does not exist
+    // A missing speaker is a 404 (handled below), not a fetch failure
     if (!speaker) {
-        throw new Error('The speaker was not found.')
+        return null
     }
 
     // Return speaker, podcast and pick of the day count
     return { speaker, podcastCount, pickOfTheDayCount }
 })
+
+// Throw at setup level (not inside the useAsyncData handler, where it would
+// only populate the error ref) so the response carries the correct status
+if (error.value) {
+    throw createError({
+        statusCode: 500,
+        statusMessage: error.value.message || 'Failed to load speaker.',
+        fatal: true,
+        cause: error.value,
+    })
+}
+if (!pageData.value) {
+    throw createError({ statusCode: 404, statusMessage: 'The speaker was not found.', fatal: true })
+}
 
 // Extract speaker, podcast and pick of the day count from page data
 const speaker = computed(() => pageData.value?.speaker)
@@ -152,9 +167,7 @@ const color = computed(() => new URLSearchParams(route.fullPath.split('?')[1]).g
 // Create full name
 const fullName = computed(() => speaker.value && getFullSpeakerName(speaker.value))
 
-if (speaker.value) {
-    useJsonld(generatePersonFromSpeaker(speaker.value))
-}
+useJsonld(() => (speaker.value ? generatePersonFromSpeaker(speaker.value) : null))
 
 // Set page meta data
 useHead(() =>
@@ -163,7 +176,7 @@ useHead(() =>
               type: 'profile',
               path: route.path,
               title: fullName.value || 'Speaker',
-              description: speaker.value.description,
+              description: getPlainText(speaker.value.description),
               image: speaker.value.profile_image,
               firstName: speaker.value.first_name,
               lastName: speaker.value.last_name,

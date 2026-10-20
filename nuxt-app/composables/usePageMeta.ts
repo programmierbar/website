@@ -1,6 +1,7 @@
 import { useHead, useRoute } from '#app'
 import type { Ref } from 'vue'
 import { getMetaInfo } from '../helpers'
+import { getPlainText } from '../helpers/sanitize'
 import type { FileItem } from '../types'
 
 interface PageMeta {
@@ -22,7 +23,7 @@ export function usePageMeta(page: Ref<PageMeta | null | undefined>) {
                   type: 'website',
                   path: route.path,
                   title: page.value.meta_title,
-                  description: page.value.meta_description,
+                  description: getPlainText(page.value.meta_description),
                   image: page.value.cover_image,
               })
             : {}

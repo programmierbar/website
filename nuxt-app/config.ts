@@ -1,3 +1,6 @@
+// Relative on purpose: nuxt.config.ts imports this file before the `shared-code` alias exists.
+import { EVENT_VENUE } from '../shared-code/helpers/eventVenue'
+
 // Feature Flags
 export const FLAG_SHOW_LOGIN = Boolean(process.env.FLAG_SHOW_LOGIN?.toLowerCase() == 'true')
 export const FLAG_SHOW_NEWS = Boolean(process.env.FLAG_SHOW_NEWS?.toLowerCase() == 'true')
@@ -18,10 +21,42 @@ export const DIRECTUS_CMS_URL =
 export const SEND_CONTACT_EMAIL_URL = '/api/email'
 export const BUZZSPROUT_TRACKING_URL = 'https://op3.dev/e/https://www.podtrac.com/pts/redirect.mp3'
 
+// Podcast votes: within this window, a further vote from the same (anonymized, hashed) IP on the
+// same episode replaces the earlier one instead of adding a second. The hash is of a truncated IP,
+// so different listeners can share it — hence a time window rather than one vote per hash forever.
+export const VOTE_COOLDOWN_MINUTES = 10
+
 // programmier.bar
 export const WEBSITE_URL = process.env.WEBSITE_URL || 'https://www.programmier.bar'
 export const WEBSITE_NAME = 'programmier.bar'
 export const TWITTER_HANDLE = '@programmierbar'
+export const WEBSITE_LOCALE = 'de_DE'
+
+// Open Graph image for every page that has no image of its own. The file lives in `public/`, so it
+// can be replaced by overwriting it — keep the dimensions below in sync with the new file.
+export const DEFAULT_OG_IMAGE = {
+    path: '/images/og-default.png',
+    type: 'image/png',
+    width: 1200,
+    height: 630,
+    alt: `${WEBSITE_NAME} – Die Plattform für App- und Webentwicklung`,
+}
+
+// Venue of meetups and conferences, used as the location in their structured data. Nearly all
+// events take place here; the rare event elsewhere is an accepted exception, as there is no
+// location field in the CMS. The venue itself lives in shared-code, because the CMS prints it in
+// the meetup confirmation mail too.
+export const EVENT_LOCATION = {
+    '@type': 'Place',
+    name: EVENT_VENUE.name,
+    address: {
+        '@type': 'PostalAddress',
+        streetAddress: EVENT_VENUE.streetAddress,
+        postalCode: EVENT_VENUE.postalCode,
+        addressLocality: EVENT_VENUE.locality,
+        addressCountry: EVENT_VENUE.country,
+    },
+} as const
 
 // News RSS feed (served by server/routes/feed/news.xml.get.ts, linked from the
 // news page). Single source of truth for the path and title used by both.
@@ -35,7 +70,7 @@ export const SPOTIFY_URL = 'https://open.spotify.com/show/0ik0sXv9paTQCeThcOLCCJ
 export const BUZZSPROUT_RSS_FEED_URL = 'https://feeds.buzzsprout.com/176239.rss'
 export const YOUTUBE_PODCAST_URL = 'https://www.youtube.com/playlist?list=PLdL7w42vTISATGJPlvPa91GEMOSHqbWZY'
 export const MEETUP_URL = 'https://www.meetup.com/programmierbar'
-export const GOOGLE_MAPS_URL = 'https://goo.gl/maps/7h8a14WPPQkQL4LB8'
+export const GOOGLE_MAPS_URL = EVENT_VENUE.mapsUrl
 export const DISCORD_INVITE_LINK = process.env.DISCORD_INVITE_LINK || 'https://discord.gg'
 
 // programmier.con Apps

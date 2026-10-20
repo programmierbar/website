@@ -1,3 +1,5 @@
+import { isWellFormedNewsletterToken } from './newsletterToken'
+
 // Opting out has to work for everyone, so it is reachable two ways: the JSON
 // route the page calls client-side, and the plain form POST the page renders for
 // visitors without working JavaScript. Both must agree on what counts as an
@@ -9,6 +11,13 @@
 // has to keep working for the life of the subscription.
 export type NewsletterUnsubscribeResult = 'unsubscribed' | 'already_unsubscribed' | 'invalid'
 
+// States that already mean "receives no newsletter". `bounced` and `complained`
+// are set by the CMS's Brevo webhook and are final: an old unsubscribe link (or
+// the one-click POST) must not turn them into `unsubscribed`, because a later
+// signup reactivates `unsubscribed` addresses and would mail a dead address or a
+// complainer again. To the visitor they read as already opted out.
+const OPTED_OUT_STATUSES = new Set(['unsubscribed', 'bounced', 'complained'])
+
 /**
  * Opt one subscriber out by its unsubscribe token. Idempotent: re-clicking a
  * link is a no-op, and unknown tokens get a neutral result (no enumeration).
@@ -18,8 +27,9 @@ export type NewsletterUnsubscribeResult = 'unsubscribed' | 'already_unsubscribed
  */
 export async function performNewsletterUnsubscribe(token: unknown): Promise<NewsletterUnsubscribeResult> {
     // Checked here rather than in the handlers so an empty or malformed token
-    // never reaches Directus, and 'invalid' means the same thing on both routes.
-    if (typeof token !== 'string' || token.length === 0) {
+    // never reaches Directus (which answers a non-UUID with a 500), and 'invalid'
+    // means the same thing on both routes.
+    if (!isWellFormedNewsletterToken(token)) {
         return 'invalid'
     }
 
@@ -33,7 +43,7 @@ export async function performNewsletterUnsubscribe(token: unknown): Promise<News
 
     // Already opted out → idempotent success (handles link re-clicks and mail
     // clients that follow links more than once).
-    if (subscriber.status === 'unsubscribed') {
+    if (OPTED_OUT_STATUSES.has(subscriber.status)) {
         return 'already_unsubscribed'
     }
 
@@ -46,5 +56,5 @@ export async function performNewsletterUnsubscribe(token: unknown): Promise<News
     }
 
     const current = await directus.readNewsletterSubscriberByUnsubscribeToken(token)
-    return current?.status === 'unsubscribed' ? 'already_unsubscribed' : 'invalid'
+    return current && OPTED_OUT_STATUSES.has(current.status) ? 'already_unsubscribed' : 'invalid'
 }
