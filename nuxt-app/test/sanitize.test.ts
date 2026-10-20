@@ -222,6 +222,50 @@ describe('htmlToPlainText', () => {
     it('drops scripts entirely', () => {
         expect(htmlToPlainText('<p>Hallo</p><script>alert(1)</script>')).toBe('Hallo')
     })
+
+    it('treats opening block tags as boundaries, so nested blocks do not glue words together', () => {
+        expect(htmlToPlainText('<div>Intro<div>Details</div></div>')).toBe('Intro\n\nDetails')
+        expect(htmlToPlainText('<div class="bio" data-x="a>b">Intro<p style="margin:0">Mehr</p>Ende</div>')).toBe(
+            'Intro\n\nMehr\n\nEnde'
+        )
+        expect(htmlToPlainText('<blockquote>Zitat<p>Absatz</p></blockquote>')).toBe('Zitat\n\nAbsatz')
+    })
+
+    it('puts every item of a nested list on its own line', () => {
+        expect(
+            htmlToPlainText('<ul><li>Backend<ul><li>TypeScript</li><li>Go</li></ul></li><li>Frontend</li></ul>')
+        ).toBe('Backend\n\nTypeScript\n\nGo\n\nFrontend')
+        expect(htmlToPlainText('<ol><li><p>Erstens</p><ol><li>Unterpunkt</li></ol></li></ol>')).toBe(
+            'Erstens\n\nUnterpunkt'
+        )
+    })
+
+    it('separates adjacent paragraphs and headings', () => {
+        expect(htmlToPlainText('<p>a</p><p>b</p>')).toBe('a\n\nb')
+        expect(htmlToPlainText('Vorspann<h3>Titel</h3>Text')).toBe('Vorspann\n\nTitel\n\nText')
+        expect(htmlToPlainText('<table><tr><td>Zelle 1</td><td>Zelle 2</td></tr></table>')).toBe('Zelle 1\n\nZelle 2')
+    })
+
+    it('does not break lines at inline tags or at tags that only start like block tags', () => {
+        expect(htmlToPlainText('<p>Ich <strong>liebe</strong> <em>Type</em><span>Script</span></p>')).toBe(
+            'Ich liebe TypeScript'
+        )
+        expect(htmlToPlainText('<p>Ein<b>fach</b><abbr>s</abbr></p>')).toBe('Einfachs')
+    })
+
+    it('keeps <br> as a single line break inside nested blocks', () => {
+        expect(htmlToPlainText('<div><p>Zeile<br/>Zeile<br class="x">Zeile</p></div>')).toBe('Zeile\nZeile\nZeile')
+    })
+
+    it('trims surrounding whitespace and collapses runs of spaces', () => {
+        expect(
+            htmlToPlainText('  <div>\n  <p>  Hallo   Welt  </p>\n\n\n  <p>\tZweiter&nbsp;&nbsp;Absatz </p>\n</div>  ')
+        ).toBe('Hallo Welt\n\nZweiter Absatz')
+    })
+
+    it('decodes entities inside nested blocks', () => {
+        expect(htmlToPlainText('<div>K&ouml;ln<div>Tom &amp; Jerry</div></div>')).toBe('Köln\n\nTom & Jerry')
+    })
 })
 
 describe('plainTextToHtml', () => {

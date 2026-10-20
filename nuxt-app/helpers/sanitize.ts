@@ -111,16 +111,21 @@ export function getPlainText(html: string | null | undefined): string {
 // through `textContent` (which would otherwise flatten it) and turned into line breaks afterwards.
 const PARAGRAPH_MARK = '\uE000'
 const LINE_BREAK_MARK = '\uE001'
-const BLOCK_END_REGEX =
-    /<\/(?:address|article|blockquote|dd|div|dl|dt|figcaption|figure|footer|h[1-6]|header|li|ol|p|pre|section|table|tr|ul)\s*>/gi
+// Opening *and* closing block tags are boundaries: with only the closing ones, text in front of a
+// nested block runs into it (`<div>Intro<div>Details</div></div>` became "IntroDetails", a nested
+// list glued "Backend" to "TypeScript"). The mark goes in front of the tag, so tags with attributes
+// need no matching of their end, and the lookahead keeps `<p` from matching `<path>` or `<p-x>`.
+const BLOCK_BOUNDARY_REGEX =
+    /<\/?(?:address|article|aside|blockquote|caption|dd|div|dl|dt|figcaption|figure|footer|h[1-6]|header|hr|li|main|nav|ol|p|pre|section|table|tbody|td|tfoot|th|thead|tr|ul)(?=[\s/>])/gi
 const LINE_BREAK_REGEX = /<br\b[^>]*>/gi
 
 /**
  * Turns CMS rich text into plain text for editing in a `<textarea>`, keeping its paragraphs.
  *
- * Each block element becomes a paragraph (separated by a blank line) and `<br>` a single line
- * break; every other tag is removed and entities are decoded. Like {@link getPlainText} the result
- * is real text, not HTML. {@link plainTextToHtml} is its inverse.
+ * Each block element becomes a paragraph (separated by a blank line), including blocks nested in
+ * other blocks and the items of nested lists, and `<br>` a single line break; every other tag is
+ * removed and entities are decoded. Like {@link getPlainText} the result is real text, not HTML.
+ * {@link plainTextToHtml} is its inverse.
  *
  * Newlines *inside* a paragraph are kept, because the site renders `p` with `whitespace-pre-line`
  * and so shows them; newlines between paragraphs are only source formatting and are dropped.
@@ -133,7 +138,7 @@ export function htmlToPlainText(html: string | null | undefined): string {
     const marked = html
         .replace(/\r\n?/g, '\n')
         .replace(LINE_BREAK_REGEX, LINE_BREAK_MARK)
-        .replace(BLOCK_END_REGEX, `$&${PARAGRAPH_MARK}`)
+        .replace(BLOCK_BOUNDARY_REGEX, `${PARAGRAPH_MARK}$&`)
 
     const fragment = DOMPurify.sanitize(marked, {
         ALLOWED_TAGS: [],
