@@ -2686,7 +2686,7 @@ Tracked so nobody has to rediscover them. None are urgent on their own.
 | `@nuxt/image-edge` | Feb 2024 (nightly) | Phase 3 removes it |
 | `h3-zod` | Jan 2024 | ✅ removed in Phase 5 (Zod 4) |
 | `eslint-plugin-nuxt` | Aug 2023 | ✅ removed in Phase 5 (ESLint 10) |
-| ~~`@ubclaunchpad/vue-fathom`~~ ✅ removed 2026-09-25 | Apr 2022 | 1 usage. Fathom's own snippet is a few lines — consider inlining and dropping the dependency. |
+| ~~`@ubclaunchpad/vue-fathom`~~ ✅ removed 2026-09-25 | Apr 2022 | Replaced with the directly declared `fathom-client`; the Vue wrapper was unused beyond loading Fathom. |
 | `smoothscroll-polyfill` | Aug 2022 | ✅ removed in Phase 1 |
 | `rss` | Sep 2023 | Still works, no replacement needed. Watch it. |
 | `@nuxtjs/algolia` | Nov 2025 | Fine, but it is the module most likely to need attention at Nuxt 5. |
