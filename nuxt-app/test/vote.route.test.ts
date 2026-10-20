@@ -86,11 +86,11 @@ describe('POST /api/vote', () => {
         expect(directus.createRating).not.toHaveBeenCalled()
     })
 
-    it('keeps the earlier vote when it cannot be replaced', async () => {
+    it('answers 500 when the earlier vote cannot be replaced', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
         directus.getRecentRatingByIP.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
         directus.updateRatingVote.mockRejectedValue(new Error('forbidden'))
-        await expect(vote('down')).resolves.toEqual({ id: 'rating-old' })
+        await expect(vote('down')).rejects.toMatchObject({ statusCode: 500 })
         expect(directus.createRating).not.toHaveBeenCalled()
     })
 

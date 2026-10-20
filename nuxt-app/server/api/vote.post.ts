@@ -56,12 +56,7 @@ export default defineEventHandler(async (event) => {
             const recentRating = await directus.getRecentRatingByIP(podcast, rawIP, since)
             if (recentRating) {
                 if (recentRating.up_or_down !== direction) {
-                    try {
-                        await directus.updateRatingVote(recentRating, direction)
-                    } catch (error) {
-                        // If the rating can't be updated, the earlier vote stands.
-                        console.error('Failed to replace rating', recentRating.id, 'for podcast', podcast.slug, error)
-                    }
+                    await directus.updateRatingVote(recentRating, direction)
                 }
                 return { id: recentRating.id }
             }
@@ -71,7 +66,7 @@ export default defineEventHandler(async (event) => {
         // Return the id so the page can attach an optional comment to this rating.
         return { id: rating?.id }
     } catch (error) {
-        console.error('Failed to create rating for podcast', podcast.slug, error)
+        console.error('Failed to store rating for podcast', podcast.slug, error)
         throw createError({
             statusCode: 500,
             message: 'Dein Feedback konnte leider nicht gespeichert werden. Bitte versuche es später erneut.',
