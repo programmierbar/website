@@ -8,6 +8,7 @@ export interface BrevoEvent {
     event?: unknown
     email?: unknown
     reason?: unknown
+    subject?: unknown
     'message-id'?: unknown
     'X-Mailin-custom'?: unknown
     tags?: unknown
@@ -29,6 +30,23 @@ export interface Decision {
     /** Text for `newsletter_sends.error`. */
     note: string
     isNewsletter: boolean
+    /**
+     * A non-newsletter mail (ticket, invoice, speaker portal, …) did not reach its recipient
+     * (`hard_bounce`, `invalid_email`, `blocked`): someone should know, e.g. to get an invoice
+     * to the buyer another way.
+     */
+    mailFailure: boolean
+    /** Brevo's reason, trimmed; null if missing or empty. */
+    reason: string | null
+    subject: string | null
+    messageId: string | null
+}
+
+/** Events that mean a mail did not reach its recipient. */
+const UNDELIVERED_EVENTS = new Set(['hard_bounce', 'invalid_email', 'blocked'])
+
+function optionalString(value: unknown): string | null {
+    return typeof value === 'string' && value.trim() ? value.trim() : null
 }
 
 /**
@@ -63,6 +81,9 @@ function parseTags(event: BrevoEvent): unknown {
  * - `unsubscribed` (Brevo's own unsubscribe) → `unsubscribed`, only for newsletter mails.
  * - `blocked` → no status change: Brevo did not send because the address is on its own
  *   blocklist, and the payload does not say why. Noted on the send row.
+ * - `hard_bounce`, `invalid_email`, `blocked` on any OTHER mail (no newsletter marker) →
+ *   additionally `mailFailure`, a Slack warning: a ticket confirmation or invoice did not
+ *   arrive, and nobody else would notice.
  * - everything else (`soft_bounce`, `deferred`, `delivered`, opens, clicks, …) → ignored.
  *   A soft bounce is temporary; Brevo reports a hard bounce if it becomes permanent.
  */
@@ -70,7 +91,7 @@ export function decide(raw: BrevoEvent): Decision {
     const event = typeof raw.event === 'string' ? raw.event : ''
     const email = typeof raw.email === 'string' ? raw.email.trim().toLowerCase() : ''
     const { isNewsletter, sendId } = parseNewsletterTracking(raw['X-Mailin-custom'], parseTags(raw))
-    const reason = typeof raw.reason === 'string' && raw.reason.trim() ? raw.reason.trim() : null
+    const reason = optionalString(raw.reason)
     const note = `Brevo: ${event}${reason ? ` (${reason})` : ''}`
 
     let transition: SubscriberTransition | null = null
@@ -94,5 +115,16 @@ export function decide(raw: BrevoEvent): Decision {
             break
     }
 
-    return { event, email, transition, sendId: noteSend ? sendId : null, note, isNewsletter }
+    return {
+        event,
+        email,
+        transition,
+        sendId: noteSend ? sendId : null,
+        note,
+        isNewsletter,
+        mailFailure: !isNewsletter && UNDELIVERED_EVENTS.has(event),
+        reason,
+        subject: optionalString(raw.subject),
+        messageId: optionalString(raw['message-id']),
+    }
 }

@@ -15,6 +15,10 @@ const SECRET = 'a3f1c9d2e8b74f60a3f1c9d2e8b74f60'
 const AUTH = `Basic ${Buffer.from(`brevo:${SECRET}`).toString('base64')}`
 const SEND_ID = '6f1c2a5e-0000-4000-8000-0000000000aa'
 const NEWSLETTER = { 'X-Mailin-custom': `newsletter:send:${SEND_ID}`, tags: ['newsletter'] }
+/** A newsletter mail without a send row (test send / double opt-in style marker). */
+const NEWSLETTER_MAIL = { tags: ['newsletter'] }
+/** A ticket mail as Brevo reports it: no newsletter marker. */
+const TICKET = { subject: 'Deine Tickets für die programmier.con', 'message-id': '<ticket-1@programmier.bar>' }
 
 type Row = Record<string, any>
 
@@ -150,7 +154,12 @@ describe('POST /brevo-webhook: subscribers', () => {
     test.each(['confirmed', 'pending'])('a hard bounce moves a %s subscriber to bounced', async (status) => {
         const { call, tables, writes } = setup({ subscribers: [subscriber(status)] })
 
-        const result = await call({ event: 'hard_bounce', email: 'Leser@Example.de', reason: 'user unknown' })
+        const result = await call({
+            event: 'hard_bounce',
+            email: 'Leser@Example.de',
+            reason: 'user unknown',
+            ...NEWSLETTER_MAIL,
+        })
 
         expect(result).toEqual({ status: 200, body: { received: 1, transitioned: 1, notedSends: 0 } })
         expect(tables.newsletter_subscribers![0]!.status).toBe('bounced')
@@ -314,12 +323,125 @@ describe('POST /brevo-webhook: send rows', () => {
     })
 })
 
+describe('POST /brevo-webhook: undelivered non-newsletter mails', () => {
+    test('a hard bounce of a ticket mail bounces the subscriber and warns on Slack', async () => {
+        const { call, tables } = setup({ subscribers: [subscriber('confirmed')] })
+
+        const result = await call({
+            event: 'hard_bounce',
+            email: 'leser@example.de',
+            reason: 'user unknown',
+            ...TICKET,
+        })
+
+        expect(result).toEqual({ status: 200, body: { received: 1, transitioned: 1, notedSends: 0 } })
+        expect(tables.newsletter_subscribers![0]!.status).toBe('bounced')
+        expect(slackMock).toHaveBeenCalledTimes(1)
+        expect(slackMock.mock.calls[0]![0]).toBe(
+            ':warning: *E-Mail*: Brevo hat eine Mail an leser@example.de nicht zugestellt – `hard_bounce` (user unknown). Betreff: „Deine Tickets für die programmier.con“. Falls wichtig (z. B. Bestellbestätigung oder Rechnung), bitte auf anderem Weg nachreichen.'
+        )
+    })
+
+    test.each(['invalid_email', 'blocked'])('%s on a ticket mail warns, also for non-subscribers', async (event) => {
+        const { call, writes } = setup()
+
+        const result = await call({ event, email: 'kaeufer@example.de', ...TICKET })
+
+        expect(result.status).toBe(200)
+        expect(slackMock).toHaveBeenCalledTimes(1)
+        const text = slackMock.mock.calls[0]![0]
+        expect(text).toContain('kaeufer@example.de')
+        expect(text).toContain(`\`${event}\``)
+        expect(text).toContain('„Deine Tickets für die programmier.con“')
+        // blocked never writes; invalid_email only tries the (absent) subscriber.
+        expect(writes.filter((w) => w.table === 'newsletter_sends')).toEqual([])
+    })
+
+    test('without subject and reason the warning still names address and event', async () => {
+        const { call } = setup()
+        await call({ event: 'blocked', email: 'kaeufer@example.de' })
+        expect(slackMock.mock.calls[0]![0]).toContain(
+            'kaeufer@example.de nicht zugestellt – `blocked`. Betreff: (ohne Betreff).'
+        )
+    })
+
+    test('escapes Slack markup in subject and reason', async () => {
+        const { call } = setup()
+        await call({ event: 'blocked', email: 'a@example.de', subject: 'Q&A <live>', reason: '<@channel>' })
+        const text = slackMock.mock.calls[0]![0]
+        expect(text).toContain('„Q&amp;A &lt;live&gt;“')
+        expect(text).toContain('(&lt;@channel&gt;)')
+        expect(text).not.toContain('<')
+    })
+
+    test('no warning for newsletter, test and double opt-in mails', async () => {
+        const { call } = setup({ sends: [{ id: SEND_ID, status: 'sent', error: null }] })
+        for (const marker of [NEWSLETTER, NEWSLETTER_MAIL, { 'X-Mailin-custom': 'newsletter:double-opt-in' }]) {
+            for (const event of ['hard_bounce', 'invalid_email', 'blocked']) {
+                await call({ event, email: 'leser@example.de', ...marker })
+            }
+        }
+        expect(slackMock).not.toHaveBeenCalled()
+    })
+
+    test('no warning for other events on a ticket mail', async () => {
+        const { call } = setup()
+        for (const event of ['soft_bounce', 'deferred', 'delivered', 'spam', 'unsubscribed']) {
+            await call({ event, email: 'kaeufer@example.de', ...TICKET })
+        }
+        expect(slackMock).not.toHaveBeenCalled()
+    })
+
+    test('a re-delivered event warns once; another mail warns again', async () => {
+        const { call } = setup()
+        const event = { event: 'blocked', email: 'kaeufer@example.de', ...TICKET }
+
+        await call(event)
+        await call(event)
+        await call([event, event])
+        await call({ ...event, subject: 'Deine Rechnung', 'message-id': '<invoice-1@programmier.bar>' })
+        // Without a message id, address and subject identify the mail.
+        await call({ event: 'blocked', email: 'kaeufer@example.de', subject: 'Deine Rechnung' })
+        await call({ event: 'blocked', email: 'kaeufer@example.de', subject: 'Deine Rechnung' })
+
+        expect(slackMock).toHaveBeenCalledTimes(3)
+    })
+
+    test('a warning Slack did not take is retried when Brevo delivers again', async () => {
+        slackMock.mockRejectedValueOnce(new Error('Slack: down'))
+        const { call } = setup()
+        const event = { event: 'blocked', email: 'kaeufer@example.de', ...TICKET }
+
+        expect((await call(event)).status).toBe(200)
+        await call(event)
+        await call(event)
+
+        // First post failed, second succeeded, third is suppressed.
+        expect(slackMock).toHaveBeenCalledTimes(2)
+    })
+
+    test('the warning goes out even if the database write fails', async () => {
+        const { call } = setup({ subscribers: [subscriber('confirmed')], failWrites: true })
+
+        const result = await call({ event: 'hard_bounce', email: 'leser@example.de', ...TICKET })
+
+        expect(result.status).toBe(500)
+        const texts = slackMock.mock.calls.map((args) => args[0])
+        expect(texts).toHaveLength(2)
+        expect(texts[0]).toContain('nicht zugestellt')
+        expect(texts[1]).toContain('database down')
+        // Brevo retries after the 500: neither message repeats.
+        await call({ event: 'hard_bounce', email: 'leser@example.de', ...TICKET })
+        expect(slackMock).toHaveBeenCalledTimes(2)
+    })
+})
+
 describe('POST /brevo-webhook: overlapping events', () => {
     test('two events racing for the same subscriber: exactly one transition wins', async () => {
         const { call, tables, writes } = setup({ subscribers: [subscriber('confirmed')] })
 
         const [bounce, complaint] = await Promise.all([
-            call({ event: 'hard_bounce', email: 'leser@example.de' }),
+            call({ event: 'hard_bounce', email: 'leser@example.de', ...NEWSLETTER_MAIL }),
             call({ event: 'spam', email: 'leser@example.de', ...NEWSLETTER }),
         ])
 
@@ -361,8 +483,9 @@ describe('POST /brevo-webhook: failures', () => {
     test('a database error answers 500 (so Brevo may retry) and reaches Slack once', async () => {
         const { call } = setup({ subscribers: [subscriber('confirmed')], failWrites: true })
 
-        expect((await call({ event: 'hard_bounce', email: 'leser@example.de' })).status).toBe(500)
-        expect((await call({ event: 'hard_bounce', email: 'leser@example.de' })).status).toBe(500)
+        const body = { event: 'hard_bounce', email: 'leser@example.de', ...NEWSLETTER_MAIL }
+        expect((await call(body)).status).toBe(500)
+        expect((await call(body)).status).toBe(500)
         expect(slackMock).toHaveBeenCalledTimes(1)
         expect(slackMock.mock.calls[0]![0]).toContain('database down')
     })
@@ -371,9 +494,10 @@ describe('POST /brevo-webhook: failures', () => {
         slackMock.mockRejectedValueOnce(new Error('Slack: down'))
         const { call } = setup({ subscribers: [subscriber('confirmed')], failWrites: true })
 
-        await call({ event: 'hard_bounce', email: 'leser@example.de' })
-        await call({ event: 'hard_bounce', email: 'leser@example.de' })
-        await call({ event: 'hard_bounce', email: 'leser@example.de' })
+        const body = { event: 'hard_bounce', email: 'leser@example.de', ...NEWSLETTER_MAIL }
+        await call(body)
+        await call(body)
+        await call(body)
 
         // First post failed, second succeeded, third is suppressed.
         expect(slackMock).toHaveBeenCalledTimes(2)

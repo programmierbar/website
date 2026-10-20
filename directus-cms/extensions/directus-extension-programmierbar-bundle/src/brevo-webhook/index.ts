@@ -15,6 +15,8 @@ const ENDPOINT_NAME = 'brevo-webhook'
  *
  * - hard bounce / invalid address → subscriber `bounced` (any mail)
  * - spam complaint → `complained` (newsletter mails only), with a Slack message
+ * - hard bounce / invalid address / blocked on any other mail (tickets, invoices, …) → Slack
+ *   warning, so the mail can be delivered another way
  * - Brevo-side unsubscribe → `unsubscribed` (newsletter mails only)
  * - on a newsletter send, the event is noted in the row's `error`
  *
@@ -28,6 +30,7 @@ export default defineEndpoint((router, context) => {
 
     const store = createDirectusWebhookStore({ database })
     const notified = new Set<string>()
+    let notifiedDay = ''
 
     /** Post to Slack. Never throws; false when the message could not be posted. */
     async function notify(text: string): Promise<boolean> {
@@ -41,16 +44,21 @@ export default defineEndpoint((router, context) => {
     }
 
     /**
-     * Recurring failures: one Slack message per day each, not one per Brevo request. The key
-     * is reserved before posting, so concurrent requests do not all post while the first one
-     * is in flight, and released again if Slack did not take the message, so a later request
-     * retries it.
+     * Recurring failures and re-delivered events: one Slack message per key and day, not one
+     * per Brevo request. The key is reserved before posting, so concurrent requests do not
+     * all post while the first one is in flight, and released again if Slack did not take the
+     * message, so a later request retries it. Kept in memory: a restart forgets the keys, and
+     * the keys of past days are dropped.
      */
     async function notifyOnce(key: string, text: string): Promise<void> {
-        const dayKey = `${berlinDayKey(new Date())}:${key}`
-        if (notified.has(dayKey)) return
-        notified.add(dayKey)
-        if (!(await notify(text))) notified.delete(dayKey)
+        const today = berlinDayKey(new Date())
+        if (today !== notifiedDay) {
+            notified.clear()
+            notifiedDay = today
+        }
+        if (notified.has(key)) return
+        notified.add(key)
+        if (!(await notify(text))) notified.delete(key)
     }
 
     router.post('/', async (req: any, res: any) => {
@@ -76,6 +84,7 @@ export default defineEndpoint((router, context) => {
                 now: () => new Date(),
                 logger,
                 notify,
+                notifyOnce,
             })
             res.status(200).send(result)
         } catch (error: any) {

@@ -71,4 +71,28 @@ describe('decide', () => {
         })
         expect(decide({ event: 'hard_bounce' })).toMatchObject({ email: '' })
     })
+
+    test('flags undelivered non-newsletter mails for a Slack warning', () => {
+        for (const event of ['hard_bounce', 'invalid_email', 'blocked']) {
+            expect(decide({ event, email: 'a@b.de', ...TICKET })).toMatchObject({ mailFailure: true })
+            expect(decide({ event, email: 'a@b.de', ...NEWSLETTER })).toMatchObject({ mailFailure: false })
+            expect(decide({ event, email: 'a@b.de', tag: '["newsletter-double-opt-in"]' })).toMatchObject({
+                mailFailure: false,
+            })
+        }
+        for (const event of ['spam', 'unsubscribed', 'soft_bounce', 'delivered']) {
+            expect(decide({ event, email: 'a@b.de', ...TICKET })).toMatchObject({ mailFailure: false })
+        }
+    })
+
+    test('reads subject, reason and message id; empty values become null', () => {
+        expect(
+            decide({ event: 'blocked', subject: ' Rechnung ', reason: ' blocked ', 'message-id': '<1@x>' })
+        ).toMatchObject({ subject: 'Rechnung', reason: 'blocked', messageId: '<1@x>' })
+        expect(decide({ event: 'blocked', subject: ' ', reason: 3, 'message-id': '' })).toMatchObject({
+            subject: null,
+            reason: null,
+            messageId: null,
+        })
+    })
 })
