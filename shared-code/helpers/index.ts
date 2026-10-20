@@ -7,3 +7,4 @@ export * from './getUrlSlug';
 export * from './eventCalendar';
 export * from './eventVenue';
 export * from './meetupRegistration';
+export * from './speakerPortal';

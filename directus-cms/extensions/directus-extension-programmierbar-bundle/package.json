@@ -164,6 +164,16 @@
             },
             {
                 "type": "endpoint",
+                "name": "speaker-portal",
+                "source": "src/speaker-portal/index.ts"
+            },
+            {
+                "type": "interface",
+                "name": "speaker-profile-update-actions",
+                "source": "src/speaker-portal/interface.ts"
+            },
+            {
+                "type": "endpoint",
                 "name": "newsletter-preview",
                 "source": "src/newsletter-preview/index.ts"
             },

@@ -1,5 +1,7 @@
+import { SPEAKER_PORTAL_STATUS } from 'shared-code'
 import { SpeakerSubmissionSchema } from '../../utils/schema'
 import { hasVisibleText, markdownToHtml } from '../../utils/speakerBio'
+import { getSpeakerPortalMode, isSpeakerPortalClosed, saveSpeakerProfileUpdate } from '../../utils/speakerProfileUpdate'
 
 // Every error leaves this handler as JSON with a German message the portal can show as-is. Anything
 // unexpected is logged here (Vercel function logs) and answered with a generic 500, so internal error
@@ -118,7 +120,7 @@ export default defineEventHandler(async (event) => {
         }
 
         // Check if already submitted
-        if (speaker.portal_submission_status === 'submitted' || speaker.portal_submission_status === 'approved') {
+        if (isSpeakerPortalClosed(speaker.portal_submission_status)) {
             throw createError({
                 statusCode: 409,
                 statusMessage: 'Conflict',
@@ -149,8 +151,9 @@ export default defineEventHandler(async (event) => {
             actionImageId = uploadResult.id
         }
 
-        // Update speaker record
-        const updateData: Record<string, any> = {
+        // The profile as submitted. Empty optional fields are stored as null, so removing a link in
+        // the form removes it from the profile.
+        const profile: Record<string, any> = {
             academic_title: data.academic_title || null,
             first_name: data.first_name,
             last_name: data.last_name,
@@ -164,21 +167,36 @@ export default defineEventHandler(async (event) => {
             instagram_url: data.instagram_url || null,
             youtube_url: data.youtube_url || null,
             mastodon_url: data.mastodon_url || null,
-            portal_submission_status: 'submitted',
-            portal_token: null, // Invalidate token after submission
         }
 
         if (profileImageId) {
-            updateData.profile_image = profileImageId
+            profile.profile_image = profileImageId
         }
         if (actionImageId) {
-            updateData.event_image = actionImageId
+            profile.event_image = actionImageId
         }
 
-        await directus.updateSpeaker(speaker.id, updateData)
+        // Marks the submission done and makes the link single-use. This write also fires the CMS's
+        // submission confirmation (mail to the speaker, Slack to the team).
+        const completion = {
+            portal_submission_status: SPEAKER_PORTAL_STATUS.submitted,
+            portal_token: null,
+        }
+
+        const mode = getSpeakerPortalMode(speaker.portal_submission_status)
+        if (mode === 'update') {
+            // An existing profile: the changes go into a Content Version for an admin to
+            // review and promote, the live item only learns that the speaker is done. The version is
+            // saved first, so a failure there leaves the token usable for another try.
+            await saveSpeakerProfileUpdate(directus, speaker.id, profile)
+            await directus.updateSpeaker(speaker.id, completion)
+        } else {
+            await directus.updateSpeaker(speaker.id, { ...profile, ...completion })
+        }
 
         return {
             success: true,
+            mode,
             message: 'Speaker information submitted successfully',
         }
     } catch (err: any) {

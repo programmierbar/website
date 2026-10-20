@@ -8,6 +8,10 @@ const { directus, useAuthenticatedDirectus } = vi.hoisted(() => {
         getSpeakerByPortalToken: vi.fn(),
         uploadFile: vi.fn(),
         updateSpeaker: vi.fn(),
+        findContentVersion: vi.fn(),
+        createContentVersion: vi.fn(),
+        renameContentVersion: vi.fn(),
+        saveToContentVersion: vi.fn(),
     }
     const useAuthenticatedDirectus = vi.fn(() => directus)
     const g = globalThis as any
@@ -152,6 +156,112 @@ describe('POST /api/speaker-portal/submit', () => {
         expect(directus.updateSpeaker).toHaveBeenCalledWith(
             's1',
             expect.objectContaining({ portal_submission_status: 'submitted', portal_token: null })
+        )
+    })
+
+    describe('profile update (status update_requested)', () => {
+        const image = { name: 'profile_image', filename: 'a.jpg', type: 'image/jpeg', data: Buffer.from('jpg') }
+
+        beforeEach(() => {
+            directus.getSpeakerByPortalToken.mockResolvedValue({
+                id: 's1',
+                portal_submission_status: 'update_requested',
+            })
+            directus.uploadFile.mockResolvedValue({ id: 'file-new' })
+            directus.updateSpeaker.mockResolvedValue({})
+            directus.saveToContentVersion.mockResolvedValue({})
+            directus.renameContentVersion.mockResolvedValue(undefined)
+        })
+
+        it('saves the profile into a new Content Version and writes only status and token live', async () => {
+            directus.findContentVersion.mockResolvedValue(null)
+            directus.createContentVersion.mockResolvedValue({ id: 'v1', key: 'profile-update', name: 'x' })
+
+            await expect(
+                invoke([part('token', 't'), part('data', JSON.stringify(validData)), image])
+            ).resolves.toMatchObject({ success: true, mode: 'update' })
+
+            expect(directus.findContentVersion).toHaveBeenCalledWith('speakers', 's1', 'profile-update')
+            expect(directus.createContentVersion).toHaveBeenCalledWith({
+                key: 'profile-update',
+                name: expect.stringMatching(/^Profil-Update \d{2}\.\d{2}\.\d{4}$/),
+                collection: 'speakers',
+                item: 's1',
+            })
+            expect(directus.saveToContentVersion).toHaveBeenCalledWith(
+                'v1',
+                expect.objectContaining({
+                    first_name: 'Erika',
+                    occupation: 'Head of Engineering at Beispiel GmbH',
+                    description: '<p>Erika Mustermann arbeitet als Head of Engineering.</p>',
+                    website_url: null,
+                    profile_image: 'file-new',
+                })
+            )
+            const delta = directus.saveToContentVersion.mock.calls[0]![1]
+            expect(delta).not.toHaveProperty('portal_submission_status')
+            expect(delta).not.toHaveProperty('portal_token')
+            expect(delta).not.toHaveProperty('event_image')
+
+            // The live item gets nothing but the completion, after the version was saved.
+            expect(directus.updateSpeaker).toHaveBeenCalledTimes(1)
+            expect(directus.updateSpeaker).toHaveBeenCalledWith('s1', {
+                portal_submission_status: 'submitted',
+                portal_token: null,
+            })
+            expect(directus.saveToContentVersion.mock.invocationCallOrder[0]!).toBeLessThan(
+                directus.updateSpeaker.mock.invocationCallOrder[0]!
+            )
+        })
+
+        it('reuses the existing version and renames it to today', async () => {
+            directus.findContentVersion.mockResolvedValue({
+                id: 'v-old',
+                key: 'profile-update',
+                name: 'Profil-Update 01.01.2020',
+            })
+
+            await invoke([part('token', 't'), part('data', JSON.stringify(validData))])
+
+            expect(directus.createContentVersion).not.toHaveBeenCalled()
+            expect(directus.renameContentVersion).toHaveBeenCalledWith(
+                'v-old',
+                expect.stringMatching(/^Profil-Update \d{2}\.\d{2}\.\d{4}$/)
+            )
+            expect(directus.saveToContentVersion).toHaveBeenCalledWith('v-old', expect.any(Object))
+        })
+
+        it('keeps the token usable when the version cannot be saved', async () => {
+            // e.g. Content Versioning switched off: Directus answers 422 on POST /versions.
+            directus.findContentVersion.mockResolvedValue(null)
+            directus.createContentVersion.mockRejectedValue(
+                new Error('Content Versioning is not enabled for collection "speakers"')
+            )
+
+            const error = await invoke([part('token', 't'), part('data', JSON.stringify(validData))]).catch(
+                (e: any) => e
+            )
+
+            expect(error).toMatchObject({ statusCode: 500 })
+            expect(error.message).not.toContain('Versioning')
+            expect(directus.updateSpeaker).not.toHaveBeenCalled()
+            expect(console.error).toHaveBeenCalled()
+        })
+    })
+
+    it('writes a first submission straight to the live item, without a version', async () => {
+        directus.getSpeakerByPortalToken.mockResolvedValue({ id: 's1', portal_submission_status: 'pending' })
+        directus.updateSpeaker.mockResolvedValue({})
+
+        await expect(invoke([part('token', 't'), part('data', JSON.stringify(validData))])).resolves.toMatchObject({
+            mode: 'initial',
+        })
+
+        expect(directus.findContentVersion).not.toHaveBeenCalled()
+        expect(directus.saveToContentVersion).not.toHaveBeenCalled()
+        expect(directus.updateSpeaker).toHaveBeenCalledWith(
+            's1',
+            expect.objectContaining({ first_name: 'Erika', portal_submission_status: 'submitted', portal_token: null })
         )
     })
 })

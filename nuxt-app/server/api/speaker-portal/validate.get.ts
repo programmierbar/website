@@ -1,4 +1,5 @@
 import { htmlToMarkdown } from '../../utils/speakerBio'
+import { getSpeakerPortalMode, isSpeakerPortalClosed } from '../../utils/speakerProfileUpdate'
 
 // Every error leaves this handler as JSON with a German message the portal can show as-is. Anything
 // unexpected is logged here (Vercel function logs) and answered with a generic 500, so internal error
@@ -38,8 +39,9 @@ export default defineEventHandler(async (event) => {
             }
         }
 
-        // Check if already submitted
-        if (speaker.portal_submission_status === 'submitted' || speaker.portal_submission_status === 'approved') {
+        // Check if already submitted. `update_requested` is open: an admin asked an existing speaker to
+        // check their profile.
+        if (isSpeakerPortalClosed(speaker.portal_submission_status)) {
             throw createError({
                 statusCode: 409,
                 statusMessage: 'Conflict',
@@ -49,6 +51,8 @@ export default defineEventHandler(async (event) => {
         }
 
         return {
+            // 'update': an existing profile to check; the form saves into a version for review.
+            mode: getSpeakerPortalMode(speaker.portal_submission_status),
             speaker: {
                 id: speaker.id,
                 first_name: speaker.first_name,

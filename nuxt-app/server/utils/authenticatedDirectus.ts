@@ -1,19 +1,24 @@
 import { randomUUID } from 'node:crypto'
 import {
     aggregate,
+    createContentVersion as createContentVersionCommand,
     createDirectus,
     createItem,
     deleteItem,
+    readContentVersions,
     readItem,
     readItems,
     rest,
+    saveToContentVersion as saveToContentVersionCommand,
     staticToken,
+    updateContentVersion,
     updateItem,
     updateItems,
     uploadFiles,
 } from '@directus/sdk'
 import type { Collections } from '~/services/directus'
 import type {
+    DirectusContentVersion,
     DirectusMeetupRegistrationItem,
     DirectusNewsletterSubscriberItem,
     DirectusTicketDiscountCodeItem,
@@ -74,6 +79,45 @@ export function useAuthenticatedDirectus() {
 
     async function uploadFile(formData: FormData) {
         return await client.request(uploadFiles(formData))
+    }
+
+    // Content Versions (Directus `/versions` API). An item has at most one version per key, and a
+    // version's `item` is always the primary key as a string. Saving merges the given fields into
+    // the version's delta; the live item stays untouched until an admin promotes the version.
+
+    async function findContentVersion(
+        collection: keyof Collections,
+        item: string,
+        key: string
+    ): Promise<DirectusContentVersion | null> {
+        const versions = await client.request(
+            readContentVersions({
+                filter: { collection: { _eq: collection }, item: { _eq: item }, key: { _eq: key } },
+                fields: ['id', 'key', 'name'],
+                limit: 1,
+            } as any)
+        )
+
+        return (versions?.[0] as DirectusContentVersion | undefined) ?? null
+    }
+
+    async function createContentVersion(data: {
+        key: string
+        name: string
+        collection: keyof Collections
+        item: string
+    }): Promise<DirectusContentVersion> {
+        const version = await client.request(createContentVersionCommand(data, { fields: ['id', 'key', 'name'] }))
+        return version as unknown as DirectusContentVersion
+    }
+
+    // Only `key` and `name` of a version can be changed; its delta changes through saving.
+    async function renameContentVersion(id: string, name: string) {
+        await client.request(updateContentVersion(id, { name } as any, { fields: ['id'] } as any))
+    }
+
+    async function saveToContentVersion(id: string, delta: Record<string, unknown>) {
+        await client.request(saveToContentVersionCommand(id, delta as any))
     }
 
     async function getConference(id: string) {
@@ -520,6 +564,10 @@ export function useAuthenticatedDirectus() {
         getSpeakerByPortalToken,
         updateSpeaker,
         uploadFile,
+        findContentVersion,
+        createContentVersion,
+        renameContentVersion,
+        saveToContentVersion,
         getConference,
         getDiscountCode,
         countPaidTicketsForConference,
