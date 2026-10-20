@@ -37,12 +37,13 @@ export function mailFailureMessage(decision: Decision): string {
 }
 
 /**
- * Brevo may deliver the same event again (e.g. after a 500), so the warning is keyed by the
- * mail: its message id, or address and subject if Brevo sent none.
+ * Brevo may deliver the same event again (e.g. after a 500), so the warning is keyed by
+ * recipient and mail: the message id, or the subject if Brevo sent none. The recipient is
+ * always part of it, because one mail to several recipients (e.g. a ticket confirmation to
+ * the buyer with the billing address in CC) shares one message id.
  */
 function mailFailureKey(decision: Decision): string {
-    const mail = decision.messageId ?? `${decision.email}|${decision.subject ?? ''}`
-    return `mail-failure:${decision.event}:${mail}`
+    return `mail-failure:${decision.event}:${decision.email}:${decision.messageId ?? decision.subject ?? ''}`
 }
 
 export interface ProcessResult {

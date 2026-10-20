@@ -400,8 +400,8 @@ the relevant ones into subscriber states. No data-model change was needed.
 **Undelivered other mails:** `hard_bounce`, `invalid_email` and `blocked` on a mail **without** a newsletter
 marker (ticket confirmation, invoice, speaker portal, …) additionally post a Slack warning with address,
 event, Brevo's reason and subject, so the mail (e.g. an invoice) can be delivered another way. One message
-per mail and day (keyed by Brevo's `message-id`, or address + subject), so a re-delivered event does not post
-twice; a message Slack did not accept is retried on the next delivery. The keys live in memory, so a Directus
+per recipient, mail and day (keyed by address plus Brevo's `message-id`, or address + subject without one;
+a mail to buyer + billing CC shares one `message-id`), so a re-delivered event does not post twice; a message Slack did not accept is retried on the next delivery. The keys live in memory, so a Directus
 restart forgets them. Nothing is stored for these mails.
 
 - **Only `pending` and `confirmed` subscribers move**, in one conditional `UPDATE … WHERE email = … AND status

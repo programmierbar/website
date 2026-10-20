@@ -407,6 +407,22 @@ describe('POST /brevo-webhook: undelivered non-newsletter mails', () => {
         expect(slackMock).toHaveBeenCalledTimes(3)
     })
 
+    test('recipients of the same mail (shared message id, e.g. buyer + billing CC) each warn once', async () => {
+        const { call } = setup()
+        const buyer = { event: 'hard_bounce', email: 'kaeufer@example.de', ...TICKET }
+        const billing = { event: 'hard_bounce', email: 'buchhaltung@example.de', ...TICKET }
+
+        await call(buyer)
+        await call(billing)
+        await call(buyer)
+        await call([billing, buyer])
+
+        expect(slackMock).toHaveBeenCalledTimes(2)
+        const texts = slackMock.mock.calls.map((args) => args[0])
+        expect(texts[0]).toContain('kaeufer@example.de')
+        expect(texts[1]).toContain('buchhaltung@example.de')
+    })
+
     test('a warning Slack did not take is retried when Brevo delivers again', async () => {
         slackMock.mockRejectedValueOnce(new Error('Slack: down'))
         const { call } = setup()
