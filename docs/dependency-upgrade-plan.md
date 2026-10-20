@@ -2069,9 +2069,9 @@ string port type-checks. `sendEmail` passes a `Number(...)` anyway.
   After masking the random multipart boundaries, 9.1.1 and 10.1.7 produce **identical output**.
   Encoded-word headers, quoted-printable wrapping and the attachment part all match.
 
-**Still not exercised:** an end-to-end send. As for 9.x, it would mean real mail to a real inbox,
-past the Gemini spam filter. The probes above cover the TLS, composition and bundling surface without
-it.
+**End-to-end send verified** by the maintainer, after the write-up above: the contact form on the
+Vercel preview of #276 delivered a correct mail. This document first listed it as not exercised,
+because the send goes to a real inbox, past the Gemini spam filter.
 
 | gate | before | after |
 | --- | --- | --- |
@@ -2588,19 +2588,41 @@ browser-support decision nobody made.
       bug. This is the only remaining audit finding that **reaches production**, through the contact
       form at `/api/email`. Its own PR, the same way 8 → 9 was done in Phase 5: read the changelog, then
       send a real mail, rather than relying on the gates.
-- [ ] ⚠️ **`plugins/vue-json-pretty.js` is dead Nuxt 2 code.** It does `import Vue from 'vue'` and
-      `Vue.component(...)`, with no default export, so Nuxt has replaced it with an empty function at
-      every build (`NUXT_B2005`, on 4.5 as well as 4.6). It is also listed in `vite.plugins` in
-      `nuxt.config.ts`, where a path string means nothing. Nothing depends on it, because
-      `components/PrettyJSON.vue` imports `vue-json-pretty` itself. Delete the file and the
-      `vite.plugins` entry. Found during the 2026-10-20 refresh.
-- [ ] **`components/BackgroundSpotlights.vue` imports `defineProps` from `vue`.** It is a compiler
-      macro. `nuxt dev` warns that it "no longer needs to be imported", and the ratchet used to count it
-      until `vue-tsc` 3.3.13 stopped reporting it. One-line deletion.
-- [ ] ⚠️ **`helpers/index.ts` re-exports `ipProcessing`, which imports `node:crypto` and `node:net`.**
-      Both builds warn that Vite has externalized them for the browser, because the barrel pulls a
-      server-only helper into the client module graph. Nothing breaks today. Server code should import
-      it directly instead, and the barrel should drop it.
+- [x] ✅ **Deleted `plugins/vue-json-pretty.js` and its `vite.plugins` entry** — 2026-10-20. TypeScript
+      had been reporting the entry all along: removing it cleared
+      `nuxt.config.ts: TS2322 Type 'string' is not assignable to type 'PluginOption'`, so the ratchet
+      went 227 → 226. In a production build, `/kommt-bald` and `/api/cocktails` (the two pages that render
+      `PrettyJSON`) give the same JSON tree before and after.
+
+      ~~**`plugins/vue-json-pretty.js` is dead Nuxt 2 code.**~~ It did `import Vue from 'vue'` and
+      `Vue.component(...)`, with no default export, so Nuxt replaced it with an empty function at every
+      build (`NUXT_B2005`, on 4.5 as well as 4.6). It was also listed in `vite.plugins` in
+      `nuxt.config.ts`, where a path string means nothing. Nothing depended on it, because
+      `components/PrettyJSON.vue` imports `vue-json-pretty` itself. Found during the 2026-10-20 refresh.
+- [x] ✅ **Removed the `defineProps` import from `components/BackgroundSpotlights.vue`** — 2026-10-20.
+      `defineProps` is a compiler macro, and `nuxt dev` warned that it "no longer needs to be imported".
+      No ratchet change, because `vue-tsc` 3.3.13 had already stopped counting it.
+- [ ] ⚠️ **Hydration mismatch on `/kommt-bald` and `/api/cocktails`.** Both pages log
+      `Hydration completed but contains mismatches.` in a local production build. Found while checking
+      the plugin removal, and **identical on `main`**, so it is not caused by it. Both pages render
+      `PrettyJSON`, which makes `vue-json-pretty` the first suspect. Unlike the
+      [podcast-page mismatch](#3-build-and-tooling-correctness), this one reproduces locally, so a dev
+      build should name the node.
+- [ ] ⚠️ **Server-only helpers live in the shared `helpers/` barrel, and the fix is not a one-liner.**
+      The earlier version of this item said "server code should import it directly". That was wrong: the
+      importer of `ipProcessing` is `composables/useDirectus.ts`, shared client/server code. Checked
+      2026-10-20:
+
+      - **`ipProcessing`**: `anonymizeAndHashIP` is called by `createRating` and `getRecentRatingByIP` in
+        `useDirectus`, whose only callers are in `server/api/vote.post.ts`. It loads `node:crypto` and
+        `node:net` through a dynamic `import()` on purpose, so the client bundle does not break, and Vite
+        warns that it externalized them. The fix is to hash the IP in the vote route and pass the hash
+        in, and to move the helper to `server/utils/`. That changes both function signatures and
+        `test/vote.route.test.ts`, on the vote-deduplication path, so it gets **its own PR**, not a
+        bundled cleanup.
+      - **`aiSpamFilter`**: pulls in `@google/generative-ai`, and its only caller is
+        `server/api/email.post.ts`. It can move to `server/utils/` as-is. Do it in the same PR, since
+        it is the same mistake.
 
 ### 6. Standing items, not one-off tasks
 
