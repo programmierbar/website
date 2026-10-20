@@ -105,16 +105,6 @@ export async function getEmailTemplate(
     }
 }
 
-/** Map attachments to the nodemailer shape MailService passes through. */
-function toMailAttachments(attachments: EmailAttachment[]) {
-    return attachments.map((a) => ({
-        filename: a.filename,
-        content: a.content,
-        contentType: a.contentType || 'application/pdf',
-        ...(a.cid && { cid: a.cid }),
-    }))
-}
-
 /**
  * Send an email using a template from the CMS.
  */
@@ -151,7 +141,14 @@ export async function sendTemplatedEmail(options: SendEmailOptions, context: Ema
             ...(options.replyTo && { replyTo: options.replyTo }),
             ...(options.cc && { cc: options.cc }),
             ...(options.headers && { headers: options.headers }),
-            ...(options.attachments && { attachments: toMailAttachments(options.attachments) }),
+            ...(options.attachments && {
+                attachments: options.attachments.map((a) => ({
+                    filename: a.filename,
+                    content: a.content,
+                    contentType: a.contentType || 'application/pdf',
+                    ...(a.cid && { cid: a.cid }),
+                })),
+            }),
         })
 
         logger.info(`Email sent to ${options.to} using template '${options.templateKey}'`)
@@ -170,14 +167,12 @@ export async function sendRawEmail(
     options: {
         to: string
         subject: string
-        /** HTML body. May be omitted for a plain-text-only mail (then `text` is required). */
-        html?: string
-        /** Plain-text body or alternative, for clients that don't render HTML. */
+        html: string
+        /** Plain-text alternative, for clients that don't render HTML. */
         text?: string
         replyTo?: string
         /** Extra mail headers (e.g. List-Unsubscribe); passed through MailService to nodemailer. */
         headers?: Record<string, string>
-        attachments?: EmailAttachment[]
     },
     context: EmailServiceContext
 ): Promise<boolean> {
@@ -195,11 +190,10 @@ export async function sendRawEmail(
         await mailService.send({
             to: options.to,
             subject: options.subject,
-            ...(options.html && { html: options.html }),
+            html: options.html,
             ...(options.text && { text: options.text }),
             ...(options.replyTo && { replyTo: options.replyTo }),
             ...(options.headers && { headers: options.headers }),
-            ...(options.attachments && { attachments: toMailAttachments(options.attachments) }),
         })
 
         logger.info(`Email sent to ${options.to}`)

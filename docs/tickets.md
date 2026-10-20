@@ -31,6 +31,9 @@ The flow consists of four main phases:
 | `STORAGE_LOCATIONS` | Comma-separated storage location IDs (first is used for invoice PDFs) | Yes |
 | Email transport config | Directus email settings (`EMAIL_TRANSPORT`, `EMAIL_SMTP_HOST`, etc.) | Yes |
 | `ACCOUNTING_INVOICE_EMAIL` | Accounting mailbox that receives a copy of every invoice document (see [Accounting copy](#accounting-copy)). Unset/empty: no copy is sent | Production |
+| `ACCOUNTING_SMTP_HOST`, `ACCOUNTING_SMTP_PORT`, `ACCOUNTING_SMTP_USER`, `ACCOUNTING_SMTP_PASSWORD` | Dedicated SMTP transport for the accounting copy (e.g. Google Workspace SMTP with an app password) | When `ACCOUNTING_INVOICE_EMAIL` is set |
+| `ACCOUNTING_SMTP_SECURE` | `true` = implicit TLS (465), `false` = STARTTLS (587); unset: derived from the port | No |
+| `ACCOUNTING_MAIL_FROM` | Sender address registered with the accounting mailbox; used as `From` and envelope sender | When `ACCOUNTING_INVOICE_EMAIL` is set |
 
 ## External Services
 
@@ -180,12 +183,23 @@ Key-value settings used by extension hooks.
 ## Accounting Copy
 
 Every generated invoice document is mailed to `ACCOUNTING_INVOICE_EMAIL` (GoBD: timely recording),
-as its own plain-text mail from `EMAIL_FROM` with exactly one PDF attached — the same bytes and file
-name as the stored file. Subject: `Rechnung PB-CON26-001`, `Rechnungsberichtigung …` or
-`Stornorechnung …`. The upload mailbox rejects mails with links, images, logos or QR codes, so the
-mail carries no HTML, template, link or signature. The code sets no sender/envelope override, so the
-SMTP envelope sender (MAIL FROM) is `EMAIL_FROM` — unless the mail relay rewrites it, which has to be
-checked on the relay side.
+as its own plain-text mail with exactly one PDF attached — the same bytes and file name as the stored
+file. Subject: `Rechnung PB-CON26-001`, `Rechnungsberichtigung …` or `Stornorechnung …`. The upload
+mailbox rejects mails with links, images, logos or QR codes, so the mail carries no HTML, template,
+link or signature.
+
+**Why a separate SMTP transport:** the upload mailbox rejects every mail (550 at `RCPT TO`) whose SMTP
+envelope sender (MAIL FROM) is not the sender address registered there. The Directus MailService
+sends through the transactional mail provider, which always uses its own return path, so it can never
+pass that check. The accounting copy therefore goes through its own nodemailer transport
+(`ACCOUNTING_SMTP_*`, e.g. Google Workspace SMTP with an app password) and sets both `From` and the
+envelope sender to `ACCOUNTING_MAIL_FROM`. There is deliberately no fallback to the MailService — it
+would only produce bounces.
+
+Setup: register `ACCOUNTING_MAIL_FROM` as an allowed sender in the accounting mailbox's settings,
+create an app password for that account, and put it in the Directus environment only — never commit
+it. If `ACCOUNTING_INVOICE_EMAIL` is set but any SMTP variable or `ACCOUNTING_MAIL_FROM` is missing,
+no copy is sent: each document logs a warning, and Slack is alerted once per process start.
 
 | Document | Sent by |
 |----------|---------|

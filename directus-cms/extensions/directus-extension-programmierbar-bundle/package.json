@@ -221,6 +221,7 @@
     },
     "dependencies": {
         "mjml": "^5.4.1",
+        "nodemailer": "^8.0.5",
         "passkit-generator": "^3.5.0",
         "pdfkit": "^0.16.0",
         "qrcode": "^1.5.4"

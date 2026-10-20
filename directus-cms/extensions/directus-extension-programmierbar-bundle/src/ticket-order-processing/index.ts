@@ -230,7 +230,7 @@ export default defineHook(({ action }, hookContext) => {
                                 invoiceFileName,
                                 orderNumber: order.order_number,
                             },
-                            { env, emailContext: context, source: HOOK_NAME }
+                            { env, logger, source: HOOK_NAME }
                         )
                     } else {
                         logger.info(`${HOOK_NAME}: Skipping invoice for internal order ${order.order_number}`)

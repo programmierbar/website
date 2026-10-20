@@ -78,7 +78,7 @@ interface OrderContext {
  * are never modified — every operation only ever adds a new document or (pre-issuance)
  * swaps the PDF of the not-yet-sent one. Every rendered PDF is copied to the
  * accounting mailbox (`ACCOUNTING_INVOICE_EMAIL`, see shared/accounting-mail.ts); the
- * response reports that as `accounting_mail: 'sent' | 'skipped' | 'failed'`.
+ * response reports that as `accounting_mail: 'sent' | 'skipped' | 'misconfigured' | 'failed'`.
  */
 export default defineEndpoint(async (router: SandboxEndpointRouter, context) => {
     const logger = context.logger
@@ -232,19 +232,10 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
      * successfully created document into an error response (persistent failures are
      * escalated to Slack inside).
      */
-    function sendToAccounting(req: any, ctx: OrderContext, doc: Omit<AccountingInvoiceDocument, 'orderNumber'>) {
+    function sendToAccounting(ctx: OrderContext, doc: Omit<AccountingInvoiceDocument, 'orderNumber'>) {
         return sendInvoiceToAccounting(
             { ...doc, orderNumber: ctx.order.order_number },
-            {
-                env,
-                emailContext: {
-                    logger,
-                    services: context.services,
-                    getSchema: context.getSchema,
-                    accountability: req.accountability,
-                },
-                source: ENDPOINT_NAME,
-            }
+            { env, logger, source: ENDPOINT_NAME }
         )
     }
 
@@ -254,7 +245,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
      * file is intentionally NOT deleted. Once the document has been sent, this is
      * blocked — issued documents are immutable and must be corrected instead.
      */
-    registerRoute('regenerate', async (req, ctx) => {
+    registerRoute('regenerate', async (_req, ctx) => {
         const current = requireCurrentDocument(ctx)
 
         if (ctx.order.status !== 'paid') {
@@ -326,7 +317,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
         // (the paid hook does so even when the customer mail failed, which is exactly
         // when a regenerate is possible). Send the replacement too, marked as such, so
         // the books hold the version the customer will actually receive.
-        const accountingMail = await sendToAccounting(req, ctx, {
+        const accountingMail = await sendToAccounting(ctx, {
             documentKind: current.type === 'correction' ? 'correction' : 'invoice',
             invoiceNumber: current.invoice_number,
             pdfBuffer: rendered.pdfBuffer,
@@ -350,7 +341,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
      * the order's legacy pointers move to the correction (the new authoritative
      * invoice). The customer is not emailed; accounting gets a copy.
      */
-    registerRoute('correction', async (req, ctx) => {
+    registerRoute('correction', async (_req, ctx) => {
         const current = requireCurrentDocument(ctx)
 
         if (ctx.order.status !== 'paid') {
@@ -406,7 +397,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             `${ENDPOINT_NAME}: Created correction ${invoiceNumber} for invoice ${current.invoice_number} on order ${ctx.order.order_number} (file: ${rendered.fileId})`
         )
 
-        const accountingMail = await sendToAccounting(req, ctx, {
+        const accountingMail = await sendToAccounting(ctx, {
             documentKind: 'correction',
             invoiceNumber,
             pdfBuffer: rendered.pdfBuffer,
@@ -430,7 +421,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
      * the order status or the order's invoice pointers, and does not email the
      * customer — it only records the cancellation document (accounting gets a copy).
      */
-    registerRoute('cancellation', async (req, ctx) => {
+    registerRoute('cancellation', async (_req, ctx) => {
         const current = requireCurrentDocument(ctx)
 
         if (!current.sent_at) {
@@ -492,7 +483,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             `${ENDPOINT_NAME}: Created cancellation ${invoiceNumber} for invoice ${current.invoice_number} on order ${ctx.order.order_number} (file: ${rendered.fileId})`
         )
 
-        const accountingMail = await sendToAccounting(req, ctx, {
+        const accountingMail = await sendToAccounting(ctx, {
             documentKind: 'cancellation',
             invoiceNumber,
             pdfBuffer: rendered.pdfBuffer,

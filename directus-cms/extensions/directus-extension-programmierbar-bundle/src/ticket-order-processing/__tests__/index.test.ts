@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { resetAccountingMailState } from '../../shared/accounting-mail.ts'
 import { sendRawEmail, sendTemplatedEmail } from '../../shared/email-service.ts'
 import { generateInvoiceNumber } from '../../shared/invoice-generator.ts'
 import { issueOriginalInvoice, markInvoiceSent } from '../../shared/invoice-service.ts'
@@ -38,6 +39,13 @@ jest.mock('../../shared/ticket-utils.ts', () => ({
 }))
 jest.mock('../../shared/postSlackMessage.ts', () => ({
     postSlackMessage: jest.fn(),
+}))
+
+// The accounting copy goes through its own SMTP transport, never through MailService.
+const mockSendMail = jest.fn<(mail: any) => Promise<unknown>>()
+jest.mock('nodemailer', () => ({
+    __esModule: true,
+    default: { createTransport: jest.fn(() => ({ sendMail: mockSendMail })) },
 }))
 
 const sendTemplatedEmailMock = jest.mocked(sendTemplatedEmail)
@@ -91,7 +99,15 @@ const CONFERENCE = {
     ticket_max_quantity: null,
 }
 
-const ACCOUNTING_ENV = { ACCOUNTING_INVOICE_EMAIL: 'accounting@example.test' }
+const ACCOUNTING_ENV = {
+    ACCOUNTING_INVOICE_EMAIL: 'accounting@example.test',
+    ACCOUNTING_SMTP_HOST: 'smtp.example.test',
+    ACCOUNTING_SMTP_PORT: 465,
+    ACCOUNTING_SMTP_SECURE: true,
+    ACCOUNTING_SMTP_USER: 'sender@example.test',
+    ACCOUNTING_SMTP_PASSWORD: 'app-password',
+    ACCOUNTING_MAIL_FROM: 'sender@example.test',
+}
 
 function setup(orderOverrides: Record<string, any> = {}, env: Record<string, any> = {}) {
     const order = { ...ORDER, ...orderOverrides }
@@ -143,6 +159,8 @@ function setup(orderOverrides: Record<string, any> = {}, env: Record<string, any
 beforeEach(() => {
     sendTemplatedEmailMock.mockReset()
     sendRawEmailMock.mockReset()
+    mockSendMail.mockReset()
+    resetAccountingMailState()
     issueOriginalInvoiceMock.mockReset()
     markInvoiceSentMock.mockReset()
     postSlackMessageMock.mockReset()
@@ -159,7 +177,7 @@ beforeEach(() => {
         snapshot: {} as any,
     })
     sendTemplatedEmailMock.mockResolvedValue(true)
-    sendRawEmailMock.mockResolvedValue(true)
+    mockSendMail.mockResolvedValue({ messageId: 'x' })
 })
 
 describe('ticket-order-processing hook', () => {
@@ -296,9 +314,13 @@ describe('ticket-order-processing hook', () => {
             const { invoke } = setup({}, ACCOUNTING_ENV)
             await invoke({ status: 'paid' })
 
-            expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
-            const mail = sendRawEmailMock.mock.calls[0]![0]
+            expect(mockSendMail).toHaveBeenCalledTimes(1)
+            const mail = mockSendMail.mock.calls[0]![0]
             expect(mail.to).toBe('accounting@example.test')
+            // Registered sender as header AND envelope sender, over the dedicated transport.
+            expect(mail.from).toBe('sender@example.test')
+            expect(mail.envelope).toEqual({ from: 'sender@example.test', to: 'accounting@example.test' })
+            expect(sendRawEmailMock).not.toHaveBeenCalled()
             expect(mail.subject).toBe('Rechnung PB-CON26-001')
             expect(mail.text).toContain('ORD-2026-ABC123')
             expect(mail.html).toBeUndefined() // plain text, not the customer template
@@ -324,8 +346,8 @@ describe('ticket-order-processing hook', () => {
             const { invoke } = setup({}, ACCOUNTING_ENV)
             await invoke({ status: 'paid' })
 
-            expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
-            expect(sendRawEmailMock.mock.calls[0]![0].subject).toBe('Rechnung PB-CON26-001')
+            expect(mockSendMail).toHaveBeenCalledTimes(1)
+            expect(mockSendMail.mock.calls[0]![0].subject).toBe('Rechnung PB-CON26-001')
             expect(markInvoiceSentMock).not.toHaveBeenCalled()
         })
 
@@ -333,7 +355,7 @@ describe('ticket-order-processing hook', () => {
             const { invoke, logger } = setup({}, { ACCOUNTING_INVOICE_EMAIL: '' })
             await invoke({ status: 'paid' })
 
-            expect(sendRawEmailMock).not.toHaveBeenCalled()
+            expect(mockSendMail).not.toHaveBeenCalled()
             const skipLogs = logger.info.mock.calls
                 .map((call) => String(call[0]))
                 .filter((msg) => msg.includes('ACCOUNTING_INVOICE_EMAIL'))
@@ -345,11 +367,11 @@ describe('ticket-order-processing hook', () => {
         })
 
         test('persistent failure: retried, escalated to Slack with the invoice number, hook carries on', async () => {
-            sendRawEmailMock.mockResolvedValue(false)
+            mockSendMail.mockRejectedValue(new Error('550 sender rejected'))
             const { invoke } = setup({}, ACCOUNTING_ENV)
             await invoke({ status: 'paid' })
 
-            expect(sendRawEmailMock).toHaveBeenCalledTimes(3)
+            expect(mockSendMail).toHaveBeenCalledTimes(3)
             expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
             expect(postSlackMessageMock.mock.calls[0]![0]).toContain('PB-CON26-001')
             expect(postSlackMessageMock.mock.calls[0]![0]).toContain('ORD-2026-ABC123')
@@ -361,12 +383,26 @@ describe('ticket-order-processing hook', () => {
         })
 
         test('a throwing mail transport does not break order processing either', async () => {
-            sendRawEmailMock.mockRejectedValue(new Error('smtp exploded'))
+            mockSendMail.mockRejectedValue(new Error('smtp exploded'))
             postSlackMessageMock.mockRejectedValue(new Error('slack down'))
             const { invoke } = setup({}, ACCOUNTING_ENV)
             await invoke({ status: 'paid' })
 
-            expect(sendRawEmailMock).toHaveBeenCalledTimes(3)
+            expect(mockSendMail).toHaveBeenCalledTimes(3)
+            expect(markInvoiceSentMock).toHaveBeenCalledTimes(1)
+            expect(invitations()).toHaveLength(2)
+        })
+
+        test('incomplete SMTP config: no mail, warning and Slack alert, order processing unaffected', async () => {
+            const { ACCOUNTING_MAIL_FROM: _unused, ...env } = ACCOUNTING_ENV
+            const { invoke, logger } = setup({}, env)
+            await invoke({ status: 'paid' })
+
+            expect(mockSendMail).not.toHaveBeenCalled()
+            expect(sendRawEmailMock).not.toHaveBeenCalled() // no fallback to MailService
+            expect(logger.warn.mock.calls.map((c) => String(c[0])).join('\n')).toContain('ACCOUNTING_MAIL_FROM')
+            expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+            expect(postSlackMessageMock.mock.calls[0]![0]).toContain('ACCOUNTING_MAIL_FROM')
             expect(markInvoiceSentMock).toHaveBeenCalledTimes(1)
             expect(invitations()).toHaveLength(2)
         })
@@ -375,7 +411,7 @@ describe('ticket-order-processing hook', () => {
             const { invoke } = setup({ is_internal: true }, ACCOUNTING_ENV)
             await invoke({ status: 'paid' })
 
-            expect(sendRawEmailMock).not.toHaveBeenCalled()
+            expect(mockSendMail).not.toHaveBeenCalled()
             expect(postSlackMessageMock).not.toHaveBeenCalled()
         })
     })

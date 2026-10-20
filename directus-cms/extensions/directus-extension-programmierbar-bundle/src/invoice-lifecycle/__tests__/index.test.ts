@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { resetAccountingMailState } from '../../shared/accounting-mail.ts'
 import { sendRawEmail, sendTemplatedEmail } from '../../shared/email-service.ts'
 import { postSlackMessage } from '../../shared/postSlackMessage.ts'
 import registerEndpoint from '../index.ts'
@@ -22,11 +23,26 @@ jest.mock('../../shared/postSlackMessage.ts', () => ({
     postSlackMessage: jest.fn(),
 }))
 
+// The accounting copy goes through its own SMTP transport, never through MailService.
+const mockSendMail = jest.fn<(mail: any) => Promise<unknown>>()
+jest.mock('nodemailer', () => ({
+    __esModule: true,
+    default: { createTransport: jest.fn(() => ({ sendMail: mockSendMail })) },
+}))
+
 const sendTemplatedEmailMock = jest.mocked(sendTemplatedEmail)
 const sendRawEmailMock = jest.mocked(sendRawEmail)
 const postSlackMessageMock = jest.mocked(postSlackMessage)
 
-const ACCOUNTING_ENV = { ACCOUNTING_INVOICE_EMAIL: 'accounting@example.test' }
+const ACCOUNTING_ENV = {
+    ACCOUNTING_INVOICE_EMAIL: 'accounting@example.test',
+    ACCOUNTING_SMTP_HOST: 'smtp.example.test',
+    ACCOUNTING_SMTP_PORT: 465,
+    ACCOUNTING_SMTP_SECURE: true,
+    ACCOUNTING_SMTP_USER: 'sender@example.test',
+    ACCOUNTING_SMTP_PASSWORD: 'app-password',
+    ACCOUNTING_MAIL_FROM: 'sender@example.test',
+}
 
 type RouteHandler = (req: any, res: any) => Promise<void>
 
@@ -234,7 +250,9 @@ async function setup(
 beforeEach(() => {
     sendTemplatedEmailMock.mockReset()
     sendRawEmailMock.mockReset()
-    sendRawEmailMock.mockResolvedValue(true)
+    mockSendMail.mockReset()
+    mockSendMail.mockResolvedValue({ messageId: 'x' })
+    resetAccountingMailState()
     postSlackMessageMock.mockReset()
 })
 
@@ -624,9 +642,12 @@ describe('invoice-lifecycle endpoint', () => {
 
             expect(res.statusCode).toBe(200)
             expect(res.body.accounting_mail).toBe('sent')
-            expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
-            const mail = sendRawEmailMock.mock.calls[0]![0]
+            expect(mockSendMail).toHaveBeenCalledTimes(1)
+            const mail = mockSendMail.mock.calls[0]![0]
             expect(mail.to).toBe('accounting@example.test')
+            expect(mail.from).toBe('sender@example.test')
+            expect(mail.envelope).toEqual({ from: 'sender@example.test', to: 'accounting@example.test' })
+            expect(sendRawEmailMock).not.toHaveBeenCalled()
             expect(mail.subject).toBe('Rechnungsberichtigung PB-CON26-002')
             expect(mail.text).toContain('zu Rechnung PB-CON26-001')
             expect(mail.attachments).toHaveLength(1)
@@ -647,8 +668,8 @@ describe('invoice-lifecycle endpoint', () => {
 
             expect(res.statusCode).toBe(200)
             expect(res.body.accounting_mail).toBe('sent')
-            expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
-            const mail = sendRawEmailMock.mock.calls[0]![0]
+            expect(mockSendMail).toHaveBeenCalledTimes(1)
+            const mail = mockSendMail.mock.calls[0]![0]
             expect(mail.subject).toBe('Stornorechnung PB-CON26-002')
             expect(mail.attachments![0]!.filename).toBe('Stornorechnung-PB-CON26-002.pdf')
             expect(mail.attachments![0]!.content.equals(calls.uploadedBytes[0]!)).toBe(true)
@@ -665,7 +686,7 @@ describe('invoice-lifecycle endpoint', () => {
 
             expect(res.statusCode).toBe(200)
             expect(res.body.accounting_mail).toBe('sent')
-            const mail = sendRawEmailMock.mock.calls[0]![0]
+            const mail = mockSendMail.mock.calls[0]![0]
             expect(mail.subject).toBe('Rechnung PB-CON26-001 (ersetzt vorherige Fassung)')
             expect(mail.attachments![0]!.filename).toBe('Rechnung-PB-CON26-001.pdf')
             expect(mail.attachments![0]!.content.equals(calls.uploadedBytes[0]!)).toBe(true)
@@ -685,7 +706,7 @@ describe('invoice-lifecycle endpoint', () => {
             const res = await call('regenerate')
 
             expect(res.statusCode).toBe(200)
-            const mail = sendRawEmailMock.mock.calls[0]![0]
+            const mail = mockSendMail.mock.calls[0]![0]
             expect(mail.subject).toBe('Rechnungsberichtigung PB-CON26-002 (ersetzt vorherige Fassung)')
             expect(mail.text).toContain('zu Rechnung PB-CON26-001')
         })
@@ -697,21 +718,21 @@ describe('invoice-lifecycle endpoint', () => {
 
             expect(res.statusCode).toBe(200)
             expect(res.body.accounting_mail).toBe('skipped')
-            expect(sendRawEmailMock).not.toHaveBeenCalled()
+            expect(mockSendMail).not.toHaveBeenCalled()
             const infoLog = logger.info.mock.calls.map((c) => String(c[0])).join('\n')
             expect(infoLog).toContain('ACCOUNTING_INVOICE_EMAIL')
             expect(logger.error).not.toHaveBeenCalled()
         })
 
         test('persistent failure: document is still created, Slack is alerted, endpoint answers 200', async () => {
-            sendRawEmailMock.mockResolvedValue(false)
+            mockSendMail.mockRejectedValue(new Error('550 sender rejected'))
             const { call, db } = await setup({ invoices: [issuedOriginalRow()], env: ACCOUNTING_ENV })
 
             const res = await call('cancellation')
 
             expect(res.statusCode).toBe(200)
             expect(res.body.accounting_mail).toBe('failed')
-            expect(sendRawEmailMock).toHaveBeenCalledTimes(3)
+            expect(mockSendMail).toHaveBeenCalledTimes(3)
             expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
             expect(postSlackMessageMock.mock.calls[0]![0]).toContain('Stornorechnung PB-CON26-002')
             expect(db.ticket_invoices.find((r) => r.type === 'cancellation')).toMatchObject({
@@ -727,7 +748,7 @@ describe('invoice-lifecycle endpoint', () => {
             const internal = await setup({ order: { is_internal: true }, env: ACCOUNTING_ENV })
             expect((await internal.call('correction')).statusCode).toBe(400)
 
-            expect(sendRawEmailMock).not.toHaveBeenCalled()
+            expect(mockSendMail).not.toHaveBeenCalled()
         })
     })
 })
