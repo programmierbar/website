@@ -449,6 +449,21 @@ describe('invoice-lifecycle endpoint', () => {
             expect(calls.creates).toHaveLength(0)
         })
 
+        test('400 when the order amounts do not add up to a valid e-invoice', async () => {
+            // Hand-edited order: net 190 € + VAT 36 € ≠ the stored gross total of 226,10 €.
+            const { call, calls } = await setup({
+                order: { vat_amount_cents: 3600 },
+                invoices: [issuedOriginalRow()],
+            })
+
+            const res = await call('correction')
+
+            expect(res.statusCode).toBe(400)
+            expect(res.body.error).toContain('e-invoice')
+            expect(calls.creates).toHaveLength(0)
+            expect(calls.uploads).toHaveLength(0)
+        })
+
         test('corrects the latest correction, not the first original', async () => {
             const original = issuedOriginalRow()
             const firstCorrection = issuedOriginalRow({

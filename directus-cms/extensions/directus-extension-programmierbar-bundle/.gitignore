@@ -1,3 +1,6 @@
 .DS_Store
 node_modules
 dist
+# Rendered by `npm run einvoice:samples`, Mustang jar cached by `npm run einvoice:validate`
+einvoice-samples
+.cache

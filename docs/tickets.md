@@ -170,7 +170,8 @@ Key-value settings used by extension hooks.
 ## Invoice Generation
 
 - **Library**: pdfkit (marked as external in Rollup via `extension.config.js`)
-- **Font**: Museo Sans 700 (loaded from `assets/MuseoSans700.otf`, falls back to Helvetica)
+- **Font**: Museo Sans 700 (loaded from `assets/MuseoSans700.otf`, falls back to Helvetica — which is not embedded, so the PDF is then not PDF/A-conformant)
+- **E-invoice**: every document (Rechnung, Rechnungsberichtigung, Stornorechnung) is a hybrid ZUGFeRD 2.x / Factur-X invoice, profile EN 16931: a PDF/A-3b with the CII XML embedded as `factur-x.xml`, built from the same data as the printed page (`shared/einvoice.ts`). Type codes: 380 Rechnung, 384 Rechnungsberichtigung, 381 Stornorechnung (credit note with positive amounts); corrections and stornos reference the original invoice (BT-25/BT-26). A missing buyer country falls back to `DE`. Validate with `npm run einvoice:validate` in the extension bundle (needs Java, see its `TESTING.md`)
 - **Number format**: `PB-CON{YY}-{NNN}` (e.g. `PB-CON26-001`), derived from conference `start_on` year
 - **Seller**: Lotum media GmbH, Am Goldstein 1, 61231 Bad Nauheim, USt-ID DE272856704
 - **Line items**: Show netto (net) prices; VAT (19%) shown separately in totals

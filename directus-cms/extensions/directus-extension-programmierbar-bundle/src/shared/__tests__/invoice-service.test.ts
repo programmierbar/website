@@ -204,6 +204,25 @@ describe('Leistungsdatum (service date)', () => {
         expect(result.pdfBuffer.subarray(0, 4).toString()).toBe('%PDF')
         expect(logger.warn).toHaveBeenCalledWith(expect.stringMatching(/Leistungsdatum.*PB-CON26-001/))
     })
+
+    test('warns when the e-invoice has to fall back to DE as buyer country', async () => {
+        const render = async (billingCountry: string | null) => {
+            const logger = { warn: jest.fn() }
+            await renderAndUploadInvoice({
+                snapshot: buildInvoiceSnapshot({ ...ORDER, billing_country: billingCountry }, 'Conf', 2, CONFERENCE),
+                invoiceNumber: 'PB-CON26-001',
+                invoiceDate: new Date('2026-02-01T10:00:00Z'),
+                filesService: fakeFilesService(),
+                logger,
+            })
+            return logger.warn.mock.calls.map(([message]) => String(message))
+        }
+
+        expect(await render(null)).toEqual([expect.stringMatching(/PB-CON26-001.*states DE/)])
+        expect(await render('Atlantis')).toEqual([expect.stringMatching(/"Atlantis".*states DE/)])
+        expect(await render('AT')).toEqual([])
+        expect(await render('Deutschland')).toEqual([])
+    })
 })
 
 describe('negateInvoiceSnapshot', () => {
@@ -269,8 +288,10 @@ describe('renderAndUploadInvoice', () => {
         ['cancellation', 'Stornorechnung-PB-CON26-001.pdf', 'Stornorechnung PB-CON26-001'],
     ] as const)('names the %s document after its kind', async (kind, fileName, title) => {
         const filesService = fakeFilesService()
+        const snapshot = buildInvoiceSnapshot(ORDER, 'Conf', 2)
         const base = {
-            snapshot: buildInvoiceSnapshot(ORDER, 'Conf', 2),
+            // A cancellation mirrors the referenced snapshot with negated amounts.
+            snapshot: kind === 'cancellation' ? negateInvoiceSnapshot(snapshot) : snapshot,
             invoiceNumber: 'PB-CON26-001',
             invoiceDate: new Date('2026-02-01T10:00:00Z'),
             filesService,

@@ -1,5 +1,8 @@
 import { Readable } from 'node:stream'
+import { buyerCountryCode, FALLBACK_BUYER_COUNTRY } from './einvoice.js'
 import { generateInvoicePdf, ticketTypeLabel, type InvoiceData, type InvoiceDocumentKind } from './invoice-generator.js'
+
+export { EInvoiceDataError } from './einvoice.js'
 
 /** Order fields required to assemble an invoice (subset of `ticket_orders`). */
 export interface InvoiceOrder {
@@ -279,11 +282,18 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
     if (!serviceDate) {
         params.logger?.warn(`No Leistungsdatum (conference date) known for ${invoiceNumber} — omitting it from the PDF`)
     }
+    if (buyerCountryCode(snapshot.billing_country).isFallback) {
+        params.logger?.warn(
+            `Billing country "${snapshot.billing_country ?? ''}" of ${invoiceNumber} has no ISO code — the e-invoice states ${FALLBACK_BUYER_COUNTRY}`
+        )
+    }
 
     const baseData = {
         invoiceNumber,
         invoiceDate: formatInvoiceDate(invoiceDate),
         serviceDate,
+        servicePeriodStart: toIsoDate(snapshot.service_date_start),
+        servicePeriodEnd: toIsoDate(snapshot.service_date_end),
         purchaserName: snapshot.purchaser_name,
         purchaserEmail: snapshot.purchaser_email,
         companyName: snapshot.company_name,
