@@ -177,6 +177,11 @@ describe('newsletter-double-opt-in hook', () => {
             expect(options.data.unsubscribe_url).toBe(
                 'https://www.programmier.bar/newsletter/unsubscribe?token=unsub-456'
             )
+            // Marked as a newsletter mail for the Brevo webhook.
+            expect(options.headers).toEqual({
+                'X-Mailin-custom': 'newsletter:double-opt-in',
+                'X-Mailin-Tag': 'newsletter-double-opt-in',
+            })
             expect(postSlackMessageMock).not.toHaveBeenCalled()
         })
 

@@ -1,4 +1,5 @@
 import { defineHook } from '@directus/extensions-sdk'
+import { buildNewsletterTrackingHeaders } from '../newsletter/brevoTracking.ts'
 import { buildUnsubscribeUrl } from '../newsletter/unsubscribe.ts'
 import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.ts'
 import { createHookErrorConstructor } from '../shared/errors.ts'
@@ -107,6 +108,8 @@ export default defineHook(({ filter, action }, hookContext) => {
                 templateKey: TEMPLATE_KEY,
                 to: subscriber.email,
                 data: { confirm_url: confirmUrl, unsubscribe_url: unsubscribeUrl },
+                // Marks it as a newsletter mail for the Brevo webhook (spam complaint → complained).
+                headers: buildNewsletterTrackingHeaders('double-opt-in'),
             },
             context
         )
