@@ -44,6 +44,8 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | [Node 24 alignment for `nuxt-app`](#node-24-alignment-for-nuxt-app--done-2026-08-04) | ✅ Done (2026-08-04) |
 | — | [Patch and minor refresh](#patch-and-minor-refresh--done-2026-09-25) — audit back from 10 to **0** | ✅ Done (2026-09-25) |
 | — | [Pinia workaround removed](#waiting-on-upstream-the-pinia-4-export-map) — fixed upstream in 4.0.3 | ✅ Done (2026-09-25) |
+| — | [Second patch and minor refresh](#second-patch-and-minor-refresh--done-2026-10-20) — audit 28 → 18, **no criticals**; the rest has no in-range fix | ✅ Done (2026-10-20) |
+| — | [`nodemailer` 9.1.1 → 10.1.7](#nodemailer-911--1017--done-2026-10-20) — last audit finding that reached production; `@types/nodemailer` dropped | ✅ Done (2026-10-20) |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
 Each phase's own write-up ends with what it deliberately left behind. Those are also gathered into
@@ -1935,6 +1937,152 @@ RC's types.
 - Search checked in a browser, because the smoke test only proves `/suche` renders: `?search=typescript`
   returns 20 hits, rendered, with zero console errors or warnings.
 
+## Second patch and minor refresh — done 2026-10-20
+
+**Four weeks after the last refresh, the audit was back at 28** (3 critical, 21 high, 4 moderate), from
+17 distinct advisories. Same method as before: `npm update`, then `npm audit fix` without `--force`.
+That cleared 9 advisories, including all three criticals, and leaves **18 findings from 8
+advisories**, none of which has a fix inside our ranges.
+
+| package | before | after | advisories cleared | reaches production? |
+| --- | --- | --- | --- | --- |
+| `simple-git` | 3.36.0 | **gone** | 1 critical, 2 high (command execution) | no. `@nuxt/devtools` and `@nuxt/cli` no longer depend on it |
+| `@simple-git/argv-parser` | — | **gone** | 1 critical | no, same |
+| `shell-quote` | 1.10.0 | 1.12.0 | 1 critical (`quote()` injection) | no, tooling |
+| `sharp` | 0.35.4 | 0.35.5 | 1 high (bundled librsvg) | no. Vercel serves images through `_vercel/image`, not `ipx` |
+| `http-cache-semantics` | 4.2.0 | 4.3.0 | 1 high | transitive |
+| `source-map-js` | 1.2.1 | 1.2.2 | 1 high | build-time |
+| `@modelcontextprotocol/client` | 2.1.0 | 2.3.1 | 1 high | no. Nuxt's dev MCP server |
+
+**What remains, and why it stays:**
+
+| advisory | why not fixed here |
+| --- | --- |
+| `nodemailer` (5 advisories) | Fixed only in **10.x**. A major on the contact-form path, so it gets its own PR. See [the backlog](#5-small-verified-uncontroversial). |
+| `braces` ≤3.0.3, `node-forge` ≤1.4.0 | **No fixed release exists.** 3.0.3 and 1.4.0 are the latest versions of each. Every other high (`micromatch`, `fast-glob`, `globby`, `chokidar`, `listhen`, `nitropack`, and the `nuxt` packages above them) is one of these two, reached transitively. All of it is build or dev-server tooling. npm's suggested "fix", `nuxt@4.1.3`, is a downgrade. |
+| `postcss-selector-parser` 6.x | Pinned by Tailwind 3 through `postcss-nested`. Goes away with the [Tailwind 4](#phase-6--deliberately-deferred) move. |
+
+Framework moves, all within their major: `nuxt` 4.5.2 → **4.6.2**, `vue` 3.5.43 → 3.5.44, `vite` 8.3.1 →
+8.3.4, `nitropack` 2.13.4 → 2.13.5, `@nuxt/image` 2.1.0 → 2.2.0 (`ipx` leaves its 4.0 beta), `pinia`
+4.0.3 → 4.1.0, `zod` 4.6.5 → 4.6.7, `eslint` 10.11 → 10.13, `vue-tsc` 3.3.11 → 3.3.13,
+`@playwright/test` 1.63 → 1.64.
+
+### Nuxt 4.6 brings several transitive majors, and two of them reach the browser
+
+Unlike last time, most of the cross-major moves in the lockfile are real rather than hoisting, because
+Nuxt 4.6 bumps its own dependencies: `cssnano` 8 → 9 (the CSS minifier), `devalue` 5 → 6 (the SSR payload
+serializer), `unimport` 6 → 7 (auto-imports), `@nuxt/cli` 3 → 4, `iron-webcrypto` 1 → 2. Plus
+`instantsearch-ui-components` 0.41 → 0.43 via `vue-instantsearch`. Each of the first two changes what
+the browser receives, so each was checked against output rather than trusted:
+
+- **CSS: identical after normalisation.** The minified CSS shrank 101,256 → 95,514 bytes (−5.7 %).
+  Parsing both builds into (at-rule, selector, property, value) tuples gives **2,922 declarations on
+  each side**. The remaining 99 pairs differ only in spelling: whitespace inside `calc()`, operand order
+  in multiplications (`calc(var(--x)*-1)` → `calc(-1 * var(--x))`), and `aspect-ratio: 1/1` → `1`. The
+  whole size saving is from cssnano 9 dropping default `ease` timing functions, splitting selector
+  lists, and similar rewrites.
+- **Payload and hydration: no warnings.** A production server (`NODE_ENV=production`) of each build was
+  probed with the same script. It loads 11 routes, scrolls each to trigger lazy images, runs a search,
+  and does one client-side navigation. Both builds produce **zero console warnings or errors**, zero
+  broken images, and identical image counts per route. The search returns the same results, and the
+  `/` → `/podcast` navigation works. The single difference: `main` also fetches `_payload.json` for a
+  404 route, and 4.6 does not.
+
+### The Node floor moved to `^24.15.0`
+
+Found in review (#275), not by any gate. Nuxt 4.6.2 requires Node `^22.22.3 || ^24.15.0 || >=26.0.0`,
+and so do six other packages in the tree (`@nuxt/nitro-server`, `@nuxt/vite-builder`,
+`@nuxt/vite-server`, `cssnano`, `postcss-calc`, `jsdoc-type-pratt-parser`). `engines.node` still said
+`^24.11.0`. With `engine-strict=true`, that made `npm ci` fail on 24.11–24.14, a range the project
+claimed to support. CI and Vercel did not notice, because both resolve the latest 24.x.
+
+The floor in `package.json`, the lockfile and the README is now `^24.15.0 || >=26.0.0`. Checked with a
+real Node 24.14.1: before the change, `npm ci` failed with `EBADENGINE` naming `@nuxt/nitro-server`.
+After it, `npm ci` fails with `EBADENGINE` naming `nuxt-app` itself and our own range. That is the
+error `engine-strict` was added to give. Every package in the lockfile accepts 24.15.0.
+
+**Lesson for the next refresh:** a minor bump in the framework can raise the Node floor. After
+`npm update`, check every package's `engines.node` in the lockfile against our declared minimum, not
+just the latest Node.
+
+### Two new build warnings, both harmless
+
+- **`[MODULE_TYPELESS_PACKAGE_JSON]` for `nuxt.config.ts`**, printed with an `ERROR` label. Nuxt 4.6
+  now loads the config through Node's own TypeScript support instead of jiti, and Node warns because
+  `package.json` has no `"type"`. The fix it suggests, `"type": "module"`, is wrong here for the reason
+  [recorded for `vitest.config.mts`](#3-build-and-tooling-correctness): `tailwind.config.js` uses
+  `require()`. The config loads correctly in `build` and `dev` both.
+- **`[NUXT_B7027] The PostCSS plugin tailwindcss/nesting could not be loaded`.** `@nuxtjs/tailwindcss`
+  registers that plugin, and Nuxt 4.6 now resolves PostCSS plugins with a native ESM `import()`.
+  Tailwind 3 ships `nesting/` as a bare directory without an `exports` map, which ESM cannot import
+  (`ERR_UNSUPPORTED_DIR_IMPORT`). **The plugin no longer runs, and that changes nothing today**: no
+  source file uses CSS nesting, and the CSS comparison above is equal. If someone writes nested CSS
+  before the Tailwind 4 move, it will reach the browser unflattened. Every browser since 2023 handles
+  that natively, but it is untested. Tailwind 4 removes the plugin, which settles it.
+
+### Verification
+
+- Audit: **28 → 18**, criticals **3 → 0**. 17 distinct advisories → 8, none fixable in range.
+- `prettier:check` clean. `lint` 0 errors / 156 warnings, the same as `main` before the update. `test`
+  247/247.
+- Ratchet **228 → 227**, baseline lowered. The one error that disappeared is
+  `components/BackgroundSpotlights.vue`'s TS2440 for `import { defineProps } from 'vue'`. `vue-tsc`
+  3.3.13 no longer reports it, but the redundant import is still there (see the backlog). The rest of
+  the error-list diff is union members printed in a different order.
+- Build → exit 0, on the branch and on `main` (a separate worktree, for the comparisons above).
+- Smoke suite **18/18** against `NODE_ENV=production node .output/server/index.mjs`.
+- `nuxt dev` starts and serves `/podcast` with 200.
+
+## `nodemailer` 9.1.1 → 10.1.7 — done 2026-10-20
+
+The follow-up the refresh left behind. 10.x is the only line that fixes five advisories against 9.1.1:
+SMTP credential disclosure through a process-wide DNS cache that reused the TLS `servername`, three
+address-parser DoS bugs, and a malformed envelope recipient. It was the **last audit finding that
+reached production**, through the contact form at `/api/email`. Audit 18 → 17. Everything left is
+build or dev tooling with no upstream fix, or Tailwind 3.
+
+**The only declared breaking change is "Node.js 20 or newer"**, which our 24.15 floor already meets.
+The changelog's real substance is that 10.0.0 is a **rewrite in TypeScript with separate ESM and CJS
+builds**. That is the kind of change that passes `npm test` and then breaks once bundled, so the checks
+below run against the copy Nitro vendors into `.output`, not against `node_modules`.
+
+**`@types/nodemailer` removed.** 10.x ships its own declarations next to each build, and TypeScript
+prefers those to `@types`, so the DefinitelyTyped package was installed but no longer read. To confirm
+the bundled types are enforced rather than degrading to `any`, `filename: 123` and `port: { bogus: true }`
+were tried. Both are rejected. One difference from 8.x's types: `port` is now `number | string`, so a
+string port type-checks. `sendEmail` passes a `Number(...)` anyway.
+
+**No source change.** `server/utils/sendEmail.ts` is untouched. Only the manifest and lockfile move.
+
+### Verified against the deployed artifact
+
+- **The vendored module loads.** `.output/server/node_modules/nodemailer` is 10.1.7, and the
+  `/api/email` chunk imports it with `import nodemailer from 'nodemailer'`, which resolves to the ESM
+  build. A production server answers an empty `POST /api/email` with the validation 400. The route
+  chunk imports nodemailer at the top, so the 400 also shows that the module loaded.
+- **TLS against the real host is unchanged.** Same probe as for 9.x: `transporter.verify()` against
+  `smtp.gmail.com:465`, `secure: true`, with fake credentials. 9.1.1 and 10.1.7 both fail with
+  `EAUTH` at `AUTH PLAIN`, so the handshake succeeds on both.
+- **The message is byte-identical.** A mail shaped like the ones `sendEmail` sends (umlaut display
+  name, a long UTF-8 subject, HTML with `€` and a 200-character line, a base64 PNG attachment with a
+  `cid`) was rendered without network through `streamTransport`, with a fixed `Message-ID` and `Date`.
+  After masking the random multipart boundaries, 9.1.1 and 10.1.7 produce **identical output**.
+  Encoded-word headers, quoted-printable wrapping and the attachment part all match.
+
+**End-to-end send verified** by the maintainer, after the write-up above: the contact form on the
+Vercel preview of #276 delivered a correct mail. This document first listed it as not exercised,
+because the send goes to a real inbox, past the Gemini spam filter.
+
+| gate | before | after |
+| --- | --- | --- |
+| `npm audit` | 18 (14 high, 4 moderate) | **17** (13 high, 4 moderate), nodemailer gone |
+| `prettier:check` | clean | clean |
+| `lint` | 0 errors, 156 warnings | 0 errors, 156 warnings |
+| `test` | 306/306 | 306/306 |
+| ratchet | 227 | 227 |
+| `build` | exit 0 | exit 0, no new warnings |
+| smoke | 18/18 | 18/18 |
+
 ## Phase 6 — Deliberately deferred
 
 Not blocked by EOL. Do **not** fold these into the phases above.
@@ -2432,6 +2580,49 @@ browser-support decision nobody made.
       `Unknown project config … will stop working in the next major version of npm` on every command,
       in CI *and* in Vercel's build log. Verified no pnpm lockfile or reference exists anywhere in the
       repo before deleting.
+
+- [x] ✅ **Done 2026-10-20**, see [the write-up](#nodemailer-911--1017--done-2026-10-20).
+
+      ~~**`nodemailer` 9.1.1 → 10.x.**~~ Five advisories, all fixed only in 10.x: SMTP credential
+      disclosure through a process-wide DNS cache, three address-parser DoS bugs and a malformed-envelope
+      bug. This is the only remaining audit finding that **reaches production**, through the contact
+      form at `/api/email`. Its own PR, the same way 8 → 9 was done in Phase 5: read the changelog, then
+      send a real mail, rather than relying on the gates.
+- [x] ✅ **Deleted `plugins/vue-json-pretty.js` and its `vite.plugins` entry** — 2026-10-20. TypeScript
+      had been reporting the entry all along: removing it cleared
+      `nuxt.config.ts: TS2322 Type 'string' is not assignable to type 'PluginOption'`, so the ratchet
+      went 227 → 226. In a production build, `/kommt-bald` and `/api/cocktails` (the two pages that render
+      `PrettyJSON`) give the same JSON tree before and after.
+
+      ~~**`plugins/vue-json-pretty.js` is dead Nuxt 2 code.**~~ It did `import Vue from 'vue'` and
+      `Vue.component(...)`, with no default export, so Nuxt replaced it with an empty function at every
+      build (`NUXT_B2005`, on 4.5 as well as 4.6). It was also listed in `vite.plugins` in
+      `nuxt.config.ts`, where a path string means nothing. Nothing depended on it, because
+      `components/PrettyJSON.vue` imports `vue-json-pretty` itself. Found during the 2026-10-20 refresh.
+- [x] ✅ **Removed the `defineProps` import from `components/BackgroundSpotlights.vue`** — 2026-10-20.
+      `defineProps` is a compiler macro, and `nuxt dev` warned that it "no longer needs to be imported".
+      No ratchet change, because `vue-tsc` 3.3.13 had already stopped counting it.
+- [ ] ⚠️ **Hydration mismatch on `/kommt-bald` and `/api/cocktails`.** Both pages log
+      `Hydration completed but contains mismatches.` in a local production build. Found while checking
+      the plugin removal, and **identical on `main`**, so it is not caused by it. Both pages render
+      `PrettyJSON`, which makes `vue-json-pretty` the first suspect. Unlike the
+      [podcast-page mismatch](#3-build-and-tooling-correctness), this one reproduces locally, so a dev
+      build should name the node.
+- [ ] ⚠️ **Server-only helpers live in the shared `helpers/` barrel, and the fix is not a one-liner.**
+      The earlier version of this item said "server code should import it directly". That was wrong: the
+      importer of `ipProcessing` is `composables/useDirectus.ts`, shared client/server code. Checked
+      2026-10-20:
+
+      - **`ipProcessing`**: `anonymizeAndHashIP` is called by `createRating` and `getRecentRatingByIP` in
+        `useDirectus`, whose only callers are in `server/api/vote.post.ts`. It loads `node:crypto` and
+        `node:net` through a dynamic `import()` on purpose, so the client bundle does not break, and Vite
+        warns that it externalized them. The fix is to hash the IP in the vote route and pass the hash
+        in, and to move the helper to `server/utils/`. That changes both function signatures and
+        `test/vote.route.test.ts`, on the vote-deduplication path, so it gets **its own PR**, not a
+        bundled cleanup.
+      - **`aiSpamFilter`**: pulls in `@google/generative-ai`, and its only caller is
+        `server/api/email.post.ts`. It can move to `server/utils/` as-is. Do it in the same PR, since
+        it is the same mistake.
 
 ### 6. Standing items, not one-off tasks
 
