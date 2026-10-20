@@ -8,6 +8,10 @@ const { directus, useAuthenticatedDirectus } = vi.hoisted(() => {
         getSpeakerByPortalToken: vi.fn(),
         uploadFile: vi.fn(),
         updateSpeaker: vi.fn(),
+        findContentVersion: vi.fn(),
+        createContentVersion: vi.fn(),
+        saveToContentVersion: vi.fn(),
+        reportSpeakerProfileUpdateFailure: vi.fn(),
     }
     const useAuthenticatedDirectus = vi.fn(() => directus)
     const g = globalThis as any
@@ -87,6 +91,8 @@ describe('POST /api/speaker-portal/submit', () => {
         expect(error).toMatchObject({ statusCode: 500 })
         expect(error.message).not.toContain('SQLITE')
         expect(console.error).toHaveBeenCalled()
+        // A first submission has no Content Version step to report.
+        expect(directus.reportSpeakerProfileUpdateFailure).not.toHaveBeenCalled()
     })
 
     it('hides a configuration error behind the same generic 500', async () => {
@@ -152,6 +158,222 @@ describe('POST /api/speaker-portal/submit', () => {
         expect(directus.updateSpeaker).toHaveBeenCalledWith(
             's1',
             expect.objectContaining({ portal_submission_status: 'submitted', portal_token: null })
+        )
+    })
+
+    describe('profile update (status update_requested)', () => {
+        const image = { name: 'profile_image', filename: 'a.jpg', type: 'image/jpeg', data: Buffer.from('jpg') }
+
+        beforeEach(() => {
+            directus.getSpeakerByPortalToken.mockResolvedValue({
+                id: 's1',
+                portal_submission_status: 'update_requested',
+            })
+            directus.uploadFile.mockResolvedValue({ id: 'file-new' })
+            directus.updateSpeaker.mockResolvedValue({})
+            directus.saveToContentVersion.mockResolvedValue({})
+            directus.reportSpeakerProfileUpdateFailure.mockResolvedValue({ notified: true })
+        })
+
+        it('saves the profile into a new Content Version and writes only status and token live', async () => {
+            directus.findContentVersion.mockResolvedValue(null)
+            directus.createContentVersion.mockResolvedValue({ id: 'v1', key: 'profile-update', name: 'x' })
+
+            await expect(
+                invoke([part('token', 't'), part('data', JSON.stringify(validData)), image])
+            ).resolves.toMatchObject({ success: true, mode: 'update' })
+
+            expect(directus.findContentVersion).toHaveBeenCalledWith('speakers', 's1', 'profile-update')
+            expect(directus.createContentVersion).toHaveBeenCalledWith({
+                key: 'profile-update',
+                name: expect.stringMatching(/^Profil-Update \d{2}\.\d{2}\.\d{4}$/),
+                collection: 'speakers',
+                item: 's1',
+            })
+            expect(directus.saveToContentVersion).toHaveBeenCalledWith(
+                'v1',
+                expect.objectContaining({
+                    first_name: 'Erika',
+                    occupation: 'Head of Engineering at Beispiel GmbH',
+                    description: '<p>Erika Mustermann arbeitet als Head of Engineering.</p>',
+                    website_url: null,
+                    profile_image: 'file-new',
+                })
+            )
+            const delta = directus.saveToContentVersion.mock.calls[0]![1]
+            expect(delta).not.toHaveProperty('portal_submission_status')
+            expect(delta).not.toHaveProperty('portal_token')
+            expect(delta).not.toHaveProperty('event_image')
+
+            // The live item gets nothing but the completion, after the version was saved.
+            expect(directus.updateSpeaker).toHaveBeenCalledTimes(1)
+            expect(directus.updateSpeaker).toHaveBeenCalledWith('s1', {
+                portal_submission_status: 'submitted',
+                portal_token: null,
+            })
+            expect(directus.saveToContentVersion.mock.invocationCallOrder[0]!).toBeLessThan(
+                directus.updateSpeaker.mock.invocationCallOrder[0]!
+            )
+        })
+
+        it('saves into a version left from an earlier attempt, resetting images not replaced now', async () => {
+            // The CMS deletes earlier versions when it sends the request, so an existing one comes
+            // from a failed attempt in this request. Its delta may hold that attempt's image.
+            directus.getSpeakerByPortalToken.mockResolvedValue({
+                id: 's1',
+                portal_submission_status: 'update_requested',
+                profile_image: 'file-live-profile',
+                event_image: null,
+            })
+            directus.findContentVersion.mockResolvedValue({
+                id: 'v-earlier',
+                key: 'profile-update',
+                name: 'Profil-Update 01.01.2020',
+            })
+
+            await invoke([part('token', 't'), part('data', JSON.stringify(validData))])
+
+            expect(directus.createContentVersion).not.toHaveBeenCalled()
+            expect(directus.saveToContentVersion).toHaveBeenCalledWith(
+                'v-earlier',
+                expect.objectContaining({ first_name: 'Erika', profile_image: 'file-live-profile', event_image: null })
+            )
+        })
+
+        it('a replacement image uploaded now wins over the live one in the fallback', async () => {
+            directus.getSpeakerByPortalToken.mockResolvedValue({
+                id: 's1',
+                portal_submission_status: 'update_requested',
+                profile_image: 'file-live-profile',
+                event_image: 'file-live-event',
+            })
+            directus.findContentVersion.mockResolvedValue({ id: 'v-earlier', key: 'profile-update', name: 'x' })
+
+            await invoke([part('token', 't'), part('data', JSON.stringify(validData)), image])
+
+            expect(directus.saveToContentVersion).toHaveBeenCalledWith(
+                'v-earlier',
+                expect.objectContaining({ profile_image: 'file-new', event_image: 'file-live-event' })
+            )
+        })
+
+        it('keeps the token usable when the version cannot be saved', async () => {
+            // e.g. Content Versioning switched off: Directus answers 422 on POST /versions.
+            directus.findContentVersion.mockResolvedValue(null)
+            directus.createContentVersion.mockRejectedValue(
+                new Error('Content Versioning is not enabled for collection "speakers"')
+            )
+
+            const error = await invoke([part('token', 't'), part('data', JSON.stringify(validData))]).catch(
+                (e: any) => e
+            )
+
+            expect(error).toMatchObject({ statusCode: 500 })
+            expect(error.message).not.toContain('Versioning')
+            expect(directus.updateSpeaker).not.toHaveBeenCalled()
+            expect(console.error).toHaveBeenCalled()
+        })
+
+        it('reports a failed version save to the team (via the CMS) and still answers the same 500', async () => {
+            directus.findContentVersion.mockResolvedValue({ id: 'v1', key: 'profile-update', name: 'x' })
+            // The Directus SDK rejects with its error payload, not an Error.
+            directus.saveToContentVersion.mockRejectedValue({
+                errors: [{ message: "You don't have permission to access this.", extensions: { code: 'FORBIDDEN' } }],
+            })
+
+            const error = await invoke([part('token', 't'), part('data', JSON.stringify(validData))]).catch(
+                (e: any) => e
+            )
+
+            expect(error).toMatchObject({
+                statusCode: 500,
+                message: 'Beim Speichern deiner Informationen ist leider ein Fehler aufgetreten.',
+            })
+            expect(directus.reportSpeakerProfileUpdateFailure).toHaveBeenCalledTimes(1)
+            expect(directus.reportSpeakerProfileUpdateFailure).toHaveBeenCalledWith('s1', {
+                stage: 'save_version',
+                message: "You don't have permission to access this.",
+            })
+            expect(directus.updateSpeaker).not.toHaveBeenCalled()
+        })
+
+        it('a failing report is logged and does not change the answer to the speaker', async () => {
+            directus.findContentVersion.mockResolvedValue(null)
+            directus.createContentVersion.mockRejectedValue(new Error('Content Versioning is not enabled'))
+            const reportError = new Error('CMS unreachable')
+            directus.reportSpeakerProfileUpdateFailure.mockRejectedValue(reportError)
+
+            const error = await invoke([part('token', 't'), part('data', JSON.stringify(validData))]).catch(
+                (e: any) => e
+            )
+
+            expect(error).toMatchObject({
+                statusCode: 500,
+                message: 'Beim Speichern deiner Informationen ist leider ein Fehler aufgetreten.',
+            })
+            expect(console.error).toHaveBeenCalledWith(expect.stringContaining('could not report'), reportError)
+            expect(directus.updateSpeaker).not.toHaveBeenCalled()
+        })
+
+        it('reports a failed completion write after the version was saved, same 500 for the speaker', async () => {
+            directus.findContentVersion.mockResolvedValue(null)
+            directus.createContentVersion.mockResolvedValue({ id: 'v1', key: 'profile-update', name: 'x' })
+            directus.updateSpeaker.mockRejectedValue(new Error('SQLITE_BUSY: database is locked'))
+
+            const error = await invoke([part('token', 't'), part('data', JSON.stringify(validData))]).catch(
+                (e: any) => e
+            )
+
+            expect(error).toMatchObject({
+                statusCode: 500,
+                message: 'Beim Speichern deiner Informationen ist leider ein Fehler aufgetreten.',
+            })
+            expect(directus.saveToContentVersion).toHaveBeenCalledWith('v1', expect.any(Object))
+            expect(directus.reportSpeakerProfileUpdateFailure).toHaveBeenCalledTimes(1)
+            expect(directus.reportSpeakerProfileUpdateFailure).toHaveBeenCalledWith('s1', {
+                stage: 'complete',
+                message: expect.stringMatching(/Content Version ist gespeichert.*SQLITE_BUSY/),
+            })
+        })
+
+        it('a failing report after a failed completion write does not change the answer', async () => {
+            directus.findContentVersion.mockResolvedValue(null)
+            directus.createContentVersion.mockResolvedValue({ id: 'v1', key: 'profile-update', name: 'x' })
+            directus.updateSpeaker.mockRejectedValue(new Error('timeout'))
+            directus.reportSpeakerProfileUpdateFailure.mockRejectedValue(new Error('CMS unreachable'))
+
+            const error = await invoke([part('token', 't'), part('data', JSON.stringify(validData))]).catch(
+                (e: any) => e
+            )
+
+            expect(error).toMatchObject({
+                statusCode: 500,
+                message: 'Beim Speichern deiner Informationen ist leider ein Fehler aufgetreten.',
+            })
+            expect(console.error).toHaveBeenCalledWith(expect.stringContaining('could not report'), expect.any(Error))
+        })
+
+        it('does not report anything when the version was saved', async () => {
+            directus.findContentVersion.mockResolvedValue(null)
+            directus.createContentVersion.mockResolvedValue({ id: 'v1', key: 'profile-update', name: 'x' })
+            await invoke([part('token', 't'), part('data', JSON.stringify(validData))])
+            expect(directus.reportSpeakerProfileUpdateFailure).not.toHaveBeenCalled()
+        })
+    })
+
+    it('writes a first submission straight to the live item, without a version', async () => {
+        directus.getSpeakerByPortalToken.mockResolvedValue({ id: 's1', portal_submission_status: 'pending' })
+        directus.updateSpeaker.mockResolvedValue({})
+
+        await expect(invoke([part('token', 't'), part('data', JSON.stringify(validData))])).resolves.toMatchObject({
+            mode: 'initial',
+        })
+
+        expect(directus.findContentVersion).not.toHaveBeenCalled()
+        expect(directus.saveToContentVersion).not.toHaveBeenCalled()
+        expect(directus.updateSpeaker).toHaveBeenCalledWith(
+            's1',
+            expect.objectContaining({ first_name: 'Erika', portal_submission_status: 'submitted', portal_token: null })
         )
     })
 })

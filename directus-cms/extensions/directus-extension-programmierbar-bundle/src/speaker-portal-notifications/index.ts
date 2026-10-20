@@ -1,15 +1,22 @@
 import { defineHook } from '@directus/extensions-sdk'
+import { SPEAKER_PROFILE_UPDATE_VERSION_KEY } from '../../../../../shared-code/index.ts'
 import { formatDateGerman, sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
 import { postSlackMessage } from '../shared/postSlackMessage.js'
 import { safeAction } from '../shared/safeHook.ts'
 import { getSetting, getSettings } from '../shared/settings.js'
+import { buildPortalUrl } from '../shared/speakerPortal.ts'
+import {
+    buildSubmissionSlackMessage,
+    createProfileUpdateTracker,
+    findProfileUpdateKeys,
+} from './util/submissionMessage.ts'
 
 const HOOK_NAME = 'speaker-portal-notifications'
 
 // Check deadline reminders at 9:00 AM every day
 const REMINDER_SCHEDULE = '0 9 * * *'
 
-export default defineHook(({ action, schedule }, hookContext) => {
+export default defineHook(({ action, filter, schedule }, hookContext) => {
     const logger = hookContext.logger
     const services = hookContext.services
     const getSchema = hookContext.getSchema
@@ -25,9 +32,9 @@ export default defineHook(({ action, schedule }, hookContext) => {
     /**
      * Build the portal URL for a speaker token.
      */
-    async function buildPortalUrl(token: string, context: EmailServiceContext): Promise<string> {
+    async function getPortalUrl(token: string, context: EmailServiceContext): Promise<string> {
         const websiteUrl = (await getSetting('website_url', context)) || 'https://www.programmier.bar'
-        return `${websiteUrl}/speaker-portal?token=${encodeURIComponent(token)}`
+        return buildPortalUrl(websiteUrl, token)
     }
 
     /**
@@ -98,7 +105,7 @@ export default defineHook(({ action, schedule }, hookContext) => {
             // Podcast lookup is optional
         }
 
-        const portalUrl = await buildPortalUrl(speaker.portal_token, context)
+        const portalUrl = await getPortalUrl(speaker.portal_token, context)
         const deadline = speaker.portal_submission_deadline
             ? formatDateGerman(speaker.portal_submission_deadline)
             : 'in den nächsten zwei Wochen'
@@ -122,6 +129,27 @@ export default defineHook(({ action, schedule }, hookContext) => {
         )
 
         logger.info(`${HOOK_NAME}: Invitation sent to ${speaker.first_name} ${speaker.last_name}`)
+    }
+
+    /**
+     * The speaker's `profile-update` Content Version, if there is one. Read as admin: the policy of
+     * whoever triggered the submission (the website's API token) need not cover system collections.
+     */
+    async function findProfileUpdateVersion(speakerId: string, schema: any): Promise<{ name: string | null } | null> {
+        const versionsService = new ItemsService('directus_versions', {
+            schema,
+            accountability: { admin: true },
+        })
+        const versions = await versionsService.readByQuery({
+            filter: {
+                collection: { _eq: 'speakers' },
+                item: { _eq: String(speakerId) },
+                key: { _eq: SPEAKER_PROFILE_UPDATE_VERSION_KEY },
+            },
+            fields: ['name'],
+            limit: 1,
+        })
+        return versions?.[0] ?? null
     }
 
     /**
@@ -164,6 +192,46 @@ export default defineHook(({ action, schedule }, hookContext) => {
     )
 
     /**
+     * Speakers whose current update answers a profile-update request (see `createProfileUpdateTracker`).
+     */
+    const profileUpdates = createProfileUpdateTracker()
+    /** Speakers whose previous status could not be read, so the Slack message hedges. */
+    const unknownPreviousStatus = createProfileUpdateTracker()
+
+    /**
+     * Before a write sets `submitted`, remember which speakers were `update_requested`: the action
+     * below only sees the new values. Never blocks the write: a failure here is logged, and the
+     * submission is then announced like a first one (with a hint in Slack, see below).
+     */
+    filter('speakers.items.update', async (payload: any, meta: any, eventContext: any) => {
+        if (payload?.portal_submission_status !== 'submitted') {
+            return payload
+        }
+
+        const keys: Array<string | number> = meta?.keys ?? []
+        try {
+            if (keys.length > 0) {
+                const speakersService = new ItemsService('speakers', {
+                    schema: eventContext?.schema ?? (await getSchema()),
+                    knex: eventContext?.database,
+                    accountability: { admin: true },
+                })
+                const rows = await speakersService.readMany(keys, { fields: ['id', 'portal_submission_status'] })
+                for (const key of findProfileUpdateKeys(rows ?? [])) {
+                    profileUpdates.mark(key)
+                }
+            }
+        } catch (err: any) {
+            logger.error(`${HOOK_NAME}: Could not read the previous submission status: ${err?.message || err}`)
+            for (const key of keys) {
+                unknownPreviousStatus.mark(key)
+            }
+        }
+
+        return payload
+    })
+
+    /**
      * Send confirmation when a speaker submits their information.
      */
     action(
@@ -192,6 +260,10 @@ export default defineHook(({ action, schedule }, hookContext) => {
                 })
 
                 for (const speakerId of keys) {
+                    // Consumed first, so a skipped speaker does not leave a mark behind.
+                    const isProfileUpdate = profileUpdates.consume(speakerId)
+                    const previousStatusUnknown = unknownPreviousStatus.consume(speakerId)
+
                     const speaker = await speakersService.readOne(speakerId, {
                         fields: ['id', 'first_name', 'last_name', 'email'],
                     })
@@ -229,10 +301,14 @@ export default defineHook(({ action, schedule }, hookContext) => {
                         // Optional
                     }
 
+                    // `is_update` / `is_initial` let the template word a profile update differently
+                    // (the mini-Handlebars renderer has `{{#if}}` but no `{{else}}`).
                     const emailData = {
                         first_name: speaker.first_name,
                         last_name: speaker.last_name,
                         podcast_title: podcastTitle,
+                        is_update: isProfileUpdate,
+                        is_initial: !isProfileUpdate,
                     }
 
                     // Send confirmation to speaker
@@ -247,12 +323,32 @@ export default defineHook(({ action, schedule }, hookContext) => {
                         context
                     )
 
-                    // Notify admin via Slack
+                    // Notify admin via Slack. A profile update lives in a Content Version, not on the
+                    // live item, so the message has to say so and point at the version.
                     const speakerName = `${speaker.first_name} ${speaker.last_name}`
-                    const podcastInfo = podcastTitle ? ` für "${podcastTitle}"` : ''
+                    let versionName: string | null = null
+                    if (isProfileUpdate) {
+                        try {
+                            versionName = (await findProfileUpdateVersion(speakerId, schema))?.name ?? null
+                        } catch (versionError: any) {
+                            // Only the name is missing then; the link still selects the version by key.
+                            logger.error(
+                                `${HOOK_NAME}: Could not read the profile-update version of speaker ${speakerId}: ${versionError?.message || versionError}`
+                            )
+                        }
+                    }
+                    const slackText = buildSubmissionSlackMessage({
+                        speakerName,
+                        podcastTitle,
+                        itemUrl: `${env.PUBLIC_URL}admin/content/speakers/${speakerId}`,
+                        isProfileUpdate,
+                        versionName,
+                    })
                     try {
                         await postSlackMessage(
-                            `:white_check_mark: *Speaker Portal*: ${speakerName} hat die Informationen${podcastInfo} eingereicht. ${env.PUBLIC_URL}admin/content/speakers/${speakerId}`
+                            previousStatusUnknown
+                                ? `${slackText} (Hinweis: Ob das ein Profil-Update war, konnte nicht geprüft werden – bitte im Versions-Menü des Speakers nachsehen.)`
+                                : slackText
                         )
                     } catch (slackError: any) {
                         logger.error(`${HOOK_NAME}: Failed to send Slack notification: ${slackError?.message}`)
@@ -320,7 +416,7 @@ export default defineHook(({ action, schedule }, hookContext) => {
                     continue
                 }
 
-                const portalUrl = `${websiteUrl}/speaker-portal?token=${encodeURIComponent(speaker.portal_token)}`
+                const portalUrl = buildPortalUrl(websiteUrl, speaker.portal_token)
                 const deadlineFormatted = formatDateGerman(deadline)
 
                 const emailData = {

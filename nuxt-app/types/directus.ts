@@ -207,6 +207,13 @@ export interface DirectusMemberItem {
     )[]
 }
 
+// A Directus Content Version (`directus_versions`), as far as the website reads it.
+export interface DirectusContentVersion {
+    id: string
+    key: string
+    name: string | null
+}
+
 export interface DirectusSpeakerItem {
     id: string
     sort: number
@@ -231,6 +238,7 @@ export interface DirectusSpeakerItem {
     portal_token_expires: string | null
     portal_submission_status: string | null
     portal_submission_deadline: string | null
+    portal_update_requested_at: string | null
     meetups: {
         id: number
         speaker: DirectusSpeakerItem
