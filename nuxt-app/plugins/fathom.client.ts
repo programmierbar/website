@@ -10,5 +10,8 @@ export default defineNuxtPlugin(() => {
         // `pushState`, before Nuxt has updated the canonical link, so reading the canonical would
         // attribute every navigation to the previous page.
         canonical: false,
+        // Previews and local runs load this plugin too. Without the canonical link they would report
+        // their own hostname into the production site's totals.
+        includedDomains: ['www.programmier.bar'],
     })
 })
