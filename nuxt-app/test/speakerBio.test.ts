@@ -191,6 +191,21 @@ describe('markdownToHtml', () => {
         expect(markdownToHtml(htmlToMarkdown('&copy; 2020 Tom & Jerry <3'))).toBe('<p>© 2020 Tom &amp; Jerry &lt;3</p>')
     })
 
+    it('keeps the start number of ordered lists', () => {
+        expect(htmlToMarkdown('<ol start="3"><li>a</li><li>b</li></ol>')).toBe('3. a\n4. b')
+        expect(markdownToHtml('3. a\n4. b')).toBe('<ol start="3">\n<li>a</li>\n<li>b</li>\n</ol>')
+        const html = '<ol start="3">\n<li>a</li>\n<li>b</li>\n</ol>'
+        expect(markdownToHtml(htmlToMarkdown(html))).toBe(html)
+    })
+
+    it('allows start only as a positive number on ordered lists', () => {
+        expect(markdownToHtml('<p start="3">a</p>')).toBe('<p>a</p>')
+        expect(markdownToHtml('<ul start="3"><li>a</li></ul>')).toBe('<ul><li>a</li></ul>')
+        expect(markdownToHtml('<ol start="x"><li>a</li></ol>')).toBe('<ol><li>a</li></ol>')
+        expect(markdownToHtml('<ol start="-1"><li>a</li></ol>')).toBe('<ol><li>a</li></ol>')
+        expect(markdownToHtml('<ol start="12"><li>a</li></ol>')).toBe('<ol start="12"><li>a</li></ol>')
+    })
+
     it('round-trips CMS rich text', () => {
         const html =
             '<p>Erika ist <strong>CTO</strong>.<br>Sie mag <em>Vue</em> und <a href="https://example.com">Blogs</a>.</p>'

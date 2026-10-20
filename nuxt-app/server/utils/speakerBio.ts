@@ -120,10 +120,33 @@ const markdown = new Marked({
 // the bio from screen readers.
 const SANITIZE_CONFIG = {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'a', 'ul', 'ol', 'li', 'code'],
-    ALLOWED_ATTR: ['href'],
+    // `start` keeps an ordered list's numbering (`3. …` is `<ol start="3">`); the hook below drops it
+    // anywhere else. DOMPurify would otherwise test its value against the URI pattern and drop it.
+    ALLOWED_ATTR: ['href', 'start'],
+    ADD_URI_SAFE_ATTR: ['start'],
     ALLOWED_URI_REGEXP: /^(?:https?|mailto):/i,
     ALLOW_ARIA_ATTR: false,
     ALLOW_DATA_ATTR: false,
+}
+
+const keepStartOnOrderedListsOnly = (
+    node: Element,
+    data: { attrName: string; attrValue: string; keepAttr: boolean }
+) => {
+    if (data.attrName === 'start' && (node.nodeName !== 'OL' || !/^[1-9]\d{0,5}$/.test(data.attrValue))) {
+        data.keepAttr = false
+    }
+}
+
+// The DOMPurify instance is shared with the rest of the app (`InnerHtml`), so the hook only lives for
+// the duration of one bio sanitisation.
+function sanitizeBio(html: string): string {
+    DOMPurify.addHook('uponSanitizeAttribute', keepStartOnOrderedListsOnly)
+    try {
+        return DOMPurify.sanitize(html, SANITIZE_CONFIG)
+    } finally {
+        DOMPurify.removeHook('uponSanitizeAttribute', keepStartOnOrderedListsOnly)
+    }
 }
 
 /**
@@ -138,7 +161,7 @@ export function markdownToHtml(text: string | null | undefined): string {
 
     const html = markdown.parse(text.replace(/\r\n?/g, '\n'), { async: false })
 
-    return DOMPurify.sanitize(html, SANITIZE_CONFIG).trim()
+    return sanitizeBio(html).trim()
 }
 
 /**
