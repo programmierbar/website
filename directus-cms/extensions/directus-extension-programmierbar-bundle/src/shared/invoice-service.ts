@@ -23,6 +23,12 @@ export interface InvoiceOrder {
     ticket_type: string
 }
 
+/** Conference dates the Leistungsdatum is derived from (subset of `conferences`). */
+export interface ServicePeriod {
+    start_on?: string | null
+    end_on?: string | null
+}
+
 /** Document types stored in `ticket_invoices.type`. */
 export type InvoiceDocumentType = 'original' | 'correction' | 'cancellation'
 
@@ -44,6 +50,12 @@ export interface InvoiceSnapshot {
     billing_postal_code: string | null
     billing_country: string | null
     conference_title: string
+    /**
+     * Leistungsdatum (§ 14 Abs. 4 Nr. 6 UStG): first/last conference day as
+     * YYYY-MM-DD. Absent on snapshots written before the field was introduced.
+     */
+    service_date_start?: string | null
+    service_date_end?: string | null
     ticket_type: string
     ticket_count: number
     unit_price_gross_cents: number
@@ -74,6 +86,52 @@ export function formatInvoiceDate(date: Date): string {
     })
 }
 
+/** The YYYY-MM-DD part of a Directus date/dateTime value, or null. */
+function toIsoDate(value: string | null | undefined): string | null {
+    const match = typeof value === 'string' ? /^\d{4}-\d{2}-\d{2}/.exec(value) : null
+    return match ? match[0] : null
+}
+
+/**
+ * Format the Leistungsdatum in German notation: "25.11.2026" for a single day,
+ * "25.–26.11.2026" for a range within one month, otherwise both full dates
+ * (shortened where the year is shared). Returns null when no date is known.
+ */
+export function formatServiceDate(start: string | null | undefined, end: string | null | undefined): string | null {
+    const from = toIsoDate(start) ?? toIsoDate(end)
+    if (!from) {
+        return null
+    }
+    const to = toIsoDate(end)
+    const [fromYear, fromMonth, fromDay] = from.split('-')
+    if (!to || to <= from) {
+        return `${fromDay}.${fromMonth}.${fromYear}`
+    }
+    const [toYear, toMonth, toDay] = to.split('-')
+    if (fromYear !== toYear) {
+        return `${fromDay}.${fromMonth}.${fromYear}–${toDay}.${toMonth}.${toYear}`
+    }
+    if (fromMonth !== toMonth) {
+        return `${fromDay}.${fromMonth}.–${toDay}.${toMonth}.${toYear}`
+    }
+    return `${fromDay}.–${toDay}.${toMonth}.${toYear}`
+}
+
+/**
+ * Fill in the conference dates on a snapshot written before the Leistungsdatum
+ * was recorded. Snapshots that already carry a date are returned unchanged.
+ */
+export function withServicePeriod(snapshot: InvoiceSnapshot, servicePeriod?: ServicePeriod): InvoiceSnapshot {
+    if (snapshot.service_date_start || snapshot.service_date_end) {
+        return snapshot
+    }
+    return {
+        ...snapshot,
+        service_date_start: toIsoDate(servicePeriod?.start_on),
+        service_date_end: toIsoDate(servicePeriod?.end_on),
+    }
+}
+
 /**
  * Thrown by {@link buildInvoiceSnapshot} when the ticket count is not a positive
  * number. Dividing by 0 (or NaN) would silently bake Infinity/NaN amounts into the
@@ -99,7 +157,8 @@ export class InvalidTicketCountError extends Error {
 export function buildInvoiceSnapshot(
     order: InvoiceOrder,
     conferenceTitle: string,
-    ticketCount: number
+    ticketCount: number,
+    servicePeriod?: ServicePeriod
 ): InvoiceSnapshot {
     if (!Number.isFinite(ticketCount) || ticketCount <= 0) {
         throw new InvalidTicketCountError(order.order_number, ticketCount)
@@ -126,6 +185,8 @@ export function buildInvoiceSnapshot(
         billing_postal_code: order.billing_postal_code,
         billing_country: order.billing_country,
         conference_title: conferenceTitle,
+        service_date_start: toIsoDate(servicePeriod?.start_on),
+        service_date_end: toIsoDate(servicePeriod?.end_on),
         ticket_type: order.ticket_type,
         ticket_count: ticketCount,
         unit_price_gross_cents: grossPerTicket,
@@ -173,6 +234,7 @@ interface RenderInvoiceBaseParams {
     invoiceDate: Date
     filesService: any
     storageLocation?: string
+    logger?: { warn: (message: string) => void }
 }
 
 /**
@@ -213,9 +275,15 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
     const { snapshot, invoiceNumber, invoiceDate, filesService } = params
     const kind: InvoiceDocumentKind = params.documentKind || 'invoice'
 
+    const serviceDate = formatServiceDate(snapshot.service_date_start, snapshot.service_date_end)
+    if (!serviceDate) {
+        params.logger?.warn(`No Leistungsdatum (conference date) known for ${invoiceNumber} — omitting it from the PDF`)
+    }
+
     const baseData = {
         invoiceNumber,
         invoiceDate: formatInvoiceDate(invoiceDate),
+        serviceDate,
         purchaserName: snapshot.purchaser_name,
         purchaserEmail: snapshot.purchaser_email,
         companyName: snapshot.company_name,
@@ -271,6 +339,7 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
 export interface IssueOriginalInvoiceParams {
     order: InvoiceOrder
     conferenceTitle: string
+    servicePeriod?: ServicePeriod
     ticketCount: number
     invoiceNumber: string
     invoiceDate: Date
@@ -278,6 +347,7 @@ export interface IssueOriginalInvoiceParams {
     invoicesService: any
     filesService: any
     storageLocation?: string
+    logger?: { warn: (message: string) => void }
 }
 
 export interface IssueOriginalInvoiceResult extends RenderInvoiceResult {
@@ -294,7 +364,7 @@ export interface IssueOriginalInvoiceResult extends RenderInvoiceResult {
 export async function issueOriginalInvoice(params: IssueOriginalInvoiceParams): Promise<IssueOriginalInvoiceResult> {
     const { order, conferenceTitle, ticketCount, invoiceNumber, invoiceDate, ordersService, invoicesService } = params
 
-    const snapshot = buildInvoiceSnapshot(order, conferenceTitle, ticketCount)
+    const snapshot = buildInvoiceSnapshot(order, conferenceTitle, ticketCount, params.servicePeriod)
 
     const rendered = await renderAndUploadInvoice({
         snapshot,
@@ -303,6 +373,7 @@ export async function issueOriginalInvoice(params: IssueOriginalInvoiceParams): 
         documentKind: 'invoice',
         filesService: params.filesService,
         storageLocation: params.storageLocation,
+        logger: params.logger,
     })
 
     const documentId = await invoicesService.createOne({
@@ -399,6 +470,7 @@ export class MissingDatePaidError extends Error {
 export interface EnsureInvoiceDocumentParams {
     order: InvoiceOrder & { invoice_number?: string | null; invoice_file?: string | null; date_paid?: string | null }
     conferenceTitle: string
+    servicePeriod?: ServicePeriod
     ticketCount: number
     invoicesService: any
 }
@@ -431,7 +503,7 @@ export async function ensureInvoiceDocuments(params: EnsureInvoiceDocumentParams
     }
 
     const issuedAt = new Date(order.date_paid)
-    const snapshot = buildInvoiceSnapshot(order, params.conferenceTitle, params.ticketCount)
+    const snapshot = buildInvoiceSnapshot(order, params.conferenceTitle, params.ticketCount, params.servicePeriod)
 
     await invoicesService.createOne({
         order: order.id,

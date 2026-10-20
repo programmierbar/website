@@ -5,6 +5,7 @@ import {
     ensureInvoiceDocuments,
     findCancellationFor,
     findCurrentInvoiceDocument,
+    formatServiceDate,
     InvalidTicketCountError,
     issueOriginalInvoice,
     markInvoiceSent,
@@ -12,6 +13,7 @@ import {
     negateInvoiceSnapshot,
     parseInvoiceSnapshot,
     renderAndUploadInvoice,
+    withServicePeriod,
     type InvoiceDocument,
     type InvoiceOrder,
     type InvoiceSnapshot,
@@ -156,6 +158,51 @@ describe('buildInvoiceSnapshot', () => {
         expect(() => buildInvoiceSnapshot(ORDER, 'Conf', 0)).toThrow(/invalid ticket count \(0\)/)
         expect(() => buildInvoiceSnapshot(ORDER, 'Conf', -1)).toThrow(InvalidTicketCountError)
         expect(() => buildInvoiceSnapshot(ORDER, 'Conf', Number.NaN)).toThrow(InvalidTicketCountError)
+    })
+})
+
+describe('Leistungsdatum (service date)', () => {
+    const CONFERENCE = { start_on: '2026-11-25T09:00:00', end_on: '2026-11-26T18:00:00' }
+
+    test.each([
+        ['2026-11-25', '2026-11-26', '25.–26.11.2026'],
+        ['2026-11-25T09:00:00', '2026-11-25T18:00:00', '25.11.2026'],
+        ['2026-11-25', null, '25.11.2026'],
+        ['2026-11-30', '2026-12-01', '30.11.–01.12.2026'],
+        ['2026-12-31', '2027-01-01', '31.12.2026–01.01.2027'],
+        [null, null, null],
+    ])('formats %s / %s as %s', (start, end, expected) => {
+        expect(formatServiceDate(start, end)).toBe(expected)
+    })
+
+    test('buildInvoiceSnapshot records the conference dates', () => {
+        const snapshot = buildInvoiceSnapshot(ORDER, 'Conf', 2, CONFERENCE)
+        expect(snapshot.service_date_start).toBe('2026-11-25')
+        expect(snapshot.service_date_end).toBe('2026-11-26')
+    })
+
+    test('withServicePeriod fills older snapshots and keeps recorded dates', () => {
+        const legacy = buildInvoiceSnapshot(ORDER, 'Conf', 2)
+        expect(withServicePeriod(legacy, CONFERENCE)).toMatchObject({
+            service_date_start: '2026-11-25',
+            service_date_end: '2026-11-26',
+        })
+
+        const recorded = buildInvoiceSnapshot(ORDER, 'Conf', 2, { start_on: '2025-11-20', end_on: '2025-11-21' })
+        expect(withServicePeriod(recorded, CONFERENCE)).toBe(recorded)
+    })
+
+    test('renders without a Leistungsdatum (and warns) when no date is known', async () => {
+        const logger = { warn: jest.fn() }
+        const result = await renderAndUploadInvoice({
+            snapshot: buildInvoiceSnapshot(ORDER, 'Conf', 2),
+            invoiceNumber: 'PB-CON26-001',
+            invoiceDate: new Date('2026-02-01T10:00:00Z'),
+            filesService: fakeFilesService(),
+            logger,
+        })
+        expect(result.pdfBuffer.subarray(0, 4).toString()).toBe('%PDF')
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringMatching(/Leistungsdatum.*PB-CON26-001/))
     })
 })
 

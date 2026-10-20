@@ -12,6 +12,7 @@ import {
     negateInvoiceSnapshot,
     parseInvoiceSnapshot,
     renderAndUploadInvoice,
+    withServicePeriod,
     type InvoiceDocument,
     type RenderInvoiceResult,
 } from '../shared/invoice-service.js'
@@ -137,7 +138,9 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
         }
 
         const conferencesService = new ItemsService('conferences', { schema, accountability })
-        const conference = await conferencesService.readOne(order.conference, { fields: ['title', 'start_on'] })
+        const conference = await conferencesService.readOne(order.conference, {
+            fields: ['title', 'start_on', 'end_on'],
+        })
 
         if (!conference) {
             throw new HttpError(400, `Conference ${order.conference} not found`)
@@ -155,6 +158,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             documents = await ensureInvoiceDocuments({
                 order,
                 conferenceTitle: conference.title,
+                servicePeriod: conference,
                 ticketCount,
                 invoicesService,
             })
@@ -243,7 +247,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             throw new HttpError(400, `Invoice ${current.invoice_number} has been cancelled`)
         }
 
-        const snapshot = buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount)
+        const snapshot = buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount, ctx.conference)
 
         let rendered: RenderInvoiceResult
         if (current.type === 'correction') {
@@ -266,6 +270,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                 referenceDate: new Date(predecessor.invoice_date),
                 filesService: ctx.filesService,
                 storageLocation: storageLocation(),
+                logger,
             })
         } else {
             rendered = await renderAndUploadInvoice({
@@ -275,6 +280,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                 documentKind: 'invoice',
                 filesService: ctx.filesService,
                 storageLocation: storageLocation(),
+                logger,
             })
         }
 
@@ -321,7 +327,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
         const invoiceNumber = await generateInvoiceNumber(ctx.ordersService, ctx.invoicesService, conferenceYear)
         const invoiceDate = new Date()
 
-        const snapshot = buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount)
+        const snapshot = buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount, ctx.conference)
         const rendered = await renderAndUploadInvoice({
             snapshot,
             invoiceNumber,
@@ -331,6 +337,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             referenceDate: new Date(current.invoice_date),
             filesService: ctx.filesService,
             storageLocation: storageLocation(),
+            logger,
         })
 
         const documentId = await ctx.invoicesService.createOne({
@@ -400,7 +407,9 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
         const invoiceNumber = await generateInvoiceNumber(ctx.ordersService, ctx.invoicesService, conferenceYear)
         const invoiceDate = new Date()
 
-        const snapshot = negateInvoiceSnapshot(referencedSnapshot)
+        // Same service as the referenced invoice, so the same Leistungsdatum; snapshots
+        // written before it was recorded fall back to the conference dates.
+        const snapshot = negateInvoiceSnapshot(withServicePeriod(referencedSnapshot, ctx.conference))
 
         const rendered = await renderAndUploadInvoice({
             snapshot,
@@ -411,6 +420,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             referenceDate: new Date(current.invoice_date),
             filesService: ctx.filesService,
             storageLocation: storageLocation(),
+            logger,
         })
 
         const documentId = await ctx.invoicesService.createOne({

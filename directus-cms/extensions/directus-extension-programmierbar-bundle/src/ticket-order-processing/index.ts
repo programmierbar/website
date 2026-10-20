@@ -111,9 +111,10 @@ export default defineHook(({ action }, hookContext) => {
                         continue
                     }
 
-                    // Get conference details (title + start_on for invoice year + ticket limit)
+                    // Get conference details (title, start_on for invoice year, start_on/end_on
+                    // for the Leistungsdatum, ticket limit)
                     const conference = await conferencesService.readOne(order.conference, {
-                        fields: ['title', 'start_on', 'ticket_max_quantity'],
+                        fields: ['title', 'start_on', 'end_on', 'ticket_max_quantity'],
                     })
 
                     if (!conference) {
@@ -198,6 +199,7 @@ export default defineHook(({ action }, hookContext) => {
                         const invoiceResult = await issueOriginalInvoice({
                             order,
                             conferenceTitle: conference.title,
+                            servicePeriod: conference,
                             ticketCount: attendees.length,
                             invoiceNumber,
                             invoiceDate: new Date(),
@@ -205,6 +207,7 @@ export default defineHook(({ action }, hookContext) => {
                             invoicesService,
                             filesService,
                             storageLocation: env.STORAGE_LOCATIONS?.split(',')[0],
+                            logger,
                         })
 
                         pdfBuffer = invoiceResult.pdfBuffer

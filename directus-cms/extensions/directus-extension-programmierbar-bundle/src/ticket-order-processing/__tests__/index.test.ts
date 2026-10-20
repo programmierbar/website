@@ -75,7 +75,13 @@ const ORDER = {
     is_internal: false,
 }
 
-const CONFERENCE = { id: 'conf-1', title: 'programmier.con 2026', start_on: '2026-03-01', ticket_max_quantity: null }
+const CONFERENCE = {
+    id: 'conf-1',
+    title: 'programmier.con 2026',
+    start_on: '2026-03-01',
+    end_on: '2026-03-02',
+    ticket_max_quantity: null,
+}
 
 function setup(orderOverrides: Record<string, any> = {}) {
     const order = { ...ORDER, ...orderOverrides }
@@ -163,6 +169,8 @@ describe('ticket-order-processing hook', () => {
         const issueParams = issueOriginalInvoiceMock.mock.calls[0]![0]
         expect(issueParams.invoiceNumber).toBe('PB-CON26-001')
         expect(issueParams.ticketCount).toBe(2)
+        // The conference dates become the invoice's Leistungsdatum.
+        expect(issueParams.servicePeriod).toMatchObject({ start_on: '2026-03-01', end_on: '2026-03-02' })
         expect(issueParams.invoicesService).toBe(serviceInstances['ticket_invoices']![0])
 
         // The confirmation email carries the invoice PDF.
