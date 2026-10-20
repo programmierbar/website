@@ -1987,6 +1987,23 @@ the browser receives, so each was checked against output rather than trusted:
   `/` → `/podcast` navigation works. The single difference: `main` also fetches `_payload.json` for a
   404 route, and 4.6 does not.
 
+### The Node floor moved to `^24.15.0`
+
+Found in review (#275), not by any gate. Nuxt 4.6.2 requires Node `^22.22.3 || ^24.15.0 || >=26.0.0`,
+and so do six other packages in the tree (`@nuxt/nitro-server`, `@nuxt/vite-builder`,
+`@nuxt/vite-server`, `cssnano`, `postcss-calc`, `jsdoc-type-pratt-parser`). `engines.node` still said
+`^24.11.0`. With `engine-strict=true`, that made `npm ci` fail on 24.11–24.14, a range the project
+claimed to support. CI and Vercel did not notice, because both resolve the latest 24.x.
+
+The floor in `package.json`, the lockfile and the README is now `^24.15.0 || >=26.0.0`. Checked with a
+real Node 24.14.1: before the change, `npm ci` failed with `EBADENGINE` naming `@nuxt/nitro-server`.
+After it, `npm ci` fails with `EBADENGINE` naming `nuxt-app` itself and our own range. That is the
+error `engine-strict` was added to give. Every package in the lockfile accepts 24.15.0.
+
+**Lesson for the next refresh:** a minor bump in the framework can raise the Node floor. After
+`npm update`, check every package's `engines.node` in the lockfile against our declared minimum, not
+just the latest Node.
+
 ### Two new build warnings, both harmless
 
 - **`[MODULE_TYPELESS_PACKAGE_JSON]` for `nuxt.config.ts`**, printed with an `ERROR` label. Nuxt 4.6
