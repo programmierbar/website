@@ -11,7 +11,7 @@ const directus = vi.hoisted(() => {
     g.createError = (input: any) => Object.assign(new Error(input.message), input)
     return {
         getPodcastBySlug: vi.fn(),
-        getRecentRatingByIP: vi.fn(),
+        getRecentRatingByIPHash: vi.fn(),
         updateRatingVote: vi.fn(),
         createRating: vi.fn(),
     }
@@ -23,6 +23,9 @@ vi.mock('~/config', () => import('../config'))
 const BROWSER_UA =
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
 const PODCAST = { id: 'podcast-1', slug: 'folge-1' }
+// anonymizeAndHashIP('203.0.113.7'): the SHA-256 of '203.0.0.0', the address with its last two octets
+// zeroed. Stored ratings carry this value, so a change here would split the cooldown across a deploy.
+const IP_HASH = '2172243fafcf160d8b3bf50e372877cfd3700fe0f59db1c795e26b2201cdb65f'
 
 const vote = (direction: 'up' | 'down', headers: Record<string, string | undefined> = { 'user-agent': BROWSER_UA }) =>
     (voteHandler as any)({
@@ -33,7 +36,7 @@ const vote = (direction: 'up' | 'down', headers: Record<string, string | undefin
 beforeEach(() => {
     Object.values(directus).forEach((fn) => fn.mockReset())
     directus.getPodcastBySlug.mockResolvedValue(PODCAST)
-    directus.getRecentRatingByIP.mockResolvedValue(null)
+    directus.getRecentRatingByIPHash.mockResolvedValue(null)
     directus.createRating.mockResolvedValue({ id: 'rating-new' })
 })
 
@@ -45,9 +48,17 @@ describe('POST /api/vote', () => {
     it('stores a vote from a browser', async () => {
         await expect(vote('up')).resolves.toEqual({ id: 'rating-new' })
         expect(directus.createRating).toHaveBeenCalledWith('up', PODCAST, {
-            ip: '203.0.113.7',
+            ip: IP_HASH,
             user_agent: BROWSER_UA,
         })
+    })
+
+    it('stores a vote without an IP, and skips the cooldown, when the IP is invalid', async () => {
+        await expect(vote('up', { 'user-agent': BROWSER_UA, 'x-forwarded-for': 'not-an-ip' })).resolves.toEqual({
+            id: 'rating-new',
+        })
+        expect(directus.getRecentRatingByIPHash).not.toHaveBeenCalled()
+        expect(directus.createRating).toHaveBeenCalledWith('up', PODCAST, { user_agent: BROWSER_UA })
     })
 
     it.each([
@@ -61,26 +72,26 @@ describe('POST /api/vote', () => {
         expect(directus.createRating).not.toHaveBeenCalled()
     })
 
-    it('looks for an earlier vote from the same IP within the cooldown', async () => {
+    it('looks for an earlier vote from the same IP hash within the cooldown', async () => {
         const now = Date.parse('2026-10-20T08:00:00Z')
         vi.spyOn(Date, 'now').mockReturnValue(now)
         await vote('up')
-        expect(directus.getRecentRatingByIP).toHaveBeenCalledWith(
+        expect(directus.getRecentRatingByIPHash).toHaveBeenCalledWith(
             PODCAST,
-            '203.0.113.7',
+            IP_HASH,
             new Date(now - VOTE_COOLDOWN_MINUTES * 60 * 1000)
         )
     })
 
     it('replaces an earlier opposite vote within the cooldown instead of adding one', async () => {
-        directus.getRecentRatingByIP.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
+        directus.getRecentRatingByIPHash.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
         await expect(vote('down')).resolves.toEqual({ id: 'rating-old' })
         expect(directus.updateRatingVote).toHaveBeenCalledWith({ id: 'rating-old', up_or_down: 'up' }, 'down')
         expect(directus.createRating).not.toHaveBeenCalled()
     })
 
     it('counts a repeated vote within the cooldown once', async () => {
-        directus.getRecentRatingByIP.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
+        directus.getRecentRatingByIPHash.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
         await expect(vote('up')).resolves.toEqual({ id: 'rating-old' })
         expect(directus.updateRatingVote).not.toHaveBeenCalled()
         expect(directus.createRating).not.toHaveBeenCalled()
@@ -88,7 +99,7 @@ describe('POST /api/vote', () => {
 
     it('answers 500 when the earlier vote cannot be replaced', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
-        directus.getRecentRatingByIP.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
+        directus.getRecentRatingByIPHash.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
         directus.updateRatingVote.mockRejectedValue(new Error('forbidden'))
         await expect(vote('down')).rejects.toMatchObject({ statusCode: 500 })
         expect(directus.createRating).not.toHaveBeenCalled()
@@ -96,7 +107,7 @@ describe('POST /api/vote', () => {
 
     it('answers 500 when the lookup fails', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
-        directus.getRecentRatingByIP.mockRejectedValue(new Error('network'))
+        directus.getRecentRatingByIPHash.mockRejectedValue(new Error('network'))
         await expect(vote('up')).rejects.toMatchObject({ statusCode: 500 })
         expect(directus.createRating).not.toHaveBeenCalled()
     })

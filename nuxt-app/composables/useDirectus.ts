@@ -29,7 +29,6 @@ import type {
     TagItem,
 } from '~/types'
 import { DIRECTUS_CMS_URL, WEBSITE_URL } from './../config'
-import { anonymizeAndHashIP } from './../helpers/'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { directus, type Collections } from './../services'
@@ -921,11 +920,9 @@ export function useDirectus() {
             ],
         }
 
+        // Already anonymized and hashed by the server route; the raw IP never reaches this composable.
         if (metadata?.ip) {
-            const hashedIP = await anonymizeAndHashIP(metadata.ip)
-            if (hashedIP) {
-                payload.ip = hashedIP
-            }
+            payload.ip = metadata.ip
         }
 
         if (metadata?.user_agent) {
@@ -941,16 +938,11 @@ export function useDirectus() {
     }
 
     // Latest rating of the podcast from the same anonymized, hashed IP created at or after `since`.
-    async function getRecentRatingByIP(podcast: DirectusPodcastItem, rawIP: string, since: Date) {
-        const hashedIP = await anonymizeAndHashIP(rawIP)
-        if (!hashedIP) {
-            return null
-        }
-
+    async function getRecentRatingByIPHash(podcast: DirectusPodcastItem, ipHash: string, since: Date) {
         const ratings = await directus.request(
             readItems('ratings', {
                 filter: {
-                    ip: { _eq: hashedIP },
+                    ip: { _eq: ipHash },
                     date_created: { _gte: since.toISOString() },
                     // `target` is a many-to-any relation, so the filter has to name the collection.
                     target: { 'target:podcasts': { id: { _eq: podcast.id } } },
@@ -1099,7 +1091,7 @@ export function useDirectus() {
         getProfileById,
         getTestimonials,
         createRating,
-        getRecentRatingByIP,
+        getRecentRatingByIPHash,
         updateRatingVote,
         addCommentToRating,
     }

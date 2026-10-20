@@ -1,7 +1,7 @@
 import { useDirectus } from '~/composables/useDirectus'
 import { VOTE_COOLDOWN_MINUTES } from '~/config'
 import { isbot } from 'isbot'
-import { VoteSchema } from '../utils'
+import { anonymizeAndHashIP, VoteSchema } from '../utils'
 
 // The only path that writes a vote. The GET /podcast/[slug]/[up|down] links that
 // ship in RSS show notes no longer write — they redirect to the podcast page,
@@ -39,10 +39,11 @@ export default defineEventHandler(async (event) => {
     // Split x-forwarded-for on comma and take the first entry (the client IP)
     const xForwardedFor = event.node.req.headers['x-forwarded-for'] as string | undefined
     const rawIP = xForwardedFor ? xForwardedFor.split(',')[0].trim() : event.node.req.socket.remoteAddress
+    const ipHash = rawIP ? anonymizeAndHashIP(rawIP) : undefined
     const referrer = event.node.req.headers['referer']
 
-    if (rawIP) {
-        metadata['ip'] = rawIP
+    if (ipHash) {
+        metadata['ip'] = ipHash
     }
     if (referrer) {
         metadata['referer_url'] = referrer
@@ -51,9 +52,9 @@ export default defineEventHandler(async (event) => {
     try {
         // A further vote from the same IP hash on the same episode within the cooldown replaces
         // the earlier one, so a corrected vote counts and a double click counts once.
-        if (rawIP) {
+        if (ipHash) {
             const since = new Date(Date.now() - VOTE_COOLDOWN_MINUTES * 60 * 1000)
-            const recentRating = await directus.getRecentRatingByIP(podcast, rawIP, since)
+            const recentRating = await directus.getRecentRatingByIPHash(podcast, ipHash, since)
             if (recentRating) {
                 if (recentRating.up_or_down !== direction) {
                     await directus.updateRatingVote(recentRating, direction)
