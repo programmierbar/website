@@ -1,34 +1,46 @@
 import { describe, expect, test } from '@jest/globals'
-import { buildSubmissionSlackMessage, isFreshProfileUpdateVersion } from '../util/submissionMessage.ts'
+import {
+    buildSubmissionSlackMessage,
+    createProfileUpdateTracker,
+    findProfileUpdateKeys,
+    PROFILE_UPDATE_MARK_TTL_MS,
+} from '../util/submissionMessage.ts'
 
-const NOW = new Date('2026-10-20T12:00:00.000Z')
-const minutesAgo = (minutes: number) => new Date(NOW.getTime() - minutes * 60 * 1000).toISOString()
+describe('createProfileUpdateTracker', () => {
+    test('a mark is consumed exactly once', () => {
+        const tracker = createProfileUpdateTracker()
+        tracker.mark('s1')
 
-describe('isFreshProfileUpdateVersion', () => {
-    test('a version saved moments ago belongs to this submission', () => {
-        expect(
-            isFreshProfileUpdateVersion({ key: 'profile-update', name: null, date_updated: minutesAgo(1) }, NOW)
-        ).toBe(true)
+        expect(tracker.consume('s1')).toBe(true)
+        expect(tracker.consume('s1')).toBe(false)
+        expect(tracker.consume('s2')).toBe(false)
     })
 
-    test('falls back to date_created for a version that was never updated', () => {
-        expect(
-            isFreshProfileUpdateVersion(
-                { key: 'profile-update', name: null, date_created: minutesAgo(2), date_updated: null },
-                NOW
-            )
-        ).toBe(true)
+    test('numeric and string keys are the same speaker', () => {
+        const tracker = createProfileUpdateTracker()
+        tracker.mark(7)
+        expect(tracker.consume('7')).toBe(true)
     })
 
-    test('an old version (e.g. kept after promoting) does not turn a first submission into an update', () => {
-        expect(
-            isFreshProfileUpdateVersion({ key: 'profile-update', name: null, date_updated: minutesAgo(60) }, NOW)
-        ).toBe(false)
-    })
+    test('a mark whose write never completed expires', () => {
+        let now = 1_000_000
+        const tracker = createProfileUpdateTracker(() => now)
+        tracker.mark('s1')
 
-    test('no version, no update', () => {
-        expect(isFreshProfileUpdateVersion(null, NOW)).toBe(false)
-        expect(isFreshProfileUpdateVersion({ key: 'profile-update', name: null }, NOW)).toBe(false)
+        now += PROFILE_UPDATE_MARK_TTL_MS + 1
+        expect(tracker.consume('s1')).toBe(false)
+    })
+})
+
+describe('findProfileUpdateKeys', () => {
+    test('picks only speakers that were asked for an update', () => {
+        expect(
+            findProfileUpdateKeys([
+                { id: 'a', portal_submission_status: 'update_requested' },
+                { id: 'b', portal_submission_status: 'pending' },
+                { id: 'c', portal_submission_status: null },
+            ])
+        ).toEqual(['a'])
     })
 })
 
@@ -45,12 +57,19 @@ describe('buildSubmissionSlackMessage', () => {
         const text = buildSubmissionSlackMessage({
             speakerName: 'Erika Mustermann',
             itemUrl,
-            profileUpdateVersion: { key: 'profile-update', name: 'Profil-Update 20.10.2026' },
+            isProfileUpdate: true,
+            versionName: 'Profil-Update 20.10.2026',
         })
 
         expect(text).toContain('Profil-Update')
         expect(text).toContain('„Profil-Update 20.10.2026“ (profile-update)')
         expect(text).toContain('NICHT live')
+        expect(text).toContain(`${itemUrl}?version=profile-update`)
+    })
+
+    test('still links the version by key when its name is unknown', () => {
+        const text = buildSubmissionSlackMessage({ speakerName: 'Erika', itemUrl, isProfileUpdate: true })
+        expect(text).toContain('„profile-update“')
         expect(text).toContain(`${itemUrl}?version=profile-update`)
     })
 })

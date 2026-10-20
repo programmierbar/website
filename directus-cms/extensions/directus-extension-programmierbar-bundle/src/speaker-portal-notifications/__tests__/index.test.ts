@@ -30,7 +30,7 @@ interface Db {
     directus_versions: any[]
 }
 
-function setup(db: Partial<Db>) {
+function setup(db: Partial<Db>, options: { readManyError?: Error } = {}) {
     const tables: Db = { speakers: [], directus_versions: [], ...db }
     const versionQueries: any[] = []
 
@@ -43,6 +43,10 @@ function setup(db: Partial<Db>) {
             const row = (tables as any)[this.collection]?.find((r: any) => r.id === id)
             if (!row) throw new Error('not found')
             return { ...row }
+        }
+        async readMany(ids: any[]) {
+            if (options.readManyError) throw options.readManyError
+            return (tables as any)[this.collection].filter((r: any) => ids.includes(r.id)).map((r: any) => ({ ...r }))
         }
         async readByQuery(query: any) {
             if (this.collection === 'directus_versions') {
@@ -58,8 +62,10 @@ function setup(db: Partial<Db>) {
     }
 
     const actions = new Map<string, Handler[]>()
+    const filters = new Map<string, Array<(payload: any, meta: any, ctx: any) => any>>()
     const register = {
         action: (event: string, handler: Handler) => actions.set(event, [...(actions.get(event) ?? []), handler]),
+        filter: (event: string, handler: any) => filters.set(event, [...(filters.get(event) ?? []), handler]),
         schedule: jest.fn(),
     }
     const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
@@ -71,7 +77,14 @@ function setup(db: Partial<Db>) {
         env: { PUBLIC_URL: 'https://admin.example.com/' },
     })
 
+    /** Mirrors a Directus update: filters see the old row, then the write lands, then actions run. */
     async function update(payload: Record<string, any>, keys: string[]) {
+        for (const handler of filters.get('speakers.items.update') ?? []) {
+            payload = await handler(payload, { keys, collection: 'speakers' }, { schema: {}, database: {} })
+        }
+        for (const row of tables.speakers) {
+            if (keys.includes(row.id)) Object.assign(row, payload)
+        }
         for (const handler of actions.get('speakers.items.update') ?? []) {
             handler({ payload, keys }, { accountability: { user: 'website-token' } })
         }
@@ -79,7 +92,7 @@ function setup(db: Partial<Db>) {
         await flush()
     }
 
-    return { update, versionQueries, logger }
+    return { update, versionQueries, logger, tables }
 }
 
 const SPEAKER = {
@@ -108,17 +121,15 @@ describe('speaker-portal-notifications', () => {
         expect(slackMock).not.toHaveBeenCalled()
     })
 
-    test('a submission with a freshly saved profile-update version is announced as Profil-Update', async () => {
+    test('a submission answering an update request is announced as Profil-Update, with the version', async () => {
         const { update, versionQueries } = setup({
-            speakers: [{ ...SPEAKER, portal_submission_status: 'submitted', portal_token: null }],
+            speakers: [{ ...SPEAKER }],
             directus_versions: [
                 {
                     collection: 'speakers',
                     item: 'speaker-1',
                     key: 'profile-update',
                     name: 'Profil-Update 20.10.2026',
-                    date_created: new Date(Date.now() - 60 * 1000).toISOString(),
-                    date_updated: new Date().toISOString(),
                 },
             ],
         })
@@ -135,14 +146,57 @@ describe('speaker-portal-notifications', () => {
         expect(text).toContain('„Profil-Update 20.10.2026“')
         expect(text).toContain('https://admin.example.com/admin/content/speakers/speaker-1?version=profile-update')
         expect(sendMock).toHaveBeenCalledWith(
-            expect.objectContaining({ templateKey: 'speaker_submission_confirmation' }),
+            expect.objectContaining({
+                templateKey: 'speaker_submission_confirmation',
+                data: expect.objectContaining({ is_update: true, is_initial: false }),
+            }),
             expect.anything()
         )
     })
 
+    test('an old profile-update version does not turn a first submission into an update', async () => {
+        // The deterministic signal is the status before the write, not whether a version exists.
+        const { update } = setup({
+            speakers: [{ ...SPEAKER, portal_submission_status: 'pending' }],
+            directus_versions: [{ collection: 'speakers', item: 'speaker-1', key: 'profile-update', name: 'alt' }],
+        })
+        await update({ portal_submission_status: 'submitted', portal_token: null }, ['speaker-1'])
+
+        expect(slackMock.mock.calls[0][0]).toMatch(/^:white_check_mark: \*Speaker Portal\*: Erika Mustermann hat/)
+        expect(sendMock.mock.calls[0][0].data).toMatchObject({ is_update: false, is_initial: true })
+    })
+
+    test('the mark is used once: a later submission is not an update again', async () => {
+        const { update, tables } = setup({ speakers: [{ ...SPEAKER }] })
+        await update({ portal_submission_status: 'submitted', portal_token: null }, ['speaker-1'])
+        // e.g. an admin re-saves the status by hand later
+        tables.speakers[0].portal_submission_status = 'pending'
+        await update({ portal_submission_status: 'submitted' }, ['speaker-1'])
+
+        expect(slackMock).toHaveBeenCalledTimes(2)
+        expect(slackMock.mock.calls[0][0]).toContain('Profil-Update')
+        expect(slackMock.mock.calls[1][0]).not.toContain('Profil-Update')
+    })
+
+    test('a failing status read never blocks the write and hedges the Slack message', async () => {
+        const { update, logger } = setup({ speakers: [{ ...SPEAKER }] }, { readManyError: new Error('db down') })
+        await update({ portal_submission_status: 'submitted', portal_token: null }, ['speaker-1'])
+
+        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('previous submission status'))
+        expect(slackMock).toHaveBeenCalledTimes(1)
+        expect(slackMock.mock.calls[0][0]).toContain('konnte nicht geprüft werden')
+    })
+
+    test('other updates pass the filter untouched without reading anything', async () => {
+        const { update, logger } = setup({ speakers: [{ ...SPEAKER }] }, { readManyError: new Error('unused') })
+        await update({ occupation: 'CTO' }, ['speaker-1'])
+        expect(logger.error).not.toHaveBeenCalled()
+        expect(slackMock).not.toHaveBeenCalled()
+    })
+
     test('a first submission keeps the existing Slack message', async () => {
         const { update } = setup({
-            speakers: [{ ...SPEAKER, portal_submission_status: 'submitted', portal_token: null }],
+            speakers: [{ ...SPEAKER, portal_submission_status: 'pending' }],
         })
         await update({ portal_submission_status: 'submitted', portal_token: null }, ['speaker-1'])
 

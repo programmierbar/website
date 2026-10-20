@@ -7,8 +7,8 @@ import { getSetting, getSettings } from '../shared/settings.js'
 import { buildPortalUrl } from '../shared/speakerPortal.ts'
 import {
     buildSubmissionSlackMessage,
-    isFreshProfileUpdateVersion,
-    type ProfileUpdateVersion,
+    createProfileUpdateTracker,
+    findProfileUpdateKeys,
 } from './util/submissionMessage.ts'
 
 const HOOK_NAME = 'speaker-portal-notifications'
@@ -16,7 +16,7 @@ const HOOK_NAME = 'speaker-portal-notifications'
 // Check deadline reminders at 9:00 AM every day
 const REMINDER_SCHEDULE = '0 9 * * *'
 
-export default defineHook(({ action, schedule }, hookContext) => {
+export default defineHook(({ action, filter, schedule }, hookContext) => {
     const logger = hookContext.logger
     const services = hookContext.services
     const getSchema = hookContext.getSchema
@@ -135,7 +135,7 @@ export default defineHook(({ action, schedule }, hookContext) => {
      * The speaker's `profile-update` Content Version, if there is one. Read as admin: the policy of
      * whoever triggered the submission (the website's API token) need not cover system collections.
      */
-    async function findProfileUpdateVersion(speakerId: string, schema: any): Promise<ProfileUpdateVersion | null> {
+    async function findProfileUpdateVersion(speakerId: string, schema: any): Promise<{ name: string | null } | null> {
         const versionsService = new ItemsService('directus_versions', {
             schema,
             accountability: { admin: true },
@@ -146,7 +146,7 @@ export default defineHook(({ action, schedule }, hookContext) => {
                 item: { _eq: String(speakerId) },
                 key: { _eq: SPEAKER_PROFILE_UPDATE_VERSION_KEY },
             },
-            fields: ['key', 'name', 'date_created', 'date_updated'],
+            fields: ['name'],
             limit: 1,
         })
         return versions?.[0] ?? null
@@ -192,6 +192,46 @@ export default defineHook(({ action, schedule }, hookContext) => {
     )
 
     /**
+     * Speakers whose current update answers a profile-update request (see `createProfileUpdateTracker`).
+     */
+    const profileUpdates = createProfileUpdateTracker()
+    /** Speakers whose previous status could not be read, so the Slack message hedges. */
+    const unknownPreviousStatus = createProfileUpdateTracker()
+
+    /**
+     * Before a write sets `submitted`, remember which speakers were `update_requested`: the action
+     * below only sees the new values. Never blocks the write: a failure here is logged, and the
+     * submission is then announced like a first one (with a hint in Slack, see below).
+     */
+    filter('speakers.items.update', async (payload: any, meta: any, eventContext: any) => {
+        if (payload?.portal_submission_status !== 'submitted') {
+            return payload
+        }
+
+        const keys: Array<string | number> = meta?.keys ?? []
+        try {
+            if (keys.length > 0) {
+                const speakersService = new ItemsService('speakers', {
+                    schema: eventContext?.schema ?? (await getSchema()),
+                    knex: eventContext?.database,
+                    accountability: { admin: true },
+                })
+                const rows = await speakersService.readMany(keys, { fields: ['id', 'portal_submission_status'] })
+                for (const key of findProfileUpdateKeys(rows ?? [])) {
+                    profileUpdates.mark(key)
+                }
+            }
+        } catch (err: any) {
+            logger.error(`${HOOK_NAME}: Could not read the previous submission status: ${err?.message || err}`)
+            for (const key of keys) {
+                unknownPreviousStatus.mark(key)
+            }
+        }
+
+        return payload
+    })
+
+    /**
      * Send confirmation when a speaker submits their information.
      */
     action(
@@ -220,6 +260,10 @@ export default defineHook(({ action, schedule }, hookContext) => {
                 })
 
                 for (const speakerId of keys) {
+                    // Consumed first, so a skipped speaker does not leave a mark behind.
+                    const isProfileUpdate = profileUpdates.consume(speakerId)
+                    const previousStatusUnknown = unknownPreviousStatus.consume(speakerId)
+
                     const speaker = await speakersService.readOne(speakerId, {
                         fields: ['id', 'first_name', 'last_name', 'email'],
                     })
@@ -257,10 +301,14 @@ export default defineHook(({ action, schedule }, hookContext) => {
                         // Optional
                     }
 
+                    // `is_update` / `is_initial` let the template word a profile update differently
+                    // (the mini-Handlebars renderer has `{{#if}}` but no `{{else}}`).
                     const emailData = {
                         first_name: speaker.first_name,
                         last_name: speaker.last_name,
                         podcast_title: podcastTitle,
+                        is_update: isProfileUpdate,
+                        is_initial: !isProfileUpdate,
                     }
 
                     // Send confirmation to speaker
@@ -278,28 +326,28 @@ export default defineHook(({ action, schedule }, hookContext) => {
                     // Notify admin via Slack. A profile update lives in a Content Version, not on the
                     // live item, so the message has to say so and point at the version.
                     const speakerName = `${speaker.first_name} ${speaker.last_name}`
-                    let profileUpdateVersion: ProfileUpdateVersion | null = null
-                    let versionLookupFailed = false
-                    try {
-                        profileUpdateVersion = await findProfileUpdateVersion(speakerId, schema)
-                    } catch (versionError: any) {
-                        versionLookupFailed = true
-                        logger.error(
-                            `${HOOK_NAME}: Could not look up the profile-update version of speaker ${speakerId}: ${versionError?.message || versionError}`
-                        )
+                    let versionName: string | null = null
+                    if (isProfileUpdate) {
+                        try {
+                            versionName = (await findProfileUpdateVersion(speakerId, schema))?.name ?? null
+                        } catch (versionError: any) {
+                            // Only the name is missing then; the link still selects the version by key.
+                            logger.error(
+                                `${HOOK_NAME}: Could not read the profile-update version of speaker ${speakerId}: ${versionError?.message || versionError}`
+                            )
+                        }
                     }
                     const slackText = buildSubmissionSlackMessage({
                         speakerName,
                         podcastTitle,
                         itemUrl: `${env.PUBLIC_URL}admin/content/speakers/${speakerId}`,
-                        profileUpdateVersion: isFreshProfileUpdateVersion(profileUpdateVersion)
-                            ? profileUpdateVersion
-                            : null,
+                        isProfileUpdate,
+                        versionName,
                     })
                     try {
                         await postSlackMessage(
-                            versionLookupFailed
-                                ? `${slackText} (Hinweis: Ob ein Profil-Update als Content Version vorliegt, konnte nicht geprüft werden – bitte im Versions-Menü nachsehen.)`
+                            previousStatusUnknown
+                                ? `${slackText} (Hinweis: Ob das ein Profil-Update war, konnte nicht geprüft werden – bitte im Versions-Menü des Speakers nachsehen.)`
                                 : slackText
                         )
                     } catch (slackError: any) {
