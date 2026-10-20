@@ -283,6 +283,7 @@ export interface DirectusRatingItem {
     ip?: string
     user_agent?: string
     referer_url?: string
+    date_created?: string
 }
 
 export interface DirectusTagItem {
