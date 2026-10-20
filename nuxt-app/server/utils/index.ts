@@ -1,3 +1,4 @@
+export * from './aiSpamFilter'
 export * from './authenticatedDirectus'
 export * from './sendEmail'
 export * from './schema'

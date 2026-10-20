@@ -16,6 +16,13 @@ export const EmailSchema = z.object({
         .max(2048, 'Deine Nachricht darf nicht länger als 2.048 Zeichen lang sein.'),
 })
 
+// The JSON the Gemini spam filter is asked to answer with
+export const SpamFilterResponseSchema = z.object({
+    confidenceScore: z.number().min(0).max(1),
+    isSpam: z.boolean(),
+    reason: z.string(),
+})
+
 // Podcast vote (rating)
 
 export const VoteSchema = z.object({
