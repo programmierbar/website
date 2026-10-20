@@ -1,4 +1,5 @@
 import PDFDocument from 'pdfkit'
+import { formatBillingCountry } from '../../../../../shared-code/index.ts'
 import { tryLoadMuseoFont } from './museo-font.js'
 
 // Seller info (hardcoded)
@@ -290,8 +291,9 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
             doc.text(`${data.billingPostalCode || ''} ${data.billingCity || ''}`.trim(), 50, y)
             y += 12
         }
-        if (data.billingCountry) {
-            doc.text(data.billingCountry, 50, y)
+        const billingCountry = formatBillingCountry(data.billingCountry)
+        if (billingCountry) {
+            doc.text(billingCountry, 50, y)
             y += 12
         }
         if (data.companyVatId) {

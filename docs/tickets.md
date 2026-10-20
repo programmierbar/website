@@ -89,7 +89,7 @@ One record per purchase.
 | `billing_address_line2` | string | |
 | `billing_city` | string | |
 | `billing_postal_code` | string | |
-| `billing_country` | string | |
+| `billing_country` | string | ISO 3166-1 alpha-2 code (e.g. `DE`), see `shared-code/helpers/billingCountry.ts`. Older orders hold free text; the invoice prints those as entered |
 | `ticket_type` | enum | `early_bird`, `regular`, `discounted` |
 | `ticket_count` | integer | |
 | `unit_price_cents` | integer | Per-ticket price in cents |
