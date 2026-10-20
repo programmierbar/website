@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import type { EditorView } from '@codemirror/view'
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = withDefaults(
     defineProps<{
@@ -82,12 +82,23 @@ onMounted(async () => {
         if (props.describedby) attributes['aria-describedby'] = props.describedby
         if (props.required) attributes['aria-required'] = 'true'
 
-        const hadFocus = document.activeElement === fallback.value
+        // Someone already typing in the textarea keeps their focus and cursor in the editor.
+        const textarea = fallback.value
+        const hadFocus = !!textarea && document.activeElement === textarea
+        const backward = textarea?.selectionDirection === 'backward'
+        const selection =
+            textarea && hadFocus
+                ? {
+                      anchor: backward ? textarea.selectionEnd : textarea.selectionStart,
+                      head: backward ? textarea.selectionStart : textarea.selectionEnd,
+                  }
+                : undefined
 
         view = createMarkdownEditor(container.value, {
             doc: props.modelValue,
             placeholder: props.placeholder,
             maxLength: props.maxlength,
+            selection,
             contentAttributes: attributes,
             onChange: (value) => emit('update:modelValue', value),
         })
@@ -96,7 +107,12 @@ onMounted(async () => {
         ready.value = true
 
         if (hadFocus) {
-            view.focus()
+            // The container is still hidden by `v-show` until Vue has rendered `ready`, and a hidden
+            // element cannot take focus. The component may also unmount meanwhile.
+            await nextTick()
+            if (!unmounted) {
+                view?.focus()
+            }
         }
     } catch (error) {
         // The textarea stays, so the speaker can still fill in the field.

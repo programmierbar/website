@@ -48,9 +48,11 @@ describe('htmlToMarkdown', () => {
         )
     })
 
-    it('passes plain text without tags through unchanged', () => {
+    it('escapes Markdown syntax in plain text without tags, keeping its line breaks', () => {
+        // A bio without tags is plain text: the public pages show its `*` literally, so the editor
+        // must not hand it on as emphasis.
         expect(htmlToMarkdown('Erika arbeitet bei *Beispiel*.\r\nZweite Zeile')).toBe(
-            'Erika arbeitet bei *Beispiel*.\nZweite Zeile'
+            'Erika arbeitet bei \\*Beispiel\\*.\nZweite Zeile'
         )
     })
 })
@@ -122,6 +124,31 @@ describe('markdownToHtml', () => {
                 '<p><a href="https://example.com">x</a></p>'
             )
         })
+    })
+
+    it('round-trips a plain-text CMS bio without turning its characters into formatting', () => {
+        const text = [
+            'Erika arbeitet bei *Beispiel* & _Co_ ~~seit~~ 2020.',
+            '# kein Titel',
+            '- kein Listenpunkt',
+            '1. keine Liste, 2) auch nicht',
+            '> kein Zitat',
+            '    eingerückt, `kein Code`',
+            '[kein Link](https://example.com) C:\\Pfad',
+            '',
+            '---',
+        ].join('\n')
+        expect(markdownToHtml(htmlToMarkdown(text))).toBe(
+            '<p>Erika arbeitet bei *Beispiel* &amp; _Co_ ~~seit~~ 2020.<br># kein Titel<br>- kein Listenpunkt<br>' +
+                '1. keine Liste, 2) auch nicht<br>&gt; kein Zitat<br>eingerückt, `kein Code`<br>' +
+                // A bare URL becomes a link (GFM autolink), its visible text stays the same.
+                '[kein Link](<a href="https://example.com">https://example.com</a>) C:\\Pfad</p>\n<p>---</p>'
+        )
+    })
+
+    it('round-trips literal Markdown characters in the text of CMS rich text', () => {
+        const html = '<p>Erika arbeitet bei *Beispiel* &amp; _Co_ ~~seit~~ 2020 [Team].</p>'
+        expect(markdownToHtml(htmlToMarkdown(html))).toBe(html)
     })
 
     it('round-trips CMS rich text', () => {

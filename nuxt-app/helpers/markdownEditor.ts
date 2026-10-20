@@ -9,6 +9,8 @@ import { tags } from '@lezer/highlight'
 // `import()` from that component, so CodeMirror lands in its own chunk and is fetched on the one page
 // that shows the editor — keep it out of `helpers/index.ts`.
 
+const isHighSurrogate = (code: number) => code >= 0xd800 && code <= 0xdbff
+
 /**
  * Caps the document at `max` characters for what the user types, pastes or drops, the way `maxlength`
  * does on a textarea: a paste that would overflow is cut to fit rather than rejected.
@@ -37,9 +39,14 @@ export function maxLength(max: number): Extension {
         // Trim from the end, so the start of a paste is what survives.
         for (let i = changes.length - 1; i >= 0 && excess > 0; i--) {
             const change = changes[i]!
-            const cut = Math.min(excess, change.insert.length)
-            change.insert = change.insert.slice(0, change.insert.length - cut)
-            excess -= cut
+            let keep = change.insert.length - Math.min(excess, change.insert.length)
+            // The limit counts UTF-16 code units, like `maxlength` and the server; never keep only the
+            // first half of a surrogate pair (an emoji, say), drop the whole character instead.
+            if (keep > 0 && isHighSurrogate(change.insert.charCodeAt(keep - 1))) {
+                keep--
+            }
+            excess -= change.insert.length - keep
+            change.insert = change.insert.slice(0, keep)
         }
 
         const changeSet = tr.startState.changes(changes)
@@ -87,12 +94,14 @@ export interface MarkdownEditorOptions {
     onChange: (value: string) => void
     placeholder?: string
     maxLength?: number
+    /** Initial selection, e.g. the cursor of the textarea the editor replaces. Clamped to the document. */
+    selection?: { anchor: number; head: number }
     /** Attributes for the editable element, e.g. `aria-labelledby` or `aria-required`. */
     contentAttributes?: Record<string, string>
 }
 
 export function createMarkdownEditor(parent: HTMLElement, options: MarkdownEditorOptions): EditorView {
-    return new EditorView({
+    const view = new EditorView({
         parent,
         state: EditorState.create({
             doc: options.doc,
@@ -119,4 +128,14 @@ export function createMarkdownEditor(parent: HTMLElement, options: MarkdownEdito
             ],
         }),
     })
+
+    if (options.selection) {
+        // Clamped to what CodeMirror counts, so a stale offset cannot throw.
+        const clamp = (pos: number) => Math.min(Math.max(pos, 0), view.state.doc.length)
+        view.dispatch({
+            selection: EditorSelection.single(clamp(options.selection.anchor), clamp(options.selection.head)),
+        })
+    }
+
+    return view
 }

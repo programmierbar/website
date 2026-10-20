@@ -18,6 +18,15 @@ const turndown = new TurndownService({
     br: '',
 })
 
+// Turndown escapes most Markdown syntax in text, but not GFM strikethrough (`~x~` and `~~x~~`), which
+// `marked` renders as `<del>` and the sanitiser then unwraps, or `1)` lists. Without these, `~~` in a
+// bio would silently vanish on submit.
+turndown.escape = (text: string) =>
+    TurndownService.prototype.escape
+        .call(turndown, text)
+        .replace(/~/g, '\\~')
+        .replace(/^(\d+)\)/, '$1\\)')
+
 // Turndown's own list rule pads the marker to four columns (`-   Item`). Valid, but not what anyone
 // types, and the editor hint promises lists written with `- `. Nested content is indented by the
 // marker's width, which is what CommonMark needs to keep it inside the item.
@@ -46,8 +55,9 @@ turndown.addRule('listItem', {
  *
  * Every block — including blocks nested in other blocks and the items of nested lists — ends up on
  * its own line, so `<div>Intro<div>Details</div></div>` cannot run together into "IntroDetails".
- * A value without any tags is taken to be plain text already and passed through unchanged, rather
- * than having its line breaks collapsed and its `*` escaped as HTML whitespace rules would demand.
+ * A value without any tags is plain text: it keeps its line breaks (a newline is a `<br>` again on
+ * submit) rather than having them collapsed as HTML whitespace rules would demand, but its Markdown
+ * syntax is escaped line by line, so `*Beispiel*` stays literal asterisks as on the public pages.
  */
 export function htmlToMarkdown(html: string | null | undefined): string {
     if (!html?.trim()) {
@@ -55,7 +65,15 @@ export function htmlToMarkdown(html: string | null | undefined): string {
     }
 
     if (!/<[a-z!/]/i.test(html)) {
-        return html.replace(/\r\n?/g, '\n').trim()
+        return (
+            html
+                .replace(/\r\n?/g, '\n')
+                .trim()
+                .split('\n')
+                // Leading whitespace would turn a line into a code block; HTML collapses it anyway.
+                .map((line) => turndown.escape(line.trim()))
+                .join('\n')
+        )
     }
 
     return turndown.turndown(html).trim()
@@ -104,4 +122,20 @@ export function markdownToHtml(text: string | null | undefined): string {
     const html = markdown.parse(text.replace(/\r\n?/g, '\n'), { async: false })
 
     return DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR, ALLOWED_URI_REGEXP }).trim()
+}
+
+/**
+ * Whether a bio from `markdownToHtml` shows any text at all. An image, raw HTML or a few entities
+ * pass as non-empty Markdown but leave nothing (or only `<p></p>`) once converted and sanitised.
+ */
+export function hasVisibleText(html: string): boolean {
+    // Parsed rather than stripped with a regex, so entities such as `&nbsp;` count as what they are.
+    const text = DOMPurify.sanitize(html, {
+        ALLOWED_TAGS,
+        ALLOWED_ATTR,
+        ALLOWED_URI_REGEXP,
+        RETURN_DOM: true,
+    }).textContent
+    // `\s` covers the no-break space; zero-width characters are invisible too.
+    return !!text?.replace(/[\s\u200b-\u200d\u2060]/g, '')
 }
