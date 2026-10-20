@@ -21,11 +21,21 @@ const turndown = new TurndownService({
 // Turndown escapes most Markdown syntax in text, but not GFM strikethrough (`~x~` and `~~x~~`), which
 // `marked` renders as `<del>` and the sanitiser then unwraps, or `1)` lists. Without these, `~~` in a
 // bio would silently vanish on submit.
-turndown.escape = (text: string) =>
+const escapeMarkdown = (text: string) =>
     TurndownService.prototype.escape
         .call(turndown, text)
         .replace(/~/g, '\\~')
         .replace(/^(\d+)\)/, '$1\\)')
+
+// The text of rich text arrives decoded: `&lt;script&gt;` is `<script>` and `&amp;copy;` is `&copy;`.
+// Written into Markdown as is, `marked` would read the one as a tag (which the sanitiser deletes) and
+// pass the other through as an entity (which shows as ©). Only a `<` that would open a tag, comment
+// or autolink and an `&` that would form an entity get a backslash, so `Tom & Jerry <3` stays
+// readable in the editor.
+turndown.escape = (text: string) =>
+    escapeMarkdown(text)
+        .replace(/<(?=[a-z/!?])/gi, '\\<')
+        .replace(/&(?=#?\w+;)/g, '\\&')
 
 // Turndown's own list rule pads the marker to four columns (`-   Item`). Valid, but not what anyone
 // types, and the editor hint promises lists written with `- `. Nested content is indented by the
@@ -71,7 +81,8 @@ export function htmlToMarkdown(html: string | null | undefined): string {
                 .trim()
                 .split('\n')
                 // Leading whitespace would turn a line into a code block; HTML collapses it anyway.
-                .map((line) => turndown.escape(line.trim()))
+                // Entities stay as they are: the public pages render this value as HTML, too.
+                .map((line) => escapeMarkdown(line.trim()))
                 .join('\n')
         )
     }
@@ -105,9 +116,15 @@ const markdown = new Marked({
 
 // What a bio may contain. Anything else — raw HTML typed into the Markdown included — is removed;
 // DOMPurify drops `<script>`, `<iframe>` and friends with their content and unwraps the rest.
-const ALLOWED_TAGS = ['p', 'br', 'strong', 'b', 'em', 'i', 'a', 'ul', 'ol', 'li', 'code']
-const ALLOWED_ATTR = ['href']
-const ALLOWED_URI_REGEXP = /^(?:https?|mailto):/i
+// `ALLOWED_ATTR` alone still lets DOMPurify keep `aria-*` and `data-*`; `aria-hidden` would hide
+// the bio from screen readers.
+const SANITIZE_CONFIG = {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'a', 'ul', 'ol', 'li', 'code'],
+    ALLOWED_ATTR: ['href'],
+    ALLOWED_URI_REGEXP: /^(?:https?|mailto):/i,
+    ALLOW_ARIA_ATTR: false,
+    ALLOW_DATA_ATTR: false,
+}
 
 /**
  * Turns the Markdown a speaker typed into the sanitised HTML the CMS stores.
@@ -121,7 +138,7 @@ export function markdownToHtml(text: string | null | undefined): string {
 
     const html = markdown.parse(text.replace(/\r\n?/g, '\n'), { async: false })
 
-    return DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR, ALLOWED_URI_REGEXP }).trim()
+    return DOMPurify.sanitize(html, SANITIZE_CONFIG).trim()
 }
 
 /**
@@ -130,12 +147,7 @@ export function markdownToHtml(text: string | null | undefined): string {
  */
 export function hasVisibleText(html: string): boolean {
     // Parsed rather than stripped with a regex, so entities such as `&nbsp;` count as what they are.
-    const text = DOMPurify.sanitize(html, {
-        ALLOWED_TAGS,
-        ALLOWED_ATTR,
-        ALLOWED_URI_REGEXP,
-        RETURN_DOM: true,
-    }).textContent
+    const text = DOMPurify.sanitize(html, { ...SANITIZE_CONFIG, RETURN_DOM: true }).textContent
     // `\s` covers the no-break space; zero-width characters are invisible too.
     return !!text?.replace(/[\s\u200b-\u200d\u2060]/g, '')
 }

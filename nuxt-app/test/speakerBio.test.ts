@@ -124,6 +124,15 @@ describe('markdownToHtml', () => {
                 '<p><a href="https://example.com">x</a></p>'
             )
         })
+
+        it('drops aria-* and data-* attributes, which DOMPurify allows by default', () => {
+            // `aria-hidden` would hide the whole bio from screen readers.
+            expect(markdownToHtml('<p aria-hidden="true">Erika</p>')).toBe('<p>Erika</p>')
+            expect(markdownToHtml('<b data-foo="bar" aria-label="x">fett</b>')).toBe('<p><b>fett</b></p>')
+            expect(markdownToHtml('<a href="https://example.com" data-foo="bar">x</a>')).toBe(
+                '<p><a href="https://example.com">x</a></p>'
+            )
+        })
     })
 
     it('round-trips a plain-text CMS bio without turning its characters into formatting', () => {
@@ -149,6 +158,37 @@ describe('markdownToHtml', () => {
     it('round-trips literal Markdown characters in the text of CMS rich text', () => {
         const html = '<p>Erika arbeitet bei *Beispiel* &amp; _Co_ ~~seit~~ 2020 [Team].</p>'
         expect(markdownToHtml(htmlToMarkdown(html))).toBe(html)
+    })
+
+    it('round-trips encoded tags in CMS rich text as text', () => {
+        // Decoded, the text would be a real `<script>` in the Markdown, which the sanitiser deletes.
+        const html = '<p>Erika erklärt &lt;script&gt;alert(1)&lt;/script&gt; und &lt;b&gt;fett&lt;/b&gt;.</p>'
+        const md = htmlToMarkdown(html)
+        expect(md).toBe('Erika erklärt \\<script>alert(1)\\</script> und \\<b>fett\\</b>.')
+        expect(markdownToHtml(md)).toBe(html)
+        expect(markdownToHtml(htmlToMarkdown('<p>&lt;!-- kein Kommentar --&gt; &lt;?php ?&gt;</p>'))).toBe(
+            '<p>&lt;!-- kein Kommentar --&gt; &lt;?php ?&gt;</p>'
+        )
+    })
+
+    it('round-trips double-encoded entities in CMS rich text as text', () => {
+        const html = '<p>&amp;copy; &amp;amp; &amp;#169; &amp;#x41;</p>'
+        const md = htmlToMarkdown(html)
+        expect(md).toBe('\\&copy; \\&amp; \\&#169; \\&#x41;')
+        expect(markdownToHtml(md)).toBe(html)
+    })
+
+    it('keeps an ordinary & and < readable in the editor', () => {
+        const html = '<p>Tom &amp; Jerry &lt;3, a &lt; b, AT&amp;T, &amp;copy ohne Semikolon</p>'
+        const md = htmlToMarkdown(html)
+        expect(md).toBe('Tom & Jerry <3, a < b, AT&T, &copy ohne Semikolon')
+        expect(markdownToHtml(md)).toBe(html)
+    })
+
+    it('keeps entities in a plain-text CMS bio as the public pages show them', () => {
+        // Without tags the CMS value is still rendered as HTML, so `&copy;` shows as ©.
+        expect(htmlToMarkdown('&copy; 2020 Tom & Jerry <3')).toBe('&copy; 2020 Tom & Jerry <3')
+        expect(markdownToHtml(htmlToMarkdown('&copy; 2020 Tom & Jerry <3'))).toBe('<p>© 2020 Tom &amp; Jerry &lt;3</p>')
     })
 
     it('round-trips CMS rich text', () => {
