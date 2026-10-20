@@ -2502,14 +2502,64 @@ browser-support decision nobody made.
       declared at the 3.7.2 already installed, and the plugin calls `load()` with the same options.
       In a browser, both builds load the same script with the same attributes and attempt the same
       beacons (blocked in the test, so nothing reached production analytics).
-- [ ] ⚠️ **Client-side navigations are counted as page views of the previous page, twice.** Found
-      while verifying the Fathom swap, and identical on `main`. After clicking from `/` to `/podcast`,
-      Fathom sends **two** beacons, both with `p=/`, although `location.pathname` and the canonical
-      link already read `/podcast` a moment later. The likely cause is `canonical: true`: Fathom reads
-      the canonical link when the route changes, before Nuxt updates the head. So in-site navigations
-      are probably attributed to the page just left. Confirm against the Fathom dashboard before
-      fixing; the fix is probably `canonical: false`, or a manual `trackPageview()` after the head
-      updates.
+- [x] ✅ **Fixed 2026-10-20 with `canonical: false`** in `plugins/fathom.client.ts`. The diagnosis
+      below was half right. The cause was `canonical: true`, but nothing was counted twice.
+
+      **What the script does.** Our Fathom script (fetched from the custom domain and read) patches
+      `history.pushState`. On each call it sends a departure ping for the page being left (`dp=1`, with
+      the time spent) and then a page view. With `canonical: true` the page view takes its path from
+      `link[rel=canonical]`. The router calls `pushState` before Nuxt updates the head, so the canonical
+      link still names the previous page.
+
+      **Reproduced** in a production build, with every request to the Fathom domain intercepted and
+      answered locally, so nothing reached the real analytics:
+
+      | step | actually on | page view sent, before | after the fix |
+      | --- | --- | --- | --- |
+      | click → `/podcast` | `/podcast` | `/` | `/podcast` |
+      | click → episode | episode | `/podcast` | episode |
+      | back | `/podcast` | episode | `/podcast` |
+      | click → `/meetup` | `/meetup` | `/podcast` | `/meetup` |
+
+      The departure pings carried the same stale path, so time on page was misattributed too. Entry pages
+      were counted correctly. Every page reached by a click was counted only when the visitor left it,
+      under the previous page's name, and the last page of a session was never counted. The "two
+      beacons" were a departure ping and a page view, which is correct behaviour.
+
+      **Nothing is lost by turning it off.** Every page builds its canonical as `WEBSITE_URL` plus
+      `route.path` or its own fixed path, so canonical and URL never differ. Production serves
+      `www.programmier.bar` (the apex 308-redirects there), so the reported hostname is unchanged.
+
+      **Turning it off exposed a second problem, fixed with `includedDomains`**, set from
+      `FATHOM_INCLUDED_DOMAINS` in `config.ts` (`['www.programmier.bar']`). Review (#279) asked to derive
+      it from `WEBSITE_URL` instead. That would be wrong: `WEBSITE_URL` is set per environment, and
+      `.env.example` sets it to `http://localhost:3000`, so a derived list would track exactly the local
+      runs it exists to exclude. The constant is explicit and says why.
+      The plugin loads in every environment, and `WEBSITE_URL` names production on Vercel previews too
+      (a preview renders `<link rel="canonical" href="https://www.programmier.bar/podcast">`). So with
+      `canonical: true`, previews and local runs had reported their page views **as production**,
+      hostname included, indistinguishable from real traffic. Without the canonical, they would have
+      reported their own hostnames into the same Fathom site instead. The script's
+      `data-included-domains`, which `fathom-client` sets from `includedDomains`, makes it send nothing
+      on any other host. Verified in both directions in a production build:
+
+      - With `localhost` temporarily added to the list, the script tag carries
+        `data-included-domains="www.programmier.bar,localhost"`, and every step of the table above sends
+        the correct path.
+      - With the final list, the same five steps send **nothing**, including the initial page view.
+
+      Whether the Fathom site itself has allowed domains configured server-side was not checked. It
+      would only have caught the second problem, never the first, because the previews claimed the
+      production hostname. **Not verifiable locally:** that production still sends. After deploying, a
+      network check on `www.programmier.bar` should show one page view per navigation.
+
+      **Historical data:** `canonical: true` dates from 2022-05-05, and from the Nuxt 3 migration
+      (2023-02-10) in its current form. Per-page numbers for in-site navigation are unreliable for at
+      least that period.
+
+      ~~**Client-side navigations are counted as page views of the previous page, twice.**~~ Found while
+      verifying the Fathom swap, and identical on `main`. After clicking from `/` to `/podcast`, Fathom
+      sends **two** beacons, both with `p=/`. The likely cause is `canonical: true`.
 - [ ] 💳 **Move the Stripe API version `2026-02-25.clover` → `2026-07-29.dahlia`.** One line in
       `server/utils/stripe.ts`, and it removes the cast there along with the types-describe-dahlia /
       wire-speaks-clover mismatch the pin introduced.

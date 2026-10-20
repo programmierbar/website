@@ -26,6 +26,11 @@ export const BUZZSPROUT_TRACKING_URL = 'https://op3.dev/e/https://www.podtrac.co
 // so different listeners can share it — hence a time window rather than one vote per hash forever.
 export const VOTE_COOLDOWN_MINUTES = 10
 
+// Fathom only tracks on these hostnames, so previews and local runs stay out of the production site.
+// Deliberately not derived from WEBSITE_URL: that is set per environment (`.env.example` uses
+// localhost), so deriving it would track exactly the runs this list exists to exclude.
+export const FATHOM_INCLUDED_DOMAINS = ['www.programmier.bar']
+
 // programmier.bar
 export const WEBSITE_URL = process.env.WEBSITE_URL || 'https://www.programmier.bar'
 export const WEBSITE_NAME = 'programmier.bar'
