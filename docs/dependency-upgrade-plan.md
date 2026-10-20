@@ -2530,7 +2530,11 @@ browser-support decision nobody made.
       `route.path` or its own fixed path, so canonical and URL never differ. Production serves
       `www.programmier.bar` (the apex 308-redirects there), so the reported hostname is unchanged.
 
-      **Turning it off exposed a second problem, fixed with `includedDomains: ['www.programmier.bar']`.**
+      **Turning it off exposed a second problem, fixed with `includedDomains`**, set from
+      `FATHOM_INCLUDED_DOMAINS` in `config.ts` (`['www.programmier.bar']`). Review (#279) asked to derive
+      it from `WEBSITE_URL` instead. That would be wrong: `WEBSITE_URL` is set per environment, and
+      `.env.example` sets it to `http://localhost:3000`, so a derived list would track exactly the local
+      runs it exists to exclude. The constant is explicit and says why.
       The plugin loads in every environment, and `WEBSITE_URL` names production on Vercel previews too
       (a preview renders `<link rel="canonical" href="https://www.programmier.bar/podcast">`). So with
       `canonical: true`, previews and local runs had reported their page views **as production**,
