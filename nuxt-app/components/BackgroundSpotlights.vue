@@ -13,7 +13,6 @@
 <script setup lang="ts">
 import backgroundSpotlightImage from '~/assets/images/spotlights.png'
 import BackgroundSpotlight from '~/assets/images/spotlights.svg'
-import { defineProps } from 'vue'
 
 const props = defineProps<{
     position: string
