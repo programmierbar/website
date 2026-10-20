@@ -90,8 +90,17 @@ export async function saveSpeakerProfileUpdate(
 
 /** Stages the website reports to the CMS when a profile update cannot be saved. */
 export const SPEAKER_PROFILE_UPDATE_FAILURE_STAGE = {
+    /** The Content Version could not be created or saved; nothing was stored. */
     saveVersion: 'save_version',
+    /** The version was saved, but marking the submission done failed (status and token unchanged). */
+    complete: 'complete',
 } as const
+
+/** Context for the team, since the CMS's Slack text is the same for every stage. */
+const FAILURE_STAGE_CONTEXT: Record<string, string> = {
+    [SPEAKER_PROFILE_UPDATE_FAILURE_STAGE.complete]:
+        'Die Content Version ist gespeichert, aber die Einreichung konnte nicht abgeschlossen werden',
+}
 
 const FAILURE_SUMMARY_MAX_LENGTH = 300
 
@@ -125,7 +134,12 @@ export async function reportSpeakerProfileUpdateFailure(
     err: unknown
 ): Promise<void> {
     try {
-        await directus.reportSpeakerProfileUpdateFailure(speakerId, { stage, message: summarizeError(err) })
+        const context = FAILURE_STAGE_CONTEXT[stage]
+        const summary = summarizeError(err)
+        await directus.reportSpeakerProfileUpdateFailure(speakerId, {
+            stage,
+            message: context ? `${context}: ${summary}` : summary,
+        })
     } catch (reportErr) {
         console.error('Speaker portal: could not report the failed profile update to the CMS:', reportErr)
     }

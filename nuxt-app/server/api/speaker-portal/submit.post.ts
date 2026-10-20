@@ -206,7 +206,19 @@ export default defineEventHandler(async (event) => {
                 )
                 throw err
             }
-            await directus.updateSpeaker(speaker.id, completion)
+            try {
+                await directus.updateSpeaker(speaker.id, completion)
+            } catch (err) {
+                // The changes are in the version, but the speaker stays `update_requested` and gets no
+                // confirmation: without a report the saved version could go unnoticed.
+                await reportSpeakerProfileUpdateFailure(
+                    directus,
+                    speaker.id,
+                    SPEAKER_PROFILE_UPDATE_FAILURE_STAGE.complete,
+                    err
+                )
+                throw err
+            }
         } else {
             await directus.updateSpeaker(speaker.id, { ...profile, ...completion })
         }

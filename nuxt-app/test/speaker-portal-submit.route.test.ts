@@ -315,6 +315,44 @@ describe('POST /api/speaker-portal/submit', () => {
             expect(directus.updateSpeaker).not.toHaveBeenCalled()
         })
 
+        it('reports a failed completion write after the version was saved, same 500 for the speaker', async () => {
+            directus.findContentVersion.mockResolvedValue(null)
+            directus.createContentVersion.mockResolvedValue({ id: 'v1', key: 'profile-update', name: 'x' })
+            directus.updateSpeaker.mockRejectedValue(new Error('SQLITE_BUSY: database is locked'))
+
+            const error = await invoke([part('token', 't'), part('data', JSON.stringify(validData))]).catch(
+                (e: any) => e
+            )
+
+            expect(error).toMatchObject({
+                statusCode: 500,
+                message: 'Beim Speichern deiner Informationen ist leider ein Fehler aufgetreten.',
+            })
+            expect(directus.saveToContentVersion).toHaveBeenCalledWith('v1', expect.any(Object))
+            expect(directus.reportSpeakerProfileUpdateFailure).toHaveBeenCalledTimes(1)
+            expect(directus.reportSpeakerProfileUpdateFailure).toHaveBeenCalledWith('s1', {
+                stage: 'complete',
+                message: expect.stringMatching(/Content Version ist gespeichert.*SQLITE_BUSY/),
+            })
+        })
+
+        it('a failing report after a failed completion write does not change the answer', async () => {
+            directus.findContentVersion.mockResolvedValue(null)
+            directus.createContentVersion.mockResolvedValue({ id: 'v1', key: 'profile-update', name: 'x' })
+            directus.updateSpeaker.mockRejectedValue(new Error('timeout'))
+            directus.reportSpeakerProfileUpdateFailure.mockRejectedValue(new Error('CMS unreachable'))
+
+            const error = await invoke([part('token', 't'), part('data', JSON.stringify(validData))]).catch(
+                (e: any) => e
+            )
+
+            expect(error).toMatchObject({
+                statusCode: 500,
+                message: 'Beim Speichern deiner Informationen ist leider ein Fehler aufgetreten.',
+            })
+            expect(console.error).toHaveBeenCalledWith(expect.stringContaining('could not report'), expect.any(Error))
+        })
+
         it('does not report anything when the version was saved', async () => {
             directus.findContentVersion.mockResolvedValue(null)
             directus.createContentVersion.mockResolvedValue({ id: 'v1', key: 'profile-update', name: 'x' })
