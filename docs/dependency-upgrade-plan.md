@@ -45,6 +45,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | [Patch and minor refresh](#patch-and-minor-refresh--done-2026-09-25) — audit back from 10 to **0** | ✅ Done (2026-09-25) |
 | — | [Pinia workaround removed](#waiting-on-upstream-the-pinia-4-export-map) — fixed upstream in 4.0.3 | ✅ Done (2026-09-25) |
 | — | [Second patch and minor refresh](#second-patch-and-minor-refresh--done-2026-10-20) — audit 28 → 18, **no criticals**; the rest has no in-range fix | ✅ Done (2026-10-20) |
+| — | [`nodemailer` 9.1.1 → 10.1.7](#nodemailer-911--1017--done-2026-10-20) — last audit finding that reached production; `@types/nodemailer` dropped | ✅ Done (2026-10-20) |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
 Each phase's own write-up ends with what it deliberately left behind. Those are also gathered into
@@ -2032,6 +2033,56 @@ just the latest Node.
 - Smoke suite **18/18** against `NODE_ENV=production node .output/server/index.mjs`.
 - `nuxt dev` starts and serves `/podcast` with 200.
 
+## `nodemailer` 9.1.1 → 10.1.7 — done 2026-10-20
+
+The follow-up the refresh left behind. 10.x is the only line that fixes five advisories against 9.1.1:
+SMTP credential disclosure through a process-wide DNS cache that reused the TLS `servername`, three
+address-parser DoS bugs, and a malformed envelope recipient. It was the **last audit finding that
+reached production**, through the contact form at `/api/email`. Audit 18 → 17. Everything left is
+build or dev tooling with no upstream fix, or Tailwind 3.
+
+**The only declared breaking change is "Node.js 20 or newer"**, which our 24.15 floor already meets.
+The changelog's real substance is that 10.0.0 is a **rewrite in TypeScript with separate ESM and CJS
+builds**. That is the kind of change that passes `npm test` and then breaks once bundled, so the checks
+below run against the copy Nitro vendors into `.output`, not against `node_modules`.
+
+**`@types/nodemailer` removed.** 10.x ships its own declarations next to each build, and TypeScript
+prefers those to `@types`, so the DefinitelyTyped package was installed but no longer read. To confirm
+the bundled types are enforced rather than degrading to `any`, `filename: 123` and `port: { bogus: true }`
+were tried. Both are rejected. One difference from 8.x's types: `port` is now `number | string`, so a
+string port type-checks. `sendEmail` passes a `Number(...)` anyway.
+
+**No source change.** `server/utils/sendEmail.ts` is untouched. Only the manifest and lockfile move.
+
+### Verified against the deployed artifact
+
+- **The vendored module loads.** `.output/server/node_modules/nodemailer` is 10.1.7, and the
+  `/api/email` chunk imports it with `import nodemailer from 'nodemailer'`, which resolves to the ESM
+  build. A production server answers an empty `POST /api/email` with the validation 400. The route
+  chunk imports nodemailer at the top, so the 400 also shows that the module loaded.
+- **TLS against the real host is unchanged.** Same probe as for 9.x: `transporter.verify()` against
+  `smtp.gmail.com:465`, `secure: true`, with fake credentials. 9.1.1 and 10.1.7 both fail with
+  `EAUTH` at `AUTH PLAIN`, so the handshake succeeds on both.
+- **The message is byte-identical.** A mail shaped like the ones `sendEmail` sends (umlaut display
+  name, a long UTF-8 subject, HTML with `€` and a 200-character line, a base64 PNG attachment with a
+  `cid`) was rendered without network through `streamTransport`, with a fixed `Message-ID` and `Date`.
+  After masking the random multipart boundaries, 9.1.1 and 10.1.7 produce **identical output**.
+  Encoded-word headers, quoted-printable wrapping and the attachment part all match.
+
+**Still not exercised:** an end-to-end send. As for 9.x, it would mean real mail to a real inbox,
+past the Gemini spam filter. The probes above cover the TLS, composition and bundling surface without
+it.
+
+| gate | before | after |
+| --- | --- | --- |
+| `npm audit` | 18 (14 high, 4 moderate) | **17** (13 high, 4 moderate), nodemailer gone |
+| `prettier:check` | clean | clean |
+| `lint` | 0 errors, 156 warnings | 0 errors, 156 warnings |
+| `test` | 306/306 | 306/306 |
+| ratchet | 227 | 227 |
+| `build` | exit 0 | exit 0, no new warnings |
+| smoke | 18/18 | 18/18 |
+
 ## Phase 6 — Deliberately deferred
 
 Not blocked by EOL. Do **not** fold these into the phases above.
@@ -2530,7 +2581,9 @@ browser-support decision nobody made.
       in CI *and* in Vercel's build log. Verified no pnpm lockfile or reference exists anywhere in the
       repo before deleting.
 
-- [ ] 🔒 **`nodemailer` 9.1.1 → 10.x.** Five advisories, all fixed only in 10.x: SMTP credential
+- [x] ✅ **Done 2026-10-20**, see [the write-up](#nodemailer-911--1017--done-2026-10-20).
+
+      ~~**`nodemailer` 9.1.1 → 10.x.**~~ Five advisories, all fixed only in 10.x: SMTP credential
       disclosure through a process-wide DNS cache, three address-parser DoS bugs and a malformed-envelope
       bug. This is the only remaining audit finding that **reaches production**, through the contact
       form at `/api/email`. Its own PR, the same way 8 → 9 was done in Phase 5: read the changelog, then
