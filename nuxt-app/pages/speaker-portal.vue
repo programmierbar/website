@@ -23,7 +23,11 @@
             <!-- Success State -->
             <div v-else-if="submitted" class="mt-16">
                 <SectionHeading element="h1">Vielen Dank!</SectionHeading>
-                <p class="mt-8 text-xl text-white">
+                <p v-if="mode === 'update'" class="mt-8 text-xl text-white">
+                    Deine Änderungen sind bei uns angekommen. Wir schauen sie uns an und übernehmen sie dann auf unsere
+                    Website.
+                </p>
+                <p v-else class="mt-8 text-xl text-white">
                     Deine Informationen wurden erfolgreich übermittelt. Wir melden uns bei dir, sobald wir alles geprüft
                     haben.
                 </p>
@@ -33,12 +37,26 @@
             <div v-else-if="speaker">
                 <SectionHeading class="mt-8 md:mt-0" element="h1">Speaker Portal</SectionHeading>
 
-                <p class="mt-8 text-lg text-white md:text-xl">
-                    Hallo {{ speaker.first_name }}! Bitte fülle die folgenden Informationen aus, damit wir dich optimal
-                    auf unserer Website präsentieren können.
-                </p>
+                <template v-if="mode === 'update'">
+                    <p class="mt-8 text-lg text-white md:text-xl">
+                        Hallo {{ speaker.first_name }}! Bitte prüfe dein Profil und passe an, was nicht mehr stimmt.
+                    </p>
+                    <p class="mt-4 text-base text-white/60">
+                        Wir haben alles schon so eingetragen, wie es gerade auf unserer Website steht. Deine Änderungen
+                        schauen wir uns an, bevor sie online gehen. Wenn alles noch passt, schick das Formular einfach
+                        unverändert ab.
+                    </p>
+                </template>
+                <template v-else>
+                    <p class="mt-8 text-lg text-white md:text-xl">
+                        Hallo {{ speaker.first_name }}! Bitte fülle die folgenden Informationen aus, damit wir dich
+                        optimal auf unserer Website präsentieren können.
+                    </p>
 
-                <p v-if="deadline" class="mt-4 text-base text-lime">Bitte bis {{ formatDate(deadline) }} ausfüllen.</p>
+                    <p v-if="deadline" class="mt-4 text-base text-lime">
+                        Bitte bis {{ formatDate(deadline) }} ausfüllen.
+                    </p>
+                </template>
 
                 <form class="mt-12 space-y-8" :class="formState" novalidate @submit.prevent="submitForm">
                     <!-- Personal Info Section -->
@@ -232,9 +250,13 @@
                         <div class="grid gap-8 md:grid-cols-2">
                             <!-- Profile Image -->
                             <div>
-                                <label class="form-label">Profilbild *</label>
+                                <label class="form-label">Profilbild{{ speaker.profile_image ? '' : ' *' }}</label>
                                 <p class="mb-4 text-sm text-white/60">
                                     Ein professionelles Portrait. Mindestens 800x800 Pixel, JPG oder PNG.
+                                    <template v-if="speaker.profile_image">
+                                        Wir haben schon eins von dir. Lade nur ein neues hoch, wenn du es ersetzen
+                                        möchtest.
+                                    </template>
                                 </p>
                                 <div class="relative">
                                     <input
@@ -254,6 +276,12 @@
                                             class="h-full w-full object-contain"
                                             alt="Profile preview"
                                         />
+                                        <img
+                                            v-else-if="speaker.profile_image"
+                                            :src="existingImageUrl(speaker.profile_image)"
+                                            class="h-full w-full object-contain"
+                                            alt="Dein aktuelles Profilbild"
+                                        />
                                         <span v-else class="text-white/60">Klicken zum Hochladen</span>
                                     </div>
                                 </div>
@@ -261,9 +289,15 @@
 
                             <!-- Action Image -->
                             <div>
-                                <label class="form-label">Action Shot / Candid Foto *</label>
+                                <label class="form-label">
+                                    Action Shot / Candid Foto{{ speaker.event_image ? '' : ' *' }}
+                                </label>
                                 <p class="mb-4 text-sm text-white/60">
                                     Ein lockeres Foto bei der Arbeit oder einer Aktivität. Mindestens 800x800 Pixel.
+                                    <template v-if="speaker.event_image">
+                                        Wir haben schon eins von dir. Lade nur ein neues hoch, wenn du es ersetzen
+                                        möchtest.
+                                    </template>
                                 </p>
                                 <div class="relative">
                                     <input
@@ -282,6 +316,12 @@
                                             :src="actionImagePreview"
                                             class="h-full w-full object-contain"
                                             alt="Action preview"
+                                        />
+                                        <img
+                                            v-else-if="speaker.event_image"
+                                            :src="existingImageUrl(speaker.event_image)"
+                                            class="h-full w-full object-contain"
+                                            alt="Dein aktueller Action Shot"
                                         />
                                         <span v-else class="text-white/60">Klicken zum Hochladen</span>
                                     </div>
@@ -318,6 +358,7 @@
 <script setup lang="ts">
 import { getMetaInfo } from '~/helpers'
 import { downscaleImage, fitImagesIntoBudget, MAX_IMAGE_UPLOAD_BYTES } from '~/helpers/downscaleImage'
+import { getAssetUrl } from '~/helpers/getAssetUrl'
 import { formatOccupation, parseOccupation } from '~/helpers/speakerOccupation'
 import {
     getSpeakerPortalErrorMessage,
@@ -338,6 +379,8 @@ const error = ref<string | null>(null)
 const submitted = ref(false)
 const speaker = ref<any>(null)
 const deadline = ref<string | null>(null)
+// 'update': an existing speaker checks their profile; the CMS reviews the changes before they go live.
+const mode = ref<'initial' | 'update'>('initial')
 const formState = ref<'pending' | 'submitting' | 'error'>('pending')
 const bioEditor = ref<{ focus: () => void } | null>(null)
 const formError = ref('')
@@ -392,11 +435,12 @@ onMounted(async () => {
     }
 
     try {
-        const data = await requestSpeakerPortal<{ speaker: any }>(
+        const data = await requestSpeakerPortal<{ mode?: 'initial' | 'update'; speaker: any }>(
             `/api/speaker-portal/validate?token=${encodeURIComponent(token)}`
         )
 
         speaker.value = data.speaker
+        mode.value = data.mode === 'update' ? 'update' : 'initial'
         deadline.value = data.speaker.portal_submission_deadline
 
         // Pre-fill form with existing data
@@ -423,6 +467,11 @@ onMounted(async () => {
         loading.value = false
     }
 })
+
+// The image the speaker already has, shown until they pick a new one.
+function existingImageUrl(file: string | { id: string }): string {
+    return getAssetUrl(file, { queryParams: { width: 600, fit: 'inside' } })
+}
 
 function formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('de-DE', {
