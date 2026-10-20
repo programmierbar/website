@@ -3,6 +3,7 @@ import { meetupsBlockMjml } from './blocks/meetups.ts'
 import { podcastsBlockMjml } from './blocks/podcasts.ts'
 import { textBlockMjml } from './blocks/text.ts'
 import { escapeHtml } from './escape.ts'
+import { createWebsiteLinker, type WebsiteLinker } from './links.ts'
 import { sortBySortField } from './sort.ts'
 import {
     MEETUPS_BLOCK_COLLECTION,
@@ -20,7 +21,7 @@ import {
 
 const UNSUBSCRIBE_PLACEHOLDER = '[Abmeldelink wird beim Versand eingesetzt]'
 
-function blockMjml(block: NewsletterIssueBlock, options: RenderOptions, report: RenderReport): string {
+function blockMjml(block: NewsletterIssueBlock, link: WebsiteLinker, report: RenderReport): string {
     const item = block.item
     if (!item || typeof item !== 'object') {
         // The junction row points at a deleted block, or the relation was not expanded.
@@ -30,11 +31,11 @@ function blockMjml(block: NewsletterIssueBlock, options: RenderOptions, report: 
 
     switch (block.collection) {
         case TEXT_BLOCK_COLLECTION:
-            return textBlockMjml(item as NewsletterTextBlock)
+            return textBlockMjml(item as NewsletterTextBlock, report)
         case PODCASTS_BLOCK_COLLECTION:
-            return podcastsBlockMjml(item as NewsletterPodcastsBlock, options.websiteUrl, report)
+            return podcastsBlockMjml(item as NewsletterPodcastsBlock, link, report)
         case MEETUPS_BLOCK_COLLECTION:
-            return meetupsBlockMjml(item as NewsletterMeetupsBlock, options.websiteUrl, report)
+            return meetupsBlockMjml(item as NewsletterMeetupsBlock, link, report)
         default:
             report.warnings.push(`Unbekannter Blocktyp '${block.collection}' übersprungen`)
             return ''
@@ -71,13 +72,23 @@ export function buildIssueMjml(
     options: RenderOptions,
     report: RenderReport = { warnings: [], hidden: [] }
 ): string {
+    return buildIssue(issue, options, report).mjml
+}
+
+function buildIssue(
+    issue: NewsletterIssue,
+    options: RenderOptions,
+    report: RenderReport
+): { mjml: string; renderedBlocks: number } {
     const subject = issue.subject?.trim() ?? ''
     const preheader = issue.preheader?.trim() ?? ''
-    const blocks = sortBySortField(issue.blocks ?? [])
-        .map((block) => blockMjml(block, options, report))
-        .join('')
+    const link = createWebsiteLinker(options.websiteUrl, subject)
+    const rendered = sortBySortField(issue.blocks ?? [])
+        .map((block) => blockMjml(block, link, report))
+        .filter((mjml) => mjml !== '')
+    const blocks = rendered.join('')
 
-    return `<mjml lang="de">
+    const mjml = `<mjml lang="de">
   <mj-head>
     <mj-title>${escapeHtml(subject)}</mj-title>
     ${preheader ? `<mj-preview>${escapeHtml(preheader)}</mj-preview>` : ''}
@@ -95,6 +106,7 @@ export function buildIssueMjml(
     ${footerMjml(options.unsubscribeUrl)}
   </mj-body>
 </mjml>`
+    return { mjml, renderedBlocks: rendered.length }
 }
 
 /**
@@ -107,7 +119,7 @@ export function buildIssueMjml(
  */
 export async function renderNewsletterIssue(issue: NewsletterIssue, options: RenderOptions): Promise<RenderResult> {
     const report: RenderReport = { warnings: [], hidden: [] }
-    const source = buildIssueMjml(issue, options, report)
+    const { mjml: source, renderedBlocks } = buildIssue(issue, options, report)
 
     const { html, errors } = await mjml2html(source, {
         validationLevel: 'soft',
@@ -119,5 +131,5 @@ export async function renderNewsletterIssue(issue: NewsletterIssue, options: Ren
         report.warnings.push(`MJML: ${error.formattedMessage ?? error.message}`)
     }
 
-    return { html, warnings: report.warnings, hidden: report.hidden }
+    return { html, warnings: report.warnings, hidden: report.hidden, renderedBlocks }
 }

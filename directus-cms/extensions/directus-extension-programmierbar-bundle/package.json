@@ -176,6 +176,21 @@
                 "type": "interface",
                 "name": "newsletter-actions",
                 "source": "src/newsletter-actions/interface.ts"
+            },
+            {
+                "type": "hook",
+                "name": "newsletter-scheduling",
+                "source": "src/newsletter-scheduling/index.ts"
+            },
+            {
+                "type": "hook",
+                "name": "newsletter-mass-send",
+                "source": "src/newsletter-mass-send/index.ts"
+            },
+            {
+                "type": "endpoint",
+                "name": "brevo-webhook",
+                "source": "src/brevo-webhook/index.ts"
             }
         ],
         "host": "^10.10.0"

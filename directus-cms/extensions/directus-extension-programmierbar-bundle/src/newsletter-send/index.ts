@@ -1,5 +1,6 @@
 import { defineEndpoint } from '@directus/extensions-sdk'
 import { checkAuthenticated } from '../newsletter/access.ts'
+import { buildNewsletterTrackingHeaders } from '../newsletter/brevoTracking.ts'
 import { IssueAccessError, loadNewsletterIssueForUser } from '../newsletter/loadIssue.ts'
 import { renderNewsletterIssue } from '../newsletter/render/index.ts'
 import { buildListUnsubscribeHeaders, buildUnsubscribeUrl, TEST_UNSUBSCRIBE_TOKEN } from '../newsletter/unsubscribe.ts'
@@ -103,7 +104,10 @@ export default defineEndpoint((router, context) => {
                     to: recipient,
                     subject: `${TEST_SUBJECT_PREFIX}${subject}`,
                     html,
-                    headers: buildListUnsubscribeHeaders(unsubscribeUrl),
+                    headers: {
+                        ...buildListUnsubscribeHeaders(unsubscribeUrl),
+                        ...buildNewsletterTrackingHeaders('test'),
+                    },
                 },
                 { logger, services, getSchema }
             )

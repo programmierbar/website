@@ -96,6 +96,28 @@ describe('POST /api/newsletter/unsubscribe', () => {
         expect(unsubscribeNewsletterSubscriber).not.toHaveBeenCalled()
     })
 
+    // Set by the CMS's Brevo webhook. Rewriting them to `unsubscribed` would let a
+    // later signup reactivate a dead address or a complainer.
+    it.each(['bounced', 'complained'])(
+        'treats a %s subscriber as already opted out, without writing',
+        async (status) => {
+            readNewsletterSubscriberByUnsubscribeToken.mockResolvedValue({ id: 'sub_1', status })
+            const result = await invoke({ token: GOOD_TOKEN })
+            expect(result).toEqual({ status: 'already_unsubscribed' })
+            expect(unsubscribeNewsletterSubscriber).not.toHaveBeenCalled()
+        }
+    )
+
+    it('reports already_unsubscribed when a bounce landed between read and write', async () => {
+        readNewsletterSubscriberByUnsubscribeToken
+            .mockResolvedValueOnce({ id: 'sub_1', status: 'confirmed' })
+            .mockResolvedValueOnce({ id: 'sub_1', status: 'bounced' })
+        unsubscribeNewsletterSubscriber.mockResolvedValue(false)
+
+        const result = await invoke({ token: GOOD_TOKEN })
+        expect(result).toEqual({ status: 'already_unsubscribed' })
+    })
+
     it('reports already_unsubscribed when a concurrent request got there first', async () => {
         readNewsletterSubscriberByUnsubscribeToken
             .mockResolvedValueOnce({ id: 'sub_1', status: 'confirmed' })
