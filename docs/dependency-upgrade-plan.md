@@ -2688,7 +2688,40 @@ browser-support decision nobody made.
       ~~**Hydration mismatch on `/kommt-bald` and `/api/cocktails`.**~~ Both pages logged
       `Hydration completed but contains mismatches.` in a local production build, identically on
       `main`.
-- [ ] ⚠️ **Server-only helpers live in the shared `helpers/` barrel, and the fix is not a one-liner.**
+- [x] ✅ **Moved both to `server/utils/`** — 2026-10-20.
+
+      - **`ipProcessing`**: the vote route now hashes the IP once and passes only the hash.
+        `createRating` stores it as given, and `getRecentRatingByIP` became
+        `getRecentRatingByIPHash(podcast, ipHash, since)`. The raw IP no longer reaches the shared
+        composable. With static `node:crypto` and `node:net` imports, the function is synchronous, and
+        the dynamic-import workaround is gone.
+      - **`aiSpamFilter`**: moved unchanged, except that `ResponseSchema` went to
+        `server/utils/schema.ts` as `SpamFilterResponseSchema`. Exported from `server/utils/` under
+        its old, generic name, it would have become a server-wide auto-import.
+
+      **Hashes are byte-identical**, which matters because stored ratings carry them and the cooldown
+      matches on them. Before the move, 13 inputs were hashed with the old helper (IPv4, IPv6
+      compressed and full, `::1`, `::ffff:`, a zone index, whitespace, and three invalid inputs), and
+      the moved helper gives the same output for all of them. `test/ipProcessing.test.ts` now pins
+      those values, and the vote-route test asserts the exact hash, not just "some hash". A negative
+      control confirmed it: zeroing one octet differently made both hash-dependent route tests fail.
+
+      **Verified beyond the gates:** both Vite warnings about `node:crypto` and `node:net` being
+      externalized for the browser are gone. The client bundle contains none of the moved code (no
+      `anonymizeAndHashIP`, no Gemini SDK). `/api/vote` and `/api/email` load in a production
+      server.
+
+- [ ] ⚠️ **IPv4-mapped IPv6 addresses all hash to the same value.** Found while pinning the hashes
+      above. `anonymizeAndHashIP` zeroes the last four groups of an IPv6 address, and in
+      `::ffff:a.b.c.d` those groups *are* the IPv4 address. So every IPv4-mapped address hashes like
+      `::1`, and the vote cooldown would treat all such voters as one person. **Probably not reachable
+      in production:** the route reads `x-forwarded-for`, which Vercel overwrites with the client's
+      public IP, so the `::ffff:` form only arrives through the `remoteAddress` fallback, which is used
+      locally. Not checked against stored ratings. The fix is to unwrap `::ffff:` to plain IPv4 before
+      anonymizing, but that **changes the hash for those inputs**, so it is deliberately left out of
+      the move, which had to keep every hash identical.
+
+      ~~**Server-only helpers live in the shared `helpers/` barrel, and the fix is not a one-liner.**~~
       The earlier version of this item said "server code should import it directly". That was wrong: the
       importer of `ipProcessing` is `composables/useDirectus.ts`, shared client/server code. Checked
       2026-10-20:
