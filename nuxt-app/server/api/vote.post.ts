@@ -1,10 +1,12 @@
 import { useDirectus } from '~/composables/useDirectus'
+import { VOTE_COOLDOWN_MINUTES } from '~/config'
+import { isbot } from 'isbot'
 import { VoteSchema } from '../utils'
 
 // The only path that writes a vote. The GET /podcast/[slug]/[up|down] links that
 // ship in RSS show notes no longer write — they redirect to the podcast page,
-// whose client-side script POSTs here. Crawlers follow the redirect but don't run
-// JS, so they never reach this handler.
+// whose client-side script POSTs here. Most crawlers follow the redirect but don't
+// run JS; those that do (e.g. meta-externalagent) are filtered by user agent below.
 export default defineEventHandler(async (event) => {
     const rawBody = await readBody(event)
 
@@ -17,6 +19,14 @@ export default defineEventHandler(async (event) => {
     }
     const { slug, direction } = parseResult.data
 
+    const userAgent = event.node.req.headers['user-agent']
+
+    // Crawlers and requests without a user agent get the normal success answer,
+    // but their vote is not stored.
+    if (!userAgent || isbot(userAgent)) {
+        return { id: undefined }
+    }
+
     const directus = useDirectus()
 
     const podcast = await directus.getPodcastBySlug(slug)
@@ -24,25 +34,39 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 404, message: 'Podcast not found' })
     }
 
-    const metadata: Record<string, string> = {}
+    const metadata: Record<string, string> = { user_agent: userAgent }
 
     // Split x-forwarded-for on comma and take the first entry (the client IP)
     const xForwardedFor = event.node.req.headers['x-forwarded-for'] as string | undefined
     const rawIP = xForwardedFor ? xForwardedFor.split(',')[0].trim() : event.node.req.socket.remoteAddress
-    const userAgent = event.node.req.headers['user-agent']
     const referrer = event.node.req.headers['referer']
 
     if (rawIP) {
         metadata['ip'] = rawIP
-    }
-    if (userAgent) {
-        metadata['user_agent'] = userAgent
     }
     if (referrer) {
         metadata['referer_url'] = referrer
     }
 
     try {
+        // A further vote from the same IP hash on the same episode within the cooldown replaces
+        // the earlier one, so a corrected vote counts and a double click counts once.
+        if (rawIP) {
+            const since = new Date(Date.now() - VOTE_COOLDOWN_MINUTES * 60 * 1000)
+            const recentRating = await directus.getRecentRatingByIP(podcast, rawIP, since)
+            if (recentRating) {
+                if (recentRating.up_or_down !== direction) {
+                    try {
+                        await directus.updateRatingVote(recentRating, direction)
+                    } catch (error) {
+                        // If the rating can't be updated, the earlier vote stands.
+                        console.error('Failed to replace rating', recentRating.id, 'for podcast', podcast.slug, error)
+                    }
+                }
+                return { id: recentRating.id }
+            }
+        }
+
         const rating = await directus.createRating(direction, podcast, metadata)
         // Return the id so the page can attach an optional comment to this rating.
         return { id: rating?.id }

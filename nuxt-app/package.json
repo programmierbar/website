@@ -30,6 +30,7 @@
         "@ubclaunchpad/vue-fathom": "^2.0.0",
         "h3": "^1.15.11",
         "html5-qrcode": "^2.3.8",
+        "isbot": "^5.2.2",
         "isomorphic-dompurify": "~2.20.0",
         "nodemailer": "^9.0.3",
         "nuxt-jsonld": "^2.0.8",
