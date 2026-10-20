@@ -15,7 +15,7 @@ directory you are working in:
 
 | tree | Node | source of truth |
 | --- | --- | --- |
-| `nuxt-app` | **24** | `nuxt-app/.nvmrc`, which CI reads too. `engines.node` requires `^24.11.0 \|\| >=26.0.0` |
+| `nuxt-app` | **24** | `nuxt-app/.nvmrc`, which CI reads too. `engines.node` requires `^24.15.0 \|\| >=26.0.0` |
 | `directus-cms` | 22 | its workflows; deliberately left behind while the tree is frozen |
 
 Node 24 is also what production runs — Vercel resolves it from `nuxt-app/package.json`'s `engines.node`.

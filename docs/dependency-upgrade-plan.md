@@ -44,6 +44,7 @@ each phase leaves the app in a shippable state and can be reverted on its own.
 | — | [Node 24 alignment for `nuxt-app`](#node-24-alignment-for-nuxt-app--done-2026-08-04) | ✅ Done (2026-08-04) |
 | — | [Patch and minor refresh](#patch-and-minor-refresh--done-2026-09-25) — audit back from 10 to **0** | ✅ Done (2026-09-25) |
 | — | [Pinia workaround removed](#waiting-on-upstream-the-pinia-4-export-map) — fixed upstream in 4.0.3 | ✅ Done (2026-09-25) |
+| — | [Second patch and minor refresh](#second-patch-and-minor-refresh--done-2026-10-20) — audit 28 → 18, **no criticals**; the rest has no in-range fix | ✅ Done (2026-10-20) |
 | — | [After the plan — follow-up backlog](#after-the-plan--follow-up-backlog) | 📋 Consolidated, unscheduled |
 
 Each phase's own write-up ends with what it deliberately left behind. Those are also gathered into
@@ -1935,6 +1936,102 @@ RC's types.
 - Search checked in a browser, because the smoke test only proves `/suche` renders: `?search=typescript`
   returns 20 hits, rendered, with zero console errors or warnings.
 
+## Second patch and minor refresh — done 2026-10-20
+
+**Four weeks after the last refresh, the audit was back at 28** (3 critical, 21 high, 4 moderate), from
+17 distinct advisories. Same method as before: `npm update`, then `npm audit fix` without `--force`.
+That cleared 9 advisories, including all three criticals, and leaves **18 findings from 8
+advisories**, none of which has a fix inside our ranges.
+
+| package | before | after | advisories cleared | reaches production? |
+| --- | --- | --- | --- | --- |
+| `simple-git` | 3.36.0 | **gone** | 1 critical, 2 high (command execution) | no. `@nuxt/devtools` and `@nuxt/cli` no longer depend on it |
+| `@simple-git/argv-parser` | — | **gone** | 1 critical | no, same |
+| `shell-quote` | 1.10.0 | 1.12.0 | 1 critical (`quote()` injection) | no, tooling |
+| `sharp` | 0.35.4 | 0.35.5 | 1 high (bundled librsvg) | no. Vercel serves images through `_vercel/image`, not `ipx` |
+| `http-cache-semantics` | 4.2.0 | 4.3.0 | 1 high | transitive |
+| `source-map-js` | 1.2.1 | 1.2.2 | 1 high | build-time |
+| `@modelcontextprotocol/client` | 2.1.0 | 2.3.1 | 1 high | no. Nuxt's dev MCP server |
+
+**What remains, and why it stays:**
+
+| advisory | why not fixed here |
+| --- | --- |
+| `nodemailer` (5 advisories) | Fixed only in **10.x**. A major on the contact-form path, so it gets its own PR. See [the backlog](#5-small-verified-uncontroversial). |
+| `braces` ≤3.0.3, `node-forge` ≤1.4.0 | **No fixed release exists.** 3.0.3 and 1.4.0 are the latest versions of each. Every other high (`micromatch`, `fast-glob`, `globby`, `chokidar`, `listhen`, `nitropack`, and the `nuxt` packages above them) is one of these two, reached transitively. All of it is build or dev-server tooling. npm's suggested "fix", `nuxt@4.1.3`, is a downgrade. |
+| `postcss-selector-parser` 6.x | Pinned by Tailwind 3 through `postcss-nested`. Goes away with the [Tailwind 4](#phase-6--deliberately-deferred) move. |
+
+Framework moves, all within their major: `nuxt` 4.5.2 → **4.6.2**, `vue` 3.5.43 → 3.5.44, `vite` 8.3.1 →
+8.3.4, `nitropack` 2.13.4 → 2.13.5, `@nuxt/image` 2.1.0 → 2.2.0 (`ipx` leaves its 4.0 beta), `pinia`
+4.0.3 → 4.1.0, `zod` 4.6.5 → 4.6.7, `eslint` 10.11 → 10.13, `vue-tsc` 3.3.11 → 3.3.13,
+`@playwright/test` 1.63 → 1.64.
+
+### Nuxt 4.6 brings several transitive majors, and two of them reach the browser
+
+Unlike last time, most of the cross-major moves in the lockfile are real rather than hoisting, because
+Nuxt 4.6 bumps its own dependencies: `cssnano` 8 → 9 (the CSS minifier), `devalue` 5 → 6 (the SSR payload
+serializer), `unimport` 6 → 7 (auto-imports), `@nuxt/cli` 3 → 4, `iron-webcrypto` 1 → 2. Plus
+`instantsearch-ui-components` 0.41 → 0.43 via `vue-instantsearch`. Each of the first two changes what
+the browser receives, so each was checked against output rather than trusted:
+
+- **CSS: identical after normalisation.** The minified CSS shrank 101,256 → 95,514 bytes (−5.7 %).
+  Parsing both builds into (at-rule, selector, property, value) tuples gives **2,922 declarations on
+  each side**. The remaining 99 pairs differ only in spelling: whitespace inside `calc()`, operand order
+  in multiplications (`calc(var(--x)*-1)` → `calc(-1 * var(--x))`), and `aspect-ratio: 1/1` → `1`. The
+  whole size saving is from cssnano 9 dropping default `ease` timing functions, splitting selector
+  lists, and similar rewrites.
+- **Payload and hydration: no warnings.** A production server (`NODE_ENV=production`) of each build was
+  probed with the same script. It loads 11 routes, scrolls each to trigger lazy images, runs a search,
+  and does one client-side navigation. Both builds produce **zero console warnings or errors**, zero
+  broken images, and identical image counts per route. The search returns the same results, and the
+  `/` → `/podcast` navigation works. The single difference: `main` also fetches `_payload.json` for a
+  404 route, and 4.6 does not.
+
+### The Node floor moved to `^24.15.0`
+
+Found in review (#275), not by any gate. Nuxt 4.6.2 requires Node `^22.22.3 || ^24.15.0 || >=26.0.0`,
+and so do six other packages in the tree (`@nuxt/nitro-server`, `@nuxt/vite-builder`,
+`@nuxt/vite-server`, `cssnano`, `postcss-calc`, `jsdoc-type-pratt-parser`). `engines.node` still said
+`^24.11.0`. With `engine-strict=true`, that made `npm ci` fail on 24.11–24.14, a range the project
+claimed to support. CI and Vercel did not notice, because both resolve the latest 24.x.
+
+The floor in `package.json`, the lockfile and the README is now `^24.15.0 || >=26.0.0`. Checked with a
+real Node 24.14.1: before the change, `npm ci` failed with `EBADENGINE` naming `@nuxt/nitro-server`.
+After it, `npm ci` fails with `EBADENGINE` naming `nuxt-app` itself and our own range. That is the
+error `engine-strict` was added to give. Every package in the lockfile accepts 24.15.0.
+
+**Lesson for the next refresh:** a minor bump in the framework can raise the Node floor. After
+`npm update`, check every package's `engines.node` in the lockfile against our declared minimum, not
+just the latest Node.
+
+### Two new build warnings, both harmless
+
+- **`[MODULE_TYPELESS_PACKAGE_JSON]` for `nuxt.config.ts`**, printed with an `ERROR` label. Nuxt 4.6
+  now loads the config through Node's own TypeScript support instead of jiti, and Node warns because
+  `package.json` has no `"type"`. The fix it suggests, `"type": "module"`, is wrong here for the reason
+  [recorded for `vitest.config.mts`](#3-build-and-tooling-correctness): `tailwind.config.js` uses
+  `require()`. The config loads correctly in `build` and `dev` both.
+- **`[NUXT_B7027] The PostCSS plugin tailwindcss/nesting could not be loaded`.** `@nuxtjs/tailwindcss`
+  registers that plugin, and Nuxt 4.6 now resolves PostCSS plugins with a native ESM `import()`.
+  Tailwind 3 ships `nesting/` as a bare directory without an `exports` map, which ESM cannot import
+  (`ERR_UNSUPPORTED_DIR_IMPORT`). **The plugin no longer runs, and that changes nothing today**: no
+  source file uses CSS nesting, and the CSS comparison above is equal. If someone writes nested CSS
+  before the Tailwind 4 move, it will reach the browser unflattened. Every browser since 2023 handles
+  that natively, but it is untested. Tailwind 4 removes the plugin, which settles it.
+
+### Verification
+
+- Audit: **28 → 18**, criticals **3 → 0**. 17 distinct advisories → 8, none fixable in range.
+- `prettier:check` clean. `lint` 0 errors / 156 warnings, the same as `main` before the update. `test`
+  247/247.
+- Ratchet **228 → 227**, baseline lowered. The one error that disappeared is
+  `components/BackgroundSpotlights.vue`'s TS2440 for `import { defineProps } from 'vue'`. `vue-tsc`
+  3.3.13 no longer reports it, but the redundant import is still there (see the backlog). The rest of
+  the error-list diff is union members printed in a different order.
+- Build → exit 0, on the branch and on `main` (a separate worktree, for the comparisons above).
+- Smoke suite **18/18** against `NODE_ENV=production node .output/server/index.mjs`.
+- `nuxt dev` starts and serves `/podcast` with 200.
+
 ## Phase 6 — Deliberately deferred
 
 Not blocked by EOL. Do **not** fold these into the phases above.
@@ -2432,6 +2529,25 @@ browser-support decision nobody made.
       `Unknown project config … will stop working in the next major version of npm` on every command,
       in CI *and* in Vercel's build log. Verified no pnpm lockfile or reference exists anywhere in the
       repo before deleting.
+
+- [ ] 🔒 **`nodemailer` 9.1.1 → 10.x.** Five advisories, all fixed only in 10.x: SMTP credential
+      disclosure through a process-wide DNS cache, three address-parser DoS bugs and a malformed-envelope
+      bug. This is the only remaining audit finding that **reaches production**, through the contact
+      form at `/api/email`. Its own PR, the same way 8 → 9 was done in Phase 5: read the changelog, then
+      send a real mail, rather than relying on the gates.
+- [ ] ⚠️ **`plugins/vue-json-pretty.js` is dead Nuxt 2 code.** It does `import Vue from 'vue'` and
+      `Vue.component(...)`, with no default export, so Nuxt has replaced it with an empty function at
+      every build (`NUXT_B2005`, on 4.5 as well as 4.6). It is also listed in `vite.plugins` in
+      `nuxt.config.ts`, where a path string means nothing. Nothing depends on it, because
+      `components/PrettyJSON.vue` imports `vue-json-pretty` itself. Delete the file and the
+      `vite.plugins` entry. Found during the 2026-10-20 refresh.
+- [ ] **`components/BackgroundSpotlights.vue` imports `defineProps` from `vue`.** It is a compiler
+      macro. `nuxt dev` warns that it "no longer needs to be imported", and the ratchet used to count it
+      until `vue-tsc` 3.3.13 stopped reporting it. One-line deletion.
+- [ ] ⚠️ **`helpers/index.ts` re-exports `ipProcessing`, which imports `node:crypto` and `node:net`.**
+      Both builds warn that Vite has externalized them for the browser, because the barrel pulls a
+      server-only helper into the client module graph. Nothing breaks today. Server code should import
+      it directly instead, and the barrel should drop it.
 
 ### 6. Standing items, not one-off tasks
 
