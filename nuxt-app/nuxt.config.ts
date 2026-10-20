@@ -77,7 +77,6 @@ export default defineNuxtConfig({
     vite: {
         plugins: [
             svgLoader(), // https://github.com/jpkleemans/vite-svg-loader#readme
-            './plugins/vue-json-pretty.js',
         ],
         build: {
             // Do not remove without setting `css.lightningcss.targets`: Vite's lightningcss default
