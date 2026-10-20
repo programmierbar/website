@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useApi } from '@directus/extensions-sdk'
 import { computed, ref, watch } from 'vue'
+import { SPEAKER_PROFILE_UPDATE_VERSION_KEY } from '../../../../../shared-code/index.js'
 import { isExistingItemKey } from '../shared/itemKey.js'
-import { formatDateDe, isWithinCooldown, PROFILE_UPDATE_COOLDOWN_DAYS } from './util/requestGuards.js'
+import { findRequestBlockers, formatDateDe, type GuardedVersion } from './util/requestGuards.js'
 
 const props = defineProps<{ collection: string; primaryKey: string }>()
 
@@ -20,6 +21,10 @@ const errorMessage = ref<string | null>(null)
 const email = ref<string | null>(null)
 const requestedAt = ref<string | null>(null)
 const status = ref<string | null>(null)
+const tokenExpires = ref<string | null>(null)
+const hasToken = ref(false)
+/** The speaker's `profile-update` Content Versions; a new request deletes them. */
+const versions = ref<GuardedVersion[]>([])
 
 // False on the "create item" page — and while Directus is still loading the
 // item record, during which it passes '+' instead of the real primary key.
@@ -35,13 +40,38 @@ async function loadState(): Promise<void> {
     loading.value = true
     loadFailed.value = false
     try {
-        const response = await api.get(`/items/speakers/${encodeURIComponent(props.primaryKey)}`, {
-            params: { fields: ['email', 'portal_update_requested_at', 'portal_submission_status'] },
-        })
+        const [response, versionsResponse] = await Promise.all([
+            api.get(`/items/speakers/${encodeURIComponent(props.primaryKey)}`, {
+                params: {
+                    fields: [
+                        'email',
+                        'portal_update_requested_at',
+                        'portal_submission_status',
+                        'portal_token',
+                        'portal_token_expires',
+                    ],
+                },
+            }),
+            api.get('/versions', {
+                params: {
+                    filter: JSON.stringify({
+                        collection: { _eq: 'speakers' },
+                        item: { _eq: String(props.primaryKey) },
+                        key: { _eq: SPEAKER_PROFILE_UPDATE_VERSION_KEY },
+                    }),
+                    fields: ['name', 'delta'],
+                    limit: -1,
+                },
+            }),
+        ])
         if (runId !== loadStateRunId) return // a newer load superseded this one
-        email.value = response.data.data?.email ?? null
-        requestedAt.value = response.data.data?.portal_update_requested_at ?? null
-        status.value = response.data.data?.portal_submission_status ?? null
+        const speaker = response.data.data ?? {}
+        email.value = speaker.email ?? null
+        requestedAt.value = speaker.portal_update_requested_at ?? null
+        status.value = speaker.portal_submission_status ?? null
+        tokenExpires.value = speaker.portal_token_expires ?? null
+        hasToken.value = Boolean(speaker.portal_token)
+        versions.value = versionsResponse.data.data ?? []
     } catch {
         if (runId !== loadStateRunId) return
         loadFailed.value = true
@@ -53,9 +83,18 @@ async function loadState(): Promise<void> {
 function openDialog(): void {
     successMessage.value = null
     errorMessage.value = null
-    warning.value = isWithinCooldown(requestedAt.value)
-        ? `Diese:r Speaker:in wurde zuletzt am ${lastRequestLabel.value} angefragt (weniger als ${PROFILE_UPDATE_COOLDOWN_DAYS} Tage her).`
-        : null
+    // Same rules as the endpoint, so "send anyway" is offered before the first click.
+    const blockers = findRequestBlockers(
+        {
+            portal_update_requested_at: requestedAt.value,
+            portal_submission_status: status.value,
+            portal_token: hasToken.value ? 'set' : null,
+            portal_token_expires: tokenExpires.value,
+        },
+        new Date(),
+        versions.value
+    )
+    warning.value = blockers.length > 0 ? blockers.map((blocker) => blocker.message).join(' ') : null
     dialogOpen.value = true
 }
 
@@ -83,7 +122,7 @@ async function sendRequest(force: boolean): Promise<void> {
     } catch (error: any) {
         const data = error?.response?.data
         if (error?.response?.status === 409 && data?.code) {
-            // Cooldown or open invitation: keep the dialog open and offer "send anyway".
+            // Cooldown, open invitation or unreviewed version: keep the dialog open and offer "send anyway".
             warning.value = data.error
             return
         }
@@ -114,8 +153,7 @@ watch(
 <template>
     <div v-if="isExistingItem">
         <v-notice v-if="loadFailed" type="warning">
-            Status der Profil-Update-Anfrage konnte nicht geladen werden (ist das Feld „portal_update_requested_at“
-            angelegt?) — die Aktion ist nicht verfügbar.
+            Status der Profil-Update-Anfrage konnte nicht geladen werden — die Aktion ist nicht verfügbar.
         </v-notice>
 
         <template v-else-if="!loading">
@@ -157,7 +195,8 @@ watch(
                     </p>
                     <p class="dialog-paragraph">
                         Was die Speaker:in dort ändert, wird NICHT direkt übernommen, sondern als Content Version
-                        „Profil-Update“ gespeichert, die du prüfen und übernehmen kannst.
+                        „Profil-Update“ gespeichert, die du prüfen und übernehmen kannst. Eine frühere Version
+                        „Profil-Update“ wird dabei gelöscht.
                     </p>
                     <v-notice v-if="warning" type="warning" class="dialog-paragraph">
                         {{ warning }} Trotzdem senden?

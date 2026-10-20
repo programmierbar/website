@@ -1,7 +1,8 @@
 import { describe, expect, test } from '@jest/globals'
 import {
-    findRequestBlocker,
+    findRequestBlockers,
     getCooldownEnd,
+    hasVersionChanges,
     isWithinCooldown,
     PROFILE_UPDATE_COOLDOWN_DAYS,
 } from '../util/requestGuards.ts'
@@ -30,7 +31,10 @@ describe('cooldown', () => {
     })
 })
 
-describe('findRequestBlocker', () => {
+describe('findRequestBlockers', () => {
+    const findRequestBlocker = (...args: Parameters<typeof findRequestBlockers>) =>
+        findRequestBlockers(...args)[0] ?? null
+
     test('nothing blocks a speaker who already submitted and was not asked recently', () => {
         expect(
             findRequestBlocker(
@@ -70,5 +74,46 @@ describe('findRequestBlocker', () => {
             )
         ).toBeNull()
         expect(findRequestBlocker({ portal_submission_status: 'pending', portal_token: null }, NOW)).toBeNull()
+    })
+})
+
+describe('profile-update version', () => {
+    test.each([
+        [{ delta: null }, false],
+        [{ delta: {} }, false],
+        [{}, false],
+        [{ delta: { occupation: 'CEO' } }, true],
+    ])('%o has changes: %s', (version, expected) => {
+        expect(hasVersionChanges(version)).toBe(expected)
+    })
+
+    test('a version with changes blocks, naming it', () => {
+        const blockers = findRequestBlockers({}, NOW, [
+            { name: 'Profil-Update 01.09.2026', delta: { first_name: 'E' } },
+        ])
+        expect(blockers.map((blocker) => blocker.code)).toEqual(['unreviewed_version'])
+        expect(blockers[0].message).toContain('„Profil-Update 01.09.2026“')
+    })
+
+    test('an empty version does not block', () => {
+        expect(findRequestBlockers({}, NOW, [{ name: 'x', delta: null }])).toEqual([])
+    })
+
+    test('lists every blocker, in a fixed order', () => {
+        const blockers = findRequestBlockers(
+            {
+                portal_update_requested_at: daysAgo(10),
+                portal_submission_status: 'pending',
+                portal_token: 'tok',
+                portal_token_expires: '2026-10-25T00:00:00.000Z',
+            },
+            NOW,
+            [{ delta: { first_name: 'E' } }]
+        )
+        expect(blockers.map((blocker) => blocker.code)).toEqual([
+            'cooldown',
+            'invitation_pending',
+            'unreviewed_version',
+        ])
     })
 })

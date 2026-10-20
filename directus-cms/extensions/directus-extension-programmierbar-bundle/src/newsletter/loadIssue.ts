@@ -1,3 +1,4 @@
+import { isNotFoundError } from '../shared/isNotFoundError.ts'
 import { MEETUPS_BLOCK_COLLECTION, PODCASTS_BLOCK_COLLECTION, TEXT_BLOCK_COLLECTION } from './render/types.ts'
 import type { NewsletterIssue } from './render/types.ts'
 
@@ -79,15 +80,6 @@ export async function loadNewsletterIssue(
         query.version = version
     }
     return service.readOne(id, query)
-}
-
-/**
- * Directus answers a missing item, an invalid primary key and an unknown Content
- * Version all with a ForbiddenError. The newsletter endpoints are admin-only, so there
- * it can only mean "not found".
- */
-export function isNotFoundError(err: any): boolean {
-    return err?.code === 'FORBIDDEN' || err?.name === 'ForbiddenError'
 }
 
 /** The issue cannot be shown to this user: it does not exist (404) or they may not read it (403). */

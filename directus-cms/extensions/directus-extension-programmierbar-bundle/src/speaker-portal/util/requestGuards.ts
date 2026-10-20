@@ -10,7 +10,7 @@ export const PROFILE_UPDATE_COOLDOWN_DAYS = 90
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-export type RequestBlockerCode = 'cooldown' | 'invitation_pending'
+export type RequestBlockerCode = 'cooldown' | 'invitation_pending' | 'unreviewed_version'
 
 export interface RequestBlocker {
     code: RequestBlockerCode
@@ -22,6 +22,21 @@ export interface GuardedSpeaker {
     portal_token?: string | null
     portal_token_expires?: string | null
     portal_update_requested_at?: string | null
+}
+
+/** The parts of a `profile-update` Content Version (`directus_versions`) the guards look at. */
+export interface GuardedVersion {
+    name?: string | null
+    delta?: Record<string, unknown> | null
+}
+
+/**
+ * Whether a version holds changes. Directus cannot tell an unreviewed version from one that was
+ * promoted and kept (promoting does not delete it), so any delta counts.
+ */
+export function hasVersionChanges(version: GuardedVersion): boolean {
+    const delta = version.delta
+    return typeof delta === 'object' && delta !== null && Object.keys(delta).length > 0
 }
 
 function parseDate(value: string | null | undefined): Date | null {
@@ -46,21 +61,30 @@ export function isWithinCooldown(lastRequestedAt: string | null | undefined, now
 }
 
 /**
- * The reason a request needs an explicit "send anyway", or `null` if it can go out right away.
+ * Every reason a request needs an explicit "send anyway" (empty if it can go out right away). All of
+ * them, not just the first: forcing overrides each one, so the admin has to see each.
  *
  * - `cooldown`: the speaker was already asked within the last {@link PROFILE_UPDATE_COOLDOWN_DAYS} days.
  * - `invitation_pending`: the regular portal invitation is still open. A new request would replace its
  *   token, so the link in the invitation would stop working.
+ * - `unreviewed_version`: the speaker's `profile-update` version still holds changes. Every request
+ *   starts with a fresh version, so sending deletes them.
  */
-export function findRequestBlocker(speaker: GuardedSpeaker, now: Date = new Date()): RequestBlocker | null {
+export function findRequestBlockers(
+    speaker: GuardedSpeaker,
+    now: Date = new Date(),
+    versions: GuardedVersion[] = []
+): RequestBlocker[] {
+    const blockers: RequestBlocker[] = []
+
     if (isWithinCooldown(speaker.portal_update_requested_at, now)) {
         const last = parseDate(speaker.portal_update_requested_at)!
-        return {
+        blockers.push({
             code: 'cooldown',
             message:
                 `Diese:r Speaker:in wurde zuletzt am ${formatDateDe(last)} um ein Profil-Update gebeten ` +
                 `(weniger als ${PROFILE_UPDATE_COOLDOWN_DAYS} Tage her).`,
-        }
+        })
     }
 
     const expires = parseDate(speaker.portal_token_expires)
@@ -69,13 +93,24 @@ export function findRequestBlocker(speaker: GuardedSpeaker, now: Date = new Date
         Boolean(speaker.portal_token) &&
         (expires === null || expires > now)
     if (invitationOpen) {
-        return {
+        blockers.push({
             code: 'invitation_pending',
             message:
                 'Die Einladung ins Speaker Portal ist noch offen. Eine Update-Anfrage ersetzt den Link aus der ' +
                 'Einladung, der dann nicht mehr funktioniert.',
-        }
+        })
     }
 
-    return null
+    const changed = versions.find(hasVersionChanges)
+    if (changed) {
+        const name = changed.name ? ` „${changed.name}“` : ''
+        blockers.push({
+            code: 'unreviewed_version',
+            message:
+                `Es gibt noch eine nicht übernommene Version${name} mit Änderungen der Speaker:in (oder sie wurde ` +
+                'übernommen, aber nicht gelöscht). Eine neue Anfrage löscht diese Version.',
+        })
+    }
+
+    return blockers
 }

@@ -4,6 +4,7 @@ import {
     createContentVersion as createContentVersionCommand,
     createDirectus,
     createItem,
+    customEndpoint,
     deleteItem,
     readContentVersions,
     readItem,
@@ -11,7 +12,6 @@ import {
     rest,
     saveToContentVersion as saveToContentVersionCommand,
     staticToken,
-    updateContentVersion,
     updateItem,
     updateItems,
     uploadFiles,
@@ -25,6 +25,9 @@ import type {
     DirectusTicketItem,
     DirectusTicketOrderItem,
 } from '~/types/directus'
+
+/** Upper bound for reporting a failed speaker profile update, which runs while the speaker waits. */
+const SPEAKER_FAILURE_REPORT_TIMEOUT_MS = 5000
 
 export function useAuthenticatedDirectus() {
     const config = useRuntimeConfig()
@@ -84,6 +87,8 @@ export function useAuthenticatedDirectus() {
     // Content Versions (Directus `/versions` API). An item has at most one version per key, and a
     // version's `item` is always the primary key as a string. Saving merges the given fields into
     // the version's delta; the live item stays untouched until an admin promotes the version.
+    // Needs `read` and `create` on `directus_versions`, plus `read` on the speaker: saving writes
+    // the delta with admin rights inside Directus, so no `update` permission is involved.
 
     async function findContentVersion(
         collection: keyof Collections,
@@ -111,13 +116,22 @@ export function useAuthenticatedDirectus() {
         return version as unknown as DirectusContentVersion
     }
 
-    // Only `key` and `name` of a version can be changed; its delta changes through saving.
-    async function renameContentVersion(id: string, name: string) {
-        await client.request(updateContentVersion(id, { name } as any, { fields: ['id'] } as any))
-    }
-
     async function saveToContentVersion(id: string, delta: Record<string, unknown>) {
         await client.request(saveToContentVersionCommand(id, delta as any))
+    }
+
+    // The website has no Slack access; the CMS's `speaker-portal` endpoint posts the failure to the
+    // team channel. Authorised by this token's user being able to read the speaker.
+    async function reportSpeakerProfileUpdateFailure(speakerId: string, report: { stage: string; message: string }) {
+        return await client.request(
+            customEndpoint<{ notified: boolean; reason?: string }>({
+                path: `/speaker-portal/${encodeURIComponent(speakerId)}/report-update-failure`,
+                method: 'POST',
+                body: JSON.stringify(report),
+                // The speaker is waiting for their error message; a slow CMS must not hold it up.
+                onRequest: (init) => ({ ...init, signal: AbortSignal.timeout(SPEAKER_FAILURE_REPORT_TIMEOUT_MS) }),
+            })
+        )
     }
 
     async function getConference(id: string) {
@@ -566,8 +580,8 @@ export function useAuthenticatedDirectus() {
         uploadFile,
         findContentVersion,
         createContentVersion,
-        renameContentVersion,
         saveToContentVersion,
+        reportSpeakerProfileUpdateFailure,
         getConference,
         getDiscountCode,
         countPaidTicketsForConference,

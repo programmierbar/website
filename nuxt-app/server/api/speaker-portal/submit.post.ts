@@ -1,7 +1,13 @@
 import { SPEAKER_PORTAL_STATUS } from 'shared-code'
 import { SpeakerSubmissionSchema } from '../../utils/schema'
 import { hasVisibleText, markdownToHtml } from '../../utils/speakerBio'
-import { getSpeakerPortalMode, isSpeakerPortalClosed, saveSpeakerProfileUpdate } from '../../utils/speakerProfileUpdate'
+import {
+    getSpeakerPortalMode,
+    isSpeakerPortalClosed,
+    reportSpeakerProfileUpdateFailure,
+    saveSpeakerProfileUpdate,
+    SPEAKER_PROFILE_UPDATE_FAILURE_STAGE,
+} from '../../utils/speakerProfileUpdate'
 
 // Every error leaves this handler as JSON with a German message the portal can show as-is. Anything
 // unexpected is logged here (Vercel function logs) and answered with a generic 500, so internal error
@@ -187,8 +193,19 @@ export default defineEventHandler(async (event) => {
         if (mode === 'update') {
             // An existing profile: the changes go into a Content Version for an admin to
             // review and promote, the live item only learns that the speaker is done. The version is
-            // saved first, so a failure there leaves the token usable for another try.
-            await saveSpeakerProfileUpdate(directus, speaker.id, profile)
+            // saved first, so a failure there leaves the token usable for another try. The team hears
+            // about it in Slack (via the CMS), since the speaker may not try again.
+            try {
+                await saveSpeakerProfileUpdate(directus, speaker, profile)
+            } catch (err) {
+                await reportSpeakerProfileUpdateFailure(
+                    directus,
+                    speaker.id,
+                    SPEAKER_PROFILE_UPDATE_FAILURE_STAGE.saveVersion,
+                    err
+                )
+                throw err
+            }
             await directus.updateSpeaker(speaker.id, completion)
         } else {
             await directus.updateSpeaker(speaker.id, { ...profile, ...completion })

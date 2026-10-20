@@ -1,19 +1,18 @@
 import { defineEndpoint } from '@directus/extensions-sdk'
-import { SPEAKER_PORTAL_STATUS } from '../../../../../shared-code/index.ts'
-import {
-    formatDateGerman,
-    getEmailTemplate,
-    sendTemplatedEmail,
-    type EmailServiceContext,
-} from '../shared/email-service.ts'
+import { SPEAKER_PORTAL_STATUS, SPEAKER_PROFILE_UPDATE_VERSION_KEY } from '../../../../../shared-code/index.ts'
+import { formatDateGerman, sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.ts'
+import { isNotFoundError } from '../shared/isNotFoundError.ts'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
 import { getSetting } from '../shared/settings.ts'
 import { buildPortalUrl, buildPublicProfileUrl, createPortalToken } from '../shared/speakerPortal.ts'
+import { buildFailureSlackMessage, createFailureReportDeduper, parseFailureReport } from './util/failureReport.ts'
 import { renderProfileOverview, SPEAKER_LINK_FIELDS } from './util/profileOverview.ts'
-import { findRequestBlocker } from './util/requestGuards.ts'
-import { choiceValues, findMissingSetup, PROFILE_UPDATE_TEMPLATE_KEY } from './util/setupCheck.ts'
+import { findRequestBlockers, type GuardedVersion } from './util/requestGuards.ts'
 
 const ENDPOINT_NAME = 'speaker-portal'
+
+/** Key of the `email_templates` row for the profile-update request mail. */
+const PROFILE_UPDATE_TEMPLATE_KEY = 'speaker_profile_update_request'
 
 const SPEAKER_FIELDS = [
     'id',
@@ -47,17 +46,35 @@ const SPEAKER_FIELDS = [
  *   profile link and the portal link. The website then saves the speaker's edits into a Content
  *   Version instead of the live item.
  *
- *   Refuses with 409 (`code: 'cooldown' | 'invitation_pending'`) unless `force` is set, when the
- *   speaker was asked within the cooldown or their regular invitation is still open.
+ *   Refuses with 409 (`code`/`codes`: `'cooldown' | 'invitation_pending' | 'unreviewed_version'`)
+ *   unless `force` is set, when the speaker was asked within the cooldown, their regular invitation
+ *   is still open, or their `profile-update` Content Version still holds changes.
+ *
+ *   Every request starts with a fresh version: an existing `profile-update` version is deleted
+ *   before the new token is written. Saving into a version merges into its delta, and promoting does
+ *   not delete it, so a reused version would carry fields from an earlier answer into the next one.
  *
  *   The token write runs with `emitEvents: false`: it is not a profile change, so none of the
  *   `speakers.items.update` hooks has anything to do. In particular the invitation in
  *   `speaker-portal-notifications` must not fire for it (it would also skip on its own, since it
  *   only sends while the status is `pending`, and the daily reminders only select `pending`).
+ *
+ * - POST /speaker-portal/:id/report-update-failure — the website reports that it could not save a
+ *   speaker's profile update. Body: `{ stage: string, message: string }`. The website has no Slack
+ *   access of its own; this posts the failure to the team channel so it does not stay in the
+ *   website's function logs.
+ *
+ *   Authorised by Directus's own permissions instead of a separate secret: the caller must be
+ *   authenticated (the website's static API token belongs to a Directus user) and must be able to
+ *   read the speaker with its own accountability — which the website's user already needs to look a
+ *   speaker up by portal token. Only speakers with an open update request (`update_requested`) can be
+ *   reported. The body is sanitised (one line, no Slack markup, e-mail addresses redacted, capped),
+ *   and the same speaker and stage is posted at most once per 10 minutes.
  */
 export default defineEndpoint((router, context) => {
     const { logger, services, getSchema, env } = context
     const { ItemsService } = services
+    const failureReports = createFailureReportDeduper()
 
     class HttpError extends Error {
         status: number
@@ -77,22 +94,24 @@ export default defineEndpoint((router, context) => {
         }
     }
 
-    async function findMissing(schema: any, emailContext: EmailServiceContext): Promise<string[]> {
-        const accountability = emailContext.accountability
-        const collectionsService = new services.CollectionsService({ schema, accountability })
-        const fieldsService = new services.FieldsService({ schema, accountability })
-
-        const [collection, statusField, template] = await Promise.all([
-            collectionsService.readOne('speakers'),
-            fieldsService.readOne('speakers', 'portal_submission_status'),
-            getEmailTemplate(PROFILE_UPDATE_TEMPLATE_KEY, emailContext),
-        ])
-
-        return findMissingSetup({
-            hasRequestedAtField: Boolean(schema?.collections?.speakers?.fields?.portal_update_requested_at),
-            versioningEnabled: collection?.meta?.versioning === true,
-            statusChoices: choiceValues(statusField?.meta),
-            hasTemplate: template !== null,
+    /**
+     * The speaker's `profile-update` Content Versions (normally at most one). Read with the
+     * requesting admin's accountability.
+     */
+    async function findProfileUpdateVersions(
+        schema: any,
+        accountability: any,
+        speakerId: string
+    ): Promise<Array<GuardedVersion & { id: string }>> {
+        const versionsService = new ItemsService('directus_versions', { schema, accountability })
+        return await versionsService.readByQuery({
+            filter: {
+                collection: { _eq: 'speakers' },
+                item: { _eq: String(speakerId) },
+                key: { _eq: SPEAKER_PROFILE_UPDATE_VERSION_KEY },
+            },
+            fields: ['id', 'name', 'delta'],
+            limit: -1,
         })
     }
 
@@ -116,17 +135,6 @@ export default defineEndpoint((router, context) => {
                 accountability: req.accountability,
             }
 
-            const missing = await findMissing(schema, emailContext)
-            if (missing.length > 0) {
-                await notifySlack(
-                    `:warning: *Speaker Portal*: Profil-Update-Anfrage nicht möglich, die Einrichtung in Directus ist unvollständig (${missing.join('; ')}). ${itemUrl}`
-                )
-                throw new HttpError(
-                    500,
-                    `Profil-Update-Anfragen sind in Directus noch nicht vollständig eingerichtet: ${missing.join('; ')}.`
-                )
-            }
-
             const websiteUrl = (await getSetting('website_url', emailContext))?.trim()
             if (!websiteUrl) {
                 await notifySlack(
@@ -140,7 +148,10 @@ export default defineEndpoint((router, context) => {
             let speaker: any = null
             try {
                 speaker = await speakersService.readOne(speakerId, { fields: SPEAKER_FIELDS })
-            } catch {
+            } catch (err) {
+                // Only "no such speaker" is a 404 (admins may read every speaker); anything else is a
+                // real failure for the logger and Slack below.
+                if (!isNotFoundError(err)) throw err
                 speaker = null
             }
             if (!speaker) {
@@ -153,12 +164,32 @@ export default defineEndpoint((router, context) => {
             }
 
             const now = new Date()
-            const blocker = findRequestBlocker(speaker, now)
-            if (blocker && !force) {
-                throw new HttpError(409, blocker.message, {
-                    code: blocker.code,
+            const versions = await findProfileUpdateVersions(schema, req.accountability, speakerId)
+            const blockers = findRequestBlockers(speaker, now, versions)
+            if (blockers.length > 0 && !force) {
+                // All of them at once: "send anyway" overrides every one, so the admin sees each.
+                throw new HttpError(409, blockers.map((blocker) => blocker.message).join(' '), {
+                    code: blockers[0].code,
+                    codes: blockers.map((blocker) => blocker.code),
                     requested_at: speaker.portal_update_requested_at ?? null,
                 })
+            }
+
+            // Every request starts with a fresh version. Saving into a version merges into its
+            // delta, so a kept one would carry fields from an earlier answer (e.g. an old image the
+            // speaker does not send again) into the next promote. Deleted before the new token is
+            // issued: if this fails, nothing about the speaker has changed yet.
+            if (versions.length > 0) {
+                const versionsService = new ItemsService('directus_versions', {
+                    schema,
+                    accountability: req.accountability,
+                })
+                for (const version of versions) {
+                    await versionsService.deleteOne(version.id)
+                }
+                logger.info(
+                    `${ENDPOINT_NAME}: Deleted ${versions.length} earlier profile-update version(s) of speaker ${speakerId}`
+                )
             }
 
             const requestedAt = now.toISOString()
@@ -228,6 +259,92 @@ export default defineEndpoint((router, context) => {
                 `:x: *Speaker Portal*: Profil-Update-Anfrage fehlgeschlagen (${err?.message || err}). ${itemUrl}`
             )
             res.status(500).send({ error: 'Die Profil-Update-Anfrage ist fehlgeschlagen.' })
+        }
+    })
+
+    router.post('/:id/report-update-failure', async (req: any, res: any) => {
+        // Any authenticated user; whether they may report on this speaker is the read below.
+        const accountability = req.accountability
+        if (!accountability?.user && accountability?.admin !== true) {
+            res.status(401).send({ error: 'Authentication required' })
+            return
+        }
+
+        const parsed = parseFailureReport(req.body)
+        if (!parsed.ok) {
+            res.status(400).send({ error: parsed.error })
+            return
+        }
+        const { report } = parsed
+
+        const speakerId = String(req.params.id)
+        const itemUrl = `${env.PUBLIC_URL}admin/content/speakers/${encodeURIComponent(speakerId)}`
+
+        try {
+            const schema = await getSchema()
+            const speakersService = new ItemsService('speakers', { schema, accountability })
+
+            let speaker: any = null
+            try {
+                speaker = await speakersService.readOne(speakerId, {
+                    fields: ['id', 'first_name', 'last_name', 'portal_submission_status', 'portal_token_expires'],
+                })
+            } catch (err) {
+                if (!isNotFoundError(err)) throw err
+                speaker = null
+            }
+            if (!speaker) {
+                // Directus answers a missing item and a forbidden one alike; so does this.
+                res.status(403).send({ error: 'Speaker not found or not readable' })
+                return
+            }
+
+            if (speaker.portal_submission_status !== SPEAKER_PORTAL_STATUS.updateRequested) {
+                res.status(409).send({ error: 'No open profile update request', code: 'not_update_requested' })
+                return
+            }
+
+            const key = `${speakerId}:${report.stage}`
+            if (!failureReports.claim(key)) {
+                logger.info(
+                    `${ENDPOINT_NAME}: Skipped duplicate failure report for speaker ${speakerId} (${report.stage})`
+                )
+                res.status(200).send({ notified: false, reason: 'duplicate' })
+                return
+            }
+
+            const text = buildFailureSlackMessage({
+                speaker,
+                report,
+                itemUrl,
+                now: new Date(),
+                formatDate: (date) =>
+                    formatDateGerman(date, {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        timeZone: 'Europe/Berlin',
+                    }),
+            })
+
+            try {
+                await postSlackMessage(text)
+            } catch (err: any) {
+                failureReports.release(key)
+                logger.error(
+                    `${ENDPOINT_NAME}: Failed to post the failure report for speaker ${speakerId} to Slack: ${err?.message || err}`
+                )
+                res.status(502).send({ error: 'Slack notification failed', notified: false })
+                return
+            }
+
+            logger.warn(`${ENDPOINT_NAME}: Reported failed profile update for speaker ${speakerId} (${report.stage})`)
+            res.status(200).send({ notified: true })
+        } catch (err: any) {
+            logger.error(
+                `${ENDPOINT_NAME}: Error reporting a failed profile update for speaker ${speakerId}: ${err?.message || err}`
+            )
+            res.status(500).send({ error: 'Failure report could not be processed' })
         }
     })
 })
