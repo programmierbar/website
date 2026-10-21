@@ -328,6 +328,27 @@ describe('ticket-order-processing hook', () => {
             expect(confirmation.bcc).toBeUndefined()
         })
 
+        test('is not awaited: tickets and customer mails do not wait for a slow accounting copy', async () => {
+            // An accounting copy that never settles (e.g. slow mail provider, retries, Slack).
+            sendInvoiceToAccountingMock.mockReturnValue(new Promise(() => {}))
+            const { invoke, serviceInstances } = setup({}, ACCOUNTING_ENV)
+            await invoke({ status: 'paid' })
+
+            expect(sendInvoiceToAccountingMock).toHaveBeenCalledTimes(1)
+            expect(serviceInstances['tickets']![0].createOne).toHaveBeenCalledTimes(2)
+            expect(markInvoiceSentMock).toHaveBeenCalledTimes(1) // confirmation mail went out
+            expect(invitations()).toHaveLength(2)
+        })
+
+        test('an unexpected rejection of the accounting copy is logged, not thrown', async () => {
+            sendInvoiceToAccountingMock.mockRejectedValue(new Error('boom'))
+            const { invoke, logger } = setup({}, ACCOUNTING_ENV)
+            await invoke({ status: 'paid' })
+
+            expect(invitations()).toHaveLength(2)
+            expect(logger.error.mock.calls.map((c) => String(c[0])).join('\n')).toContain('boom')
+        })
+
         test('is sent even when the customer confirmation mail fails — and never stamps sent_at', async () => {
             sendTemplatedEmailMock.mockResolvedValue(false)
             const { invoke } = setup({}, ACCOUNTING_ENV)

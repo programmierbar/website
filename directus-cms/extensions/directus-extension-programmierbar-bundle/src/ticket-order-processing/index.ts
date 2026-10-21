@@ -220,9 +220,10 @@ export default defineHook(({ action }, hookContext) => {
                         )
 
                         // Accounting copy (GoBD: timely recording). The document exists now,
-                        // so it goes out regardless of what happens to the customer mail below.
+                        // so it goes out regardless of what happens below. Not awaited: its
+                        // retries and Slack alert must not delay tickets or customer mails.
                         // Never throws; persistent failures are escalated to Slack inside.
-                        await sendInvoiceToAccounting(
+                        void sendInvoiceToAccounting(
                             {
                                 documentKind: 'invoice',
                                 invoiceNumber,
@@ -233,6 +234,10 @@ export default defineHook(({ action }, hookContext) => {
                                 orderNumber: order.order_number,
                             },
                             { env, emailContext: context, source: HOOK_NAME }
+                        ).catch((err: any) =>
+                            logger.error(
+                                `${HOOK_NAME}: Accounting copy of ${invoiceNumber} failed unexpectedly: ${err?.message || err}`
+                            )
                         )
                     } else {
                         logger.info(`${HOOK_NAME}: Skipping invoice for internal order ${order.order_number}`)
