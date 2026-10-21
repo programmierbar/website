@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
+import { formatBillingCountry } from 'shared-code'
 import { computed, onMounted, ref, watch } from 'vue'
 import TicketPricingSummary from './TicketPricingSummary.vue'
 
@@ -110,7 +111,7 @@ async function proceedToPayment() {
                     <p>{{ store.company.address.line1 }}</p>
                     <p v-if="store.company.address.line2">{{ store.company.address.line2 }}</p>
                     <p>{{ store.company.address.postalCode }} {{ store.company.address.city }}</p>
-                    <p>{{ store.company.address.country }}</p>
+                    <p>{{ formatBillingCountry(store.company.address.country) }}</p>
                     <p v-if="store.company.billingEmail" class="mt-2 text-sm">
                         Rechnungs-E-Mail: {{ store.company.billingEmail }}
                     </p>
@@ -126,7 +127,9 @@ async function proceedToPayment() {
                     <p v-if="store.personalAddress.postalCode || store.personalAddress.city">
                         {{ store.personalAddress.postalCode }} {{ store.personalAddress.city }}
                     </p>
-                    <p v-if="store.personalAddress.country">{{ store.personalAddress.country }}</p>
+                    <p v-if="store.personalAddress.country">
+                        {{ formatBillingCountry(store.personalAddress.country) }}
+                    </p>
                 </div>
             </div>
         </div>

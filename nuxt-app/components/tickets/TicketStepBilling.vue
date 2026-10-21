@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useTicketCheckoutStore } from '~/composables/useTicketCheckoutStore'
 import { computed, onMounted, watch } from 'vue'
+import TicketCountrySelect from './TicketCountrySelect.vue'
 import TicketPricingSummary from './TicketPricingSummary.vue'
 
 const emit = defineEmits(['validityChange'])
@@ -249,16 +250,10 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                         </div>
                     </div>
 
-                    <div>
-                        <label class="text-gray-400 mb-2 block text-sm font-bold"> Land </label>
-                        <input
-                            :value="store.personalAddress.country || ''"
-                            type="text"
-                            placeholder="Deutschland"
-                            class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime focus:outline-none"
-                            @input="updatePersonalAddressField('country', ($event.target as HTMLInputElement).value)"
-                        />
-                    </div>
+                    <TicketCountrySelect
+                        :model-value="store.personalAddress.country || ''"
+                        @update:model-value="updatePersonalAddressField('country', $event)"
+                    />
                 </div>
             </div>
         </div>
@@ -336,18 +331,11 @@ function updatePersonalAddressField(field: keyof NonNullable<typeof store.person
                     </div>
                 </div>
 
-                <div>
-                    <label class="text-gray-400 mb-2 block text-sm font-bold">
-                        Land <span class="text-lime">*</span>
-                    </label>
-                    <input
-                        :value="store.company.address.country"
-                        type="text"
-                        placeholder="Deutschland"
-                        class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime focus:outline-none"
-                        @input="updateCompanyField('address.country', ($event.target as HTMLInputElement).value)"
-                    />
-                </div>
+                <TicketCountrySelect
+                    :model-value="store.company.address.country"
+                    required
+                    @update:model-value="updateCompanyField('address.country', $event)"
+                />
 
                 <div>
                     <label class="text-gray-400 mb-2 block text-sm font-bold"> USt-IdNr. (optional) </label>
