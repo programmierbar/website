@@ -61,7 +61,7 @@ const BASE_ORDER = {
     is_internal: false,
 }
 
-const CONFERENCE = { id: 'conf-1', title: 'programmier.con 2026', start_on: '2026-03-01' }
+const CONFERENCE = { id: 'conf-1', title: 'programmier.con 2026', start_on: '2026-03-01', end_on: '2026-03-02' }
 
 const ORIGINAL_SNAPSHOT = {
     order_id: 'order-1',
@@ -386,6 +386,11 @@ describe('invoice-lifecycle endpoint', () => {
             })
             // Snapshot taken from the order's CURRENT billing data.
             expect(correction.snapshot_json.company_name).toBe('Beispiel GmbH')
+            // Same service as the original: Leistungsdatum from the conference dates.
+            expect(correction.snapshot_json).toMatchObject({
+                service_date_start: '2026-03-01',
+                service_date_end: '2026-03-02',
+            })
 
             // The original document row stays byte-for-byte untouched.
             const original = db.ticket_invoices.find((r) => r.id === 'doc-original')
@@ -495,6 +500,9 @@ describe('invoice-lifecycle endpoint', () => {
                 vat_amount_cents: -3610,
                 total_gross_cents: -22610,
                 ticket_count: 2,
+                // The referenced snapshot predates the Leistungsdatum: falls back to the conference dates.
+                service_date_start: '2026-03-01',
+                service_date_end: '2026-03-02',
             })
 
             // The original document row stays untouched, nothing is deleted.

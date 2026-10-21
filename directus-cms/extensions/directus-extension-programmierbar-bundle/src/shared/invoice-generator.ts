@@ -61,6 +61,11 @@ export type InvoiceDocumentKind = 'invoice' | 'correction' | 'cancellation'
 interface InvoiceDataBase {
     invoiceNumber: string
     invoiceDate: string // formatted DD.MM.YYYY
+    /**
+     * Leistungsdatum (§ 14 Abs. 4 Nr. 6 UStG): the conference date(s), e.g.
+     * "25.–26.11.2026". The line is omitted when no date is known.
+     */
+    serviceDate?: string | null
     // Customer
     purchaserName: string
     purchaserEmail: string
@@ -228,18 +233,24 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         const metaY = headingWrapped ? Math.ceil(50 + headingHeight + 6) : 75
 
         doc.fontSize(9).fillColor('#666')
-        doc.text(`Rechnungsdatum: ${data.invoiceDate}`, 50, metaY, { align: 'right' })
+        let metaLineY = metaY
+        const metaLine = (text: string) => {
+            doc.text(text, 50, metaLineY, { align: 'right' })
+            metaLineY += 12
+        }
+        metaLine(`Rechnungsdatum: ${data.invoiceDate}`)
+        if (data.serviceDate) {
+            metaLine(`Leistungsdatum: ${data.serviceDate}`)
+        }
         if (kind === 'invoice') {
-            doc.text(`Fälligkeitsdatum: ${data.invoiceDate}`, 50, metaY + 12, { align: 'right' })
+            metaLine(`Fälligkeitsdatum: ${data.invoiceDate}`)
         } else {
             // referenceNumber/referenceDate are guaranteed by the guard above.
-            doc.text(`Bezug: Rechnung Nr. ${data.referenceNumber} vom ${data.referenceDate}`, 50, metaY + 12, {
-                align: 'right',
-            })
+            metaLine(`Bezug: Rechnung Nr. ${data.referenceNumber} vom ${data.referenceDate}`)
         }
 
         // --- Seller info ---
-        let y = Math.max(115, metaY + 40)
+        let y = Math.max(115, metaLineY + 16)
         doc.fontSize(9).fillColor('#333')
         doc.text(SELLER.name, 50, y)
         y += 13
