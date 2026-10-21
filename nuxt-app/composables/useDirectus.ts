@@ -937,29 +937,6 @@ export function useDirectus() {
         return await directus.request(createItem('ratings', payload))
     }
 
-    // Latest rating of the podcast from the same anonymized, hashed IP created at or after `since`.
-    async function getRecentRatingByIPHash(podcast: DirectusPodcastItem, ipHash: string, since: Date) {
-        const ratings = await directus.request(
-            readItems('ratings', {
-                filter: {
-                    ip: { _eq: ipHash },
-                    date_created: { _gte: since.toISOString() },
-                    // `target` is a many-to-any relation, so the filter has to name the collection.
-                    target: { 'target:podcasts': { id: { _eq: podcast.id } } },
-                } as QueryFilter<Collections, DirectusRatingItem>,
-                fields: ['id', 'up_or_down'],
-                sort: ['-date_created'],
-                limit: 1,
-            })
-        )
-
-        return ratings?.[0] ?? null
-    }
-
-    async function updateRatingVote(rating: { id: string }, vote: 'up' | 'down') {
-        return await directus.request(updateItem('ratings', rating.id, { up_or_down: vote }))
-    }
-
     async function addCommentToRating(rating: { id: string }, comment: string) {
         return await directus.request(updateItem('ratings', rating.id, { comment }))
     }
@@ -1091,8 +1068,6 @@ export function useDirectus() {
         getProfileById,
         getTestimonials,
         createRating,
-        getRecentRatingByIPHash,
-        updateRatingVote,
         addCommentToRating,
     }
 }

@@ -15,12 +15,15 @@ import {
     updateItem,
     updateItems,
     uploadFiles,
+    type QueryFilter,
 } from '@directus/sdk'
 import type { Collections } from '~/services/directus'
 import type {
     DirectusContentVersion,
     DirectusMeetupRegistrationItem,
     DirectusNewsletterSubscriberItem,
+    DirectusPodcastItem,
+    DirectusRatingItem,
     DirectusTicketDiscountCodeItem,
     DirectusTicketItem,
     DirectusTicketOrderItem,
@@ -574,6 +577,30 @@ export function useAuthenticatedDirectus() {
         return (updated?.length ?? 0) > 0
     }
 
+    // Latest rating of the podcast from the same anonymized, hashed IP created at or after `since`.
+    // Needs the token: the public role may create ratings but not read their `ip` or `target`.
+    async function getRecentRatingByIPHash(podcast: Pick<DirectusPodcastItem, 'id'>, ipHash: string, since: Date) {
+        const ratings = await client.request(
+            readItems('ratings', {
+                filter: {
+                    ip: { _eq: ipHash },
+                    date_created: { _gte: since.toISOString() },
+                    // `target` is a many-to-any relation, so the filter has to name the collection.
+                    target: { 'target:podcasts': { id: { _eq: podcast.id } } },
+                } as QueryFilter<Collections, DirectusRatingItem>,
+                fields: ['id', 'up_or_down'],
+                sort: ['-date_created'],
+                limit: 1,
+            })
+        )
+
+        return ratings?.[0] ?? null
+    }
+
+    async function updateRatingVote(rating: { id: string }, vote: 'up' | 'down') {
+        return await client.request(updateItem('ratings', rating.id, { up_or_down: vote }))
+    }
+
     return {
         getSpeakerByPortalToken,
         updateSpeaker,
@@ -609,5 +636,7 @@ export function useAuthenticatedDirectus() {
         createMeetupRegistration,
         readMeetupRegistrationByCancelToken,
         cancelMeetupRegistration,
+        getRecentRatingByIPHash,
+        updateRatingVote,
     }
 }

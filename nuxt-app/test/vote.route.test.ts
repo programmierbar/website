@@ -4,20 +4,24 @@ import voteHandler from '../server/api/vote.post'
 
 // Nuxt/Nitro auto-imports must exist before the handler is imported (its
 // `defineEventHandler(...)` runs at load time); vi.hoisted runs first.
-const directus = vi.hoisted(() => {
+const { directus, authenticated } = vi.hoisted(() => {
     const g = globalThis as any
     g.defineEventHandler = (fn: any) => fn
     g.readBody = async (event: any) => event.body ?? {}
     g.createError = (input: any) => Object.assign(new Error(input.message), input)
     return {
-        getPodcastBySlug: vi.fn(),
-        getRecentRatingByIPHash: vi.fn(),
-        updateRatingVote: vi.fn(),
-        createRating: vi.fn(),
+        // The public client: the CMS's public role may read podcasts and create ratings.
+        directus: { getPodcastBySlug: vi.fn(), createRating: vi.fn() },
+        // The token client: the public role may not read a rating's `ip` or `target`, nor update one.
+        authenticated: { getRecentRatingByIPHash: vi.fn(), updateRatingVote: vi.fn() },
     }
 })
 
 vi.mock('~/composables/useDirectus', () => ({ useDirectus: () => directus }))
+vi.mock('../server/utils', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../server/utils')>()),
+    useAuthenticatedDirectus: () => authenticated,
+}))
 vi.mock('~/config', () => import('../config'))
 
 const BROWSER_UA =
@@ -34,9 +38,9 @@ const vote = (direction: 'up' | 'down', headers: Record<string, string | undefin
     })
 
 beforeEach(() => {
-    Object.values(directus).forEach((fn) => fn.mockReset())
+    for (const fn of [...Object.values(directus), ...Object.values(authenticated)]) fn.mockReset()
     directus.getPodcastBySlug.mockResolvedValue(PODCAST)
-    directus.getRecentRatingByIPHash.mockResolvedValue(null)
+    authenticated.getRecentRatingByIPHash.mockResolvedValue(null)
     directus.createRating.mockResolvedValue({ id: 'rating-new' })
 })
 
@@ -57,7 +61,7 @@ describe('POST /api/vote', () => {
         await expect(vote('up', { 'user-agent': BROWSER_UA, 'x-forwarded-for': 'not-an-ip' })).resolves.toEqual({
             id: 'rating-new',
         })
-        expect(directus.getRecentRatingByIPHash).not.toHaveBeenCalled()
+        expect(authenticated.getRecentRatingByIPHash).not.toHaveBeenCalled()
         expect(directus.createRating).toHaveBeenCalledWith('up', PODCAST, { user_agent: BROWSER_UA })
     })
 
@@ -76,7 +80,7 @@ describe('POST /api/vote', () => {
         const now = Date.parse('2026-10-20T08:00:00Z')
         vi.spyOn(Date, 'now').mockReturnValue(now)
         await vote('up')
-        expect(directus.getRecentRatingByIPHash).toHaveBeenCalledWith(
+        expect(authenticated.getRecentRatingByIPHash).toHaveBeenCalledWith(
             PODCAST,
             IP_HASH,
             new Date(now - VOTE_COOLDOWN_MINUTES * 60 * 1000)
@@ -84,30 +88,30 @@ describe('POST /api/vote', () => {
     })
 
     it('replaces an earlier opposite vote within the cooldown instead of adding one', async () => {
-        directus.getRecentRatingByIPHash.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
+        authenticated.getRecentRatingByIPHash.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
         await expect(vote('down')).resolves.toEqual({ id: 'rating-old' })
-        expect(directus.updateRatingVote).toHaveBeenCalledWith({ id: 'rating-old', up_or_down: 'up' }, 'down')
+        expect(authenticated.updateRatingVote).toHaveBeenCalledWith({ id: 'rating-old', up_or_down: 'up' }, 'down')
         expect(directus.createRating).not.toHaveBeenCalled()
     })
 
     it('counts a repeated vote within the cooldown once', async () => {
-        directus.getRecentRatingByIPHash.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
+        authenticated.getRecentRatingByIPHash.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
         await expect(vote('up')).resolves.toEqual({ id: 'rating-old' })
-        expect(directus.updateRatingVote).not.toHaveBeenCalled()
+        expect(authenticated.updateRatingVote).not.toHaveBeenCalled()
         expect(directus.createRating).not.toHaveBeenCalled()
     })
 
     it('answers 500 when the earlier vote cannot be replaced', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
-        directus.getRecentRatingByIPHash.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
-        directus.updateRatingVote.mockRejectedValue(new Error('forbidden'))
+        authenticated.getRecentRatingByIPHash.mockResolvedValue({ id: 'rating-old', up_or_down: 'up' })
+        authenticated.updateRatingVote.mockRejectedValue(new Error('forbidden'))
         await expect(vote('down')).rejects.toMatchObject({ statusCode: 500 })
         expect(directus.createRating).not.toHaveBeenCalled()
     })
 
     it('answers 500 when the lookup fails', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
-        directus.getRecentRatingByIPHash.mockRejectedValue(new Error('network'))
+        authenticated.getRecentRatingByIPHash.mockRejectedValue(new Error('network'))
         await expect(vote('up')).rejects.toMatchObject({ statusCode: 500 })
         expect(directus.createRating).not.toHaveBeenCalled()
     })

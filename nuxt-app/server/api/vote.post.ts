@@ -1,7 +1,7 @@
 import { useDirectus } from '~/composables/useDirectus'
 import { VOTE_COOLDOWN_MINUTES } from '~/config'
 import { isbot } from 'isbot'
-import { anonymizeAndHashIP, VoteSchema } from '../utils'
+import { anonymizeAndHashIP, useAuthenticatedDirectus, VoteSchema } from '../utils'
 
 // The only path that writes a vote. The GET /podcast/[slug]/[up|down] links that
 // ship in RSS show notes no longer write — they redirect to the podcast page,
@@ -53,11 +53,13 @@ export default defineEventHandler(async (event) => {
         // A further vote from the same IP hash on the same episode within the cooldown replaces
         // the earlier one, so a corrected vote counts and a double click counts once.
         if (ipHash) {
+            // Reading and changing existing ratings needs the API token; creating one does not.
+            const authenticatedDirectus = useAuthenticatedDirectus()
             const since = new Date(Date.now() - VOTE_COOLDOWN_MINUTES * 60 * 1000)
-            const recentRating = await directus.getRecentRatingByIPHash(podcast, ipHash, since)
+            const recentRating = await authenticatedDirectus.getRecentRatingByIPHash(podcast, ipHash, since)
             if (recentRating) {
                 if (recentRating.up_or_down !== direction) {
-                    await directus.updateRatingVote(recentRating, direction)
+                    await authenticatedDirectus.updateRatingVote(recentRating, direction)
                 }
                 return { id: recentRating.id }
             }
