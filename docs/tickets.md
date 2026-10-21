@@ -200,7 +200,7 @@ Bruttobetrag and Aussteller — no customer data; the PDF carries everything els
 
 | Document | Sent by |
 |----------|---------|
-| Original invoice | `ticket-order-processing`, right after the document is generated — independent of the customer mail |
+| Original invoice | `ticket-order-processing`, started right after the document is generated and not awaited — tickets and customer mails never wait for it |
 | Rechnungsberichtigung / Stornorechnung | `invoice-lifecycle` endpoint, when the document is created |
 | Regenerated (not yet issued) document | `invoice-lifecycle` endpoint, subject suffixed `(ersetzt vorherige Fassung)` — accounting already holds the earlier version under the same number |
 
