@@ -35,7 +35,7 @@ export const ACCOUNTING_MAIL_ATTEMPTS = 3
 
 /** Document type as named in the accounting mail (more specific than the PDF title). */
 export const ACCOUNTING_DOCUMENT_LABEL: Record<InvoiceDocumentKind, string> = {
-    invoice: 'Ticketrechnung',
+    invoice: 'Rechnung',
     correction: 'Rechnungsberichtigung',
     cancellation: 'Stornorechnung (Gutschrift)',
 }
@@ -96,11 +96,13 @@ export function buildAccountingMail(doc: AccountingInvoiceDocument): { subject: 
     const label = ACCOUNTING_DOCUMENT_LABEL[doc.documentKind]
     const reference = doc.referenceNumber ? ` zu ${doc.referenceNumber}` : ''
     const replaces = doc.replacesPreviousVersion ? ' (ersetzt vorherige Fassung)' : ''
-    const subject = `Ausgangsrechnung${conference ? ` ${conference}` : ''} – ${label} ${doc.invoiceNumber}${reference}${replaces}`
+    // "<conference> Ticket" names what was sold; the invoice number follows the type as the unique key.
+    const product = conference ? `${conference} Ticket` : 'Ticket'
+    const subject = `Ausgangsrechnung ${product} – ${label} ${doc.invoiceNumber}${reference}${replaces}`
 
     const serviceDate = formatServiceDate(doc.snapshot.service_date_start, doc.snapshot.service_date_end)
     const lines = [
-        `Dokumentart: Ausgangsrechnung – ${label}`,
+        `Dokumentart: Ausgangsrechnung ${product} – ${label}`,
         ...(conference ? [`Veranstaltung: ${conference}`] : []),
         `Rechnungsnummer: ${doc.invoiceNumber}`,
         `Rechnungsdatum: ${formatInvoiceDate(doc.invoiceDate)}`,

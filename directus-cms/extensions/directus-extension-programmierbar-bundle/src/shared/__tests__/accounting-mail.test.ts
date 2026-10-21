@@ -98,10 +98,10 @@ describe('getAccountingInvoiceEmail', () => {
 describe('buildAccountingMail', () => {
     test('original invoice: classifiable subject and a fact sheet without customer data', () => {
         const mail = buildAccountingMail(DOC)
-        expect(mail.subject).toBe('Ausgangsrechnung programmier.con 2026 – Ticketrechnung PB-CON26-012')
+        expect(mail.subject).toBe('Ausgangsrechnung programmier.con 2026 Ticket – Rechnung PB-CON26-012')
         expect(mail.text).toBe(
             [
-                'Dokumentart: Ausgangsrechnung – Ticketrechnung',
+                'Dokumentart: Ausgangsrechnung programmier.con 2026 Ticket – Rechnung',
                 'Veranstaltung: programmier.con 2026',
                 'Rechnungsnummer: PB-CON26-012',
                 'Rechnungsdatum: 21.10.2026',
@@ -120,18 +120,22 @@ describe('buildAccountingMail', () => {
     test('correction names the corrected invoice in subject and body', () => {
         const mail = buildAccountingMail(CORRECTION)
         expect(mail.subject).toBe(
-            'Ausgangsrechnung programmier.con 2026 – Rechnungsberichtigung PB-CON26-049 zu PB-CON26-040'
+            'Ausgangsrechnung programmier.con 2026 Ticket – Rechnungsberichtigung PB-CON26-049 zu PB-CON26-040'
         )
-        expect(mail.text).toContain('Dokumentart: Ausgangsrechnung – Rechnungsberichtigung\n')
+        expect(mail.text).toContain(
+            'Dokumentart: Ausgangsrechnung programmier.con 2026 Ticket – Rechnungsberichtigung\n'
+        )
         expect(mail.text).toContain('Bezug auf Originalrechnung: PB-CON26-040 vom 01.10.2026\n')
     })
 
     test('cancellation is marked as Gutschrift with a negative amount', () => {
         const mail = buildAccountingMail(CANCELLATION)
         expect(mail.subject).toBe(
-            'Ausgangsrechnung programmier.con 2026 – Stornorechnung (Gutschrift) PB-CON26-050 zu PB-CON26-040'
+            'Ausgangsrechnung programmier.con 2026 Ticket – Stornorechnung (Gutschrift) PB-CON26-050 zu PB-CON26-040'
         )
-        expect(mail.text).toContain('Dokumentart: Ausgangsrechnung – Stornorechnung (Gutschrift)\n')
+        expect(mail.text).toContain(
+            'Dokumentart: Ausgangsrechnung programmier.con 2026 Ticket – Stornorechnung (Gutschrift)\n'
+        )
         expect(mail.text).toContain(`Bruttobetrag: -1.189,00${NBSP}€\n`)
         expect(mail.text).toContain('Bezug auf Originalrechnung: PB-CON26-040 vom 01.10.2026\n')
     })
@@ -139,7 +143,7 @@ describe('buildAccountingMail', () => {
     test('a replacement version is marked in subject and body', () => {
         const mail = buildAccountingMail({ ...DOC, replacesPreviousVersion: true })
         expect(mail.subject).toBe(
-            'Ausgangsrechnung programmier.con 2026 – Ticketrechnung PB-CON26-012 (ersetzt vorherige Fassung)'
+            'Ausgangsrechnung programmier.con 2026 Ticket – Rechnung PB-CON26-012 (ersetzt vorherige Fassung)'
         )
         expect(mail.text).toContain('Diese Fassung ersetzt die zuvor übermittelte mit derselben Rechnungsnummer.')
     })
@@ -150,7 +154,7 @@ describe('buildAccountingMail', () => {
             referenceDate: null,
             snapshot: { conference_title: '', service_date_start: null, service_date_end: null, total_gross_cents: 0 },
         })
-        expect(mail.subject).toBe('Ausgangsrechnung – Rechnungsberichtigung PB-CON26-049 zu PB-CON26-040')
+        expect(mail.subject).toBe('Ausgangsrechnung Ticket – Rechnungsberichtigung PB-CON26-049 zu PB-CON26-040')
         expect(mail.text).not.toContain('Veranstaltung')
         expect(mail.text).not.toContain('Leistungszeitraum')
         expect(mail.text).toContain('Bezug auf Originalrechnung: PB-CON26-040\n')

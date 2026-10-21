@@ -634,7 +634,7 @@ describe('invoice-lifecycle endpoint', () => {
             const mail = accountingMail()
             expect(mail.to).toBe('accounting@example.test')
             expect(mail.subject).toBe(
-                `Ausgangsrechnung ${CONFERENCE.title} – Rechnungsberichtigung PB-CON26-002 zu PB-CON26-001`
+                `Ausgangsrechnung ${CONFERENCE.title} Ticket – Rechnungsberichtigung PB-CON26-002 zu PB-CON26-001`
             )
             expect(mail.text).toContain('Bezug auf Originalrechnung: PB-CON26-001 vom ')
             expect(mail.html).toBeUndefined() // plain text, not a template
@@ -659,7 +659,7 @@ describe('invoice-lifecycle endpoint', () => {
             expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
             const mail = accountingMail()
             expect(mail.subject).toBe(
-                `Ausgangsrechnung ${CONFERENCE.title} – Stornorechnung (Gutschrift) PB-CON26-002 zu PB-CON26-001`
+                `Ausgangsrechnung ${CONFERENCE.title} Ticket – Stornorechnung (Gutschrift) PB-CON26-002 zu PB-CON26-001`
             )
             expect(mail.text).toMatch(/Bruttobetrag: -\d/)
             expect(mail.attachments[0].filename).toBe('Stornorechnung-PB-CON26-002.pdf')
@@ -679,7 +679,7 @@ describe('invoice-lifecycle endpoint', () => {
             expect(res.body.accounting_mail).toBe('sent')
             const mail = accountingMail()
             expect(mail.subject).toBe(
-                `Ausgangsrechnung ${CONFERENCE.title} – Ticketrechnung PB-CON26-001 (ersetzt vorherige Fassung)`
+                `Ausgangsrechnung ${CONFERENCE.title} Ticket – Rechnung PB-CON26-001 (ersetzt vorherige Fassung)`
             )
             expect(mail.attachments[0].filename).toBe('Rechnung-PB-CON26-001.pdf')
             expect(mail.attachments[0].content.equals(calls.uploadedBytes[0]!)).toBe(true)
@@ -701,7 +701,7 @@ describe('invoice-lifecycle endpoint', () => {
             expect(res.statusCode).toBe(200)
             const mail = accountingMail()
             expect(mail.subject).toBe(
-                `Ausgangsrechnung ${CONFERENCE.title} – Rechnungsberichtigung PB-CON26-002 zu PB-CON26-001 (ersetzt vorherige Fassung)`
+                `Ausgangsrechnung ${CONFERENCE.title} Ticket – Rechnungsberichtigung PB-CON26-002 zu PB-CON26-001 (ersetzt vorherige Fassung)`
             )
             expect(mail.text).toContain('Bezug auf Originalrechnung: PB-CON26-001 vom ')
         })
