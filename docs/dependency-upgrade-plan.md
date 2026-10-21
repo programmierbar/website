@@ -2711,6 +2711,24 @@ browser-support decision nobody made.
       `anonymizeAndHashIP`, no Gemini SDK). `/api/vote` and `/api/email` load in a production
       server.
 
+      **The preview test exposed a production outage, fixed in the same PR (#285).** Every vote with
+      an IP answered 500, in production too, since the cooldown lookup shipped in `cd9acca`
+      (2026-10-20). `useDirectus` talks to the CMS without a token, so the server ran the lookup as the
+      **public role**, and that role may create ratings but not read a rating's `ip` or `target`. The
+      CMS answered `403 FORBIDDEN`, and the lookup runs before the insert, so **no vote was stored**. The
+      403 reproduces with a plain unauthenticated request. Vercel's error list stayed empty, because
+      the route catches the error and only logs it.
+
+      `getRecentRatingByIPHash` and `updateRatingVote` moved to `useAuthenticatedDirectus()`, which
+      uses the API token. `createRating` stays on the public client, which is allowed to create.
+      Opening up the public role instead would have let anyone query the IP hashes. The route test
+      now mocks the two clients separately. Before, a single mock stood in for both, which is how
+      the tests stayed green over the outage. A negative control confirmed it: with the lookup back
+      on the public client, 4 tests fail. Locally, without a token, a vote now fails with
+      `NUXT_DIRECTUS_API_TOKEN not configured`, which shows the route takes the token path.
+      **Requires** the token's role to have `read` and `update` on `ratings`, including `ip` and
+      `target`. Verified on the preview.
+
 - [ ] ⚠️ **IPv4-mapped IPv6 addresses all hash to the same value.** Found while pinning the hashes
       above. `anonymizeAndHashIP` zeroes the last four groups of an IPv6 address, and in
       `::ffff:a.b.c.d` those groups *are* the IPv4 address. So every IPv4-mapped address hashes like
