@@ -2,6 +2,7 @@ import { VAT_RATE } from '~/config'
 import type { PurchaseType, TicketType } from '~/types/directus'
 import type { BillingAddress, CompanyBillingInfo, Purchaser, TicketAttendee } from '~/types/items'
 import { defineStore } from 'pinia'
+import { DEFAULT_BILLING_COUNTRY, normalizeBillingCountry } from 'shared-code'
 
 interface TicketPricingSettings {
     earlyBirdPriceCents: number | null
@@ -33,6 +34,14 @@ interface TicketCheckoutState {
     pricingSettings: TicketPricingSettings | null
     pricingLoaded: boolean
     pricingError: boolean
+}
+
+/**
+ * State saved before the country became a select holds free text ("Deutschland"). Map it to the
+ * ISO code the select and the API expect; an unknown value is cleared so it has to be picked again.
+ */
+function withCountryCode(address: BillingAddress): BillingAddress {
+    return { ...address, country: normalizeBillingCountry(address.country) ?? '' }
 }
 
 // Keys to persist (exclude transient state like isLoading, error, discountValidating)
@@ -314,9 +323,11 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
                 this.attendees = stored.attendees || [{ firstName: '', lastName: '', email: '' }]
                 this.purchaser = stored.purchaser || { firstName: '', lastName: '', email: '' }
                 this.purchaseType = stored.purchaseType || 'personal'
-                this.company = stored.company || null
+                this.company = stored.company
+                    ? { ...stored.company, address: withCountryCode(stored.company.address) }
+                    : null
                 this.showPersonalAddress = stored.showPersonalAddress || false
-                this.personalAddress = stored.personalAddress || null
+                this.personalAddress = stored.personalAddress ? withCountryCode(stored.personalAddress) : null
                 this.discountCode = stored.discountCode || ''
                 this.discountValid = false
 
@@ -409,7 +420,7 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
                         line1: '',
                         city: '',
                         postalCode: '',
-                        country: 'Deutschland',
+                        country: DEFAULT_BILLING_COUNTRY,
                     },
                 }
             }
@@ -436,7 +447,7 @@ export const useTicketCheckoutStore = defineStore('ticketCheckout', {
                     line1: '',
                     city: '',
                     postalCode: '',
-                    country: 'Deutschland',
+                    country: DEFAULT_BILLING_COUNTRY,
                 }
             } else if (!show) {
                 this.personalAddress = null

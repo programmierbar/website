@@ -1,4 +1,4 @@
-import { MEETUP_HEARD_ABOUT_OPTIONS } from 'shared-code'
+import { BILLING_COUNTRY_CODES, MEETUP_HEARD_ABOUT_OPTIONS } from 'shared-code'
 import { z } from 'zod'
 
 export const EmailSchema = z.object({
@@ -90,6 +90,10 @@ export const PurchaserSchema = z.object({
         .max(200, 'Deine E-Mail-Adresse darf nicht länger als 200 Zeichen sein.'),
 })
 
+// ISO 3166-1 alpha-2 code from the checkout's country select, stored as
+// `ticket_orders.billing_country` and needed for e-invoices.
+const BillingCountrySchema = z.enum(BILLING_COUNTRY_CODES, { error: 'Bitte wähle ein Land aus der Liste aus.' })
+
 export const BillingAddressSchema = z.object({
     line1: z
         .string()
@@ -101,10 +105,7 @@ export const BillingAddressSchema = z.object({
         .string()
         .min(1, 'Bitte trage die Postleitzahl ein.')
         .max(20, 'Die Postleitzahl darf nicht länger als 20 Zeichen sein.'),
-    country: z
-        .string()
-        .min(1, 'Bitte trage das Land ein.')
-        .max(100, 'Das Land darf nicht länger als 100 Zeichen sein.'),
+    country: BillingCountrySchema,
 })
 
 export const OptionalBillingAddressSchema = z.object({
@@ -112,7 +113,8 @@ export const OptionalBillingAddressSchema = z.object({
     line2: z.string().max(200, 'Die Adresszeile darf nicht länger als 200 Zeichen sein.').optional(),
     city: z.string().max(100, 'Die Stadt darf nicht länger als 100 Zeichen sein.').optional(),
     postalCode: z.string().max(20, 'Die Postleitzahl darf nicht länger als 20 Zeichen sein.').optional(),
-    country: z.string().max(100, 'Das Land darf nicht länger als 100 Zeichen sein.').optional(),
+    // An unselected country (empty string) counts as "not provided".
+    country: z.preprocess((value) => (value === '' ? undefined : value), BillingCountrySchema.optional()),
 })
 
 export const CompanyBillingSchema = z.object({

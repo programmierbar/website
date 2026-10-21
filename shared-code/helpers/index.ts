@@ -8,3 +8,4 @@ export * from './eventCalendar';
 export * from './eventVenue';
 export * from './meetupRegistration';
 export * from './speakerPortal';
+export * from './billingCountry';
