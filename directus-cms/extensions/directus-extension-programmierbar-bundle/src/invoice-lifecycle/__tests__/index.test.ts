@@ -593,7 +593,10 @@ describe('invoice-lifecycle endpoint', () => {
 // (env var, unset warning + Slack alert) is covered in
 // shared/__tests__/secure-invoice-folder.test.ts; here it is stubbed, which also
 // keeps the unset-folder Slack alert offline for the empty `env` above.
-jest.mock('../../shared/secure-invoice-folder.ts', () => ({ invoiceFilesFolder: () => 'folder-invoices' }))
+jest.mock('../../shared/secure-invoice-folder.ts', () => ({
+    ...jest.requireActual<object>('../../shared/secure-invoice-folder.ts'),
+    invoiceFilesFolder: () => 'folder-invoices',
+}))
 
 describe('invoice-lifecycle upload folder', () => {
     const correctionRow = () =>

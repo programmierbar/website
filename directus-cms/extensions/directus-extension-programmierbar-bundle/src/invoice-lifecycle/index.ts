@@ -268,6 +268,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                 filesService: ctx.filesService,
                 folder: invoiceFilesFolder(env, logger),
                 storageLocation: storageLocation(),
+                logger,
             })
         } else {
             rendered = await renderAndUploadInvoice({
@@ -278,6 +279,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                 filesService: ctx.filesService,
                 folder: invoiceFilesFolder(env, logger),
                 storageLocation: storageLocation(),
+                logger,
             })
         }
 
@@ -335,6 +337,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             filesService: ctx.filesService,
             folder: invoiceFilesFolder(env, logger),
             storageLocation: storageLocation(),
+            logger,
         })
 
         const documentId = await ctx.invoicesService.createOne({
@@ -416,6 +419,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             filesService: ctx.filesService,
             folder: invoiceFilesFolder(env, logger),
             storageLocation: storageLocation(),
+            logger,
         })
 
         const documentId = await ctx.invoicesService.createOne({

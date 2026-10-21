@@ -29,7 +29,7 @@ The flow consists of four main phases:
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `STORAGE_LOCATIONS` | Comma-separated storage location IDs (first is used for invoice PDFs) | Yes |
-| `INVOICE_FILES_FOLDER` | Id of the `directus_files` folder invoice PDFs are uploaded into; the Public policy must not read it (see [Invoice File Privacy](#invoice-file-privacy)). Unset: invoices still upload, but into the public library (warning + Slack alert) | Yes |
+| `INVOICE_FILES_FOLDER` | Id of the `directus_files` folder invoice PDFs are uploaded into; the Public policy must not read it (see [Invoice File Privacy](#invoice-file-privacy)). Unset or invalid: invoices still upload, but into the public library (warning + Slack alert) | Yes |
 | Email transport config | Directus email settings (`EMAIL_TRANSPORT`, `EMAIL_SMTP_HOST`, etc.) | Yes |
 
 ## External Services
@@ -223,8 +223,10 @@ Key-value settings used by extension hooks.
 Directus serves every file the Public role may read at `/assets/<file-id>` — no login needed — and
 lists them at `/files`. Invoice PDFs (Rechnung, Rechnungsberichtigung, Stornorechnung) contain
 customer data, so they are uploaded into a dedicated folder (`INVOICE_FILES_FOLDER`) that the Public
-policy is not allowed to read. If the variable is unset, invoicing keeps working but the PDFs land in
-the public file library; the extension logs a warning and posts a Slack alert once per process.
+policy is not allowed to read. If the variable is unset, or the upload into the folder fails (e.g. an
+unknown or malformed folder id), invoicing keeps working but the PDF lands in the public file
+library; the extension logs a warning (with the invoice number) and posts a Slack alert once per
+process. Fix the setting and move those PDFs into the folder (step 4).
 
 One-time setup per environment:
 

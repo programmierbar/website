@@ -207,6 +207,7 @@ export default defineHook(({ action }, hookContext) => {
                             filesService,
                             folder: invoiceFilesFolder(env, logger),
                             storageLocation: env.STORAGE_LOCATIONS?.split(',')[0],
+                            logger,
                         })
 
                         pdfBuffer = invoiceResult.pdfBuffer

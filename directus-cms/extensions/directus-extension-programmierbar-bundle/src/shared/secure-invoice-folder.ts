@@ -13,7 +13,8 @@ let missingFolderReported = false
  *
  * When `INVOICE_FILES_FOLDER` is unset, invoicing keeps working (the PDF lands in
  * the general file library), but it needs a human to fix the configuration: warn
- * in the log and alert Slack, once per process.
+ * in the log and alert Slack, once per process (retried with the next invoice if
+ * the Slack message could not be delivered).
  */
 export function invoiceFilesFolder(
     env: Record<string, any>,
@@ -29,9 +30,47 @@ export function invoiceFilesFolder(
         const message = `${INVOICE_FILES_FOLDER_ENV} is not set — invoice PDFs are uploaded to the public file library and can be downloaded via /assets/<id>. Set it to the id of the private invoice folder (see docs/tickets.md).`
         logger.warn(`secure-invoice-folder: ${message}`)
         postSlackMessage(`:rotating_light: *Invoices*: ${message}`).catch((error: any) => {
+            // Not delivered: let the next invoice try again.
+            missingFolderReported = false
             logger.error(`secure-invoice-folder: Could not send Slack alert: ${error?.message ?? error}`)
         })
     }
 
     return undefined
+}
+
+let rejectedFolderReported = false
+
+/**
+ * Run an invoice upload into `folder`, falling back to the public file library when
+ * the upload into the folder fails — e.g. an unknown or malformed `INVOICE_FILES_FOLDER`
+ * (Directus rejects the row on the folder foreign key before anything is stored).
+ * Same trade-off as an unset folder: the invoice flow keeps working, a warning is logged
+ * and Slack is alerted (once per process, like above) so the config can be fixed and the file moved.
+ * Without a folder there is nothing to fall back from; a failing retry throws as before.
+ */
+export async function uploadWithInvoiceFolderFallback(
+    upload: (folder: string | undefined) => Promise<string>,
+    options: { folder?: string; invoiceNumber: string; logger?: { warn: (message: string) => void } }
+): Promise<string> {
+    const { folder, invoiceNumber, logger } = options
+    if (!folder) {
+        return upload(undefined)
+    }
+
+    try {
+        return await upload(folder)
+    } catch (error: any) {
+        const fileId = await upload(undefined)
+        const message = `Could not store invoice ${invoiceNumber} in ${INVOICE_FILES_FOLDER_ENV} folder "${folder}" (${error?.message ?? error}) — stored it in the public file library instead. Check ${INVOICE_FILES_FOLDER_ENV} (see docs/tickets.md) and move the file into the invoice folder.`
+        logger?.warn(`secure-invoice-folder: ${message}`)
+        if (!rejectedFolderReported) {
+            rejectedFolderReported = true
+            postSlackMessage(`:rotating_light: *Invoices*: ${message}`).catch((slackError: any) => {
+                rejectedFolderReported = false
+                logger?.warn(`secure-invoice-folder: Could not send Slack alert: ${slackError?.message ?? slackError}`)
+            })
+        }
+        return fileId
+    }
 }
