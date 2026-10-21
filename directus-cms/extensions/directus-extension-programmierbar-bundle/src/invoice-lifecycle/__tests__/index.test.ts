@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
-import { sendTemplatedEmail } from '../../shared/email-service.ts'
+import { resetAccountingMailState } from '../../shared/accounting-mail.ts'
+import { sendRawEmail, sendTemplatedEmail } from '../../shared/email-service.ts'
+import { postSlackMessage } from '../../shared/postSlackMessage.ts'
 import registerEndpoint from '../index.ts'
 
 // The extensions SDK ships as ESM and is not transformed under Jest's CJS mode,
@@ -11,13 +13,25 @@ jest.mock('@directus/extensions-sdk', () => ({
 // `import.meta.url` in the font loader cannot be parsed by Jest's CJS transform.
 jest.mock('../../shared/museo-font.ts', () => ({ tryLoadMuseoFont: () => null }))
 
-// The lifecycle endpoint must NEVER send mail. Mocking the shared email service
-// lets the tests assert that even if a future change wires it in, it is not called.
+// The lifecycle endpoint must NEVER mail the customer (no templated mail), only the
+// plain accounting copy. Mocking the shared email service lets the tests assert both.
 jest.mock('../../shared/email-service.ts', () => ({
     sendTemplatedEmail: jest.fn(),
+    sendRawEmail: jest.fn(),
+}))
+jest.mock('../../shared/postSlackMessage.ts', () => ({
+    postSlackMessage: jest.fn(),
+    isSlackConfigured: jest.fn(() => false),
 }))
 
 const sendTemplatedEmailMock = jest.mocked(sendTemplatedEmail)
+const sendRawEmailMock = jest.mocked(sendRawEmail)
+const postSlackMessageMock = jest.mocked(postSlackMessage)
+
+const ACCOUNTING_ENV = { ACCOUNTING_INVOICE_EMAIL: 'accounting@example.test' }
+
+/** The accounting mail handed to the shared email service (n-th call). */
+const accountingMail = (n = 0) => sendRawEmailMock.mock.calls[n]![0] as any
 
 type RouteHandler = (req: any, res: any) => Promise<void>
 
@@ -101,7 +115,9 @@ function issuedOriginalRow(overrides: Record<string, any> = {}) {
     }
 }
 
-async function setup(options: { order?: Record<string, any>; invoices?: any[]; conference?: any } = {}) {
+async function setup(
+    options: { order?: Record<string, any>; invoices?: any[]; conference?: any; env?: Record<string, any> } = {}
+) {
     const db: Db = {
         ticket_orders: [{ ...BASE_ORDER, ...options.order }],
         conferences: [options.conference ?? { ...CONFERENCE }],
@@ -116,6 +132,8 @@ async function setup(options: { order?: Record<string, any>; invoices?: any[]; c
         updates: [] as Array<{ collection: string; id: any; data: any }>,
         deletes: [] as Array<{ collection: string; id: any }>,
         uploads: [] as any[],
+        /** Bytes of each uploaded file, in upload order. */
+        uploadedBytes: [] as Buffer[],
         accountabilities: [] as any[],
     }
 
@@ -170,7 +188,10 @@ async function setup(options: { order?: Record<string, any>; invoices?: any[]; c
     }
 
     class FakeFilesService {
-        async uploadOne(_stream: any, meta: any) {
+        async uploadOne(stream: any, meta: any) {
+            const chunks: Buffer[] = []
+            for await (const chunk of stream) chunks.push(Buffer.from(chunk))
+            calls.uploadedBytes.push(Buffer.concat(chunks))
             calls.uploads.push(meta)
             return `file-new-${++fileSeq}`
         }
@@ -187,7 +208,7 @@ async function setup(options: { order?: Record<string, any>; invoices?: any[]; c
     const context = {
         logger,
         services: { ItemsService: FakeItemsService, FilesService: FakeFilesService, MailService },
-        env: {},
+        env: options.env ?? {},
         getSchema: async () => ({}),
     }
 
@@ -217,6 +238,10 @@ async function setup(options: { order?: Record<string, any>; invoices?: any[]; c
 
 beforeEach(() => {
     sendTemplatedEmailMock.mockReset()
+    sendRawEmailMock.mockReset()
+    sendRawEmailMock.mockResolvedValue(true)
+    resetAccountingMailState()
+    postSlackMessageMock.mockReset()
 })
 
 describe('invoice-lifecycle endpoint', () => {
@@ -285,6 +310,7 @@ describe('invoice-lifecycle endpoint', () => {
                 invoice_number: 'PB-CON26-001',
                 invoice_file: 'file-new-1',
                 document_id: 'doc-original',
+                accounting_mail: 'skipped', // no ACCOUNTING_INVOICE_EMAIL in this setup
             })
 
             // Document row updated in place: new file, refreshed snapshot, same number.
@@ -536,7 +562,7 @@ describe('invoice-lifecycle endpoint', () => {
             expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
         })
 
-        test('never instantiates the mail service', async () => {
+        test('never instantiates the mail service directly (all mail goes through the shared helpers)', async () => {
             const { call, MailService } = await setup({ invoices: [issuedOriginalRow()] })
             await call('cancellation')
             expect(MailService).not.toHaveBeenCalled()
@@ -608,6 +634,131 @@ describe('invoice-lifecycle endpoint', () => {
             for (const use of invoiceServiceUses) {
                 expect(use.accountability).toBe(ADMIN)
             }
+        })
+    })
+
+    describe('accounting copy', () => {
+        test('a correction is mailed to accounting with the stored PDF', async () => {
+            const { call, calls, db } = await setup({ invoices: [issuedOriginalRow()], env: ACCOUNTING_ENV })
+
+            const res = await call('correction')
+
+            expect(res.statusCode).toBe(200)
+            expect(res.body.accounting_mail).toBe('sent')
+            expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
+            const mail = accountingMail()
+            expect(mail.to).toBe('accounting@example.test')
+            expect(mail.subject).toBe(
+                `Ausgangsrechnung ${CONFERENCE.title} Ticket – Rechnungsberichtigung PB-CON26-002 zu PB-CON26-001`
+            )
+            expect(mail.text).toContain('Bezug auf Originalrechnung: PB-CON26-001 vom ')
+            expect(mail.html).toBeUndefined() // plain text, not a template
+            expect(mail.attachments).toHaveLength(1)
+            expect(mail.attachments[0].filename).toBe('Rechnungsberichtigung-PB-CON26-002.pdf')
+            // Same bytes as the stored file.
+            expect(mail.attachments[0].content.equals(calls.uploadedBytes[0]!)).toBe(true)
+            expect(mail.attachments[0].content.subarray(0, 4).toString()).toBe('%PDF')
+
+            // The customer is not mailed, and the accounting copy does not issue the document.
+            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+            expect(db.ticket_invoices.find((r) => r.type === 'correction').sent_at).toBeNull()
+        })
+
+        test('a cancellation is mailed to accounting with its negative amount', async () => {
+            const { call, calls } = await setup({ invoices: [issuedOriginalRow()], env: ACCOUNTING_ENV })
+
+            const res = await call('cancellation')
+
+            expect(res.statusCode).toBe(200)
+            expect(res.body.accounting_mail).toBe('sent')
+            expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
+            const mail = accountingMail()
+            expect(mail.subject).toBe(
+                `Ausgangsrechnung ${CONFERENCE.title} Ticket – Stornorechnung (Gutschrift) PB-CON26-002 zu PB-CON26-001`
+            )
+            expect(mail.text).toMatch(/Bruttobetrag: -\d/)
+            expect(mail.attachments[0].filename).toBe('Stornorechnung-PB-CON26-002.pdf')
+            expect(mail.attachments[0].content.equals(calls.uploadedBytes[0]!)).toBe(true)
+            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+        })
+
+        test('a pre-issuance regenerate sends the new version, marked as replacing the previous one', async () => {
+            const { call, calls } = await setup({
+                invoices: [issuedOriginalRow({ sent_at: null })],
+                env: ACCOUNTING_ENV,
+            })
+
+            const res = await call('regenerate')
+
+            expect(res.statusCode).toBe(200)
+            expect(res.body.accounting_mail).toBe('sent')
+            const mail = accountingMail()
+            expect(mail.subject).toBe(
+                `Ausgangsrechnung ${CONFERENCE.title} Ticket – Rechnung PB-CON26-001 (ersetzt vorherige Fassung)`
+            )
+            expect(mail.attachments[0].filename).toBe('Rechnung-PB-CON26-001.pdf')
+            expect(mail.attachments[0].content.equals(calls.uploadedBytes[0]!)).toBe(true)
+        })
+
+        test('a regenerated correction keeps its document type and reference in the accounting mail', async () => {
+            const correction = issuedOriginalRow({
+                id: 'doc-correction-1',
+                type: 'correction',
+                invoice_number: 'PB-CON26-002',
+                related_invoice: 'doc-original',
+                date_created: '2026-02-01T00:00:00.000Z',
+                sent_at: null,
+            })
+            const { call } = await setup({ invoices: [issuedOriginalRow(), correction], env: ACCOUNTING_ENV })
+
+            const res = await call('regenerate')
+
+            expect(res.statusCode).toBe(200)
+            const mail = accountingMail()
+            expect(mail.subject).toBe(
+                `Ausgangsrechnung ${CONFERENCE.title} Ticket – Rechnungsberichtigung PB-CON26-002 zu PB-CON26-001 (ersetzt vorherige Fassung)`
+            )
+            expect(mail.text).toContain('Bezug auf Originalrechnung: PB-CON26-001 vom ')
+        })
+
+        test('is skipped with an info log when ACCOUNTING_INVOICE_EMAIL is not set', async () => {
+            const { call, logger } = await setup({ invoices: [issuedOriginalRow()] })
+
+            const res = await call('correction')
+
+            expect(res.statusCode).toBe(200)
+            expect(res.body.accounting_mail).toBe('skipped')
+            expect(sendRawEmailMock).not.toHaveBeenCalled()
+            const infoLog = logger.info.mock.calls.map((c) => String(c[0])).join('\n')
+            expect(infoLog).toContain('ACCOUNTING_INVOICE_EMAIL')
+            expect(logger.error).not.toHaveBeenCalled()
+        })
+
+        test('persistent failure: document is still created, Slack is alerted, endpoint answers 200', async () => {
+            sendRawEmailMock.mockResolvedValue(false)
+            const { call, db } = await setup({ invoices: [issuedOriginalRow()], env: ACCOUNTING_ENV })
+
+            const res = await call('cancellation')
+
+            expect(res.statusCode).toBe(200)
+            expect(res.body.accounting_mail).toBe('failed')
+            expect(sendRawEmailMock).toHaveBeenCalledTimes(3)
+            expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+            expect(postSlackMessageMock.mock.calls[0]![0]).toContain('Stornorechnung PB-CON26-002')
+            expect(db.ticket_invoices.find((r) => r.type === 'cancellation')).toMatchObject({
+                invoice_number: 'PB-CON26-002',
+                sent_at: null,
+            })
+        })
+
+        test('blocked operations and internal orders send nothing', async () => {
+            const blocked = await setup({ invoices: [issuedOriginalRow()], env: ACCOUNTING_ENV })
+            expect((await blocked.call('regenerate')).statusCode).toBe(400)
+
+            const internal = await setup({ order: { is_internal: true }, env: ACCOUNTING_ENV })
+            expect((await internal.call('correction')).statusCode).toBe(400)
+
+            expect(sendRawEmailMock).not.toHaveBeenCalled()
         })
     })
 })

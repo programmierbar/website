@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { sendInvoiceToAccounting } from '../../shared/accounting-mail.ts'
 import { sendTemplatedEmail } from '../../shared/email-service.ts'
 import { generateInvoiceNumber } from '../../shared/invoice-generator.ts'
 import { issueOriginalInvoice, markInvoiceSent } from '../../shared/invoice-service.ts'
@@ -33,7 +34,14 @@ jest.mock('../../shared/postSlackMessage.ts', () => ({
     postSlackMessage: jest.fn(),
 }))
 
+// Building and sending the accounting mail is covered in shared/__tests__/accounting-mail.test.ts;
+// here it only matters that the hook hands over the right document at the right time.
+jest.mock('../../shared/accounting-mail.ts', () => ({
+    sendInvoiceToAccounting: jest.fn(),
+}))
+
 const sendTemplatedEmailMock = jest.mocked(sendTemplatedEmail)
+const sendInvoiceToAccountingMock = jest.mocked(sendInvoiceToAccounting)
 const postSlackMessageMock = jest.mocked(postSlackMessage)
 const issueOriginalInvoiceMock = jest.mocked(issueOriginalInvoice)
 const markInvoiceSentMock = jest.mocked(markInvoiceSent)
@@ -83,7 +91,9 @@ const CONFERENCE = {
     ticket_max_quantity: null,
 }
 
-function setup(orderOverrides: Record<string, any> = {}) {
+const ACCOUNTING_ENV = { ACCOUNTING_INVOICE_EMAIL: 'accounting@example.test' }
+
+function setup(orderOverrides: Record<string, any> = {}, env: Record<string, any> = {}) {
     const order = { ...ORDER, ...orderOverrides }
     const serviceInstances: Record<string, any[]> = {}
 
@@ -117,7 +127,7 @@ function setup(orderOverrides: Record<string, any> = {}) {
         logger,
         services: { ItemsService: FakeItemsService, FilesService, MailService },
         getSchema: async () => ({}),
-        env: {},
+        env,
     }
 
     registerHook(register as any, hookContext as any)
@@ -127,11 +137,13 @@ function setup(orderOverrides: Record<string, any> = {}) {
         await flush()
     }
 
-    return { order, serviceInstances, actions, invoke, logger }
+    return { order, serviceInstances, actions, invoke, logger, hookContext }
 }
 
 beforeEach(() => {
     sendTemplatedEmailMock.mockReset()
+    sendInvoiceToAccountingMock.mockReset()
+    sendInvoiceToAccountingMock.mockResolvedValue('sent')
     issueOriginalInvoiceMock.mockReset()
     markInvoiceSentMock.mockReset()
     postSlackMessageMock.mockReset()
@@ -145,7 +157,7 @@ beforeEach(() => {
         fileId: 'file-1',
         pdfBuffer: Buffer.from('%PDF-fake'),
         invoiceFileName: 'Rechnung-PB-CON26-001.pdf',
-        snapshot: {} as any,
+        snapshot: { conference_title: 'programmier.con 2026' } as any,
     })
     sendTemplatedEmailMock.mockResolvedValue(true)
 })
@@ -272,6 +284,91 @@ describe('ticket-order-processing hook', () => {
         expect(markInvoiceSentMock).not.toHaveBeenCalled()
         const templates = sendTemplatedEmailMock.mock.calls.map(([opts]) => (opts as any).templateKey)
         expect(templates).toEqual(['ticket_profile_invitation', 'ticket_profile_invitation'])
+    })
+
+    describe('accounting copy', () => {
+        const invitations = () =>
+            sendTemplatedEmailMock.mock.calls.filter(
+                ([opts]) => (opts as any).templateKey === 'ticket_profile_invitation'
+            )
+
+        test('hands the original invoice document to the accounting mail, separate from the customer mail', async () => {
+            const { invoke, hookContext } = setup({}, ACCOUNTING_ENV)
+            await invoke({ status: 'paid' })
+
+            expect(sendInvoiceToAccountingMock).toHaveBeenCalledTimes(1)
+            const [doc, options] = sendInvoiceToAccountingMock.mock.calls[0]!
+            const issueParams = issueOriginalInvoiceMock.mock.calls[0]![0]
+            expect(doc).toEqual({
+                documentKind: 'invoice',
+                invoiceNumber: 'PB-CON26-001',
+                // The very date printed on the invoice, and the snapshot it was rendered from.
+                invoiceDate: issueParams.invoiceDate,
+                snapshot: { conference_title: 'programmier.con 2026' },
+                pdfBuffer: Buffer.from('%PDF-fake'),
+                invoiceFileName: 'Rechnung-PB-CON26-001.pdf',
+                orderNumber: 'ORD-2026-ABC123',
+            })
+            expect(options.env).toBe(hookContext.env)
+            expect(options.source).toBe('ticket-order-processing')
+            // Goes through the shared email service with the hook's services.
+            expect(options.emailContext.services).toBe(hookContext.services)
+
+            // Not piggybacked onto the customer mail.
+            const confirmation = sendTemplatedEmailMock.mock.calls.find(
+                ([opts]) => (opts as any).templateKey === 'ticket_order_confirmation'
+            )![0] as any
+            expect(confirmation.cc).toBeUndefined()
+            expect(confirmation.bcc).toBeUndefined()
+        })
+
+        test('is not awaited: tickets and customer mails do not wait for a slow accounting copy', async () => {
+            // An accounting copy that never settles (e.g. slow mail provider, retries, Slack).
+            sendInvoiceToAccountingMock.mockReturnValue(new Promise(() => {}))
+            const { invoke, serviceInstances } = setup({}, ACCOUNTING_ENV)
+            await invoke({ status: 'paid' })
+
+            expect(sendInvoiceToAccountingMock).toHaveBeenCalledTimes(1)
+            expect(serviceInstances['tickets']![0].createOne).toHaveBeenCalledTimes(2)
+            expect(markInvoiceSentMock).toHaveBeenCalledTimes(1) // confirmation mail went out
+            expect(invitations()).toHaveLength(2)
+        })
+
+        test('an unexpected rejection of the accounting copy is logged, not thrown', async () => {
+            sendInvoiceToAccountingMock.mockRejectedValue(new Error('boom'))
+            const { invoke, logger } = setup({}, ACCOUNTING_ENV)
+            await invoke({ status: 'paid' })
+
+            expect(invitations()).toHaveLength(2)
+            expect(logger.error.mock.calls.map((c) => String(c[0])).join('\n')).toContain('boom')
+        })
+
+        test('is sent even when the customer confirmation mail fails — and never stamps sent_at', async () => {
+            sendTemplatedEmailMock.mockResolvedValue(false)
+            const { invoke } = setup({}, ACCOUNTING_ENV)
+            await invoke({ status: 'paid' })
+
+            expect(sendInvoiceToAccountingMock).toHaveBeenCalledTimes(1)
+            expect(markInvoiceSentMock).not.toHaveBeenCalled()
+        })
+
+        test('a failed accounting copy does not affect the customer flow', async () => {
+            sendInvoiceToAccountingMock.mockResolvedValue('failed')
+            const { invoke } = setup({}, ACCOUNTING_ENV)
+            await invoke({ status: 'paid' })
+
+            // The customer still got their invoice, issuance is recorded from THAT mail,
+            // tickets exist and attendees were invited.
+            expect(markInvoiceSentMock).toHaveBeenCalledTimes(1)
+            expect(invitations()).toHaveLength(2)
+        })
+
+        test('internal orders have no invoice, so nothing goes to accounting', async () => {
+            const { invoke } = setup({ is_internal: true }, ACCOUNTING_ENV)
+            await invoke({ status: 'paid' })
+
+            expect(sendInvoiceToAccountingMock).not.toHaveBeenCalled()
+        })
     })
 })
 

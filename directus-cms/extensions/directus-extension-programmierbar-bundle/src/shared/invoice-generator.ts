@@ -177,6 +177,9 @@ export function fitHeadingFontSize(
     return fontSize
 }
 
+/** The issuing company as printed on every invoice document. */
+export const INVOICE_ISSUER_NAME = SELLER.name
+
 function formatEur(cents: number): string {
     return new Intl.NumberFormat('de-DE', {
         style: 'currency',

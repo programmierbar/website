@@ -1,4 +1,6 @@
+export * from './aiSpamFilter'
 export * from './authenticatedDirectus'
+export * from './ipProcessing'
 export * from './sendEmail'
 export * from './schema'
 export * from './stripe'

@@ -31,6 +31,8 @@ The flow consists of four main phases:
 | `STORAGE_LOCATIONS` | Comma-separated storage location IDs (first is used for invoice PDFs) | Yes |
 | `INVOICE_FILES_FOLDER` | Id of the `directus_files` folder invoice PDFs are uploaded into; the Public policy must not read it (see [Invoice File Privacy](#invoice-file-privacy)). Unset or invalid: invoices still upload, but into the public library (warning + Slack alert) | Yes |
 | Email transport config | Directus email settings (`EMAIL_TRANSPORT`, `EMAIL_SMTP_HOST`, etc.) | Yes |
+| `EMAIL_REPLY_TO` | Reply-To added to every mail Directus sends (`mail-reply-to` hook), so replies reach a real inbox instead of `EMAIL_FROM`. A Reply-To set by the sender is kept; unset or empty: no Reply-To | No |
+| `ACCOUNTING_INVOICE_EMAIL` | Accounting mailbox that receives a copy of every invoice document (see [Accounting copy](#accounting-copy)). Unset/empty: no copy is sent (Slack is alerted once per process start) | Production |
 
 ## External Services
 
@@ -158,8 +160,9 @@ Key-value settings used by extension hooks.
   1. Creates `tickets` records with unique codes and profile tokens
   2. Generates invoice PDF (pdfkit) and uploads to Directus files
   3. Updates order with `invoice_number` and `invoice_file`
-  4. Sends `ticket_order_confirmation` email to purchaser (with invoice PDF attachment, CC to `billing_email` if set)
-  5. Sends `ticket_profile_invitation` email to all attendees
+  4. Sends a copy of the invoice PDF to the accounting mailbox (see [Accounting copy](#accounting-copy))
+  5. Sends `ticket_order_confirmation` email to purchaser (with invoice PDF attachment, CC to `billing_email` if set)
+  6. Sends `ticket_profile_invitation` email to all attendees
 
 ### `ticket-profile-completion`
 
@@ -176,6 +179,39 @@ Key-value settings used by extension hooks.
 - **Number format**: `PB-CON{YY}-{NNN}` (e.g. `PB-CON26-001`), derived from conference `start_on` year
 - **Seller**: Lotum media GmbH, Am Goldstein 1, 61231 Bad Nauheim, USt-ID DE272856704
 - **Line items**: Show netto (net) prices; VAT (19%) shown separately in totals
+
+## Accounting Copy
+
+Every generated invoice document is mailed to `ACCOUNTING_INVOICE_EMAIL` (GoBD: timely recording),
+from where accounting takes it into the bookkeeping system. It goes through the Directus MailService
+like every other mail (`sendRawEmail` in `shared/email-service.ts`, sender `EMAIL_FROM`), as its own
+plain-text mail with exactly one PDF attached — the same bytes and file name as the stored file.
+
+Subject and body say what the document is, so it can be classified without opening the PDF:
+
+```
+Ausgangsrechnung programmier.con 2026 Ticket – Rechnung PB-CON26-012
+Ausgangsrechnung programmier.con 2026 Ticket – Rechnungsberichtigung PB-CON26-049 zu PB-CON26-040
+Ausgangsrechnung programmier.con 2026 Ticket – Stornorechnung (Gutschrift) PB-CON26-050 zu PB-CON26-040
+```
+
+The conference name is the order's conference title (just `Ticket` if it is empty); the invoice number
+follows the document type as the unique key. The body lists Dokumentart, Rechnungsnummer,
+Rechnungsdatum, Leistungszeitraum, the referenced original invoice (corrections and cancellations),
+Bruttobetrag and Aussteller — no customer data; the PDF carries everything else.
+
+| Document | Sent by |
+|----------|---------|
+| Original invoice | `ticket-order-processing`, started right after the document is generated and not awaited — tickets and customer mails never wait for it |
+| Rechnungsberichtigung / Stornorechnung | `invoice-lifecycle` endpoint, when the document is created |
+| Regenerated (not yet issued) document | `invoice-lifecycle` endpoint, subject suffixed `(ersetzt vorherige Fassung)` — accounting already holds the earlier version under the same number |
+
+Internal orders have no invoice, so nothing is sent. The accounting copy never sets `sent_at` (that
+records the customer dispatch). It is retried up to three times; if it still fails, a Slack alert
+names the invoice number so the PDF can be forwarded by hand. If `ACCOUNTING_INVOICE_EMAIL` is unset,
+each document is skipped with an info log, and Slack (when configured) is alerted once per process
+start with the first affected invoice number. Order processing and the lifecycle endpoint carry on
+either way.
 
 ## Data Flow
 
