@@ -208,7 +208,7 @@ describe('Leistungsdatum (service date)', () => {
         expect(result.pdfBuffer.subarray(0, 4).toString()).toBe('%PDF')
         expect(logger.warn).toHaveBeenCalledWith(expect.stringMatching(/PB-CON26-001 has no Leistungsdatum/))
         expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
-        expect(postSlackMessageMock.mock.calls[0]![0]).toMatch(/Rechnung PB-CON26-001 has no Leistungsdatum/)
+        expect(postSlackMessageMock.mock.calls[0]![0]).toMatch(/Invoice document PB-CON26-001 has no Leistungsdatum/)
     })
 
     test('does not alert Slack when the snapshot carries the conference dates', async () => {

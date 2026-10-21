@@ -283,7 +283,7 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
     if (!serviceDate) {
         // Non-blocking like the invoice folder fallback, but the document lacks a
         // mandatory field (§ 14 Abs. 4 Nr. 6 UStG), so a human has to follow up.
-        const message = `${KIND_LABEL[kind]} ${invoiceNumber} has no Leistungsdatum because its conference has no start_on/end_on. Set the conference dates; if the document has already been sent, issue a Rechnungsberichtigung.`
+        const message = `Invoice document ${invoiceNumber} has no Leistungsdatum because its conference has no start_on/end_on. Set the conference dates; if the document has already been sent, issue a Rechnungsberichtigung.`
         params.logger?.warn(message)
         postSlackMessage(`:rotating_light: *Invoices*: ${message}`).catch((error: any) => {
             params.logger?.warn(`Could not send Slack alert for ${invoiceNumber}: ${error?.message ?? error}`)
