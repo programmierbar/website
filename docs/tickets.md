@@ -31,6 +31,7 @@ The flow consists of four main phases:
 | `STORAGE_LOCATIONS` | Comma-separated storage location IDs (first is used for invoice PDFs) | Yes |
 | `INVOICE_FILES_FOLDER` | Id of the `directus_files` folder invoice PDFs are uploaded into; the Public policy must not read it (see [Invoice File Privacy](#invoice-file-privacy)). Unset or invalid: invoices still upload, but into the public library (warning + Slack alert) | Yes |
 | Email transport config | Directus email settings (`EMAIL_TRANSPORT`, `EMAIL_SMTP_HOST`, etc.) | Yes |
+| `EMAIL_REPLY_TO` | Reply-To added to every mail Directus sends (`mail-reply-to` hook), so replies reach a real inbox instead of `EMAIL_FROM`. A Reply-To set by the sender is kept; unset or empty: no Reply-To | No |
 | `ACCOUNTING_INVOICE_EMAIL` | Accounting mailbox that receives a copy of every invoice document (see [Accounting copy](#accounting-copy)). Unset/empty: no copy is sent (Slack is alerted once per process start) | Production |
 
 ## External Services

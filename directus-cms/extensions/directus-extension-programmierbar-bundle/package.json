@@ -34,6 +34,11 @@
             },
             {
                 "type": "hook",
+                "name": "mail-reply-to",
+                "source": "src/mail-reply-to/index.ts"
+            },
+            {
+                "type": "hook",
                 "name": "deploy-website",
                 "source": "src/deploy-website/index.ts"
             },
