@@ -223,10 +223,10 @@ Key-value settings used by extension hooks.
 Directus serves every file the Public role may read at `/assets/<file-id>` — no login needed — and
 lists them at `/files`. Invoice PDFs (Rechnung, Rechnungsberichtigung, Stornorechnung) contain
 customer data, so they are uploaded into a dedicated folder (`INVOICE_FILES_FOLDER`) that the Public
-policy is not allowed to read. If the variable is unset, or the upload into the folder fails (e.g. an
-unknown or malformed folder id), invoicing keeps working but the PDF lands in the public file
-library; the extension logs a warning (with the invoice number) and posts a Slack alert once per
-process. Fix the setting and move those PDFs into the folder (step 4).
+policy is not allowed to read. If the variable is unset, or Directus rejects the folder id (unknown
+or malformed), invoicing keeps working but the PDF lands in the public file library (any other
+upload error fails the invoice as before); the extension logs a warning (with the invoice number)
+and posts a Slack alert once per process. Fix the setting and move those PDFs into the folder (step 4).
 
 One-time setup per environment:
 

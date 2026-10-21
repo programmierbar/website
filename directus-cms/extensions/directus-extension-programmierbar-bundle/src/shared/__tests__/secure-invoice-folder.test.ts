@@ -175,18 +175,51 @@ describe('invoice uploads', () => {
     })
 })
 
-/** A files service that rejects every upload into `rejectFolder` (like an unknown folder id). */
-function rejectingFilesService(options: { rejectFolder?: string; rejectAll?: boolean } = {}) {
+/** `InvalidForeignKeyError` as Directus throws it (Postgres names the field; SQLite passes null). */
+function foreignKeyError(field: string | null, value: string | null) {
+    return Object.assign(
+        new Error(`Invalid foreign key "${value}" for field "${field}" in collection "directus_files".`),
+        {
+            name: 'DirectusError',
+            code: 'INVALID_FOREIGN_KEY',
+            status: 400,
+            extensions: { collection: field === null ? null : 'directus_files', field, value },
+        }
+    )
+}
+
+/** The untranslated Postgres error for a malformed uuid (SQLSTATE 22P02). */
+function invalidUuidError(value: string) {
+    return Object.assign(
+        new Error(
+            `insert into "directus_files" ("folder") values ($1) - invalid input syntax for type uuid: "${value}"`
+        ),
+        { code: '22P02' }
+    )
+}
+
+/**
+ * A files service whose uploads into a folder fail with `folderError` (default: an unknown
+ * folder id on Postgres). `otherError` fails every upload; `failWithoutFolder` fails the
+ * uploads without a folder.
+ */
+function rejectingFilesService(
+    options: { folderError?: (folder: string) => Error; otherError?: Error; failWithoutFolder?: boolean } = {}
+) {
+    const folderError = options.folderError ?? ((folder: string) => foreignKeyError('folder', folder))
     const uploads: any[] = []
     return {
         uploads,
         uploadOne: jest.fn(async (_stream: any, meta: any) => {
             uploads.push(meta)
-            if (options.rejectAll) {
-                throw new Error(`storage unavailable (attempt ${uploads.length})`)
+            if (options.otherError) {
+                throw options.otherError
             }
-            if (meta.folder === options.rejectFolder) {
-                throw new Error(`Invalid foreign key "${meta.folder}" for field "folder"`)
+            if (meta.folder) {
+                throw folderError(meta.folder)
+            }
+            if (options.failWithoutFolder) {
+                throw new Error(`storage unavailable (attempt ${uploads.length})`)
             }
             return `file-${uploads.length}`
         }),
@@ -206,7 +239,7 @@ describe('invalid invoice folder', () => {
 
     test('falls back to the public library once, warns and alerts Slack (once per process)', async () => {
         const { renderAndUploadInvoice, postSlackMessageMock } = await load()
-        const filesService = rejectingFilesService({ rejectFolder: 'not-a-folder' })
+        const filesService = rejectingFilesService()
 
         const result = await render(renderAndUploadInvoice, filesService)
 
@@ -229,7 +262,7 @@ describe('invalid invoice folder', () => {
 
     test('the paid-hook flow continues: the document row points at the fallback file', async () => {
         const { issueOriginalInvoice } = await load()
-        const filesService = rejectingFilesService({ rejectFolder: 'not-a-folder' })
+        const filesService = rejectingFilesService()
         const invoicesService = { createOne: jest.fn(async (_data: any) => 'doc-1') }
         const ordersService = { updateOne: jest.fn(async (_id: any, _data: any) => 'order-1') }
 
@@ -257,7 +290,7 @@ describe('invalid invoice folder', () => {
     test('retries the Slack alert with the next invoice when it could not be delivered', async () => {
         const { renderAndUploadInvoice, postSlackMessageMock } = await load()
         postSlackMessageMock.mockRejectedValueOnce(new Error('slack down'))
-        const filesService = rejectingFilesService({ rejectFolder: 'not-a-folder' })
+        const filesService = rejectingFilesService()
 
         await render(renderAndUploadInvoice, filesService)
         await flush()
@@ -268,9 +301,38 @@ describe('invalid invoice folder', () => {
         expect(postSlackMessageMock.mock.calls[1]![0]).toContain('PB-CON26-002')
     })
 
+    test.each([
+        ['an unknown id on SQLite (no field reported)', () => foreignKeyError(null, null)],
+        ['a malformed id on Postgres (22P02)', (folder: string) => invalidUuidError(folder)],
+    ])('also falls back for %s', async (_label, folderError) => {
+        const { renderAndUploadInvoice, postSlackMessageMock } = await load()
+        const filesService = rejectingFilesService({ folderError })
+
+        const result = await render(renderAndUploadInvoice, filesService)
+
+        expect(result.fileId).toBe('file-2')
+        expect(filesService.uploads[1]).not.toHaveProperty('folder')
+        expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+    })
+
+    test.each([
+        ['a transient storage/DB error', new Error('connect ECONNRESET')],
+        ['a foreign key error on another field', foreignKeyError('uploaded_by', 'user-1')],
+        ['a 22P02 error for another value', invalidUuidError('something-else')],
+    ])('never falls back on %s: rethrows it, no upload without folder, no alert', async (_label, otherError) => {
+        const { renderAndUploadInvoice, postSlackMessageMock } = await load()
+        const filesService = rejectingFilesService({ otherError })
+
+        await expect(render(renderAndUploadInvoice, filesService)).rejects.toBe(otherError)
+        expect(filesService.uploads).toHaveLength(1)
+        expect(filesService.uploads[0].folder).toBe('not-a-folder')
+        expect(logger.warn).not.toHaveBeenCalled()
+        expect(postSlackMessageMock).not.toHaveBeenCalled()
+    })
+
     test('throws when the fallback upload fails too, without alerting', async () => {
         const { renderAndUploadInvoice, postSlackMessageMock } = await load()
-        const filesService = rejectingFilesService({ rejectAll: true })
+        const filesService = rejectingFilesService({ failWithoutFolder: true })
 
         await expect(render(renderAndUploadInvoice, filesService)).rejects.toThrow('attempt 2')
         expect(filesService.uploads).toHaveLength(2)
@@ -279,7 +341,7 @@ describe('invalid invoice folder', () => {
 
     test('without a folder there is no retry', async () => {
         const { renderAndUploadInvoice, postSlackMessageMock } = await load()
-        const filesService = rejectingFilesService({ rejectAll: true })
+        const filesService = rejectingFilesService({ failWithoutFolder: true })
 
         await expect(
             renderAndUploadInvoice({
