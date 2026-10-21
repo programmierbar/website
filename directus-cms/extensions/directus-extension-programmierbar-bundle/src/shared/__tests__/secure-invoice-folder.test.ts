@@ -80,6 +80,8 @@ const SNAPSHOT = {
     billing_postal_code: '61231',
     billing_country: 'Deutschland',
     conference_title: 'programmier.con 2026',
+    service_date_start: '2026-11-25',
+    service_date_end: '2026-11-26',
     ticket_type: 'regular',
     ticket_count: 1,
     unit_price_gross_cents: 11900,

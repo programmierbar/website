@@ -1,5 +1,6 @@
 import { Readable } from 'node:stream'
 import { generateInvoicePdf, ticketTypeLabel, type InvoiceData, type InvoiceDocumentKind } from './invoice-generator.js'
+import { postSlackMessage } from './postSlackMessage.js'
 import { uploadWithInvoiceFolderFallback } from './secure-invoice-folder.js'
 
 /** Order fields required to assemble an invoice (subset of `ticket_orders`). */
@@ -280,7 +281,13 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
 
     const serviceDate = formatServiceDate(snapshot.service_date_start, snapshot.service_date_end)
     if (!serviceDate) {
-        params.logger?.warn(`No Leistungsdatum (conference date) known for ${invoiceNumber} — omitting it from the PDF`)
+        // Non-blocking like the invoice folder fallback, but the document lacks a
+        // mandatory field (§ 14 Abs. 4 Nr. 6 UStG), so a human has to follow up.
+        const message = `${KIND_LABEL[kind]} ${invoiceNumber} has no Leistungsdatum because its conference has no start_on/end_on. Set the conference dates; if the document has already been sent, issue a Rechnungsberichtigung.`
+        params.logger?.warn(message)
+        postSlackMessage(`:rotating_light: *Invoices*: ${message}`).catch((error: any) => {
+            params.logger?.warn(`Could not send Slack alert for ${invoiceNumber}: ${error?.message ?? error}`)
+        })
     }
 
     const baseData = {
