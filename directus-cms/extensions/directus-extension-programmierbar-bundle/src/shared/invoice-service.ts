@@ -172,6 +172,8 @@ interface RenderInvoiceBaseParams {
     invoiceNumber: string
     invoiceDate: Date
     filesService: any
+    /** `directus_files` folder to upload into — see `invoiceFilesFolder()`. */
+    folder?: string
     storageLocation?: string
 }
 
@@ -263,6 +265,7 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
         filename_download: invoiceFileName,
         title: `${label} ${invoiceNumber}`,
         ...(params.storageLocation && { storage: params.storageLocation }),
+        ...(params.folder && { folder: params.folder }),
     })
 
     return { fileId, pdfBuffer, invoiceFileName }
@@ -277,6 +280,7 @@ export interface IssueOriginalInvoiceParams {
     ordersService: any
     invoicesService: any
     filesService: any
+    folder?: string
     storageLocation?: string
 }
 
@@ -302,6 +306,7 @@ export async function issueOriginalInvoice(params: IssueOriginalInvoiceParams): 
         invoiceDate,
         documentKind: 'invoice',
         filesService: params.filesService,
+        folder: params.folder,
         storageLocation: params.storageLocation,
     })
 
