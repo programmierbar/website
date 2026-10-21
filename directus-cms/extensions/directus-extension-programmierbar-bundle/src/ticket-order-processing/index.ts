@@ -198,13 +198,14 @@ export default defineHook(({ action }, hookContext) => {
                             schema,
                         })
 
+                        const invoiceDate = new Date()
                         const invoiceResult = await issueOriginalInvoice({
                             order,
                             conferenceTitle: conference.title,
                             servicePeriod: { start_on: conference.start_on, end_on: conference.end_on },
                             ticketCount: attendees.length,
                             invoiceNumber,
-                            invoiceDate: new Date(),
+                            invoiceDate,
                             ordersService,
                             invoicesService,
                             filesService,
@@ -228,11 +229,13 @@ export default defineHook(({ action }, hookContext) => {
                             {
                                 documentKind: 'invoice',
                                 invoiceNumber,
+                                invoiceDate,
+                                snapshot: invoiceResult.snapshot,
                                 pdfBuffer,
                                 invoiceFileName,
                                 orderNumber: order.order_number,
                             },
-                            { env, logger, source: HOOK_NAME }
+                            { env, emailContext: context, source: HOOK_NAME }
                         )
                     } else {
                         logger.info(`${HOOK_NAME}: Skipping invoice for internal order ${order.order_number}`)

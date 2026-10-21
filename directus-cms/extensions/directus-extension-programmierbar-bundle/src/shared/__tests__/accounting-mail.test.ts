@@ -1,56 +1,80 @@
-import { beforeEach, describe, expect, jest, test } from '@jest/globals'
-import nodemailer from 'nodemailer'
+import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals'
 import {
     buildAccountingMail,
     getAccountingInvoiceEmail,
-    getAccountingSmtpConfig,
     resetAccountingMailState,
     sendInvoiceToAccounting,
     type AccountingInvoiceDocument,
 } from '../accounting-mail.ts'
-import { postSlackMessage } from '../postSlackMessage.ts'
+import { isSlackConfigured, postSlackMessage } from '../postSlackMessage.ts'
 
 // `import.meta.url` in the font loader cannot be parsed by Jest's CJS transform.
 jest.mock('../museo-font.ts', () => ({ tryLoadMuseoFont: () => null }))
-jest.mock('../postSlackMessage.ts', () => ({ postSlackMessage: jest.fn() }))
-const mockSendMail = jest.fn<(mail: any) => Promise<unknown>>()
-jest.mock('nodemailer', () => ({
-    __esModule: true,
-    default: { createTransport: jest.fn(() => ({ sendMail: mockSendMail })) },
-}))
+jest.mock('../postSlackMessage.ts', () => ({ postSlackMessage: jest.fn(), isSlackConfigured: jest.fn() }))
 
-const createTransportMock = jest.mocked(nodemailer.createTransport)
 const postSlackMessageMock = jest.mocked(postSlackMessage)
+const isSlackConfiguredMock = jest.mocked(isSlackConfigured)
+
+// The real shared email service runs on top of a fake Directus MailService.
+const mailSendMock = jest.fn<(mail: any) => Promise<unknown>>()
+class FakeMailService {
+    send = mailSendMock
+}
+
+const NBSP = ' '
 
 const DOC: AccountingInvoiceDocument = {
     documentKind: 'invoice',
-    invoiceNumber: 'PB-CON26-001',
+    invoiceNumber: 'PB-CON26-012',
+    invoiceDate: new Date(2026, 9, 21),
+    snapshot: {
+        conference_title: 'programmier.con 2026',
+        service_date_start: '2026-11-25',
+        service_date_end: '2026-11-26',
+        total_gross_cents: 118900,
+    },
     pdfBuffer: Buffer.from('%PDF-fake'),
-    invoiceFileName: 'Rechnung-PB-CON26-001.pdf',
+    invoiceFileName: 'Rechnung-PB-CON26-012.pdf',
     orderNumber: 'ORD-2026-ABC123',
 }
 
-const ENV = {
-    ACCOUNTING_INVOICE_EMAIL: 'accounting@example.test',
-    ACCOUNTING_SMTP_HOST: 'smtp.example.test',
-    ACCOUNTING_SMTP_PORT: '587',
-    ACCOUNTING_SMTP_SECURE: 'false',
-    ACCOUNTING_SMTP_USER: 'sender@example.test',
-    ACCOUNTING_SMTP_PASSWORD: 'app-password',
-    ACCOUNTING_MAIL_FROM: 'sender@example.test',
+const CORRECTION: AccountingInvoiceDocument = {
+    ...DOC,
+    documentKind: 'correction',
+    invoiceNumber: 'PB-CON26-049',
+    invoiceFileName: 'Rechnungsberichtigung-PB-CON26-049.pdf',
+    referenceNumber: 'PB-CON26-040',
+    referenceDate: new Date(2026, 9, 1),
 }
+
+const CANCELLATION: AccountingInvoiceDocument = {
+    ...CORRECTION,
+    documentKind: 'cancellation',
+    invoiceNumber: 'PB-CON26-050',
+    invoiceFileName: 'Stornorechnung-PB-CON26-050.pdf',
+    snapshot: { ...DOC.snapshot, total_gross_cents: -118900 },
+}
+
+const ENV = { ACCOUNTING_INVOICE_EMAIL: 'accounting@example.test' }
 
 function makeOptions(env: Record<string, unknown> | undefined = ENV) {
     const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
-    return { logger, options: { env, logger, source: 'test-source' } }
+    const emailContext = {
+        logger: logger as any,
+        services: { ItemsService: class {}, MailService: FakeMailService },
+        getSchema: async () => ({}),
+    }
+    return { logger, options: { env, emailContext, source: 'test-source' } }
 }
 
 beforeEach(() => {
     resetAccountingMailState()
-    createTransportMock.mockClear()
-    mockSendMail.mockReset()
-    mockSendMail.mockResolvedValue({ messageId: 'x' })
+    mailSendMock.mockReset()
+    mailSendMock.mockResolvedValue({ messageId: 'x' })
     postSlackMessageMock.mockReset()
+    postSlackMessageMock.mockResolvedValue(undefined)
+    isSlackConfiguredMock.mockReset()
+    isSlackConfiguredMock.mockReturnValue(true)
 })
 
 describe('getAccountingInvoiceEmail', () => {
@@ -71,206 +95,164 @@ describe('getAccountingInvoiceEmail', () => {
     })
 })
 
-describe('getAccountingSmtpConfig', () => {
-    test('reads the dedicated transport from env, accepting Directus-cast values', () => {
-        expect(getAccountingSmtpConfig({ ...ENV, ACCOUNTING_SMTP_PORT: 465, ACCOUNTING_SMTP_SECURE: true })).toEqual({
-            config: {
-                host: 'smtp.example.test',
-                port: 465,
-                secure: true,
-                user: 'sender@example.test',
-                password: 'app-password',
-                from: 'sender@example.test',
-            },
-            missing: [],
-        })
-    })
-
-    test.each([
-        [465, true],
-        [587, false],
-    ])('derives secure from port %s when ACCOUNTING_SMTP_SECURE is unset', (port, secure) => {
-        const { ACCOUNTING_SMTP_SECURE: _unused, ...env } = ENV
-        expect(getAccountingSmtpConfig({ ...env, ACCOUNTING_SMTP_PORT: String(port) }).config?.secure).toBe(secure)
-    })
-
-    test('names every missing or invalid variable', () => {
-        const result = getAccountingSmtpConfig({
-            ACCOUNTING_INVOICE_EMAIL: 'accounting@example.test',
-            ACCOUNTING_SMTP_HOST: 'smtp.example.test',
-            ACCOUNTING_SMTP_PORT: 'abc',
-            ACCOUNTING_SMTP_PASSWORD: '',
-        })
-        expect(result.config).toBeNull()
-        expect([...result.missing].sort()).toEqual([
-            'ACCOUNTING_MAIL_FROM',
-            'ACCOUNTING_SMTP_PASSWORD',
-            'ACCOUNTING_SMTP_PORT',
-            'ACCOUNTING_SMTP_USER',
-        ])
-    })
-})
-
 describe('buildAccountingMail', () => {
-    test('original invoice: minimal subject, one-line body', () => {
+    test('original invoice: classifiable subject and a fact sheet without customer data', () => {
         const mail = buildAccountingMail(DOC)
-        expect(mail.subject).toBe('Rechnung PB-CON26-001')
-        expect(mail.text).toBe('Rechnung PB-CON26-001 (Bestellung ORD-2026-ABC123) im Anhang.\n')
+        expect(mail.subject).toBe('Ausgangsrechnung programmier.con 2026 – Ticketrechnung PB-CON26-012')
+        expect(mail.text).toBe(
+            [
+                'Dokumentart: Ausgangsrechnung – Ticketrechnung',
+                'Veranstaltung: programmier.con 2026',
+                'Rechnungsnummer: PB-CON26-012',
+                'Rechnungsdatum: 21.10.2026',
+                'Leistungszeitraum: 25.–26.11.2026',
+                `Bruttobetrag: 1.189,00${NBSP}€`,
+                'Aussteller: Lotum media GmbH',
+                '',
+                'Das Dokument liegt als PDF bei (Rechnung-PB-CON26-012.pdf).',
+                '',
+            ].join('\n')
+        )
+        // No order number either: the body only describes the document.
+        expect(mail.text).not.toContain('ORD-2026-ABC123')
     })
 
-    test('correction and cancellation name their document type and the referenced invoice', () => {
-        const correction = buildAccountingMail({
-            ...DOC,
-            documentKind: 'correction',
-            invoiceNumber: 'PB-CON26-002',
-            referenceNumber: 'PB-CON26-001',
-        })
-        expect(correction.subject).toBe('Rechnungsberichtigung PB-CON26-002')
-        expect(correction.text).toContain('zu Rechnung PB-CON26-001')
-
-        const cancellation = buildAccountingMail({
-            ...DOC,
-            documentKind: 'cancellation',
-            invoiceNumber: 'PB-CON26-003',
-        })
-        expect(cancellation.subject).toBe('Stornorechnung PB-CON26-003')
+    test('correction names the corrected invoice in subject and body', () => {
+        const mail = buildAccountingMail(CORRECTION)
+        expect(mail.subject).toBe(
+            'Ausgangsrechnung programmier.con 2026 – Rechnungsberichtigung PB-CON26-049 zu PB-CON26-040'
+        )
+        expect(mail.text).toContain('Dokumentart: Ausgangsrechnung – Rechnungsberichtigung\n')
+        expect(mail.text).toContain('Bezug auf Originalrechnung: PB-CON26-040 vom 01.10.2026\n')
     })
 
-    test('a replacement version is marked in the subject', () => {
+    test('cancellation is marked as Gutschrift with a negative amount', () => {
+        const mail = buildAccountingMail(CANCELLATION)
+        expect(mail.subject).toBe(
+            'Ausgangsrechnung programmier.con 2026 – Stornorechnung (Gutschrift) PB-CON26-050 zu PB-CON26-040'
+        )
+        expect(mail.text).toContain('Dokumentart: Ausgangsrechnung – Stornorechnung (Gutschrift)\n')
+        expect(mail.text).toContain(`Bruttobetrag: -1.189,00${NBSP}€\n`)
+        expect(mail.text).toContain('Bezug auf Originalrechnung: PB-CON26-040 vom 01.10.2026\n')
+    })
+
+    test('a replacement version is marked in subject and body', () => {
         const mail = buildAccountingMail({ ...DOC, replacesPreviousVersion: true })
-        expect(mail.subject).toBe('Rechnung PB-CON26-001 (ersetzt vorherige Fassung)')
-        expect(mail.text).toContain('ersetzt')
+        expect(mail.subject).toBe(
+            'Ausgangsrechnung programmier.con 2026 – Ticketrechnung PB-CON26-012 (ersetzt vorherige Fassung)'
+        )
+        expect(mail.text).toContain('Diese Fassung ersetzt die zuvor übermittelte mit derselben Rechnungsnummer.')
+    })
+
+    test('omits what is not known: conference title, Leistungszeitraum, reference date', () => {
+        const mail = buildAccountingMail({
+            ...CORRECTION,
+            referenceDate: null,
+            snapshot: { conference_title: '', service_date_start: null, service_date_end: null, total_gross_cents: 0 },
+        })
+        expect(mail.subject).toBe('Ausgangsrechnung – Rechnungsberichtigung PB-CON26-049 zu PB-CON26-040')
+        expect(mail.text).not.toContain('Veranstaltung')
+        expect(mail.text).not.toContain('Leistungszeitraum')
+        expect(mail.text).toContain('Bezug auf Originalrechnung: PB-CON26-040\n')
     })
 })
 
 describe('sendInvoiceToAccounting', () => {
-    test('sends one plain-text mail with exactly the document PDF over the dedicated SMTP transport', async () => {
+    test('sends one plain-text mail with exactly the document PDF through the MailService', async () => {
         const { options } = makeOptions()
         await expect(sendInvoiceToAccounting(DOC, options)).resolves.toBe('sent')
 
-        // Transport built from the ACCOUNTING_SMTP_* env, STARTTLS enforced on 587.
-        expect(createTransportMock).toHaveBeenCalledTimes(1)
-        expect(createTransportMock).toHaveBeenCalledWith({
-            host: 'smtp.example.test',
-            port: 587,
-            secure: false,
-            requireTLS: true,
-            auth: { user: 'sender@example.test', pass: 'app-password' },
-        })
-
-        expect(mockSendMail).toHaveBeenCalledTimes(1)
-        const mail = mockSendMail.mock.calls[0]![0]
+        expect(mailSendMock).toHaveBeenCalledTimes(1)
+        const mail = mailSendMock.mock.calls[0]![0]
+        const expected = buildAccountingMail(DOC)
+        // No `from`: the MailService uses EMAIL_FROM like for every other mail.
         expect(mail).toEqual({
-            from: 'sender@example.test',
             to: 'accounting@example.test',
-            // The mailbox checks MAIL FROM against the registered sender.
-            envelope: { from: 'sender@example.test', to: 'accounting@example.test' },
-            subject: 'Rechnung PB-CON26-001',
-            text: 'Rechnung PB-CON26-001 (Bestellung ORD-2026-ABC123) im Anhang.\n',
+            subject: expected.subject,
+            text: expected.text,
             attachments: [
-                { filename: 'Rechnung-PB-CON26-001.pdf', content: DOC.pdfBuffer, contentType: 'application/pdf' },
+                { filename: 'Rechnung-PB-CON26-012.pdf', content: DOC.pdfBuffer, contentType: 'application/pdf' },
             ],
         })
         expect(mail.attachments[0].content).toBe(DOC.pdfBuffer) // the very same bytes
-        // The upload mailbox rejects HTML, links and images.
-        expect(mail).not.toHaveProperty('html')
-        expect(mail.text).not.toMatch(/https?:|www\./)
         expect(postSlackMessageMock).not.toHaveBeenCalled()
-    })
-
-    test('creates the transport once and reuses it', async () => {
-        const { options } = makeOptions()
-        await sendInvoiceToAccounting(DOC, options)
-        await sendInvoiceToAccounting({ ...DOC, invoiceNumber: 'PB-CON26-002' }, options)
-
-        expect(createTransportMock).toHaveBeenCalledTimes(1)
-        expect(mockSendMail).toHaveBeenCalledTimes(2)
-    })
-
-    test('skips with one info log (no error) when the mailbox is not configured', async () => {
-        const { options, logger } = makeOptions({})
-        await expect(sendInvoiceToAccounting(DOC, options)).resolves.toBe('skipped')
-
-        expect(createTransportMock).not.toHaveBeenCalled()
-        expect(mockSendMail).not.toHaveBeenCalled()
-        expect(logger.info).toHaveBeenCalledTimes(1)
-        expect(logger.info.mock.calls[0]![0]).toContain('ACCOUNTING_INVOICE_EMAIL')
-        expect(logger.info.mock.calls[0]![0]).toContain('PB-CON26-001')
-        expect(logger.warn).not.toHaveBeenCalled()
-        expect(logger.error).not.toHaveBeenCalled()
-        expect(postSlackMessageMock).not.toHaveBeenCalled()
-    })
-
-    test('incomplete SMTP config: skips with a warning per document and alerts Slack once per process', async () => {
-        const { ACCOUNTING_SMTP_PASSWORD: _unused, ...env } = ENV
-        const { options, logger } = makeOptions(env)
-
-        await expect(sendInvoiceToAccounting(DOC, options)).resolves.toBe('misconfigured')
-        await expect(sendInvoiceToAccounting({ ...DOC, invoiceNumber: 'PB-CON26-002' }, options)).resolves.toBe(
-            'misconfigured'
-        )
-
-        // No mail through any transport — in particular no fallback that would bounce.
-        expect(createTransportMock).not.toHaveBeenCalled()
-        expect(mockSendMail).not.toHaveBeenCalled()
-
-        expect(logger.warn).toHaveBeenCalledTimes(2)
-        expect(logger.warn.mock.calls[0]![0]).toContain('ACCOUNTING_SMTP_PASSWORD')
-        expect(logger.warn.mock.calls[1]![0]).toContain('PB-CON26-002')
-
-        expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
-        const slack = postSlackMessageMock.mock.calls[0]![0]
-        expect(slack).toContain('ACCOUNTING_SMTP_PASSWORD')
-        expect(slack).toContain('PB-CON26-001')
-        expect(slack).not.toContain('accounting@example.test')
     })
 
     test('retries a failed send and recovers without escalating', async () => {
-        mockSendMail.mockRejectedValueOnce(new Error('421 try again')).mockResolvedValueOnce({ messageId: 'x' })
+        mailSendMock.mockRejectedValueOnce(new Error('421 try again')).mockResolvedValueOnce({ messageId: 'x' })
         const { options } = makeOptions()
         await expect(sendInvoiceToAccounting(DOC, options)).resolves.toBe('sent')
 
-        expect(mockSendMail).toHaveBeenCalledTimes(2)
+        expect(mailSendMock).toHaveBeenCalledTimes(2)
         expect(postSlackMessageMock).not.toHaveBeenCalled()
     })
 
     test('persistent failure: alerts Slack with the invoice number and does not throw', async () => {
-        mockSendMail.mockRejectedValue(new Error('550 sender not registered'))
+        mailSendMock.mockRejectedValue(new Error('transport down'))
         const { options, logger } = makeOptions()
         await expect(sendInvoiceToAccounting(DOC, options)).resolves.toBe('failed')
 
-        expect(mockSendMail).toHaveBeenCalledTimes(3)
-        expect(logger.warn.mock.calls.map((c) => c[0]).join('\n')).toContain('550 sender not registered')
+        expect(mailSendMock).toHaveBeenCalledTimes(3)
+        expect(logger.error.mock.calls.map((c) => c[0]).join('\n')).toContain('transport down')
         expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
         const slack = postSlackMessageMock.mock.calls[0]![0]
-        expect(slack).toContain('PB-CON26-001')
+        expect(slack).toContain('PB-CON26-012')
         expect(slack).toContain('ORD-2026-ABC123')
-        expect(slack).toContain('Rechnung-PB-CON26-001.pdf')
+        expect(slack).toContain('Rechnung-PB-CON26-012.pdf')
         // The address is configuration, not something to broadcast.
         expect(slack).not.toContain('accounting@example.test')
-        expect(logger.error.mock.calls.map((c) => c[0]).join('\n')).toContain('PB-CON26-001')
     })
 
     test('a failing Slack alert is swallowed too', async () => {
-        mockSendMail.mockRejectedValue(new Error('smtp exploded'))
+        mailSendMock.mockRejectedValue(new Error('transport down'))
         postSlackMessageMock.mockRejectedValue(new Error('slack down'))
         const { options, logger } = makeOptions()
         await expect(sendInvoiceToAccounting(DOC, options)).resolves.toBe('failed')
 
-        expect(mockSendMail).toHaveBeenCalledTimes(3)
+        expect(mailSendMock).toHaveBeenCalledTimes(3)
         expect(logger.error.mock.calls.map((c) => c[0]).join('\n')).toContain('slack down')
     })
 
-    test('a transport that cannot be created is retried, alerted and does not throw', async () => {
-        createTransportMock.mockImplementation(() => {
-            throw new Error('bad transport options')
+    describe('mailbox not configured', () => {
+        afterEach(() => {
+            expect(mailSendMock).not.toHaveBeenCalled()
         })
-        const { options, logger } = makeOptions()
-        await expect(sendInvoiceToAccounting(DOC, options)).resolves.toBe('failed')
 
-        expect(createTransportMock).toHaveBeenCalledTimes(3)
-        expect(logger.warn.mock.calls.map((c) => c[0]).join('\n')).toContain('bad transport options')
-        expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
-        createTransportMock.mockImplementation(() => ({ sendMail: mockSendMail }) as any)
+        test('skips every document with an info log and alerts Slack once per process', async () => {
+            const { options, logger } = makeOptions({})
+            await expect(sendInvoiceToAccounting(DOC, options)).resolves.toBe('skipped')
+            await expect(sendInvoiceToAccounting(CORRECTION, options)).resolves.toBe('skipped')
+
+            expect(logger.info).toHaveBeenCalledTimes(2)
+            expect(logger.info.mock.calls[0]![0]).toContain('ACCOUNTING_INVOICE_EMAIL')
+            expect(logger.info.mock.calls[1]![0]).toContain('PB-CON26-049')
+            expect(logger.error).not.toHaveBeenCalled()
+
+            expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+            const slack = postSlackMessageMock.mock.calls[0]![0]
+            expect(slack).toContain('ACCOUNTING_INVOICE_EMAIL')
+            expect(slack).toContain('PB-CON26-012')
+        })
+
+        test('an undelivered alert is retried with the next document', async () => {
+            postSlackMessageMock.mockRejectedValueOnce(new Error('slack down'))
+            const { options, logger } = makeOptions({})
+            await expect(sendInvoiceToAccounting(DOC, options)).resolves.toBe('skipped')
+            await expect(sendInvoiceToAccounting(CORRECTION, options)).resolves.toBe('skipped')
+            await expect(sendInvoiceToAccounting(CANCELLATION, options)).resolves.toBe('skipped')
+
+            expect(postSlackMessageMock).toHaveBeenCalledTimes(2)
+            expect(postSlackMessageMock.mock.calls[1]![0]).toContain('PB-CON26-049')
+            expect(logger.error.mock.calls.map((c) => c[0]).join('\n')).toContain('slack down')
+        })
+
+        test('stays quiet when Slack is not configured', async () => {
+            isSlackConfiguredMock.mockReturnValue(false)
+            const { options, logger } = makeOptions({ ACCOUNTING_INVOICE_EMAIL: '' })
+            await expect(sendInvoiceToAccounting(DOC, options)).resolves.toBe('skipped')
+
+            expect(postSlackMessageMock).not.toHaveBeenCalled()
+            expect(logger.error).not.toHaveBeenCalled()
+        })
     })
 })

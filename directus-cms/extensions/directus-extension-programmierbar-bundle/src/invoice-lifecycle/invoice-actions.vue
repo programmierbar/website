@@ -67,8 +67,6 @@ const ACCOUNTING_MAIL_TEXT: Record<string, string> = {
     sent: 'Kopie an die Buchhaltung verschickt.',
     failed: 'Kopie an die Buchhaltung fehlgeschlagen — Hinweis ging an Slack, bitte manuell weiterleiten.',
     skipped: 'Keine Kopie an die Buchhaltung (Postfach nicht konfiguriert).',
-    misconfigured:
-        'Keine Kopie an die Buchhaltung: SMTP-Zugang unvollständig konfiguriert (siehe Slack) — bitte manuell weiterleiten.',
 }
 
 let loadStateRunId = 0
