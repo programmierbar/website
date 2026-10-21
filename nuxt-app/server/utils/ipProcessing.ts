@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto'
+import { isIPv4, isIPv6 } from 'node:net'
+
 /**
  * Expand a compressed IPv6 address to its full 8-group form.
  * Handles ::1, ::ffff:x.x.x.x, and other compressed forms.
@@ -33,12 +36,8 @@ function expandIPv6(ip: string): string {
 /**
  * Validate, anonymize, and SHA-256 hash an IP address.
  * Returns hex string or undefined if the IP is invalid.
- * Uses dynamic imports for node:crypto and node:net to avoid client bundle errors.
  */
-async function anonymizeAndHashIP(rawIP: string): Promise<string | undefined> {
-    const { createHash } = await import('node:crypto')
-    const { isIPv4, isIPv6 } = await import('node:net')
-
+function anonymizeAndHashIP(rawIP: string): string | undefined {
     const trimmed = rawIP.trim()
 
     if (isIPv4(trimmed)) {

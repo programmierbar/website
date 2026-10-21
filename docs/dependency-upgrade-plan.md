@@ -2688,7 +2688,73 @@ browser-support decision nobody made.
       ~~**Hydration mismatch on `/kommt-bald` and `/api/cocktails`.**~~ Both pages logged
       `Hydration completed but contains mismatches.` in a local production build, identically on
       `main`.
-- [ ] ⚠️ **Server-only helpers live in the shared `helpers/` barrel, and the fix is not a one-liner.**
+- [x] ✅ **Moved both to `server/utils/`** — 2026-10-20.
+
+      - **`ipProcessing`**: the vote route now hashes the IP once and passes only the hash.
+        `createRating` stores it as given, and `getRecentRatingByIP` became
+        `getRecentRatingByIPHash(podcast, ipHash, since)`. The raw IP no longer reaches the shared
+        composable. With static `node:crypto` and `node:net` imports, the function is synchronous, and
+        the dynamic-import workaround is gone.
+      - **`aiSpamFilter`**: moved unchanged, except that `ResponseSchema` went to
+        `server/utils/schema.ts` as `SpamFilterResponseSchema`. Exported from `server/utils/` under
+        its old, generic name, it would have become a server-wide auto-import.
+
+      **Hashes are byte-identical**, which matters because stored ratings carry them and the cooldown
+      matches on them. Before the move, 13 inputs were hashed with the old helper (IPv4, IPv6
+      compressed and full, `::1`, `::ffff:`, a zone index, whitespace, and three invalid inputs), and
+      the moved helper gives the same output for all of them. `test/ipProcessing.test.ts` now pins
+      those values, and the vote-route test asserts the exact hash, not just "some hash". A negative
+      control confirmed it: zeroing one octet differently made both hash-dependent route tests fail.
+
+      **Verified beyond the gates:** both Vite warnings about `node:crypto` and `node:net` being
+      externalized for the browser are gone. The client bundle contains none of the moved code (no
+      `anonymizeAndHashIP`, no Gemini SDK). `/api/vote` and `/api/email` load in a production
+      server.
+
+      **The preview test exposed a production outage, fixed in the same PR (#285).** Every vote with
+      an IP answered 500, in production too, since the cooldown lookup shipped in `cd9acca`
+      (2026-10-20). `useDirectus` talks to the CMS without a token, so the server ran the lookup as the
+      **public role**, and that role may create ratings but not read a rating's `ip` or `target`. The
+      CMS answered `403 FORBIDDEN`, and the lookup runs before the insert, so **no vote was stored**. The
+      403 reproduces with a plain unauthenticated request. Vercel's error list stayed empty, because
+      the route catches the error and only logs it.
+
+      `getRecentRatingByIPHash` and `updateRatingVote` moved to `useAuthenticatedDirectus()`, which
+      uses the API token. `createRating` stays on the public client, which is allowed to create.
+      Opening up the public role instead would have let anyone query the IP hashes. The route test
+      now mocks the two clients separately. Before, a single mock stood in for both, which is how
+      the tests stayed green over the outage. A negative control confirmed it: with the lookup back
+      on the public client, 4 tests fail. Locally, without a token, a vote now fails with
+      `NUXT_DIRECTUS_API_TOKEN not configured`, which shows the route takes the token path.
+      **CMS permissions this depends on.** Directus roles and policies are **not versioned**:
+      `directus-cms/schema.json` holds collections, fields and relations only. These grants were set
+      by hand in the Directus admin on 2026-10-21, on the role or policy behind
+      `NUXT_DIRECTUS_API_TOKEN`. Anyone rebuilding the CMS has to set them again:
+
+      | collection | action | fields | used by |
+      | --- | --- | --- | --- |
+      | `ratings` | read | `id`, `up_or_down`, `ip`, `date_created`, `target` | `getRecentRatingByIPHash`, which filters on `ip`, `date_created` and `target` and returns `id` and `up_or_down` |
+      | `ratings_target` | read | `rating`, `target`, `collection` | the same lookup. `target` is a many-to-any relation, and `target:podcasts` goes through this junction |
+      | `podcasts` | read | `id` | the end of that filter |
+      | `ratings` | update | `up_or_down` | `updateRatingVote`, for an opposite vote within the cooldown |
+
+      Creating a rating stays with the **public role**, which already had `create` on `ratings`. A
+      first preview test with only the code fix failed with `403` on `id` and `up_or_down`, now from the
+      token client. Directus reports the requested fields first, so the error does not list everything
+      that is missing. With all four grants, the preview stored a vote, and the opposite vote within
+      10 minutes replaced it: **one** rating, with the second direction, as intended.
+
+- [ ] ⚠️ **IPv4-mapped IPv6 addresses all hash to the same value.** Found while pinning the hashes
+      above. `anonymizeAndHashIP` zeroes the last four groups of an IPv6 address, and in
+      `::ffff:a.b.c.d` those groups *are* the IPv4 address. So every IPv4-mapped address hashes like
+      `::1`, and the vote cooldown would treat all such voters as one person. **Probably not reachable
+      in production:** the route reads `x-forwarded-for`, which Vercel overwrites with the client's
+      public IP, so the `::ffff:` form only arrives through the `remoteAddress` fallback, which is used
+      locally. Not checked against stored ratings. The fix is to unwrap `::ffff:` to plain IPv4 before
+      anonymizing, but that **changes the hash for those inputs**, so it is deliberately left out of
+      the move, which had to keep every hash identical.
+
+      ~~**Server-only helpers live in the shared `helpers/` barrel, and the fix is not a one-liner.**~~
       The earlier version of this item said "server code should import it directly". That was wrong: the
       importer of `ipProcessing` is `composables/useDirectus.ts`, shared client/server code. Checked
       2026-10-20:
