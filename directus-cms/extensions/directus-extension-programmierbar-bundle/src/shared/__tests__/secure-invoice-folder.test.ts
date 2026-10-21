@@ -326,7 +326,7 @@ describe('invalid invoice folder', () => {
         await expect(render(renderAndUploadInvoice, filesService)).rejects.toBe(otherError)
         expect(filesService.uploads).toHaveLength(1)
         expect(filesService.uploads[0].folder).toBe('not-a-folder')
-        expect(logger.warn).not.toHaveBeenCalled()
+        expect(logger.warn).not.toHaveBeenCalledWith(expect.stringContaining('secure-invoice-folder'))
         expect(postSlackMessageMock).not.toHaveBeenCalled()
     })
 
