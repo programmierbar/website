@@ -190,12 +190,13 @@ plain-text mail with exactly one PDF attached — the same bytes and file name a
 Subject and body say what the document is, so it can be classified without opening the PDF:
 
 ```
-Ausgangsrechnung programmier.con 2026 – Ticketrechnung PB-CON26-012
-Ausgangsrechnung programmier.con 2026 – Rechnungsberichtigung PB-CON26-049 zu PB-CON26-040
-Ausgangsrechnung programmier.con 2026 – Stornorechnung (Gutschrift) PB-CON26-050 zu PB-CON26-049
+Ausgangsrechnung programmier.con 2026 Ticket – Rechnung PB-CON26-012
+Ausgangsrechnung programmier.con 2026 Ticket – Rechnungsberichtigung PB-CON26-049 zu PB-CON26-040
+Ausgangsrechnung programmier.con 2026 Ticket – Stornorechnung (Gutschrift) PB-CON26-050 zu PB-CON26-040
 ```
 
-The conference name is the order's conference title. The body lists Dokumentart, Rechnungsnummer,
+The conference name is the order's conference title (just `Ticket` if it is empty); the invoice number
+follows the document type as the unique key. The body lists Dokumentart, Rechnungsnummer,
 Rechnungsdatum, Leistungszeitraum, the referenced original invoice (corrections and cancellations),
 Bruttobetrag and Aussteller — no customer data; the PDF carries everything else.
 
