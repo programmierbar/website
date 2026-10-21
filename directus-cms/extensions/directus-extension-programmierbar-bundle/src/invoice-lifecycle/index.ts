@@ -16,6 +16,7 @@ import {
     type InvoiceDocument,
     type RenderInvoiceResult,
 } from '../shared/invoice-service.js'
+import { invoiceFilesFolder } from '../shared/secure-invoice-folder.js'
 
 const ENDPOINT_NAME = 'invoice-lifecycle'
 
@@ -269,6 +270,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                 referenceNumber: predecessor.invoice_number,
                 referenceDate: new Date(predecessor.invoice_date),
                 filesService: ctx.filesService,
+                folder: invoiceFilesFolder(env, logger),
                 storageLocation: storageLocation(),
                 logger,
             })
@@ -279,6 +281,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                 invoiceDate: new Date(current.invoice_date),
                 documentKind: 'invoice',
                 filesService: ctx.filesService,
+                folder: invoiceFilesFolder(env, logger),
                 storageLocation: storageLocation(),
                 logger,
             })
@@ -336,6 +339,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             referenceNumber: current.invoice_number,
             referenceDate: new Date(current.invoice_date),
             filesService: ctx.filesService,
+            folder: invoiceFilesFolder(env, logger),
             storageLocation: storageLocation(),
             logger,
         })
@@ -419,6 +423,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             referenceNumber: current.invoice_number,
             referenceDate: new Date(current.invoice_date),
             filesService: ctx.filesService,
+            folder: invoiceFilesFolder(env, logger),
             storageLocation: storageLocation(),
             logger,
         })

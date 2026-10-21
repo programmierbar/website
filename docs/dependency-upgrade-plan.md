@@ -2481,7 +2481,12 @@ browser-support decision nobody made.
       environment variables are not readable from the repo, and it may well set the correct names.
       Worth checking that it does, and either renaming the local var or deleting it, because a
       credential-shaped variable that is silently ignored is how a real outage gets misdiagnosed.
-- [ ] ⚠️ **Auth-path `console.log`s leak into the browser console.**
+- [x] ✅ **Already fixed on 2026-08-04** in `1edd2f2` ("Stop logging auth payloads"). This entry was never
+      ticked off, which was noticed on 2026-10-20 when it came up as the next task. No `console.log`
+      remains in `composables/`, `pages/`, `components/` or `plugins/`. The one in `helpers/aiSpamFilter.ts`
+      runs on the server and logs only the spam verdict and score.
+
+      ~~**Auth-path `console.log`s leak into the browser console.**~~
       `composables/useDirectus.ts:897` logs `await directus.refresh()` — i.e. the **token refresh
       response** — plus the full user object at `:900`, and `pages/login-callback.vue:46` logs the
       user again. `getCurrentUser()` is called from `onMounted`, so this is client-side console
@@ -2550,8 +2555,13 @@ browser-support decision nobody made.
 
       Whether the Fathom site itself has allowed domains configured server-side was not checked. It
       would only have caught the second problem, never the first, because the previews claimed the
-      production hostname. **Not verifiable locally:** that production still sends. After deploying, a
-      network check on `www.programmier.bar` should show one page view per navigation.
+      production hostname.
+
+      **Verified in production** after the deploy. A probe against `www.programmier.bar`, with Fathom
+      requests intercepted, sends one correct page view per navigation. The maintainer confirmed in the
+      dashboard that navigated-to pages appear. A first check showed only the entry page, which went
+      away after a reload. That is what a cached pre-fix bundle produces, since it reports each
+      navigation as the previous page. **Do a hard reload before any check like this.**
 
       **Historical data:** `canonical: true` dates from 2022-05-05, and from the Nuxt 3 migration
       (2023-02-10) in its current form. Per-page numbers for in-site navigation are unreliable for at
@@ -2652,12 +2662,32 @@ browser-support decision nobody made.
 - [x] ✅ **Removed the `defineProps` import from `components/BackgroundSpotlights.vue`** — 2026-10-20.
       `defineProps` is a compiler macro, and `nuxt dev` warned that it "no longer needs to be imported".
       No ratchet change, because `vue-tsc` 3.3.13 had already stopped counting it.
-- [ ] ⚠️ **Hydration mismatch on `/kommt-bald` and `/api/cocktails`.** Both pages log
-      `Hydration completed but contains mismatches.` in a local production build. Found while checking
-      the plugin removal, and **identical on `main`**, so it is not caused by it. Both pages render
-      `PrettyJSON`, which makes `vue-json-pretty` the first suspect. Unlike the
-      [podcast-page mismatch](#3-build-and-tooling-correctness), this one reproduces locally, so a dev
-      build should name the node.
+- [x] ✅ **Fixed 2026-10-20 with `build.transpile: ['vue-json-pretty']`.** The server never rendered the
+      JSON tree at all. `vue-json-pretty` gives Node only a UMD build (`lib/`), which Nitro left
+      external. In the production server, `import VueJsonPretty from 'vue-json-pretty'` then resolves to
+      `{ default: Tree }`, a wrapper without a render function. Vue renders that as an empty comment
+      (`<!---->`), and the client, which gets the real component from Vite, finds a `div` instead.
+      That also explains why a dev build was clean: Vite does the interop there.
+
+      **How it was found:** the dev build logged nothing. A production build with
+      `__VUE_PROD_HYDRATION_MISMATCH_DETAILS__` temporarily defined named the node ("rendered on server:
+      comment, expected on client: div"). The server HTML contained no `vjs-tree` at all. Rendering
+      the library directly with `vue/server-renderer` worked, which pointed at the import rather than
+      the component, and importing it from inside `.output/server` showed the wrapper.
+
+      **After the fix:** `vue-json-pretty` is bundled instead of vendored. The server HTML contains the
+      tree (`vjs-tree` 6 times on `/kommt-bald`, 74 on `/api/cocktails`). The details flag reports no
+      mismatch, and the normal build logs nothing. The client-side tree is unchanged (38 and 1,699
+      characters of text, as before).
+
+      **Worth knowing for other dependencies:** any Vue component library that ships only CJS or UMD
+      to Node can fail this way, rendering nothing on the server and passing every gate. The
+      [podcast-page mismatch](#3-build-and-tooling-correctness) is probably a different cause, since it
+      does not reproduce in a local production build and this one did. Not checked further.
+
+      ~~**Hydration mismatch on `/kommt-bald` and `/api/cocktails`.**~~ Both pages logged
+      `Hydration completed but contains mismatches.` in a local production build, identically on
+      `main`.
 - [ ] ⚠️ **Server-only helpers live in the shared `helpers/` barrel, and the fix is not a one-liner.**
       The earlier version of this item said "server code should import it directly". That was wrong: the
       importer of `ipProcessing` is `composables/useDirectus.ts`, shared client/server code. Checked

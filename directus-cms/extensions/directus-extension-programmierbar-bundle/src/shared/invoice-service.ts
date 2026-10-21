@@ -1,5 +1,6 @@
 import { Readable } from 'node:stream'
 import { generateInvoicePdf, ticketTypeLabel, type InvoiceData, type InvoiceDocumentKind } from './invoice-generator.js'
+import { uploadWithInvoiceFolderFallback } from './secure-invoice-folder.js'
 
 /** Order fields required to assemble an invoice (subset of `ticket_orders`). */
 export interface InvoiceOrder {
@@ -233,6 +234,8 @@ interface RenderInvoiceBaseParams {
     invoiceNumber: string
     invoiceDate: Date
     filesService: any
+    /** `directus_files` folder to upload into — see `invoiceFilesFolder()`. */
+    folder?: string
     storageLocation?: string
     logger?: { warn: (message: string) => void }
 }
@@ -325,13 +328,17 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
 
     const label = KIND_LABEL[kind]
     const invoiceFileName = `${label}-${invoiceNumber}.pdf`
-    const pdfStream = Readable.from([pdfBuffer])
-    const fileId = await filesService.uploadOne(pdfStream, {
-        type: 'application/pdf',
-        filename_download: invoiceFileName,
-        title: `${label} ${invoiceNumber}`,
-        ...(params.storageLocation && { storage: params.storageLocation }),
-    })
+    const fileId = await uploadWithInvoiceFolderFallback(
+        (folder) =>
+            filesService.uploadOne(Readable.from([pdfBuffer]), {
+                type: 'application/pdf',
+                filename_download: invoiceFileName,
+                title: `${label} ${invoiceNumber}`,
+                ...(params.storageLocation && { storage: params.storageLocation }),
+                ...(folder && { folder }),
+            }),
+        { folder: params.folder, invoiceNumber, logger: params.logger }
+    )
 
     return { fileId, pdfBuffer, invoiceFileName }
 }
@@ -346,6 +353,7 @@ export interface IssueOriginalInvoiceParams {
     ordersService: any
     invoicesService: any
     filesService: any
+    folder?: string
     storageLocation?: string
     logger?: { warn: (message: string) => void }
 }
@@ -372,6 +380,7 @@ export async function issueOriginalInvoice(params: IssueOriginalInvoiceParams): 
         invoiceDate,
         documentKind: 'invoice',
         filesService: params.filesService,
+        folder: params.folder,
         storageLocation: params.storageLocation,
         logger: params.logger,
     })

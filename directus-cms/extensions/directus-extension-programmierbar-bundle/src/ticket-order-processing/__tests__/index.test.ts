@@ -274,3 +274,18 @@ describe('ticket-order-processing hook', () => {
         expect(templates).toEqual(['ticket_profile_invitation', 'ticket_profile_invitation'])
     })
 })
+
+// The folder lookup itself (env var, unset warning + Slack alert) is covered in
+// shared/__tests__/secure-invoice-folder.test.ts; stubbed here so the empty `env`
+// above does not trigger the unset-folder Slack alert.
+jest.mock('../../shared/secure-invoice-folder.ts', () => ({ invoiceFilesFolder: () => 'folder-invoices' }))
+
+describe('ticket-order-processing invoice folder', () => {
+    test('issues the original invoice into the invoice folder', async () => {
+        const { invoke } = setup()
+        await invoke({ status: 'paid' })
+
+        expect(issueOriginalInvoiceMock).toHaveBeenCalledTimes(1)
+        expect(issueOriginalInvoiceMock.mock.calls[0]![0].folder).toBe('folder-invoices')
+    })
+})
