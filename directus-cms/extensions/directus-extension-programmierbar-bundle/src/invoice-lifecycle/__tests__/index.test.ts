@@ -61,7 +61,7 @@ const BASE_ORDER = {
     is_internal: false,
 }
 
-const CONFERENCE = { id: 'conf-1', title: 'programmier.con 2026', start_on: '2026-03-01' }
+const CONFERENCE = { id: 'conf-1', title: 'programmier.con 2026', start_on: '2026-03-01', end_on: '2026-03-02' }
 
 const ORIGINAL_SNAPSHOT = {
     order_id: 'order-1',
@@ -386,6 +386,11 @@ describe('invoice-lifecycle endpoint', () => {
             })
             // Snapshot taken from the order's CURRENT billing data.
             expect(correction.snapshot_json.company_name).toBe('Beispiel GmbH')
+            // Same service as the original: Leistungsdatum from the conference dates.
+            expect(correction.snapshot_json).toMatchObject({
+                service_date_start: '2026-03-01',
+                service_date_end: '2026-03-02',
+            })
 
             // The original document row stays byte-for-byte untouched.
             const original = db.ticket_invoices.find((r) => r.id === 'doc-original')
@@ -495,6 +500,9 @@ describe('invoice-lifecycle endpoint', () => {
                 vat_amount_cents: -3610,
                 total_gross_cents: -22610,
                 ticket_count: 2,
+                // The referenced snapshot predates the Leistungsdatum: falls back to the conference dates.
+                service_date_start: '2026-03-01',
+                service_date_end: '2026-03-02',
             })
 
             // The original document row stays untouched, nothing is deleted.
@@ -586,5 +594,41 @@ describe('invoice-lifecycle endpoint', () => {
                 expect(use.accountability).toBe(ADMIN)
             }
         })
+    })
+})
+
+// Invoice PDFs must not land in the public file library. The folder lookup itself
+// (env var, unset warning + Slack alert) is covered in
+// shared/__tests__/secure-invoice-folder.test.ts; here it is stubbed, which also
+// keeps the unset-folder Slack alert offline for the empty `env` above.
+jest.mock('../../shared/secure-invoice-folder.ts', () => ({
+    ...jest.requireActual<object>('../../shared/secure-invoice-folder.ts'),
+    invoiceFilesFolder: () => 'folder-invoices',
+}))
+
+describe('invoice-lifecycle upload folder', () => {
+    const correctionRow = () =>
+        issuedOriginalRow({
+            id: 'doc-correction-1',
+            type: 'correction',
+            invoice_number: 'PB-CON26-002',
+            related_invoice: 'doc-original',
+            date_created: '2026-02-01T00:00:00.000Z',
+            sent_at: null,
+        })
+
+    test.each([
+        ['regenerate (invoice)', 'regenerate', () => [issuedOriginalRow({ sent_at: null })]],
+        ['regenerate (correction)', 'regenerate', () => [issuedOriginalRow(), correctionRow()]],
+        ['correction', 'correction', () => [issuedOriginalRow()]],
+        ['cancellation', 'cancellation', () => [issuedOriginalRow()]],
+    ])('%s uploads the PDF into the invoice folder', async (_label, action, invoices) => {
+        const { call, calls } = await setup({ invoices: invoices() })
+
+        const res = await call(action)
+
+        expect(res.statusCode).toBe(200)
+        expect(calls.uploads).toHaveLength(1)
+        expect(calls.uploads[0].folder).toBe('folder-invoices')
     })
 })

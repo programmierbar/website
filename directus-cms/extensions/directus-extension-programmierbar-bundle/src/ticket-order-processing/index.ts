@@ -5,6 +5,7 @@ import { generateInvoiceNumber } from '../shared/invoice-generator.js'
 import { issueOriginalInvoice, markInvoiceSent } from '../shared/invoice-service.js'
 import { postSlackMessage } from '../shared/postSlackMessage.js'
 import { safeAction } from '../shared/safeHook.ts'
+import { invoiceFilesFolder } from '../shared/secure-invoice-folder.js'
 import { getSetting } from '../shared/settings.js'
 import { formatPrice, generateUniqueTicketCode } from '../shared/ticket-utils.js'
 
@@ -111,9 +112,10 @@ export default defineHook(({ action }, hookContext) => {
                         continue
                     }
 
-                    // Get conference details (title + start_on for invoice year + ticket limit)
+                    // Get conference details (title, start_on for invoice year, start_on/end_on
+                    // for the Leistungsdatum, ticket limit)
                     const conference = await conferencesService.readOne(order.conference, {
-                        fields: ['title', 'start_on', 'ticket_max_quantity'],
+                        fields: ['title', 'start_on', 'end_on', 'ticket_max_quantity'],
                     })
 
                     if (!conference) {
@@ -198,13 +200,16 @@ export default defineHook(({ action }, hookContext) => {
                         const invoiceResult = await issueOriginalInvoice({
                             order,
                             conferenceTitle: conference.title,
+                            servicePeriod: { start_on: conference.start_on, end_on: conference.end_on },
                             ticketCount: attendees.length,
                             invoiceNumber,
                             invoiceDate: new Date(),
                             ordersService,
                             invoicesService,
                             filesService,
+                            folder: invoiceFilesFolder(env, logger),
                             storageLocation: env.STORAGE_LOCATIONS?.split(',')[0],
+                            logger,
                         })
 
                         pdfBuffer = invoiceResult.pdfBuffer
