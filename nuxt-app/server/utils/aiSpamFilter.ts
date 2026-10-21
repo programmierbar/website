@@ -1,11 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { z } from 'zod'
-
-export const ResponseSchema = z.object({
-    confidenceScore: z.number().min(0).max(1),
-    isSpam: z.boolean(),
-    reason: z.string(),
-})
+import { SpamFilterResponseSchema } from './schema'
 
 function getValidationPrompt(name: string, email: string, message: string): string {
     return `
@@ -65,7 +59,7 @@ export async function filterSpam(input: { name: string; email: string; message: 
             .replace(/```json/g, '')
             .replace(/```/g, '')
             .trim()
-        const validation = ResponseSchema.parse(JSON.parse(jsonString))
+        const validation = SpamFilterResponseSchema.parse(JSON.parse(jsonString))
 
         console.log('Gemini Validation: isSpam=%s, confidenceScore=%s', validation.isSpam, validation.confidenceScore)
 

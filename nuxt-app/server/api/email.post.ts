@@ -1,5 +1,4 @@
-import { filterSpam } from '../../helpers'
-import { EmailSchema, sendEmail } from '../utils'
+import { EmailSchema, filterSpam, sendEmail } from '../utils'
 
 export default defineEventHandler(async (event) => {
     // Read body once and use for both honeypot check and validation
