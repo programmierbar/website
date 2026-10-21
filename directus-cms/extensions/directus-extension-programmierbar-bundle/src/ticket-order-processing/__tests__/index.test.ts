@@ -170,7 +170,7 @@ describe('ticket-order-processing hook', () => {
         expect(issueParams.invoiceNumber).toBe('PB-CON26-001')
         expect(issueParams.ticketCount).toBe(2)
         // The conference dates become the invoice's Leistungsdatum.
-        expect(issueParams.servicePeriod).toMatchObject({ start_on: '2026-03-01', end_on: '2026-03-02' })
+        expect(issueParams.servicePeriod).toEqual({ start_on: '2026-03-01', end_on: '2026-03-02' })
         expect(issueParams.invoicesService).toBe(serviceInstances['ticket_invoices']![0])
 
         // The confirmation email carries the invoice PDF.

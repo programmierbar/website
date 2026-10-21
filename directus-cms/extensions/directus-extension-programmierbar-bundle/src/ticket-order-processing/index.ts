@@ -200,7 +200,7 @@ export default defineHook(({ action }, hookContext) => {
                         const invoiceResult = await issueOriginalInvoice({
                             order,
                             conferenceTitle: conference.title,
-                            servicePeriod: conference,
+                            servicePeriod: { start_on: conference.start_on, end_on: conference.end_on },
                             ticketCount: attendees.length,
                             invoiceNumber,
                             invoiceDate: new Date(),
