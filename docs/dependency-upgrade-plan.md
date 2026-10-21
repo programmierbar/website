@@ -2726,8 +2726,23 @@ browser-support decision nobody made.
       the tests stayed green over the outage. A negative control confirmed it: with the lookup back
       on the public client, 4 tests fail. Locally, without a token, a vote now fails with
       `NUXT_DIRECTUS_API_TOKEN not configured`, which shows the route takes the token path.
-      **Requires** the token's role to have `read` and `update` on `ratings`, including `ip` and
-      `target`. Verified on the preview.
+      **CMS permissions this depends on.** Directus roles and policies are **not versioned**:
+      `directus-cms/schema.json` holds collections, fields and relations only. These grants were set
+      by hand in the Directus admin on 2026-10-21, on the role or policy behind
+      `NUXT_DIRECTUS_API_TOKEN`. Anyone rebuilding the CMS has to set them again:
+
+      | collection | action | fields | used by |
+      | --- | --- | --- | --- |
+      | `ratings` | read | `id`, `up_or_down`, `ip`, `date_created`, `target` | `getRecentRatingByIPHash`, which filters on `ip`, `date_created` and `target` and returns `id` and `up_or_down` |
+      | `ratings_target` | read | `rating`, `target`, `collection` | the same lookup. `target` is a many-to-any relation, and `target:podcasts` goes through this junction |
+      | `podcasts` | read | `id` | the end of that filter |
+      | `ratings` | update | `up_or_down` | `updateRatingVote`, for an opposite vote within the cooldown |
+
+      Creating a rating stays with the **public role**, which already had `create` on `ratings`. A
+      first preview test with only the code fix failed with `403` on `id` and `up_or_down`, now from the
+      token client. Directus reports the requested fields first, so the error does not list everything
+      that is missing. With all four grants, the preview stored a vote, and the opposite vote within
+      10 minutes replaced it: **one** rating, with the second direction, as intended.
 
 - [ ] ⚠️ **IPv4-mapped IPv6 addresses all hash to the same value.** Found while pinning the hashes
       above. `anonymizeAndHashIP` zeroes the last four groups of an IPv6 address, and in
