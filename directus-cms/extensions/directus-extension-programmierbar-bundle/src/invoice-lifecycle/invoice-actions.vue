@@ -65,7 +65,7 @@ const ACTION_TEXT: Record<ActionKey, { button: string; title: string; body: stri
 
 const ACCOUNTING_MAIL_TEXT: Record<string, string> = {
     sent: 'Kopie an die Buchhaltung verschickt.',
-    failed: 'Kopie an die Buchhaltung fehlgeschlagen — Hinweis ging an Slack, bitte manuell weiterleiten.',
+    failed: 'Kopie an die Buchhaltung fehlgeschlagen — bitte manuell weiterleiten.',
     skipped: 'Keine Kopie an die Buchhaltung (Postfach nicht konfiguriert).',
 }
 
