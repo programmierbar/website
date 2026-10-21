@@ -333,7 +333,7 @@ would differ from what is sent. The only content filter is the renderer's publis
   `sendRawEmail`/`sendTemplatedEmail` in `src/shared/email-service.ts` (MailService passes it to
   nodemailer). No `mailto:` entry, because no mailbox processes unsubscribe mails. Plus `X-Mailin-custom: newsletter:test` / `X-Mailin-Tag: newsletter-test`
   for the Brevo webhook (see "Bounces and complaints"). From address: Directus
-  `EMAIL_FROM`, as for all CMS mail.
+  `EMAIL_FROM`, Reply-To: `EMAIL_REPLY_TO` (if set, `mail-reply-to` hook), as for all CMS mail.
 - **One-click on the website**: `nuxt-app/server/routes/newsletter/unsubscribe.post.ts` serves the same URL
   as the page. A POST with body `List-Unsubscribe=One-Click` (urlencoded or `multipart/form-data`, both
   allowed by RFC 8058) takes the token from the query, opts out and answers 200 (500 on a technical error) instead of the form's 303 redirect.
