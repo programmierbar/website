@@ -29,6 +29,7 @@ The flow consists of four main phases:
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `STORAGE_LOCATIONS` | Comma-separated storage location IDs (first is used for invoice PDFs) | Yes |
+| `INVOICE_FILES_FOLDER` | Id of the `directus_files` folder invoice PDFs are uploaded into; the Public policy must not read it (see [Invoice File Privacy](#invoice-file-privacy)). Unset or invalid: invoices still upload, but into the public library (warning + Slack alert) | Yes |
 | Email transport config | Directus email settings (`EMAIL_TRANSPORT`, `EMAIL_SMTP_HOST`, etc.) | Yes |
 | `ACCOUNTING_INVOICE_EMAIL` | Accounting mailbox that receives a copy of every invoice document (see [Accounting copy](#accounting-copy)). Unset/empty: no copy is sent | Production |
 | `ACCOUNTING_SMTP_HOST`, `ACCOUNTING_SMTP_PORT`, `ACCOUNTING_SMTP_USER`, `ACCOUNTING_SMTP_PASSWORD` | Dedicated SMTP transport for the accounting copy (e.g. Google Workspace SMTP with an app password) | When `ACCOUNTING_INVOICE_EMAIL` is set |
@@ -254,6 +255,45 @@ endpoint carry on either way.
 └─────────────────────────────────────────────────────────┘
 ```
 
+## Invoice File Privacy
+
+Directus serves every file the Public role may read at `/assets/<file-id>` — no login needed — and
+lists them at `/files`. Invoice PDFs (Rechnung, Rechnungsberichtigung, Stornorechnung) contain
+customer data, so they are uploaded into a dedicated folder (`INVOICE_FILES_FOLDER`) that the Public
+policy is not allowed to read. If the variable is unset, or Directus rejects the folder id (unknown
+or malformed), invoicing keeps working but the PDF lands in the public file library (any other
+upload error fails the invoice as before); the extension logs a warning (with the invoice number)
+and posts a Slack alert once per process. Fix the setting and move those PDFs into the folder (step 4).
+
+One-time setup per environment:
+
+1. **Create the folder**: File Library → *Create Folder* → name it `Rechnungen` → *Save*. Open the
+   folder; its id is the last segment of the URL (`/admin/files/folders/<folder-id>`). Do not
+   create subfolders in it — the filter below only matches this exact folder.
+2. **Set the env var**: `INVOICE_FILES_FOLDER=<folder-id>` in the Directus environment, then
+   restart Directus.
+3. **Restrict the Public policy**: Settings → Access Policies → *Public* → Permissions →
+   `directus_files` → *Read* → *Use Custom* → Item Permissions. Add an OR group ("Any of") with
+   `Folder` *Is null* and `Folder` *Doesn't equal* `<folder-id>` — as raw filter:
+
+   ```json
+   { "_or": [{ "folder": { "_null": true } }, { "folder": { "_neq": "<folder-id>" } }] }
+   ```
+
+   Save. The `_null` branch is required: Directus 11 runs `_neq` as SQL `NOT folder = '<folder-id>'`,
+   which is never true for files without a folder (`NULL`), so `_neq` alone would also hide every
+   file in the library root (website images) from the public. Permissions of several policies add
+   up — any other policy on the Public role (or on a role that must not see invoices) with read
+   access to `directus_files` needs the same filter.
+4. **Move existing invoices**: File Library → search `Rechnung` (titles are `Rechnung …`,
+   `Rechnungsberichtigung …`, `Stornorechnung …`) → select all → *Move to Folder* → `Rechnungen`.
+   Moving keeps the file id, so `invoice_file` references on orders and invoice documents stay
+   valid.
+5. **Verify** in a private/incognito window (not logged in):
+   - `/assets/<invoice-file-id>` returns **403 Forbidden**.
+   - `/files` lists no invoice; `/files?filter[folder][_eq]=<folder-id>` returns `"data": []`.
+   - A public image outside the folder still loads via `/assets/<file-id>`.
+
 ## Setup Checklist
 
 - [ ] Set all environment variables (Nuxt + Directus)
@@ -265,5 +305,6 @@ endpoint carry on either way.
 - [ ] Configure Stripe webhook pointing to `/api/tickets/webhook`
 - [ ] Configure Directus email transport
 - [ ] Configure Directus file storage (`STORAGE_LOCATIONS`)
+- [ ] Create the private invoice folder, set `INVOICE_FILES_FOLDER` and restrict the Public policy (see [Invoice File Privacy](#invoice-file-privacy))
 - [ ] Build the Directus extension (`npm run build` in the extension directory)
 - [ ] Place `MuseoSans700.otf` in extension `assets/` directory (optional, falls back to Helvetica)
