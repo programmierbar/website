@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { defineHook } from '@directus/extensions-sdk'
+import { sendInvoiceToAccounting } from '../shared/accounting-mail.js'
 import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
 import { generateInvoiceNumber } from '../shared/invoice-generator.js'
 import { issueOriginalInvoice, markInvoiceSent } from '../shared/invoice-service.js'
@@ -197,13 +198,14 @@ export default defineHook(({ action }, hookContext) => {
                             schema,
                         })
 
+                        const invoiceDate = new Date()
                         const invoiceResult = await issueOriginalInvoice({
                             order,
                             conferenceTitle: conference.title,
                             servicePeriod: { start_on: conference.start_on, end_on: conference.end_on },
                             ticketCount: attendees.length,
                             invoiceNumber,
-                            invoiceDate: new Date(),
+                            invoiceDate,
                             ordersService,
                             invoicesService,
                             filesService,
@@ -218,6 +220,27 @@ export default defineHook(({ action }, hookContext) => {
 
                         logger.info(
                             `${HOOK_NAME}: Invoice ${invoiceNumber} generated and stored (file: ${invoiceResult.fileId}, document: ${invoiceResult.documentId})`
+                        )
+
+                        // Accounting copy (GoBD: timely recording). The document exists now,
+                        // so it goes out regardless of what happens below. Not awaited: its
+                        // retries and Slack alert must not delay tickets or customer mails.
+                        // Never throws; persistent failures are escalated to Slack inside.
+                        void sendInvoiceToAccounting(
+                            {
+                                documentKind: 'invoice',
+                                invoiceNumber,
+                                invoiceDate,
+                                snapshot: invoiceResult.snapshot,
+                                pdfBuffer,
+                                invoiceFileName,
+                                orderNumber: order.order_number,
+                            },
+                            { env, emailContext: context, source: HOOK_NAME }
+                        ).catch((err: any) =>
+                            logger.error(
+                                `${HOOK_NAME}: Accounting copy of ${invoiceNumber} failed unexpectedly: ${err?.message || err}`
+                            )
                         )
                     } else {
                         logger.info(`${HOOK_NAME}: Skipping invoice for internal order ${order.order_number}`)
