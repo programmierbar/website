@@ -19,9 +19,11 @@ import {
     type InvoiceSnapshot,
     type RenderInvoiceParams,
 } from '../invoice-service.ts'
+import { postSlackMessage } from '../postSlackMessage.ts'
 
 // `import.meta.url` in the font loader cannot be parsed by Jest's CJS transform.
 jest.mock('../museo-font.ts', () => ({ tryLoadMuseoFont: () => null }))
+jest.mock('../postSlackMessage.ts', () => ({ postSlackMessage: jest.fn(async () => undefined) }))
 
 const ORDER: InvoiceOrder & { order_number: string } = {
     id: 'order-1',
@@ -192,7 +194,9 @@ describe('Leistungsdatum (service date)', () => {
         expect(withServicePeriod(recorded, CONFERENCE)).toBe(recorded)
     })
 
-    test('renders without a Leistungsdatum (and warns) when no date is known', async () => {
+    test('renders without a Leistungsdatum and alerts Slack when no date is known', async () => {
+        const postSlackMessageMock = jest.mocked(postSlackMessage)
+        postSlackMessageMock.mockClear()
         const logger = { warn: jest.fn() }
         const result = await renderAndUploadInvoice({
             snapshot: buildInvoiceSnapshot(ORDER, 'Conf', 2),
@@ -202,7 +206,21 @@ describe('Leistungsdatum (service date)', () => {
             logger,
         })
         expect(result.pdfBuffer.subarray(0, 4).toString()).toBe('%PDF')
-        expect(logger.warn).toHaveBeenCalledWith(expect.stringMatching(/Leistungsdatum.*PB-CON26-001/))
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringMatching(/PB-CON26-001 has no Leistungsdatum/))
+        expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+        expect(postSlackMessageMock.mock.calls[0]![0]).toMatch(/Invoice document PB-CON26-001 has no Leistungsdatum/)
+    })
+
+    test('does not alert Slack when the snapshot carries the conference dates', async () => {
+        const postSlackMessageMock = jest.mocked(postSlackMessage)
+        postSlackMessageMock.mockClear()
+        await renderAndUploadInvoice({
+            snapshot: buildInvoiceSnapshot(ORDER, 'Conf', 2, CONFERENCE),
+            invoiceNumber: 'PB-CON26-001',
+            invoiceDate: new Date('2026-02-01T10:00:00Z'),
+            filesService: fakeFilesService(),
+        })
+        expect(postSlackMessageMock).not.toHaveBeenCalled()
     })
 })
 

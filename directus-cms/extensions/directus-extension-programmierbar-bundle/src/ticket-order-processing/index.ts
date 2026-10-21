@@ -6,6 +6,7 @@ import { recordInvoiceSent } from '../shared/invoice-customer-mail.js'
 import { generateInvoiceNumber } from '../shared/invoice-generator.js'
 import { INVOICE_DOCUMENT_LABEL, issueOriginalInvoice } from '../shared/invoice-service.js'
 import { safeAction } from '../shared/safeHook.ts'
+import { invoiceFilesFolder } from '../shared/secure-invoice-folder.js'
 import { getSetting } from '../shared/settings.js'
 import { formatPrice, generateUniqueTicketCode } from '../shared/ticket-utils.js'
 
@@ -197,13 +198,14 @@ export default defineHook(({ action }, hookContext) => {
                         const invoiceResult = await issueOriginalInvoice({
                             order,
                             conferenceTitle: conference.title,
-                            servicePeriod: conference,
+                            servicePeriod: { start_on: conference.start_on, end_on: conference.end_on },
                             ticketCount: attendees.length,
                             invoiceNumber,
                             invoiceDate: new Date(),
                             ordersService,
                             invoicesService,
                             filesService,
+                            folder: invoiceFilesFolder(env, logger),
                             storageLocation: env.STORAGE_LOCATIONS?.split(',')[0],
                             logger,
                         })

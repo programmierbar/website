@@ -908,3 +908,39 @@ describe('invoice-lifecycle endpoint', () => {
         })
     })
 })
+
+// Invoice PDFs must not land in the public file library. The folder lookup itself
+// (env var, unset warning + Slack alert) is covered in
+// shared/__tests__/secure-invoice-folder.test.ts; here it is stubbed, which also
+// keeps the unset-folder Slack alert offline for the empty `env` above.
+jest.mock('../../shared/secure-invoice-folder.ts', () => ({
+    ...jest.requireActual<object>('../../shared/secure-invoice-folder.ts'),
+    invoiceFilesFolder: () => 'folder-invoices',
+}))
+
+describe('invoice-lifecycle upload folder', () => {
+    const correctionRow = () =>
+        issuedOriginalRow({
+            id: 'doc-correction-1',
+            type: 'correction',
+            invoice_number: 'PB-CON26-002',
+            related_invoice: 'doc-original',
+            date_created: '2026-02-01T00:00:00.000Z',
+            sent_at: null,
+        })
+
+    test.each([
+        ['regenerate (invoice)', 'regenerate', () => [issuedOriginalRow({ sent_at: null })]],
+        ['regenerate (correction)', 'regenerate', () => [issuedOriginalRow(), correctionRow()]],
+        ['correction', 'correction', () => [issuedOriginalRow()]],
+        ['cancellation', 'cancellation', () => [issuedOriginalRow()]],
+    ])('%s uploads the PDF into the invoice folder', async (_label, action, invoices) => {
+        const { call, calls } = await setup({ invoices: invoices() })
+
+        const res = await call(action)
+
+        expect(res.statusCode).toBe(200)
+        expect(calls.uploads).toHaveLength(1)
+        expect(calls.uploads[0].folder).toBe('folder-invoices')
+    })
+})

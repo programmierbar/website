@@ -46,6 +46,13 @@ export default defineNuxtConfig({
     // Global CSS: https://go.nuxtjs.dev/config-css
     css: ['vue-json-pretty/lib/styles.css'],
 
+    build: {
+        // Node resolves vue-json-pretty to its UMD build. Left external, the server's default import
+        // gets `{ default: Tree }` rather than the component, renders nothing, and the client then
+        // fails hydration. Bundling it lets Vite unwrap the default export.
+        transpile: ['vue-json-pretty'],
+    },
+
     runtimeConfig: {
         // Email (SMTP)
         emailFrom: 'noreply@programmier.bar', // Set via NUXT_EMAIL_FROM env var

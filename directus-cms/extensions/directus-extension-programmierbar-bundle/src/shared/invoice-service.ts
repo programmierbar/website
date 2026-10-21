@@ -1,5 +1,7 @@
 import { Readable } from 'node:stream'
 import { generateInvoicePdf, ticketTypeLabel, type InvoiceData, type InvoiceDocumentKind } from './invoice-generator.js'
+import { postSlackMessage } from './postSlackMessage.js'
+import { uploadWithInvoiceFolderFallback } from './secure-invoice-folder.js'
 
 /** Order fields required to assemble an invoice (subset of `ticket_orders`). */
 export interface InvoiceOrder {
@@ -233,6 +235,8 @@ interface RenderInvoiceBaseParams {
     invoiceNumber: string
     invoiceDate: Date
     filesService: any
+    /** `directus_files` folder to upload into — see `invoiceFilesFolder()`. */
+    folder?: string
     storageLocation?: string
     logger?: { warn: (message: string) => void }
 }
@@ -278,7 +282,13 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
 
     const serviceDate = formatServiceDate(snapshot.service_date_start, snapshot.service_date_end)
     if (!serviceDate) {
-        params.logger?.warn(`No Leistungsdatum (conference date) known for ${invoiceNumber} — omitting it from the PDF`)
+        // Non-blocking like the invoice folder fallback, but the document lacks a
+        // mandatory field (§ 14 Abs. 4 Nr. 6 UStG), so a human has to follow up.
+        const message = `Invoice document ${invoiceNumber} has no Leistungsdatum because its conference has no start_on/end_on. Set the conference dates; if the document has already been sent, issue a Rechnungsberichtigung.`
+        params.logger?.warn(message)
+        postSlackMessage(`:rotating_light: *Invoices*: ${message}`).catch((error: any) => {
+            params.logger?.warn(`Could not send Slack alert for ${invoiceNumber}: ${error?.message ?? error}`)
+        })
     }
 
     const baseData = {
@@ -326,13 +336,17 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
 
     const label = INVOICE_DOCUMENT_LABEL[kind]
     const invoiceFileName = `${label}-${invoiceNumber}.pdf`
-    const pdfStream = Readable.from([pdfBuffer])
-    const fileId = await filesService.uploadOne(pdfStream, {
-        type: 'application/pdf',
-        filename_download: invoiceFileName,
-        title: `${label} ${invoiceNumber}`,
-        ...(params.storageLocation && { storage: params.storageLocation }),
-    })
+    const fileId = await uploadWithInvoiceFolderFallback(
+        (folder) =>
+            filesService.uploadOne(Readable.from([pdfBuffer]), {
+                type: 'application/pdf',
+                filename_download: invoiceFileName,
+                title: `${label} ${invoiceNumber}`,
+                ...(params.storageLocation && { storage: params.storageLocation }),
+                ...(folder && { folder }),
+            }),
+        { folder: params.folder, invoiceNumber, logger: params.logger }
+    )
 
     return { fileId, pdfBuffer, invoiceFileName }
 }
@@ -347,6 +361,7 @@ export interface IssueOriginalInvoiceParams {
     ordersService: any
     invoicesService: any
     filesService: any
+    folder?: string
     storageLocation?: string
     logger?: { warn: (message: string) => void }
 }
@@ -373,6 +388,7 @@ export async function issueOriginalInvoice(params: IssueOriginalInvoiceParams): 
         invoiceDate,
         documentKind: 'invoice',
         filesService: params.filesService,
+        folder: params.folder,
         storageLocation: params.storageLocation,
         logger: params.logger,
     })
