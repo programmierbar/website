@@ -92,6 +92,16 @@ async function readEmailTemplate(key: string, context: EmailServiceContext): Pro
     return templates && templates.length > 0 ? templates[0] : null
 }
 
+/** Attachments in the shape MailService expects (PDF unless stated otherwise). */
+function toMailAttachments(attachments: EmailAttachment[]) {
+    return attachments.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+        contentType: a.contentType || 'application/pdf',
+        ...(a.cid && { cid: a.cid }),
+    }))
+}
+
 /**
  * Get an email template from the email_templates collection.
  */
@@ -163,14 +173,7 @@ export async function deliverTemplatedEmail(
             ...(options.replyTo && { replyTo: options.replyTo }),
             ...(options.cc && { cc: options.cc }),
             ...(options.headers && { headers: options.headers }),
-            ...(options.attachments && {
-                attachments: options.attachments.map((a) => ({
-                    filename: a.filename,
-                    content: a.content,
-                    contentType: a.contentType || 'application/pdf',
-                    ...(a.cid && { cid: a.cid }),
-                })),
-            }),
+            ...(options.attachments && { attachments: toMailAttachments(options.attachments) }),
         })
 
         logger.info(`Email sent to ${options.to} using template '${options.templateKey}'`)
@@ -190,19 +193,24 @@ export async function sendTemplatedEmail(options: SendEmailOptions, context: Ema
 
 /**
  * Send a raw email (without using a template from CMS).
- * Useful for dynamically generated content.
+ * Useful for dynamically generated content. Without `html` the mail is plain text only.
  */
 export async function sendRawEmail(
     options: {
         to: string
         subject: string
-        html: string
-        /** Plain-text alternative, for clients that don't render HTML. */
-        text?: string
         replyTo?: string
         /** Extra mail headers (e.g. List-Unsubscribe); passed through MailService to nodemailer. */
         headers?: Record<string, string>
-    },
+        attachments?: EmailAttachment[]
+    } & (
+        | {
+              html: string
+              /** Plain-text alternative, for clients that don't render HTML. */
+              text?: string
+          }
+        | { html?: undefined; text: string }
+    ),
     context: EmailServiceContext
 ): Promise<boolean> {
     const { logger, services, getSchema } = context
@@ -219,10 +227,11 @@ export async function sendRawEmail(
         await mailService.send({
             to: options.to,
             subject: options.subject,
-            html: options.html,
+            ...(options.html !== undefined && { html: options.html }),
             ...(options.text && { text: options.text }),
             ...(options.replyTo && { replyTo: options.replyTo }),
             ...(options.headers && { headers: options.headers }),
+            ...(options.attachments && { attachments: toMailAttachments(options.attachments) }),
         })
 
         logger.info(`Email sent to ${options.to}`)

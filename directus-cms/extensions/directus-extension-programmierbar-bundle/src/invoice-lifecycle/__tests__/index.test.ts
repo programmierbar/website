@@ -14,7 +14,7 @@ jest.mock('@directus/extensions-sdk', () => ({
 jest.mock('../../shared/museo-font.ts', () => ({ tryLoadMuseoFont: () => null }))
 
 // Corrections and cancellations are mailed to the customer through the templated mail
-// path (`deliverTemplatedEmail`), the accounting copy through its own SMTP transport.
+// path (`deliverTemplatedEmail`), the accounting copy as a plain mail (`sendRawEmail`).
 // Mocking the shared email service lets the tests assert both and stay offline.
 jest.mock('../../shared/email-service.ts', () => ({
     deliverTemplatedEmail: jest.fn(),
@@ -23,13 +23,7 @@ jest.mock('../../shared/email-service.ts', () => ({
 }))
 jest.mock('../../shared/postSlackMessage.ts', () => ({
     postSlackMessage: jest.fn(),
-}))
-
-// The accounting copy goes through its own SMTP transport, never through MailService.
-const mockSendMail = jest.fn<(mail: any) => Promise<unknown>>()
-jest.mock('nodemailer', () => ({
-    __esModule: true,
-    default: { createTransport: jest.fn(() => ({ sendMail: mockSendMail })) },
+    isSlackConfigured: jest.fn(() => false),
 }))
 
 const sendTemplatedEmailMock = jest.mocked(sendTemplatedEmail)
@@ -37,15 +31,10 @@ const deliverTemplatedEmailMock = jest.mocked(deliverTemplatedEmail)
 const sendRawEmailMock = jest.mocked(sendRawEmail)
 const postSlackMessageMock = jest.mocked(postSlackMessage)
 
-const ACCOUNTING_ENV = {
-    ACCOUNTING_INVOICE_EMAIL: 'accounting@example.test',
-    ACCOUNTING_SMTP_HOST: 'smtp.example.test',
-    ACCOUNTING_SMTP_PORT: 465,
-    ACCOUNTING_SMTP_SECURE: true,
-    ACCOUNTING_SMTP_USER: 'sender@example.test',
-    ACCOUNTING_SMTP_PASSWORD: 'app-password',
-    ACCOUNTING_MAIL_FROM: 'sender@example.test',
-}
+const ACCOUNTING_ENV = { ACCOUNTING_INVOICE_EMAIL: 'accounting@example.test' }
+
+/** The accounting mail handed to the shared email service (n-th call). */
+const accountingMail = (n = 0) => sendRawEmailMock.mock.calls[n]![0] as any
 
 type RouteHandler = (req: any, res: any) => Promise<void>
 
@@ -255,8 +244,7 @@ beforeEach(() => {
     deliverTemplatedEmailMock.mockReset()
     deliverTemplatedEmailMock.mockResolvedValue('sent')
     sendRawEmailMock.mockReset()
-    mockSendMail.mockReset()
-    mockSendMail.mockResolvedValue({ messageId: 'x' })
+    sendRawEmailMock.mockResolvedValue(true)
     resetAccountingMailState()
     postSlackMessageMock.mockReset()
 })
@@ -646,19 +634,19 @@ describe('invoice-lifecycle endpoint', () => {
 
             expect(res.statusCode).toBe(200)
             expect(res.body.accounting_mail).toBe('sent')
-            expect(mockSendMail).toHaveBeenCalledTimes(1)
-            const mail = mockSendMail.mock.calls[0]![0]
+            expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
+            const mail = accountingMail()
             expect(mail.to).toBe('accounting@example.test')
-            expect(mail.from).toBe('sender@example.test')
-            expect(mail.envelope).toEqual({ from: 'sender@example.test', to: 'accounting@example.test' })
-            expect(sendRawEmailMock).not.toHaveBeenCalled()
-            expect(mail.subject).toBe('Rechnungsberichtigung PB-CON26-002')
-            expect(mail.text).toContain('zu Rechnung PB-CON26-001')
+            expect(mail.subject).toBe(
+                `Ausgangsrechnung ${CONFERENCE.title} – Rechnungsberichtigung PB-CON26-002 zu PB-CON26-001`
+            )
+            expect(mail.text).toContain('Bezug auf Originalrechnung: PB-CON26-001 vom ')
+            expect(mail.html).toBeUndefined() // plain text, not a template
             expect(mail.attachments).toHaveLength(1)
-            expect(mail.attachments![0]!.filename).toBe('Rechnungsberichtigung-PB-CON26-002.pdf')
+            expect(mail.attachments[0].filename).toBe('Rechnungsberichtigung-PB-CON26-002.pdf')
             // Same bytes as the stored file.
-            expect(mail.attachments![0]!.content.equals(calls.uploadedBytes[0]!)).toBe(true)
-            expect(mail.attachments![0]!.content.subarray(0, 4).toString()).toBe('%PDF')
+            expect(mail.attachments[0].content.equals(calls.uploadedBytes[0]!)).toBe(true)
+            expect(mail.attachments[0].content.subarray(0, 4).toString()).toBe('%PDF')
 
             // The accounting copy is a separate mail; the customer mail is what issued the document.
             expect(mail.to).not.toBe(BASE_ORDER.purchaser_email)
@@ -666,18 +654,22 @@ describe('invoice-lifecycle endpoint', () => {
             expect(deliverTemplatedEmailMock).toHaveBeenCalledTimes(1)
         })
 
-        test('a cancellation is mailed to accounting', async () => {
+        test('a cancellation is mailed to accounting with its negative amount', async () => {
             const { call, calls } = await setup({ invoices: [issuedOriginalRow()], env: ACCOUNTING_ENV })
 
             const res = await call('cancellation')
 
             expect(res.statusCode).toBe(200)
             expect(res.body.accounting_mail).toBe('sent')
-            expect(mockSendMail).toHaveBeenCalledTimes(1)
-            const mail = mockSendMail.mock.calls[0]![0]
-            expect(mail.subject).toBe('Stornorechnung PB-CON26-002')
-            expect(mail.attachments![0]!.filename).toBe('Stornorechnung-PB-CON26-002.pdf')
-            expect(mail.attachments![0]!.content.equals(calls.uploadedBytes[0]!)).toBe(true)
+            expect(sendRawEmailMock).toHaveBeenCalledTimes(1)
+            const mail = accountingMail()
+            expect(mail.subject).toBe(
+                `Ausgangsrechnung ${CONFERENCE.title} – Stornorechnung (Gutschrift) PB-CON26-002 zu PB-CON26-001`
+            )
+            expect(mail.text).toMatch(/Bruttobetrag: -\d/)
+            expect(mail.attachments[0].filename).toBe('Stornorechnung-PB-CON26-002.pdf')
+            expect(mail.attachments[0].content.equals(calls.uploadedBytes[0]!)).toBe(true)
+            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
         })
 
         test('a pre-issuance regenerate sends the new version, marked as replacing the previous one', async () => {
@@ -690,10 +682,12 @@ describe('invoice-lifecycle endpoint', () => {
 
             expect(res.statusCode).toBe(200)
             expect(res.body.accounting_mail).toBe('sent')
-            const mail = mockSendMail.mock.calls[0]![0]
-            expect(mail.subject).toBe('Rechnung PB-CON26-001 (ersetzt vorherige Fassung)')
-            expect(mail.attachments![0]!.filename).toBe('Rechnung-PB-CON26-001.pdf')
-            expect(mail.attachments![0]!.content.equals(calls.uploadedBytes[0]!)).toBe(true)
+            const mail = accountingMail()
+            expect(mail.subject).toBe(
+                `Ausgangsrechnung ${CONFERENCE.title} – Ticketrechnung PB-CON26-001 (ersetzt vorherige Fassung)`
+            )
+            expect(mail.attachments[0].filename).toBe('Rechnung-PB-CON26-001.pdf')
+            expect(mail.attachments[0].content.equals(calls.uploadedBytes[0]!)).toBe(true)
         })
 
         test('a regenerated correction keeps its document type and reference in the accounting mail', async () => {
@@ -710,9 +704,11 @@ describe('invoice-lifecycle endpoint', () => {
             const res = await call('regenerate')
 
             expect(res.statusCode).toBe(200)
-            const mail = mockSendMail.mock.calls[0]![0]
-            expect(mail.subject).toBe('Rechnungsberichtigung PB-CON26-002 (ersetzt vorherige Fassung)')
-            expect(mail.text).toContain('zu Rechnung PB-CON26-001')
+            const mail = accountingMail()
+            expect(mail.subject).toBe(
+                `Ausgangsrechnung ${CONFERENCE.title} – Rechnungsberichtigung PB-CON26-002 zu PB-CON26-001 (ersetzt vorherige Fassung)`
+            )
+            expect(mail.text).toContain('Bezug auf Originalrechnung: PB-CON26-001 vom ')
         })
 
         test('is skipped with an info log when ACCOUNTING_INVOICE_EMAIL is not set', async () => {
@@ -722,21 +718,21 @@ describe('invoice-lifecycle endpoint', () => {
 
             expect(res.statusCode).toBe(200)
             expect(res.body.accounting_mail).toBe('skipped')
-            expect(mockSendMail).not.toHaveBeenCalled()
+            expect(sendRawEmailMock).not.toHaveBeenCalled()
             const infoLog = logger.info.mock.calls.map((c) => String(c[0])).join('\n')
             expect(infoLog).toContain('ACCOUNTING_INVOICE_EMAIL')
             expect(logger.error).not.toHaveBeenCalled()
         })
 
         test('persistent failure: document is still created, Slack is alerted, endpoint answers 200', async () => {
-            mockSendMail.mockRejectedValue(new Error('550 sender rejected'))
+            sendRawEmailMock.mockResolvedValue(false)
             const { call, db } = await setup({ invoices: [issuedOriginalRow()], env: ACCOUNTING_ENV })
 
             const res = await call('cancellation')
 
             expect(res.statusCode).toBe(200)
             expect(res.body.accounting_mail).toBe('failed')
-            expect(mockSendMail).toHaveBeenCalledTimes(3)
+            expect(sendRawEmailMock).toHaveBeenCalledTimes(3)
             expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
             expect(postSlackMessageMock.mock.calls[0]![0]).toContain('Stornorechnung PB-CON26-002')
             // Issued by the customer mail, independent of the failed accounting copy.
@@ -753,7 +749,7 @@ describe('invoice-lifecycle endpoint', () => {
             const internal = await setup({ order: { is_internal: true }, env: ACCOUNTING_ENV })
             expect((await internal.call('correction')).statusCode).toBe(400)
 
-            expect(mockSendMail).not.toHaveBeenCalled()
+            expect(sendRawEmailMock).not.toHaveBeenCalled()
             expect(deliverTemplatedEmailMock).not.toHaveBeenCalled()
         })
     })
@@ -795,9 +791,9 @@ describe('invoice-lifecycle endpoint', () => {
             expect(options.attachments![0]!.filename).toBe('Rechnungsberichtigung-PB-CON26-002.pdf')
             expect(options.attachments![0]!.contentType).toBe('application/pdf')
             expect(options.attachments![0]!.content.equals(calls.uploadedBytes[0]!)).toBe(true)
-            // Through the customer mail path (Directus MailService), not the accounting SMTP.
+            // Through the templated customer mail path; no accounting copy without ACCOUNTING_INVOICE_EMAIL.
             expect(emailContext.services.MailService).toBeDefined()
-            expect(mockSendMail).not.toHaveBeenCalled()
+            expect(sendRawEmailMock).not.toHaveBeenCalled()
 
             // Successful send stamps sent_at on the new document row only.
             const correction = db.ticket_invoices.find((r) => r.type === 'correction')
@@ -840,7 +836,7 @@ describe('invoice-lifecycle endpoint', () => {
                 customer_mail: 'failed',
                 accounting_mail: 'sent',
             })
-            expect(mockSendMail).toHaveBeenCalledTimes(1) // accounting copy, independent of the customer mail
+            expect(sendRawEmailMock).toHaveBeenCalledTimes(1) // accounting copy, independent of the customer mail
             expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
             const slack = postSlackMessageMock.mock.calls[0]![0]
             expect(slack).toContain('Rechnungsberichtigung PB-CON26-002')
@@ -848,6 +844,35 @@ describe('invoice-lifecycle endpoint', () => {
             expect(slack).toContain('sent_at')
             const correction = db.ticket_invoices.find((r) => r.type === 'correction')
             expect(correction).toMatchObject({ invoice_number: 'PB-CON26-002', sent_at: null })
+        })
+
+        test.each(['correction', 'cancellation'] as const)(
+            '%s: the customer mail goes out before the accounting copy (which may retry)',
+            async (action) => {
+                const { call } = await setup({ invoices: [issuedOriginalRow()], env: ACCOUNTING_ENV })
+
+                const res = await call(action)
+
+                expect(res.body).toMatchObject({ customer_mail: 'sent', accounting_mail: 'sent' })
+                const customerAt = deliverTemplatedEmailMock.mock.invocationCallOrder[0]!
+                const accountingAt = sendRawEmailMock.mock.invocationCallOrder[0]!
+                expect(customerAt).toBeLessThan(accountingAt)
+            }
+        )
+
+        test('a slow, failing accounting copy does not hold up or affect the customer mail', async () => {
+            sendRawEmailMock.mockResolvedValue(false)
+            const { call, db } = await setup({ invoices: [issuedOriginalRow()], env: ACCOUNTING_ENV })
+
+            const res = await call('correction')
+
+            expect(res.body).toMatchObject({ customer_mail: 'sent', accounting_mail: 'failed' })
+            expect(sendRawEmailMock).toHaveBeenCalledTimes(3)
+            // Issued by the customer mail before the accounting retries started.
+            expect(deliverTemplatedEmailMock.mock.invocationCallOrder[0]!).toBeLessThan(
+                sendRawEmailMock.mock.invocationCallOrder[0]!
+            )
+            expect(db.ticket_invoices.find((r) => r.type === 'correction').sent_at).toEqual(expect.any(String))
         })
 
         test('a throwing mail helper is contained as a failure as well', async () => {

@@ -31,10 +31,7 @@ The flow consists of four main phases:
 | `STORAGE_LOCATIONS` | Comma-separated storage location IDs (first is used for invoice PDFs) | Yes |
 | `INVOICE_FILES_FOLDER` | Id of the `directus_files` folder invoice PDFs are uploaded into; the Public policy must not read it (see [Invoice File Privacy](#invoice-file-privacy)). Unset or invalid: invoices still upload, but into the public library (warning + Slack alert) | Yes |
 | Email transport config | Directus email settings (`EMAIL_TRANSPORT`, `EMAIL_SMTP_HOST`, etc.) | Yes |
-| `ACCOUNTING_INVOICE_EMAIL` | Accounting mailbox that receives a copy of every invoice document (see [Accounting copy](#accounting-copy)). Unset/empty: no copy is sent | Production |
-| `ACCOUNTING_SMTP_HOST`, `ACCOUNTING_SMTP_PORT`, `ACCOUNTING_SMTP_USER`, `ACCOUNTING_SMTP_PASSWORD` | Dedicated SMTP transport for the accounting copy (e.g. Google Workspace SMTP with an app password) | When `ACCOUNTING_INVOICE_EMAIL` is set |
-| `ACCOUNTING_SMTP_SECURE` | `true` = implicit TLS (465), `false` = STARTTLS (587); unset: derived from the port | No |
-| `ACCOUNTING_MAIL_FROM` | Sender address registered with the accounting mailbox; used as `From` and envelope sender | When `ACCOUNTING_INVOICE_EMAIL` is set |
+| `ACCOUNTING_INVOICE_EMAIL` | Accounting mailbox that receives a copy of every invoice document (see [Accounting copy](#accounting-copy)). Unset/empty: no copy is sent (Slack is alerted once per process start) | Production |
 
 ## External Services
 
@@ -186,23 +183,21 @@ Key-value settings used by extension hooks.
 ## Accounting Copy
 
 Every generated invoice document is mailed to `ACCOUNTING_INVOICE_EMAIL` (GoBD: timely recording),
-as its own plain-text mail with exactly one PDF attached — the same bytes and file name as the stored
-file. Subject: `Rechnung PB-CON26-001`, `Rechnungsberichtigung …` or `Stornorechnung …`. The upload
-mailbox rejects mails with links, images, logos or QR codes, so the mail carries no HTML, template,
-link or signature.
+from where accounting takes it into the bookkeeping system. It goes through the Directus MailService
+like every other mail (`sendRawEmail` in `shared/email-service.ts`, sender `EMAIL_FROM`), as its own
+plain-text mail with exactly one PDF attached — the same bytes and file name as the stored file.
 
-**Why a separate SMTP transport:** the upload mailbox rejects every mail (550 at `RCPT TO`) whose SMTP
-envelope sender (MAIL FROM) is not the sender address registered there. The Directus MailService
-sends through the transactional mail provider, which always uses its own return path, so it can never
-pass that check. The accounting copy therefore goes through its own nodemailer transport
-(`ACCOUNTING_SMTP_*`, e.g. Google Workspace SMTP with an app password) and sets both `From` and the
-envelope sender to `ACCOUNTING_MAIL_FROM`. There is deliberately no fallback to the MailService — it
-would only produce bounces.
+Subject and body say what the document is, so it can be classified without opening the PDF:
 
-Setup: register `ACCOUNTING_MAIL_FROM` as an allowed sender in the accounting mailbox's settings,
-create an app password for that account, and put it in the Directus environment only — never commit
-it. If `ACCOUNTING_INVOICE_EMAIL` is set but any SMTP variable or `ACCOUNTING_MAIL_FROM` is missing,
-no copy is sent: each document logs a warning, and Slack is alerted once per process start.
+```
+Ausgangsrechnung programmier.con 2026 – Ticketrechnung PB-CON26-012
+Ausgangsrechnung programmier.con 2026 – Rechnungsberichtigung PB-CON26-049 zu PB-CON26-040
+Ausgangsrechnung programmier.con 2026 – Stornorechnung (Gutschrift) PB-CON26-050 zu PB-CON26-049
+```
+
+The conference name is the order's conference title. The body lists Dokumentart, Rechnungsnummer,
+Rechnungsdatum, Leistungszeitraum, the referenced original invoice (corrections and cancellations),
+Bruttobetrag and Aussteller — no customer data; the PDF carries everything else.
 
 | Document | Sent by |
 |----------|---------|
@@ -212,15 +207,17 @@ no copy is sent: each document logs a warning, and Slack is alerted once per pro
 
 Internal orders have no invoice, so nothing is sent. The accounting copy never sets `sent_at` (that
 records the customer dispatch). It is retried up to three times; if it still fails, a Slack alert
-names the invoice number so the PDF can be forwarded by hand. Order processing and the lifecycle
-endpoint carry on either way.
+names the invoice number so the PDF can be forwarded by hand. If `ACCOUNTING_INVOICE_EMAIL` is unset,
+each document is skipped with an info log, and Slack (when configured) is alerted once per process
+start with the first affected invoice number. Order processing and the lifecycle endpoint carry on
+either way.
 
 ## Customer Mail for Corrections and Cancellations
 
 A Rechnungsberichtigung or Stornorechnung created through the `invoice-lifecycle` endpoint (the
 "Rechnungs-Aktionen" on the order page) is mailed to the customer like the original invoice: To the
 purchaser, CC `billing_email` if set, the stored PDF attached, through the Directus MailService
-(`EMAIL_FROM`) — not the accounting transport. The mail text comes from `email_templates`:
+(`EMAIL_FROM`). The mail text comes from `email_templates`:
 `ticket_invoice_correction` or `ticket_invoice_cancellation` (`shared/invoice-customer-mail.ts`).
 
 | Outcome | `customer_mail` | Document | Slack |
@@ -230,7 +227,8 @@ purchaser, CC `billing_email` if set, the stored PDF attached, through the Direc
 | Template missing | `template_missing` | `sent_at` stays null | yes — names the template to create; no fallback text is sent |
 
 The endpoint answers 200 in every case (the document exists) and the admin UI shows the outcome. The
-accounting copy is sent independently of it.
+accounting copy is sent independently of it, after the customer mail, so its retries never delay the
+customer dispatch.
 
 **Regenerate** never mails the customer — for the original invoice and for corrections alike. It is
 only offered while `sent_at` is null, i.e. when the customer mail did not go out: fix the order data,
