@@ -16,7 +16,9 @@ import {
     withServicePeriod,
     type InvoiceDocument,
     type RenderInvoiceResult,
+    type ServicePeriod,
 } from '../shared/invoice-service.js'
+import { invoiceFilesFolder } from '../shared/secure-invoice-folder.js'
 
 const ENDPOINT_NAME = 'invoice-lifecycle'
 
@@ -51,6 +53,7 @@ const ORDER_FIELDS = [
 interface OrderContext {
     order: any
     conference: any
+    servicePeriod: ServicePeriod
     ticketCount: number
     documents: InvoiceDocument[]
     currentDocument: InvoiceDocument | null
@@ -154,12 +157,14 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             )
         }
 
+        const servicePeriod: ServicePeriod = { start_on: conference.start_on, end_on: conference.end_on }
+
         let documents: InvoiceDocument[]
         try {
             documents = await ensureInvoiceDocuments({
                 order,
                 conferenceTitle: conference.title,
-                servicePeriod: conference,
+                servicePeriod,
                 ticketCount,
                 invoicesService,
             })
@@ -175,6 +180,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
         return {
             order,
             conference,
+            servicePeriod,
             ticketCount,
             documents,
             currentDocument: findCurrentInvoiceDocument(documents),
@@ -250,7 +256,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             throw new HttpError(400, `Invoice ${current.invoice_number} has been cancelled`)
         }
 
-        const snapshot = buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount, ctx.conference)
+        const snapshot = buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount, ctx.servicePeriod)
 
         let rendered: RenderInvoiceResult
         if (current.type === 'correction') {
@@ -272,6 +278,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                 referenceNumber: predecessor.invoice_number,
                 referenceDate: new Date(predecessor.invoice_date),
                 filesService: ctx.filesService,
+                folder: invoiceFilesFolder(env, logger),
                 storageLocation: storageLocation(),
                 logger,
             })
@@ -282,6 +289,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                 invoiceDate: new Date(current.invoice_date),
                 documentKind: 'invoice',
                 filesService: ctx.filesService,
+                folder: invoiceFilesFolder(env, logger),
                 storageLocation: storageLocation(),
                 logger,
             })
@@ -330,7 +338,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
         const invoiceNumber = await generateInvoiceNumber(ctx.ordersService, ctx.invoicesService, conferenceYear)
         const invoiceDate = new Date()
 
-        const snapshot = buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount, ctx.conference)
+        const snapshot = buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount, ctx.servicePeriod)
         const rendered = await renderAndUploadInvoice({
             snapshot,
             invoiceNumber,
@@ -339,6 +347,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             referenceNumber: current.invoice_number,
             referenceDate: new Date(current.invoice_date),
             filesService: ctx.filesService,
+            folder: invoiceFilesFolder(env, logger),
             storageLocation: storageLocation(),
             logger,
         })
@@ -412,7 +421,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
 
         // Same service as the referenced invoice, so the same Leistungsdatum; snapshots
         // written before it was recorded fall back to the conference dates.
-        const snapshot = negateInvoiceSnapshot(withServicePeriod(referencedSnapshot, ctx.conference))
+        const snapshot = negateInvoiceSnapshot(withServicePeriod(referencedSnapshot, ctx.servicePeriod))
 
         const rendered = await renderAndUploadInvoice({
             snapshot,
@@ -422,6 +431,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             referenceNumber: current.invoice_number,
             referenceDate: new Date(current.invoice_date),
             filesService: ctx.filesService,
+            folder: invoiceFilesFolder(env, logger),
             storageLocation: storageLocation(),
             logger,
         })
