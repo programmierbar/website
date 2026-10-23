@@ -57,6 +57,55 @@ jobs:
       - name: Build
         run: npm run build
 
+  # Ticket invoices are ZUGFeRD / Factur-X e-invoices (PDF/A-3b with embedded CII XML, profile
+  # EN 16931). Jest checks the mapping; this job renders a sample of every document type and runs
+  # them through Mustang, which applies veraPDF (PDF/A-3), the CII XSD and the EN 16931 + Factur-X
+  # Schematron rules. A separate job because it needs Java and a ~60 MB validator jar.
+  einvoice-validation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: directus-cms/extensions/directus-extension-programmierbar-bundle
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: directus-cms/extensions/directus-extension-programmierbar-bundle/.nvmrc
+          cache: 'npm'
+          cache-dependency-path: 'directus-cms/extensions/directus-extension-programmierbar-bundle/package-lock.json'
+
+      - name: Use Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # The validator script pins the Mustang version and its SHA-256; keying the cache on the
+      # script means a version bump downloads the new jar exactly once.
+      - name: Cache Mustang validator
+        uses: actions/cache@v4
+        with:
+          path: directus-cms/extensions/directus-extension-programmierbar-bundle/.cache/mustang
+          key: mustang-${{ hashFiles('directus-cms/extensions/directus-extension-programmierbar-bundle/src/shared/cli/validate-einvoices.ts') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate e-invoices
+        run: npm run einvoice:validate
+
+      # The rendered samples and Mustang's reports, for reviewing a change to the invoice layout.
+      - name: Upload e-invoice samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: einvoice-samples
+          path: directus-cms/extensions/directus-extension-programmierbar-bundle/einvoice-samples
+          if-no-files-found: ignore
+
   nuxt-app-test:
     runs-on: ubuntu-latest
     defaults:

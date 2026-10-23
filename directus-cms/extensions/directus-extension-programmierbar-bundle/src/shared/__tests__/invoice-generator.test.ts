@@ -103,7 +103,18 @@ describe('invoice meta block', () => {
     test.each([
         ['invoice', {}],
         ['correction', { referenceNumber: 'PB-CON26-000', referenceDate: '15.01.2026' }],
-        ['cancellation', { referenceNumber: 'PB-CON26-000', referenceDate: '15.01.2026' }],
+        [
+            'cancellation',
+            {
+                referenceNumber: 'PB-CON26-000',
+                referenceDate: '15.01.2026',
+                // A Stornorechnung carries the referenced invoice's amounts negated.
+                unitPriceGrossCents: -11900,
+                subtotalCents: -10000,
+                vatAmountCents: -1900,
+                totalGrossCents: -11900,
+            },
+        ],
     ] as const)('a %s shows the Leistungsdatum (§ 14 Abs. 4 Nr. 6 UStG)', async (kind, reference) => {
         const texts = await renderedTexts({ ...BASE, documentKind: kind, ...reference } as InvoiceData)
 
