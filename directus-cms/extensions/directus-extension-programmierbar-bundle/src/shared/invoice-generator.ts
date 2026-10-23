@@ -2,6 +2,7 @@ import PDFDocument from 'pdfkit'
 import { formatBillingCountry } from '../../../../../shared-code/index.ts'
 import {
     buildFacturXXml,
+    EInvoiceDataError,
     FACTURX_FILENAME,
     facturXXmpMetadata,
     unitPriceNetCents,
@@ -197,14 +198,33 @@ function drawLogo(doc: InstanceType<typeof PDFDocument>, x: number, y: number, s
     }
 }
 
+/** The e-invoice XML for an invoice, or why none can be built from its data. */
+export type FacturXResult = { xml: string; error: null } | { xml: null; error: EInvoiceDataError }
+
+export function tryBuildFacturXXml(data: InvoiceData): FacturXResult {
+    try {
+        return { xml: buildFacturXXml(data, SELLER), error: null }
+    } catch (err) {
+        if (err instanceof EInvoiceDataError) {
+            return { xml: null, error: err }
+        }
+        throw err
+    }
+}
+
 /**
  * Generate an invoice PDF and return it as a Buffer.
  *
  * The PDF is a PDF/A-3b with the ZUGFeRD / Factur-X XML (profile EN 16931) of the
  * same data embedded as `factur-x.xml` — a hybrid e-invoice: readable for private
- * buyers, machine-readable E-Rechnung (§ 14 UStG) for business buyers.
+ * buyers, machine-readable E-Rechnung (§ 14 UStG) for business buyers. When the data
+ * cannot yield a correct e-invoice (`facturX.error`), the PDF is rendered without XML;
+ * the caller alerts a human.
  */
-export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
+export function generateInvoicePdf(
+    data: InvoiceData,
+    facturX: FacturXResult = tryBuildFacturXXml(data)
+): Promise<Buffer> {
     const kind: InvoiceDocumentKind = data.documentKind || 'invoice'
 
     // Defense in depth alongside the InvoiceData union: a correction/cancellation
@@ -218,15 +238,6 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
 
     const heading =
         kind === 'correction' ? 'Rechnungsberichtigung' : kind === 'cancellation' ? 'Stornorechnung' : 'Rechnung'
-
-    // Built before rendering: data that cannot become a valid e-invoice must not
-    // yield a PDF either.
-    let facturXXml: string
-    try {
-        facturXXml = buildFacturXXml(data, SELLER)
-    } catch (err) {
-        return Promise.reject(err)
-    }
 
     return new Promise((resolve, reject) => {
         const createdAt = new Date()
@@ -259,15 +270,17 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         }
 
         // --- Embedded e-invoice (ZUGFeRD / Factur-X) ---
-        doc.appendXML(facturXXmpMetadata())
-        doc.file(Buffer.from(facturXXml, 'utf-8'), {
-            name: FACTURX_FILENAME,
-            type: 'text/xml',
-            description: 'Factur-X/ZUGFeRD invoice (EN 16931)',
-            relationship: 'Alternative',
-            creationDate: createdAt,
-            modifiedDate: createdAt,
-        })
+        if (facturX.xml) {
+            doc.appendXML(facturXXmpMetadata())
+            doc.file(Buffer.from(facturX.xml, 'utf-8'), {
+                name: FACTURX_FILENAME,
+                type: 'text/xml',
+                description: 'Factur-X/ZUGFeRD invoice (EN 16931)',
+                relationship: 'Alternative',
+                creationDate: createdAt,
+                modifiedDate: createdAt,
+            })
+        }
 
         const pageWidth = doc.page.width - 100 // margins
 

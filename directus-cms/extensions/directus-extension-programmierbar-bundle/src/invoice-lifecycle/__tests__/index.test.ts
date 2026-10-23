@@ -511,7 +511,8 @@ describe('invoice-lifecycle endpoint', () => {
             expect(calls.creates).toHaveLength(0)
         })
 
-        test('400 when the order amounts do not add up to a valid e-invoice', async () => {
+        test('amounts that do not add up to a valid e-invoice: issued as plain PDF, Slack alerted', async () => {
+            postSlackMessageMock.mockResolvedValue(undefined)
             // Hand-edited order: net 190 € + VAT 36 € ≠ the stored gross total of 226,10 €.
             const { call, calls } = await setup({
                 order: { vat_amount_cents: 3600 },
@@ -520,11 +521,32 @@ describe('invoice-lifecycle endpoint', () => {
 
             const res = await call('correction')
 
-            expect(res.statusCode).toBe(400)
-            expect(res.body.error).toContain('e-invoice')
-            expect(calls.creates).toHaveLength(0)
-            expect(calls.uploads).toHaveLength(0)
+            expect(res.statusCode).toBe(200)
+            expect(calls.uploadedBytes[0]!.toString('latin1')).not.toContain('/Type /EmbeddedFile')
+            const alerts = postSlackMessageMock.mock.calls.map(([text]) => text)
+            expect(alerts).toContainEqual(expect.stringMatching(/PB-CON26-002.*plain PDF.*does not add up/))
         })
+
+        test.each(['correction', 'cancellation'])(
+            'legacy order without total_gross_cents: %s works with consistent amounts',
+            async (action) => {
+                // Backfilled original snapshot and the correction derive gross = net + VAT.
+                const { db, call, calls } = await setup({ order: { total_gross_cents: null }, invoices: [] })
+
+                const res = await call(action)
+
+                expect(res.statusCode).toBe(200)
+                const created = db.ticket_invoices.find((r) => r.type === action)
+                const sign = action === 'cancellation' ? -1 : 1
+                expect(created.snapshot_json).toMatchObject({
+                    subtotal_cents: sign * 20000,
+                    discount_amount_cents: sign * 1000,
+                    vat_amount_cents: sign * 3610,
+                    total_gross_cents: sign * 22610,
+                })
+                expect(calls.uploadedBytes[0]!.toString('latin1')).toContain('/Type /EmbeddedFile')
+            }
+        )
 
         test('corrects the latest correction, not the first original', async () => {
             const original = issuedOriginalRow()

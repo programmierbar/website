@@ -63,11 +63,11 @@ const PRIVATE_BUYER = {
     purchaser_email: 'max@example.com',
     company_name: null,
     company_vat_id: null,
-    billing_address_line1: null,
+    billing_address_line1: 'Beispielweg 5',
     billing_address_line2: null,
-    billing_city: null,
-    billing_postal_code: null,
-    billing_country: null,
+    billing_city: 'Berlin',
+    billing_postal_code: '10115',
+    billing_country: 'DE',
 }
 
 export interface EInvoiceSample {
@@ -119,7 +119,7 @@ export async function renderEInvoiceSamples(): Promise<EInvoiceSample[]> {
             referenceNumber: 'PB-CON26-002',
             referenceDate: correctionDate,
         }),
-        // Private buyer without any address: BT-55 falls back to DE.
+        // Private buyer (one without any address gets a plain PDF, see the tests).
         await render('rechnung-privat', {
             snapshot: buildInvoiceSnapshot(
                 pricedOrder({ ...PRIVATE_BUYER, ticket_type: 'regular' }, 1, 39900),

@@ -4,6 +4,7 @@ import {
     buyerCountryCode,
     EInvoiceDataError,
     expectedVatCents,
+    MissingBuyerCountryError,
     normalizeVatId,
     unitPriceNetCents,
 } from '../einvoice.ts'
@@ -193,21 +194,44 @@ describe('buildFacturXXml', () => {
         expect(xml).not.toMatch(/>-\d/)
     })
 
-    test('a private buyer without address gets the documented country fallback', () => {
-        const xml = buildFacturXXml(PRIVATE, SELLER)
+    test('a private buyer with a personal address', () => {
+        const xml = buildFacturXXml({ ...PRIVATE, billingCountry: 'Österreich' }, SELLER)
         expect(value(xml, 'ram:Name', 'ram:BuyerTradeParty')).toBe('Erika Musterfrau')
-        expect(value(xml, 'ram:CountryID', 'ram:BuyerTradeParty')).toBe('DE')
+        expect(value(xml, 'ram:CountryID', 'ram:BuyerTradeParty')).toBe('AT')
         expect(xml).not.toContain('<ram:AllowanceTotalAmount>')
         expect(xml).not.toContain('SpecifiedTradeAllowanceCharge')
-        expect(buyerCountryCode(null)).toEqual({ code: 'DE', isFallback: true })
-        expect(buyerCountryCode('Österreich')).toEqual({ code: 'AT', isFallback: false })
-        expect(buyerCountryCode('AT')).toEqual({ code: 'AT', isFallback: false })
+    })
+
+    test('never declares a buyer country nobody entered (BT-55)', () => {
+        expect(() => buildFacturXXml(PRIVATE, SELLER)).toThrow(MissingBuyerCountryError)
+        expect(() => buildFacturXXml({ ...INVOICE, billingCountry: 'Atlantis' }, SELLER)).toThrow(
+            MissingBuyerCountryError
+        )
+        expect(buyerCountryCode(null)).toBeNull()
+        expect(buyerCountryCode('Atlantis')).toBeNull()
+        expect(buyerCountryCode('Österreich')).toBe('AT')
+        expect(buyerCountryCode('AT')).toBe('AT')
+    })
+
+    test('refuses a negative Rabatt (discount code priced above the list price)', () => {
+        // 1 ticket listed at 299 € net, sold with a code for 349 €: Rabatt −50 €.
+        const surcharge: InvoiceData = {
+            ...INVOICE,
+            ticketCount: 1,
+            unitPriceGrossCents: 35581, // round(29900 × 1.19)
+            subtotalCents: 29900,
+            discountAmountCents: -5000,
+            vatAmountCents: 6631, // round(34900 × 1.19) − 34900
+            totalGrossCents: 41531,
+        }
+        expect(() => buildFacturXXml(surcharge, SELLER)).toThrow(EInvoiceDataError)
     })
 
     test('a 0 € invoice (100 % discount) has no payment means and zero totals', () => {
         const xml = buildFacturXXml(
             {
                 ...PRIVATE,
+                billingCountry: 'DE',
                 ticketType: 'Discounted',
                 discountAmountCents: 39900,
                 vatAmountCents: 0,
@@ -262,6 +286,9 @@ describe('amount helpers', () => {
         expect(normalizeVatId('ATU12345678')).toBe('ATU12345678')
         expect(normalizeVatId('123456789')).toBeNull()
         expect(normalizeVatId(null)).toBeNull()
+        // BR-CO-09: ISO 3166-1 alpha-2 prefix, or EL for Greece.
+        expect(normalizeVatId('ZZ123456789')).toBeNull()
+        expect(normalizeVatId('EL123456789')).toBe('EL123456789')
     })
 })
 
@@ -294,7 +321,13 @@ describe('generateInvoicePdf e-invoice embedding', () => {
         expect(xmp).toContain('<fx:ConformanceLevel>EN 16931</fx:ConformanceLevel>')
     })
 
-    test('rejects instead of rendering a PDF whose amounts the e-invoice would contradict', async () => {
-        await expect(generateInvoicePdf({ ...INVOICE, subtotalCents: 1 })).rejects.toThrow(EInvoiceDataError)
+    test.each([
+        ['amounts the e-invoice would contradict', { ...INVOICE, subtotalCents: 1 }],
+        ['no buyer country', PRIVATE],
+    ] as const)('renders a plain PDF without XML for %s', async (_case, data) => {
+        const pdf = await generateInvoicePdf(data)
+        expect(pdf.toString('latin1')).toMatch(/^%PDF-1\.7/)
+        expect(() => extractEmbeddedFile(pdf)).toThrow('no embedded file')
+        expect(pdf.toString('latin1')).not.toContain('factur-x')
     })
 })

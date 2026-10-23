@@ -1,6 +1,12 @@
 import { Readable } from 'node:stream'
-import { buyerCountryCode, FALLBACK_BUYER_COUNTRY } from './einvoice.js'
-import { generateInvoicePdf, ticketTypeLabel, type InvoiceData, type InvoiceDocumentKind } from './invoice-generator.js'
+import { MissingBuyerCountryError } from './einvoice.js'
+import {
+    generateInvoicePdf,
+    ticketTypeLabel,
+    tryBuildFacturXXml,
+    type InvoiceData,
+    type InvoiceDocumentKind,
+} from './invoice-generator.js'
 import { postSlackMessage } from './postSlackMessage.js'
 import { uploadWithInvoiceFolderFallback } from './secure-invoice-folder.js'
 
@@ -175,7 +181,14 @@ export function buildInvoiceSnapshot(
     // with Zwischensumme; the Rabatt line takes us down to the actual total.
     // `??` (not `||`) everywhere below: 0 is a legitimate stored amount (free orders,
     // 100% discounts, 0 VAT) and must not be treated as missing.
-    const subtotalCents = order.subtotal_cents ?? order.total_cents ?? 0
+    // Legacy/hand-made orders may lack some amounts; the missing ones are derived from
+    // the others so the set stays consistent (Zwischensumme − Rabatt + MwSt. = Betrag).
+    // `total_cents` is the NET total after the discount (see the checkout's pricing).
+    const discountCents = order.discount_amount_cents ?? 0
+    const subtotalCents = order.subtotal_cents ?? (order.total_cents ?? 0) + discountCents
+    const netCents = subtotalCents - discountCents
+    const grossCents = order.total_gross_cents ?? null
+    const vatCents = order.vat_amount_cents ?? (grossCents === null ? 0 : grossCents - netCents)
     const baseUnitNetCents = Math.round(subtotalCents / ticketCount)
     const grossPerTicket = Math.round(baseUnitNetCents * 1.19)
 
@@ -198,9 +211,9 @@ export function buildInvoiceSnapshot(
         ticket_count: ticketCount,
         unit_price_gross_cents: grossPerTicket,
         subtotal_cents: subtotalCents,
-        discount_amount_cents: order.discount_amount_cents ?? 0,
-        vat_amount_cents: order.vat_amount_cents ?? 0,
-        total_gross_cents: order.total_gross_cents ?? order.total_cents ?? 0,
+        discount_amount_cents: discountCents,
+        vat_amount_cents: vatCents,
+        total_gross_cents: grossCents ?? netCents + vatCents,
     }
 }
 
@@ -295,11 +308,6 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
             params.logger?.warn(`Could not send Slack alert for ${invoiceNumber}: ${error?.message ?? error}`)
         })
     }
-    if (buyerCountryCode(snapshot.billing_country).isFallback) {
-        params.logger?.warn(
-            `Billing country "${snapshot.billing_country ?? ''}" of ${invoiceNumber} has no ISO code — the e-invoice states ${FALLBACK_BUYER_COUNTRY}`
-        )
-    }
 
     const baseData = {
         invoiceNumber,
@@ -344,7 +352,21 @@ export async function renderAndUploadInvoice(params: RenderInvoiceParams): Promi
         }
     }
 
-    const pdfBuffer = await generateInvoicePdf(invoiceData)
+    const facturX = tryBuildFacturXXml(invoiceData)
+    // A private buyer who skipped the address needs no E-Rechnung: nothing to follow up.
+    const isPrivateWithoutCountry =
+        facturX.error instanceof MissingBuyerCountryError &&
+        !snapshot.company_name?.trim() &&
+        !snapshot.billing_country?.trim()
+    if (facturX.error && !isPrivateWithoutCountry) {
+        // Never block issuance over the e-invoice: the document goes out as a plain PDF.
+        const message = `Invoice document ${invoiceNumber} (order ${snapshot.order_number ?? snapshot.order_id}) was issued as a plain PDF without e-invoice (ZUGFeRD): ${facturX.error.message}. Check the order data; issue a Rechnungsberichtigung if the buyer needs an E-Rechnung.`
+        params.logger?.warn(message)
+        postSlackMessage(`:rotating_light: *Invoices*: ${message}`).catch((error: any) => {
+            params.logger?.warn(`Could not send Slack alert for ${invoiceNumber}: ${error?.message ?? error}`)
+        })
+    }
+    const pdfBuffer = await generateInvoicePdf(invoiceData, facturX)
 
     const label = INVOICE_DOCUMENT_LABEL[kind]
     const invoiceFileName = `${label}-${invoiceNumber}.pdf`

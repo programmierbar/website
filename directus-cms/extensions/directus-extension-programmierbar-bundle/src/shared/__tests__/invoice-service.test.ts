@@ -20,6 +20,7 @@ import {
     type RenderInvoiceParams,
 } from '../invoice-service.ts'
 import { postSlackMessage } from '../postSlackMessage.ts'
+import { extractEmbeddedFile } from './pdf-inspect.ts'
 
 // `import.meta.url` in the font loader cannot be parsed by Jest's CJS transform.
 jest.mock('../museo-font.ts', () => ({ tryLoadMuseoFont: () => null }))
@@ -124,15 +125,28 @@ describe('buildInvoiceSnapshot', () => {
         expect(snapshot.unit_price_gross_cents).toBe(11900)
     })
 
-    test('falls back to total_cents when subtotal/total_gross are missing', () => {
+    test('derives missing amounts of legacy orders consistently (total_cents is the net total)', () => {
         const snapshot = buildInvoiceSnapshot(
             { ...ORDER, subtotal_cents: null, total_gross_cents: null, discount_amount_cents: null },
             'Conf',
             1
         )
         expect(snapshot.subtotal_cents).toBe(19000)
-        expect(snapshot.total_gross_cents).toBe(19000)
         expect(snapshot.discount_amount_cents).toBe(0)
+        expect(snapshot.vat_amount_cents).toBe(3610)
+        expect(snapshot.total_gross_cents).toBe(22610)
+
+        // Only the gross total missing: net 190 € + VAT 36,10 €.
+        expect(buildInvoiceSnapshot({ ...ORDER, total_gross_cents: null }, 'Conf', 2)).toMatchObject({
+            subtotal_cents: 20000,
+            discount_amount_cents: 1000,
+            vat_amount_cents: 3610,
+            total_gross_cents: 22610,
+        })
+        // Subtotal missing, discount known: total_cents is after the discount.
+        expect(buildInvoiceSnapshot({ ...ORDER, subtotal_cents: null }, 'Conf', 2).subtotal_cents).toBe(20000)
+        // VAT missing, gross known.
+        expect(buildInvoiceSnapshot({ ...ORDER, vat_amount_cents: null }, 'Conf', 2).vat_amount_cents).toBe(3610)
     })
 
     test('keeps legitimate 0 amounts instead of treating them as missing (free order)', () => {
@@ -223,23 +237,75 @@ describe('Leistungsdatum (service date)', () => {
         expect(postSlackMessageMock).not.toHaveBeenCalled()
     })
 
-    test('warns when the e-invoice has to fall back to DE as buyer country', async () => {
-        const render = async (billingCountry: string | null) => {
+    describe('falls back to a plain PDF when no correct e-invoice can be built', () => {
+        const render = async (order: InvoiceOrder, ticketCount = 2) => {
+            jest.mocked(postSlackMessage).mockClear()
             const logger = { warn: jest.fn() }
-            await renderAndUploadInvoice({
-                snapshot: buildInvoiceSnapshot({ ...ORDER, billing_country: billingCountry }, 'Conf', 2, CONFERENCE),
+            const { pdfBuffer } = await renderAndUploadInvoice({
+                snapshot: buildInvoiceSnapshot(order, 'Conf', ticketCount, CONFERENCE),
                 invoiceNumber: 'PB-CON26-001',
                 invoiceDate: new Date('2026-02-01T10:00:00Z'),
                 filesService: fakeFilesService(),
                 logger,
             })
-            return logger.warn.mock.calls.map(([message]) => String(message))
+            let hasXml = true
+            try {
+                extractEmbeddedFile(pdfBuffer)
+            } catch {
+                hasXml = false
+            }
+            return { hasXml, slack: jest.mocked(postSlackMessage).mock.calls.map(([text]) => text) }
         }
+        const PRIVATE_ORDER = { ...ORDER, company_name: null, company_vat_id: null }
 
-        expect(await render(null)).toEqual([expect.stringMatching(/PB-CON26-001.*states DE/)])
-        expect(await render('Atlantis')).toEqual([expect.stringMatching(/"Atlantis".*states DE/)])
-        expect(await render('AT')).toEqual([])
-        expect(await render('Deutschland')).toEqual([])
+        test('known country: e-invoice embedded, no alert', async () => {
+            expect(await render({ ...ORDER, billing_country: 'AT' })).toEqual({ hasXml: true, slack: [] })
+        })
+
+        test('private buyer without address: plain PDF, nothing to follow up', async () => {
+            expect(await render({ ...PRIVATE_ORDER, billing_country: null })).toEqual({ hasXml: false, slack: [] })
+        })
+
+        test.each([
+            ['company without country', { ...ORDER, billing_country: null }],
+            ['unknown free-text country', { ...PRIVATE_ORDER, billing_country: 'Atlantis' }],
+        ])('%s: plain PDF and one Slack alert', async (_case, order) => {
+            const { hasXml, slack } = await render(order)
+            expect(hasXml).toBe(false)
+            expect(slack).toEqual([expect.stringMatching(/PB-CON26-001 \(order ORD-2026-ABC123\).*plain PDF.*BT-55/)])
+        })
+
+        test('discount code priced above the list price: issued anyway, plain PDF, Slack alert', async () => {
+            // 1 ticket listed at 299 € net, code for 349 € — as the checkout prices it.
+            const surcharge = {
+                ...ORDER,
+                subtotal_cents: 29900,
+                discount_amount_cents: -5000,
+                total_cents: 34900,
+                total_gross_cents: 41531,
+                vat_amount_cents: 6631,
+            }
+            const { hasXml, slack } = await render(surcharge, 1)
+            expect(hasXml).toBe(false)
+            expect(slack).toEqual([expect.stringMatching(/PB-CON26-001.*plain PDF.*negative amounts/)])
+
+            jest.mocked(postSlackMessage).mockClear()
+            const invoicesService = fakeInvoicesService()
+            const issued = await issueOriginalInvoice({
+                order: surcharge,
+                conferenceTitle: 'Conf',
+                servicePeriod: CONFERENCE,
+                ticketCount: 1,
+                invoiceNumber: 'PB-CON26-002',
+                invoiceDate: new Date('2026-02-01T10:00:00Z'),
+                ordersService: { updateOne: jest.fn(async () => 'order-1') },
+                invoicesService,
+                filesService: fakeFilesService(),
+            })
+            expect(issued.documentId).toBe('doc-1')
+            expect(issued.snapshot.total_gross_cents).toBe(41531)
+            expect(postSlackMessage).toHaveBeenCalledTimes(1)
+        })
     })
 })
 

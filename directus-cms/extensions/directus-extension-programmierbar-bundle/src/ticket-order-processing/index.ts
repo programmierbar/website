@@ -5,6 +5,7 @@ import { deliverTemplatedEmail, type EmailServiceContext } from '../shared/email
 import { recordInvoiceSent } from '../shared/invoice-customer-mail.js'
 import { generateInvoiceNumber } from '../shared/invoice-generator.js'
 import { INVOICE_DOCUMENT_LABEL, issueOriginalInvoice } from '../shared/invoice-service.js'
+import { postSlackMessage } from '../shared/postSlackMessage.js'
 import { safeAction } from '../shared/safeHook.ts'
 import { invoiceFilesFolder } from '../shared/secure-invoice-folder.js'
 import { getSetting } from '../shared/settings.js'
@@ -48,6 +49,10 @@ export default defineHook(({ action }, hookContext) => {
                 accountability: eventContext.accountability,
             }
 
+            // Named in the Slack alert if processing fails half-way.
+            let currentOrder: string | number | null = null
+            let currentInvoice: string | null = null
+
             try {
                 const schema = await getSchema()
 
@@ -74,6 +79,8 @@ export default defineHook(({ action }, hookContext) => {
                 const websiteUrl = (await getSetting('website_url', context)) || 'https://www.programmier.bar'
 
                 for (const orderId of keys) {
+                    currentOrder = orderId
+                    currentInvoice = null
                     logger.info(`${HOOK_NAME}: Processing paid order ${orderId}`)
 
                     // Get order details (including billing fields for invoice)
@@ -109,6 +116,7 @@ export default defineHook(({ action }, hookContext) => {
                         logger.error(`${HOOK_NAME}: Order ${orderId} not found`)
                         continue
                     }
+                    currentOrder = order.order_number || orderId
 
                     // Get conference details (title, start_on for invoice year, start_on/end_on
                     // for the Leistungsdatum, ticket limit)
@@ -187,6 +195,7 @@ export default defineHook(({ action }, hookContext) => {
                     if (!isInternal) {
                         const conferenceYear = new Date(conference.start_on).getFullYear()
                         invoiceNumber = await generateInvoiceNumber(ordersService, invoicesService, conferenceYear)
+                        currentInvoice = invoiceNumber
 
                         logger.info(`${HOOK_NAME}: Generating invoice ${invoiceNumber} for order ${order.order_number}`)
 
@@ -364,7 +373,16 @@ export default defineHook(({ action }, hookContext) => {
                     )
                 }
             } catch (err: any) {
-                logger.error(`${HOOK_NAME}: Error processing order: ${err?.message || err}`)
+                const reason = err?.message || err
+                logger.error(`${HOOK_NAME}: Error processing order ${currentOrder ?? ''}: ${reason}`)
+                // A paid order without invoice, tickets or confirmation needs a human.
+                try {
+                    await postSlackMessage(
+                        `:rotating_light: *Ticket orders*: Processing paid order ${currentOrder ?? '(unknown)'}${currentInvoice ? ` (invoice ${currentInvoice})` : ''} failed: ${reason}. Invoice, tickets or confirmation mail may be missing — check the order.`
+                    )
+                } catch (slackError: any) {
+                    logger.error(`${HOOK_NAME}: Could not send Slack alert: ${slackError?.message ?? slackError}`)
+                }
             }
         })
     )

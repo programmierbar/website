@@ -9,6 +9,10 @@ import type { InvoiceData, InvoiceDocumentKind } from './invoice-generator.js'
  * XML cannot drift from the PDF. `generateInvoicePdf` embeds it as `factur-x.xml`
  * into a PDF/A-3b, so one file is both the readable invoice and a valid German
  * E-Rechnung (§ 14 UStG).
+ *
+ * When the data cannot yield a correct e-invoice (see {@link EInvoiceDataError}), the
+ * document is issued as a plain PDF without XML instead: false XML data is worse than
+ * none, and issuing an invoice must never be blocked by its e-invoice.
  */
 
 /** Only VAT rate ticket invoices use (Umsatzsteuer, standard rate). */
@@ -21,14 +25,6 @@ export const FACTURX_FILENAME = 'factur-x.xml'
 export const FACTURX_GUIDELINE_ID = 'urn:cen.eu:en16931:2017'
 export const FACTURX_CONFORMANCE_LEVEL = 'EN 16931'
 export const FACTURX_VERSION = '1.0'
-
-/**
- * Buyer country (BT-55, mandatory) used when the order carries no country we can map
- * to an ISO code — private buyers may skip the address entirely. Every invoice is
- * issued by a German seller for a conference held in Germany, so DE is the only
- * defensible default.
- */
-export const FALLBACK_BUYER_COUNTRY = 'DE'
 
 /**
  * BT-3 invoice type codes (UNTDID 1001):
@@ -64,14 +60,25 @@ export interface InvoiceSeller {
 
 /**
  * Thrown when the invoice data would yield an e-invoice that contradicts the printed
- * amounts or violates EN 16931. Orders created by the checkout can never trigger it
- * (their amounts reconcile by construction); it guards hand-edited orders, where
- * issuing a self-contradictory invoice would be worse than refusing to.
+ * amounts or violates EN 16931 — e.g. hand-edited amounts, or a discount code priced
+ * above the list price (a negative Rabatt). `generateInvoicePdf` then leaves the XML
+ * out instead of embedding false data.
  */
 export class EInvoiceDataError extends Error {
     constructor(invoiceNumber: string, reason: string) {
         super(`Cannot build the e-invoice for ${invoiceNumber}: ${reason}`)
         this.name = 'EInvoiceDataError'
+    }
+}
+
+/**
+ * The buyer country (BT-55) is unknown, so no EN 16931 e-invoice can be built (BR-11).
+ * Expected for private buyers, who may skip the address — and need no E-Rechnung.
+ */
+export class MissingBuyerCountryError extends EInvoiceDataError {
+    constructor(invoiceNumber: string, billingCountry: string | null | undefined) {
+        super(invoiceNumber, `the billing country "${billingCountry ?? ''}" has no ISO code (BT-55, BR-11)`)
+        this.name = 'MissingBuyerCountryError'
     }
 }
 
@@ -161,22 +168,34 @@ function dateElement(tag: string, yyyymmdd: string): string {
 }
 
 /**
- * BT-48 must start with an ISO country prefix (BR-CO-09). The checkout takes the
+ * Prefixes BR-CO-09 accepts for a VAT identifier: ISO 3166-1 alpha-2 plus EL (Greece)
+ * and the codes 1A and XI — copied from the EN 16931 CII schematron.
+ */
+const VAT_ID_PREFIXES = new Set(
+    (
+        '1A AD AE AF AG AI AL AM AN AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BL BJ BM BN BO BQ BR BS BT BV ' +
+        'BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH EL ER ES ET ' +
+        'FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN ' +
+        'IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF ' +
+        'MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH ' +
+        'PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR ST SV SX SY SZ TC ' +
+        'TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS XI YE YT ZA ZM ZW'
+    ).split(' ')
+)
+
+/**
+ * BT-48 must start with a country prefix BR-CO-09 accepts. The checkout takes the
  * USt-IdNr. as free text, so an unprefixed or malformed value is left out of the XML
  * (it is optional for a domestic 19 % invoice) — the PDF still prints it as entered.
  */
 export function normalizeVatId(value: string | null | undefined): string | null {
     const compact = (value ?? '').replace(/[\s.\-/]/g, '').toUpperCase()
-    return /^[A-Z]{2}[0-9A-Z+*]{2,12}$/.test(compact) ? compact : null
+    return /^[A-Z0-9]{2}[0-9A-Z+*]{2,12}$/.test(compact) && VAT_ID_PREFIXES.has(compact.slice(0, 2)) ? compact : null
 }
 
-/** BT-55: ISO code of the buyer's country, or the documented fallback. */
-export function buyerCountryCode(billingCountry: string | null | undefined): {
-    code: string
-    isFallback: boolean
-} {
-    const code = normalizeBillingCountry(billingCountry)
-    return code ? { code, isFallback: false } : { code: FALLBACK_BUYER_COUNTRY, isFallback: true }
+/** BT-55: ISO code of the buyer's country, or null when the order has none we can map. */
+export function buyerCountryCode(billingCountry: string | null | undefined): string | null {
+    return normalizeBillingCountry(billingCountry) ?? null
 }
 
 /** Number and printed date of the corrected/cancelled invoice (BT-25/BT-26). */
@@ -247,8 +266,13 @@ export function buildFacturXXml(data: InvoiceData, seller: InvoiceSeller): strin
     if (kind !== 'invoice' && !preceding) {
         throw new EInvoiceDataError(invoiceNumber, 'missing reference to the corrected/cancelled invoice')
     }
-
     const issueDate = toFormat102(invoiceNumber, data.invoiceDate)
+    // Last check, so a MissingBuyerCountryError means everything else is fine.
+    const buyerCountry = buyerCountryCode(data.billingCountry)
+    if (!buyerCountry) {
+        throw new MissingBuyerCountryError(invoiceNumber, data.billingCountry)
+    }
+
     const amount = (cents: number) => formatAmount(cents)
     const text = (value: string) => escapeXml(value)
     const vatCategory = `<ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${VAT_RATE_PERCENT}</ram:RateApplicablePercent>`
@@ -284,7 +308,6 @@ export function buildFacturXXml(data: InvoiceData, seller: InvoiceSeller): strin
 
     // --- Buyer (BG-7) ---
     const companyName = data.companyName?.trim() || null
-    const country = buyerCountryCode(data.billingCountry)
     const buyerVatId = normalizeVatId(data.companyVatId)
     const buyerParty = [`<ram:Name>${text(companyName || data.purchaserName)}</ram:Name>`]
     if (companyName) {
@@ -308,7 +331,7 @@ export function buildFacturXXml(data: InvoiceData, seller: InvoiceSeller): strin
     if (data.billingCity?.trim()) {
         buyerParty.push(`<ram:CityName>${text(data.billingCity.trim())}</ram:CityName>`)
     }
-    buyerParty.push(`<ram:CountryID>${country.code}</ram:CountryID>`, '</ram:PostalTradeAddress>')
+    buyerParty.push(`<ram:CountryID>${buyerCountry}</ram:CountryID>`, '</ram:PostalTradeAddress>')
     if (data.purchaserEmail?.trim()) {
         buyerParty.push(
             `<ram:URIUniversalCommunication><ram:URIID schemeID="EM">${text(data.purchaserEmail.trim())}</ram:URIID></ram:URIUniversalCommunication>`

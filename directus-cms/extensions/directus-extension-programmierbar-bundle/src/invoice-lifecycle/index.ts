@@ -7,7 +7,6 @@ import { sendInvoiceDocumentToCustomer, type CustomerInvoiceDocument } from '../
 import { generateInvoiceNumber } from '../shared/invoice-generator.js'
 import {
     buildInvoiceSnapshot,
-    EInvoiceDataError,
     ensureInvoiceDocuments,
     findCancellationFor,
     findCurrentInvoiceDocument,
@@ -236,10 +235,8 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
                     return
                 }
                 // Same class of client error as the empty-attendees 400 in
-                // loadOrderContext: nothing to invoice, not a server fault. Order amounts
-                // that do not reconcile into a valid e-invoice are a data problem the
-                // admin has to fix on the order.
-                if (err instanceof InvalidTicketCountError || err instanceof EInvoiceDataError) {
+                // loadOrderContext: nothing to invoice, not a server fault.
+                if (err instanceof InvalidTicketCountError) {
                     res.status(400).send({ error: err.message })
                     return
                 }
