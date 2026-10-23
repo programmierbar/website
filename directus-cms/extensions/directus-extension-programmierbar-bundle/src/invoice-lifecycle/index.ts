@@ -24,6 +24,14 @@ import { invoiceFilesFolder } from '../shared/secure-invoice-folder.js'
 
 const ENDPOINT_NAME = 'invoice-lifecycle'
 
+/**
+ * Regenerate refuses documents younger than this: right after creation the customer
+ * mail may still be in flight, and regenerating then could swap the PDF under a
+ * dispatch that is about to stamp `sent_at`. After the window, regenerate is the
+ * recovery path for a document whose customer mail failed.
+ */
+const REGENERATE_MIN_DOCUMENT_AGE_MS = 60_000
+
 const ORDER_FIELDS = [
     'id',
     'order_number',
@@ -70,7 +78,8 @@ interface OrderContext {
  * are strictly document operations:
  *
  * - POST /invoice-lifecycle/:id/regenerate    — replace the PDF of a NOT yet issued
- *   invoice (same number, same date). Blocked once the document has been sent.
+ *   invoice (same number, same date). Blocked once the document has been sent, and
+ *   for the first minute after creation (its customer mail may still be in flight).
  * - POST /invoice-lifecycle/:id/correction    — create a Rechnungsberichtigung: a new
  *   document with its own number from the same series, today's date, the order's
  *   current billing data and an explicit reference to the corrected invoice
@@ -299,6 +308,15 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
 
         if (findCancellationFor(ctx.documents, current.id)) {
             throw new HttpError(400, `Invoice ${current.invoice_number} has been cancelled`)
+        }
+
+        // A row without a readable date_created (none expected) is not held back.
+        const createdAt = current.date_created ? Date.parse(current.date_created) : NaN
+        if (Number.isFinite(createdAt) && Date.now() - createdAt < REGENERATE_MIN_DOCUMENT_AGE_MS) {
+            throw new HttpError(
+                409,
+                `Dokument ${current.invoice_number} wurde gerade erst erstellt; Versand läuft evtl. noch. Bitte in einer Minute erneut versuchen.`
+            )
         }
 
         const snapshot = buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount, ctx.servicePeriod)

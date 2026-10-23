@@ -371,6 +371,40 @@ describe('invoice-lifecycle endpoint', () => {
             expect(res.body.error).toContain('not paid')
         })
 
+        test('is refused with 409 while the document is younger than a minute (dispatch may be running)', async () => {
+            const createdAt = Date.parse('2026-06-01T12:00:00.000Z')
+            const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(createdAt + 59_999)
+            try {
+                const fresh = issuedOriginalRow({ sent_at: null, date_created: new Date(createdAt).toISOString() })
+                const { call, calls } = await setup({ invoices: [fresh] })
+
+                const res = await call('regenerate')
+
+                expect(res.statusCode).toBe(409)
+                expect(res.body.error).toContain('gerade erst erstellt')
+                expect(calls.uploads).toHaveLength(0)
+                expect(calls.updates).toHaveLength(0)
+            } finally {
+                nowSpy.mockRestore()
+            }
+        })
+
+        test('is allowed again once the document is a minute old (recovery after a failed mail)', async () => {
+            const createdAt = Date.parse('2026-06-01T12:00:00.000Z')
+            const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(createdAt + 60_000)
+            try {
+                const fresh = issuedOriginalRow({ sent_at: null, date_created: new Date(createdAt).toISOString() })
+                const { call, calls } = await setup({ invoices: [fresh] })
+
+                const res = await call('regenerate')
+
+                expect(res.statusCode).toBe(200)
+                expect(calls.uploads).toHaveLength(1)
+            } finally {
+                nowSpy.mockRestore()
+            }
+        })
+
         test('refuses to regenerate a correction whose reference cannot be resolved', async () => {
             const original = issuedOriginalRow()
             const brokenCorrection = issuedOriginalRow({
