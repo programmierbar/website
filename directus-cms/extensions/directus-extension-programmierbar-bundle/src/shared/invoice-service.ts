@@ -81,6 +81,8 @@ export interface InvoiceDocument {
     related_invoice: string | null
     snapshot_json: InvoiceSnapshot | string | null
     sent_at: string | null
+    /** Set by Directus on insert (`date-created` special). */
+    date_created?: string | null
 }
 
 export function formatInvoiceDate(date: Date): string {
@@ -452,6 +454,7 @@ export async function readInvoiceDocuments(invoicesService: any, orderId: string
             'related_invoice',
             'snapshot_json',
             'sent_at',
+            'date_created',
         ],
         sort: ['date_created'],
         limit: -1,

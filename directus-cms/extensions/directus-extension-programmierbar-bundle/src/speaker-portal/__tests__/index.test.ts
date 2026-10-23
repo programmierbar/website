@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals'
-import { sendTemplatedEmail } from '../../shared/email-service.ts'
+import { deliverTemplatedEmail } from '../../shared/email-service.ts'
 import { postSlackMessage } from '../../shared/postSlackMessage.ts'
 import registerEndpoint from '../index.ts'
 
@@ -10,13 +10,13 @@ jest.mock('@directus/extensions-sdk', () => ({
 }))
 
 jest.mock('../../shared/email-service.ts', () => ({
-    sendTemplatedEmail: jest.fn(),
+    deliverTemplatedEmail: jest.fn(),
     formatDateGerman: (date: string) => `formatted:${date}`,
 }))
 
 jest.mock('../../shared/postSlackMessage.ts', () => ({ postSlackMessage: jest.fn() }))
 
-const sendMock = jest.mocked(sendTemplatedEmail)
+const sendMock = jest.mocked(deliverTemplatedEmail)
 const slackMock = jest.mocked(postSlackMessage)
 
 type RouteHandler = (req: any, res: any) => Promise<void>
@@ -156,7 +156,7 @@ async function setup(options: SetupOptions = {}) {
 
 beforeEach(() => {
     jest.useFakeTimers({ now: NOW })
-    sendMock.mockReset().mockResolvedValue(true)
+    sendMock.mockReset().mockResolvedValue('sent')
     slackMock.mockReset().mockResolvedValue(undefined)
 })
 
@@ -372,7 +372,7 @@ describe('speaker-portal endpoint: POST /:id/request-update', () => {
     })
 
     test('a failed send keeps the new token, resets the request date and notifies Slack', async () => {
-        sendMock.mockResolvedValue(false)
+        sendMock.mockResolvedValue('failed')
         const previous = '2026-01-01T00:00:00.000Z'
         const { call, updates, speaker } = await setup({ speaker: { portal_update_requested_at: previous } })
         const res = await call()

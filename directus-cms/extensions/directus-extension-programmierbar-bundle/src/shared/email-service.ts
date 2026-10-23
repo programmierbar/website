@@ -4,7 +4,6 @@
  * This module provides:
  * - Template rendering using Handlebars syntax
  * - Email sending via Directus MailService
- * - Reading templates from the email_templates collection
  *
  * Reading values from the automation_settings collection lives in `settings.ts`.
  */
@@ -81,55 +80,45 @@ function toMailAttachments(attachments: EmailAttachment[]) {
 }
 
 /**
- * Get an email template from the email_templates collection.
+ * Outcome of {@link deliverTemplatedEmail}. `template_missing` means no `email_templates`
+ * row has the key — a setup problem a human has to fix in the CMS, as opposed to `failed`
+ * (template read or mail transport error).
  */
-export async function getEmailTemplate(
-    key: string,
-    context: EmailServiceContext
-): Promise<{ subject: string; body_html: string } | null> {
-    const { services, getSchema, logger } = context
-    const { ItemsService } = services
+export type TemplatedEmailResult = 'sent' | 'template_missing' | 'failed'
 
+/**
+ * Send an email using a template from the `email_templates` collection, reporting why it was
+ * not sent. Never throws.
+ */
+export async function deliverTemplatedEmail(
+    options: SendEmailOptions,
+    context: EmailServiceContext
+): Promise<TemplatedEmailResult> {
+    const { logger, services, getSchema } = context
+    const { ItemsService, MailService } = services
+
+    let template: { subject: string; body_html: string } | undefined
     try {
-        const schema = await getSchema()
         const templatesService = new ItemsService('email_templates', {
-            schema,
+            schema: await getSchema(),
             accountability: { admin: true },
         })
-
         const templates = await templatesService.readByQuery({
-            filter: { key: { _eq: key } },
+            filter: { key: { _eq: options.templateKey } },
             fields: ['subject', 'body_html'],
             limit: 1,
         })
-
-        if (templates && templates.length > 0) {
-            return templates[0]
-        }
-
-        logger.warn(`Email template '${key}' not found`)
-        return null
+        template = templates?.[0]
     } catch (err: any) {
-        logger.error(`Failed to read email template '${key}': ${err?.message || err}`)
-        return null
+        logger.error(`Failed to read email template '${options.templateKey}': ${err?.message || err}`)
+        return 'failed'
     }
-}
-
-/**
- * Send an email using a template from the CMS.
- */
-export async function sendTemplatedEmail(options: SendEmailOptions, context: EmailServiceContext): Promise<boolean> {
-    const { logger, services, getSchema } = context
-    const { MailService } = services
+    if (!template) {
+        logger.error(`Cannot send email: template '${options.templateKey}' not found`)
+        return 'template_missing'
+    }
 
     try {
-        // Get the template
-        const template = await getEmailTemplate(options.templateKey, context)
-        if (!template) {
-            logger.error(`Cannot send email: template '${options.templateKey}' not found`)
-            return false
-        }
-
         // Render subject and body with data
         const subject = renderTemplate(template.subject, options.data)
         const html = renderTemplate(template.body_html, options.data)
@@ -155,10 +144,10 @@ export async function sendTemplatedEmail(options: SendEmailOptions, context: Ema
         })
 
         logger.info(`Email sent to ${options.to} using template '${options.templateKey}'`)
-        return true
+        return 'sent'
     } catch (err: any) {
         logger.error(`Failed to send email to ${options.to}: ${err?.message || err}`)
-        return false
+        return 'failed'
     }
 }
 

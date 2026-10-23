@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
-import { sendTemplatedEmail } from './../../shared/email-service.ts'
+import { deliverTemplatedEmail } from './../../shared/email-service.ts'
 import { postSlackMessage } from './../../shared/postSlackMessage.ts'
 import { getRequiredSetting } from './../../shared/settings.ts'
 import registerHook from './../index.ts'
@@ -23,7 +23,7 @@ jest.mock('./../../shared/errors.ts', () => ({
 
 // Mock the shared side-effect helpers so the hook never reaches the network.
 jest.mock('./../../shared/email-service.ts', () => ({
-    sendTemplatedEmail: jest.fn(),
+    deliverTemplatedEmail: jest.fn(),
 }))
 jest.mock('./../../shared/settings.ts', () => ({
     getRequiredSetting: jest.fn(),
@@ -32,7 +32,7 @@ jest.mock('./../../shared/postSlackMessage.ts', () => ({
     postSlackMessage: jest.fn(),
 }))
 
-const sendTemplatedEmailMock = jest.mocked(sendTemplatedEmail)
+const deliverTemplatedEmailMock = jest.mocked(deliverTemplatedEmail)
 const getRequiredSettingMock = jest.mocked(getRequiredSetting)
 const postSlackMessageMock = jest.mocked(postSlackMessage)
 
@@ -83,7 +83,7 @@ const invokeAction = async (handler: ActionHandler, meta: any) => {
 
 describe('newsletter-double-opt-in hook', () => {
     beforeEach(() => {
-        sendTemplatedEmailMock.mockReset()
+        deliverTemplatedEmailMock.mockReset()
         getRequiredSettingMock.mockReset()
         postSlackMessageMock.mockReset()
     })
@@ -157,7 +157,7 @@ describe('newsletter-double-opt-in hook', () => {
     describe('action: double-opt-in mail', () => {
         test('sends the ad-free template with a confirm link for a pending subscriber', async () => {
             getRequiredSettingMock.mockResolvedValue('https://www.programmier.bar')
-            sendTemplatedEmailMock.mockResolvedValue(true)
+            deliverTemplatedEmailMock.mockResolvedValue('sent')
             const { actions } = setup({
                 id: 'sub_1',
                 email: 'me@example.de',
@@ -168,8 +168,8 @@ describe('newsletter-double-opt-in hook', () => {
 
             await invokeAction(actions.get(CREATE)!, { key: 'sub_1' })
 
-            expect(sendTemplatedEmailMock).toHaveBeenCalledTimes(1)
-            const [options] = sendTemplatedEmailMock.mock.calls[0] as [any, any]
+            expect(deliverTemplatedEmailMock).toHaveBeenCalledTimes(1)
+            const [options] = deliverTemplatedEmailMock.mock.calls[0] as [any, any]
             expect(options.templateKey).toBe('newsletter_double_opt_in')
             expect(options.to).toBe('me@example.de')
             expect(options.data.confirm_url).toBe('https://www.programmier.bar/newsletter/confirm?token=tok-123')
@@ -197,7 +197,7 @@ describe('newsletter-double-opt-in hook', () => {
             await invokeAction(actions.get(CREATE)!, { key: 'sub_1' })
 
             // No guessed-host link is baked into a sent mail; a human is alerted.
-            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+            expect(deliverTemplatedEmailMock).not.toHaveBeenCalled()
             expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
             expect(postSlackMessageMock.mock.calls[0]?.[0]).toContain('website_url')
         })
@@ -212,13 +212,13 @@ describe('newsletter-double-opt-in hook', () => {
 
             await invokeAction(actions.get(CREATE)!, { key: 'sub_1' })
 
-            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+            expect(deliverTemplatedEmailMock).not.toHaveBeenCalled()
             expect(postSlackMessageMock).not.toHaveBeenCalled()
         })
 
         test('posts a Slack warning when the mail cannot be sent', async () => {
             getRequiredSettingMock.mockResolvedValue('https://www.programmier.bar')
-            sendTemplatedEmailMock.mockResolvedValue(false)
+            deliverTemplatedEmailMock.mockResolvedValue('failed')
             const { actions } = setup({
                 id: 'sub_1',
                 email: 'me@example.de',
@@ -238,14 +238,14 @@ describe('newsletter-double-opt-in hook', () => {
             await invokeAction(actions.get(CREATE)!, {})
 
             expect(readOne).not.toHaveBeenCalled()
-            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+            expect(deliverTemplatedEmailMock).not.toHaveBeenCalled()
         })
     })
 
     describe('action: resend on a new confirmation link', () => {
         test('resends when a pending row gets a rotated confirm_token', async () => {
             getRequiredSettingMock.mockResolvedValue('https://www.programmier.bar')
-            sendTemplatedEmailMock.mockResolvedValue(true)
+            deliverTemplatedEmailMock.mockResolvedValue('sent')
             const { actions } = setup({
                 id: 'sub_1',
                 email: 'me@example.de',
@@ -259,14 +259,14 @@ describe('newsletter-double-opt-in hook', () => {
                 payload: { confirm_token: 'tok-new' },
             })
 
-            expect(sendTemplatedEmailMock).toHaveBeenCalledTimes(1)
-            const [options] = sendTemplatedEmailMock.mock.calls[0] as [any, any]
+            expect(deliverTemplatedEmailMock).toHaveBeenCalledTimes(1)
+            const [options] = deliverTemplatedEmailMock.mock.calls[0] as [any, any]
             expect(options.data.confirm_url).toBe('https://www.programmier.bar/newsletter/confirm?token=tok-new')
         })
 
         test('resends when only the confirmation window is extended (e.g. a manual fix)', async () => {
             getRequiredSettingMock.mockResolvedValue('https://www.programmier.bar')
-            sendTemplatedEmailMock.mockResolvedValue(true)
+            deliverTemplatedEmailMock.mockResolvedValue('sent')
             const { actions } = setup({
                 id: 'sub_1',
                 email: 'me@example.de',
@@ -279,7 +279,7 @@ describe('newsletter-double-opt-in hook', () => {
                 payload: { confirm_token_expires_at: inOneHour },
             })
 
-            expect(sendTemplatedEmailMock).toHaveBeenCalledTimes(1)
+            expect(deliverTemplatedEmailMock).toHaveBeenCalledTimes(1)
         })
 
         // Backdating the window by hand is how a link gets invalidated, not
@@ -298,7 +298,7 @@ describe('newsletter-double-opt-in hook', () => {
             })
 
             expect(readOne).not.toHaveBeenCalled()
-            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+            expect(deliverTemplatedEmailMock).not.toHaveBeenCalled()
         })
 
         test('does not resend when a rotation carries an explicitly backdated window', async () => {
@@ -317,7 +317,7 @@ describe('newsletter-double-opt-in hook', () => {
             })
 
             expect(readOne).not.toHaveBeenCalled()
-            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+            expect(deliverTemplatedEmailMock).not.toHaveBeenCalled()
         })
 
         test('does not resend for an unparseable window', async () => {
@@ -334,7 +334,7 @@ describe('newsletter-double-opt-in hook', () => {
             })
 
             expect(readOne).not.toHaveBeenCalled()
-            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+            expect(deliverTemplatedEmailMock).not.toHaveBeenCalled()
         })
 
         test('does not resend when the update touches neither token nor window', async () => {
@@ -347,7 +347,7 @@ describe('newsletter-double-opt-in hook', () => {
             })
 
             expect(readOne).not.toHaveBeenCalled()
-            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+            expect(deliverTemplatedEmailMock).not.toHaveBeenCalled()
         })
     })
 })

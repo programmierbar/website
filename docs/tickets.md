@@ -140,6 +140,8 @@ Templates stored with a `key`, `subject`, and `body_html` field. Uses Handlebars
 | Template Key | Trigger | Available Variables |
 |-------------|---------|---------------------|
 | `ticket_order_confirmation` | Order paid | `purchaser_name`, `conference_title`, `order_number`, `total_amount`, `ticket_count`, `invoice_number` |
+| `ticket_invoice_correction` | Rechnungsberichtigung created (`invoice-lifecycle`) | `purchaser_name`, `conference_title`, `order_number`, `invoice_number`, `invoice_date`, `reference_invoice_number`, `reference_invoice_date` |
+| `ticket_invoice_cancellation` | Stornorechnung created (`invoice-lifecycle`) | same as `ticket_invoice_correction` |
 | `ticket_profile_invitation` | Order paid (sent to each attendee) | `attendee_name`, `conference_title`, `portal_url`, `purchaser_name` |
 | `ticket_profile_completed` | Profile submitted | `attendee_name`, `conference_title`, `ticket_code`, `qr_code_data_url`, `ticket_card_html` |
 
@@ -212,6 +214,36 @@ names the invoice number so the PDF can be forwarded by hand. If `ACCOUNTING_INV
 each document is skipped with an info log, and Slack (when configured) is alerted once per process
 start with the first affected invoice number. Order processing and the lifecycle endpoint carry on
 either way.
+
+## Customer Mail for Corrections and Cancellations
+
+A Rechnungsberichtigung or Stornorechnung created through the `invoice-lifecycle` endpoint (the
+"Rechnungs-Aktionen" on the order page) is mailed to the customer like the original invoice: To the
+purchaser, CC `billing_email` if set, the stored PDF attached, through the Directus MailService
+(`EMAIL_FROM`). The mail text comes from `email_templates`:
+`ticket_invoice_correction` or `ticket_invoice_cancellation` (`shared/invoice-customer-mail.ts`).
+
+| Outcome | `customer_mail` | Document | Slack |
+|---------|-----------------|----------|-------|
+| Sent | `sent` | `sent_at` stamped (retried 3×; alert if it cannot be stored) — the document is issued | only if the stamp fails |
+| Send failed | `failed` | `sent_at` stays null | yes — send the PDF by hand, then set `sent_at` |
+| Template missing | `template_missing` | `sent_at` stays null | yes — names the template to create; no fallback text is sent |
+
+The endpoint answers 200 in every case (the document exists) and the admin UI shows the outcome. The
+accounting copy is sent independently of it, after the customer mail, so its retries never delay the
+customer dispatch.
+
+**Regenerate** never mails the customer — for the original invoice and for corrections alike. It is
+only offered while `sent_at` is null, i.e. when the customer mail did not go out: fix the order data,
+regenerate, send the PDF by hand and set `sent_at`. A Stornorechnung is never the current document,
+so it cannot be regenerated. Internal orders have no invoice, so nothing is sent.
+
+Suggested template content (adjust freely in the CMS):
+
+- `ticket_invoice_correction` — subject `Rechnungsberichtigung {{invoice_number}} zu Ihrer Rechnung {{reference_invoice_number}}`, body:
+  `<p>Guten Tag {{purchaser_name}},</p><p>anbei erhalten Sie die Rechnungsberichtigung Nr. {{invoice_number}} vom {{invoice_date}} zur Rechnung Nr. {{reference_invoice_number}} vom {{reference_invoice_date}} (Bestellung {{order_number}}, {{conference_title}}). Sie ersetzt die ursprüngliche Rechnung.</p><p>Viele Grüße<br>Ihr programmier.bar-Team</p>`
+- `ticket_invoice_cancellation` — subject `Stornorechnung {{invoice_number}} zu Ihrer Rechnung {{reference_invoice_number}}`, body:
+  `<p>Guten Tag {{purchaser_name}},</p><p>anbei erhalten Sie die Stornorechnung Nr. {{invoice_number}} vom {{invoice_date}} zur Rechnung Nr. {{reference_invoice_number}} vom {{reference_invoice_date}} (Bestellung {{order_number}}, {{conference_title}}). Eine Erstattung bereits gezahlter Beträge erfolgt separat.</p><p>Viele Grüße<br>Ihr programmier.bar-Team</p>`
 
 ## Data Flow
 
@@ -300,7 +332,7 @@ One-time setup per environment:
 - [ ] Create `ticket_settings` collection and populate pricing
 - [ ] Create all fields on `ticket_orders` collection (including `invoice_number`, `invoice_file`)
 - [ ] Create all fields on `tickets` collection (including profile fields and `profile_token`, `profile_status`)
-- [ ] Create `email_templates` entries for `ticket_order_confirmation`, `ticket_profile_invitation`, `ticket_profile_completed`
+- [ ] Create `email_templates` entries for `ticket_order_confirmation`, `ticket_profile_invitation`, `ticket_profile_completed`, `ticket_invoice_correction`, `ticket_invoice_cancellation`
 - [ ] Add `website_url` entry to `automation_settings`
 - [ ] Configure Stripe webhook pointing to `/api/tickets/webhook`
 - [ ] Configure Directus email transport

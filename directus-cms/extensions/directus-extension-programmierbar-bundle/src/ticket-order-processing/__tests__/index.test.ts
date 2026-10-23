@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
 import { sendInvoiceToAccounting } from '../../shared/accounting-mail.ts'
-import { sendTemplatedEmail } from '../../shared/email-service.ts'
+import { deliverTemplatedEmail } from '../../shared/email-service.ts'
 import { generateInvoiceNumber } from '../../shared/invoice-generator.ts'
 import { issueOriginalInvoice, markInvoiceSent } from '../../shared/invoice-service.ts'
 import { postSlackMessage } from '../../shared/postSlackMessage.ts'
@@ -14,7 +14,7 @@ jest.mock('@directus/extensions-sdk', () => ({
 }))
 
 jest.mock('../../shared/email-service.ts', () => ({
-    sendTemplatedEmail: jest.fn(),
+    deliverTemplatedEmail: jest.fn(),
 }))
 jest.mock('../../shared/settings.ts', () => ({
     getSetting: jest.fn(async () => 'https://www.programmier.bar'),
@@ -25,6 +25,12 @@ jest.mock('../../shared/invoice-generator.ts', () => ({
 jest.mock('../../shared/invoice-service.ts', () => ({
     issueOriginalInvoice: jest.fn(),
     markInvoiceSent: jest.fn(),
+    // Used by the hook for the document label passed to recordInvoiceSent.
+    INVOICE_DOCUMENT_LABEL: {
+        invoice: 'Rechnung',
+        correction: 'Rechnungsberichtigung',
+        cancellation: 'Stornorechnung',
+    },
 }))
 jest.mock('../../shared/ticket-utils.ts', () => ({
     generateUniqueTicketCode: jest.fn(),
@@ -40,7 +46,7 @@ jest.mock('../../shared/accounting-mail.ts', () => ({
     sendInvoiceToAccounting: jest.fn(),
 }))
 
-const sendTemplatedEmailMock = jest.mocked(sendTemplatedEmail)
+const deliverTemplatedEmailMock = jest.mocked(deliverTemplatedEmail)
 const sendInvoiceToAccountingMock = jest.mocked(sendInvoiceToAccounting)
 const postSlackMessageMock = jest.mocked(postSlackMessage)
 const issueOriginalInvoiceMock = jest.mocked(issueOriginalInvoice)
@@ -141,7 +147,7 @@ function setup(orderOverrides: Record<string, any> = {}, env: Record<string, any
 }
 
 beforeEach(() => {
-    sendTemplatedEmailMock.mockReset()
+    deliverTemplatedEmailMock.mockReset()
     sendInvoiceToAccountingMock.mockReset()
     sendInvoiceToAccountingMock.mockResolvedValue('sent')
     issueOriginalInvoiceMock.mockReset()
@@ -159,7 +165,7 @@ beforeEach(() => {
         invoiceFileName: 'Rechnung-PB-CON26-001.pdf',
         snapshot: { conference_title: 'programmier.con 2026' } as any,
     })
-    sendTemplatedEmailMock.mockResolvedValue(true)
+    deliverTemplatedEmailMock.mockResolvedValue('sent')
 })
 
 describe('ticket-order-processing hook', () => {
@@ -168,7 +174,7 @@ describe('ticket-order-processing hook', () => {
         await invoke({ status: 'cancelled' })
 
         expect(issueOriginalInvoiceMock).not.toHaveBeenCalled()
-        expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
+        expect(deliverTemplatedEmailMock).not.toHaveBeenCalled()
         expect(serviceInstances['ticket_orders']).toBeUndefined()
     })
 
@@ -186,7 +192,7 @@ describe('ticket-order-processing hook', () => {
         expect(issueParams.invoicesService).toBe(serviceInstances['ticket_invoices']![0])
 
         // The confirmation email carries the invoice PDF.
-        const confirmation = sendTemplatedEmailMock.mock.calls.find(
+        const confirmation = deliverTemplatedEmailMock.mock.calls.find(
             ([options]) => (options as any).templateKey === 'ticket_order_confirmation'
         )
         expect(confirmation).toBeDefined()
@@ -209,7 +215,7 @@ describe('ticket-order-processing hook', () => {
         )
 
         // Both attendees got their profile invitation.
-        const invitations = sendTemplatedEmailMock.mock.calls.filter(
+        const invitations = deliverTemplatedEmailMock.mock.calls.filter(
             ([opts]) => (opts as any).templateKey === 'ticket_profile_invitation'
         )
         expect(invitations).toHaveLength(2)
@@ -219,7 +225,7 @@ describe('ticket-order-processing hook', () => {
     })
 
     test('does NOT mark the invoice as sent when the confirmation email fails', async () => {
-        sendTemplatedEmailMock.mockResolvedValue(false)
+        deliverTemplatedEmailMock.mockResolvedValue('failed')
         const { invoke } = setup()
         await invoke({ status: 'paid' })
 
@@ -258,7 +264,7 @@ describe('ticket-order-processing hook', () => {
         expect(errorLog).toContain('ORD-2026-ABC123')
 
         // The hook carried on: attendees still received their profile invitations.
-        const invitations = sendTemplatedEmailMock.mock.calls.filter(
+        const invitations = deliverTemplatedEmailMock.mock.calls.filter(
             ([opts]) => (opts as any).templateKey === 'ticket_profile_invitation'
         )
         expect(invitations).toHaveLength(2)
@@ -270,7 +276,7 @@ describe('ticket-order-processing hook', () => {
         const { invoke } = setup()
         await invoke({ status: 'paid' })
 
-        const invitations = sendTemplatedEmailMock.mock.calls.filter(
+        const invitations = deliverTemplatedEmailMock.mock.calls.filter(
             ([opts]) => (opts as any).templateKey === 'ticket_profile_invitation'
         )
         expect(invitations).toHaveLength(2)
@@ -282,13 +288,13 @@ describe('ticket-order-processing hook', () => {
 
         expect(issueOriginalInvoiceMock).not.toHaveBeenCalled()
         expect(markInvoiceSentMock).not.toHaveBeenCalled()
-        const templates = sendTemplatedEmailMock.mock.calls.map(([opts]) => (opts as any).templateKey)
+        const templates = deliverTemplatedEmailMock.mock.calls.map(([opts]) => (opts as any).templateKey)
         expect(templates).toEqual(['ticket_profile_invitation', 'ticket_profile_invitation'])
     })
 
     describe('accounting copy', () => {
         const invitations = () =>
-            sendTemplatedEmailMock.mock.calls.filter(
+            deliverTemplatedEmailMock.mock.calls.filter(
                 ([opts]) => (opts as any).templateKey === 'ticket_profile_invitation'
             )
 
@@ -315,7 +321,7 @@ describe('ticket-order-processing hook', () => {
             expect(options.emailContext.services).toBe(hookContext.services)
 
             // Not piggybacked onto the customer mail.
-            const confirmation = sendTemplatedEmailMock.mock.calls.find(
+            const confirmation = deliverTemplatedEmailMock.mock.calls.find(
                 ([opts]) => (opts as any).templateKey === 'ticket_order_confirmation'
             )![0] as any
             expect(confirmation.cc).toBeUndefined()
@@ -344,7 +350,7 @@ describe('ticket-order-processing hook', () => {
         })
 
         test('is sent even when the customer confirmation mail fails — and never stamps sent_at', async () => {
-            sendTemplatedEmailMock.mockResolvedValue(false)
+            deliverTemplatedEmailMock.mockResolvedValue('failed')
             const { invoke } = setup({}, ACCOUNTING_ENV)
             await invoke({ status: 'paid' })
 
