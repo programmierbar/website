@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
 import { resetAccountingMailState } from '../../shared/accounting-mail.ts'
-import { deliverTemplatedEmail, sendRawEmail, sendTemplatedEmail } from '../../shared/email-service.ts'
+import { deliverTemplatedEmail, sendRawEmail } from '../../shared/email-service.ts'
 import { postSlackMessage } from '../../shared/postSlackMessage.ts'
 import registerEndpoint from '../index.ts'
 
@@ -18,7 +18,6 @@ jest.mock('../../shared/museo-font.ts', () => ({ tryLoadMuseoFont: () => null })
 // Mocking the shared email service lets the tests assert both and stay offline.
 jest.mock('../../shared/email-service.ts', () => ({
     deliverTemplatedEmail: jest.fn(),
-    sendTemplatedEmail: jest.fn(),
     sendRawEmail: jest.fn(),
 }))
 jest.mock('../../shared/postSlackMessage.ts', () => ({
@@ -26,7 +25,6 @@ jest.mock('../../shared/postSlackMessage.ts', () => ({
     isSlackConfigured: jest.fn(() => false),
 }))
 
-const sendTemplatedEmailMock = jest.mocked(sendTemplatedEmail)
 const deliverTemplatedEmailMock = jest.mocked(deliverTemplatedEmail)
 const sendRawEmailMock = jest.mocked(sendRawEmail)
 const postSlackMessageMock = jest.mocked(postSlackMessage)
@@ -240,7 +238,6 @@ async function setup(
 }
 
 beforeEach(() => {
-    sendTemplatedEmailMock.mockReset()
     deliverTemplatedEmailMock.mockReset()
     deliverTemplatedEmailMock.mockResolvedValue('sent')
     sendRawEmailMock.mockReset()
@@ -330,7 +327,6 @@ describe('invoice-lifecycle endpoint', () => {
             // No new document row, nothing deleted, no customer email, still not issued.
             expect(calls.creates).toHaveLength(0)
             expect(calls.deletes).toHaveLength(0)
-            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
             expect(deliverTemplatedEmailMock).not.toHaveBeenCalled()
             expect(doc.sent_at).toBeNull()
         })
@@ -669,7 +665,6 @@ describe('invoice-lifecycle endpoint', () => {
             expect(mail.text).toMatch(/Bruttobetrag: -\d/)
             expect(mail.attachments[0].filename).toBe('Stornorechnung-PB-CON26-002.pdf')
             expect(mail.attachments[0].content.equals(calls.uploadedBytes[0]!)).toBe(true)
-            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
         })
 
         test('a pre-issuance regenerate sends the new version, marked as replacing the previous one', async () => {
@@ -897,7 +892,6 @@ describe('invoice-lifecycle endpoint', () => {
             expect(res.body.customer_mail).toBe('template_missing')
             expect(deliverTemplatedEmailMock).toHaveBeenCalledTimes(1)
             expect(sendRawEmailMock).not.toHaveBeenCalled()
-            expect(sendTemplatedEmailMock).not.toHaveBeenCalled()
             expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
             expect(postSlackMessageMock.mock.calls[0]![0]).toContain('ticket_invoice_cancellation')
             expect(logger.error.mock.calls.map((c) => String(c[0])).join('\n')).toContain('ticket_invoice_cancellation')

@@ -1,6 +1,6 @@
 import { defineEndpoint } from '@directus/extensions-sdk'
 import { SPEAKER_PORTAL_STATUS, SPEAKER_PROFILE_UPDATE_VERSION_KEY } from '../../../../../shared-code/index.ts'
-import { formatDateGerman, sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.ts'
+import { deliverTemplatedEmail, formatDateGerman, type EmailServiceContext } from '../shared/email-service.ts'
 import { isNotFoundError } from '../shared/isNotFoundError.ts'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
 import { getSetting } from '../shared/settings.ts'
@@ -205,7 +205,7 @@ export default defineEndpoint((router, context) => {
                 { emitEvents: false }
             )
 
-            const sent = await sendTemplatedEmail(
+            const result = await deliverTemplatedEmail(
                 {
                     templateKey: PROFILE_UPDATE_TEMPLATE_KEY,
                     to: email,
@@ -225,7 +225,7 @@ export default defineEndpoint((router, context) => {
                 emailContext
             )
 
-            if (!sent) {
+            if (result !== 'sent') {
                 // The new token stays: the speaker may still be sent the link by hand, and the old
                 // one is replaced either way. The request date goes back, so that retrying is not
                 // blocked by a cooldown for a mail that never left.

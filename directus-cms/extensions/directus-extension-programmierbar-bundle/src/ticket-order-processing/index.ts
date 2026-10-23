@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { defineHook } from '@directus/extensions-sdk'
 import { sendInvoiceToAccounting } from '../shared/accounting-mail.js'
-import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
+import { deliverTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
 import { recordInvoiceSent } from '../shared/invoice-customer-mail.js'
 import { generateInvoiceNumber } from '../shared/invoice-generator.js'
 import { INVOICE_DOCUMENT_LABEL, issueOriginalInvoice } from '../shared/invoice-service.js'
@@ -287,7 +287,7 @@ export default defineHook(({ action }, hookContext) => {
                     if (!isInternal && pdfBuffer && invoiceFileName && invoiceNumber) {
                         const totalAmount = formatPrice(order.total_gross_cents || order.total_cents)
 
-                        const emailSent = await sendTemplatedEmail(
+                        const emailResult = await deliverTemplatedEmail(
                             {
                                 templateKey: 'ticket_order_confirmation',
                                 to: order.purchaser_email,
@@ -311,7 +311,7 @@ export default defineHook(({ action }, hookContext) => {
                             context
                         )
 
-                        if (emailSent && invoiceDocumentId) {
+                        if (emailResult === 'sent' && invoiceDocumentId) {
                             // The invoice left the house: record issuance on the document row.
                             // If sending failed, sent_at stays null and the invoice may still be
                             // regenerated before it is dispatched manually. A persistently failing
@@ -331,9 +331,9 @@ export default defineHook(({ action }, hookContext) => {
                                     `${HOOK_NAME}: Sent confirmation email with invoice to ${order.purchaser_email}`
                                 )
                             }
-                        } else if (!emailSent) {
+                        } else if (emailResult !== 'sent') {
                             logger.error(
-                                `${HOOK_NAME}: Confirmation email for order ${order.order_number} could not be sent — invoice ${invoiceNumber} remains marked as not issued`
+                                `${HOOK_NAME}: Confirmation email for order ${order.order_number} could not be sent (${emailResult}) — invoice ${invoiceNumber} remains marked as not issued`
                             )
                         }
                     }
@@ -342,7 +342,7 @@ export default defineHook(({ action }, hookContext) => {
                     for (const ticket of ticketRecords) {
                         const portalUrl = `${websiteUrl}/ticket-portal?token=${encodeURIComponent(ticket.profileToken)}`
 
-                        await sendTemplatedEmail(
+                        await deliverTemplatedEmail(
                             {
                                 templateKey: 'ticket_profile_invitation',
                                 to: ticket.attendeeEmail,

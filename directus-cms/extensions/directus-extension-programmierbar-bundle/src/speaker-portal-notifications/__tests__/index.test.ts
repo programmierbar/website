@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
-import { sendTemplatedEmail } from '../../shared/email-service.ts'
+import { deliverTemplatedEmail } from '../../shared/email-service.ts'
 import { postSlackMessage } from '../../shared/postSlackMessage.ts'
 import registerHook from '../index.ts'
 
@@ -10,13 +10,13 @@ jest.mock('@directus/extensions-sdk', () => ({
 }))
 
 jest.mock('../../shared/email-service.ts', () => ({
-    sendTemplatedEmail: jest.fn(),
+    deliverTemplatedEmail: jest.fn(),
     formatDateGerman: (date: string) => `formatted:${date}`,
 }))
 
 jest.mock('../../shared/postSlackMessage.ts', () => ({ postSlackMessage: jest.fn() }))
 
-const sendMock = jest.mocked(sendTemplatedEmail)
+const sendMock = jest.mocked(deliverTemplatedEmail)
 const slackMock = jest.mocked(postSlackMessage)
 
 // Handlers are registered through `safeAction`, which detaches the work into its own promise
@@ -106,7 +106,7 @@ const SPEAKER = {
 }
 
 beforeEach(() => {
-    sendMock.mockReset().mockResolvedValue(true)
+    sendMock.mockReset().mockResolvedValue('sent')
     slackMock.mockReset().mockResolvedValue(undefined)
 })
 

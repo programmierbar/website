@@ -1,6 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { SPEAKER_PROFILE_UPDATE_VERSION_KEY } from '../../../../../shared-code/index.ts'
-import { formatDateGerman, sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
+import { deliverTemplatedEmail, formatDateGerman, type EmailServiceContext } from '../shared/email-service.js'
 import { postSlackMessage } from '../shared/postSlackMessage.js'
 import { safeAction } from '../shared/safeHook.ts'
 import { getSetting, getSettings } from '../shared/settings.js'
@@ -112,7 +112,7 @@ export default defineHook(({ action, filter, schedule }, hookContext) => {
 
         logger.info(`${HOOK_NAME}: Sending invitation email to ${speaker.email}`)
 
-        await sendTemplatedEmail(
+        await deliverTemplatedEmail(
             {
                 templateKey: 'speaker_invitation',
                 to: speaker.email,
@@ -314,7 +314,7 @@ export default defineHook(({ action, filter, schedule }, hookContext) => {
                     // Send confirmation to speaker
                     logger.info(`${HOOK_NAME}: Sending submission confirmation to ${speaker.email}`)
 
-                    await sendTemplatedEmail(
+                    await deliverTemplatedEmail(
                         {
                             templateKey: 'speaker_submission_confirmation',
                             to: speaker.email,
@@ -430,7 +430,7 @@ export default defineHook(({ action, filter, schedule }, hookContext) => {
                 if (deadline <= oneDayFromNow) {
                     logger.info(`${HOOK_NAME}: Sending urgent reminder to ${speaker.email}`)
 
-                    await sendTemplatedEmail(
+                    await deliverTemplatedEmail(
                         {
                             templateKey: 'speaker_urgent_reminder',
                             to: speaker.email,
@@ -443,7 +443,7 @@ export default defineHook(({ action, filter, schedule }, hookContext) => {
                 else if (deadline <= threeDaysFromNow) {
                     logger.info(`${HOOK_NAME}: Sending reminder to ${speaker.email}`)
 
-                    await sendTemplatedEmail(
+                    await deliverTemplatedEmail(
                         {
                             templateKey: 'speaker_reminder',
                             to: speaker.email,

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
-import { deliverTemplatedEmail, sendTemplatedEmail, type EmailServiceContext } from '../email-service.ts'
+import { deliverTemplatedEmail, type EmailServiceContext } from '../email-service.ts'
 
 const send = jest.fn<(mail: any) => Promise<void>>()
 let templates: Array<{ key: string; subject: string; body_html: string }> = []
@@ -86,13 +86,5 @@ describe('deliverTemplatedEmail', () => {
     test('a failing transport is a failure', async () => {
         send.mockRejectedValue(new Error('provider down'))
         await expect(deliverTemplatedEmail(OPTIONS, context())).resolves.toBe('failed')
-    })
-})
-
-describe('sendTemplatedEmail', () => {
-    test('is true only when the mail was sent', async () => {
-        await expect(sendTemplatedEmail(OPTIONS, context())).resolves.toBe(true)
-        templates = []
-        await expect(sendTemplatedEmail(OPTIONS, context())).resolves.toBe(false)
     })
 })
