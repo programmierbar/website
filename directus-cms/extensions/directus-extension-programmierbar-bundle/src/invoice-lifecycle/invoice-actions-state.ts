@@ -63,3 +63,60 @@ export function deriveInvoiceActionsState(
         showPostIssuanceActions: hasInvoice && isIssued && !isCancelled,
     }
 }
+
+export type InvoiceActionKey = 'regenerate' | 'correction' | 'cancellation'
+
+/** The fields of an `invoice-lifecycle` response the result notice reports on. */
+export interface InvoiceActionResponse {
+    invoice_number?: string
+    corrects?: string
+    cancels?: string
+    accounting_mail?: string
+    customer_mail?: string
+}
+
+const ACCOUNTING_MAIL_TEXT: Record<string, string> = {
+    sent: 'Kopie an die Buchhaltung verschickt.',
+    failed: 'Kopie an die Buchhaltung fehlgeschlagen — bitte manuell weiterleiten.',
+    skipped: 'Keine Kopie an die Buchhaltung (Postfach nicht konfiguriert).',
+}
+
+const MANUAL_DISPATCH = 'Bitte das PDF manuell an den Kunden schicken und danach sent_at am Rechnungsdokument setzen.'
+
+const CUSTOMER_MAIL_TEXT: Record<string, string> = {
+    sent: 'An den Kunden verschickt.',
+    failed: `NICHT an den Kunden verschickt — der Versand ist fehlgeschlagen (siehe Slack). ${MANUAL_DISPATCH}`,
+    template_missing: `NICHT an den Kunden verschickt — die E-Mail-Vorlage fehlt in Directus (siehe Slack). ${MANUAL_DISPATCH}`,
+}
+
+/**
+ * Result notice after a successful lifecycle call. A correction or cancellation that did
+ * not reach the customer is a warning: the document exists but still has to be sent.
+ */
+export function describeActionResult(
+    action: InvoiceActionKey,
+    data: InvoiceActionResponse
+): { type: 'success' | 'warning'; text: string } {
+    const nr = data.invoice_number
+    const accounting = ACCOUNTING_MAIL_TEXT[data.accounting_mail ?? ''] ?? ''
+
+    if (action === 'regenerate') {
+        return {
+            type: 'success',
+            text: `Rechnung ${nr} wurde neu generiert. Seite neu laden, um die neue Datei zu sehen. ${accounting}`.trim(),
+        }
+    }
+
+    const created =
+        action === 'correction'
+            ? `Rechnungsberichtigung ${nr} wurde erstellt (berichtigt ${data.corrects}).`
+            : `Stornorechnung ${nr} wurde erstellt (storniert ${data.cancels}).`
+    const customerSent = data.customer_mail === 'sent'
+    const customer =
+        CUSTOMER_MAIL_TEXT[data.customer_mail ?? ''] ?? `Versand an den Kunden unbekannt. ${MANUAL_DISPATCH}`
+
+    return {
+        type: customerSent ? 'success' : 'warning',
+        text: `${created} ${customer} ${accounting}`.trim(),
+    }
+}

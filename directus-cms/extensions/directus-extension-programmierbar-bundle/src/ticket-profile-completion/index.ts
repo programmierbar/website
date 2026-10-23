@@ -1,5 +1,5 @@
 import { defineHook } from '@directus/extensions-sdk'
-import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
+import { deliverTemplatedEmail, type EmailServiceContext } from '../shared/email-service.js'
 import { safeAction } from '../shared/safeHook.ts'
 import { getSetting } from '../shared/settings.js'
 import { generateQRCodeBuffer } from '../shared/ticket-utils.js'
@@ -152,7 +152,7 @@ export default defineHook(({ action }, hookContext) => {
                     }
 
                     // Send final ticket email with QR code and wallet links
-                    await sendTemplatedEmail(
+                    await deliverTemplatedEmail(
                         {
                             templateKey: 'ticket_profile_completed',
                             to: ticket.attendee_email,

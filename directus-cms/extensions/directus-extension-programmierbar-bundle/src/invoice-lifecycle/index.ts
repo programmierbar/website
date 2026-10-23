@@ -3,6 +3,7 @@ import { defineEndpoint } from '@directus/extensions-sdk'
 import type { SandboxEndpointRouter } from 'directus:api'
 import { sendInvoiceToAccounting, type AccountingInvoiceDocument } from '../shared/accounting-mail.js'
 import type { EmailServiceContext } from '../shared/email-service.js'
+import { sendInvoiceDocumentToCustomer, type CustomerInvoiceDocument } from '../shared/invoice-customer-mail.js'
 import { generateInvoiceNumber } from '../shared/invoice-generator.js'
 import {
     buildInvoiceSnapshot,
@@ -23,6 +24,14 @@ import { invoiceFilesFolder } from '../shared/secure-invoice-folder.js'
 
 const ENDPOINT_NAME = 'invoice-lifecycle'
 
+/**
+ * Regenerate refuses documents younger than this: right after creation the customer
+ * mail may still be in flight, and regenerating then could swap the PDF under a
+ * dispatch that is about to stamp `sent_at`. After the window, regenerate is the
+ * recovery path for a document whose customer mail failed.
+ */
+const REGENERATE_MIN_DOCUMENT_AGE_MS = 60_000
+
 const ORDER_FIELDS = [
     'id',
     'order_number',
@@ -34,6 +43,7 @@ const ORDER_FIELDS = [
     'purchaser_first_name',
     'purchaser_last_name',
     'purchaser_email',
+    'billing_email',
     'company_name',
     'company_vat_id',
     'billing_address_line1',
@@ -68,7 +78,8 @@ interface OrderContext {
  * are strictly document operations:
  *
  * - POST /invoice-lifecycle/:id/regenerate    — replace the PDF of a NOT yet issued
- *   invoice (same number, same date). Blocked once the document has been sent.
+ *   invoice (same number, same date). Blocked once the document has been sent, and
+ *   for the first minute after creation (its customer mail may still be in flight).
  * - POST /invoice-lifecycle/:id/correction    — create a Rechnungsberichtigung: a new
  *   document with its own number from the same series, today's date, the order's
  *   current billing data and an explicit reference to the corrected invoice
@@ -78,11 +89,23 @@ interface OrderContext {
  *   invoice's snapshot and an explicit reference to it. Touches neither Stripe nor
  *   tickets nor the order status.
  *
- * None of the routes emails the customer, none deletes a file, and issued documents
- * are never modified — every operation only ever adds a new document or (pre-issuance)
- * swaps the PDF of the not-yet-sent one. Every rendered PDF is copied to the
- * accounting mailbox (`ACCOUNTING_INVOICE_EMAIL`, see shared/accounting-mail.ts); the
- * response reports that as `accounting_mail: 'sent' | 'skipped' | 'failed'`.
+ * None of the routes deletes a file, and issued documents are never modified — every
+ * operation only ever adds a new document or (pre-issuance) swaps the PDF of the
+ * not-yet-sent one. Every rendered PDF is copied to the accounting mailbox
+ * (`ACCOUNTING_INVOICE_EMAIL`, see shared/accounting-mail.ts); the response reports that
+ * as `accounting_mail: 'sent' | 'skipped' | 'failed'`.
+ *
+ * A new correction or cancellation is also mailed to the customer, like the original
+ * invoice (shared/invoice-customer-mail.ts): To purchaser, CC billing_email, PDF
+ * attached; a successful send stamps `sent_at` (the document is issued). The response
+ * reports that as `customer_mail: 'sent' | 'failed' | 'template_missing'`; a failure
+ * never fails the route, leaves `sent_at` null and alerts Slack.
+ *
+ * Regenerate never mails the customer — for originals and corrections alike. It is
+ * only possible while `sent_at` is null, i.e. the customer mail did not go out: the
+ * admin regenerates if the data was wrong, then dispatches the PDF by hand and sets
+ * `sent_at`, exactly as for an original invoice whose confirmation mail failed. (A
+ * cancellation is never the current document, so it cannot be regenerated at all.)
  */
 export default defineEndpoint(async (router: SandboxEndpointRouter, context) => {
     const logger = context.logger
@@ -248,10 +271,26 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
     }
 
     /**
+     * Mail a new correction/cancellation to the customer and stamp `sent_at` on success.
+     * Runs after the document row is stored and never throws (failures go to Slack).
+     */
+    function sendToCustomer(ctx: OrderContext, doc: CustomerInvoiceDocument) {
+        return sendInvoiceDocumentToCustomer(doc, {
+            order: ctx.order,
+            conferenceTitle: ctx.conference.title,
+            invoicesService: ctx.invoicesService,
+            emailContext,
+            logger,
+            source: ENDPOINT_NAME,
+        })
+    }
+
+    /**
      * Regenerate: replace the PDF of the current (not yet issued) invoice document
      * in place. Keeps the invoice number and the original invoice date. The previous
      * file is intentionally NOT deleted. Once the document has been sent, this is
      * blocked — issued documents are immutable and must be corrected instead.
+     * Never mails the customer (see the endpoint comment above).
      */
     registerRoute('regenerate', async (_req, ctx) => {
         const current = requireCurrentDocument(ctx)
@@ -269,6 +308,15 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
 
         if (findCancellationFor(ctx.documents, current.id)) {
             throw new HttpError(400, `Invoice ${current.invoice_number} has been cancelled`)
+        }
+
+        // A row without a readable date_created (none expected) is not held back.
+        const createdAt = current.date_created ? Date.parse(current.date_created) : NaN
+        if (Number.isFinite(createdAt) && Date.now() - createdAt < REGENERATE_MIN_DOCUMENT_AGE_MS) {
+            throw new HttpError(
+                409,
+                `Dokument ${current.invoice_number} wurde gerade erst erstellt; Versand läuft evtl. noch. Bitte in einer Minute erneut versuchen.`
+            )
         }
 
         const snapshot = buildInvoiceSnapshot(ctx.order, ctx.conference.title, ctx.ticketCount, ctx.servicePeriod)
@@ -352,7 +400,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
      * current billing data with its own invoice number and today's date, explicitly
      * referencing the corrected invoice. The corrected document stays untouched;
      * the order's legacy pointers move to the correction (the new authoritative
-     * invoice). The customer is not emailed; accounting gets a copy.
+     * invoice). Mailed to the customer (which issues it) and copied to accounting.
      */
     registerRoute('correction', async (_req, ctx) => {
         const current = requireCurrentDocument(ctx)
@@ -411,6 +459,19 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             `${ENDPOINT_NAME}: Created correction ${invoiceNumber} for invoice ${current.invoice_number} on order ${ctx.order.order_number} (file: ${rendered.fileId})`
         )
 
+        // Customer first: the accounting copy may spend several attempts, and the customer
+        // dispatch (which issues the document) should not wait for it. Neither ever throws.
+        const customerMail = await sendToCustomer(ctx, {
+            documentKind: 'correction',
+            documentId,
+            invoiceNumber,
+            invoiceDate,
+            referenceNumber: current.invoice_number,
+            referenceDate: new Date(current.invoice_date),
+            pdfBuffer: rendered.pdfBuffer,
+            invoiceFileName: rendered.invoiceFileName,
+        })
+
         const accountingMail = await sendToAccounting(ctx, {
             documentKind: 'correction',
             invoiceNumber,
@@ -428,6 +489,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             document_id: documentId,
             corrects: current.invoice_number,
             accounting_mail: accountingMail,
+            customer_mail: customerMail,
         }
     })
 
@@ -435,8 +497,8 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
      * Cancellation (Stornorechnung): create a NEW document with its own invoice
      * number, negative amounts mirroring the referenced invoice's immutable snapshot
      * and an explicit reference to it. Deliberately does NOT touch Stripe, tickets,
-     * the order status or the order's invoice pointers, and does not email the
-     * customer — it only records the cancellation document (accounting gets a copy).
+     * the order status or the order's invoice pointers — it only records the
+     * cancellation document, mails it to the customer and copies it to accounting.
      */
     registerRoute('cancellation', async (_req, ctx) => {
         const current = requireCurrentDocument(ctx)
@@ -501,6 +563,18 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             `${ENDPOINT_NAME}: Created cancellation ${invoiceNumber} for invoice ${current.invoice_number} on order ${ctx.order.order_number} (file: ${rendered.fileId})`
         )
 
+        // Customer first, as for corrections; neither delivery ever throws.
+        const customerMail = await sendToCustomer(ctx, {
+            documentKind: 'cancellation',
+            documentId,
+            invoiceNumber,
+            invoiceDate,
+            referenceNumber: current.invoice_number,
+            referenceDate: new Date(current.invoice_date),
+            pdfBuffer: rendered.pdfBuffer,
+            invoiceFileName: rendered.invoiceFileName,
+        })
+
         const accountingMail = await sendToAccounting(ctx, {
             documentKind: 'cancellation',
             invoiceNumber,
@@ -518,6 +592,7 @@ export default defineEndpoint(async (router: SandboxEndpointRouter, context) => 
             document_id: documentId,
             cancels: current.invoice_number,
             accounting_mail: accountingMail,
+            customer_mail: customerMail,
         }
     })
 })

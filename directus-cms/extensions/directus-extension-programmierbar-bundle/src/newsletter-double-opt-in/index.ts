@@ -1,7 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { buildNewsletterTrackingHeaders } from '../newsletter/brevoTracking.ts'
 import { buildUnsubscribeUrl } from '../newsletter/unsubscribe.ts'
-import { sendTemplatedEmail, type EmailServiceContext } from '../shared/email-service.ts'
+import { deliverTemplatedEmail, type EmailServiceContext } from '../shared/email-service.ts'
 import { createHookErrorConstructor } from '../shared/errors.ts'
 import { postSlackMessage } from '../shared/postSlackMessage.ts'
 import { safeAction } from '../shared/safeHook.ts'
@@ -103,7 +103,7 @@ export default defineHook(({ filter, action }, hookContext) => {
         // same link is valid in this mail and in every later newsletter issue.
         const unsubscribeUrl = buildUnsubscribeUrl(websiteUrl, subscriber.unsubscribe_token)
 
-        const sent = await sendTemplatedEmail(
+        const result = await deliverTemplatedEmail(
             {
                 templateKey: TEMPLATE_KEY,
                 to: subscriber.email,
@@ -114,7 +114,7 @@ export default defineHook(({ filter, action }, hookContext) => {
             context
         )
 
-        if (!sent) {
+        if (result !== 'sent') {
             await notifyFailure(`Template '${TEMPLATE_KEY}' fehlt oder der Mailversand schlug fehl`)
             return
         }
