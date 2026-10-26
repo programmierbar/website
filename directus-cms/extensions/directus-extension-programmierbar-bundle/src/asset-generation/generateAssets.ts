@@ -296,6 +296,8 @@ export async function generateAssetsForPodcast(
         // Track generation results
         let successCount = 0
         let failCount = 0
+        // Cover file to link to the podcast, written with the final status update
+        let coverImageId: string | undefined
 
         // Process each template
         for (const template of filteredTemplates) {
@@ -406,12 +408,11 @@ export async function generateAssetsForPodcast(
                 })
 
                 // Auto-link certain asset types to the podcast (only if not already set)
+                // The cover is written together with the final status below: two podcast
+                // updates in quick succession would race in the Buzzsprout hook.
                 if (template.asset_type === 'episode_cover' && !podcast.cover_image) {
-                    await podcastsService.updateOne(podcastId, {
-                        cover_image: fileId,
-                    })
                     podcast.cover_image = fileId
-                    logger.info(`${hookName}: Updated podcast cover_image to ${fileId}`)
+                    coverImageId = fileId
                 } else if (template.asset_type === 'episode_cover' && podcast.cover_image) {
                     logger.info(`${hookName}: Skipping cover_image update - already has a value`)
                 }
@@ -449,7 +450,11 @@ export async function generateAssetsForPodcast(
 
         await podcastsService.updateOne(podcastId, {
             assets_status: finalStatus,
+            ...(coverImageId ? { cover_image: coverImageId } : {}),
         })
+        if (coverImageId) {
+            logger.info(`${hookName}: Updated podcast cover_image to ${coverImageId}`)
+        }
 
         logger.info(
             `${hookName}: Asset generation ${finalStatus} for podcast ${podcastId}. Success: ${successCount}, Failed: ${failCount}`
