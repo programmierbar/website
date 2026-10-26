@@ -448,6 +448,16 @@ export async function generateAssetsForPodcast(
             finalStatus = 'complete'
         }
 
+        // Re-check cover_image right before writing: an editor may have set one
+        // while later templates were still generating.
+        if (coverImageId) {
+            const current: PodcastData = await podcastsService.readOne(podcastId, { fields: ['cover_image'] })
+            if (current.cover_image) {
+                logger.info(`${hookName}: Skipping cover_image update - already has a value`)
+                coverImageId = undefined
+            }
+        }
+
         await podcastsService.updateOne(podcastId, {
             assets_status: finalStatus,
             ...(coverImageId ? { cover_image: coverImageId } : {}),
