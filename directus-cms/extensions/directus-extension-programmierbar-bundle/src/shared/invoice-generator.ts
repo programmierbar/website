@@ -1,16 +1,34 @@
 import PDFDocument from 'pdfkit'
 import { formatBillingCountry } from '../../../../../shared-code/index.ts'
+import {
+    buildFacturXXml,
+    EInvoiceDataError,
+    FACTURX_FILENAME,
+    facturXXmpMetadata,
+    unitPriceNetCents,
+    type InvoiceSeller,
+} from './einvoice.js'
 import { tryLoadMuseoFont } from './museo-font.js'
 
-// Seller info (hardcoded)
-const SELLER = {
+// Seller info (hardcoded). Structured so the e-invoice can carry it as BG-4.
+export const SELLER: InvoiceSeller = {
     name: 'Lotum media GmbH',
-    address: ['Am Goldstein 1', '61231 Bad Nauheim', 'Deutschland'],
+    street: 'Am Goldstein 1',
+    postalCode: '61231',
+    city: 'Bad Nauheim',
+    countryCode: 'DE',
+    countryName: 'Deutschland',
     email: 'podcast@programmier.bar',
     phone: '+49 (0) 6032 925507 0',
     taxNumber: '020 238 63371',
     vatId: 'DE272856704',
 }
+
+/** Seller address lines as printed below the header. */
+const SELLER_ADDRESS_LINES = [SELLER.street, `${SELLER.postalCode} ${SELLER.city}`, SELLER.countryName]
+
+/** Shown as creator/producer in the PDF metadata (Info dictionary and XMP must agree for PDF/A). */
+const PDF_PRODUCER = 'programmier.bar invoice generator'
 
 // programmier.bar logo SVG paths (from pblogo.svg, viewBox 0 0 280 33)
 const LOGO_PATHS = [
@@ -67,6 +85,12 @@ interface InvoiceDataBase {
      * "25.–26.11.2026". The line is omitted when no date is known.
      */
     serviceDate?: string | null
+    /**
+     * The same Leistungsdatum as first/last day (YYYY-MM-DD) for the e-invoice
+     * (BT-72 or BG-14). Omitted from the XML when unknown, like the printed line.
+     */
+    servicePeriodStart?: string | null
+    servicePeriodEnd?: string | null
     // Customer
     purchaserName: string
     purchaserEmail: string
@@ -174,10 +198,33 @@ function drawLogo(doc: InstanceType<typeof PDFDocument>, x: number, y: number, s
     }
 }
 
+/** The e-invoice XML for an invoice, or why none can be built from its data. */
+export type FacturXResult = { xml: string; error: null } | { xml: null; error: EInvoiceDataError }
+
+export function tryBuildFacturXXml(data: InvoiceData): FacturXResult {
+    try {
+        return { xml: buildFacturXXml(data, SELLER), error: null }
+    } catch (err) {
+        if (err instanceof EInvoiceDataError) {
+            return { xml: null, error: err }
+        }
+        throw err
+    }
+}
+
 /**
  * Generate an invoice PDF and return it as a Buffer.
+ *
+ * The PDF is a PDF/A-3b with the ZUGFeRD / Factur-X XML (profile EN 16931) of the
+ * same data embedded as `factur-x.xml` — a hybrid e-invoice: readable for private
+ * buyers, machine-readable E-Rechnung (§ 14 UStG) for business buyers. When the data
+ * cannot yield a correct e-invoice (`facturX.error`), the PDF is rendered without XML;
+ * the caller alerts a human.
  */
-export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
+export function generateInvoicePdf(
+    data: InvoiceData,
+    facturX: FacturXResult = tryBuildFacturXXml(data)
+): Promise<Buffer> {
     const kind: InvoiceDocumentKind = data.documentKind || 'invoice'
 
     // Defense in depth alongside the InvoiceData union: a correction/cancellation
@@ -189,8 +236,26 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         )
     }
 
+    const heading =
+        kind === 'correction' ? 'Rechnungsberichtigung' : kind === 'cancellation' ? 'Stornorechnung' : 'Rechnung'
+
     return new Promise((resolve, reject) => {
-        const doc = new PDFDocument({ size: 'A4', margin: 50 })
+        const createdAt = new Date()
+        const doc = new PDFDocument({
+            size: 'A4',
+            margin: 50,
+            // PDF/A-3 is the only PDF/A part that allows embedding the XML invoice.
+            pdfVersion: '1.7',
+            subset: 'PDF/A-3b',
+            lang: 'de-DE',
+            info: {
+                Title: `${heading} ${data.invoiceNumber}`,
+                Author: SELLER.name,
+                Creator: PDF_PRODUCER,
+                Producer: PDF_PRODUCER,
+                CreationDate: createdAt,
+            },
+        })
         const chunks: Buffer[] = []
 
         doc.on('data', (chunk: Buffer) => chunks.push(chunk))
@@ -204,13 +269,24 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
             doc.font('MuseoSans')
         }
 
+        // --- Embedded e-invoice (ZUGFeRD / Factur-X) ---
+        if (facturX.xml) {
+            doc.appendXML(facturXXmpMetadata())
+            doc.file(Buffer.from(facturX.xml, 'utf-8'), {
+                name: FACTURX_FILENAME,
+                type: 'text/xml',
+                description: 'Factur-X/ZUGFeRD invoice (EN 16931)',
+                relationship: 'Alternative',
+                creationDate: createdAt,
+                modifiedDate: createdAt,
+            })
+        }
+
         const pageWidth = doc.page.width - 100 // margins
 
         // --- Header with logo ---
         drawLogo(doc, LOGO_ORIGIN.x, LOGO_ORIGIN.y, LOGO_SCALE)
 
-        const heading =
-            kind === 'correction' ? 'Rechnungsberichtigung' : kind === 'cancellation' ? 'Stornorechnung' : 'Rechnung'
         const headingText = `${heading} Nr.: ${data.invoiceNumber}`
 
         // The heading shares the top row with the logo, so its right-aligned text
@@ -258,7 +334,7 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         doc.fontSize(9).fillColor('#333')
         doc.text(SELLER.name, 50, y)
         y += 13
-        for (const line of SELLER.address) {
+        for (const line of SELLER_ADDRESS_LINES) {
             doc.text(line, 50, y)
             y += 12
         }
@@ -359,13 +435,13 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         y += 22
 
         // Line item – use netto (net) prices
-        const unitPriceNetCents = Math.round(data.unitPriceGrossCents / 1.19)
+        const unitNetCents = unitPriceNetCents(data)
         doc.fontSize(9).fillColor('#000')
         const ticketLabel = `${data.ticketType}\n${data.conferenceTitle}`
         doc.text(ticketLabel, col1, y, { width: 230 })
         doc.text(String(data.ticketCount), col2, y, { width: 60, align: 'center' })
-        doc.text(formatEur(unitPriceNetCents), col3, y, { width: 80, align: 'right' })
-        doc.text(formatEur(unitPriceNetCents * data.ticketCount), col4, y, { width: 75, align: 'right' })
+        doc.text(formatEur(unitNetCents), col3, y, { width: 80, align: 'right' })
+        doc.text(formatEur(unitNetCents * data.ticketCount), col4, y, { width: 75, align: 'right' })
 
         y += 35
 
