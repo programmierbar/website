@@ -1,53 +1,96 @@
 <template>
-    <div class="agenda-root grid gap-8">
-        <section v-for="day in days" :key="day.isoDay" class="day">
-            <h2 class="text-lg font-bold">{{ fmtDay(day.isoDay) }}</h2>
+    <div class="agenda-root">
+        <!-- Desktop: one grid per day, one column per track -->
+        <div class="hidden gap-16 md:grid">
+            <section v-for="day in days" :key="day.isoDay">
+                <h2 class="mb-2 text-lg font-bold">{{ fmtDay(day.isoDay) }}</h2>
 
-            <div class="grid" :style="gridStyle(day)">
-                <!-- Corner -->
-                <div class="col-1 row-1"></div>
-
-                <!-- Track headers -->
-                <div
-                    v-for="(t, i) in tracks"
-                    :key="t"
-                    class="sticky top-0 z-10 border-b-1 border-b-white px-2 py-1 text-center font-bold"
-                    :style="{ gridColumn: String(i + 2), gridRow: '1' }"
-                >
-                    {{ t }}
-                </div>
-
-                <!-- Time labels: only at session starts (rows == starts) -->
-                <div
-                    v-for="t in day.startLines"
-                    :key="t"
-                    class="sticky left-0 -z--1 self-start py-1 pr-2 tabular-nums"
-                    :style="{ gridColumn: '1', gridRow: String(2 + (day.indexMap.get(t) ?? 0)) }"
-                >
-                    {{ fmtTime(t) }}
-                </div>
-
-                <!-- Sessions -->
-                <article
-                    v-for="(a, idx) in day.items"
-                    :key="idx"
-                    class="talk relative flex flex-col gap-1 rounded-s px-3 py-2 md:pb-8 lg:pb-2"
-                    :class="{ 'items-center justify-center text-center': isNoTrack(a) }"
-                    :style="itemStyle(a, day)"
-                    :title="`${fmtTime(a.start)}–${fmtTime(a.end)}`"
-                    :data-cursor-hover="a._object ? true : null"
-                    @click="handleTalkClick(a._object)"
-                >
-                    <header class="text-sm font-bold md:text-lg">
-                        {{ a._object?.title ?? a.title }}
-                    </header>
-                    <div class="text-sm">{{ buildSubtitle(a) }}</div>
-                    <div class="absolute bottom-0 left-0 right-0 hidden w-auto px-2 pb-2 text-right text-sm md:block">
-                        {{ fmtTime(a.start) }}<span v-if="a.end"> – {{ fmtTime(a.end) }}</span>
+                <div class="agenda-grid grid gap-x-2" :style="gridStyle(day)">
+                    <!-- Track headers stay visible while scrolling through the day -->
+                    <div
+                        class="sticky top-0 z-10 bg-black pb-3 pt-2"
+                        :style="{ gridColumn: `2 / ${tracks.length + 2}`, gridRow: '1' }"
+                    >
+                        <div class="grid gap-x-2" :style="{ gridTemplateColumns: `repeat(${tracks.length}, 1fr)` }">
+                            <div
+                                v-for="t in tracks"
+                                :key="t"
+                                class="border-b-1 border-b-white px-2 py-1 text-center font-bold"
+                            >
+                                {{ t }}
+                            </div>
+                        </div>
                     </div>
-                </article>
+
+                    <template v-for="(row, rowIdx) in day.rows" :key="rowIdx">
+                        <!-- Pause between two slots -->
+                        <div
+                            v-if="row.kind === 'pause'"
+                            class="agenda-pause flex items-center gap-3 px-1 text-xs text-shade-400"
+                            :style="{ gridColumn: `2 / ${tracks.length + 2}`, gridRow: String(rowIdx + 2) }"
+                        >
+                            Pause · {{ fmtDuration(row.minutes) }}
+                        </div>
+
+                        <template v-else>
+                            <div
+                                class="self-start pr-2 pt-3 text-lg font-bold tabular-nums text-lime"
+                                :style="{ gridColumn: '1', gridRow: String(rowIdx + 2) }"
+                            >
+                                {{ fmtTime(row.start) }}
+                            </div>
+                            <ConferenceAgendaCard
+                                v-for="(a, idx) in row.items"
+                                :key="idx"
+                                class="my-2"
+                                :style="itemPlacement(a, rowIdx)"
+                                v-bind="cardProps(a)"
+                                @select="handleTalkClick(a._object)"
+                            />
+                        </template>
+                    </template>
+                </div>
+            </section>
+        </div>
+
+        <!-- Mobile: one list per day, filterable by track -->
+        <div class="md:hidden">
+            <div v-if="tracks.length > 1" class="mb-6 flex rounded-md bg-gray-800 p-1" role="group" aria-label="Bühne">
+                <button
+                    v-for="option in ['', ...tracks]"
+                    :key="option"
+                    type="button"
+                    class="flex-1 rounded-md py-2 text-sm"
+                    :class="trackFilter === option ? 'bg-gray-600 font-bold text-white' : 'text-shade-300'"
+                    :aria-pressed="trackFilter === option"
+                    @click="trackFilter = option"
+                >
+                    {{ option || 'Alle' }}
+                </button>
             </div>
-        </section>
+
+            <!-- Each day is its own container, so its sticky date scrolls out when the next day arrives.
+                 top-18 keeps it below the fixed logo and menu button. -->
+            <section v-for="day in days" :key="day.isoDay" class="mb-10">
+                <h2 class="sticky top-18 z-10 mb-4 border-b-1 border-shade-800 bg-black pb-2 pt-3 font-bold">
+                    {{ fmtDay(day.isoDay) }}
+                </h2>
+                <div class="grid gap-5">
+                    <template v-for="(row, rowIdx) in day.rows" :key="rowIdx">
+                        <div v-if="row.kind === 'slot' && visibleItems(row.items).length" class="grid gap-2">
+                            <div class="font-bold tabular-nums text-lime">{{ fmtTime(row.start) }}</div>
+                            <ConferenceAgendaCard
+                                v-for="(a, idx) in visibleItems(row.items)"
+                                :key="idx"
+                                v-bind="cardProps(a)"
+                                :track="tracks.length > 1 && !isNoTrack(a) ? a.track.trim() : undefined"
+                                @select="handleTalkClick(a._object)"
+                            />
+                        </div>
+                    </template>
+                </div>
+            </section>
+        </div>
     </div>
 </template>
 
@@ -55,7 +98,7 @@
 import { parseCmsDate } from '~/helpers'
 import { buildSpeakerNamesForTalk } from '~/helpers/buildSpeakerNamesForTalk'
 import type { TalkItem } from '~/types'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 type Agenda = {
     start: string // ISO string, e.g. "2025-10-29T09:15:00"
@@ -67,6 +110,8 @@ type Agenda = {
 }
 
 const props = defineProps<{ agenda: Agenda[] }>()
+
+const trackFilter = ref('')
 
 const buildSubtitle = function (agenda: Agenda): string | undefined {
     if (!agenda._object?.speakers.length) {
@@ -81,15 +126,9 @@ const handleTalkClick = function (talk: TalkItem | undefined | null) {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
-/** ===== Config ===== */
-// You already set this to false. We keep it so you can flip later if you want durations.
-const USE_DURATION_HEIGHTS = false // equal-height rows
-// New: when true, the grid compacts to one row per distinct start time (no gaps possible)
-const COMPACT_BY_STARTS = true
-const TIME_COL_WIDTH = 'var(--time-col-width, 8rem)'
-
 /** ===== Utils ===== */
 const toDate = (s: string) => parseCmsDate(s)
+const toMinutes = (s: string) => toDate(s).getTime() / 60000
 const dayKey = (d: Date) => d.toISOString().slice(0, 10)
 const fmtTime = (s: string) => {
     const d = toDate(s)
@@ -101,6 +140,18 @@ const fmtTime = (s: string) => {
     return d.toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' })
 }
 
+const fmtDuration = (minutes: number) => {
+    if (minutes < 60) return `${minutes} Min`
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    return m ? `${h} Std ${m} Min` : `${h} Std`
+}
+
+const durationOf = (a: Agenda): string | undefined => {
+    const minutes = Math.round(toMinutes(a.end) - toMinutes(a.start))
+    return Number.isFinite(minutes) && minutes > 0 ? fmtDuration(minutes) : undefined
+}
+
 const fmtDay = (isoDay: string) =>
     parseCmsDate(isoDay).toLocaleDateString('de-DE', {
         timeZone: 'Europe/Berlin',
@@ -110,45 +161,41 @@ const fmtDay = (isoDay: string) =>
         day: 'numeric',
     })
 
-function uniqSorted<T>(arr: T[], key?: (x: T) => any): T[] {
-    const set = new Map<any, T>()
-    for (const x of arr) set.set(key ? key(x) : (x as any), x)
-    const out = [...set.values()]
-    out.sort((a, b) => {
-        const ka = key ? key(a) : (a as any)
-        const kb = key ? key(b) : (b as any)
-        return ka < kb ? -1 : ka > kb ? 1 : 0
-    })
-    return out
-}
-
 /** ===== Columns (tracks) ===== */
-const tracks = computed(() => uniqSorted(props.agenda.map((a) => (a.track ?? '').trim()).filter((t) => t.length > 0)))
+const tracks = computed(() =>
+    [...new Set(props.agenda.map((a) => (a.track ?? '').trim()).filter((t) => t.length > 0))].sort()
+)
 
 function isNoTrack(a: Agenda) {
     return !a.track || a.track.trim().length === 0
 }
-function colForTrack(track: string) {
-    const idx = tracks.value.findIndex((t) => t === track.trim())
-    return String(idx + 2) // +1 for the time-column, +1 because the grid is 1-based
+
+function visibleItems(items: Agenda[]) {
+    return items.filter((a) => !trackFilter.value || isNoTrack(a) || a.track.trim() === trackFilter.value)
+}
+
+function cardProps(a: Agenda) {
+    return {
+        title: a._object?.title ?? a.title,
+        subtitle: buildSubtitle(a),
+        start: fmtTime(a.start),
+        end: fmtTime(a.end),
+        duration: durationOf(a),
+        isService: isNoTrack(a) && !a._object,
+        clickable: Boolean(a._object),
+    }
 }
 
 /** ===== Day model ===== */
+type Row = { kind: 'slot'; start: string; items: Agenda[] } | { kind: 'pause'; minutes: number }
+
 type DayBlock = {
     isoDay: string
-    items: Agenda[]
-
-    // When COMPACT_BY_STARTS=true, these are the ONLY boundaries we use for rows.
-    startLines: string[] // sorted unique session starts of the day
-    indexMap: Map<string, number> // start time -> row index (0-based within content)
-
-    // Back-compat if you flip COMPACT_BY_STARTS off later:
-    lines: string[] // full boundaries (starts + ends)
-    rowHeightsMin: number[] // per-interval minutes (unused when equal-height)
+    // One row per distinct start time, with a pause row wherever nothing runs between two slots
+    rows: Row[]
 }
 
 const days = computed<DayBlock[]>(() => {
-    // Group items by day
     const byDay = new Map<string, Agenda[]>()
     for (const a of props.agenda) {
         const k = dayKey(toDate(a.start))
@@ -161,28 +208,24 @@ const days = computed<DayBlock[]>(() => {
     for (const [isoDay, items] of [...byDay.entries()].sort()) {
         if (!items.length) continue
 
-        // === Compact rows: one row per distinct start time
-        const startLines = uniqSorted(
-            items.map((i) => i.start),
-            (t) => t
-        )
-        const indexMap = new Map<string, number>()
-        startLines.forEach((t, i) => indexMap.set(t, i))
-
-        // === Keep full boundaries in case you later use duration-based mode
-        const lines = uniqSorted(
-            items.flatMap((i) => [i.start, i.end]),
-            (t) => t
-        )
-        const rowHeightsMin: number[] = []
-        for (let i = 0; i < lines.length - 1; i++) {
-            // minutes between boundaries (unused when equal-height)
-            rowHeightsMin.push(
-                Math.max(1, Math.round((toDate(lines[i + 1]).getTime() - toDate(lines[i]).getTime()) / 60000))
-            )
+        const byStart = new Map<string, Agenda[]>()
+        for (const a of [...items].sort((x, y) => toMinutes(x.start) - toMinutes(y.start))) {
+            if (!byStart.has(a.start)) byStart.set(a.start, [])
+            byStart.get(a.start)!.push(a)
         }
 
-        result.push({ isoDay, items, startLines, indexMap, lines, rowHeightsMin })
+        const rows: Row[] = []
+        let latestEnd: number | undefined
+        for (const [start, slotItems] of byStart) {
+            const gap = latestEnd === undefined ? 0 : Math.round(toMinutes(start) - latestEnd)
+            if (gap > 0) rows.push({ kind: 'pause', minutes: gap })
+            rows.push({ kind: 'slot', start, items: slotItems })
+
+            const ends = slotItems.map((a) => toMinutes(a.end)).filter((m) => Number.isFinite(m))
+            latestEnd = Math.max(latestEnd ?? -Infinity, toMinutes(start), ...ends)
+        }
+
+        result.push({ isoDay, rows })
     }
 
     return result
@@ -190,91 +233,36 @@ const days = computed<DayBlock[]>(() => {
 
 /** ===== Grid helpers ===== */
 function gridStyle(day: DayBlock) {
-    const cols = [`${TIME_COL_WIDTH}`, ...tracks.value.map(() => '1fr')].join(' ')
-
-    if (COMPACT_BY_STARTS) {
-        // Rows: 1 header + one row per distinct start time
-        // We check for each start time if all items starting then have no _object
-        const rowSpecs = day.startLines.map((startTime) => {
-            const itemsAtTime = day.items.filter((i) => i.start === startTime)
-            const allEmpty = itemsAtTime.every((i) => !i._object)
-            return allEmpty ? 'auto' : '1fr'
-        })
-
-        return {
-            display: 'grid',
-            gridTemplateColumns: cols,
-            gridTemplateRows: `auto ${rowSpecs.join(' ')}`,
-            gap: '6px',
-        } as const
-    }
-
-    // Fallback: duration-based layout (kept for completeness)
-    if (USE_DURATION_HEIGHTS) {
-        // proportional heights
-        const MINUTES_PER_UNIT = 2
-        const unit = `${MINUTES_PER_UNIT}px`
-        const content = day.rowHeightsMin.map((min) => `calc(${min} * ${unit})`).join(' ')
-        return {
-            display: 'grid',
-            gridTemplateColumns: cols,
-            gridTemplateRows: `auto ${content}`,
-            gap: '6px',
-        } as const
-    } else {
-        // equal-height intervals across full boundaries
-        return {
-            display: 'grid',
-            gridTemplateColumns: cols,
-            gridTemplateRows: `auto repeat(${Math.max(0, day.lines.length - 1)}, 1fr)`,
-            gap: '6px',
-        } as const
-    }
+    return {
+        gridTemplateColumns: ['var(--time-col-width)', ...tracks.value.map(() => 'minmax(0, 1fr)')].join(' '),
+        gridTemplateRows: `auto repeat(${day.rows.length}, auto)`,
+    } as const
 }
 
-function itemStyle(a: Agenda, day: DayBlock) {
-    if (COMPACT_BY_STARTS) {
-        // Place the item in the row corresponding to its START time (one row high)
-        const rowIdx = day.indexMap.get(a.start) ?? 0
-        const rs = 2 + rowIdx // +1 for header, +1 because 0-based index
-        const re = rs + 1 // exactly one row tall
-        if (isNoTrack(a)) {
-            const endExclusive = tracks.value.length + 2
-            return { gridColumn: `2 / ${endExclusive}`, gridRow: `${rs} / ${re}` } as const
-        }
-        return { gridColumn: `${colForTrack(a.track!)}/span 1`, gridRow: `${rs} / ${re}` } as const
-    }
-
-    // Fallback (duration-based placement)
-    const startIdx = day.lines.indexOf(a.start)
-    const endIdx = day.lines.indexOf(a.end)
-    const rs = 2 + (startIdx >= 0 ? startIdx : 0)
-    const re = 2 + (endIdx >= 0 ? endIdx : rs)
+function itemPlacement(a: Agenda, rowIdx: number) {
+    const row = String(rowIdx + 2) // +1 for the header row, +1 because the grid is 1-based
     if (isNoTrack(a)) {
-        const endExclusive = tracks.value.length + 2
-        return { gridColumn: `2 / ${endExclusive}`, gridRow: `${rs} / ${re}` } as const
+        return { gridColumn: `2 / ${tracks.value.length + 2}`, gridRow: row } as const
     }
-    return { gridColumn: `${colForTrack(a.track!)}/span 1`, gridRow: `${rs} / ${re}` } as const
+    const col = tracks.value.findIndex((t) => t === a.track.trim()) + 2
+    return { gridColumn: `${col} / span 1`, gridRow: row } as const
 }
 </script>
 
 <style scoped>
-:root,
 .agenda-root {
-    --time-col-width: 8rem;
+    --time-col-width: 6rem;
 }
 
-@media (max-width: 600px) {
-    .agenda-root {
-        --time-col-width: 3.5rem;
-    }
-}
-
-.grid > * {
+.agenda-grid > * {
     min-width: 0;
 }
 
-.talk {
-    background: var(--Grey, #131415);
+.agenda-pause::before,
+.agenda-pause::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgb(255 255 255 / 0.08);
 }
 </style>
