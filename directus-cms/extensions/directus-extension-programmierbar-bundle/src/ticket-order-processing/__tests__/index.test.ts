@@ -282,6 +282,18 @@ describe('ticket-order-processing hook', () => {
         expect(invitations).toHaveLength(2)
     })
 
+    test('a failing invoice issuance is escalated to Slack with order, invoice number and reason', async () => {
+        issueOriginalInvoiceMock.mockRejectedValue(new Error('storage down'))
+        const { invoke } = setup()
+        await invoke({ status: 'paid' })
+
+        expect(postSlackMessageMock).toHaveBeenCalledTimes(1)
+        const slackMessage = postSlackMessageMock.mock.calls[0]![0]
+        expect(slackMessage).toContain('ORD-2026-ABC123')
+        expect(slackMessage).toContain('PB-CON26-001')
+        expect(slackMessage).toContain('storage down')
+    })
+
     test('internal orders: no invoice document, no confirmation email, but profile invitations', async () => {
         const { invoke } = setup({ is_internal: true })
         await invoke({ status: 'paid' })
