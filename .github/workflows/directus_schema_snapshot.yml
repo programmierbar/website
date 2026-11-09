@@ -29,10 +29,18 @@ jobs:
           # Strip any trailing slashes so PUBLIC_URL values like
           # "https://admin.programmier.bar/" don't produce a "//schema/snapshot" path.
           DIRECTUS_URL="$(echo "$DIRECTUS_URL" | sed 's#/*$##')"
-          curl --fail --silent --show-error \
+          # No --fail: keep the response body so a non-2xx shows Directus' error
+          # code (401 = token unknown, 403 FORBIDDEN = token's user lacks admin access).
+          status="$(curl --silent --show-error \
             -H "Authorization: Bearer $DIRECTUS_TOKEN" \
             -H "Accept: application/json" \
-            "$DIRECTUS_URL/schema/snapshot" -o /tmp/schema-raw.json
+            -o /tmp/schema-raw.json -w '%{http_code}' \
+            "$DIRECTUS_URL/schema/snapshot")"
+          if [ "$status" != "200" ]; then
+            echo "::error title=Schema snapshot fetch failed::HTTP $status from /schema/snapshot. DIRECTUS_SCHEMA_TOKEN must belong to an active Directus user with admin access (see .github/workflows/README.md)."
+            head -c 2000 /tmp/schema-raw.json; echo
+            exit 1
+          fi
           # Unwrap the API response's "data" envelope so the file is a top-level
           # snapshot that "directus schema apply ./schema.json" accepts directly.
           # The CLI expects collections/fields/relations at the root; the REST
