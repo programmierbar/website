@@ -1,5 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk'
 import { safeAction } from '../shared/safeHook.ts'
+import { createKeyedSerializer } from '../shared/serializeByKey.ts'
 import { handlePickOfTheDayAction } from './handlers/handlePickOfTheDayAction.ts'
 import { handlePodcastAction } from './handlers/handlePodcastAction.ts'
 import { handleTagAction } from './handlers/handleTagAction.ts'
@@ -18,16 +19,24 @@ export default defineHook(({ action }, hookContext) => {
         return
     }
 
+    // Podcast events for the same item must not run concurrently: two updates in
+    // quick succession (e.g. asset generation) would both see no "buzzsprout_id"
+    // yet and each create an episode at Buzzsprout. The handler only processes the
+    // first key, so that is the key events are serialized by.
+    const serializePodcast = createKeyedSerializer()
+
     const podcastHandler = (metadata: any, eventContext: any) => {
         const { payload } = metadata
-        return handlePodcastAction(
-            HOOK_NAME,
-            {
-                payload,
-                metadata: { ...metadata, collection: 'podcasts' },
-                context: eventContext,
-            },
-            { logger, ItemsService, env }
+        return serializePodcast(metadata.key ?? metadata.keys?.[0], () =>
+            handlePodcastAction(
+                HOOK_NAME,
+                {
+                    payload,
+                    metadata: { ...metadata, collection: 'podcasts' },
+                    context: eventContext,
+                },
+                { logger, ItemsService, env }
+            )
         )
     }
     action('podcasts.items.create', safeAction(HOOK_NAME, logger, podcastHandler))
