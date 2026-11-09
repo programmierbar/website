@@ -38,7 +38,9 @@ import { computed } from 'vue'
 const route = useRoute()
 const slug = route.params.slug as string
 
-const { data: podcast, error } = await useFetch(`/api/integrations/heise/podcast/${encodeURIComponent(slug)}`)
+const { data: podcast, error } = await useFetch(`/api/integrations/heise/podcast/${encodeURIComponent(slug)}`, {
+    query: { token: route.query.token },
+})
 
 // Thrown at setup level so the response carries the status, as on the podcast page
 if (error.value?.statusCode === 404) {

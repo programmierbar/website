@@ -66,6 +66,8 @@ export default defineNuxtConfig({
         stripeWebhookSecret: '', // Set via NUXT_STRIPE_WEBHOOK_SECRET env var
         // Optional Cloudflare Turnstile on the meetup registration form. Off unless both keys are set.
         turnstileSecretKey: '', // Set via NUXT_TURNSTILE_SECRET_KEY env var
+        // Shared secret in the links to the heise.de pages. Without it those pages answer 500.
+        heiseAccessToken: '', // Set via NUXT_HEISE_ACCESS_TOKEN env var
         public: {
             FLAG_SHOW_LOGIN: FLAG_SHOW_LOGIN,
             FLAG_SHOW_NEWS: FLAG_SHOW_NEWS,
