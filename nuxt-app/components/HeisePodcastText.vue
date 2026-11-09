@@ -2,15 +2,7 @@
     <section>
         <div class="flex flex-wrap items-center justify-between gap-4">
             <h2 class="text-sm font-black uppercase tracking-widest text-lime md:text-base">{{ label }}</h2>
-            <button
-                v-if="hasContent && clipboard.isRichTextSupported"
-                class="rounded-full border-3 border-lime px-4 py-1 text-xs font-black uppercase tracking-widest text-lime transition-colors hover:bg-lime hover:text-black md:text-sm"
-                type="button"
-                data-cursor-hover
-                @click="copy"
-            >
-                {{ clipboard.copied ? 'Kopiert!' : clipboard.failed ? 'Kopieren fehlgeschlagen' : `${label} kopieren` }}
-            </button>
+            <HeiseCopyButton v-if="hasContent" :label="label" rich :content="renderedContent" />
         </div>
         <InnerHtml
             v-if="hasContent"
@@ -23,7 +15,6 @@
 </template>
 
 <script setup lang="ts">
-import { useClipboard } from '~/composables'
 import { getPlainText } from '~/helpers/sanitize'
 import { computed, useTemplateRef } from 'vue'
 
@@ -35,14 +26,11 @@ const props = defineProps<{
 // Markup with no text in it, such as `<p>&nbsp;</p>`, counts as missing
 const hasContent = computed(() => getPlainText(props.html) !== '')
 
-const clipboard = useClipboard()
 const content = useTemplateRef<{ $el: HTMLElement }>('content')
 
 // Copies what the page shows: the sanitised markup, and the rendered text with its paragraph breaks
-function copy() {
+function renderedContent() {
     const element = content.value?.$el
-    if (element) {
-        clipboard.copyRichText(element.innerHTML, element.innerText)
-    }
+    return element ? { html: element.innerHTML, text: element.innerText } : null
 }
 </script>

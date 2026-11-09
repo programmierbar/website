@@ -28,7 +28,10 @@ export function useClipboard() {
     }
 
     const copy = (data: string) => {
-        navigator.value?.clipboard.writeText(data).then(() => flash(copied))
+        navigator.value?.clipboard.writeText(data).then(
+            () => flash(copied),
+            () => flash(failed)
+        )
     }
 
     /**

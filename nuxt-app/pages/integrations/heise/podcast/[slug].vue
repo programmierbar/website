@@ -3,8 +3,11 @@
         <div class="container px-6 pb-20 pt-32 md:pb-32 md:pl-48 md:pt-40 lg:pb-52 lg:pr-8 lg:pt-56 2xl:pt-64 3xl:px-8">
             <SectionHeading class="hidden md:block" element="h2">heise.de</SectionHeading>
 
-            <div class="text-sm font-black uppercase tracking-widest text-blue md:text-lg lg:text-xl">
-                // Podcast für heise.de
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="text-sm font-black uppercase tracking-widest text-blue md:text-lg lg:text-xl">
+                    // Podcast für heise.de
+                </div>
+                <HeiseCopyButton v-if="podcast.title" label="Titel" :content="titleContent" />
             </div>
             <h1
                 v-if="podcast.title"
@@ -91,6 +94,8 @@ if (error.value || !podcast.value) {
 }
 
 useLoadingScreen(podcast)
+
+const titleContent = () => (podcast.value?.title ? { text: podcast.value.title } : null)
 
 const episodeUrl = computed(() => `${WEBSITE_URL}/podcast/${podcast.value?.slug}`)
 
