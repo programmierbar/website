@@ -24,6 +24,13 @@ export interface DirectusPodcastItem {
     google_url: string
     spotify_url: string
     youtube_url: string | null
+    // heise.de integration. Not readable by the public role, only with the API token.
+    heise_enabled: boolean | null
+    heise_titel: string | null
+    heise_cover: DirectusFileItem | null
+    heise_anriss: string | null
+    heise_text: string | null
+    heise_mail_sent_at: string | null
     picks_of_the_day: (string | DirectusPickOfTheDayItem)[]
     members: (
         | number

@@ -246,6 +246,10 @@ export default defineNuxtConfig({
         // a cached response would pin the first-seen platform for everyone.
         '/app': { isr: false },
 
+        // Partner pages (e.g. heise.de) show whatever the CMS holds right now, including whether
+        // the page exists at all. Never cache or prerender them.
+        '/integrations/**': { isr: false, prerender: false },
+
         // Not in use currently
         //'/login-callback': { isr: false },
         //'/login': { isr: false },

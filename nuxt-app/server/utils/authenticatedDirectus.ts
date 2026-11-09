@@ -601,6 +601,37 @@ export function useAuthenticatedDirectus() {
         return await client.request(updateItem('ratings', rating.id, { up_or_down: vote }))
     }
 
+    // The heise.de page of a podcast. Filtering on `heise_enabled` here, not in the caller, means
+    // the content of a podcast that is not released to heise never leaves the CMS.
+    // Needs read on `podcasts` (`slug`, `youtube_url`, `heise_*`) and on `directus_files`.
+    async function getHeisePodcastBySlug(slug: string) {
+        const fields = [
+            'slug',
+            'youtube_url',
+            'heise_titel',
+            'heise_anriss',
+            'heise_text',
+            'heise_cover.id',
+            'heise_cover.title',
+            'heise_cover.type',
+            'heise_cover.width',
+            'heise_cover.height',
+        ]
+        const podcasts = await client.request(
+            readItems('podcasts', {
+                filter: { slug: { _eq: slug }, heise_enabled: { _eq: true } },
+                // `Collections` does not model `directus_files` as a relation, so the SDK rejects
+                // nested paths. The cast keeps the result typed as the top-level fields.
+                fields: fields as (
+                    'slug' | 'youtube_url' | 'heise_titel' | 'heise_anriss' | 'heise_text' | 'heise_cover'
+                )[],
+                limit: 1,
+            })
+        )
+
+        return podcasts?.[0] ?? null
+    }
+
     return {
         getSpeakerByPortalToken,
         updateSpeaker,
@@ -638,5 +669,6 @@ export function useAuthenticatedDirectus() {
         cancelMeetupRegistration,
         getRecentRatingByIPHash,
         updateRatingVote,
+        getHeisePodcastBySlug,
     }
 }
