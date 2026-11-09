@@ -18,6 +18,18 @@ const { directus, config } = vi.hoisted(() => {
 
 const COVER = { id: 'file-1', title: 'cover', type: 'image/png', width: 3000, height: 2000 }
 
+const PODCAST = {
+    slug: 'deep-dive-1',
+    published_on: '2026-11-12T05:00:00.000Z',
+    youtube_url: 'https://youtu.be/abc',
+    heise_titel: 'Titel',
+    heise_anriss: '<p>Anriss</p>',
+    heise_text: '<p>Text</p>',
+    heise_cover: COVER,
+    speakers: [],
+    members: [],
+}
+
 const invoke = (slug = 'deep-dive-1', query: Record<string, unknown> = { token: 'secret' }) =>
     (handler as any)({ params: { slug }, query })
 
@@ -33,24 +45,43 @@ afterEach(() => {
 
 describe('GET /api/integrations/heise/podcast/[slug]', () => {
     it('returns the heise content of a released podcast', async () => {
-        directus.getHeisePodcastBySlug.mockResolvedValue({
-            slug: 'deep-dive-1',
-            youtube_url: 'https://youtu.be/abc',
-            heise_titel: 'Titel',
-            heise_anriss: '<p>Anriss</p>',
-            heise_text: '<p>Text</p>',
-            heise_cover: COVER,
-        })
+        directus.getHeisePodcastBySlug.mockResolvedValue(PODCAST)
 
         await expect(invoke()).resolves.toEqual({
             slug: 'deep-dive-1',
+            publishedOn: '2026-11-12T05:00:00.000Z',
             youtubeUrl: 'https://youtu.be/abc',
             title: 'Titel',
             anriss: '<p>Anriss</p>',
             text: '<p>Text</p>',
             cover: COVER,
+            guests: [],
+            hosts: [],
         })
         expect(directus.getHeisePodcastBySlug).toHaveBeenCalledWith('deep-dive-1')
+    })
+
+    it('lists guests and hosts by full name in the order set in the CMS', async () => {
+        directus.getHeisePodcastBySlug.mockResolvedValue({
+            ...PODCAST,
+            speakers: [
+                { sort: 2, speaker: { academic_title: null, first_name: 'Erika', last_name: 'Mustermann' } },
+                { sort: 1, speaker: { academic_title: 'Dr.', first_name: 'Max', last_name: 'Muster' } },
+                // A junction row whose speaker is gone comes back as null
+                { sort: 3, speaker: null },
+            ],
+            members: [
+                { sort: 2, member: { first_name: 'Garrelt', last_name: 'Mock' } },
+                { sort: 1, member: { first_name: 'Dennis', last_name: 'Becker' } },
+                // An entry that was not expanded is a bare id
+                7,
+            ],
+        })
+
+        await expect(invoke()).resolves.toMatchObject({
+            guests: ['Dr. Max Muster', 'Erika Mustermann'],
+            hosts: ['Dennis Becker', 'Garrelt Mock'],
+        })
     })
 
     // The query filters on `heise_enabled`, so an unreleased podcast comes back as no podcast at all

@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
+import { getFullSpeakerName } from 'shared-code'
 
 // Content the heise.de newsroom needs to feature an episode, often before it is public. A wrong or
 // missing token and a podcast that is not released to heise all answer 404, the same as a podcast
@@ -31,13 +32,30 @@ export default defineEventHandler(async (event) => {
 
     return {
         slug: podcast.slug,
+        publishedOn: podcast.published_on,
         youtubeUrl: podcast.youtube_url,
         title: podcast.heise_titel,
         anriss: podcast.heise_anriss,
         text: podcast.heise_text,
         cover: podcast.heise_cover,
+        guests: namesInOrder(podcast.speakers.map(({ sort, speaker }) => ({ sort, person: speaker }))),
+        hosts: namesInOrder(
+            podcast.members.flatMap((entry) =>
+                typeof entry === 'object' && typeof entry.member === 'object'
+                    ? [{ sort: entry.sort, person: entry.member }]
+                    : []
+            )
+        ),
     }
 })
+
+// Editors order the people on an episode in the CMS; that order carries over to the page.
+function namesInOrder(entries: { sort: number | null; person: Parameters<typeof getFullSpeakerName>[0] | null }[]) {
+    return entries
+        .flatMap(({ sort, person }) => (person ? [{ sort: sort ?? 0, name: getFullSpeakerName(person) }] : []))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ name }) => name)
+}
 
 // Hashing first gives both sides the same length, which `timingSafeEqual` requires, so the
 // comparison takes the same time however much of the token is right.

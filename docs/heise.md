@@ -1,7 +1,8 @@
 # heise.de integration
 
 heise.de features some of our episodes. Their newsroom gets a page per episode with everything
-they need: the cover, title, Anriss, full text, the episode link and the YouTube URL.
+they need: the cover, title, publishing date, Anriss, the people on the episode, full text, a
+closing paragraph (Abspann), the episode link and the YouTube URL.
 
 ## The link
 
@@ -34,17 +35,30 @@ These fields are on `podcasts`, in the "Heise.de Integration" group:
 | `heise_anriss`  | Anriss, with a copy button                  |
 | `heise_text`    | Full text, with a copy button               |
 
-The copy buttons put both HTML and plain text on the clipboard, so a rich text editor keeps the
-formatting.
+Besides these, the page shows from the regular podcast fields:
+
+- `published_on`, as date and time in Berlin time
+- the people on the episode by name, in the order set in the CMS: `speakers` as "Gäste" and
+  `members` as "Hosts"
+
+The Abspann is the same for every episode, so it is fixed in
+`pages/integrations/heise/podcast/[slug].vue`. Its links come from the constants in `config.ts`.
+
+The copy buttons on Anriss, full text and Abspann put both HTML and plain text on the clipboard, so
+a rich text editor keeps the formatting.
 
 ## Directus permissions
 
 The page reads through the API token (`NUXT_DIRECTUS_API_TOKEN`), not the public role. That
 token's role needs read access on:
 
-- `podcasts`: `slug`, `youtube_url`, `heise_enabled`, `heise_titel`, `heise_anriss`, `heise_text`,
-  `heise_cover`
+- `podcasts`: `slug`, `published_on`, `youtube_url`, `speakers`, `members`, `heise_enabled`,
+  `heise_titel`, `heise_anriss`, `heise_text`, `heise_cover`
 - `directus_files`: for the cover's dimensions and type
+- `podcast_speakers`: `sort`, `speaker`
+- `speakers`: `academic_title`, `first_name`, `last_name`
+- `podcast_members`: `sort`, `member`
+- `members`: `first_name`, `last_name`
 
 ## Caching
 
