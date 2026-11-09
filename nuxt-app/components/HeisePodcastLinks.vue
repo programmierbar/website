@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+import { normalizeExternalUrl } from '~/helpers'
 import { computed } from 'vue'
 
 const props = defineProps<{
@@ -28,8 +29,18 @@ const props = defineProps<{
     youtubeUrl: string | null
 }>()
 
+// `web`, not `youtube`: the field holds a video link, and the `youtube` rules would read a bare value
+// as a channel handle. A value that cannot be made into a URL is named, so editors can fix it.
+const youtubeUrl = computed(() => normalizeExternalUrl(props.youtubeUrl, 'web'))
+
 const links = computed(() => [
     { label: 'Folge auf programmier.bar', url: props.episodeUrl, missing: '' },
-    { label: 'Video auf YouTube', url: props.youtubeUrl, missing: 'Noch keine YouTube-URL hinterlegt.' },
+    {
+        label: 'Video auf YouTube',
+        url: youtubeUrl.value,
+        missing: props.youtubeUrl?.trim()
+            ? `Die YouTube-URL im CMS ist ungültig: ${props.youtubeUrl}`
+            : 'Noch keine YouTube-URL hinterlegt.',
+    },
 ])
 </script>
