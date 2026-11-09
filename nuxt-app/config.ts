@@ -77,6 +77,12 @@ export const YOUTUBE_PODCAST_URL = 'https://www.youtube.com/playlist?list=PLdL7w
 export const MEETUP_URL = 'https://www.meetup.com/programmierbar'
 export const GOOGLE_MAPS_URL = EVENT_VENUE.mapsUrl
 export const DISCORD_INVITE_LINK = process.env.DISCORD_INVITE_LINK || 'https://discord.gg'
+export const MASTODON_URL = 'https://social.programmier.bar/@podcast'
+export const LINKEDIN_URL = 'https://www.linkedin.com/company/68164372'
+export const BLUESKY_URL = 'https://bsky.app/profile/programmier.bar'
+export const INSTAGRAM_URL = 'https://www.instagram.com/programmier.bar'
+export const TIKTOK_URL = 'https://www.tiktok.com/@programmier.bar'
+export const PODCAST_CONTACT_EMAIL = 'podcast@programmier.bar'
 
 // programmier.con Apps
 export const PROGRAMMIER_CON_APP_IOS =

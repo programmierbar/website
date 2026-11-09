@@ -14,7 +14,7 @@
         </li>
         <li style="display: none">
             <!-- Only required for mastodon verification -->
-            <a rel="me" href="https://social.programmier.bar/@podcast">Mastodon</a>
+            <a rel="me" :href="MASTODON_URL">Mastodon</a>
         </li>
     </ul>
 </template>
@@ -29,6 +29,10 @@ import MastodonIcon from '~/assets/logos/mastodon.svg'
 //import TwitterIcon from '~/assets/logos/twitter.svg'
 import YoutubeIcon from '~/assets/logos/youtube.svg'
 import {
+    BLUESKY_URL,
+    INSTAGRAM_URL,
+    LINKEDIN_URL,
+    MASTODON_URL,
     OPEN_BLUESKY_EVENT_ID,
     //OPEN_TWITTER_EVENT_ID,
     OPEN_DISCORD_EVENT_ID,
@@ -46,7 +50,7 @@ const socialNetworks = [
     {
         label: 'Mastodon',
         icon: MastodonIcon,
-        href: 'https://social.programmier.bar/@podcast',
+        href: MASTODON_URL,
         eventId: OPEN_MASTODON_EVENT_ID,
     },
     {
@@ -58,19 +62,19 @@ const socialNetworks = [
     {
         label: 'LinkedIn',
         icon: LinkedinIcon,
-        href: 'https://www.linkedin.com/company/68164372',
+        href: LINKEDIN_URL,
         eventId: OPEN_LINKEDIN_EVENT_ID,
     },
     {
         label: 'Bluesky',
         icon: BlueskyIcon,
-        href: 'https://bsky.app/profile/programmier.bar',
+        href: BLUESKY_URL,
         eventId: OPEN_BLUESKY_EVENT_ID,
     },
     {
         label: 'Instagram',
         icon: InstagramIcon,
-        href: 'https://www.instagram.com/programmier.bar',
+        href: INSTAGRAM_URL,
         eventId: OPEN_INSTAGRAM_EVENT_ID,
     },
     {
