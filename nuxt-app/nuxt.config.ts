@@ -163,6 +163,14 @@ export default defineNuxtConfig({
                 '/pick-of-the-day',
             ]
 
+            // Only prerender the pitch page once it is published: it answers 404 before that, and a
+            // prerendered 404 fails the build via `failOnError`. Publishing or unpublishing it in the
+            // CMS triggers a new deploy, which picks up the change here.
+            const pitchPage = await directus.getPitchPage()
+            if (pitchPage) {
+                routes.push('/pitch')
+            }
+
             const podcasts = await directus.getPodcasts(10)
             routes.push(...podcasts.map((podcast) => `/podcast/${podcast.slug}`))
 
@@ -251,10 +259,6 @@ export default defineNuxtConfig({
         // Partner pages (e.g. heise.de) show whatever the CMS holds right now, including whether
         // the page exists at all. Never cache or prerender them.
         '/integrations/**': { isr: false, prerender: false },
-
-        // Answers 404 until the page is published in the CMS. Rendered per request, so publishing
-        // or unpublishing it takes effect immediately instead of after the ISR window.
-        '/pitch': { isr: false, prerender: false },
 
         // Not in use currently
         //'/login-callback': { isr: false },
