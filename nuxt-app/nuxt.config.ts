@@ -252,6 +252,10 @@ export default defineNuxtConfig({
         // the page exists at all. Never cache or prerender them.
         '/integrations/**': { isr: false, prerender: false },
 
+        // Answers 404 until the page is published in the CMS. Rendered per request, so publishing
+        // or unpublishing it takes effect immediately instead of after the ISR window.
+        '/pitch': { isr: false, prerender: false },
+
         // Not in use currently
         //'/login-callback': { isr: false },
         //'/login': { isr: false },

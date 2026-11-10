@@ -21,6 +21,7 @@ import type {
     DirectusNewsLinkItem,
     DirectusPickOfTheDayItem,
     DirectusPickOfTheDayPage,
+    DirectusPitchPage,
     DirectusPodcastItem,
     DirectusPodcastPage,
     DirectusPrivacyPage,
@@ -50,6 +51,7 @@ export type Collections = {
     imprint_page: DirectusImprintPage
     privacy_page: DirectusPrivacyPage
     agb_page: DirectusAgbPage
+    pitch_page: DirectusPitchPage
     raffle_page: DirectusRafflePage
     login_page: DirectusLoginPage
     profile_creation_page: DirectusProfileCreationPage
@@ -83,10 +85,18 @@ export const directus = createDirectus<Collections>(DIRECTUS_CMS_URL)
 // Statuses that indicate a transient upstream condition worth retrying.
 const TRANSIENT_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504])
 
+/**
+ * The HTTP status of a failed Directus request, or `undefined` for a network-level failure.
+ *
+ * Directus SDK API errors carry the raw Response; network-level failures
+ * (DNS, connection reset, timeout) surface as a TypeError without one.
+ */
+export function getDirectusErrorStatus(error: unknown): number | undefined {
+    return (error as { response?: { status?: number } } | null)?.response?.status
+}
+
 function isTransientError(error: unknown): boolean {
-    // Directus SDK API errors carry the raw Response; network-level failures
-    // (DNS, connection reset, timeout) surface as a TypeError without one.
-    const status = (error as { response?: { status?: number } } | null)?.response?.status
+    const status = getDirectusErrorStatus(error)
     return status !== undefined ? TRANSIENT_STATUS_CODES.has(status) : error instanceof TypeError
 }
 
