@@ -40,8 +40,8 @@ const ticketingAvailable = computed(() => {
 
 const ticketsSoldOut = await useTicketAvailability(ticketingAvailable.value ? conference.value?.id : undefined)
 
-// Team tickets don't count against the limit, so a sold-out conference still
-// lets team members order with their code, behind an explicit opt-in.
+// Team codes and capacity bypass codes ignore the limit, so a sold-out conference
+// still lets code holders order, behind an explicit opt-in.
 const continueWithTeamCode = ref(false)
 
 // Set page meta data
@@ -119,7 +119,7 @@ const breadcrumbs = computed(() => [
                         data-cursor-hover
                         @click="continueWithTeamCode = true"
                     >
-                        Du bist im Team? Mit Team-Code bestellen
+                        Du hast einen Code? Mit Code bestellen
                     </button>
                 </div>
             </TicketsSoldOutNotice>

@@ -27,6 +27,20 @@ export default defineHook(({ action }, hookContext) => {
     }
 
     /**
+     * Whether the order used a discount code that may be sold beyond the ticket limit.
+     * Reads all fields so a missing `bypass_capacity` field just means "no bypass".
+     */
+    async function usedCapacityBypassCode(discountCodeId: string | null, schema: any): Promise<boolean> {
+        if (!discountCodeId) return false
+        const discountCodesService = new ItemsService('ticket_discount_codes', {
+            schema,
+            accountability: { admin: true },
+        })
+        const discountCode = await discountCodesService.readOne(discountCodeId, { fields: ['*'] })
+        return discountCode?.bypass_capacity === true
+    }
+
+    /**
      * Process order when status changes to 'paid'
      * Creates tickets with profile tokens, generates invoice, and sends emails
      * (QR codes are generated later when the attendee completes their profile)
@@ -102,6 +116,7 @@ export default defineHook(({ action }, hookContext) => {
                             'attendees_json',
                             'ticket_type',
                             'is_internal',
+                            'discount_code_used',
                         ],
                     })
 
@@ -159,7 +174,10 @@ export default defineHook(({ action }, hookContext) => {
                             aggregate: { count: ['id'] },
                         })
                         const currentCount = Number(existingTickets?.[0]?.count?.id ?? 0)
-                        if (currentCount + attendees.length > conference.ticket_max_quantity) {
+                        if (
+                            currentCount + attendees.length > conference.ticket_max_quantity &&
+                            !(await usedCapacityBypassCode(order.discount_code_used, schema))
+                        ) {
                             logger.error(
                                 `${HOOK_NAME}: Ticket limit exceeded for conference ${order.conference}. ` +
                                     `Current: ${currentCount}, requested: ${attendees.length}, limit: ${conference.ticket_max_quantity}. ` +

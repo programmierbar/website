@@ -161,7 +161,8 @@ export function useAuthenticatedDirectus() {
                     conference: { _eq: conferenceId },
                     active: { _eq: true },
                 },
-                fields: ['id', 'conference', 'code', 'price_cents', 'label', 'max_uses', 'active', 'is_employee_code'],
+                // All fields, so the optional bypass_capacity field doesn't break the request while it doesn't exist
+                fields: ['*'],
             })
         )
         const upperCode = code.toUpperCase()

@@ -168,6 +168,7 @@ export default defineEventHandler(async (event) => {
         let discountPriceCents: number | null = null
         let discountCodeId: string | null = null
         let isInternal = false
+        let bypassCapacity = false
 
         if (input.discountCode) {
             const discountCode = await directus.getDiscountCode(input.conferenceId, input.discountCode)
@@ -184,6 +185,7 @@ export default defineEventHandler(async (event) => {
                 }
                 discountPriceCents = discountCode.price_cents
                 discountCodeId = discountCode.id
+                bypassCapacity = discountCode.bypass_capacity === true
                 if (discountCode.is_employee_code === true) {
                     isInternal = true
                     discountPriceCents = 0
@@ -191,8 +193,8 @@ export default defineEventHandler(async (event) => {
             }
         }
 
-        // Hard limit check: internal tickets don't consume capacity
-        if (!isInternal) {
+        // Hard limit check: internal tickets don't consume capacity, bypass codes may exceed it
+        if (!isInternal && !bypassCapacity) {
             const remaining = await getRemainingTicketCapacity(directus, conference)
             if (remaining !== null && input.tickets.length > remaining) {
                 throw createError({
