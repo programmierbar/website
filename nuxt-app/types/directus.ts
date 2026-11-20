@@ -603,6 +603,18 @@ export interface DirectusTicketItem {
 export type CheckinTshirtInfo =
     { status: 'eligible'; size: string } | { status: 'too_late'; size: string | null } | { status: 'no_size' }
 
+export type CheckinConference = { id: string; title: string; slug: string }
+
+export type CheckinStats = { conference: CheckinConference; totalSold: number; checkedIn: number }
+
+export type CheckinResult = {
+    alreadyCheckedIn: boolean
+    firstName: string
+    lastName: string
+    checkedInAt?: string | null
+    tshirt: CheckinTshirtInfo
+}
+
 export interface DirectusTicketDiscountCodeItem {
     id: string
     conference: string

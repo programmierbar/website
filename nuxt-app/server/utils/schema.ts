@@ -200,12 +200,6 @@ export const TicketProfileSchema = z.object({
     additional_notes: z.string().max(1000, 'Maximal 1000 Zeichen.').optional().or(z.literal('')),
 })
 
-// Check-in
-
-export const CheckinScanSchema = z.object({
-    ticketCode: z.string().min(1),
-})
-
 // Newsletter signup
 
 export const NewsletterSignupSchema = z.object({

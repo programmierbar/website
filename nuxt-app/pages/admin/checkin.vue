@@ -31,6 +31,11 @@
                 <NuxtLink to="/login" class="mt-4 inline-block text-lime hover:text-blue"> Zum Login </NuxtLink>
             </div>
 
+            <div v-else-if="accessDenied" class="mt-16 text-center">
+                <p class="text-xl text-pink">Keine Berechtigung.</p>
+                <p class="mt-2 text-white/60">Dein Directus-Konto darf keine Tickets einchecken.</p>
+            </div>
+
             <!-- Scanner -->
             <template v-else>
                 <!-- Success animation -->
@@ -92,7 +97,8 @@
 
 <script setup lang="ts">
 import { useDirectus } from '~/composables/useDirectus'
-import type { CheckinTshirtInfo } from '~/types/directus'
+import { CheckinError, checkInTicket, loadCheckinStats } from '~/helpers/ticketCheckin'
+import type { CheckinResult, CheckinStats } from '~/types/directus'
 
 useHead({
     title: 'Check-in',
@@ -100,34 +106,31 @@ useHead({
 })
 
 const directus = useDirectus()
+// Same Directus session as the login check below, so a page that shows the scanner can check in.
+const request = directus.getSessionRequest()
 
 // Auth state
 const authChecked = ref(false)
 const isAuthenticated = ref(false)
+const accessDenied = ref(false)
 
 // Scanner state
-const scanResult = ref<{
-    firstName: string
-    lastName: string
-    alreadyCheckedIn: boolean
-    tshirt?: CheckinTshirtInfo
-} | null>(null)
+const scanResult = ref<CheckinResult | null>(null)
 const scanError = ref<string | null>(null)
 const scanning = ref(false)
 const manualCode = ref('')
 
 // Stats
-const stats = ref<{
-    conference: { id: string; title: string; slug: string }
-    totalSold: number
-    checkedIn: number
-} | null>(null)
+const stats = ref<CheckinStats | null>(null)
 
 let scanner: any = null
 let scanCooldown = false
 // The card stays up until the next scan, so the code it shows stays in front of the camera
 // while the shirt is handed out; that code is ignored instead of being checked in again.
 let displayedTicketCode: string | null = null
+// Each failed scan clears its error after a few seconds; a newer scan cancels the pending reset so
+// an older timer can't wipe the newer error or its duplicate-scan guard.
+let errorResetTimer: ReturnType<typeof setTimeout> | null = null
 
 onMounted(async () => {
     try {
@@ -138,23 +141,48 @@ onMounted(async () => {
     }
     authChecked.value = true
 
-    if (isAuthenticated.value) {
-        await refreshStats()
-        await initScanner()
+    if (!isAuthenticated.value) return
+
+    try {
+        stats.value = await loadCheckinStats(request)
+    } catch (err) {
+        if (err instanceof CheckinError && err.reason === 'auth') {
+            await handleAuthFailure()
+            return
+        }
+        // Stats not critical
     }
+    await initScanner()
 })
 
 onBeforeUnmount(() => {
+    stopScanner()
+    if (errorResetTimer) clearTimeout(errorResetTimer)
+})
+
+function stopScanner() {
     if (scanner) {
         scanner.stop().catch(() => {})
+        scanner = null
     }
-})
+}
 
 async function refreshStats() {
     try {
-        stats.value = (await $fetch('/api/checkin/stats')) as any
+        stats.value = await loadCheckinStats(request)
     } catch {
         // Stats not critical
+    }
+}
+
+// The session expired (and could not be refreshed) or the account may not check tickets in.
+async function handleAuthFailure() {
+    stopScanner()
+    const user = await directus.getCurrentUser()
+    if (user) {
+        accessDenied.value = true
+    } else {
+        isAuthenticated.value = false
     }
 }
 
@@ -215,13 +243,15 @@ async function performCheckin(ticketCode: string) {
     if (scanning.value) return
     scanning.value = true
     scanError.value = null
+    if (errorResetTimer) {
+        clearTimeout(errorResetTimer)
+        errorResetTimer = null
+    }
     dismissResult()
 
     try {
-        const result = await ($fetch as any)('/api/checkin/scan', {
-            method: 'POST',
-            body: { ticketCode },
-        })
+        const conferenceId = stats.value?.conference.id ?? (await loadCheckinStats(request)).conference.id
+        const result = await checkInTicket(request, conferenceId, ticketCode)
 
         scanResult.value = result
         displayedTicketCode = ticketCode
@@ -229,17 +259,18 @@ async function performCheckin(ticketCode: string) {
         // Refresh stats
         await refreshStats()
     } catch (err: any) {
-        const message = err?.data?.message || err?.message || 'Unbekannter Fehler'
-        if (message.includes('not found')) {
-            scanError.value = 'Ticket nicht gefunden'
-        } else if (message.includes('cancelled')) {
-            scanError.value = 'Ticket wurde storniert'
-        } else {
-            scanError.value = message
+        if (err instanceof CheckinError && err.reason === 'auth') {
+            await handleAuthFailure()
+            return
         }
+        scanError.value =
+            err instanceof CheckinError
+                ? err.message
+                : err?.errors?.[0]?.message || err?.message || 'Unbekannter Fehler'
 
         displayedTicketCode = ticketCode
-        setTimeout(() => {
+        errorResetTimer = setTimeout(() => {
+            errorResetTimer = null
             scanError.value = null
             if (!scanResult.value) displayedTicketCode = null
         }, 4000)

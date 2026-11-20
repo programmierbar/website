@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getCheckinTshirt } from '../server/utils/checkinTshirt'
+import { getCheckinTshirt } from '../helpers/checkinTshirt'
 
 const DEADLINE = '2026-09-30T23:59:59.999+02:00'
 
