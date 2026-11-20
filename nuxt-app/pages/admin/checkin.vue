@@ -4,18 +4,18 @@
             <!-- Header with stats -->
             <div class="mb-8 text-center">
                 <h1 class="text-3xl font-bold text-white">Check-in</h1>
-                <p v-if="stats" class="mt-2 text-lg text-white/60">{{ stats.conference.title }}</p>
+                <p v-if="conference" class="mt-2 text-lg text-white/60">{{ conference.title }}</p>
             </div>
 
             <!-- Stats bar -->
-            <div v-if="stats" class="mb-8 flex items-center justify-center gap-8">
+            <div v-if="counts" class="mb-8 flex items-center justify-center gap-8">
                 <div class="text-center">
-                    <div class="text-4xl font-bold text-lime">{{ stats.checkedIn }}</div>
+                    <div class="text-4xl font-bold text-lime">{{ counts.checkedIn }}</div>
                     <div class="text-sm text-white/60">Eingecheckt</div>
                 </div>
                 <div class="text-3xl text-white/20">/</div>
                 <div class="text-center">
-                    <div class="text-4xl font-bold text-white">{{ stats.totalSold }}</div>
+                    <div class="text-4xl font-bold text-white">{{ counts.totalSold }}</div>
                     <div class="text-sm text-white/60">Tickets verkauft</div>
                 </div>
             </div>
@@ -31,14 +31,20 @@
                 <NuxtLink to="/login" class="mt-4 inline-block text-lime hover:text-blue"> Zum Login </NuxtLink>
             </div>
 
+            <div v-else-if="accessDenied" class="mt-16 text-center">
+                <p class="text-xl text-pink">Keine Berechtigung.</p>
+                <p class="mt-2 text-white/60">Dein Directus-Konto darf keine Tickets einchecken.</p>
+            </div>
+
             <!-- Scanner -->
             <template v-else>
                 <!-- Success animation -->
                 <Transition name="checkin-success">
                     <div
                         v-if="scanResult"
-                        class="mb-8 rounded-2xl p-8 text-center"
+                        class="mb-8 cursor-pointer rounded-2xl p-8 text-center"
                         :class="scanResult.alreadyCheckedIn ? 'bg-yellow-900/40' : 'bg-lime/10'"
+                        @click="dismissResult"
                     >
                         <div
                             class="text-5xl font-bold"
@@ -49,6 +55,10 @@
                         <div class="mt-2 text-lg text-white/80">{{ scanResult.lastName }}</div>
                         <div v-if="scanResult.alreadyCheckedIn" class="text-yellow-400 mt-4">Bereits eingecheckt</div>
                         <div v-else class="mt-4 text-lime">Willkommen!</div>
+                        <CheckinTshirt v-if="scanResult.tshirt" :tshirt="scanResult.tshirt" />
+                        <button type="button" class="mt-6 rounded bg-white/10 px-6 py-2 font-bold text-white">
+                            Fertig
+                        </button>
                     </div>
                 </Transition>
 
@@ -58,7 +68,7 @@
                 </div>
 
                 <!-- QR Scanner -->
-                <div v-show="!scanResult" class="overflow-hidden rounded-2xl">
+                <div class="overflow-hidden rounded-2xl">
                     <div id="qr-reader" />
                 </div>
 
@@ -87,6 +97,14 @@
 
 <script setup lang="ts">
 import { useDirectus } from '~/composables/useDirectus'
+import {
+    canCheckInTickets,
+    CheckinError,
+    checkInTicket,
+    loadCheckinConference,
+    loadCheckinCounts,
+} from '~/helpers/ticketCheckin'
+import type { CheckinConference, CheckinCounts, CheckinResult } from '~/types/directus'
 
 useHead({
     title: 'Check-in',
@@ -94,30 +112,33 @@ useHead({
 })
 
 const directus = useDirectus()
+// Same Directus session as the login check below, so a page that shows the scanner can check in.
+const request = directus.getSessionRequest()
 
 // Auth state
 const authChecked = ref(false)
 const isAuthenticated = ref(false)
+const accessDenied = ref(false)
 
 // Scanner state
-const scanResult = ref<{
-    firstName: string
-    lastName: string
-    alreadyCheckedIn: boolean
-} | null>(null)
+const scanResult = ref<CheckinResult | null>(null)
 const scanError = ref<string | null>(null)
 const scanning = ref(false)
 const manualCode = ref('')
 
 // Stats
-const stats = ref<{
-    conference: { id: string; title: string; slug: string }
-    totalSold: number
-    checkedIn: number
-} | null>(null)
+const conference = ref<CheckinConference | null>(null)
+// Optional: if the counts can't be loaded, check-in still works.
+const counts = ref<CheckinCounts | null>(null)
 
 let scanner: any = null
 let scanCooldown = false
+// The card stays up until the next scan, so the code it shows stays in front of the camera
+// while the shirt is handed out; that code is ignored instead of being checked in again.
+let displayedTicketCode: string | null = null
+// Each failed scan clears its error after a few seconds; a newer scan cancels the pending reset so
+// an older timer can't wipe the newer error or its duplicate-scan guard.
+let errorResetTimer: ReturnType<typeof setTimeout> | null = null
 
 onMounted(async () => {
     try {
@@ -128,23 +149,65 @@ onMounted(async () => {
     }
     authChecked.value = true
 
-    if (isAuthenticated.value) {
-        await refreshStats()
-        await initScanner()
+    if (!isAuthenticated.value) return
+
+    try {
+        if (!(await canCheckInTickets(request))) {
+            accessDenied.value = true
+            return
+        }
+    } catch (err) {
+        if (err instanceof CheckinError && err.reason === 'auth') {
+            await handleAuthFailure()
+            return
+        }
+        // Can't tell; a missing permission then shows as an error on the first scan.
     }
+
+    try {
+        conference.value = await loadCheckinConference(request)
+    } catch (err) {
+        if (err instanceof CheckinError && err.reason === 'auth') {
+            await handleAuthFailure()
+            return
+        }
+        // Each scan loads the conference again until this works.
+        scanError.value = err instanceof CheckinError ? err.message : 'Konferenz konnte nicht geladen werden'
+    }
+
+    void refreshCounts()
+    await initScanner()
 })
 
 onBeforeUnmount(() => {
-    if (scanner) {
-        scanner.stop().catch(() => {})
-    }
+    stopScanner()
+    if (errorResetTimer) clearTimeout(errorResetTimer)
 })
 
-async function refreshStats() {
+function stopScanner() {
+    if (scanner) {
+        scanner.stop().catch(() => {})
+        scanner = null
+    }
+}
+
+async function refreshCounts() {
+    if (!conference.value) return
     try {
-        stats.value = (await $fetch('/api/checkin/stats')) as any
+        counts.value = await loadCheckinCounts(request, conference.value.id)
     } catch {
-        // Stats not critical
+        // Counts are optional
+    }
+}
+
+// The session expired (and could not be refreshed) or the account may not check tickets in.
+async function handleAuthFailure() {
+    stopScanner()
+    const user = await directus.getCurrentUser()
+    if (user) {
+        accessDenied.value = true
+    } else {
+        isAuthenticated.value = false
     }
 }
 
@@ -176,13 +239,21 @@ function extractTicketCode(text: string): string | null {
 }
 
 async function onScanSuccess(decodedText: string) {
-    if (scanning.value || scanResult.value || scanCooldown) return
+    if (scanning.value || scanCooldown) return
 
     const ticketCode = extractTicketCode(decodedText)
-    if (!ticketCode) return
+    if (!ticketCode || ticketCode === displayedTicketCode) return
 
     scanCooldown = true
     await performCheckin(ticketCode)
+    setTimeout(() => {
+        scanCooldown = false
+    }, 1500)
+}
+
+function dismissResult() {
+    scanResult.value = null
+    displayedTicketCode = null
 }
 
 async function handleManualInput() {
@@ -197,37 +268,36 @@ async function performCheckin(ticketCode: string) {
     if (scanning.value) return
     scanning.value = true
     scanError.value = null
-    scanResult.value = null
+    if (errorResetTimer) {
+        clearTimeout(errorResetTimer)
+        errorResetTimer = null
+    }
+    dismissResult()
 
     try {
-        const result = await ($fetch as any)('/api/checkin/scan', {
-            method: 'POST',
-            body: { ticketCode },
-        })
+        conference.value ??= await loadCheckinConference(request)
+        const result = await checkInTicket(request, conference.value.id, ticketCode)
 
         scanResult.value = result
+        displayedTicketCode = ticketCode
 
-        // Refresh stats
-        await refreshStats()
-
-        // Auto-reset after 4 seconds
-        setTimeout(() => {
-            scanResult.value = null
-            scanCooldown = false
-        }, 4000)
+        // Not awaited: the next scan shouldn't wait for (or fail with) the counter
+        void refreshCounts()
     } catch (err: any) {
-        const message = err?.data?.message || err?.message || 'Unbekannter Fehler'
-        if (message.includes('not found')) {
-            scanError.value = 'Ticket nicht gefunden'
-        } else if (message.includes('cancelled')) {
-            scanError.value = 'Ticket wurde storniert'
-        } else {
-            scanError.value = message
+        if (err instanceof CheckinError && err.reason === 'auth') {
+            await handleAuthFailure()
+            return
         }
+        scanError.value =
+            err instanceof CheckinError
+                ? err.message
+                : err?.errors?.[0]?.message || err?.message || 'Unbekannter Fehler'
 
-        setTimeout(() => {
+        displayedTicketCode = ticketCode
+        errorResetTimer = setTimeout(() => {
+            errorResetTimer = null
             scanError.value = null
-            scanCooldown = false
+            if (!scanResult.value) displayedTicketCode = null
         }, 4000)
     } finally {
         scanning.value = false

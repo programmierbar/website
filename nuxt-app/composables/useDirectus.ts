@@ -29,6 +29,7 @@ import type {
     TagItem,
 } from '~/types'
 import { DIRECTUS_CMS_URL, WEBSITE_URL } from './../config'
+import { withSessionRetry, type CheckinRequest } from './../helpers/ticketCheckin'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
 import { directus, type Collections } from './../services'
@@ -900,6 +901,19 @@ export function useDirectus() {
         }
     }
 
+    /**
+     * Request function that runs with the signed-in user's Directus session cookie, the same
+     * credentials `getCurrentUser` checks, and so with that user's Directus permissions. An auth
+     * failure refreshes the session and retries once (see `withSessionRetry`).
+     */
+    function getSessionRequest(): CheckinRequest {
+        const sessionClient = directus.with(rest({ credentials: 'include' }))
+        return withSessionRetry(
+            (command) => sessionClient.request(command),
+            () => directus.refresh()
+        )
+    }
+
     async function registerNewUser(email: string, password: string) {
         try {
             await directus.request(createUser({ email, password }))
@@ -1064,6 +1078,7 @@ export function useDirectus() {
         getTranscriptForPodcast,
         getSingleSignOnProviders,
         getCurrentUser,
+        getSessionRequest,
         registerNewUser,
         getProfileById,
         getTestimonials,
