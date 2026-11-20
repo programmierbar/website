@@ -37,8 +37,9 @@
                 <Transition name="checkin-success">
                     <div
                         v-if="scanResult"
-                        class="mb-8 rounded-2xl p-8 text-center"
+                        class="mb-8 cursor-pointer rounded-2xl p-8 text-center"
                         :class="scanResult.alreadyCheckedIn ? 'bg-yellow-900/40' : 'bg-lime/10'"
+                        @click="dismissResult"
                     >
                         <div
                             class="text-5xl font-bold"
@@ -50,6 +51,9 @@
                         <div v-if="scanResult.alreadyCheckedIn" class="text-yellow-400 mt-4">Bereits eingecheckt</div>
                         <div v-else class="mt-4 text-lime">Willkommen!</div>
                         <CheckinTshirt v-if="scanResult.tshirt" :tshirt="scanResult.tshirt" />
+                        <button type="button" class="mt-6 rounded bg-white/10 px-6 py-2 font-bold text-white">
+                            Fertig
+                        </button>
                     </div>
                 </Transition>
 
@@ -59,7 +63,7 @@
                 </div>
 
                 <!-- QR Scanner -->
-                <div v-show="!scanResult" class="overflow-hidden rounded-2xl">
+                <div class="overflow-hidden rounded-2xl">
                     <div id="qr-reader" />
                 </div>
 
@@ -121,6 +125,9 @@ const stats = ref<{
 
 let scanner: any = null
 let scanCooldown = false
+// The card stays up until the next scan, so the code it shows stays in front of the camera
+// while the shirt is handed out; that code is ignored instead of being checked in again.
+let displayedTicketCode: string | null = null
 
 onMounted(async () => {
     try {
@@ -179,13 +186,21 @@ function extractTicketCode(text: string): string | null {
 }
 
 async function onScanSuccess(decodedText: string) {
-    if (scanning.value || scanResult.value || scanCooldown) return
+    if (scanning.value || scanCooldown) return
 
     const ticketCode = extractTicketCode(decodedText)
-    if (!ticketCode) return
+    if (!ticketCode || ticketCode === displayedTicketCode) return
 
     scanCooldown = true
     await performCheckin(ticketCode)
+    setTimeout(() => {
+        scanCooldown = false
+    }, 1500)
+}
+
+function dismissResult() {
+    scanResult.value = null
+    displayedTicketCode = null
 }
 
 async function handleManualInput() {
@@ -200,7 +215,7 @@ async function performCheckin(ticketCode: string) {
     if (scanning.value) return
     scanning.value = true
     scanError.value = null
-    scanResult.value = null
+    dismissResult()
 
     try {
         const result = await ($fetch as any)('/api/checkin/scan', {
@@ -209,15 +224,10 @@ async function performCheckin(ticketCode: string) {
         })
 
         scanResult.value = result
+        displayedTicketCode = ticketCode
 
         // Refresh stats
         await refreshStats()
-
-        // Auto-reset after 4 seconds
-        setTimeout(() => {
-            scanResult.value = null
-            scanCooldown = false
-        }, 4000)
     } catch (err: any) {
         const message = err?.data?.message || err?.message || 'Unbekannter Fehler'
         if (message.includes('not found')) {
@@ -228,9 +238,10 @@ async function performCheckin(ticketCode: string) {
             scanError.value = message
         }
 
+        displayedTicketCode = ticketCode
         setTimeout(() => {
             scanError.value = null
-            scanCooldown = false
+            if (!scanResult.value) displayedTicketCode = null
         }, 4000)
     } finally {
         scanning.value = false
