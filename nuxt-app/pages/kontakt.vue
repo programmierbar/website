@@ -17,6 +17,13 @@
 
         <!-- Contact form -->
         <div class="container md:pl-48 md:pr-6 lg:pr-8 3xl:px-8">
+            <!-- Pitch hint (only while the pitch page is published, as it would link to a 404 otherwise) -->
+            <p v-if="pitchPage" class="mb-8 px-6 text-base text-white md:mb-12 md:px-0 md:text-xl lg:text-2xl">
+                Du möchtest uns etwas vorschlagen? Schau bitte vorher auf unserer
+                <NuxtLink class="font-bold text-lime" to="/pitch" data-cursor-hover>Pitch-Seite</NuxtLink>
+                vorbei.
+            </p>
+
             <ContactForm />
         </div>
 
@@ -55,6 +62,17 @@ const googleMapsUrl = GOOGLE_MAPS_URL
 
 // Query contact page
 const { data: contactPage } = useAsyncData(() => directus.getContactPage())
+
+// Query pitch page for the hint above the form. A failed request only hides
+// the hint; it must not take the contact page down with it.
+const { data: pitchPage } = useAsyncData('contact-pitch-page', async () => {
+    try {
+        return await directus.getPitchPage()
+    } catch (error) {
+        console.error('[kontakt] Failed to load pitch page:', error instanceof Error ? error.message : error)
+        return null
+    }
+})
 
 // Set loading screen
 useLoadingScreen(contactPage)

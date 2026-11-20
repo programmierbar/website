@@ -31,7 +31,7 @@ import type {
 import { DIRECTUS_CMS_URL, WEBSITE_URL } from './../config'
 // This import needs to be relative/file-based
 // so that it can be resolved during the nuxt build process
-import { directus, type Collections } from './../services'
+import { directus, getDirectusErrorStatus, type Collections } from './../services'
 
 const collectionWithTagsName = ['members', 'speakers', 'podcasts', 'meetups', 'picks_of_the_day'] as const
 type CollectionWithTagsName = (typeof collectionWithTagsName)[number]
@@ -118,6 +118,29 @@ export function useDirectus() {
                 fields: ['*'],
             })
         )
+    }
+
+    /**
+     * The pitch page, or `null` while it is not published.
+     *
+     * The status is checked here rather than left to the CMS permissions alone, so a token that
+     * can read drafts still does not publish the page. Directus answers 403 for a collection the
+     * public role may not read, which is the other way an unpublished page shows up.
+     */
+    async function getPitchPage() {
+        try {
+            const pitchPage = await directus.request(
+                readSingleton('pitch_page', {
+                    fields: ['*'],
+                })
+            )
+            return pitchPage?.status === 'published' ? pitchPage : null
+        } catch (error) {
+            if (getDirectusErrorStatus(error) === 403) {
+                return null
+            }
+            throw error
+        }
     }
 
     async function getImprintPage() {
@@ -1033,6 +1056,7 @@ export function useDirectus() {
         getAboutPage,
         getPrivacyPage,
         getAgbPage,
+        getPitchPage,
         getRafflePage,
         getLoginPage,
         getProfileCreationPage,

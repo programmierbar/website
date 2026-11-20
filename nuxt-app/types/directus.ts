@@ -530,6 +530,12 @@ export interface DirectusAgbPage {
     text: string
 }
 
+export interface DirectusPitchPage {
+    status: string
+    heading: string
+    text: string
+}
+
 // Ticket system types
 
 export type TicketOrderStatus = 'pending' | 'paid' | 'cancelled'
