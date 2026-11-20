@@ -292,6 +292,8 @@ export function useAuthenticatedDirectus() {
                     'status',
                     'checked_in_at',
                     'ticket_type',
+                    'tshirt_size',
+                    'date_created',
                 ],
                 limit: 1,
             })

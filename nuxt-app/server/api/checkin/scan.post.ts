@@ -1,3 +1,5 @@
+import { CONFERENCE_TSHIRT_ORDER_DEADLINES } from '~/config'
+import { getCheckinTshirt } from '~/server/utils/checkinTshirt'
 import { CheckinScanSchema } from '~/server/utils/schema'
 
 export default defineEventHandler(async (event) => {
@@ -41,12 +43,19 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, message: 'Ticket is cancelled' })
     }
 
+    const tshirt = getCheckinTshirt(
+        ticket.tshirt_size,
+        ticket.date_created,
+        CONFERENCE_TSHIRT_ORDER_DEADLINES[conference.id]
+    )
+
     if (ticket.status === 'checked_in') {
         return {
             alreadyCheckedIn: true,
             firstName: ticket.attendee_first_name,
             lastName: ticket.attendee_last_name,
             checkedInAt: ticket.checked_in_at,
+            tshirt,
         }
     }
 
@@ -66,5 +75,6 @@ export default defineEventHandler(async (event) => {
         alreadyCheckedIn: false,
         firstName: ticket.attendee_first_name,
         lastName: ticket.attendee_last_name,
+        tshirt,
     }
 })

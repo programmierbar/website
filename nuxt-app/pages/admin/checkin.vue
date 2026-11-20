@@ -49,6 +49,7 @@
                         <div class="mt-2 text-lg text-white/80">{{ scanResult.lastName }}</div>
                         <div v-if="scanResult.alreadyCheckedIn" class="text-yellow-400 mt-4">Bereits eingecheckt</div>
                         <div v-else class="mt-4 text-lime">Willkommen!</div>
+                        <CheckinTshirt v-if="scanResult.tshirt" :tshirt="scanResult.tshirt" />
                     </div>
                 </Transition>
 
@@ -87,6 +88,7 @@
 
 <script setup lang="ts">
 import { useDirectus } from '~/composables/useDirectus'
+import type { CheckinTshirtInfo } from '~/types/directus'
 
 useHead({
     title: 'Check-in',
@@ -104,6 +106,7 @@ const scanResult = ref<{
     firstName: string
     lastName: string
     alreadyCheckedIn: boolean
+    tshirt?: CheckinTshirtInfo
 } | null>(null)
 const scanError = ref<string | null>(null)
 const scanning = ref(false)
