@@ -109,6 +109,15 @@ export const WEBFINGER_HOST = 'https://social.programmier.bar'
 export const VAT_RATE = 0.19
 export const VAT_RATE_PERCENT = Math.round(VAT_RATE * 100)
 
+// Conference T-shirts are ordered weeks ahead, so only tickets ordered by this moment get one
+// (promised in the conference FAQ: "bis Ende September dein Ticket bestellt"). Keyed by
+// conference id; a conference without an entry has no deadline. There is no CMS field for this
+// yet — a datetime on `conferences` could replace it, added in the Directus Data Model UI.
+export const CONFERENCE_TSHIRT_ORDER_DEADLINES: Record<string, string> = {
+    // programmier.con 2026: end of 30 September, Europe/Berlin (CEST, UTC+2)
+    'f05b413b-3d5e-48d9-9601-2e02266a628c': '2026-09-30T23:59:59.999+02:00',
+}
+
 // Event IDs
 export const PLAY_PODCAST_EVENT_ID = 'PLAY_PODCAST'
 export const PAUSE_PODCAST_EVENT_ID = 'PAUSE_PODCAST'

@@ -599,6 +599,22 @@ export interface DirectusTicketItem {
     is_internal: boolean
 }
 
+/** T-shirt hand-out shown on the check-in screen. */
+export type CheckinTshirtInfo =
+    { status: 'eligible'; size: string } | { status: 'too_late'; size: string | null } | { status: 'no_size' }
+
+export type CheckinConference = { id: string; title: string; slug: string }
+
+export type CheckinCounts = { totalSold: number; checkedIn: number }
+
+export type CheckinResult = {
+    alreadyCheckedIn: boolean
+    firstName: string
+    lastName: string
+    checkedInAt?: string | null
+    tshirt: CheckinTshirtInfo
+}
+
 export interface DirectusTicketDiscountCodeItem {
     id: string
     conference: string

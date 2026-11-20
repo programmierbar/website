@@ -278,44 +278,6 @@ export function useAuthenticatedDirectus() {
         return orders?.[0] ?? null
     }
 
-    async function getTicketByCode(ticketCode: string) {
-        const tickets = await client.request(
-            readItems('tickets', {
-                filter: { ticket_code: { _eq: ticketCode } },
-                fields: [
-                    'id',
-                    'ticket_code',
-                    'conference',
-                    'attendee_first_name',
-                    'attendee_last_name',
-                    'attendee_email',
-                    'status',
-                    'checked_in_at',
-                    'ticket_type',
-                ],
-                limit: 1,
-            })
-        )
-
-        return tickets?.[0] ?? null
-    }
-
-    async function countCheckedInTicketsForConference(conferenceId: string): Promise<number> {
-        const result = await client.request(
-            aggregate('tickets' as any, {
-                aggregate: { count: ['id'] },
-                query: {
-                    filter: {
-                        conference: { _eq: conferenceId },
-                        status: { _eq: 'checked_in' },
-                        is_internal: { _neq: true },
-                    },
-                },
-            })
-        )
-        return Number(result?.[0]?.count?.id ?? 0)
-    }
-
     async function getLatestConferenceWithTicketing() {
         const conferences = await client.request(
             readItems('conferences', {
@@ -668,8 +630,6 @@ export function useAuthenticatedDirectus() {
         updateTicket,
         getTicketsByOrderId,
         getTicketOrderBySessionId,
-        getTicketByCode,
-        countCheckedInTicketsForConference,
         getLatestConferenceWithTicketing,
         createNewsletterSubscriber,
         readNewsletterSubscriberByToken,
