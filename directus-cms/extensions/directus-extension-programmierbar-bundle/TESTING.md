@@ -16,6 +16,23 @@ npm test                 # Jest
 npm run build            # directus-extension build
 ```
 
+### E-invoice validation
+
+Ticket invoices are ZUGFeRD / Factur-X e-invoices (PDF/A-3b with an embedded CII XML, profile EN
+16931). Jest covers the mapping (`shared/__tests__/einvoice.test.ts`); the official rules run in a
+separate CI job (`einvoice-validation`) because they need Java:
+
+```bash
+npm run einvoice:samples    # render every document type to einvoice-samples/ (PDF + extracted XML)
+npm run einvoice:validate   # render, then validate each PDF with Mustang
+```
+
+[Mustang](https://www.mustangproject.org/) (Apache-2.0) checks PDF/A-3 conformance with its
+embedded veraPDF, the CII XSD and the EN 16931 + Factur-X Schematron rules. The script downloads the
+pinned Mustang CLI jar from Maven Central into `.cache/mustang/` and verifies its SHA-256; set
+`MUSTANG_JAR` to use a jar you already have. Java 11+ must be on the `PATH`. Each PDF gets a
+`*.mustang.xml` report next to it.
+
 There is deliberately no typecheck step yet. `tsc` cannot currently run on this tree at all — see
 [the tooling plan](../../../docs/directus-extension-tooling-plan.md), Phase 1.
 
