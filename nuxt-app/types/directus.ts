@@ -605,7 +605,7 @@ export type CheckinTshirtInfo =
 
 export type CheckinConference = { id: string; title: string; slug: string }
 
-export type CheckinStats = { conference: CheckinConference; totalSold: number; checkedIn: number }
+export type CheckinCounts = { totalSold: number; checkedIn: number }
 
 export type CheckinResult = {
     alreadyCheckedIn: boolean

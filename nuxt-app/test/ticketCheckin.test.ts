@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+    canCheckInTickets,
     CheckinError,
     checkInTicket,
-    loadCheckinStats,
+    loadCheckinConference,
+    loadCheckinCounts,
     withSessionRetry,
     type CheckinRequest,
 } from '../helpers/ticketCheckin'
@@ -130,22 +132,54 @@ describe('checkInTicket', () => {
     })
 })
 
-describe('loadCheckinStats', () => {
-    it('counts sold and checked-in tickets of the latest ticketing conference', async () => {
+describe('loadCheckinConference', () => {
+    it('reads the latest conference with ticketing', async () => {
         const conference = { id: CONFERENCE_ID, title: 'programmier.con 2026', slug: 'programmiercon-2026' }
-        const { request, calls } = fakeRequest((call) => {
-            if (call.path === '/items/conferences') return [conference]
-            return [{ count: { id: JSON.stringify(call.params).includes('checked_in') ? '12' : '340' } }]
-        })
+        const { request, calls } = fakeRequest(() => [conference])
 
-        await expect(loadCheckinStats(request)).resolves.toEqual({ conference, totalSold: 340, checkedIn: 12 })
-        expect(
-            calls.filter((call) => call.path === '/aggregate/tickets' || call.path === '/items/tickets')
-        ).toHaveLength(2)
+        await expect(loadCheckinConference(request)).resolves.toEqual(conference)
+        expect(calls[0]).toMatchObject({ path: '/items/conferences', method: 'GET' })
     })
 
     it('fails clearly when no conference has ticketing', async () => {
         const { request } = fakeRequest(() => [])
-        await expect(loadCheckinStats(request)).rejects.toMatchObject({ reason: 'no_conference' })
+        await expect(loadCheckinConference(request)).rejects.toMatchObject({ reason: 'no_conference' })
+    })
+})
+
+describe('loadCheckinCounts', () => {
+    it('counts sold and checked-in tickets of the conference', async () => {
+        const { request, calls } = fakeRequest((call) => [
+            { count: { id: JSON.stringify(call.params).includes('checked_in') ? '12' : '340' } },
+        ])
+
+        await expect(loadCheckinCounts(request, CONFERENCE_ID)).resolves.toEqual({ totalSold: 340, checkedIn: 12 })
+        expect(calls).toHaveLength(2)
+        expect(calls.every((call) => JSON.stringify(call.params).includes(CONFERENCE_ID))).toBe(true)
+    })
+})
+
+describe('canCheckInTickets', () => {
+    const access = (read: object, update: object) => ({ tickets: { read, update } })
+
+    it.each([
+        ['admins', access({ access: 'full', fields: ['*'] }, { access: 'full', fields: ['*'] }), true],
+        [
+            'roles that may set status and checked_in_at',
+            access({ access: 'partial', fields: ['id'] }, { access: 'full', fields: ['status', 'checked_in_at'] }),
+            true,
+        ],
+        ['roles without update access', access({ access: 'full', fields: ['*'] }, { access: 'none' }), false],
+        [
+            'roles that may not set checked_in_at',
+            access({ access: 'full', fields: ['*'] }, { access: 'full', fields: ['status'] }),
+            false,
+        ],
+        ['roles without read access', access({ access: 'none' }, { access: 'full', fields: ['*'] }), false],
+        ['roles without any ticket permission', {}, false],
+    ])('answers for %s', async (_, permissions, expected) => {
+        const { request, calls } = fakeRequest(() => permissions)
+        await expect(canCheckInTickets(request)).resolves.toBe(expected)
+        expect(calls[0]).toMatchObject({ path: '/permissions/me', method: 'GET' })
     })
 })

@@ -1,6 +1,6 @@
-import { aggregate, readItems, updateItem, type RestCommand } from '@directus/sdk'
+import { aggregate, readItems, readUserPermissions, updateItem, type RestCommand } from '@directus/sdk'
 import { CONFERENCE_TSHIRT_ORDER_DEADLINES } from '../config'
-import type { CheckinConference, CheckinResult, CheckinStats } from '../types/directus'
+import type { CheckinConference, CheckinCounts, CheckinResult } from '../types/directus'
 import { getCheckinTshirt } from './checkinTshirt'
 
 // The check-in page talks to Directus directly, with the Directus session cookie of
@@ -63,7 +63,7 @@ export function withSessionRetry(request: CheckinRequest, refresh: () => Promise
     }
 }
 
-async function getLatestConferenceWithTicketing(request: CheckinRequest): Promise<CheckinConference> {
+export async function loadCheckinConference(request: CheckinRequest): Promise<CheckinConference> {
     const conferences = (await request(
         readItems('conferences' as any, {
             filter: { ticketing_enabled: { _eq: true } },
@@ -88,13 +88,35 @@ async function countTickets(request: CheckinRequest, filter: Record<string, unkn
     return Number(result?.[0]?.count?.id ?? 0)
 }
 
-export async function loadCheckinStats(request: CheckinRequest): Promise<CheckinStats> {
-    const conference = await getLatestConferenceWithTicketing(request)
+/** The counter above the scanner. Optional: check-in works without it. */
+export async function loadCheckinCounts(request: CheckinRequest, conferenceId: string): Promise<CheckinCounts> {
     const [totalSold, checkedIn] = await Promise.all([
-        countTickets(request, { conference: { _eq: conference.id }, status: { _neq: 'cancelled' } }),
-        countTickets(request, { conference: { _eq: conference.id }, status: { _eq: 'checked_in' } }),
+        countTickets(request, { conference: { _eq: conferenceId }, status: { _neq: 'cancelled' } }),
+        countTickets(request, { conference: { _eq: conferenceId }, status: { _eq: 'checked_in' } }),
     ])
-    return { conference, totalSold, checkedIn }
+    return { totalSold, checkedIn }
+}
+
+const CHECKIN_UPDATE_FIELDS = ['status', 'checked_in_at']
+
+type CollectionAccess = { access?: 'none' | 'partial' | 'full'; fields?: string[] }
+
+/**
+ * Whether the signed-in user's Directus permissions (`GET /permissions/me`) let them read tickets
+ * and set `status` and `checked_in_at`. Admins get full access on every collection.
+ */
+export async function canCheckInTickets(request: CheckinRequest): Promise<boolean> {
+    const permissions = (await request(readUserPermissions())) as Record<
+        string,
+        Partial<Record<'read' | 'update', CollectionAccess>> | undefined
+    >
+    const tickets = permissions?.tickets
+    const has = (info: CollectionAccess | undefined, fields: string[]) =>
+        !!info?.access &&
+        info.access !== 'none' &&
+        (info.fields?.includes('*') || fields.every((field) => info.fields?.includes(field)))
+
+    return has(tickets?.read, []) && has(tickets?.update, CHECKIN_UPDATE_FIELDS)
 }
 
 type CheckinTicket = {

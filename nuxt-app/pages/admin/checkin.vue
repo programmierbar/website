@@ -4,18 +4,18 @@
             <!-- Header with stats -->
             <div class="mb-8 text-center">
                 <h1 class="text-3xl font-bold text-white">Check-in</h1>
-                <p v-if="stats" class="mt-2 text-lg text-white/60">{{ stats.conference.title }}</p>
+                <p v-if="conference" class="mt-2 text-lg text-white/60">{{ conference.title }}</p>
             </div>
 
             <!-- Stats bar -->
-            <div v-if="stats" class="mb-8 flex items-center justify-center gap-8">
+            <div v-if="counts" class="mb-8 flex items-center justify-center gap-8">
                 <div class="text-center">
-                    <div class="text-4xl font-bold text-lime">{{ stats.checkedIn }}</div>
+                    <div class="text-4xl font-bold text-lime">{{ counts.checkedIn }}</div>
                     <div class="text-sm text-white/60">Eingecheckt</div>
                 </div>
                 <div class="text-3xl text-white/20">/</div>
                 <div class="text-center">
-                    <div class="text-4xl font-bold text-white">{{ stats.totalSold }}</div>
+                    <div class="text-4xl font-bold text-white">{{ counts.totalSold }}</div>
                     <div class="text-sm text-white/60">Tickets verkauft</div>
                 </div>
             </div>
@@ -97,8 +97,14 @@
 
 <script setup lang="ts">
 import { useDirectus } from '~/composables/useDirectus'
-import { CheckinError, checkInTicket, loadCheckinStats } from '~/helpers/ticketCheckin'
-import type { CheckinResult, CheckinStats } from '~/types/directus'
+import {
+    canCheckInTickets,
+    CheckinError,
+    checkInTicket,
+    loadCheckinConference,
+    loadCheckinCounts,
+} from '~/helpers/ticketCheckin'
+import type { CheckinConference, CheckinCounts, CheckinResult } from '~/types/directus'
 
 useHead({
     title: 'Check-in',
@@ -121,7 +127,9 @@ const scanning = ref(false)
 const manualCode = ref('')
 
 // Stats
-const stats = ref<CheckinStats | null>(null)
+const conference = ref<CheckinConference | null>(null)
+// Optional: if the counts can't be loaded, check-in still works.
+const counts = ref<CheckinCounts | null>(null)
 
 let scanner: any = null
 let scanCooldown = false
@@ -144,14 +152,30 @@ onMounted(async () => {
     if (!isAuthenticated.value) return
 
     try {
-        stats.value = await loadCheckinStats(request)
+        if (!(await canCheckInTickets(request))) {
+            accessDenied.value = true
+            return
+        }
     } catch (err) {
         if (err instanceof CheckinError && err.reason === 'auth') {
             await handleAuthFailure()
             return
         }
-        // Stats not critical
+        // Can't tell; a missing permission then shows as an error on the first scan.
     }
+
+    try {
+        conference.value = await loadCheckinConference(request)
+    } catch (err) {
+        if (err instanceof CheckinError && err.reason === 'auth') {
+            await handleAuthFailure()
+            return
+        }
+        // Each scan loads the conference again until this works.
+        scanError.value = err instanceof CheckinError ? err.message : 'Konferenz konnte nicht geladen werden'
+    }
+
+    void refreshCounts()
     await initScanner()
 })
 
@@ -167,11 +191,12 @@ function stopScanner() {
     }
 }
 
-async function refreshStats() {
+async function refreshCounts() {
+    if (!conference.value) return
     try {
-        stats.value = await loadCheckinStats(request)
+        counts.value = await loadCheckinCounts(request, conference.value.id)
     } catch {
-        // Stats not critical
+        // Counts are optional
     }
 }
 
@@ -250,14 +275,14 @@ async function performCheckin(ticketCode: string) {
     dismissResult()
 
     try {
-        const conferenceId = stats.value?.conference.id ?? (await loadCheckinStats(request)).conference.id
-        const result = await checkInTicket(request, conferenceId, ticketCode)
+        conference.value ??= await loadCheckinConference(request)
+        const result = await checkInTicket(request, conference.value.id, ticketCode)
 
         scanResult.value = result
         displayedTicketCode = ticketCode
 
-        // Refresh stats
-        await refreshStats()
+        // Not awaited: the next scan shouldn't wait for (or fail with) the counter
+        void refreshCounts()
     } catch (err: any) {
         if (err instanceof CheckinError && err.reason === 'auth') {
             await handleAuthFailure()
