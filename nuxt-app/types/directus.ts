@@ -624,6 +624,8 @@ export interface DirectusTicketDiscountCodeItem {
     max_uses: number | null
     active: boolean
     is_employee_code: boolean
+    /** Orders with this code may exceed the conference's ticket limit */
+    bypass_capacity?: boolean
 }
 
 // Newsletter

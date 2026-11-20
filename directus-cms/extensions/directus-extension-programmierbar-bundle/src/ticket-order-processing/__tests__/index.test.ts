@@ -99,15 +99,24 @@ const CONFERENCE = {
 
 const ACCOUNTING_ENV = { ACCOUNTING_INVOICE_EMAIL: 'accounting@example.test' }
 
-function setup(orderOverrides: Record<string, any> = {}, env: Record<string, any> = {}) {
+function setup(
+    orderOverrides: Record<string, any> = {},
+    env: Record<string, any> = {},
+    {
+        conferenceOverrides = {},
+        discountCodes = {},
+    }: { conferenceOverrides?: Record<string, any>; discountCodes?: Record<string, any> } = {}
+) {
     const order = { ...ORDER, ...orderOverrides }
+    const conference = { ...CONFERENCE, ...conferenceOverrides }
     const serviceInstances: Record<string, any[]> = {}
 
     class FakeItemsService {
         collection: string
         readOne = jest.fn(async (id: any) => {
             if (this.collection === 'ticket_orders' && id === order.id) return { ...order }
-            if (this.collection === 'conferences' && id === CONFERENCE.id) return { ...CONFERENCE }
+            if (this.collection === 'conferences' && id === conference.id) return { ...conference }
+            if (this.collection === 'ticket_discount_codes' && discountCodes[id]) return { ...discountCodes[id] }
             return null
         })
         readByQuery = jest.fn(async () => [])
@@ -390,5 +399,52 @@ describe('ticket-order-processing invoice folder', () => {
 
         expect(issueOriginalInvoiceMock).toHaveBeenCalledTimes(1)
         expect(issueOriginalInvoiceMock.mock.calls[0]![0].folder).toBe('folder-invoices')
+    })
+})
+
+describe('ticket-order-processing ticket limit', () => {
+    // Two attendees against a limit of one, with no tickets sold yet.
+    const overLimit = { conferenceOverrides: { ticket_max_quantity: 1 } }
+
+    test('cancels an order that exceeds the ticket limit', async () => {
+        const { invoke, serviceInstances } = setup({}, {}, overLimit)
+        await invoke({ status: 'paid' })
+
+        expect(serviceInstances['ticket_orders']![0].updateOne).toHaveBeenCalledWith('order-1', { status: 'cancelled' })
+        expect(serviceInstances['tickets']![0].createOne).not.toHaveBeenCalled()
+        expect(issueOriginalInvoiceMock).not.toHaveBeenCalled()
+    })
+
+    test('cancels an order over the limit whose discount code does not bypass it', async () => {
+        const { invoke, serviceInstances } = setup(
+            { discount_code_used: 'code-1' },
+            {},
+            {
+                ...overLimit,
+                discountCodes: { 'code-1': { id: 'code-1', bypass_capacity: false } },
+            }
+        )
+        await invoke({ status: 'paid' })
+
+        expect(serviceInstances['ticket_orders']![0].updateOne).toHaveBeenCalledWith('order-1', { status: 'cancelled' })
+        expect(serviceInstances['tickets']![0].createOne).not.toHaveBeenCalled()
+    })
+
+    test('processes an order over the limit when its discount code bypasses the limit', async () => {
+        const { invoke, serviceInstances } = setup(
+            { discount_code_used: 'code-1' },
+            {},
+            {
+                ...overLimit,
+                discountCodes: { 'code-1': { id: 'code-1', bypass_capacity: true } },
+            }
+        )
+        await invoke({ status: 'paid' })
+
+        expect(serviceInstances['ticket_orders']![0].updateOne).not.toHaveBeenCalledWith('order-1', {
+            status: 'cancelled',
+        })
+        expect(serviceInstances['tickets']![0].createOne).toHaveBeenCalledTimes(2)
+        expect(issueOriginalInvoiceMock).toHaveBeenCalledTimes(1)
     })
 })
