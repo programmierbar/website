@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import TicketPurchaseFlow from '~/components/tickets/TicketPurchaseFlow.vue'
+import TicketsSoldOutNotice from '~/components/tickets/TicketsSoldOutNotice.vue'
+import { useTicketAvailability } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { getMetaInfo } from '~/helpers'
 import { computed, onMounted, ref } from 'vue'
@@ -16,7 +18,7 @@ onMounted(() => {
 })
 
 // Query conference data
-const { data: pageData, error } = useAsyncData(route.fullPath, async () => {
+const { data: pageData, error } = await useAsyncData(route.fullPath, async () => {
     const conference = await directus.getConferenceBySlug(route.params.slug as string)
 
     if (!conference) {
@@ -35,6 +37,12 @@ const conference = computed(() => pageData.value?.conference)
 const ticketingAvailable = computed(() => {
     return conference.value?.ticketing_enabled === true
 })
+
+const ticketsSoldOut = await useTicketAvailability(ticketingAvailable.value ? conference.value?.id : undefined)
+
+// Team tickets don't count against the limit, so a sold-out conference still
+// lets team members order with their code, behind an explicit opt-in.
+const continueWithTeamCode = ref(false)
 
 // Set page meta data
 useHead(() =>
@@ -92,6 +100,29 @@ const breadcrumbs = computed(() => [
                     Zurück zur Konferenz
                 </NuxtLink>
             </div>
+
+            <!-- Sold out -->
+            <TicketsSoldOutNotice
+                v-else-if="conference && ticketsSoldOut && !continueWithTeamCode"
+                :conference-title="conference.title"
+            >
+                <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
+                    <NuxtLink
+                        :to="`/konferenz/${route.params.slug}`"
+                        class="inline-block rounded-lg bg-lime px-6 py-3 font-bold text-black"
+                    >
+                        Zurück zur Konferenz
+                    </NuxtLink>
+                    <button
+                        type="button"
+                        class="text-sm text-white/80 underline underline-offset-4 hover:text-white"
+                        data-cursor-hover
+                        @click="continueWithTeamCode = true"
+                    >
+                        Du bist im Team? Mit Team-Code bestellen
+                    </button>
+                </div>
+            </TicketsSoldOutNotice>
 
             <!-- Checkout flow -->
             <TicketPurchaseFlow
