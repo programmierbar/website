@@ -172,6 +172,10 @@ export const CreateCheckoutSchema = z
         }
     )
 
+export const TicketAvailabilityQuerySchema = z.object({
+    conferenceId: z.string().uuid('Ungültige Konferenz-ID.'),
+})
+
 export const ValidateDiscountSchema = z.object({
     code: z.string().min(1, 'Bitte trage einen Rabattcode ein.').max(50),
     conferenceId: z.string().uuid('Ungültige Konferenz-ID.'),

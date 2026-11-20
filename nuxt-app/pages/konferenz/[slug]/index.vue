@@ -47,14 +47,22 @@
                         :position="'-top-32 fixed right-[-40vw] -translate-x-1/2 transform'"
                         :index="'0'"
                     />
+                    <!-- Sold out: replaces the sales copy, price cards and CTA -->
+                    <TicketsSoldOutNotice
+                        v-if="ticketsSoldOut"
+                        class="z-30 mt-8 lg:max-w-2xl"
+                        :conference-title="conference.title"
+                    />
+
                     <InnerHtml
+                        v-if="!ticketsSoldOut"
                         class="relative z-30 mt-2 text-2xl font-light leading-normal"
                         :html="conference.tickets_text"
                     />
 
                     <!-- Ticket price cards -->
                     <div
-                        v-if="conference.ticket_regular_price_cents"
+                        v-if="!ticketsSoldOut && conference.ticket_regular_price_cents"
                         class="relative z-30 mt-12 grid gap-6 sm:grid-cols-2 lg:max-w-2xl"
                     >
                         <!-- Early Bird -->
@@ -127,7 +135,7 @@
                     </div>
 
                     <!-- CTA Button -->
-                    <div class="relative z-30 mt-10">
+                    <div v-if="!ticketsSoldOut" class="relative z-30 mt-10">
                         <NuxtLink
                             :to="`/konferenz/${conference.slug}/tickets`"
                             data-cursor-hover
@@ -272,7 +280,8 @@
 import ConferenceGallery from '~/components/ConferenceGallery.vue'
 import ConferenceSpeakersSlider from '~/components/ConferenceSpeakersSlider.vue'
 import TestimonialSlider from '~/components/TestimonialSlider.vue'
-import { useLoadingScreen, useNow } from '~/composables'
+import TicketsSoldOutNotice from '~/components/tickets/TicketsSoldOutNotice.vue'
+import { useLoadingScreen, useNow, useTicketAvailability } from '~/composables'
 import { useDirectus } from '~/composables/useDirectus'
 import { VAT_RATE } from '~/config'
 import { getMetaInfo, parseCmsDate, trackGoal } from '~/helpers'
@@ -388,6 +397,10 @@ const isConferenceOver = computed(() => {
 const showTicketSection = computed(() => {
     return conference.value?.ticketing_enabled === true && !isConferenceOver.value
 })
+
+// Only asked for when the ticket section is shown at all, so past and
+// non-ticketed conference pages make no extra request.
+const ticketsSoldOut = await useTicketAvailability(showTicketSection.value ? conference.value?.id : undefined)
 
 type preparedAgendaItem = {
     start: string

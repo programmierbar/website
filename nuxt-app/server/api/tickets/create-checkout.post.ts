@@ -5,7 +5,7 @@ import type Stripe from 'stripe'
 import { CreateCheckoutSchema } from '../../utils/schema'
 import type { CreateCheckoutInput } from '../../utils/schema'
 import { getStripe } from '../../utils/stripe'
-import { isEarlyBirdPeriod } from '../../utils/ticketSettings'
+import { getRemainingTicketCapacity, isEarlyBirdPeriod } from '../../utils/ticketSettings'
 
 function generateOrderNumber(): string {
     const year = new Date().getFullYear()
@@ -192,10 +192,9 @@ export default defineEventHandler(async (event) => {
         }
 
         // Hard limit check: internal tickets don't consume capacity
-        if (!isInternal && conference.ticket_max_quantity !== null) {
-            const existingTickets = await directus.countPaidTicketsForConference(input.conferenceId)
-            if (existingTickets + input.tickets.length > conference.ticket_max_quantity) {
-                const remaining = Math.max(0, conference.ticket_max_quantity - existingTickets)
+        if (!isInternal) {
+            const remaining = await getRemainingTicketCapacity(directus, conference)
+            if (remaining !== null && input.tickets.length > remaining) {
                 throw createError({
                     statusCode: 409,
                     message:
